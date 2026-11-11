@@ -1,0 +1,45 @@
+name = "misub"
+main = "worker.js"
+compatibility_date = "2024-04-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
+[build]
+command = "npm run build"
+
+# 静态资源托管 (Cloudflare Workers Static Assets)
+# run_worker_first = true 确保所有请求先经过 Worker 执行伪装页、防探测、自定义登录路径和短链路由
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = true
+not_found_handling = "none"
+
+# 原生定时触发器 (默认每 6 小时自动同步订阅并检查流量/到期通知)
+[triggers]
+crons = ["0 */6 * * *"]
+
+# ==============================================================================
+# 存储与环境变量绑定说明：
+# 生产部署可通过 Cloudflare Dashboard (Workers & Pages -> Settings -> Bindings) 绑定，
+# 或取消下方注释并填入实际的 Namespace ID / Database ID。
+#
+# 敏感密钥建议使用命令行注入，切勿明文提交到代码仓库：
+#   npx wrangler secret put ADMIN_PASSWORD
+#   npx wrangler secret put COOKIE_SECRET
+#   npx wrangler secret put CRON_SECRET
+# ==============================================================================
+
+# [[kv_namespaces]]
+# binding = "MISUB_KV"
+# id = "<YOUR_KV_NAMESPACE_ID>"
+
+# [[d1_databases]]
+# binding = "MISUB_DB"
+# database_name = "misub"
+# database_id = "<YOUR_D1_DATABASE_ID>"
+
+# [vars]
+# CORS_ORIGINS = "https://your-domain.com"
+# MISUB_PUBLIC_URL = "https://your-domain.com"
+
