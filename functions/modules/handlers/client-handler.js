@@ -42,30 +42,35 @@ const LEGACY_CLIENT_ICONS = {
 };
 
 const LEGACY_ICON_ALIASES = {
-    '/icons/clients/clash-verge-rev.png': '/icons/clients/clash-verge-rev.svg',
-    '/icons/clients/clash-party.png': '/icons/clients/clash-party.svg',
-    '/icons/clients/v2rayn.ico': '/icons/clients/v2rayn.svg',
-    '/icons/clients/v2rayng.png': '/icons/clients/v2rayng.svg',
-    '/icons/clients/shadowrocket.jpg': '/icons/clients/shadowrocket.svg',
-    '/icons/clients/hiddify.png': '/icons/clients/hiddify.svg',
-    '/icons/clients/nekobox.png': '/icons/clients/nekobox.svg',
-    '/icons/clients/stash.jpg': '/icons/clients/stash.svg',
-    '/icons/clients/loon.jpg': '/icons/clients/loon.svg',
-    '/icons/clients/egern.png': '/icons/clients/egern.svg',
-    '/icons/clients/surge.jpg': '/icons/clients/surge.svg',
-    '/icons/clients/flclash.png': '/icons/clients/flclash.svg',
-    '/icons/clients/clashmi.png': '/icons/clients/clashmi.svg',
-    '/icons/clients/flyclash.png': '/icons/clients/flyclash.svg',
-    '/icons/clients/karing.png': '/icons/clients/karing.svg',
-    '/icons/clients/quantumultx.jpg': '/icons/clients/quantumultx.svg',
-    '/icons/clients/clashbox.png': '/icons/clients/clashbox.svg',
+    '/icons/clients/clash-verge-rev.svg': '/icons/clients/clash-verge-rev.png',
+    '/icons/clients/clash-party.svg': '/icons/clients/clash-party.png',
+    '/icons/clients/v2rayn.ico': '/icons/clients/v2rayn.png',
+    '/icons/clients/v2rayn.svg': '/icons/clients/v2rayn.png',
+    '/icons/clients/v2rayng.svg': '/icons/clients/v2rayng.png',
+    '/icons/clients/shadowrocket.jpg': '/icons/clients/shadowrocket.png',
+    '/icons/clients/shadowrocket.svg': '/icons/clients/shadowrocket.png',
+    '/icons/clients/hiddify.svg': '/icons/clients/hiddify.png',
+    '/icons/clients/nekobox.svg': '/icons/clients/nekobox.png',
+    '/icons/clients/stash.svg': '/icons/clients/stash.jpg',
+    '/icons/clients/loon.svg': '/icons/clients/loon.jpg',
+    '/icons/clients/egern.png': '/icons/clients/egern.jpg',
+    '/icons/clients/egern.svg': '/icons/clients/egern.jpg',
+    '/icons/clients/surge.jpg': '/icons/clients/surge.png',
+    '/icons/clients/surge.svg': '/icons/clients/surge.png',
+    '/icons/clients/flclash.svg': '/icons/clients/flclash.png',
+    '/icons/clients/clashmi.svg': '/icons/clients/clashmi.png',
+    '/icons/clients/flyclash.svg': '/icons/clients/flyclash.png',
+    '/icons/clients/karing.svg': '/icons/clients/karing.png',
+    '/icons/clients/quantumultx.jpg': '/icons/clients/quantumultx.png',
+    '/icons/clients/quantumultx.svg': '/icons/clients/quantumultx.png',
+    '/icons/clients/clashbox.svg': '/icons/clients/clashbox.png',
 };
 
 const DEFAULT_CLIENTS = [
     {
         id: 'clash-verge-rev',
         name: 'Clash Verge Rev',
-        icon: '/icons/clients/clash-verge-rev.svg',
+        icon: '/icons/clients/clash-verge-rev.png',
         description: '现代化的 Clash 客户端，界面美观，功能强大，支持多平台。',
         platforms: ['windows', 'macos', 'linux'],
         url: 'https://github.com/clash-verge-rev/clash-verge-rev/releases',
@@ -75,7 +80,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'clash-party',
         name: 'Clash-Party',
-        icon: '/icons/clients/clash-party.svg',
+        icon: '/icons/clients/clash-party.png',
         description: '基于 Electron 的 Mihomo 图形客户端，专注于简单易用的体验。',
         platforms: ['windows', 'macos', 'linux'],
         url: 'https://github.com/mihomo-party-org/clash-party/releases',
@@ -85,7 +90,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'v2rayn',
         name: 'v2rayN',
-        icon: '/icons/clients/v2rayn.svg',
+        icon: '/icons/clients/v2rayn.png',
         description: 'Windows 平台最流行的 V2Ray/Xray 客户端，功能强大且易于使用。',
         platforms: ['windows', 'linux'],
         url: 'https://github.com/2dust/v2rayN/releases',
@@ -95,7 +100,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'v2rayng',
         name: 'v2rayNG',
-        icon: '/icons/clients/v2rayng.svg',
+        icon: '/icons/clients/v2rayng.png',
         description: 'Android 平台上最流行的通用代理工具，支持多种协议。',
         platforms: ['android'],
         url: 'https://github.com/2dust/v2rayNG/releases',
@@ -105,7 +110,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'shadowrocket',
         name: 'Shadowrocket',
-        icon: '/icons/clients/shadowrocket.svg',
+        icon: '/icons/clients/shadowrocket.png',
         description: 'iOS 平台功能强大的网络工具，需使用非中国区 Apple ID 下载。',
         platforms: ['ios'],
         url: 'https://apps.apple.com/us/app/shadowrocket/id932747118',
@@ -115,7 +120,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'hiddify',
         name: 'Hiddify',
-        icon: '/icons/clients/hiddify.svg',
+        icon: '/icons/clients/hiddify.png',
         description: '新一代通用客户端，支持 Sing-box 核心，全平台兼容。',
         platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
         url: 'https://github.com/hiddify/hiddify-next/releases',
@@ -125,7 +130,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'nekobox',
         name: 'NekoBox',
-        icon: '/icons/clients/nekobox.svg',
+        icon: '/icons/clients/nekobox.png',
         description: '功能丰富的全能代理客户端，支持 Sing-box 和 Xray 核心。',
         platforms: ['android', 'windows'],
         url: 'https://github.com/MatsuriDayo/NekoBoxForAndroid/releases',
@@ -135,7 +140,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'stash',
         name: 'Stash',
-        icon: '/icons/clients/stash.svg',
+        icon: '/icons/clients/stash.jpg',
         description: 'iOS 平台上强大的基于规则的代理实用工具，支持多种协议。',
         platforms: ['ios', 'macos'],
         url: 'https://apps.apple.com/us/app/stash-rule-based-proxy/id1596063349',
@@ -145,7 +150,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'loon',
         name: 'Loon',
-        icon: '/icons/clients/loon.svg',
+        icon: '/icons/clients/loon.jpg',
         description: 'iOS 平台功能强大的网络工具，界面简洁优雅，支持插件扩展。',
         platforms: ['ios', 'macos'],
         url: 'https://apps.apple.com/us/app/loon/id1373567447',
@@ -155,7 +160,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'egern',
         name: 'Egern',
-        icon: '/icons/clients/egern.svg',
+        icon: '/icons/clients/egern.jpg',
         description: 'iOS 平台的规则代理客户端，支持通过订阅链接快速导入配置。',
         platforms: ['ios'],
         url: 'https://apps.apple.com/us/app/egern/id1616105820',
@@ -165,7 +170,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'surge',
         name: 'Surge',
-        icon: '/icons/clients/surge.svg',
+        icon: '/icons/clients/surge.png',
         description: 'iOS/macOS 平台的高级网络工具，拥有强大的性能和丰富的功能。',
         platforms: ['ios', 'macos'],
         url: 'https://nssurge.com/',
@@ -175,7 +180,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'flclash',
         name: 'FlClash',
-        icon: '/icons/clients/flclash.svg',
+        icon: '/icons/clients/flclash.png',
         description: '基于 Flutter 开发的多平台 Clash 客户端，界面美观流畅。',
         platforms: ['windows', 'linux', 'android'],
         url: 'https://github.com/chen08209/FlClash/releases',
@@ -185,7 +190,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'clashmi',
         name: 'ClashMI',
-        icon: '/icons/clients/clashmi.svg',
+        icon: '/icons/clients/clashmi.png',
         description: '基于 Mihomo 内核的多平台客户端，简单易用，支持全平台。',
         platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
         url: 'https://github.com/KaringX/clashmi/releases',
@@ -195,7 +200,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'flyclash',
         name: 'FlyClash',
-        icon: '/icons/clients/flyclash.svg',
+        icon: '/icons/clients/flyclash.png',
         description: '基于 ClashMeta 内核的轻量级客户端，专注于速度和稳定性。',
         platforms: ['windows', 'android'],
         url: 'https://github.com/GtxFury/FlyClash/releases',
@@ -205,7 +210,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'karing',
         name: 'Karing',
-        icon: '/icons/clients/karing.svg',
+        icon: '/icons/clients/karing.png',
         description: '简单的兼容 Clash/V2ray/Sing-box 的全平台客户端。',
         platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
         url: 'https://github.com/KaringX/karing/releases',
@@ -215,7 +220,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'quantumultx',
         name: 'Quantumult X',
-        icon: '/icons/clients/quantumultx.svg',
+        icon: '/icons/clients/quantumultx.png',
         description: 'iOS 平台功能强大的网络工具，界面精美，支持脚本。',
         platforms: ['ios'],
         url: 'https://apps.apple.com/us/app/quantumult-x/id1443988620',
@@ -225,7 +230,7 @@ const DEFAULT_CLIENTS = [
     {
         id: 'clashbox',
         name: 'ClashBox',
-        icon: '/icons/clients/clashbox.svg',
+        icon: '/icons/clients/clashbox.png',
         description: 'HarmonyOS NEXT 平台的原生 Clash 客户端，界面美观，性能强大。',
         platforms: ['HarmonyOS'],
         url: 'https://github.com/xiaobaigroup/ClashBox/releases',
