@@ -70,7 +70,7 @@
                 <svg
                     class="mr-2 md:mr-2.5 flex-shrink-0 h-4 w-4"
                     :class="
-                        activeTab === tab.id ? 'text-zinc-900' : 'text-zinc-500'
+                        activeTab === tab.id ? 'text-current' : 'text-zinc-500'
                     "
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -116,7 +116,7 @@
                         v-if="tab.id === 'client'"
                         stroke-linecap="round"
                         stroke-linejoin="round"
-                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
 
                     <path
