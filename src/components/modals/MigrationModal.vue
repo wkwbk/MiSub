@@ -160,7 +160,10 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                 <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{
                     t('d1Migration.title')
                 }}</span>
-                <span v-if="step === 'migrating'" class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span
+                    v-if="step === 'migrating'"
+                    class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"
+                ></span>
             </div>
         </template>
 
@@ -171,7 +174,9 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     <div
                         class="bg-transparent p-4 rounded-md border border-zinc-200 dark:border-zinc-800"
                     >
-                        <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
+                        <h4
+                            class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2"
+                        >
                             <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                             {{ t('d1Migration.precheckHeading') }}
                         </h4>
@@ -200,7 +205,9 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                                 />
                                 <span
                                     >{{ t('d1Migration.stepBindDbPrefix') }}
-                                    <code class="font-mono text-zinc-900 dark:text-zinc-100">MISUB_DB</code>
+                                    <code class="font-mono text-zinc-900 dark:text-zinc-100"
+                                        >MISUB_DB</code
+                                    >
                                     {{ t('d1Migration.stepBindDbSuffix') }}</span
                                 >
                             </li>
@@ -211,10 +218,9 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                                     aria-hidden="true"
                                 />
                                 <div class="flex flex-col gap-1">
-                                    <span
-                                        class="font-medium text-zinc-900 dark:text-zinc-100"
-                                        >{{ t('d1Migration.stepRunSchema') }}</span
-                                    >
+                                    <span class="font-medium text-zinc-900 dark:text-zinc-100">{{
+                                        t('d1Migration.stepRunSchema')
+                                    }}</span>
                                     <button
                                         @click="copySchema"
                                         class="text-xs flex items-center gap-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2 transition-colors w-fit"
@@ -247,7 +253,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                 <!-- Step 2 & 3: Logs -->
                 <div v-else class="flex-1 flex flex-col min-h-0">
                     <div
-                        class="bg-[#131515] rounded-md p-4 font-mono text-xs overflow-y-auto flex-1 custom-scrollbar shadow-none border border-zinc-800"
+                        class="bg-[#131515] rounded-md p-4 font-mono text-xs overflow-y-auto flex-1 shadow-none border border-zinc-800"
                     >
                         <div v-if="logs.length === 0" class="text-zinc-500 text-center mt-10">
                             {{ t('d1Migration.waiting') }}
@@ -278,16 +284,3 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         </template>
     </Modal>
 </template>
-
-<style scoped>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: var(--color-slate-800);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: var(--color-slate-600);
-        border-radius: 3px;
-    }
-</style>

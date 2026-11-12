@@ -5,7 +5,10 @@
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
     import { useDataStore } from '../../stores/useDataStore.js';
     import { useSubscriptions } from '../../composables/useSubscriptions.js';
-    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.js';
+    import {
+        useBulkImportLogic,
+        needsServerParsing,
+    } from '../../composables/useBulkImportLogic.js';
     import { useManualNodes } from '../../composables/useManualNodes.js';
     import { useI18n } from '../../i18n/index.js';
     import { parseSurgeConfig } from '../../utils/protocolConverter.js';
@@ -246,10 +249,7 @@
                     <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('manualNodes.addTitle') : t('manualNodes.editTitle') }}
                     </h3>
-                    <p
-                        v-if="!(isNew && isMultiLine)"
-                        class="mt-0.5 text-xs text-zinc-400"
-                    >
+                    <p v-if="!(isNew && isMultiLine)" class="mt-0.5 text-xs text-zinc-400">
                         {{ t('manualNodes.modalDescription') }}
                     </p>
                     <p
@@ -357,9 +357,7 @@
                         v-if="isNew"
                         class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-zinc-800 bg-transparent px-3 py-2.5"
                     >
-                        <div
-                            class="flex items-center gap-2 text-xs text-zinc-300"
-                        >
+                        <div class="flex items-center gap-2 text-xs text-zinc-300">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4 shrink-0 text-zinc-400"
@@ -416,9 +414,7 @@
                             v-if="singleProtocol && !isMultiLine"
                             class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
                         >
-                            <span
-                                class="font-mono text-xs font-semibold text-zinc-200 uppercase"
-                            >
+                            <span class="font-mono text-xs font-semibold text-zinc-200 uppercase">
                                 {{ singleProtocol.name }}
                             </span>
                         </div>
@@ -459,9 +455,7 @@
                 <!-- 批量导入预览 -->
                 <div v-if="isMultiLine && parsedNodes.length > 0" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <h4
-                            class="text-xs font-semibold text-zinc-300 flex items-center gap-2"
-                        >
+                        <h4 class="text-xs font-semibold text-zinc-300 flex items-center gap-2">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4 text-zinc-400"
@@ -525,17 +519,5 @@
     /* 移除 textarea 默认样式 */
     textarea:focus {
         outline: none;
-    }
-
-    /* 自定义滚动条 */
-    .max-h-48::-webkit-scrollbar {
-        width: 4px;
-    }
-    .max-h-48::-webkit-scrollbar-thumb {
-        background: color-mix(in srgb, var(--color-indigo-500) 30%, transparent);
-        border-radius: 2px;
-    }
-    .max-h-48::-webkit-scrollbar-thumb:hover {
-        background: color-mix(in srgb, var(--color-indigo-500) 50%, transparent);
     }
 </style>

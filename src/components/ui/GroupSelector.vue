@@ -134,9 +134,7 @@
                 @keydown.enter="isOpen = false"
                 :aria-label="placeholder"
             />
-            <div
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
-            >
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
                 <slot name="icon">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -191,7 +189,7 @@
                 <div
                     v-if="isOpen && (groups.length > 0 || modelValue)"
                     id="group-selector-dropdown"
-                    class="absolute bg-white dark:bg-[#171717] rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 max-h-60 overflow-auto py-1 custom-scrollbar"
+                    class="absolute bg-white dark:bg-[#171717] rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 max-h-60 overflow-auto py-1"
                     :style="dropdownStyle"
                 >
                     <button
@@ -231,19 +229,3 @@
         </Teleport>
     </div>
 </template>
-
-<style scoped>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: color-mix(in srgb, var(--color-gray-400) 50%, transparent);
-        border-radius: 2px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background-color: color-mix(in srgb, var(--color-gray-400) 80%, transparent);
-    }
-</style>

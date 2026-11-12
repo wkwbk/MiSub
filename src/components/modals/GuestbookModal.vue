@@ -285,17 +285,4 @@
             transform: translateY(0);
         }
     }
-
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: color-mix(in srgb, var(--color-gray-400) 50%, transparent);
-        border-radius: 3px;
-    }
 </style>

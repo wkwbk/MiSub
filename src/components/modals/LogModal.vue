@@ -117,9 +117,7 @@
     >
         <template #title>
             <div class="flex justify-between items-center w-full">
-                <span class="text-base font-semibold text-zinc-100">{{
-                    t('logs.title')
-                }}</span>
+                <span class="text-base font-semibold text-zinc-100">{{ t('logs.title') }}</span>
                 <div class="flex gap-2">
                     <button
                         @click="fetchLogs"
@@ -139,7 +137,7 @@
 
         <template #body>
             <div class="flex flex-col h-[60vh]">
-                <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+                <div class="flex-1 overflow-y-auto pr-2 min-h-0">
                     <div v-if="isLoading" class="py-12 text-center text-zinc-500">
                         <svg
                             class="animate-spin h-6 w-6 mx-auto mb-2 text-zinc-400"
@@ -199,9 +197,7 @@
                                                 'bg-red-400': log.status === 'error',
                                             }"
                                         ></span>
-                                        <span
-                                            class="font-semibold text-zinc-100 truncate text-xs"
-                                        >
+                                        <span class="font-semibold text-zinc-100 truncate text-xs">
                                             {{ log.profileName || 'Unknown Profile' }}
                                         </span>
                                     </div>
@@ -212,9 +208,7 @@
                                     </span>
                                 </div>
 
-                                <div
-                                    class="flex flex-col gap-1 text-xs text-zinc-400"
-                                >
+                                <div class="flex flex-col gap-1 text-xs text-zinc-400">
                                     <!-- Compact Info Rows -->
                                     <div class="flex justify-between items-center">
                                         <div class="flex items-center gap-1.5">
@@ -260,8 +254,7 @@
                                 >
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div class="flex">
-                                            <span
-                                                class="font-mono text-zinc-500 w-16 shrink-0"
+                                            <span class="font-mono text-zinc-500 w-16 shrink-0"
                                                 >ISP:</span
                                             >
                                             <span class="font-mono text-zinc-300 truncate"
@@ -271,8 +264,7 @@
                                             >
                                         </div>
                                         <div class="flex">
-                                            <span
-                                                class="text-zinc-500 w-16 shrink-0"
+                                            <span class="text-zinc-500 w-16 shrink-0"
                                                 >{{ t('logs.duration') }}:</span
                                             >
                                             <span class="font-mono text-zinc-300"
@@ -280,8 +272,7 @@
                                             >
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
-                                            <span
-                                                class="text-zinc-500 w-16 shrink-0"
+                                            <span class="text-zinc-500 w-16 shrink-0"
                                                 >{{ t('logs.nodes') }}:</span
                                             >
                                             <span class="font-mono text-zinc-300 truncate">
@@ -295,8 +286,7 @@
                                             </span>
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
-                                            <span
-                                                class="font-mono text-zinc-500 w-16 shrink-0"
+                                            <span class="font-mono text-zinc-500 w-16 shrink-0"
                                                 >UA:</span
                                             >
                                             <span
@@ -366,16 +356,6 @@
 </template>
 
 <style scoped>
-    .custom-scrollbar::-webkit-scrollbar {
-        width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-        background-color: color-mix(in srgb, var(--color-gray-400) 50%, transparent);
-        border-radius: 20px;
-    }
     .animate-fadeIn {
         animation: fadeIn 0.2s ease-out;
     }

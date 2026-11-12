@@ -469,7 +469,9 @@
         <!-- 默认布局模式 -->
         <template v-else>
             <!-- Hero Section (Left Aligned & Open) -->
-            <div class="relative pt-10 pb-10 lg:pt-14 lg:pb-12 z-10 overflow-visible border-b border-zinc-800">
+            <div
+                class="relative pt-10 pb-10 lg:pt-14 lg:pb-12 z-10 overflow-visible border-b border-zinc-800"
+            >
                 <div
                     class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
                 >
@@ -493,12 +495,8 @@
                             <div
                                 class="h-10 w-56 rounded-md bg-zinc-900 sm:h-14 sm:w-72 lg:h-16 lg:w-96"
                             ></div>
-                            <div
-                                class="h-4 w-full max-w-3xl rounded-md bg-zinc-900"
-                            ></div>
-                            <div
-                                class="h-4 w-5/6 max-w-2xl rounded-md bg-zinc-900"
-                            ></div>
+                            <div class="h-4 w-full max-w-3xl rounded-md bg-zinc-900"></div>
+                            <div class="h-4 w-5/6 max-w-2xl rounded-md bg-zinc-900"></div>
                         </div>
 
                         <template v-else>
@@ -547,16 +545,12 @@
                             class="h-[260px] bg-[#171717] rounded-md p-6 shadow-none border border-zinc-800 animate-pulse"
                         >
                             <div class="flex items-center gap-4 mb-6">
-                                <div
-                                    class="h-10 w-10 bg-zinc-900 rounded-md"
-                                ></div>
+                                <div class="h-10 w-10 bg-zinc-900 rounded-md"></div>
                                 <div class="h-5 bg-zinc-900 rounded-md w-1/2"></div>
                             </div>
                             <div class="h-4 bg-zinc-900 rounded-md w-full mb-3"></div>
                             <div class="h-4 bg-zinc-900 rounded-md w-5/6 mb-8"></div>
-                            <div
-                                class="mt-auto h-10 bg-zinc-900 rounded-md"
-                            ></div>
+                            <div class="mt-auto h-10 bg-zinc-900 rounded-md"></div>
                         </div>
                     </div>
 
@@ -568,10 +562,7 @@
                         <div
                             class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-zinc-800 bg-transparent mb-4"
                         >
-                            <BaseIcon
-                                :path="ICONS.error"
-                                className="w-6 h-6 text-red-400"
-                            />
+                            <BaseIcon :path="ICONS.error" className="w-6 h-6 text-red-400" />
                         </div>
                         <h3 class="text-base font-semibold text-zinc-100 mb-2">
                             {{ t('publicProfiles.loadFailed') }}
@@ -609,9 +600,7 @@
                 </div>
 
                 <!-- Clients Section (Visually Separated) -->
-                <div
-                    class="mt-16 pt-12 pb-10 border-t border-zinc-800 bg-transparent"
-                >
+                <div class="mt-16 pt-12 pb-10 border-t border-zinc-800 bg-transparent">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">
@@ -634,7 +623,7 @@
                             <div
                                 v-for="client in clients"
                                 :key="client.name"
-                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_0_18px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.65)] border border-zinc-800 hover:border-zinc-700 transition-all duration-200"
+                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 border border-zinc-800 hover:border-zinc-700 transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div
@@ -758,31 +747,5 @@
     }
     .delay-300 {
         animation-delay: 300ms;
-    }
-
-    /* Custom Scrollbar for nicer feel */
-    ::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: var(--color-slate-300);
-        border-radius: 3px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--color-slate-400);
-    }
-
-    .dark ::-webkit-scrollbar-thumb {
-        background: var(--color-slate-600);
-    }
-
-    .dark ::-webkit-scrollbar-thumb:hover {
-        background: var(--color-slate-500);
     }
 </style>
