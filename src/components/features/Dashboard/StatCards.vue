@@ -59,7 +59,7 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-transparent hover:bg-zinc-900/60 p-4 sm:p-5 rounded-none shadow-none border-zinc-800 transition-colors duration-150 focus-visible:outline-hidden focus-visible:bg-zinc-900/60';
+        'stat-card group w-full text-left bg-[#171717] hover:bg-zinc-900/60 p-4 sm:p-5 rounded-md shadow-none border border-zinc-800 transition-colors duration-150 focus-visible:outline-hidden focus-visible:bg-zinc-900/60';
     const normalCardClass = 'border-zinc-800';
     const warningCardClass = 'border-zinc-800';
 
@@ -69,9 +69,7 @@
 </script>
 
 <template>
-    <div
-        class="grid grid-cols-2 md:grid-cols-4 divide-x divide-zinc-800 border border-zinc-800 rounded-md bg-[#0c0c0e] overflow-hidden max-md:[&>*:nth-child(n+3)]:border-t max-md:[&>*:nth-child(n+3)]:border-zinc-800"
-    >
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <button
             type="button"
             data-testid="stat-card-traffic"

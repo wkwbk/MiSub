@@ -19,7 +19,7 @@
             <div
                 v-for="i in count"
                 :key="i"
-                class="bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md p-5 shadow-none animate-pulse"
+                class="bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md p-5 shadow-none animate-pulse"
                 :style="{ '--delay-index': i - 1 }"
             >
                 <div class="flex items-start justify-between mb-4">
@@ -51,7 +51,7 @@
             <div
                 v-for="i in count"
                 :key="i"
-                class="flex items-center p-4 bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none animate-pulse mb-2"
+                class="flex items-center p-4 bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none animate-pulse mb-2"
                 :style="{ '--delay-index': i - 1 }"
             >
                 <div
@@ -89,12 +89,12 @@
                     </div>
                 </div>
 
-                <!-- 统计卡片 (Exposed Hairline Grid) -->
-                <div class="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                     <div
                         v-for="i in 4"
                         :key="i"
-                        class="bg-transparent p-5 animate-pulse"
+                        class="bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md p-4 sm:p-5 shadow-none animate-pulse"
                     >
                         <div
                             class="h-3 bg-zinc-200 dark:bg-zinc-800 rounded-sm w-1/2 mb-3"
@@ -110,7 +110,7 @@
                     <div
                         v-for="i in 4"
                         :key="i"
-                        class="h-16 bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none animate-pulse"
+                        class="h-16 bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none animate-pulse"
                     ></div>
                 </div>
             </div>
