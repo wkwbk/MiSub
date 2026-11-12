@@ -16,30 +16,35 @@
         {
             name: t('dashboard.totalSubscriptions'),
             value: props.stats.totalSubscriptions,
-            color: 'text-gray-900 dark:text-white',
+            dotClass: 'bg-zinc-400',
         },
         {
             name: t('dashboard.enabled'),
             value: props.stats.enabledSubscriptions,
-            color: 'text-green-600 dark:text-green-400',
+            dotClass: 'bg-emerald-500',
         },
         {
             name: t('dashboard.totalNodes'),
             value: props.stats.totalNodes,
-            color: 'text-blue-600 dark:text-blue-400',
+            dotClass: 'bg-sky-500',
         },
     ]);
 </script>
 
 <template>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div
+        class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800 border border-zinc-800 rounded-md bg-[#0c0c0e] overflow-hidden"
+    >
         <div
             v-for="stat in statsData"
             :key="stat.name"
-            class="bg-white/90 dark:bg-gray-900/80 backdrop-blur-md p-5 misub-radius-lg shadow-lg dark:shadow-2xl"
+            class="bg-transparent hover:bg-zinc-900/60 p-5 rounded-none shadow-none transition-colors"
         >
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.name }}</p>
-            <p class="mt-1 text-3xl font-semibold" :class="stat.color">{{ stat.value }}</p>
+            <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="stat.dotClass"></span>
+                {{ stat.name }}
+            </p>
+            <p class="mt-2 text-2xl font-semibold text-zinc-100 font-mono">{{ stat.value }}</p>
         </div>
     </div>
 </template>

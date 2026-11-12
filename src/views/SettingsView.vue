@@ -103,9 +103,9 @@
 <template>
     <div class="pt-0 pb-6 min-h-[calc(100vh-80px)]">
         <div
-            class="mb-4 bg-white/80 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg p-4"
+            class="mb-4 bg-[#0c0c0e] border border-zinc-800 rounded-md p-4 shadow-none"
         >
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 class="text-lg font-semibold text-zinc-100">
                 {{ t('settings.title') }}
             </h1>
         </div>

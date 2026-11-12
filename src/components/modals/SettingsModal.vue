@@ -36,9 +36,9 @@
     >
         <template #title>
             <div
-                class="bg-white/80 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg px-4 py-2"
+                class="bg-transparent px-1 py-0.5"
             >
-                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                <h3 class="text-base font-semibold text-zinc-100">
                     {{ t('settings.title') }}
                 </h3>
             </div>

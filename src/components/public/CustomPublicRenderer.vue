@@ -293,7 +293,7 @@
                 >
                     <button
                         @click="themeStore.toggleTheme"
-                        class="theme-toggle-btn p-2 rounded-full border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur-md shadow-sm transition-all active:scale-90"
+                        class="theme-toggle-btn p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] shadow-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
                         :title="
                             themeStore.theme === 'dark'
                                 ? t('common.switchToLight')
@@ -307,7 +307,7 @@
                     >
                         <svg
                             v-if="themeStore.theme === 'dark'"
-                            class="w-5 h-5 text-amber-400"
+                            class="w-4 h-4 text-zinc-200"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -321,7 +321,7 @@
                         </svg>
                         <svg
                             v-else
-                            class="w-5 h-5 text-indigo-600"
+                            class="w-4 h-4 text-zinc-700"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"

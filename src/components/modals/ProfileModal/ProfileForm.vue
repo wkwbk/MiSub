@@ -129,7 +129,7 @@
                 :label="t('profiles.customIdLabel')"
                 :placeholder="t('profiles.customIdPlaceholder')"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
+            <p class="text-xs text-zinc-500 mt-1">
                 {{ t('profiles.customIdHint') }}
             </p>
         </div>
@@ -137,7 +137,7 @@
 
     <!-- Public Display & Description -->
     <div
-        class="bg-gray-50 dark:bg-gray-800/50 misub-radius-md p-4 border border-gray-100 dark:border-gray-700 mt-4"
+        class="bg-transparent rounded-md p-4 border border-zinc-800 mt-4"
     >
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
@@ -145,20 +145,21 @@
                     type="checkbox"
                     id="profile-is-public"
                     v-model="localProfile.isPublic"
-                    class="h-4 w-4 rounded-sm border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                    class="h-4 w-4 rounded-sm border-zinc-700 bg-[#09090b] text-zinc-100 focus:ring-0"
                 />
                 <label
                     for="profile-is-public"
-                    class="ml-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="ml-2 block text-xs font-medium text-zinc-200"
                 >
                     {{ t('profiles.publicDisplay') }}
                 </label>
             </div>
             <span
-                class="text-xs text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-full"
+                class="inline-flex items-center gap-1.5 text-[11px] text-zinc-300 border border-zinc-800 bg-transparent px-2 py-0.5 rounded-md"
                 v-if="localProfile.isPublic"
             >
-                {{ t('profiles.publicVisible') }}
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                <span>{{ t('profiles.publicVisible') }}</span>
             </span>
         </div>
 
@@ -168,20 +169,20 @@
                 v-model="localProfile.description"
                 rows="2"
                 :placeholder="t('profiles.descriptionPlaceholder')"
-                class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:outline-hidden focus-visible:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
+                class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-600 text-xs text-zinc-100 placeholder-zinc-600"
             ></textarea>
         </div>
-        <div v-else class="text-xs text-gray-500 dark:text-gray-400">
+        <div v-else class="text-xs text-zinc-500">
             {{ t('profiles.publicDisplayHint') }}
         </div>
     </div>
 
     <!-- Advanced Settings Toggle -->
-    <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-6">
+    <div class="border-t border-zinc-800 pt-4 mt-6">
         <button
             type="button"
             @click="emit('toggle-advanced')"
-            class="flex items-center text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 focus-visible:outline-hidden"
+            class="flex items-center text-xs font-semibold text-zinc-200 hover:text-white focus-visible:outline-hidden"
         >
             <span>{{ t('profiles.advancedTitle') }}</span>
             <svg
@@ -200,29 +201,29 @@
             </svg>
         </button>
 
-        <div v-show="showAdvanced" class="mt-4 space-y-8 animate-fade-in-down">
+        <div v-show="showAdvanced" class="mt-4 space-y-6 animate-fade-in-down">
             <!-- === 区块 A：渲染核心配置 (Core Logic) === -->
-            <div class="space-y-4">
-                <div class="flex items-center gap-2 border-l-4 border-indigo-500 pl-3">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
                         {{ t('profileModal.coreConfig') }}
                     </h3>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
+                    <span class="text-[11px] text-zinc-500">{{
                         t('profileModal.coreConfigDesc')
                     }}</span>
                 </div>
 
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-white dark:bg-gray-800/40 p-4 border border-gray-100 dark:border-gray-700 misub-radius-lg shadow-sm"
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-zinc-800 rounded-md shadow-none"
                 >
                     <!-- 引擎选择 -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">{{
+                        <label class="block text-xs font-medium text-zinc-400">{{
                             t('profileModal.engineLabel')
                         }}</label>
                         <select
                             v-model="localProfile.subconverter.engineMode"
-                            class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md focus-visible:ring-indigo-500 sm:text-sm dark:text-white transition-all font-medium"
+                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
                         >
                             <option value="">{{ t('profileModal.followGlobalConfig') }}</option>
                             <option
@@ -237,9 +238,9 @@
                             v-if="localProfile.subconverter.engineMode === ''"
                             class="flex items-center gap-1.5 mt-1.5"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold uppercase tracking-tight"
+                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
                             >
                                 {{ t('profileModal.currentGlobal', { value: globalEngineLabel }) }}
                             </span>
@@ -248,12 +249,12 @@
 
                     <!-- 方案选择 -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">{{
+                        <label class="block text-xs font-medium text-zinc-400">{{
                             t('profileModal.schemeLabel')
                         }}</label>
                         <select
                             v-model="localProfile.transformConfigMode"
-                            class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md focus-visible:ring-indigo-500 sm:text-sm dark:text-white"
+                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100"
                         >
                             <option value="global">
                                 {{ t('profileModal.followGlobalScheme') }}
@@ -272,7 +273,7 @@
                         </select>
                         <p
                             v-if="isExternalEngine"
-                            class="mt-1 text-[10px] leading-relaxed text-amber-600 dark:text-amber-400"
+                            class="mt-1 text-[10px] leading-relaxed text-zinc-400"
                         >
                             {{ t('profileModal.externalEngineHint') }}
                         </p>
@@ -280,9 +281,9 @@
                             v-if="localProfile.transformConfigMode === 'global'"
                             class="flex items-center gap-1.5 mt-1.5"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="text-[10px] text-purple-600 dark:text-purple-400 font-bold uppercase tracking-tight"
+                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
                             >
                                 {{ t('profileModal.currentGlobal', { value: globalConfigLabel }) }}
                             </span>
@@ -292,20 +293,20 @@
                     <!-- 引擎为第三方时的 URL 输入 -->
                     <div
                         v-if="isExternalEngine"
-                        class="sm:col-span-2 animate-fade-in-down border-t border-gray-50 dark:border-gray-700/50 pt-3"
+                        class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
                         <label
-                            class="block text-xs font-medium text-orange-600 dark:text-orange-400 mb-1.5"
+                            class="block text-xs font-medium text-zinc-400 mb-1.5"
                             >{{ t('profileModal.backendOverride') }}</label
                         >
                         <input
                             type="text"
                             v-model="localProfile.subconverter.backend"
                             :placeholder="t('profileModal.backendPlaceholder')"
-                            class="block w-full px-3 py-2 bg-orange-50/20 dark:bg-orange-900/10 border border-orange-200/50 dark:border-orange-500/20 misub-radius-md sm:text-sm dark:text-white focus-visible:ring-orange-500"
+                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus-visible:outline-hidden"
                         />
                         <p
-                            class="mt-1.5 text-[10px] leading-relaxed text-gray-500 dark:text-gray-400"
+                            class="mt-1.5 text-[10px] leading-relaxed text-zinc-500"
                         >
                             {{ t('profileModal.backendHint') }}
                         </p>
@@ -313,9 +314,9 @@
                             v-if="!localProfile.subconverter.backend"
                             class="flex items-center gap-1.5 mt-1.5"
                         >
-                            <span class="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="text-[10px] text-orange-600 dark:text-orange-400 font-bold uppercase tracking-tight"
+                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
                             >
                                 {{
                                     t('profileModal.currentGlobal', {
@@ -334,10 +335,10 @@
                             localProfile.transformConfigMode !== 'global' &&
                             localProfile.transformConfigMode !== 'builtin'
                         "
-                        class="sm:col-span-2 animate-fade-in-down border-t border-gray-50 dark:border-gray-700/50 pt-3"
+                        class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
                         <label
-                            class="block text-xs font-medium text-indigo-600 dark:text-indigo-400 mb-1.5"
+                            class="block text-xs font-medium text-zinc-400 mb-1.5"
                             >{{ t('profileModal.templateLabel') }}</label
                         >
                         <TransformSelector
@@ -353,47 +354,48 @@
                             :allowEmpty="false"
                             :exclude-builtin-assets="isExternalEngine"
                         />
-                        <p
+                        <div
                             v-if="localProfile.transformConfigMode === 'custom_template'"
-                            class="mt-2 rounded-lg bg-emerald-50 px-3 py-2 text-[10px] leading-relaxed text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                            class="mt-2 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-[11px] leading-relaxed text-zinc-400"
                         >
-                            {{ t('profileModal.customTemplateHint') }}
-                        </p>
+                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
+                            <span>{{ t('profileModal.customTemplateHint') }}</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- === 区块 B：参数微调与后处理 (Parameter Tuning) === -->
-            <div class="space-y-4">
-                <div class="flex items-center gap-2 border-l-4 border-emerald-500 pl-3">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
                         {{ t('profileModal.tuningTitle') }}
                     </h3>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
+                    <span class="text-[11px] text-zinc-500">{{
                         t('profileModal.tuningDesc')
                     }}</span>
                 </div>
 
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-5 bg-white dark:bg-gray-800/40 p-4 border border-gray-100 dark:border-gray-700 misub-radius-lg shadow-sm"
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-zinc-800 rounded-md shadow-none"
                 >
                     <!-- 到期时间 -->
                     <div>
                         <label
-                            class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                            class="block text-xs font-medium text-zinc-400 mb-1.5"
                             >{{ t('profileModal.expiresLabel') }}</label
                         >
                         <input
                             type="date"
                             v-model="localProfile.expiresAt"
-                            class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md sm:text-sm dark:text-white"
+                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                         />
                     </div>
 
                     <!-- 内置规则等级 (当切换到内置引擎，或切换到第三方引擎但使用内置分流方案时显示) -->
                     <div v-if="!isExternalEngine">
                         <label
-                            class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5"
+                            class="block text-xs font-medium text-zinc-400 mb-1.5"
                             >{{ t('profileModal.ruleLevelLabel') }}</label
                         >
                         <select
@@ -407,7 +409,7 @@
                                     localProfile.transformConfigMode !== 'builtin' &&
                                     localProfile.transformConfigMode !== 'global',
                             }"
-                            class="block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md sm:text-sm dark:text-white transition-all"
+                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden transition-colors"
                         >
                             <option value="">{{ t('profileModal.followGlobalLevel') }}</option>
                             <option value="base">{{ t('profileModal.ruleBase') }}</option>
@@ -419,10 +421,10 @@
 
                     <!-- 节点前缀设置 (合并) -->
                     <div
-                        class="sm:col-span-2 space-y-3 pt-2 border-t border-gray-50 dark:border-gray-700/50"
+                        class="sm:col-span-2 space-y-3 pt-3 border-t border-zinc-800"
                     >
                         <label
-                            class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest"
+                            class="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
                             >{{ t('profileModal.nodeNameVisibility') }}</label
                         >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -436,12 +438,12 @@
 
                             <!-- {{ t('profileModal.manualNodeDisplay') }}开关 -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-gray-500">{{
+                                <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.manualNodeDisplay')
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.enableManualNodes"
-                                    class="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:ring-1 focus-visible:ring-indigo-500"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
@@ -455,12 +457,12 @@
 
                             <!-- 机场订阅展示开关 (自动机场名) -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-gray-500">{{
+                                <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.subscriptionPrefix')
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.enableSubscriptions"
-                                    class="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:ring-1 focus-visible:ring-indigo-500"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
@@ -474,12 +476,12 @@
 
                             <!-- 组名前缀开关 -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-gray-500">{{
+                                <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.groupPrefix')
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.prependGroupName"
-                                    class="w-full px-2 py-1.5 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:ring-1 focus-visible:ring-indigo-500"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in groupPrefixToggleOptions"
@@ -499,18 +501,17 @@
                             <div
                                 v-for="flag in flagOptions"
                                 :key="flag.key"
-                                class="flex flex-col gap-1.5 p-2 bg-gray-50 dark:bg-white/5 rounded-lg border border-gray-100 dark:border-white/5"
+                                class="flex flex-col gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
                             >
                                 <div class="flex items-center gap-1.5">
-                                    <span class="text-xs">{{ flag.icon }}</span>
                                     <span
-                                        class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase"
+                                        class="text-[10px] font-semibold text-zinc-400 uppercase"
                                         >{{ flag.label }}</span
                                     >
                                 </div>
                                 <select
                                     v-model="localProfile.subconverter.options[flag.key]"
-                                    class="w-full px-1.5 py-1 text-[11px] bg-white dark:bg-gray-700 border-none misub-radius-md focus-visible:ring-1 focus-visible:ring-indigo-500 dark:text-white"
+                                    class="w-full px-1.5 py-1 text-[11px] bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option :value="null">
                                         {{ t('profileModal.followGlobal') }}
@@ -525,12 +526,12 @@
             </div>
 
             <!-- === 区块 C：处理管道 (Process Workflow) === -->
-            <div class="space-y-4">
-                <div class="flex items-center gap-2 border-l-4 border-indigo-400 pl-3">
-                    <h3 class="text-sm font-bold text-gray-900 dark:text-white">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
                         {{ t('profileModal.pipelineTitle') }}
                     </h3>
-                    <span class="text-[10px] text-gray-500 dark:text-gray-400">{{
+                    <span class="text-[11px] text-zinc-500">{{
                         t('profileModal.pipelineDesc')
                     }}</span>
                 </div>

@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
     import { computed, ref, watch } from 'vue';
     import { useI18n } from '../../i18n/index.js';
 
@@ -88,9 +88,9 @@
 <template>
     <div
         v-if="shouldShow && isPanelVariant"
-        class="panel-pagination-shell mt-4 px-4 py-3 bg-white/90 dark:bg-gray-900/80 backdrop-blur-md shadow-sm border border-gray-100/80 dark:border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 transition-all"
+        class="panel-pagination-shell mt-4 px-4 py-3 bg-[#0c0c0e] rounded-md shadow-none border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
     >
-        <div class="flex items-center space-x-4 text-xs text-gray-500 whitespace-nowrap">
+        <div class="flex items-center space-x-4 text-xs font-mono text-zinc-400 whitespace-nowrap">
             <span v-if="showTotalItems">{{
                 t('common.totalProfiles', { count: totalItems })
             }}</span>
@@ -99,7 +99,7 @@
                 <select
                     :value="itemsPerPage"
                     @change="handleItemsPerPageChange"
-                    class="form-select misub-radius-md text-xs py-1 pl-2 pr-6 border-gray-300 bg-gray-50 dark:bg-gray-900 dark:border-gray-600 focus-visible:ring-primary-500/50 focus:border-primary-500"
+                    class="form-select rounded-md text-xs font-mono py-1 pl-2 pr-6 border border-zinc-800 bg-transparent text-zinc-200 focus:border-zinc-500 focus-visible:outline-none"
                 >
                     <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
                         {{ option === -1 ? t('common.all') : option }}
@@ -113,11 +113,11 @@
             <button
                 @click="emitPageChange(1)"
                 :disabled="currentPage === 1"
-                class="h-8 w-8 flex items-center justify-center misub-radius-md bg-white/70 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200/70 dark:border-white/10 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
                 :title="t('common.firstPage')"
                 :aria-label="t('common.firstPage')"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -129,11 +129,11 @@
             <button
                 @click="emitPageChange(currentPage - 1)"
                 :disabled="currentPage === 1"
-                class="h-8 w-8 flex items-center justify-center misub-radius-md bg-white/70 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200/70 dark:border-white/10 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
                 :title="t('common.prevPage')"
                 :aria-label="t('common.prevPage')"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -143,26 +143,26 @@
                 </svg>
             </button>
 
-            <div class="flex items-center space-x-1">
+            <div class="flex items-center space-x-1 font-mono">
                 <input
                     type="number"
                     v-model="pageInput"
                     @keydown.enter="jumpToPage"
                     @blur="jumpToPage"
-                    class="w-14 text-center text-sm py-1 border border-gray-300 dark:border-gray-600 misub-radius-md bg-gray-50 dark:bg-gray-900 focus-visible:ring-1 focus-visible:ring-primary-500/50 focus:border-primary-500 appearance-none remove-arrow touch-target"
+                    class="w-14 text-center text-xs font-mono py-1 border border-zinc-800 rounded-md bg-transparent text-zinc-200 focus:border-zinc-500 focus-visible:outline-none appearance-none remove-arrow touch-target"
                     :aria-label="t('common.pageNumber')"
                 />
-                <span class="text-sm text-gray-500">/ {{ totalPages }}</span>
+                <span class="text-xs text-zinc-500">/ {{ totalPages }}</span>
             </div>
 
             <button
                 @click="emitPageChange(currentPage + 1)"
                 :disabled="currentPage === totalPages"
-                class="h-8 w-8 flex items-center justify-center misub-radius-md bg-white/70 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200/70 dark:border-white/10 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
                 :title="t('common.nextPage')"
                 :aria-label="t('common.nextPage')"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -174,11 +174,11 @@
             <button
                 @click="emitPageChange(totalPages)"
                 :disabled="currentPage === totalPages"
-                class="h-8 w-8 flex items-center justify-center misub-radius-md bg-white/70 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200/70 dark:border-white/10 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
                 :title="t('common.lastPage')"
                 :aria-label="t('common.lastPage')"
             >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -193,23 +193,23 @@
 
     <div
         v-else-if="shouldShow"
-        class="flex flex-wrap justify-center items-center gap-3 mt-6 text-sm font-medium"
+        class="flex flex-wrap justify-center items-center gap-3 mt-6 text-xs font-mono"
     >
         <button
             @click="emitPageChange(currentPage - 1)"
             :disabled="currentPage === 1"
-            class="h-8 px-3 misub-radius-md disabled:opacity-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 touch-target"
+            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-zinc-300 border border-zinc-800 hover:bg-zinc-900 touch-target"
         >
             &laquo; {{ t('common.prevPage') }}
         </button>
         <span
-            class="text-gray-500 dark:text-gray-400 bg-white/70 dark:bg-white/5 border border-gray-200/70 dark:border-white/10 px-3 py-1 misub-radius-md"
+            class="text-zinc-400 bg-transparent border border-zinc-800 px-3 py-1 rounded-md"
             >{{ t('common.pageOf', { current: currentPage, total: totalPages }) }}</span
         >
         <button
             @click="emitPageChange(currentPage + 1)"
             :disabled="currentPage === totalPages"
-            class="h-8 px-3 misub-radius-md disabled:opacity-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 touch-target"
+            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-zinc-300 border border-zinc-800 hover:bg-zinc-900 touch-target"
         >
             {{ t('common.nextPage') }} &raquo;
         </button>

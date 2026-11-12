@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
     import { ref, onMounted } from 'vue';
     import MigrationModal from './MigrationModal.vue';
     import { useSettingsLogic } from '../../composables/useSettingsLogic.js';
@@ -38,7 +38,7 @@
 
 <template>
     <div
-        class="w-full h-full min-h-[520px] overflow-hidden bg-white/50 dark:bg-gray-900/50 misub-radius-lg"
+        class="w-full h-full min-h-[520px] overflow-hidden bg-transparent rounded-md"
     >
         <SettingsContent
             v-model:activeTab="activeTab"

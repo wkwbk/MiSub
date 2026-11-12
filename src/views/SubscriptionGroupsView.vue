@@ -247,7 +247,7 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
             :paginated-subscriptions="paginatedSubscriptions"

@@ -40,7 +40,7 @@ describe('dashboard UI components', () => {
 
         const nodeCard = wrapper.find('[data-testid="stat-card-nodes"]');
         expect(nodeCard.text()).toContain('需要刷新节点');
-        expect(nodeCard.classes().join(' ')).toContain('border-amber-200/80');
+        expect(nodeCard.classes().join(' ')).toContain('border-zinc-800');
 
         await nodeCard.trigger('click');
         expect(wrapper.emitted('navigate')?.[0]).toEqual([

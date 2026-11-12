@@ -65,17 +65,17 @@
     // 尺寸映射支持
     const sizeMap = {
         sm: {
-            input: 'py-1.5 text-xs misub-radius-md px-2',
+            input: 'py-1.5 text-xs rounded-md px-2',
             label: 'text-xs mb-1 ml-1',
             icon: 'h-4 w-4',
         },
         md: {
-            input: 'py-2 text-sm misub-radius-md px-3',
+            input: 'py-2 text-sm rounded-md px-3',
             label: 'text-sm mb-1.5 ml-1',
             icon: 'h-4 w-4',
         },
         lg: {
-            input: 'py-3 text-base misub-radius-lg px-4',
+            input: 'py-2.5 text-base rounded-md px-4',
             label: 'text-sm mb-1.5 ml-1',
             icon: 'h-5 w-5',
         },
@@ -89,7 +89,7 @@
         <label
             v-if="label"
             :for="id"
-            class="block font-medium text-gray-700 dark:text-gray-300"
+            class="block font-medium text-zinc-300"
             :class="currentSize.label"
         >
             {{ label }}
@@ -98,7 +98,7 @@
             <!-- Icon Slot/Prop -->
             <div
                 v-if="hasIcon"
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 dark:text-gray-400 group-focus-within:text-primary-500 transition-colors"
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-zinc-300 transition-colors"
             >
                 <slot name="icon">
                     <svg
@@ -121,11 +121,11 @@
             <!-- Prefix Slot/Prop -->
             <div
                 v-else-if="hasPrefix"
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-gray-500 dark:text-gray-400"
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-zinc-500"
             >
                 <slot name="prefix">
                     <span
-                        class="font-medium"
+                        class="font-mono"
                         :class="props.size === 'sm' ? 'text-[10px]' : 'text-sm'"
                         >{{ prefix }}</span
                     >
@@ -141,23 +141,18 @@
                 :type="type"
                 :placeholder="placeholder"
                 :disabled="disabled"
-                class="w-full bg-white dark:bg-white/[0.035] border border-gray-200 dark:border-white/10 text-gray-900 dark:text-[var(--text-primary-dark)] placeholder-gray-400 dark:placeholder-gray-500 focus-visible:ring-2 focus-visible:ring-primary-500/30 focus:border-primary-500/70 dark:focus:border-primary-400/60 focus-visible:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full bg-transparent border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus-visible:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
                 :class="[
                     currentSize.input,
                     hasIcon || hasPrefix ? 'pl-9' : '',
                     error
-                        ? 'border-red-500 focus:border-red-500 focus-visible:ring-red-500/50'
+                        ? 'border-red-500 focus:border-red-500'
                         : '',
                 ]"
             />
-
-            <!-- Focus Glow -->
-            <div
-                class="absolute inset-0 misub-radius-md pointer-events-none transition-opacity duration-150 opacity-0 group-focus-within:opacity-100 ring-1 ring-primary-500/20"
-            ></div>
         </div>
 
-        <p v-if="error" class="mt-1 text-xs text-red-500 ml-1">
+        <p v-if="error" class="mt-1 text-xs text-red-400 ml-1">
             {{ error }}
         </p>
     </div>

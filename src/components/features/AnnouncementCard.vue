@@ -83,32 +83,16 @@
     const typeConfig = computed(() => {
         const types = {
             info: {
-                bg: 'bg-indigo-50/50 dark:bg-indigo-900/10',
-                border: 'border-indigo-100 dark:border-indigo-800/30',
-                text: 'text-indigo-700 dark:text-indigo-300',
-                iconBg: 'bg-indigo-500',
-                glow: 'var(--glow-info)',
+                dot: 'bg-zinc-400',
             },
             success: {
-                bg: 'bg-emerald-50/50 dark:bg-emerald-900/10',
-                border: 'border-emerald-100 dark:border-emerald-800/30',
-                text: 'text-emerald-700 dark:text-emerald-300',
-                iconBg: 'bg-emerald-500',
-                glow: 'var(--glow-success)',
+                dot: 'bg-emerald-500',
             },
             warning: {
-                bg: 'bg-amber-50/50 dark:bg-amber-900/10',
-                border: 'border-amber-100 dark:border-amber-800/30',
-                text: 'text-amber-700 dark:text-amber-300',
-                iconBg: 'bg-amber-500',
-                glow: 'var(--glow-warning)',
+                dot: 'bg-amber-500',
             },
             error: {
-                bg: 'bg-rose-50/50 dark:bg-rose-900/10',
-                border: 'border-rose-100 dark:border-rose-800/30',
-                text: 'text-rose-700 dark:text-rose-300',
-                iconBg: 'bg-rose-500',
-                glow: 'var(--glow-danger)',
+                dot: 'bg-red-500',
             },
         };
         return types[props.announcement.type] || types.info;
@@ -119,129 +103,60 @@
     <Transition name="fade-slide">
         <div
             v-if="isVisible"
-            class="announcement-glass group relative overflow-hidden transition-all duration-500 misub-radius-lg border backdrop-blur-xl shadow-lg"
-            :class="[typeConfig.bg, typeConfig.border]"
+            class="group relative overflow-hidden transition-colors rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] shadow-none"
         >
-            <!-- Subtle Background Glow -->
-            <div
-                class="absolute -right-20 -top-20 w-64 h-64 blur-[80px] rounded-full opacity-20 pointer-events-none transition-transform duration-1000 group-hover:scale-125"
-                :style="{ background: typeConfig.glow }"
-            ></div>
-
-            <div class="relative p-5 sm:p-6 z-10 flex flex-col sm:flex-row gap-5">
-                <!-- Icon Area -->
-                <div class="shrink-0">
-                    <div
-                        class="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
-                        :class="typeConfig.iconBg"
-                    >
-                        <svg
-                            v-if="announcement.type === 'success'"
-                            class="w-6 h-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2.5"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
-                        <svg
-                            v-else-if="announcement.type === 'warning'"
-                            class="w-6 h-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2.5"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
-                        </svg>
-                        <svg
-                            v-else-if="announcement.type === 'error'"
-                            class="w-6 h-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2.5"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                        <svg
-                            v-else
-                            class="w-6 h-6"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2.5"
-                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Content Area -->
-                <div class="flex-1 space-y-1.5 min-w-0">
-                    <div class="flex items-center justify-between gap-4">
+            <div class="relative p-4 sm:p-5 z-10 flex flex-col gap-2">
+                <!-- Header Area -->
+                <div class="flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span
+                            class="h-1.5 w-1.5 rounded-full shrink-0"
+                            :class="typeConfig.dot"
+                        ></span>
                         <h3
-                            class="text-lg font-bold truncate transition-colors duration-300"
-                            :class="[typeConfig.text]"
+                            class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate"
                         >
                             {{ announcement.title || t('common.announcementFallbackTitle') }}
                         </h3>
-                        <button
-                            v-if="announcement.dismissible"
-                            @click="dismiss"
-                            class="p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-black/5 dark:hover:bg-white/5 transition-all touch-target"
-                            :title="t('common.dismissAnnouncement')"
-                            :aria-label="t('common.dismissAnnouncement')"
-                        >
-                            <svg
-                                class="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2.5"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        </button>
                     </div>
-
-                    <div
-                        class="prose prose-sm max-w-none text-gray-600 dark:text-gray-300 leading-relaxed dark:prose-invert transition-colors duration-300"
-                        v-html="sanitizedContent"
-                    ></div>
-
-                    <div
-                        v-if="announcement.updatedAt"
-                        class="pt-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest flex items-center gap-2"
+                    <button
+                        v-if="announcement.dismissible"
+                        @click="dismiss"
+                        class="p-1 rounded-md text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors touch-target"
+                        :title="t('common.dismissAnnouncement')"
+                        :aria-label="t('common.dismissAnnouncement')"
                     >
-                        <span class="w-1 h-1 rounded-full bg-current opacity-40"></span>
-                        {{
-                            t('common.updatedAt', {
-                                time: new Date(announcement.updatedAt).toLocaleString(),
-                            })
-                        }}
-                    </div>
+                        <svg
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"
+                            />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content Area -->
+                <div
+                    class="prose prose-sm max-w-none text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed dark:prose-invert pl-3.5"
+                    v-html="sanitizedContent"
+                ></div>
+
+                <div
+                    v-if="announcement.updatedAt"
+                    class="pt-1 pl-3.5 text-[11px] font-mono text-zinc-500 flex items-center gap-2"
+                >
+                    {{
+                        t('common.updatedAt', {
+                            time: new Date(announcement.updatedAt).toLocaleString(),
+                        })
+                    }}
                 </div>
             </div>
         </div>

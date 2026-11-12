@@ -152,7 +152,7 @@
                         v-if="show"
                         ref="modalPanelRef"
                         tabindex="-1"
-                        class="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl misub-radius-lg shadow-2xl w-full text-left ring-1 ring-black/5 dark:ring-white/10 flex flex-col max-h-[85vh] lg:max-h-[90vh] border border-white/20 dark:border-white/5 focus-visible:outline-none"
+                        class="bg-[#0c0c0e] rounded-md shadow-none w-full text-left flex flex-col max-h-[85vh] lg:max-h-[90vh] border border-zinc-800 focus-visible:outline-none text-zinc-100"
                         :class="{
                             'max-w-sm': size === 'sm',
                             'max-w-md': size === 'md',
@@ -166,29 +166,29 @@
                         }"
                         @click.stop
                     >
-                        <div :id="titleId" class="p-6 pb-4 shrink-0">
+                        <div :id="titleId" class="p-6 pb-4 shrink-0 border-b border-zinc-800">
                             <slot name="title">
-                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                                <h3 class="text-base font-semibold text-zinc-100">
                                     {{ t('common.confirmAction') }}
                                 </h3>
                             </slot>
                         </div>
 
-                        <div class="px-6 pb-6 grow overflow-y-auto">
+                        <div class="px-6 py-5 grow overflow-y-auto">
                             <slot name="body">
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                <p class="text-sm text-zinc-400">
                                     {{ t('common.confirmContinue') }}
                                 </p>
                             </slot>
                         </div>
 
                         <div
-                            class="p-6 pt-4 flex justify-end space-x-3 shrink-0 border-t border-gray-200 dark:border-gray-700"
+                            class="p-6 pt-4 flex justify-end space-x-3 shrink-0 border-t border-zinc-800 bg-[#09090b]"
                         >
                             <slot name="footer">
                                 <button
                                     @click="emit('update:show', false)"
-                                    class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold text-sm misub-radius-lg transition-colors"
+                                    class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
                                 >
                                     {{ cancelLabel }}
                                 </button>
@@ -199,11 +199,11 @@
                                         (confirmKeyword && confirmInput !== confirmKeyword)
                                     "
                                     :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
-                                    class="px-4 py-2 text-white font-semibold text-sm misub-radius-lg transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    class="px-4 py-2 font-semibold text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="
                                         confirmVariant === 'danger'
-                                            ? 'bg-red-600 hover:bg-red-700'
-                                            : 'bg-indigo-600 hover:bg-indigo-700'
+                                            ? 'bg-transparent border border-red-900/60 text-red-400 hover:bg-red-950/40'
+                                            : 'bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100'
                                     "
                                 >
                                     {{ confirmLabel }}

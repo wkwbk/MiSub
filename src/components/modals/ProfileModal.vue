@@ -369,28 +369,25 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <div class="p-2 misub-radius-lg bg-indigo-500/10">
-                    <!-- Folder Icon for Profile -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 text-indigo-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                        />
-                    </svg>
-                </div>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-zinc-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                    />
+                </svg>
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                    <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('profiles.addTitle') : t('profiles.editTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('profiles.modalDescription') }}
                     </p>
                 </div>
@@ -409,7 +406,7 @@
                 />
 
                 <!-- 资源类型 Tab 切换栏 -->
-                <div class="border-b border-gray-200 dark:border-gray-700">
+                <div class="border-b border-zinc-800">
                     <nav
                         class="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto pb-1"
                         aria-label="Tabs"
@@ -419,15 +416,15 @@
                             @click="activeResourceTab = 'subscriptions'"
                             :class="[
                                 activeResourceTab === 'subscriptions'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'border-zinc-100 text-zinc-100'
+                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
+                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>📡 {{ t('profileModal.tabSubscriptions') }}</span>
+                            <span>{{ t('profileModal.tabSubscriptions') }}</span>
                             <span
                                 v-if="localProfile.subscriptions?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
+                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
                             >
                                 {{ localProfile.subscriptions.length }}
                             </span>
@@ -438,15 +435,15 @@
                             @click="activeResourceTab = 'subProfiles'"
                             :class="[
                                 activeResourceTab === 'subProfiles'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'border-zinc-100 text-zinc-100'
+                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
+                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>🧩 {{ t('profileModal.tabSubProfiles') }}</span>
+                            <span>{{ t('profileModal.tabSubProfiles') }}</span>
                             <span
                                 v-if="localProfile.subProfiles?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
+                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
                             >
                                 {{ localProfile.subProfiles.length }}
                             </span>
@@ -457,15 +454,15 @@
                             @click="activeResourceTab = 'manualNodes'"
                             :class="[
                                 activeResourceTab === 'manualNodes'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'border-zinc-100 text-zinc-100'
+                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
+                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>📌 {{ t('profileModal.tabManualNodes') }}</span>
+                            <span>{{ t('profileModal.tabManualNodes') }}</span>
                             <span
                                 v-if="localProfile.manualNodes?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
+                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
                             >
                                 {{ localProfile.manualNodes.length }}
                             </span>
@@ -476,12 +473,12 @@
                             @click="activeResourceTab = 'all'"
                             :class="[
                                 activeResourceTab === 'all'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'border-zinc-100 text-zinc-100'
+                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
+                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>⚡ {{ t('profileModal.tabAll') }}</span>
+                            <span>{{ t('profileModal.tabAll') }}</span>
                         </button>
                     </nav>
                 </div>

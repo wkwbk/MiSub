@@ -328,26 +328,26 @@
 <template>
     <div>
         <div
-            class="mb-4 rounded-xl border border-gray-100/80 bg-white/85 p-4 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="mb-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 shadow-none"
         >
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
                     <div class="flex items-center gap-3 shrink-0">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                        <h2 class="text-lg font-semibold text-zinc-100">
                             {{ t('subscriptions.title') }}
                         </h2>
                         <span
-                            class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
+                            class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
                             >{{ visibleCount }}/{{ subscriptions.length }}</span
                         >
                     </div>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-400">
                         {{ t('subscriptions.subtitle') }}
                     </p>
                     <p
                         data-testid="subscriptions-refresh-status"
                         aria-live="polite"
-                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        class="mt-1 text-xs font-mono text-zinc-500"
                     >
                         <span v-if="isRefreshing">{{ t('subscriptions.refreshing') }}</span>
                         <span v-else-if="refreshError">{{
@@ -364,7 +364,7 @@
                     <button
                         v-if="subscriptions.length > 1"
                         type="button"
-                        class="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-200"
+                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                         :title="t('subscriptions.assignAirportGroup')"
                         @click.stop="openAirportIdentityEditor()"
                     >
@@ -373,27 +373,27 @@
 
                     <button
                         @click="handleImport"
-                        class="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
+                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
                         {{ t('actions.bulkImport') }}
                     </button>
                     <button
                         v-if="isGrouped && !isSorting"
                         @click="collapseAllGroups"
-                        class="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200"
+                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
                         {{ t('subscriptions.collapseAll') }}
                     </button>
                     <button
                         v-if="isGrouped && !isSorting"
                         @click="expandAllGroups"
-                        class="shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10"
+                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
                         {{ t('subscriptions.expandAll') }}
                     </button>
                     <button
                         @click="handleAdd"
-                        class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+                        class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
                     >
                         {{ t('actions.add') }}
                     </button>
@@ -404,7 +404,7 @@
                                     handleRefreshAll();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                class="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                             >
                                 {{ t('actions.refreshAll') }}
                             </button>
@@ -413,17 +413,17 @@
                                     handleToggleSort();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                class="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
-                            <div class="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                            <div class="border-t border-zinc-800 my-1"></div>
                             <button
                                 @click="
                                     handleDeleteAll();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-500/10"
+                                class="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-red-950/40"
                             >
                                 {{ t('actions.clearAll') }}
                             </button>
@@ -433,7 +433,7 @@
             </div>
             <div v-if="searchable" class="relative mt-4">
                 <svg
-                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -450,11 +450,11 @@
                     :placeholder="t('subscriptions.listSearchPlaceholder')"
                     :aria-label="t('subscriptions.searchPlaceholder')"
                     :disabled="isSorting"
-                    class="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-20 text-sm text-gray-900 outline-none transition focus:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500"
+                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-20 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
                 />
                 <span
                     v-if="searchQuery"
-                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400"
                 >
                     {{ visibleCount }}/{{ subscriptions.length }}
                 </span>
@@ -463,14 +463,15 @@
             <div
                 v-if="statusFilter"
                 data-testid="subscription-status-filter"
-                class="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200/80 bg-amber-50/80 px-3 py-2 text-xs text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-200"
+                class="mt-3 flex flex-wrap items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-200"
             >
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                 <span>{{ statusFilterLabel }}</span>
-                <span class="opacity-70">{{ visibleCount }}/{{ subscriptions.length }}</span>
+                <span class="font-mono text-zinc-400">{{ visibleCount }}/{{ subscriptions.length }}</span>
                 <button
                     type="button"
                     data-testid="subscription-status-filter-clear"
-                    class="ml-auto font-semibold underline underline-offset-2 hover:opacity-80"
+                    class="ml-auto font-semibold text-zinc-200 hover:text-white underline underline-offset-2"
                     @click="emit('clearStatusFilter')"
                 >
                     {{ t('subscriptions.clearStatusFilter') }}
@@ -511,7 +512,7 @@
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
                     <div
-                        class="rounded-xl border border-gray-100/80 bg-white/70 shadow-sm dark:border-white/10 dark:bg-gray-900/50"
+                        class="rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none"
                     >
                         <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
                             <button
@@ -521,7 +522,7 @@
                                 @click="toggleGroup(group.key)"
                             >
                                 <svg
-                                    class="h-4 w-4 shrink-0 text-gray-500 dark:text-gray-400 transition-transform"
+                                    class="h-4 w-4 shrink-0 text-zinc-400 transition-transform"
                                     :class="isGroupCollapsed(group.key) ? '-rotate-90' : ''"
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
@@ -534,11 +535,11 @@
                                     />
                                 </svg>
                                 <span
-                                    class="truncate font-semibold text-gray-800 dark:text-gray-100"
+                                    class="truncate text-sm font-semibold text-zinc-100"
                                     >{{ groupDisplayName(group) }}</span
                                 >
                                 <span
-                                    class="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600 dark:bg-white/10 dark:text-gray-300"
+                                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono text-zinc-300"
                                     >{{ group.items.length }}</span
                                 >
                             </button>
@@ -546,7 +547,7 @@
                                 <button
                                     v-if="groupDetectedName(group)"
                                     type="button"
-                                    class="rounded-md border border-primary-500/30 px-2 py-1 text-[11px] font-medium text-primary-500 transition-colors hover:bg-primary-500/10 dark:text-primary-400"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-200 transition-colors hover:bg-zinc-900"
                                     :title="
                                         t('subscriptions.renameGroupHint', {
                                             name: groupDetectedName(group),
@@ -558,7 +559,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="rounded-md border border-gray-300/60 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-500/10 dark:border-white/15 dark:text-gray-300"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                                     :title="t('subscriptions.assignAirportGroup')"
                                     @click.stop="
                                         openAirportIdentityEditor(
@@ -571,7 +572,7 @@
                                 <button
                                     v-if="group.items.length > 1"
                                     type="button"
-                                    class="rounded-md border border-gray-300/60 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-500/10 dark:border-white/15 dark:text-gray-300"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                                     :title="t('subscriptions.splitAirportGroup')"
                                     @click.stop="handleSplitAirportGroup(group)"
                                 >
@@ -580,13 +581,13 @@
                                 <button
                                     v-if="group.items.some((item) => item.airportIdentity?.groupId)"
                                     type="button"
-                                    class="rounded-md border border-gray-300/60 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-500/10 dark:border-white/15 dark:text-gray-300"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                                     :title="t('subscriptions.automaticAirportIdentity')"
                                     @click.stop="handleResetGroup(group)"
                                 >
                                     {{ t('subscriptions.automaticAirportIdentity') }}
                                 </button>
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                                <span class="text-xs text-zinc-400">{{
                                     isGroupCollapsed(group.key)
                                         ? t('subscriptions.expand')
                                         : t('subscriptions.collapse')
@@ -595,7 +596,7 @@
                         </div>
                         <div
                             v-show="!isGroupCollapsed(group.key)"
-                            class="grid grid-cols-1 gap-4 border-t border-gray-100/80 p-4 md:grid-cols-2 dark:border-white/10"
+                            class="grid grid-cols-1 gap-4 border-t border-zinc-800 p-4 md:grid-cols-2"
                         >
                             <div
                                 v-for="(subscription, index) in group.items"
@@ -667,15 +668,15 @@
         <div
             v-else-if="searchable && searchQuery && filteredCount === 0"
             data-testid="subscription-no-search-results"
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 px-6 py-12 text-center dark:border-gray-700 dark:bg-gray-900/50"
+            class="rounded-md border border-zinc-800 bg-[#0c0c0e] px-6 py-12 text-center"
         >
-            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+            <p class="text-sm font-medium text-zinc-200">
                 {{ t('subscriptions.noSearchResults') }}
             </p>
             <button
                 data-testid="clear-subscription-search"
                 type="button"
-                class="mt-3 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                class="mt-3 text-xs font-medium text-zinc-200 hover:text-white underline underline-offset-2"
                 @click="searchModel = ''"
             >
                 {{ t('actions.clearSearch') }}
@@ -683,7 +684,7 @@
         </div>
         <div
             v-else-if="subscriptions.length === 0"
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-6 dark:border-gray-700 dark:bg-gray-900/50"
+            class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-2"
         >
             <EmptyState
                 :title="t('subscriptions.empty')"
@@ -691,18 +692,18 @@
                 icon="folder"
                 :total-count="0"
             />
-            <div class="-mt-8 mb-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div class="-mt-6 mb-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
                 <button
                     data-testid="empty-add-subscription"
                     @click="handleAdd"
-                    class="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30"
+                    class="inline-flex items-center justify-center rounded-md bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100 focus-visible:outline-none"
                 >
                     {{ t('subscriptions.addEmpty') }}
                 </button>
                 <button
                     data-testid="empty-import-subscriptions"
                     @click="handleImport"
-                    class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+                    class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-transparent px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none"
                 >
                     {{ t('actions.bulkImport') }}
                 </button>
@@ -727,18 +728,18 @@
             @confirm="saveAirportIdentity"
         >
             <template #title>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                <h3 class="text-base font-semibold text-zinc-100">
                     {{ t('subscriptions.assignAirportGroup') }}
                 </h3>
             </template>
             <template #body>
                 <div class="space-y-4">
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('subscriptions.chooseAirportGroup') }}
                     </p>
                     <select
                         v-model="selectedAirportGroup"
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-primary-500 dark:border-white/15 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500"
                     >
                         <option value="">{{ t('subscriptions.newAirportGroupName') }}</option>
                         <option
@@ -752,7 +753,7 @@
                     <input
                         v-if="!selectedAirportGroup"
                         v-model="groupNameInput"
-                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-primary-500 dark:border-white/15 dark:bg-gray-800 dark:text-white"
+                        class="w-full rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500 placeholder:text-zinc-500"
                         :placeholder="t('subscriptions.newAirportGroupName')"
                     />
                 </div>

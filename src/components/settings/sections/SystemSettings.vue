@@ -147,17 +147,17 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6">
         <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-300"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -170,11 +170,11 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         />
                     </svg>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('systemSettings.storageTypeTitle') }}
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('systemSettings.storageTypeDesc') }}
                     </p>
                 </div>
@@ -185,10 +185,10 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         type="radio"
                         value="kv"
                         v-model="settings.storageType"
-                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                         :aria-label="t('systemSettings.kvStorage')"
                     />
-                    <span class="ml-3 text-sm dark:text-gray-300">{{
+                    <span class="ml-3 text-sm text-zinc-300">{{
                         t('systemSettings.kvStorage')
                     }}</span>
                 </div>
@@ -197,44 +197,45 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         type="radio"
                         value="d1"
                         v-model="settings.storageType"
-                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                         :aria-label="t('systemSettings.d1DatabaseRecommended')"
                     />
-                    <span class="ml-3 text-sm dark:text-gray-300">{{
+                    <span class="ml-3 text-sm text-zinc-300">{{
                         t('systemSettings.d1DatabaseRecommended')
                     }}</span>
                 </div>
 
                 <div
                     v-if="settings.storageType === 'kv'"
-                    class="mt-4 p-4 bg-blue-50/80 dark:bg-blue-900/20 misub-radius-lg border border-blue-100/80 dark:border-blue-800/60"
+                    class="mt-4 p-4 bg-transparent rounded-md border border-zinc-800"
                 >
-                    <h4 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+                    <h4 class="text-xs font-semibold text-zinc-200 mb-2 flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                         {{ t('systemSettings.migrateToD1') }}
                     </h4>
-                    <p class="text-xs text-blue-600 dark:text-blue-400 mb-3">
+                    <p class="text-xs text-zinc-400 mb-3">
                         {{ t('systemSettings.d1MigrationDesc') }}
                     </p>
                     <ol
-                        class="list-decimal list-inside text-xs text-blue-600 dark:text-blue-400 mb-3 space-y-1"
+                        class="list-decimal list-inside text-xs text-zinc-400 mb-3 space-y-1"
                     >
                         <li><span v-html="t('systemSettings.d1StepCreate')"></span></li>
                         <li><span v-html="t('systemSettings.d1StepSchema')"></span></li>
                         <li>{{ t('systemSettings.d1StepMigrate') }}</li>
                     </ol>
-                    <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex flex-col sm:flex-row gap-2">
                         <button
                             @click="emit('migrate')"
-                            class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 flex items-center justify-center min-w-[120px] shadow-sm"
+                            class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors bg-zinc-100 hover:bg-white border border-zinc-100 flex items-center justify-center min-w-[120px] shadow-none"
                         >
                             {{ t('systemSettings.startMigration') }}
                         </button>
                         <button
                             @click="copySchema"
-                            class="px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-white/80 dark:bg-gray-900/60 border border-blue-200 dark:border-blue-700/70 misub-radius-lg hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            class="px-4 py-1.5 text-xs font-medium text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100 transition-colors flex items-center justify-center gap-2 shadow-none"
                         >
                             <svg
-                                class="w-4 h-4"
+                                class="w-3.5 h-3.5"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -254,15 +255,15 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         </div>
 
         <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -275,11 +276,11 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         />
                     </svg>
                 </div>
-                <div class="space-y-1 flex-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                <div class="space-y-0.5 flex-1">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('systemSettings.externalApiTitle') }}
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('systemSettings.externalApiDesc') }}
                     </p>
                 </div>
@@ -290,12 +291,12 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
             </div>
 
             <div
-                class="space-y-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4 dark:border-violet-900/30 dark:bg-violet-900/10"
+                class="space-y-4 rounded-md border border-zinc-800 bg-transparent p-4"
             >
-                <p class="text-xs leading-5 text-violet-700 dark:text-violet-300">
+                <p class="text-xs leading-5 text-zinc-300">
                     {{ t('systemSettings.externalApiHint') }}
                 </p>
-                <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">
+                <p class="text-xs font-mono leading-5 text-zinc-500">
                     {{ t('systemSettings.externalApiPathHint') }}
                 </p>
 
@@ -312,16 +313,16 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     />
                 </div>
 
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-2">
                     <button
                         @click="handleGenerateExternalApiToken(settings)"
-                        class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-semibold text-zinc-900 rounded-md bg-zinc-100 border border-zinc-100 hover:bg-white transition-colors"
                     >
                         {{ t('systemSettings.externalApiGenerateToken') }}
                     </button>
                     <button
                         @click="handleCopyExternalApiToken(settings)"
-                        class="px-4 py-2 text-sm font-medium rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-900/30 transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                     >
                         {{ t('systemSettings.externalApiCopyToken') }}
                     </button>
@@ -330,15 +331,15 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         </div>
 
         <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -351,25 +352,25 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         />
                     </svg>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('systemSettings.backupRestoreTitle') }}
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('systemSettings.backupRestoreDesc') }}
                     </p>
                 </div>
             </div>
-            <div class="flex gap-4">
+            <div class="flex gap-3">
                 <button
                     @click="exportBackup"
-                    class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700"
+                    class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-100 border border-zinc-100 hover:bg-white"
                 >
                     {{ t('systemSettings.exportBackup') }}
                 </button>
                 <button
                     @click="importBackup"
-                    class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600"
+                    class="px-4 py-1.5 text-xs font-medium text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
                 >
                     {{ t('systemSettings.importBackup') }}
                 </button>
@@ -377,15 +378,15 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         </div>
 
         <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-300"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -398,18 +399,18 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         />
                     </svg>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('systemSettings.adminSecurityTitle') }}
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('systemSettings.adminSecurityDesc') }}
                     </p>
                 </div>
             </div>
 
             <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/70 dark:bg-gray-900/50 p-6 misub-radius-lg border border-gray-200/70 dark:border-white/10"
+                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-transparent p-5 rounded-md border border-zinc-800"
             >
                 <div class="space-y-4">
                     <div>
@@ -418,7 +419,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                             v-model="passwordForm.newPassword"
                             type="password"
                             :placeholder="t('systemSettings.newPasswordPlaceholder')"
-                            class="misub-radius-lg"
+                            class="rounded-md"
                         />
                     </div>
                     <div>
@@ -427,7 +428,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                             v-model="passwordForm.confirmPassword"
                             type="password"
                             :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
-                            class="misub-radius-lg"
+                            class="rounded-md"
                         />
                     </div>
                 </div>
@@ -435,11 +436,11 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     <button
                         @click="handleUpdatePassword"
                         :disabled="isUpdatingPassword || !passwordForm.newPassword"
-                        class="px-6 py-2.5 misub-radius-lg text-white text-sm font-medium shadow-sm transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-5 py-2 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <svg
                             v-if="isUpdatingPassword"
-                            class="animate-spin h-4 w-4 text-white"
+                            class="animate-spin h-4 w-4 text-zinc-600"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -469,15 +470,15 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         </div>
 
         <div
-            class="rounded-xl border border-red-200/60 bg-red-50/30 p-6 shadow-sm dark:border-red-900/30 dark:bg-red-900/10"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-400"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-red-400"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -490,31 +491,32 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         />
                     </svg>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-red-900 dark:text-red-300">
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
                         {{ t('systemSettings.dangerZoneTitle') }}
                     </h3>
-                    <p class="text-sm text-red-600/80 dark:text-red-400/80">
+                    <p class="text-xs text-zinc-400">
                         {{ t('systemSettings.dangerZoneDesc') }}
                     </p>
                 </div>
             </div>
 
             <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/50 dark:bg-gray-900/40 p-6 misub-radius-lg border border-red-100 dark:border-red-900/20"
+                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-transparent p-5 rounded-md border border-zinc-800"
             >
-                <div class="space-y-2">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                <div class="space-y-1.5">
+                    <h4 class="text-sm font-medium text-zinc-100">
                         {{ t('systemSettings.factoryResetTitle') }}
                     </h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         <span v-html="t('systemSettings.factoryResetDesc')"></span>
                     </p>
                 </div>
                 <div class="flex items-center sm:justify-end">
                     <button
                         @click="handleReset"
-                        class="px-5 py-2.5 misub-radius-lg text-red-600 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-900/50 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all active:scale-95"
+                        class="px-4 py-2 rounded-md text-red-400 text-xs font-semibold border border-red-900/60 bg-transparent hover:bg-red-950/40 hover:text-red-300 transition-colors"
                     >
                         {{ t('systemSettings.factoryResetTitle') }}
                     </button>

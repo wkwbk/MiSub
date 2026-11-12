@@ -5,11 +5,11 @@
 
 <template>
     <div
-        class="h-full w-full bg-white/90 dark:bg-gray-900/70 md:shadow-sm md:misub-radius-lg md:border md:border-gray-100/80 md:dark:border-white/10 flex flex-col md:flex-row relative"
+        class="h-full w-full bg-[#0c0c0e] md:shadow-none md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
     >
         <!-- Sidebar -->
         <aside
-            class="md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-gray-100/80 dark:border-white/10 p-2 md:p-3 overflow-y-auto"
+            class="md:w-56 shrink-0 border-b md:border-b-0 md:border-r border-zinc-800 p-2 md:p-3 overflow-y-auto"
         >
             <slot name="sidebar"></slot>
         </aside>
@@ -23,7 +23,7 @@
 
             <!-- Sticky Footer Area -->
             <div
-                class="shrink-0 px-4 md:px-6 py-3 bg-white/80 dark:bg-gray-900/70 border-t border-gray-100/70 dark:border-white/10 flex justify-end sticky bottom-0 z-10 backdrop-blur-sm md:rounded-br-2xl md:rounded-bl-none"
+                class="shrink-0 px-4 md:px-6 py-3 bg-[#09090b]/95 border-t border-zinc-800 flex justify-end sticky bottom-0 z-10 backdrop-blur-sm md:rounded-br-md md:rounded-bl-none"
             >
                 <slot name="footer"></slot>
             </div>

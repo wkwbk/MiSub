@@ -99,7 +99,7 @@
     >
         <template #title>
             <div class="flex items-center gap-2">
-                <span class="text-lg font-bold text-gray-900 dark:text-white">{{
+                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{
                     t('d1Migration.legacyTitle')
                 }}</span>
             </div>
@@ -109,35 +109,37 @@
             <div class="h-[360px] flex flex-col">
                 <div v-if="step === 'check'" class="flex-1 space-y-4">
                     <div
-                        class="rounded-lg border border-amber-200 bg-amber-50/80 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                        class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent p-4 text-xs text-zinc-700 dark:text-zinc-300 flex items-start gap-2.5"
                     >
-                        {{ t('d1Migration.legacyIntro') }}
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                        <span>{{ t('d1Migration.legacyIntro') }}</span>
                     </div>
-                    <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+                    <ul class="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">
                         <li v-if="details.hasLegacySubscriptions">
-                            {{ t('d1Migration.legacyHasSubscriptions') }}
+                            • {{ t('d1Migration.legacyHasSubscriptions') }}
                         </li>
                         <li v-if="details.hasLegacyProfiles">
-                            {{ t('d1Migration.legacyHasProfiles') }}
+                            • {{ t('d1Migration.legacyHasProfiles') }}
                         </li>
-                        <li>{{ t('d1Migration.legacyNoDataChange') }}</li>
+                        <li>• {{ t('d1Migration.legacyNoDataChange') }}</li>
                     </ul>
                 </div>
 
                 <div v-else class="flex-1 flex flex-col min-h-0">
                     <div
-                        class="flex-1 overflow-y-auto rounded-md border border-gray-700 bg-gray-900 p-4 font-mono text-xs shadow-inner"
+                        class="flex-1 overflow-y-auto rounded-md border border-zinc-800 bg-[#09090b] p-4 font-mono text-xs shadow-none"
                     >
                         <div v-for="(log, idx) in logs" :key="idx" class="mb-1.5 break-all">
-                            <span class="mr-2 text-gray-500 opacity-50">[{{ log.time }}]</span>
+                            <span class="mr-2 text-zinc-500">[{{ log.time }}]</span>
                             <span :class="getLogClass(log.type)">{{ log.message }}</span>
                         </div>
                     </div>
                     <div
                         v-if="step === 'done'"
-                        class="mt-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-300"
+                        class="mt-4 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent p-3 text-xs text-zinc-700 dark:text-zinc-300 flex items-center gap-2"
                     >
-                        {{ t('d1Migration.legacyDoneHint') }}
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span>{{ t('d1Migration.legacyDoneHint') }}</span>
                     </div>
                 </div>
             </div>

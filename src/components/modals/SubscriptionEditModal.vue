@@ -326,11 +326,11 @@
         }
 
         const tagClassMap = {
-            unset: 'bg-gray-100 text-gray-600 dark:bg-gray-700/50 dark:text-gray-300',
-            exclude: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200',
+            unset: 'border border-zinc-800 bg-transparent text-zinc-400',
+            exclude: 'border border-zinc-800 bg-transparent text-zinc-300',
             keepOnly:
-                'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200',
-            mixed: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-200',
+                'border border-zinc-800 bg-transparent text-zinc-300',
+            mixed: 'border border-zinc-800 bg-transparent text-zinc-300',
         };
 
         const errors = [];
@@ -421,28 +421,25 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <div class="p-2 misub-radius-lg bg-indigo-500/10">
-                    <!-- Standard RSS/Link Icon for Subscription -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 text-indigo-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
-                </div>
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 text-zinc-400 shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                </svg>
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                    <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('subscriptions.addTitle') : t('subscriptions.editTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('subscriptions.modalDescription') }}
                     </p>
                 </div>

@@ -15,18 +15,18 @@
 </script>
 
 <template>
-    <div v-if="settings" class="space-y-8">
+    <div v-if="settings" class="space-y-6">
         <!-- {{ t('settings.homeHeroTitle') }} -->
         <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="mb-5 flex items-start gap-3">
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -39,11 +39,11 @@
                         />
                     </svg>
                 </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('settings.homeHeroTitle') }}
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('settings.homeHeroDesc') }}
                     </p>
                 </div>

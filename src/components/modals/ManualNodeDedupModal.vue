@@ -25,49 +25,49 @@
         @confirm="emit('confirm')"
     >
         <template #title>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+            <h3 class="text-base font-semibold text-zinc-100">
                 {{ t('manualNodes.dedupConfirmTitle') }}
             </h3>
         </template>
         <template #body>
             <div class="space-y-4">
-                <div class="text-sm text-gray-600 dark:text-gray-300">
+                <div class="text-xs text-zinc-300">
                     {{ t('manualNodes.dedupWillRemovePrefix') }}
-                    <span class="font-semibold text-red-600 dark:text-red-400">{{
+                    <span class="font-mono font-semibold text-red-400">{{
                         plan?.removeCount || 0
                     }}</span>
                     {{ t('manualNodes.dedupWillRemoveMiddle') }}
                     {{ t('manualNodes.dedupWillRemoveSuffix') }}
-                    <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{
+                    <span class="font-mono font-semibold text-emerald-400">{{
                         plan?.keepCount || 0
                     }}</span>
                     {{ t('manualNodes.dedupKeptSuffix') }}
                 </div>
                 <div
                     v-if="previewList.length > 0"
-                    class="border border-gray-200 dark:border-gray-700 misub-radius-md"
+                    class="border border-zinc-800 rounded-md"
                 >
                     <div
-                        class="px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700"
+                        class="px-3 py-2 text-xs text-zinc-400 border-b border-zinc-800"
                     >
                         {{ t('manualNodes.dedupPreviewTitle') }}
                     </div>
                     <div
-                        class="max-h-64 overflow-auto divide-y divide-gray-100 dark:divide-gray-800"
+                        class="max-h-64 overflow-auto divide-y divide-zinc-800"
                     >
-                        <div v-for="node in previewList" :key="node.id" class="px-3 py-2 text-sm">
-                            <div class="text-gray-800 dark:text-gray-100 truncate">
+                        <div v-for="node in previewList" :key="node.id" class="px-3 py-2 text-xs">
+                            <div class="text-zinc-100 truncate">
                                 {{ node.name || t('manualNodes.unnamedNode') }}
                             </div>
                             <div
-                                class="text-xs text-gray-500 dark:text-gray-400 truncate font-mono"
+                                class="text-xs text-zinc-500 truncate font-mono mt-0.5"
                             >
                                 {{ node.url }}
                             </div>
                         </div>
                     </div>
                 </div>
-                <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+                <div v-else class="text-xs text-zinc-500">
                     {{ t('manualNodes.noDuplicatesFound') }}
                 </div>
             </div>

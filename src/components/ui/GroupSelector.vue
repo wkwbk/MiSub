@@ -128,19 +128,19 @@
                 :value="modelValue"
                 type="text"
                 :placeholder="placeholder"
-                class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-white/10 misub-radius-lg focus-visible:ring-1 focus-visible:ring-indigo-500 focus:border-indigo-500 text-sm transition-all h-[42px] dark:text-white placeholder-gray-400"
+                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-sm transition-colors h-[38px] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 shadow-none"
                 @input="handleInput"
                 @focus="handleFocus"
                 @keydown.enter="isOpen = false"
                 :aria-label="placeholder"
             />
             <div
-                class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 pointer-events-none"
+                class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
             >
                 <slot name="icon">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         viewBox="0 0 20 20"
                         fill="currentColor"
                     >
@@ -157,7 +157,7 @@
             <!-- Arrow Icon -->
             <div
                 data-testid="group-selector-toggle"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 cursor-pointer transition-transform duration-200 hover:text-gray-600 dark:hover:text-gray-300"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 cursor-pointer transition-transform duration-200 hover:text-zinc-700 dark:hover:text-zinc-300"
                 :class="{ 'rotate-180': isOpen }"
                 @click.stop="toggleDropdown"
             >
@@ -191,12 +191,12 @@
                 <div
                     v-if="isOpen && (groups.length > 0 || modelValue)"
                     id="group-selector-dropdown"
-                    class="absolute bg-white dark:bg-gray-800 misub-radius-lg shadow-lg border border-gray-100 dark:border-gray-700 max-h-60 overflow-auto py-1 custom-scrollbar"
+                    class="absolute bg-white dark:bg-[#0c0c0e] rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 max-h-60 overflow-auto py-1 custom-scrollbar"
                     :style="dropdownStyle"
                 >
                     <button
                         v-if="normalizeGroup(modelValue) && !hasExistingGroup"
-                        class="w-full text-left pl-10 pr-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 block transition-colors"
+                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 block transition-colors"
                         @click="selectGroup(modelValue)"
                     >
                         {{ t('common.createGroup', { name: modelValue }) }}
@@ -204,9 +204,9 @@
                     <button
                         v-for="group in filteredGroups"
                         :key="group"
-                        class="w-full text-left pl-10 pr-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center justify-between group-item"
+                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-between group-item"
                         :class="{
-                            'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400':
+                            'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-medium':
                                 modelValue === group,
                         }"
                         @click="selectGroup(group)"

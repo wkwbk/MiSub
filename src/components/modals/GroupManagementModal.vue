@@ -95,7 +95,7 @@
             <div class="flex items-center gap-2">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-indigo-600 dark:text-indigo-400"
+                    class="h-4 w-4 text-zinc-500"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                 >
@@ -103,7 +103,7 @@
                         d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
                     />
                 </svg>
-                <span>{{ t('actions.manageGroups') }}</span>
+                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{ t('actions.manageGroups') }}</span>
             </div>
         </template>
 
@@ -111,11 +111,11 @@
             <div class="space-y-3">
                 <div
                     v-if="localGroups.length === 0"
-                    class="text-center py-8 text-gray-500 dark:text-gray-400"
+                    class="text-center py-8 text-zinc-500"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-12 w-12 mx-auto mb-2 opacity-50"
+                        class="h-8 w-8 mx-auto mb-2 text-zinc-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -123,11 +123,11 @@
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            stroke-width="2"
+                            stroke-width="1.5"
                             d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                         />
                     </svg>
-                    <p>{{ t('subscriptions.noGroups') }}</p>
+                    <p class="text-sm">{{ t('subscriptions.noGroups') }}</p>
                 </div>
 
                 <draggable
@@ -142,23 +142,23 @@
                 >
                     <template #item="{ element, index }">
                         <div
-                            class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 transition-colors"
+                            class="flex items-center gap-3 p-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] transition-colors"
                             :class="
                                 editingGroupIndex === index
-                                    ? 'ring-2 ring-indigo-500'
-                                    : 'hover:border-gray-300 dark:hover:border-gray-600'
+                                    ? 'border-zinc-500 dark:border-zinc-500'
+                                    : 'hover:border-zinc-300 dark:hover:border-zinc-700'
                             "
                         >
                             <!-- 拖拽手柄 -->
                             <button
                                 v-if="isDraggable"
-                                class="drag-handle cursor-move text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                class="drag-handle cursor-move text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
                                 :title="t('common.dragToSort')"
                                 :aria-label="t('common.dragToSort')"
                             >
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5"
+                                    class="h-4 w-4"
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
                                 >
@@ -174,7 +174,7 @@
                                     v-if="editingGroupIndex === index"
                                     v-model="editingGroupName"
                                     type="text"
-                                    class="w-full px-3 py-1.5 text-sm border border-indigo-300 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-white dark:bg-[#0c0c0e] text-zinc-900 dark:text-zinc-100"
                                     @keyup.enter="confirmEdit"
                                     @keyup.esc="cancelEdit"
                                     ref="editInput"
@@ -183,7 +183,7 @@
                                 />
                                 <div v-else class="flex items-center gap-2">
                                     <span
-                                        class="text-sm font-medium text-gray-900 dark:text-white"
+                                        class="text-sm font-medium text-zinc-900 dark:text-zinc-100"
                                         >{{ element.name }}</span
                                     >
                                 </div>
@@ -194,7 +194,7 @@
                                 <template v-if="editingGroupIndex === index">
                                     <button
                                         @click="confirmEdit"
-                                        class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-md transition-colors touch-target"
+                                        class="p-1.5 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target"
                                         :title="t('actions.confirm')"
                                         :aria-label="t('actions.confirm')"
                                     >
@@ -213,7 +213,7 @@
                                     </button>
                                     <button
                                         @click="cancelEdit"
-                                        class="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors touch-target"
+                                        class="p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target"
                                         :title="t('actions.cancel')"
                                         :aria-label="t('actions.cancel')"
                                     >
@@ -234,7 +234,7 @@
                                 <template v-else>
                                     <button
                                         @click="startEdit(index)"
-                                        class="p-1.5 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700 rounded-md transition-colors touch-target"
+                                        class="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target"
                                         :title="t('subscriptions.renameGroup')"
                                         :aria-label="t('subscriptions.renameGroup')"
                                     >
@@ -251,7 +251,7 @@
                                     </button>
                                     <button
                                         @click="handleDelete(element.name)"
-                                        class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors touch-target"
+                                        class="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target"
                                         :title="t('actions.delete')"
                                         :aria-label="t('actions.delete')"
                                     >
@@ -274,20 +274,9 @@
                     </template>
                 </draggable>
 
-                <div v-if="isDraggable" class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <p class="text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4 mt-0.5 shrink-0"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                <div v-if="isDraggable" class="mt-3 p-3 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md">
+                    <p class="text-xs text-zinc-500 flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0"></span>
                         <span>{{ t('subscriptions.dragToReorder') }}</span>
                     </p>
                 </div>
@@ -297,7 +286,7 @@
         <template #footer>
             <button
                 @click="handleClose"
-                class="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+                class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-4 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
             >
                 {{ t('common.close') }}
             </button>

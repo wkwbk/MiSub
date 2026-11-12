@@ -60,16 +60,16 @@
 
 <template>
     <div
-        class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-xs dark:border-white/10 dark:bg-gray-900/70 space-y-4"
+        class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none space-y-4"
     >
         <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <div
-                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-500/10"
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 text-teal-600 dark:text-teal-400"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -83,25 +83,26 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('settings.dnsOverrideTitle') }}
                     </h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400">
                         {{ t('settings.dnsOverrideDesc') }}
                     </p>
                 </div>
             </div>
             <span
                 v-if="hasValue"
-                class="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-semibold text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
+                class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
             >
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                 {{ t('settings.dnsOverrideActive') }}
             </span>
         </div>
 
         <div>
             <label
-                class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
             >
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
@@ -110,18 +111,18 @@
                 rows="20"
                 spellcheck="false"
                 :placeholder="t('settings.dnsOverridePlaceholder')"
-                class="block w-full rounded-lg border bg-white px-4 py-3 font-mono text-xs leading-relaxed text-gray-900 shadow-sm transition-colors duration-200 focus:border-teal-500 focus-visible:ring-teal-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                class="block w-full rounded-md border bg-[#09090b] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                 :class="
                     jsonError
-                        ? 'border-red-300 focus:border-red-500 focus-visible:ring-red-500 dark:border-red-500/50'
-                        : 'border-gray-200 dark:border-gray-700'
+                        ? 'border-red-500/60 focus:border-red-500 focus-visible:ring-red-500'
+                        : 'border-zinc-800'
                 "
                 @blur="validateInput"
             />
-            <p v-if="jsonError" class="mt-2 text-xs text-red-600 dark:text-red-400">
+            <p v-if="jsonError" class="mt-2 text-xs text-red-400">
                 {{ jsonError }}
             </p>
-            <p v-else class="mt-2 text-[10px] leading-relaxed text-gray-500 dark:text-gray-400">
+            <p v-else class="mt-2 text-xs leading-relaxed text-zinc-500">
                 {{ t('settings.dnsOverrideHint') }}
             </p>
         </div>

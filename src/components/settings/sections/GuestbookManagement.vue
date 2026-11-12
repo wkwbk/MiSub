@@ -123,13 +123,13 @@
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case 'pending':
-                return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+                return 'border border-zinc-800 bg-transparent text-amber-400 font-mono';
             case 'approved':
-                return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+                return 'border border-zinc-800 bg-transparent text-emerald-400 font-mono';
             case 'replied':
-                return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+                return 'border border-zinc-800 bg-transparent text-sky-400 font-mono';
             default:
-                return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+                return 'border border-zinc-800 bg-transparent text-zinc-400 font-mono';
         }
     };
 
@@ -166,37 +166,41 @@
     <div class="space-y-6">
         <!-- 头部说明 -->
         <div
-            class="bg-white/90 dark:bg-gray-900/70 misub-radius-lg p-6 space-y-5 border border-gray-100/80 dark:border-white/10 shadow-sm overflow-hidden"
+            class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none overflow-hidden"
         >
-            <h3
-                class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2"
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-indigo-500"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                    />
-                </svg>
-                {{ t('settings.guestbookTitle') }}
-            </h3>
+            <div class="flex items-start gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300">
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                        />
+                    </svg>
+                </div>
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
+                        {{ t('settings.guestbookTitle') }}
+                    </h3>
+                </div>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-                    class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 misub-radius-lg"
+                    class="flex items-center justify-between p-4 bg-transparent border border-zinc-800 rounded-md"
                 >
                     <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.guestbookEnable') }}
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 mt-0.5">
                             {{ t('settings.guestbookEnableDesc') }}
                         </p>
                     </div>
@@ -208,18 +212,18 @@
         <!-- {{ t('settings.guestbookTitle') }}区域 -->
         <div
             v-if="guestbookConfig.enabled"
-            class="bg-white dark:bg-gray-800 misub-radius-lg border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden"
+            class="bg-transparent rounded-md border border-zinc-800 shadow-none overflow-hidden"
         >
             <!-- Toolbar -->
             <div
-                class="p-4 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                class="p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
                 <div class="flex items-center gap-2">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('settings.guestbookList') }}
                     </h3>
                     <span
-                        class="px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-xs text-gray-600 dark:text-gray-300"
+                        class="px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent font-mono text-xs text-zinc-400"
                         >{{ messages.length }}</span
                     >
                 </div>
@@ -227,7 +231,7 @@
                 <div class="flex items-center gap-2">
                     <select
                         v-model="filterStatus"
-                        class="block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus-visible:outline-none focus-visible:ring-indigo-500 focus:border-indigo-500 sm:text-sm misub-radius-md bg-white dark:bg-gray-700 dark:text-white"
+                        class="block w-full sm:w-auto pl-3 pr-8 py-1.5 text-xs border border-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 rounded-md bg-[#09090b] text-zinc-100"
                     >
                         <option value="all">{{ t('settings.guestbookAllStatus') }}</option>
                         <option value="pending">{{ t('settings.guestbookPending') }}</option>
@@ -236,10 +240,10 @@
                     </select>
                     <button
                         @click="fetchMessages"
-                        class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        class="p-1.5 rounded-md border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
                         :aria-label="t('actions.refresh')"
                     >
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
@@ -252,13 +256,13 @@
             </div>
 
             <!-- List -->
-            <div class="divide-y divide-gray-100 dark:divide-gray-700">
-                <div v-if="loading" class="p-8 text-center text-gray-500">
+            <div class="divide-y divide-zinc-800">
+                <div v-if="loading" class="p-8 text-center text-xs text-zinc-500">
                     {{ t('settings.guestbookLoading') }}
                 </div>
                 <div
                     v-else-if="filteredMessages.length === 0"
-                    class="p-8 text-center text-gray-500"
+                    class="p-8 text-center text-xs text-zinc-500"
                 >
                     {{ t('settings.guestbookEmpty') }}
                 </div>
@@ -266,55 +270,48 @@
                 <div
                     v-for="msg in filteredMessages"
                     :key="msg.id"
-                    class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
+                    class="p-5 hover:bg-zinc-900/40 transition-colors"
                 >
                     <div class="flex items-start justify-between mb-2">
-                        <div class="flex items-center gap-3">
-                            <span class="font-medium text-gray-900 dark:text-white">{{
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-sm font-medium text-zinc-100">{{
                                 msg.nickname || t('settings.guestbookAnonymous')
                             }}</span>
                             <span
-                                class="text-xs px-2 py-0.5 rounded border"
-                                :class="
-                                    msg.type === 'bug'
-                                        ? 'bg-red-50 text-red-600 border-red-100 dark:bg-red-900/20 dark:border-red-800'
-                                        : msg.type === 'feature'
-                                          ? 'bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800'
-                                          : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-700/50 dark:border-gray-600'
-                                "
+                                class="text-[11px] font-mono px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                             >
                                 {{ getTypeLabel(msg.type) }}
                             </span>
                             <span
                                 :class="[
-                                    'text-xs px-2 py-0.5 rounded',
+                                    'text-[11px] px-2 py-0.5 rounded-md',
                                     getStatusBadgeClass(msg.status),
                                 ]"
                             >
                                 {{ getStatusLabel(msg.status) }}
                             </span>
                         </div>
-                        <span class="text-xs text-gray-500">{{ formatDate(msg.createdAt) }}</span>
+                        <span class="text-xs font-mono text-zinc-500">{{ formatDate(msg.createdAt) }}</span>
                     </div>
 
-                    <div class="mb-4 text-sm text-gray-700 dark:text-gray-300 break-words">
+                    <div class="mb-4 text-sm text-zinc-300 break-words">
                         {{ msg.content }}
                     </div>
 
                     <!-- Reply Display -->
                     <div
                         v-if="msg.reply && replyingId !== msg.id"
-                        class="mb-4 ml-4 bg-gray-50 dark:bg-gray-900/50 p-3 misub-radius-lg border-l-4 border-indigo-500"
+                        class="mb-4 ml-4 bg-[#09090b] p-3 rounded-md border border-zinc-800"
                     >
                         <div
-                            class="text-xs text-indigo-600 dark:text-indigo-400 font-medium mb-1 flex justify-between"
+                            class="text-xs text-zinc-300 font-medium mb-1 flex justify-between"
                         >
                             <span>{{ t('settings.guestbookAdminReply') }}</span>
-                            <span class="text-gray-500 dark:text-gray-400 font-normal">{{
+                            <span class="text-zinc-500 font-mono font-normal">{{
                                 formatDate(msg.replyAt)
                             }}</span>
                         </div>
-                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ msg.reply }}</div>
+                        <div class="text-xs text-zinc-400">{{ msg.reply }}</div>
                     </div>
 
                     <!-- Reply Input -->
@@ -322,19 +319,19 @@
                         <textarea
                             v-model="replyContent"
                             rows="3"
-                            class="block w-full misub-radius-lg border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus-visible:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-white sm:text-sm"
+                            class="block w-full rounded-md border border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 bg-[#09090b] text-zinc-100 sm:text-sm px-3 py-2"
                             :placeholder="t('settings.guestbookReplyPlaceholder')"
                         ></textarea>
                         <div class="mt-2 flex justify-end gap-2">
                             <button
                                 @click="cancelReply"
-                                class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 misub-radius-md"
+                                class="px-3 py-1.5 text-xs font-medium text-zinc-300 border border-zinc-800 bg-transparent hover:bg-zinc-900 rounded-md"
                             >
                                 {{ t('actions.cancel') }}
                             </button>
                             <button
                                 @click="submitReply(msg.id)"
-                                class="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded shadow-sm"
+                                class="px-3 py-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 border border-zinc-100 hover:bg-white rounded-md shadow-none"
                             >
                                 {{ t('settings.guestbookSendReply') }}
                             </button>
@@ -342,14 +339,14 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-center gap-4 text-sm">
+                    <div class="flex items-center gap-3 text-xs">
                         <button
                             v-if="!msg.isVisible"
                             @click="handleAction('toggle', msg.id)"
-                            class="text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+                            class="text-emerald-400 hover:text-emerald-300 font-medium flex items-center gap-1"
                         >
                             <svg
-                                class="w-4 h-4"
+                                class="w-3.5 h-3.5"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -372,10 +369,10 @@
                         <button
                             v-else
                             @click="handleAction('toggle', msg.id)"
-                            class="text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1"
+                            class="text-amber-400 hover:text-amber-300 font-medium flex items-center gap-1"
                         >
                             <svg
-                                class="w-4 h-4"
+                                class="w-3.5 h-3.5"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -392,10 +389,10 @@
 
                         <button
                             @click="startReply(msg)"
-                            class="text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
+                            class="text-zinc-300 hover:text-zinc-100 font-medium flex items-center gap-1"
                         >
                             <svg
-                                class="w-4 h-4"
+                                class="w-3.5 h-3.5"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -412,10 +409,10 @@
 
                         <button
                             @click="handleAction('delete', msg.id)"
-                            class="text-red-600 hover:text-red-700 font-medium flex items-center gap-1 ml-auto"
+                            class="text-red-400 hover:text-red-300 font-medium flex items-center gap-1 ml-auto"
                         >
                             <svg
-                                class="w-4 h-4"
+                                class="w-3.5 h-3.5"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"

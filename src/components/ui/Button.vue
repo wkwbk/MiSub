@@ -46,13 +46,13 @@
     const variantClasses = computed(() => {
         const variants = {
             primary:
-                'bg-primary-600 hover:bg-primary-500 text-white border border-primary-500/70 active:scale-[0.98]',
+                'bg-zinc-100 hover:bg-white text-zinc-900 border border-zinc-100 font-semibold shadow-none',
             secondary:
-                'bg-white dark:bg-white/[0.04] hover:bg-gray-50 dark:hover:bg-white/[0.055] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-white/10',
-            danger: 'bg-red-500 hover:bg-red-400 text-white border border-red-400/70 active:scale-[0.98]',
-            ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-white/[0.055] text-gray-600 dark:text-gray-300',
+                'bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 border border-zinc-800 shadow-none',
+            danger: 'bg-transparent hover:bg-red-950/40 text-red-400 border border-zinc-800 hover:border-red-900/60 shadow-none',
+            ghost: 'bg-transparent hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100',
             outline:
-                'bg-transparent hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40 dark:border-primary-400/40',
+                'bg-transparent hover:bg-zinc-900 text-zinc-200 border border-zinc-800 shadow-none',
         };
         return variants[props.variant];
     });
@@ -87,7 +87,7 @@
         :disabled="disabled || loading"
         :aria-label="ariaLabel"
         @click="handleClick"
-        class="relative inline-flex items-center justify-center rounded-[var(--misub-radius-md)] font-medium tap-effect disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group tracking-normal transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30"
+        class="relative inline-flex items-center justify-center rounded-md font-medium tap-effect disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group tracking-normal transition-colors duration-150 focus-visible:outline-none"
         :class="[variantClasses, sizeClasses]"
     >
         <svg

@@ -87,22 +87,26 @@
             case 'https':
                 return {
                     text: 'HTTPS',
-                    style: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20',
+                    dot: 'bg-emerald-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             case 'clash':
                 return {
                     text: 'CLASH',
-                    style: 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20',
+                    dot: 'bg-sky-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             case 'http':
                 return {
                     text: 'HTTP',
-                    style: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20',
+                    dot: 'bg-amber-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             default:
                 return {
                     text: 'SUB',
-                    style: 'bg-gray-500/10 text-gray-500 dark:text-gray-400 border border-gray-500/20',
+                    dot: 'bg-zinc-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-400',
                 };
         }
     });
@@ -141,9 +145,15 @@
         if (diffDays > REASONABLE_EXPIRY_LIMIT_DAYS) {
             return null;
         }
-        let style = 'text-gray-500 dark:text-gray-400';
-        if (diffDays < 0) style = 'text-red-500 font-bold';
-        else if (diffDays <= 7) style = 'text-orange-500 font-semibold';
+        let style = 'text-zinc-400';
+        let dot = 'bg-zinc-500';
+        if (diffDays < 0) {
+            style = 'text-red-400 font-semibold';
+            dot = 'bg-red-500';
+        } else if (diffDays <= 7) {
+            style = 'text-amber-400 font-semibold';
+            dot = 'bg-amber-500';
+        }
         return {
             date: expiryDate.toLocaleDateString(),
             daysRemaining:
@@ -152,7 +162,8 @@
                     : diffDays === 0
                       ? t('subscriptions.expiresToday')
                       : t('subscriptions.expiresInDays', { count: diffDays }),
-            style: style,
+            style,
+            dot,
         };
     });
 
@@ -186,9 +197,9 @@
 
 <template>
     <div
-        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary-500/5 dark:border-white/10 dark:bg-gray-900/70"
+        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#0c0c0e] p-5 shadow-none transition-colors duration-150 hover:border-zinc-700"
         :class="{
-            'opacity-75 grayscale-[0.8]': !misub.enabled,
+            'opacity-60': !misub.enabled,
         }"
     >
         <div class="relative z-10 flex flex-col h-full">
@@ -197,21 +208,23 @@
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2 mb-1.5">
                         <span
-                            class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                            class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
                             :class="protocolStyle.style"
                         >
+                            <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
                             {{ protocolStyle.text }}
                         </span>
                         <span
                             v-if="expiryInfo"
-                            class="rounded-full border border-transparent bg-gray-100 px-2 py-0.5 text-[10px] font-medium dark:bg-white/5"
+                            class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
                             :class="expiryInfo.style"
                         >
+                            <span class="h-1.5 w-1.5 rounded-full" :class="expiryInfo.dot"></span>
                             {{ expiryInfo.daysRemaining }}
                         </span>
                     </div>
                     <h3
-                        class="truncate text-lg font-semibold leading-tight text-gray-900 dark:text-white"
+                        class="truncate text-base font-semibold leading-tight text-zinc-100"
                         :title="misub.name || t('subscriptions.unnamed')"
                     >
                         {{ misub.name || t('subscriptions.unnamed') }}
@@ -219,7 +232,7 @@
                     <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
                     <div
                         v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
-                        class="mt-1 flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400"
+                        class="mt-1 flex items-center gap-1 text-[11px] text-zinc-400"
                         :title="t('subscriptions.detectedNameHint')"
                     >
                         <svg
@@ -237,7 +250,7 @@
                         <span class="truncate">{{ effectiveDetectedName }}</span>
                         <button
                             type="button"
-                            class="shrink-0 text-[11px] font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400"
+                            class="shrink-0 text-[11px] font-medium text-zinc-200 hover:text-white underline underline-offset-2"
                             :title="t('subscriptions.applyDetectedName')"
                             @click.stop="emit('applyDetectedName', effectiveDetectedName)"
                         >
@@ -251,7 +264,7 @@
                     >
                         <button
                             type="button"
-                            class="shrink-0 text-[11px] text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400"
+                            class="shrink-0 text-[11px] text-zinc-500 hover:text-zinc-200"
                             :disabled="detecting"
                             :title="t('subscriptions.detectNameHint')"
                             @click.stop="handleDetect"
@@ -269,7 +282,7 @@
                         :href="`https://${rootDomain}`"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="mt-0.5 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400"
+                        class="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] text-zinc-500 hover:text-zinc-200"
                         :title="t('subscriptions.visitSite', { domain: rootDomain })"
                         @click.stop
                     >
@@ -291,7 +304,7 @@
                 >
                     <button
                         @click.stop="emit('preview')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.previewNodes')"
                         :aria-label="t('actions.previewNodes')"
                     >
@@ -317,7 +330,7 @@
                     </button>
                     <button
                         @click.stop="emit('qrcode')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.showQrCode')"
                         :aria-label="t('actions.showQrCode')"
                     >
@@ -343,7 +356,7 @@
                     </button>
                     <button
                         @click.stop="emit('edit')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.edit')"
                         :aria-label="t('actions.edit')"
                     >
@@ -364,7 +377,7 @@
                     </button>
                     <button
                         @click.stop="emit('delete')"
-                        class="p-2.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.delete')"
                         :aria-label="t('actions.delete')"
                     >
@@ -390,7 +403,7 @@
             <div class="relative mb-4">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
-                        class="h-3.5 w-3.5 text-gray-500 dark:text-gray-400"
+                        class="h-3.5 w-3.5 text-zinc-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -407,43 +420,43 @@
                     type="text"
                     :value="misub.url"
                     readonly
-                    class="w-full rounded-lg border border-gray-100 bg-gray-50/80 py-2 pl-9 pr-3 font-mono text-xs text-gray-500 transition-all focus:border-primary-500/30 focus:bg-white focus-visible:outline-none dark:border-white/5 dark:bg-black/20 dark:text-gray-400 dark:focus:bg-black/40"
+                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-3 font-mono text-xs text-zinc-400 transition-colors focus:border-zinc-500 focus-visible:outline-none"
                     :aria-label="t('subscriptions.urlLabel')"
                 />
             </div>
 
             <div
-                class="grid gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-3 dark:border-white/10 dark:bg-white/5"
+                class="grid gap-3 rounded-md border border-zinc-800 bg-transparent p-3"
             >
                 <div v-if="trafficInfo" class="space-y-2">
                     <div class="flex items-end justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400"
+                        <span class="text-zinc-400"
                             >{{ t('subscriptions.usedTraffic') }}
-                            <span class="font-semibold text-gray-700 dark:text-gray-200">{{
+                            <span class="font-mono font-semibold text-zinc-200">{{
                                 trafficInfo.used
                             }}</span></span
                         >
-                        <span class="text-gray-500 dark:text-gray-400">{{
+                        <span class="font-mono text-zinc-400">{{
                             trafficInfo.total
                         }}</span>
                     </div>
                     <div
-                        class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
+                        class="h-1 w-full overflow-hidden rounded-none bg-zinc-800"
                     >
                         <div
-                            class="h-full rounded-full bg-gradient-to-r from-primary-400 to-cyan-400 transition-all duration-500"
+                            class="h-full bg-zinc-100 transition-all duration-500"
                             :style="{ width: trafficInfo.percentage + '%' }"
                         ></div>
                     </div>
                 </div>
-                <div v-else class="text-xs text-gray-500 dark:text-gray-400">
+                <div v-else class="text-xs text-zinc-500">
                     {{ t('subscriptions.noTrafficData') }}
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                    <span class="text-gray-500 dark:text-gray-400">{{
+                    <span class="text-zinc-400">{{
                         t('subscriptions.nodeCountLabel')
                     }}</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">
+                    <span class="font-mono font-semibold text-zinc-200">
                         {{
                             misub.isUpdating
                                 ? t('subscriptions.updating')
@@ -455,7 +468,7 @@
 
             <!-- Footer Actions -->
             <div
-                class="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-white/10"
+                class="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3"
             >
                 <Switch v-model="misub.enabled" @change="emit('change')" />
 
@@ -463,7 +476,7 @@
                     <button
                         @click.stop="emit('update')"
                         :disabled="misub.isUpdating"
-                        class="p-1.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-50 touch-target"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors disabled:opacity-50 touch-target"
                         :title="
                             misub.isUpdating
                                 ? t('subscriptions.updating')
@@ -478,7 +491,7 @@
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
                             class="w-4 h-4"
-                            :class="{ 'animate-spin text-primary-500': misub.isUpdating }"
+                            :class="{ 'animate-spin text-zinc-100': misub.isUpdating }"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
@@ -496,7 +509,7 @@
             <div
                 v-if="hasFooterMeta"
                 data-testid="subscription-footer-meta"
-                class="mt-3 flex items-center gap-1 truncate text-[10px] text-gray-500 dark:text-gray-400"
+                class="mt-3 flex items-center gap-1 truncate text-[10px] text-zinc-400"
             >
                 <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -513,7 +526,7 @@
                     target="_blank"
                     rel="noopener noreferrer"
                     @click.stop
-                    class="flex items-center gap-0.5 text-primary-500 hover:text-primary-600 font-medium transition-colors cursor-pointer"
+                    class="flex items-center gap-0.5 font-mono text-zinc-200 hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
                     :title="t('subscriptions.visitWebsite')"
                 >
                     {{ t('subscriptions.website') }}

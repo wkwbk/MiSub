@@ -178,7 +178,7 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <ManualNodePanel
             :manual-nodes="manualNodes"
             :paginated-manual-nodes="paginatedManualNodes"

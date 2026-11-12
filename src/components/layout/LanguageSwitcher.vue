@@ -14,7 +14,7 @@
 <template>
     <button
         @click="toggleLocale"
-        class="nav-action-btn nav-action-btn-neutral rounded-full"
+        class="nav-action-btn nav-action-btn-neutral rounded-md"
         :title="isZh ? t('common.switchToEnglish') : t('common.switchToChinese')"
         :aria-label="isZh ? t('common.switchToEnglish') : t('common.switchToChinese')"
     >

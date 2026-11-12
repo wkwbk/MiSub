@@ -29,22 +29,22 @@
                 v-if="isExpanded"
                 @pointerdown.capture="handleBackdropPointerDown"
                 @click.self="handleBackdropClick"
-                class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center"
+                class="fixed inset-0 bg-black/75 flex items-center justify-center"
                 :style="{ zIndex: 'var(--z-modal)' }"
                 role="dialog"
                 aria-modal="true"
             >
                 <div
-                    class="relative bg-white dark:bg-gray-800 misub-radius-lg p-8 shadow-2xl max-w-sm w-full mx-4 transform transition-all border border-gray-100 dark:border-gray-700"
+                    class="relative bg-white dark:bg-[#0c0c0e] rounded-md p-6 shadow-none max-w-sm w-full mx-4 transform transition-all border border-zinc-200 dark:border-zinc-800"
                     @click.stop
                 >
                     <!-- Close Button -->
                     <button
                         @click="emit('close')"
-                        class="absolute top-4 right-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                         :aria-label="t('common.close')"
                     >
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
@@ -55,15 +55,15 @@
                     </button>
 
                     <div class="flex flex-col items-center pt-2">
-                        <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        <h4 class="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
                             {{ profile.name }}
                         </h4>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                        <p class="text-xs text-zinc-500 mb-5">
                             {{ t('public.scanToImport') }}
                         </p>
 
                         <div
-                            class="bg-white p-3 misub-radius-lg shadow-inner border border-gray-100 w-64 h-64 flex items-center justify-center"
+                            class="bg-white p-3 rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 w-64 h-64 flex items-center justify-center"
                         >
                             <canvas
                                 :ref="
@@ -71,16 +71,16 @@
                                         if (el) emit('register-canvas', profile.id, el);
                                     }
                                 "
-                                class="max-w-full h-auto misub-radius-md"
+                                class="max-w-full h-auto rounded-sm"
                             ></canvas>
                         </div>
 
                         <button
                             @click="emit('download')"
-                            class="mt-8 w-full flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold text-white bg-primary-600 hover:bg-primary-700 misub-radius-lg transition-all shadow-lg shadow-primary-600/20 active:scale-95"
+                            class="mt-6 w-full flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-medium text-zinc-100 dark:text-zinc-900 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white rounded-md transition-colors shadow-none"
                         >
                             <svg
-                                class="w-5 h-5"
+                                class="w-4 h-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"

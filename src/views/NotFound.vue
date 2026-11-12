@@ -1,42 +1,28 @@
 <template>
-    <div class="not-found-container font-sans text-gray-100 dark:text-gray-100">
-        <!-- Cosmic Background Elements -->
-        <div class="absolute inset-0 bg-gray-900 overflow-hidden">
-            <div
-                class="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"
-            ></div>
-            <div
-                class="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/30 blur-[120px] animate-pulse-slow"
-            ></div>
-            <div
-                class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-600/20 blur-[100px] animate-pulse-slow"
-                style="animation-delay: -2s"
-            ></div>
-        </div>
-
+    <div class="not-found-container bg-[#09090b] font-sans text-zinc-100">
         <!-- Content Card -->
         <div
-            class="relative z-10 glass-panel border border-white/10 misub-radius-lg p-12 max-w-lg w-[90%] text-center shadow-2xl backdrop-blur-xl animate-fade-in-up"
+            class="relative z-10 border border-zinc-800 bg-[#0c0c0e] rounded-md p-10 max-w-lg w-[90%] text-center shadow-none"
         >
             <div
-                class="font-display font-bold text-9xl bg-gradient-to-b from-white to-white/10 bg-clip-text text-transparent drop-shadow-lg mb-4 animate-float"
+                class="font-mono font-bold text-7xl text-zinc-100 mb-4"
             >
                 404
             </div>
 
-            <h1 class="text-3xl font-bold mb-4 tracking-tight">{{ t('notFound.title') }}</h1>
-            <p class="text-lg text-gray-500 dark:text-gray-400 mb-10 leading-relaxed">
+            <h1 class="text-xl font-semibold mb-3 tracking-tight text-zinc-100">{{ t('notFound.title') }}</h1>
+            <p class="text-sm text-zinc-400 mb-8 leading-relaxed">
                 {{ t('notFound.description') }}<br />
                 {{ t('notFound.loginHint') }}
             </p>
 
             <router-link
                 to="/"
-                class="inline-flex items-center justify-center px-8 py-3 text-base font-semibold text-white bg-primary-600 hover:bg-primary-500 rounded-full transition-all duration-300 shadow-lg shadow-primary-500/30 hover:-translate-y-1 hover:shadow-primary-500/50"
+                class="inline-flex items-center justify-center px-6 py-2.5 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md transition-colors shadow-none"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 mr-2"
+                    class="h-4 w-4 mr-2"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                 >

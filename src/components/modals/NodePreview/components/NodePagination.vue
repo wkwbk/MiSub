@@ -70,11 +70,11 @@
 <template>
     <div
         v-if="totalPages > 1"
-        class="shrink-0 border-t border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40 sm:p-5"
+        class="shrink-0 border-t border-zinc-200 dark:border-zinc-800 bg-transparent pt-4 mt-4"
     >
         <!-- 桌面端完整分页 -->
         <div v-if="currentPage > 0" class="hidden sm:flex items-center justify-between">
-            <div class="text-sm text-gray-700 dark:text-gray-300">
+            <div class="text-xs font-mono text-zinc-500">
                 {{
                     t('pagination.showingRange', {
                         from: (currentPage - 1) * pageSize + 1,
@@ -83,12 +83,12 @@
                     })
                 }}
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1.5">
                 <!-- 上一页 -->
                 <button
                     @click="goToPage(currentPage - 1)"
                     :disabled="currentPage <= 1"
-                    class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ t('common.prevPage') }}
                 </button>
@@ -100,11 +100,11 @@
                         :key="page"
                         @click="page !== '...' && goToPage(page)"
                         :class="{
-                            'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors': true,
-                            'bg-indigo-600 border-indigo-600 text-white': page === currentPage,
-                            'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600':
+                            'rounded-md border px-2.5 py-1.5 text-xs font-mono font-medium transition-colors': true,
+                            'bg-zinc-900 border-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900': page === currentPage,
+                            'border-zinc-300 dark:border-zinc-800 bg-transparent text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900':
                                 page !== currentPage && page !== '...',
-                            'opacity-50 cursor-not-allowed': page === '...',
+                            'opacity-50 cursor-not-allowed border-transparent': page === '...',
                         }"
                         :disabled="page === '...'"
                     >
@@ -116,7 +116,7 @@
                 <button
                     @click="goToPage(currentPage + 1)"
                     :disabled="currentPage >= totalPages"
-                    class="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ t('common.nextPage') }}
                 </button>
@@ -126,28 +126,28 @@
         <!-- 移动端简化分页 -->
         <div class="sm:hidden">
             <div class="mb-3 flex items-center justify-between">
-                <div class="text-sm text-gray-700 dark:text-gray-300">
+                <div class="text-xs font-mono text-zinc-700 dark:text-zinc-300">
                     {{ t('pagination.pageOfShort', { current: currentPage, total: totalPages }) }}
                 </div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">
+                <div class="text-xs font-mono text-zinc-500">
                     {{ t('pagination.totalItems', { total: totalItems }) }}
                 </div>
             </div>
-            <div class="flex items-center justify-center space-x-4">
+            <div class="flex items-center justify-center space-x-3">
                 <button
                     @click="goToPage(currentPage - 1)"
                     :disabled="currentPage <= 1"
-                    class="max-w-[100px] flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="max-w-[100px] flex-1 rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ t('common.prevPage') }}
                 </button>
-                <span class="px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">
+                <span class="px-3 py-1 text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">
                     {{ currentPage }}
                 </span>
                 <button
                     @click="goToPage(currentPage + 1)"
                     :disabled="currentPage >= totalPages"
-                    class="max-w-[100px] flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="max-w-[100px] flex-1 rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                     {{ t('common.nextPage') }}
                 </button>

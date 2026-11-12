@@ -47,38 +47,40 @@
 
 <template>
     <div
-        class="group flex min-h-[180px] flex-col rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary-500/5 dark:border-white/10 dark:bg-gray-900/70"
-        :class="[compact ? 'p-4' : 'p-5', { 'opacity-60 grayscale-[0.5]': !isEnabled }]"
+        class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none transition-colors duration-150 hover:border-zinc-700"
+        :class="[compact ? 'p-4' : 'p-5', { 'opacity-60': !isEnabled }]"
     >
         <div class="flex items-start justify-between gap-3" :class="compact ? 'flex-col' : ''">
             <div class="min-w-0 flex-1 space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span
-                        class="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-semibold text-gray-600 dark:bg-white/10 dark:text-gray-300"
+                        class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                     >
                         {{ t('profiles.badge') }}
                     </span>
                     <span
                         v-if="!isEnabled"
-                        class="rounded-full bg-gray-200 px-2.5 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-white/10 dark:text-gray-400"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-400"
                     >
+                        <span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span>
                         {{ t('profiles.disabled') }}
                     </span>
                     <span
                         v-else-if="isPublic"
-                        class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                     >
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                         {{ t('profiles.public') }}
                     </span>
                 </div>
                 <p
-                    class="truncate text-lg font-semibold text-gray-900 dark:text-white"
+                    class="truncate text-base font-semibold text-zinc-100"
                     :title="profile.name"
                 >
                     {{ profile.name }}
                 </p>
                 <p
-                    class="text-sm text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-1.5"
+                    class="text-xs font-mono text-zinc-400 flex flex-wrap items-center gap-1.5"
                 >
                     <span>
                         {{
@@ -90,9 +92,9 @@
                     </span>
                     <span
                         v-if="subProfileCount > 0"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300"
+                        class="inline-flex items-center px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent text-[11px] font-mono text-zinc-300"
                     >
-                        🧩 {{ t('profileModal.subProfilesCountBadge', { count: subProfileCount }) }}
+                        {{ t('profileModal.subProfilesCountBadge', { count: subProfileCount }) }}
                     </span>
                 </p>
             </div>
@@ -103,7 +105,7 @@
             >
                 <button
                     @click.stop="emit('preview')"
-                    class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.previewNodes')"
                     :aria-label="t('actions.previewNodes')"
                 >
@@ -129,7 +131,7 @@
                 </button>
                 <button
                     @click.stop="emit('qrcode')"
-                    class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.showQrCode')"
                     :aria-label="t('actions.showQrCode')"
                 >
@@ -155,7 +157,7 @@
                 </button>
                 <button
                     @click.stop="emit('edit')"
-                    class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.edit')"
                     :aria-label="t('actions.edit')"
                 >
@@ -176,7 +178,7 @@
                 </button>
                 <button
                     @click.stop="emit('delete')"
-                    class="p-2.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-2 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.delete')"
                     :aria-label="t('actions.delete')"
                 >
@@ -199,9 +201,9 @@
         </div>
 
         <div
-            class="mt-4 grid gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-3 text-sm dark:border-white/10 dark:bg-white/5"
+            class="mt-4 grid gap-3 rounded-md border border-zinc-800 bg-transparent p-3 text-xs"
         >
-            <div class="flex items-center justify-between gap-3 text-gray-600 dark:text-gray-300">
+            <div class="flex items-center justify-between gap-3 text-zinc-300">
                 <span>{{ t('profiles.enabledStatus') }}</span>
                 <Switch
                     :model-value="isEnabled"
@@ -209,7 +211,7 @@
                     :label="t('profiles.enable')"
                 />
             </div>
-            <div class="flex items-center justify-between gap-3 text-gray-600 dark:text-gray-300">
+            <div class="flex items-center justify-between gap-3 text-zinc-300">
                 <span>{{ t('profiles.publicAccess') }}</span>
                 <Switch
                     :model-value="isPublic"
@@ -218,14 +220,14 @@
                 />
             </div>
             <div
-                class="flex items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400"
+                class="flex items-center justify-between gap-3 text-xs font-mono text-zinc-400"
             >
                 <span>{{
                     t('profiles.downloadCount', { count: profile.downloadCount || 0 })
                 }}</span>
                 <button
                     @click.stop="emit('view-logs')"
-                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-gray-600 transition-colors hover:bg-white hover:text-gray-800 dark:text-gray-300 dark:hover:bg-white/10 dark:hover:text-white"
+                    class="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-xs font-sans font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     :title="t('actions.viewLogs')"
                 >
                     <svg
@@ -248,13 +250,13 @@
         </div>
 
         <div
-            class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-3 dark:border-white/10"
+            class="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-3"
             :class="compact ? 'items-stretch' : ''"
         >
             <div class="flex items-center gap-2 sm:gap-4">
                 <button
                     @click="emit('open-copy')"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-600 transition-colors hover:bg-indigo-100 dark:bg-indigo-900/40 dark:text-indigo-300 dark:hover:bg-indigo-800/60"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
                     :class="compact ? 'w-full justify-center' : ''"
                 >
                     <svg
@@ -278,7 +280,7 @@
                 <template v-if="isSorting">
                     <button
                         @click="emit('move-up')"
-                        class="p-1 rounded-full hover:bg-gray-500/10 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 touch-target"
+                        class="p-1.5 rounded-md border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 touch-target"
                         :title="t('actions.moveUp')"
                         :aria-label="t('actions.moveUp')"
                     >
@@ -299,7 +301,7 @@
                     </button>
                     <button
                         @click="emit('move-down')"
-                        class="p-1 rounded-full hover:bg-gray-500/10 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 touch-target"
+                        class="p-1.5 rounded-md border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 touch-target"
                         :title="t('actions.moveDown')"
                         :aria-label="t('actions.moveDown')"
                     >

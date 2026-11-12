@@ -89,13 +89,13 @@
     </div>
 
     <!-- 专属拉取代理 -->
-    <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+    <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800">
         <div class="flex items-center justify-between mb-2">
             <div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
+                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
                     t('subscriptions.fetchProxyTitle')
                 }}</span>
-                <p class="text-xs text-gray-500 mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
+                <p class="text-xs text-zinc-500 mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
             </div>
             <Switch v-model="useFetchProxy" />
         </div>
@@ -117,11 +117,11 @@
                         !editingSubscription.fetchProxy ||
                         !editingSubscription.url
                     "
-                    class="h-[46px] px-4 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
+                    class="h-[38px] px-3.5 bg-transparent border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
                 >
                     <svg
                         v-if="isTestingProxy"
-                        class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-500"
+                        class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-zinc-400"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -143,7 +143,7 @@
                     <svg
                         v-else
                         xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4 mr-1.5"
+                        class="w-3.5 h-3.5 mr-1.5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -158,7 +158,7 @@
                     {{ isTestingProxy ? t('subscriptions.testing') : t('subscriptions.testProxy') }}
                 </button>
             </div>
-            <p class="text-[11px] text-indigo-600 dark:text-indigo-400">
+            <p class="text-[11px] text-zinc-500">
                 {{ t('subscriptions.fetchProxyHint') }}
             </p>
         </div>

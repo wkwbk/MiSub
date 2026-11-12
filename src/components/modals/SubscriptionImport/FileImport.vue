@@ -70,11 +70,11 @@
 <template>
     <div class="space-y-4">
         <div
-            class="relative border-2 border-dashed misub-radius-lg p-6 text-center transition-all duration-200 cursor-pointer"
+            class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-[#09090b]"
             :class="[
                 isDragging
-                    ? 'border-primary-500 bg-primary-500/5'
-                    : 'border-gray-300 dark:border-gray-600 hover:border-primary-400 dark:hover:border-primary-500',
+                    ? 'border-zinc-500 bg-zinc-900/50'
+                    : 'border-zinc-800 hover:border-zinc-700',
                 isProcessing ? 'opacity-60 pointer-events-none' : '',
             ]"
             @click="openPicker"
@@ -94,7 +94,7 @@
             <div class="flex flex-col items-center gap-2">
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-9 w-9 text-primary-500"
+                    class="h-7 w-7 text-zinc-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -106,40 +106,40 @@
                         d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
                     />
                 </svg>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <p class="text-xs font-medium text-zinc-200">
                     {{ t('fileImport.dropHint') }}
                 </p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
+                <p class="text-xs text-zinc-500">
                     {{ t('fileImport.supportedTypes') }}
                 </p>
             </div>
         </div>
 
         <div
-            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 misub-radius-md p-3"
+            class="bg-transparent border border-zinc-800 rounded-md p-3"
         >
-            <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+            <h4 class="text-xs font-semibold text-zinc-200 mb-2">
                 {{ t('fileImport.detectedHeading') }}
             </h4>
-            <ul class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+            <ul class="text-xs text-zinc-400 space-y-1">
                 <li>
-                    • <strong>{{ t('fileImport.fmtPlainText') }}</strong
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtPlainText') }}</strong
                     >：{{ t('fileImport.fmtPlainTextDesc') }}
                 </li>
                 <li>
-                    • <strong>{{ t('fileImport.fmtBase64') }}</strong
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtBase64') }}</strong
                     >：{{ t('fileImport.fmtBase64Desc') }}
                 </li>
                 <li>
-                    • <strong>{{ t('fileImport.fmtClash') }}</strong
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtClash') }}</strong
                     >：{{ t('fileImport.fmtClashDesc') }}
                 </li>
                 <li>
-                    • <strong>{{ t('fileImport.fmtSurge') }}</strong
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtSurge') }}</strong
                     >：{{ t('fileImport.fmtSurgeDesc') }}
                 </li>
                 <li>
-                    • <strong>{{ t('fileImport.fmtJson') }}</strong
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtJson') }}</strong
                     >：{{ t('fileImport.fmtJsonDesc') }}
                 </li>
             </ul>
@@ -147,9 +147,9 @@
 
         <div
             v-if="statusText"
-            class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300"
+            class="flex items-center gap-2 text-xs text-zinc-300"
         >
-            <svg class="h-4 w-4 animate-spin text-primary-500" viewBox="0 0 24 24" fill="none">
+            <svg class="h-4 w-4 animate-spin text-zinc-400" viewBox="0 0 24 24" fill="none">
                 <circle
                     class="opacity-25"
                     cx="12"
@@ -167,17 +167,19 @@
             <span>{{ statusText }}</span>
         </div>
 
-        <p
+        <div
             v-if="errorMessage"
-            class="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 misub-radius-md p-2"
+            class="flex items-center gap-2 text-xs text-red-400 bg-transparent border border-zinc-800 rounded-md p-2.5"
         >
-            {{ errorMessage }}
-        </p>
-        <p
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"></span>
+            <span>{{ errorMessage }}</span>
+        </div>
+        <div
             v-if="successMessage"
-            class="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 misub-radius-md p-2"
+            class="flex items-center gap-2 text-xs text-emerald-400 bg-transparent border border-zinc-800 rounded-md p-2.5"
         >
-            {{ successMessage }}
-        </p>
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
+            <span>{{ successMessage }}</span>
+        </div>
     </div>
 </template>

@@ -88,7 +88,7 @@
 
     // 计算样式
     const modalClasses = computed(() => [
-        'relative transform overflow-hidden rounded-[var(--misub-radius-lg)] bg-white dark:bg-[var(--surface-panel-dark)] text-left shadow-xl border border-gray-200 dark:border-white/10 transition-opacity duration-150',
+        'relative transform overflow-hidden rounded-md bg-[#0c0c0e] text-left shadow-none border border-zinc-800 transition-opacity duration-150',
         sizeClasses[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
@@ -208,10 +208,10 @@
                     <!-- 头部 -->
                     <div
                         v-if="title || closable"
-                        class="border-b border-gray-200 dark:border-white/10 px-6 py-4"
+                        class="border-b border-zinc-800 px-6 py-4"
                     >
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                            <h3 class="text-base font-semibold leading-6 text-zinc-100">
                                 {{ title }}
                             </h3>
 
@@ -220,7 +220,7 @@
                                 v-if="closable"
                                 type="button"
                                 :disabled="disabled || loading"
-                                class="rounded-[var(--misub-radius-md)] bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-150"
+                                class="rounded-md bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-150"
                                 @click="handleClose"
                             >
                                 <span class="sr-only">{{ t('common.close') }}</span>
@@ -244,7 +244,7 @@
                     <!-- 底部按钮 -->
                     <div
                         v-if="showFooter || $slots.footer"
-                        class="border-t border-gray-200 dark:border-white/10 px-6 py-4 bg-gray-50 dark:bg-white/[0.02]"
+                        class="border-t border-zinc-800 px-6 py-4 bg-[#09090b]"
                     >
                         <!-- 自定义底部插槽 -->
                         <slot name="footer">
@@ -254,7 +254,7 @@
                                     type="button"
                                     :disabled="disabled || loading"
                                     :class="cancelButtonClass"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 text-sm font-medium rounded-[var(--misub-radius-md)] text-gray-700 dark:text-gray-300 bg-white dark:bg-white/[0.04] hover:bg-gray-50 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-800 text-sm font-medium rounded-md text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                                     @click="handleCancel"
                                 >
                                     {{ resolvedCancelText }}
@@ -267,7 +267,7 @@
                                         confirmButtonClass,
                                         { 'opacity-50 cursor-not-allowed': confirmDisabled },
                                     ]"
-                                    class="inline-flex items-center px-4 py-2 border border-primary-500/70 text-sm font-medium rounded-[var(--misub-radius-md)] text-white bg-primary-600 hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-100 text-sm font-semibold rounded-md text-zinc-900 bg-zinc-100 hover:bg-white focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                                     @click="handleConfirm"
                                 >
                                     <!-- 加载图标 -->

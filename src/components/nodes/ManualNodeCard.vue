@@ -52,65 +52,46 @@
     const protocol = computed(() => getProtocol(props.node.url));
 
     const protocolStyle = computed(() => {
-        // ... (protocol style map unchanged)
         const p = protocol.value;
         switch (p) {
             case 'anytls':
-                return {
-                    text: 'AnyTLS',
-                    style: 'bg-slate-500/20 text-slate-500 dark:text-slate-400',
-                };
+                return { text: 'AnyTLS', dot: 'bg-zinc-400' };
             case 'vless':
-                return { text: 'VLESS', style: 'bg-blue-500/20 text-blue-500 dark:text-blue-400' };
+                return { text: 'VLESS', dot: 'bg-sky-500' };
             case 'hysteria2':
-                return {
-                    text: 'HY2',
-                    style: 'bg-purple-500/20 text-purple-500 dark:text-purple-400',
-                };
+                return { text: 'HY2', dot: 'bg-purple-500' };
             case 'hysteria':
-                return {
-                    text: 'Hysteria',
-                    style: 'bg-fuchsia-500/20 text-fuchsia-500 dark:text-fuchsia-400',
-                };
+                return { text: 'Hysteria', dot: 'bg-fuchsia-500' };
             case 'tuic':
-                return { text: 'TUIC', style: 'bg-cyan-500/20 text-cyan-500 dark:text-cyan-400' };
+                return { text: 'TUIC', dot: 'bg-cyan-500' };
             case 'trojan':
-                return { text: 'TROJAN', style: 'bg-red-500/20 text-red-500 dark:text-red-400' };
+                return { text: 'TROJAN', dot: 'bg-red-500' };
             case 'ssr':
-                return { text: 'SSR', style: 'bg-rose-500/20 text-rose-500 dark:text-rose-400' };
+                return { text: 'SSR', dot: 'bg-rose-500' };
             case 'ss':
-                return {
-                    text: 'SS',
-                    style: 'bg-orange-500/20 text-orange-500 dark:text-orange-400',
-                };
+                return { text: 'SS', dot: 'bg-amber-500' };
             case 'vmess':
-                return { text: 'VMESS', style: 'bg-teal-500/20 text-teal-500 dark:text-teal-400' };
+                return { text: 'VMESS', dot: 'bg-emerald-500' };
             case 'socks5':
-                return { text: 'SOCKS5', style: 'bg-lime-500/20 text-lime-500 dark:text-lime-400' };
+                return { text: 'SOCKS5', dot: 'bg-lime-500' };
             case 'http':
-                return {
-                    text: 'HTTP',
-                    style: 'bg-green-500/20 text-green-500 dark:text-green-400',
-                };
+                return { text: 'HTTP', dot: 'bg-emerald-500' };
             case 'snell':
-                return {
-                    text: 'SNELL',
-                    style: 'bg-indigo-500/20 text-indigo-500 dark:text-indigo-400',
-                };
+                return { text: 'SNELL', dot: 'bg-indigo-500' };
             case 'naive':
-                return { text: 'NAIVE', style: 'bg-pink-500/20 text-pink-500 dark:text-pink-400' };
+                return { text: 'NAIVE', dot: 'bg-pink-500' };
             default:
-                return { text: 'LINK', style: 'bg-gray-500/20 text-gray-500 dark:text-gray-400' };
+                return { text: 'LINK', dot: 'bg-zinc-500' };
         }
     });
 </script>
 
 <template>
     <div
-        class="group relative flex min-h-[88px] items-center justify-between gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary-500/5 dark:border-white/10 dark:bg-gray-900/70"
+        class="group relative flex min-h-[84px] items-center justify-between gap-3 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 shadow-none transition-colors duration-150 hover:border-zinc-700"
         :class="{
-            'opacity-50 grayscale': !node.enabled && !isSelectionMode,
-            'ring-2 ring-primary-500 bg-primary-50 dark:bg-primary-900/10':
+            'opacity-50': !node.enabled && !isSelectionMode,
+            'border-zinc-200 bg-zinc-900/50':
                 isSelectionMode && isSelected,
             'cursor-pointer': isSelectionMode,
         }"
@@ -119,17 +100,17 @@
         <!-- Selection Checkbox -->
         <div v-if="isSelectionMode" class="shrink-0 mr-1">
             <div
-                class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors"
+                class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                 :class="
                     isSelected
-                        ? 'bg-primary-500 border-primary-500'
-                        : 'border-gray-300 dark:border-gray-600'
+                        ? 'bg-zinc-100 border-zinc-100'
+                        : 'border-zinc-700 bg-transparent'
                 "
             >
                 <svg
                     v-if="isSelected"
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-3.5 w-3.5 text-white"
+                    class="h-3 w-3 text-zinc-900"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                 >
@@ -146,7 +127,7 @@
             <!-- Group Badge -->
             <div
                 v-if="node.group"
-                class="max-w-[90px] shrink-0 truncate rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                class="max-w-[90px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
                 :title="node.group"
                 @click.stop="$emit('filter-group', node.group)"
             >
@@ -154,13 +135,13 @@
             </div>
 
             <div
-                class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                :class="protocolStyle.style"
+                class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
             >
+                <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
                 {{ protocolStyle.text }}
             </div>
             <p
-                class="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-white"
+                class="min-w-0 flex-1 truncate text-sm font-medium text-zinc-100"
                 :title="node.name"
             >
                 {{ node.name || t('manualNodes.unnamed') }}
@@ -169,17 +150,7 @@
             <!-- Ping Result Badge -->
             <div
                 v-if="pingResult"
-                class="flex shrink-0 flex-row items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium"
-                :class="{
-                    'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400':
-                        pingResult.status === 'ok' && pingResult.latency < 300,
-                    'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400':
-                        pingResult.status === 'ok' && pingResult.latency >= 300,
-                    'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400':
-                        pingResult.status === 'error' || pingResult.status === 'timeout',
-                    'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400':
-                        pingResult.status === 'loading',
-                }"
+                class="flex shrink-0 flex-row items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                 :title="
                     pingResult.message ||
                     (pingResult.status === 'ok'
@@ -187,27 +158,15 @@
                         : t('manualNodes.connectivityFailed'))
                 "
             >
-                <svg
-                    v-if="pingResult.status === 'loading'"
-                    class="animate-spin h-3 w-3"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
-                    ></circle>
-                    <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                </svg>
+                <span
+                    class="h-1.5 w-1.5 rounded-full shrink-0"
+                    :class="{
+                        'bg-emerald-500': pingResult.status === 'ok' && pingResult.latency < 300,
+                        'bg-amber-500': pingResult.status === 'ok' && pingResult.latency >= 300,
+                        'bg-red-500': pingResult.status === 'error' || pingResult.status === 'timeout',
+                        'bg-sky-500 animate-pulse': pingResult.status === 'loading',
+                    }"
+                ></span>
                 <span v-if="pingResult.status === 'loading'">{{ t('manualNodes.pinging') }}</span>
                 <span v-else-if="pingResult.status === 'ok'">{{ pingResult.latency }}ms</span>
                 <span v-else>{{ t('manualNodes.unreachable') }}</span>
@@ -220,11 +179,11 @@
         >
             <button
                 @click.stop="emit('ping')"
-                class="flex h-10 w-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-green-500/10 hover:text-green-500 sm:h-11 sm:w-11"
+                class="flex h-8 w-8 items-center justify-center rounded-md border border-transparent hover:border-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                 :title="t('actions.ping')"
                 :aria-label="t('actions.ping')"
                 :disabled="isPinging"
-                :class="{ 'animate-pulse text-green-500': isPinging }"
+                :class="{ 'animate-pulse text-zinc-100': isPinging }"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -243,7 +202,7 @@
             </button>
             <button
                 @click.stop="emit('edit')"
-                class="flex h-10 w-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-500/10 hover:text-gray-600 dark:hover:text-gray-200 sm:h-11 sm:w-11"
+                class="flex h-8 w-8 items-center justify-center rounded-md border border-transparent hover:border-zinc-800 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                 :title="t('actions.edit')"
                 :aria-label="t('actions.edit')"
             >
@@ -264,7 +223,7 @@
             </button>
             <button
                 @click.stop="emit('delete')"
-                class="flex h-10 w-10 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-red-500/10 hover:text-red-500 sm:h-11 sm:w-11"
+                class="flex h-8 w-8 items-center justify-center rounded-md border border-transparent hover:border-red-900/60 text-zinc-400 transition-colors hover:bg-red-950/40 hover:text-red-400"
                 :title="t('actions.delete')"
                 :aria-label="t('actions.delete')"
             >

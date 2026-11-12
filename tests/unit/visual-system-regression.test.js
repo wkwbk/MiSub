@@ -11,17 +11,13 @@ describe('MiSub visual system regression', () => {
     it('keeps global UI tokens aligned with the clean dashboard design system', async () => {
         const css = await readSource('src/assets/main.css');
 
-        expect(css).toContain('--bg-page-dark: #08090a');
-        expect(css).toContain('--surface-panel-dark: #0f1011');
-        expect(css).toContain('--surface-card-dark: rgba(255, 255, 255, 0.035)');
-        expect(css).toContain('--text-primary-dark: #f7f8f8');
-        expect(css).toContain('--text-secondary-dark: #d0d6e0');
-        expect(css).toContain('--text-muted-dark: #8a8f98');
-        expect(css).toContain('--border-subtle-dark: rgba(255, 255, 255, 0.08)');
-        expect(css).toContain('--focus-ring: 0 0 0 3px rgba(113, 112, 255, 0.28)');
-        expect(css).toContain('--misub-radius-sm: 0.375rem');
-        expect(css).toContain('--misub-radius-md: 0.5rem');
-        expect(css).toContain('--misub-radius-lg: 0.75rem');
+        expect(css).toContain('--bg-page-dark: #09090b');
+        expect(css).toContain('--surface-panel-dark: #0c0c0e');
+        expect(css).toContain('--surface-card-dark: #0c0c0e');
+        expect(css).toContain('--text-primary-dark: #f4f4f5');
+        expect(css).toContain('--text-secondary-dark: #a1a1aa');
+        expect(css).toContain('--text-muted-dark: #71717a');
+        expect(css).toContain('--border-subtle-dark: #27272a');
         expect(css).toContain('font-family: var(--font-body)');
         expect(css).toContain('font-feature-settings: "cv01", "ss03"');
         expect(css).toContain('scroll-behavior: auto');
@@ -32,11 +28,12 @@ describe('MiSub visual system regression', () => {
 
     it('uses subdued, consistent button variant classes', () => {
         const primary = mount(Button, { slots: { default: '保存' } });
-        expect(primary.classes().join(' ')).toContain('rounded-[var(--misub-radius-md)]');
+        expect(primary.classes().join(' ')).toContain('rounded-md');
         expect(primary.classes().join(' ')).toContain('duration-150');
 
         const primaryButton = primary.find('button');
-        expect(primaryButton.classes().join(' ')).toContain('bg-primary-600');
+        expect(primaryButton.classes().join(' ')).toContain('bg-zinc-100');
+        expect(primaryButton.classes().join(' ')).toContain('text-zinc-900');
         expect(primaryButton.classes().join(' ')).not.toContain('bg-gradient-to-r');
         expect(primaryButton.classes().join(' ')).not.toContain('shadow-primary-500/20');
 
@@ -44,8 +41,8 @@ describe('MiSub visual system regression', () => {
             props: { variant: 'secondary' },
             slots: { default: '取消' },
         });
-        expect(secondary.find('button').classes().join(' ')).toContain('border-white/10');
-        expect(secondary.find('button').classes().join(' ')).toContain('dark:bg-white/[0.04]');
+        expect(secondary.find('button').classes().join(' ')).toContain('border-zinc-800');
+        expect(secondary.find('button').classes().join(' ')).toContain('bg-transparent');
     });
 
     it('uses the shared surface and focus treatment for inputs and modals', () => {
@@ -53,9 +50,9 @@ describe('MiSub visual system regression', () => {
             props: { label: '名称', modelValue: '', placeholder: '输入名称' },
         });
         const inputClasses = input.find('input').classes().join(' ');
-        expect(inputClasses).toContain('dark:bg-white/[0.035]');
-        expect(inputClasses).toContain('dark:border-white/10');
-        expect(inputClasses).toContain('focus-visible:ring-primary-500/30');
+        expect(inputClasses).toContain('bg-transparent');
+        expect(inputClasses).toContain('border-zinc-800');
+        expect(inputClasses).toContain('focus:border-zinc-500');
 
         const modal = mount(FormModal, {
             props: { show: true, title: '编辑订阅' },
@@ -63,8 +60,8 @@ describe('MiSub visual system regression', () => {
             slots: { default: '<div>content</div>' },
         });
         const html = document.body.innerHTML;
-        expect(html).toContain('dark:bg-[var(--surface-panel-dark)]');
-        expect(html).toContain('dark:border-white/10');
+        expect(html).toContain('bg-[#0c0c0e]');
+        expect(html).toContain('border-zinc-800');
         expect(html).toContain('backdrop-blur-sm');
         modal.unmount();
     });

@@ -87,7 +87,7 @@
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <label
-                        class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight"
+                        class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
                         >{{ t('operators.protocolLimit') }}</label
                     >
                     <button
@@ -100,8 +100,8 @@
                         :class="[
                             'text-[10px] font-medium transition-colors',
                             params.protocols.enabled
-                                ? 'text-indigo-600'
-                                : 'text-gray-500 dark:text-gray-400',
+                                ? 'text-zinc-100'
+                                : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params.protocols.enabled) }}
@@ -109,17 +109,17 @@
                 </div>
                 <div
                     v-if="params.protocols.enabled"
-                    class="flex flex-wrap gap-1.5 p-2 bg-gray-50/50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-800"
+                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
                 >
                     <button
                         v-for="p in commonProtocols"
                         :key="p"
                         @click="toggleValue('protocols', p)"
                         :class="[
-                            'px-2 py-1 rounded-md text-[10px] font-bold uppercase transition-all',
+                            'px-2 py-1 rounded-md font-mono text-[10px] font-semibold uppercase transition-all',
                             params.protocols.values?.includes(p)
-                                ? 'bg-indigo-600 text-white shadow-sm'
-                                : 'bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700',
+                                ? 'bg-zinc-100 text-zinc-900'
+                                : 'bg-transparent text-zinc-400 border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200',
                         ]"
                     >
                         {{ p }}
@@ -131,7 +131,7 @@
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <label
-                        class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight"
+                        class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
                         >{{ t('operators.regionLimit') }}</label
                     >
                     <button
@@ -144,8 +144,8 @@
                         :class="[
                             'text-[10px] font-medium transition-colors',
                             params.regions.enabled
-                                ? 'text-indigo-600'
-                                : 'text-gray-500 dark:text-gray-400',
+                                ? 'text-zinc-100'
+                                : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params.regions.enabled) }}
@@ -153,17 +153,17 @@
                 </div>
                 <div
                     v-if="params.regions.enabled"
-                    class="flex flex-wrap gap-1.5 p-2 bg-gray-50/50 dark:bg-gray-900/40 rounded-xl border border-gray-100 dark:border-gray-700"
+                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
                 >
                     <button
                         v-for="r in commonRegions"
                         :key="r"
                         @click="toggleValue('regions', r)"
                         :class="[
-                            'px-2 py-1 rounded-md text-[10px] font-bold transition-all',
+                            'px-2 py-1 rounded-md text-[10px] font-semibold transition-all',
                             params.regions.values?.includes(r)
-                                ? 'bg-teal-600 text-white shadow-sm'
-                                : 'bg-white dark:bg-gray-800 text-gray-500 border border-gray-100 dark:border-gray-700',
+                                ? 'bg-zinc-100 text-zinc-900'
+                                : 'bg-transparent text-zinc-400 border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200',
                         ]"
                     >
                         {{ regionLabel(r) }}
@@ -176,7 +176,7 @@
         <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
             <div class="flex items-center justify-between">
                 <label
-                    class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-tight"
+                    class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
                 >
                     {{
                         t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex')
@@ -186,7 +186,7 @@
                     <button
                         v-if="params[type].enabled"
                         @click="addRule(type)"
-                        class="text-[10px] text-indigo-600 font-bold"
+                        class="text-[10px] text-zinc-200 font-semibold hover:text-white"
                     >
                         + {{ t('operators.add') }}
                     </button>
@@ -197,8 +197,8 @@
                         :class="[
                             'text-[10px] font-medium',
                             params[type].enabled
-                                ? 'text-indigo-600'
-                                : 'text-gray-500 dark:text-gray-400',
+                                ? 'text-zinc-100'
+                                : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params[type].enabled) }}
@@ -216,12 +216,12 @@
                         v-model="rule.pattern"
                         @input="normalizeRuleFlags(type, idx)"
                         :placeholder="t('operators.regexPlaceholder')"
-                        class="flex-1 px-3 py-1.5 text-[11px] rounded-lg bg-gray-50 dark:bg-gray-900 border border-transparent focus:bg-white dark:focus:bg-gray-800 focus:border-indigo-500/30 transition-all outline-none"
+                        class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 transition-all outline-none"
                         :aria-label="t('operators.regexPlaceholder')"
                     />
                     <button
                         @click="removeRule(type, idx)"
-                        class="p-1.5 text-gray-500 dark:text-gray-400 hover:text-rose-500 touch-target"
+                        class="p-1.5 text-zinc-500 hover:text-red-400 touch-target"
                         :aria-label="t('operators.removeRule')"
                     >
                         <svg
@@ -235,12 +235,12 @@
                         </svg>
                     </button>
                 </div>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400 px-1">
+                <p class="text-[10px] text-zinc-500 px-1">
                     {{ t('operators.regexFlagsHint') }}
                 </p>
                 <div
                     v-if="!params[type].rules?.length"
-                    class="text-center py-2 text-[10px] text-gray-500 dark:text-gray-400 italic"
+                    class="text-center py-2 text-[10px] text-zinc-500 italic"
                 >
                     {{ t('operators.filterEmptyRules') }}
                 </div>

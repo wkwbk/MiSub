@@ -42,16 +42,14 @@
 <template>
     <!-- {{ t('settings.cronTitle') }} 卡片 -->
     <div
-        class="bg-white/90 dark:bg-gray-900/70 misub-radius-lg p-6 space-y-5 border border-gray-100/80 dark:border-white/10 shadow-sm transition-shadow duration-300"
+        class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none"
     >
         <div class="flex justify-between items-start">
-            <div>
-                <h3
-                    class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2"
-                >
+            <div class="flex items-start gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300">
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 text-amber-500"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -63,15 +61,19 @@
                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                     </svg>
-                    {{ t('settings.cronTitle') }}
-                </h3>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {{ t('settings.cronDesc') }}
-                </p>
+                </div>
+                <div class="space-y-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-100">
+                        {{ t('settings.cronTitle') }}
+                    </h3>
+                    <p class="text-xs text-zinc-400">
+                        {{ t('settings.cronDesc') }}
+                    </p>
+                </div>
             </div>
             <button
                 @click="showCronGuide = !showCronGuide"
-                class="text-blue-600 hover:text-blue-500 text-xs font-medium"
+                class="text-zinc-300 hover:text-zinc-100 text-xs font-medium border border-zinc-800 bg-transparent hover:bg-zinc-900 px-2.5 py-1 rounded-md transition-colors"
             >
                 {{ showCronGuide ? t('settings.cronHideGuide') : t('settings.cronShowGuide') }}
             </button>
@@ -79,16 +81,16 @@
 
         <!-- Cron Secret 输入框 -->
         <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+            <label class="block text-xs font-medium text-zinc-300 mb-1.5"
                 >Cron Secret</label
             >
             <input
                 type="text"
                 v-model="settings.cronSecret"
                 :placeholder="t('settings.cronSecretPlaceholder')"
-                class="block w-full px-3 py-2.5 bg-white/70 dark:bg-gray-900/50 border border-gray-200/80 dark:border-white/10 misub-radius-lg shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/40 focus:border-blue-500 sm:text-sm dark:text-white transition-colors"
+                class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
             />
-            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <p class="mt-1 text-xs text-zinc-500">
                 {{ t('settings.cronSecretHint') }}
             </p>
         </div>
@@ -96,21 +98,21 @@
         <!-- Cron 访问链接（自动生成） -->
         <div v-if="cronUrl" class="space-y-3">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-xs font-medium text-zinc-300 mb-1.5">
                     {{ t('settings.cronCompatibleUrl') }}
                 </label>
-                <div class="flex misub-radius-lg shadow-xs">
+                <div class="flex rounded-md shadow-none">
                     <input
                         type="text"
                         :value="cronUrl"
                         readonly
-                        class="flex-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l-xl sm:text-sm dark:text-white font-mono text-xs"
+                        class="flex-1 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-l-md text-zinc-200 font-mono text-xs"
                         :aria-label="t('settings.cronCompatibleUrl')"
                     />
                     <button
                         @click="copyCronUrl"
                         type="button"
-                        class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-xl bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 focus-visible:outline-hidden"
+                        class="inline-flex items-center px-3.5 py-2 border border-l-0 border-zinc-800 rounded-r-md bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-hidden"
                         :aria-label="t('actions.copy')"
                     >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,21 +125,21 @@
                         </svg>
                     </button>
                 </div>
-                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p class="mt-1 text-xs text-zinc-500">
                     {{ t('settings.cronCopyHint') }}
                 </p>
             </div>
 
             <div
-                class="bg-blue-50/70 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/60 misub-radius-md p-3 space-y-2"
+                class="bg-transparent border border-zinc-800 rounded-md p-3 space-y-2"
             >
-                <div class="flex items-start gap-2">
-                    <span class="text-blue-500 mt-0.5">🔐</span>
+                <div class="flex items-start gap-2.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>
                     <div>
-                        <p class="text-xs font-medium text-blue-700 dark:text-blue-300">
+                        <p class="text-xs font-medium text-zinc-200">
                             {{ t('settings.cronRecommendedSecurity') }}
                         </p>
-                        <p class="text-xs text-blue-600/80 dark:text-blue-200/80 mt-0.5">
+                        <p class="text-xs text-zinc-400 mt-0.5">
                             {{ t('settings.cronBearerHint') }}
                         </p>
                     </div>
@@ -146,24 +148,25 @@
                     type="text"
                     :value="cronHeaderCommand"
                     readonly
-                    class="block w-full px-3 py-2 bg-white/70 dark:bg-gray-950/40 border border-blue-100 dark:border-blue-800/70 rounded-lg text-xs font-mono text-gray-700 dark:text-gray-200"
+                    class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md text-xs font-mono text-zinc-300"
                     :aria-label="t('settings.cronCommandLabel')"
                 />
             </div>
         </div>
         <div
             v-else
-            class="bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200/80 dark:border-yellow-800/70 misub-radius-md p-3"
+            class="flex items-center gap-2.5 bg-transparent border border-zinc-800 rounded-md p-3"
         >
-            <p class="text-xs text-yellow-700 dark:text-yellow-300">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            <p class="text-xs text-zinc-400">
                 {{ t('settings.cronEmptyHint') }}
             </p>
         </div>
 
-        <div v-if="showCronGuide" class="text-xs text-gray-600 dark:text-gray-300 space-y-2">
+        <div v-if="showCronGuide" class="text-xs text-zinc-300 space-y-2 border-t border-zinc-800 pt-3">
             <p>{{ t('settings.cronGuideExternal') }}</p>
             <p>{{ t('settings.cronGuideBearer') }}</p>
-            <p class="text-gray-500">{{ t('settings.cronGuideFrequency') }}</p>
+            <p class="text-zinc-500">{{ t('settings.cronGuideFrequency') }}</p>
         </div>
     </div>
 </template>

@@ -270,7 +270,7 @@
         <template #footer>
             <button
                 @click="emit('update:show', false)"
-                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-semibold text-sm misub-radius-lg transition-colors"
+                class="px-4 py-2 border border-zinc-800 bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 font-medium text-xs rounded-md transition-colors"
             >
                 {{ t('actions.cancel') }}
             </button>
@@ -278,7 +278,7 @@
                 v-if="activeTab === 'url'"
                 @click="importSubscription"
                 :disabled="isLoading || !subscriptionUrl.trim()"
-                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm misub-radius-lg transition-colors disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:opacity-70 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-900 font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {{ t('actions.import') }}
             </button>
@@ -286,14 +286,14 @@
         <template #body>
             <div class="space-y-4">
                 <!-- 来源切换 -->
-                <div class="grid grid-cols-2 gap-1 p-1 bg-gray-100 dark:bg-white/5 misub-radius-lg">
+                <div class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#09090b]">
                     <button
                         type="button"
-                        class="py-1.5 text-sm font-medium misub-radius-md transition-colors"
+                        class="py-1.5 text-xs font-medium transition-colors"
                         :class="
                             activeTab === 'url'
-                                ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-xs'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                ? 'bg-zinc-100 text-zinc-900 font-semibold'
+                                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
                         "
                         @click="activeTab = 'url'"
                     >
@@ -301,11 +301,11 @@
                     </button>
                     <button
                         type="button"
-                        class="py-1.5 text-sm font-medium misub-radius-md transition-colors"
+                        class="py-1.5 text-xs font-medium transition-colors"
                         :class="
                             activeTab === 'file'
-                                ? 'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-xs'
-                                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                ? 'bg-zinc-100 text-zinc-900 font-semibold'
+                                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
                         "
                         @click="activeTab = 'file'"
                     >
@@ -316,7 +316,7 @@
                 <!-- Group Selector Added -->
                 <div class="relative">
                     <label
-                        class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 ml-1 block"
+                        class="text-xs font-semibold text-zinc-400 mb-1.5 block"
                     >
                         {{ t('importNodes.targetGroup') }}
                     </label>

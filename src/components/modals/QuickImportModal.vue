@@ -150,19 +150,19 @@
         <template #title>
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                    <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                         {{ t('quickImport.title') }}
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-500">
                         {{ t('quickImport.subtitle') }}
                     </p>
                 </div>
                 <button
                     @click="closeModal"
-                    class="w-10 h-10 flex items-center justify-center misub-radius-md bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    class="w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                     :aria-label="t('common.close')"
                 >
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path
                             stroke-linecap="round"
                             stroke-linejoin="round"
@@ -174,24 +174,12 @@
             </div>
             <div
                 v-if="detectedPlatform"
-                class="mt-4 flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 misub-radius-md"
+                class="mt-3 flex items-center gap-2 px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md"
             >
-                <svg
-                    class="w-4 h-4 text-indigo-600 dark:text-indigo-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                </svg>
-                <span class="text-sm text-indigo-700 dark:text-indigo-300">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="text-xs text-zinc-600 dark:text-zinc-400">
                     {{ t('quickImport.detectedPrefix') }}
-                    <strong>{{ getPlatformLabel(detectedPlatform) }}</strong
+                    <strong class="font-mono text-zinc-900 dark:text-zinc-100">{{ getPlatformLabel(detectedPlatform) }}</strong
                     >{{ t('quickImport.detectedSuffix') }}
                 </span>
             </div>
@@ -200,32 +188,32 @@
         <template #body>
             <div
                 v-if="groupedClients.length === 0"
-                class="py-12 text-center text-gray-500 dark:text-gray-400"
+                class="py-12 text-center text-sm text-zinc-500"
             >
                 {{ t('quickImport.empty') }}
             </div>
 
-            <div v-else class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                 <button
                     v-for="client in groupedClients"
                     :key="client.id"
                     @click="handleClientClick(client)"
-                    class="group relative flex flex-col items-center gap-3 p-4 misub-radius-lg border-2 transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    class="group relative flex flex-col items-center gap-3 p-4 rounded-md border transition-colors shadow-none"
                     :class="
                         isRecommended(client)
-                            ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300 dark:border-indigo-600 ring-2 ring-indigo-500/20'
-                            : 'bg-white dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 hover:border-indigo-200 dark:hover:border-indigo-700'
+                            ? 'bg-zinc-50 dark:bg-zinc-900/60 border-zinc-400 dark:border-zinc-600'
+                            : 'bg-white dark:bg-[#0c0c0e] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
                     "
                 >
                     <div
                         v-if="isRecommended(client)"
-                        class="absolute -top-2 -right-2 px-2 py-0.5 bg-indigo-500 text-white text-[10px] font-bold rounded-full shadow-lg"
+                        class="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-medium rounded-sm shadow-none"
                     >
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                         {{ t('quickImport.recommended') }}
                     </div>
                     <div
-                        class="w-14 h-14 misub-radius-lg flex items-center justify-center text-3xl bg-gray-50 dark:bg-gray-800 overflow-hidden"
-                        :class="isRecommended(client) ? 'ring-2 ring-indigo-400' : ''"
+                        class="w-12 h-12 rounded-md flex items-center justify-center text-2xl bg-zinc-50 dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 overflow-hidden"
                     >
                         <img
                             v-if="
@@ -234,13 +222,13 @@
                             "
                             :src="client.icon"
                             :alt="client.name"
-                            class="w-full h-full object-cover rounded-lg p-1"
+                            class="w-full h-full object-cover rounded-md p-1"
                         />
                         <span v-else>{{ client.icon }}</span>
                     </div>
                     <div class="text-center">
                         <div
-                            class="text-sm font-semibold text-gray-900 dark:text-white line-clamp-1"
+                            class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1"
                         >
                             {{ client.name }}
                         </div>
@@ -248,7 +236,7 @@
                             <span
                                 v-for="platform in client.platforms?.slice(0, 2)"
                                 :key="platform"
-                                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300"
+                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 dark:text-zinc-400"
                             >
                                 {{ getPlatformLabel(platform) }}
                             </span>
@@ -260,31 +248,19 @@
 
         <template #footer>
             <div
-                class="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-700/30 dark:text-gray-400"
+                class="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-4 py-3 text-xs text-zinc-500"
             >
-                <div class="flex items-start gap-3">
-                    <svg
-                        class="w-5 h-5 shrink-0 mt-0.5 text-gray-500 dark:text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
+                <div class="flex items-start gap-2.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                     <div>
-                        <p class="font-medium text-gray-700 dark:text-gray-300">
+                        <p class="font-medium text-zinc-800 dark:text-zinc-200">
                             {{ t('quickImport.tipsTitle') }}
                         </p>
                         <ul class="mt-1 space-y-1 list-disc list-inside">
                             <li>{{ t('quickImport.tipInstalled') }}</li>
                             <li>{{ t('quickImport.tipOpenApp') }}</li>
                             <li>{{ t('quickImport.tipBrowserConfirm') }}</li>
-                            <li class="font-medium text-amber-600 dark:text-amber-400">
+                            <li class="font-medium text-zinc-700 dark:text-zinc-300">
                                 {{ t('quickImport.tipDefaultApp') }}
                             </li>
                         </ul>

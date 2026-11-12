@@ -71,29 +71,29 @@
 <template>
     <Modal :show="show" @update:show="emit('update:show', $event)">
         <template #title>
-            <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">
+            <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 {{ title || t('qr.title') }}
             </h3>
         </template>
         <template #body>
-            <div class="flex flex-col items-center gap-6 py-4">
+            <div class="flex flex-col items-center gap-5 py-4">
                 <div
-                    class="bg-white p-4 misub-radius-lg shadow-inner border border-gray-100 dark:border-gray-700"
+                    class="bg-white p-3 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-none"
                 >
-                    <canvas ref="canvasRef" class="w-64 h-64 misub-radius-md"></canvas>
+                    <canvas ref="canvasRef" class="w-64 h-64 rounded-sm"></canvas>
                 </div>
 
-                <p class="text-sm text-center text-gray-500 max-w-xs break-all">
+                <p class="text-xs font-mono text-center text-zinc-500 max-w-xs break-all">
                     {{ url }}
                 </p>
 
                 <button
                     @click="downloadQRCode"
-                    class="flex items-center gap-2 px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white misub-radius-lg font-medium transition-colors shadow-lg shadow-primary-500/20 active:scale-95"
+                    class="flex items-center gap-2 px-5 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 rounded-md text-xs font-medium transition-colors shadow-none"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"

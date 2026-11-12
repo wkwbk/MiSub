@@ -47,10 +47,10 @@
         <template v-for="(group, groupIndex) in tabGroups" :key="group.id">
             <!-- 分组标题只在桌面端显示；移动端保持两列紧凑网格 -->
             <p
-                class="hidden md:block px-4 pb-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                class="hidden md:block px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
                 :class="
                     groupIndex > 0
-                        ? 'md:mt-4 md:pt-3 md:border-t md:border-gray-200/70 dark:md:border-white/10'
+                        ? 'md:mt-4 md:pt-3 md:border-t md:border-zinc-800'
                         : 'md:pt-2'
                 "
             >
@@ -60,21 +60,17 @@
                 v-for="tab in group.tabs"
                 :key="tab.id"
                 @click="emit('update:activeTab', tab.id)"
-                class="relative flex items-center justify-center md:justify-start px-4 py-3 text-sm font-medium misub-radius-lg transition-all duration-200"
+                class="relative flex items-center justify-center md:justify-start px-3 py-2 text-xs font-medium rounded-md transition-colors"
                 :class="
                     activeTab === tab.id
-                        ? 'bg-primary-600 text-white shadow-sm shadow-primary-500/25 border border-white/10'
-                        : 'text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-gray-200'
+                        ? 'bg-zinc-100 text-zinc-900 font-semibold border border-zinc-100 shadow-none'
+                        : 'text-zinc-400 border border-transparent hover:bg-zinc-900 hover:text-zinc-100'
                 "
             >
-                <span
-                    v-if="activeTab === tab.id"
-                    class="absolute left-2 top-1/2 -translate-y-1/2 h-6 w-1 rounded-full bg-white/90"
-                ></span>
                 <svg
-                    class="mr-2 md:mr-3 flex-shrink-0 h-5 w-5 md:h-6 md:w-6"
+                    class="mr-2 md:mr-2.5 flex-shrink-0 h-4 w-4"
                     :class="
-                        activeTab === tab.id ? 'text-white' : 'text-gray-500 dark:text-gray-400'
+                        activeTab === tab.id ? 'text-zinc-900' : 'text-zinc-500'
                     "
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"

@@ -469,7 +469,7 @@
         <!-- 默认布局模式 -->
         <template v-else>
             <!-- Hero Section (Left Aligned & Open) -->
-            <div class="relative pt-10 pb-10 lg:pt-16 lg:pb-14 z-10 overflow-visible">
+            <div class="relative pt-10 pb-10 lg:pt-14 lg:pb-12 z-10 overflow-visible border-b border-zinc-800">
                 <div
                     class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
                 >
@@ -477,53 +477,46 @@
                     <div class="text-left relative z-20 lg:col-span-12 xl:col-span-12">
                         <!-- Badge -->
                         <div
-                            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary-200/50 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-md mb-8 shadow-sm animate-fade-in-up"
+                            class="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-zinc-800 bg-transparent mb-6 shadow-none"
                         >
-                            <span class="relative flex h-2 w-2">
-                                <span
-                                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75"
-                                ></span>
-                                <span
-                                    class="relative inline-flex rounded-full h-2 w-2 bg-primary-500"
-                                ></span>
-                            </span>
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                             <span
-                                class="text-xs font-bold text-primary-700 dark:text-primary-300 tracking-widest uppercase"
+                                class="font-mono text-xs font-medium text-zinc-300 tracking-widest uppercase"
                                 >{{ t('publicProfiles.badge') }}</span
                             >
                         </div>
 
                         <div v-if="isInitialLoading" class="max-w-5xl space-y-4 animate-pulse">
                             <div
-                                class="h-10 w-44 rounded-2xl bg-white/75 dark:bg-white/10 sm:h-14 sm:w-56 lg:h-16 lg:w-72"
+                                class="h-10 w-44 rounded-md bg-zinc-900 sm:h-14 sm:w-56 lg:h-16 lg:w-72"
                             ></div>
                             <div
-                                class="h-10 w-56 rounded-2xl bg-white/70 dark:bg-white/10 sm:h-14 sm:w-72 lg:h-16 lg:w-96"
+                                class="h-10 w-56 rounded-md bg-zinc-900 sm:h-14 sm:w-72 lg:h-16 lg:w-96"
                             ></div>
                             <div
-                                class="h-4 w-full max-w-3xl rounded-full bg-white/65 dark:bg-white/10"
+                                class="h-4 w-full max-w-3xl rounded-md bg-zinc-900"
                             ></div>
                             <div
-                                class="h-4 w-5/6 max-w-2xl rounded-full bg-white/55 dark:bg-white/10"
+                                class="h-4 w-5/6 max-w-2xl rounded-md bg-zinc-900"
                             ></div>
                         </div>
 
                         <template v-else>
                             <h1
-                                class="text-4xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[1.1] mb-8 animate-fade-in-up delay-100 break-words"
+                                class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 break-words"
                             >
-                                <span class="block text-gray-900 dark:text-white drop-shadow-sm">
+                                <span class="block text-zinc-100">
                                     {{ heroConfig.title1 }}
                                 </span>
                                 <span
-                                    class="block text-3xl sm:text-5xl lg:text-7xl bg-clip-text text-transparent bg-gradient-to-r from-primary-600 via-purple-500 to-indigo-500 dark:from-primary-400 dark:via-purple-400 dark:to-indigo-400 bg-[length:200%_auto] animate-gradient pb-2 mt-2"
+                                    class="block text-2xl sm:text-4xl lg:text-5xl text-zinc-400 pb-2 mt-2"
                                 >
                                     {{ heroConfig.title2 }}
                                 </span>
                             </h1>
 
                             <p
-                                class="text-base md:text-lg text-gray-500 dark:text-gray-400 leading-relaxed font-medium max-w-5xl mb-10 animate-fade-in-up delay-200 break-words"
+                                class="text-sm md:text-base text-zinc-400 leading-relaxed max-w-4xl mb-4 break-words"
                             >
                                 {{ heroConfig.description }}
                             </p>
@@ -533,7 +526,7 @@
             </div>
 
             <!-- Content Section -->
-            <div class="relative z-20 pb-24">
+            <div class="relative z-20 pb-24 pt-10">
                 <!-- Subscription Section -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Announcement Section -->
@@ -546,23 +539,23 @@
                     <!-- Loading State -->
                     <div
                         v-if="loading"
-                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
                     >
                         <div
                             v-for="i in 6"
                             :key="i"
-                            class="h-[300px] bg-white dark:bg-gray-800 misub-radius-lg p-6 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse"
+                            class="h-[260px] bg-[#0c0c0e] rounded-md p-6 shadow-none border border-zinc-800 animate-pulse"
                         >
                             <div class="flex items-center gap-4 mb-6">
                                 <div
-                                    class="h-12 w-12 bg-gray-200 dark:bg-gray-700 misub-radius-lg"
+                                    class="h-10 w-10 bg-zinc-900 rounded-md"
                                 ></div>
-                                <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                                <div class="h-5 bg-zinc-900 rounded-md w-1/2"></div>
                             </div>
-                            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-3"></div>
-                            <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6 mb-8"></div>
+                            <div class="h-4 bg-zinc-900 rounded-md w-full mb-3"></div>
+                            <div class="h-4 bg-zinc-900 rounded-md w-5/6 mb-8"></div>
                             <div
-                                class="mt-auto h-12 bg-gray-100 dark:bg-gray-700/50 misub-radius-lg"
+                                class="mt-auto h-10 bg-zinc-900 rounded-md"
                             ></div>
                         </div>
                     </div>
@@ -570,23 +563,23 @@
                     <!-- Error State -->
                     <div
                         v-else-if="error"
-                        class="text-center py-20 bg-white/50 dark:bg-gray-800/50 misub-radius-lg border border-red-100 dark:border-red-900/30 backdrop-blur-sm"
+                        class="text-center py-16 bg-transparent rounded-md border border-zinc-800"
                     >
                         <div
-                            class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-50 dark:bg-red-900/20 mb-6"
+                            class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-zinc-800 bg-transparent mb-4"
                         >
                             <BaseIcon
                                 :path="ICONS.error"
-                                className="w-10 h-10 text-red-500 dark:text-red-400"
+                                className="w-6 h-6 text-red-400"
                             />
                         </div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                        <h3 class="text-base font-semibold text-zinc-100 mb-2">
                             {{ t('publicProfiles.loadFailed') }}
                         </h3>
-                        <p class="text-gray-500 dark:text-gray-400 mb-6">{{ error }}</p>
+                        <p class="text-xs text-zinc-400 mb-6">{{ error }}</p>
                         <button
                             @click="fetchPublicProfiles"
-                            class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium misub-radius-lg shadow-lg shadow-primary-600/20 transition-all active:scale-95"
+                            class="px-5 py-2 bg-zinc-100 hover:bg-white text-zinc-900 text-xs font-semibold rounded-md shadow-none transition-colors"
                         >
                             {{ t('publicProfiles.retry') }}
                         </button>
@@ -594,13 +587,13 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-16 text-center text-gray-500 dark:text-gray-400"
+                        class="py-16 text-center text-zinc-500 border border-zinc-800 rounded-md"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
 
                     <!-- Profile Grid -->
-                    <div v-else-if="publicProfiles.length > 0" class="animate-fade-in-up delay-300">
+                    <div v-else-if="publicProfiles.length > 0">
                         <ProfileGrid
                             :profiles="publicProfiles"
                             :is-qr-expanded="isQRExpanded"
@@ -617,35 +610,35 @@
 
                 <!-- Clients Section (Visually Separated) -->
                 <div
-                    class="mt-16 pt-12 pb-10 border-t border-transparent bg-transparent dark:bg-transparent backdrop-blur-sm"
+                    class="mt-16 pt-12 pb-10 border-t border-zinc-800 bg-transparent"
                 >
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center mb-16 relative">
+                        <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">
                                 <span
-                                    class="text-sm font-bold tracking-widest text-primary-600 dark:text-primary-400 uppercase mb-2"
+                                    class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
                                     >{{ t('publicProfiles.clientsEyebrow') }}</span
                                 >
                                 <h2
-                                    class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight"
+                                    class="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight"
                                 >
                                     {{ t('publicProfiles.clientsTitle') }}
                                 </h2>
-                                <p class="mt-4 text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+                                <p class="mt-2 text-sm text-zinc-400 max-w-2xl mx-auto">
                                     {{ t('publicProfiles.clientsDescription') }}
                                 </p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div
                                 v-for="client in clients"
                                 :key="client.name"
-                                class="group relative glass-panel dark:bg-white/5 backdrop-blur-2xl rounded-[2rem] p-6 shadow-xl border border-white/40 dark:border-white/5 hover:border-primary-500/30 transition-all duration-300 hover:shadow-primary-500/5"
+                                class="group relative bg-[#0c0c0e] rounded-md p-5 shadow-none border border-zinc-800 hover:border-zinc-700 transition-colors"
                             >
-                                <div class="flex items-start gap-5">
+                                <div class="flex items-start gap-4">
                                     <div
-                                        class="h-12 w-12 misub-radius-lg flex items-center justify-center text-3xl shadow-sm bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 group-hover:scale-105 transition-transform duration-300 shrink-0 overflow-hidden"
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-2xl shadow-none bg-transparent border border-zinc-800 shrink-0 overflow-hidden"
                                     >
                                         <img
                                             v-if="
@@ -655,15 +648,15 @@
                                             "
                                             :src="client.icon"
                                             :alt="client.name"
-                                            class="w-full h-full object-cover rounded-lg p-1"
+                                            class="w-full h-full object-cover rounded-md p-1"
                                         />
                                         <span v-else>{{ client.icon }}</span>
                                     </div>
 
-                                    <div class="flex-1 min-w-0 pt-1">
-                                        <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-1.5">
                                             <h3
-                                                class="text-lg font-bold text-gray-900 dark:text-white truncate"
+                                                class="text-sm font-semibold text-zinc-100 truncate"
                                             >
                                                 {{ client.name }}
                                             </h3>
@@ -672,23 +665,13 @@
                                             <span
                                                 v-for="platform in client.platforms"
                                                 :key="platform"
-                                                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border"
-                                                :class="{
-                                                    'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-900/50':
-                                                        platform === 'windows',
-                                                    'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-700/50 dark:text-gray-300 dark:border-gray-600':
-                                                        platform === 'macos' || platform === 'ios',
-                                                    'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-900/50':
-                                                        platform === 'android',
-                                                    'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-900/50':
-                                                        platform === 'linux',
-                                                }"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400"
                                             >
                                                 {{ getPlatformLabel(platform) }}
                                             </span>
                                         </div>
                                         <p
-                                            class="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed h-12"
+                                            class="text-zinc-400 text-xs line-clamp-2 leading-relaxed h-9"
                                         >
                                             {{ client.description }}
                                         </p>
@@ -696,10 +679,10 @@
                                 </div>
 
                                 <div
-                                    class="mt-6 flex items-center justify-between pt-4 border-t border-gray-50 dark:border-white/5"
+                                    class="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800"
                                 >
                                     <span
-                                        class="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 px-2 py-1 misub-radius-md"
+                                        class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md"
                                     >
                                         {{ getClientVersionLabel(client) }}
                                     </span>
@@ -707,12 +690,12 @@
                                     <a
                                         :href="client.url"
                                         target="_blank"
-                                        class="text-sm font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 group/link"
+                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link"
                                     >
                                         {{ t('publicProfiles.download') }}
                                         <BaseIcon
                                             :path="ICONS.download"
-                                            className="w-4 h-4 transform group-hover/link:translate-x-0.5 transition-transform"
+                                            className="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
                                         />
                                     </a>
                                 </div>

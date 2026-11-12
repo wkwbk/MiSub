@@ -103,23 +103,23 @@
     <div>
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
-                class="rounded-xl border border-gray-100/80 bg-white/85 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+                class="rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none"
                 :class="compact ? 'p-3' : 'p-4'"
             >
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div class="flex items-center gap-3 shrink-0">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
+                        <h2 class="text-lg font-semibold text-zinc-100">
                             {{ t('profiles.title') }}
                         </h2>
                         <span
-                            class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
+                            class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
                             >{{ profiles.length }}</span
                         >
                     </div>
                     <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start">
                         <button
                             @click="handleAdd"
-                            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+                            class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
                         >
                             {{ t('actions.add') }}
                         </button>
@@ -130,7 +130,7 @@
                                         handleToggleSort();
                                         close();
                                     "
-                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    class="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                                 >
                                     {{
                                         isSorting
@@ -139,14 +139,14 @@
                                     }}
                                 </button>
                                 <div
-                                    class="border-t border-gray-200 dark:border-gray-700 my-1"
+                                    class="border-t border-zinc-800 my-1"
                                 ></div>
                                 <button
                                     @click="
                                         handleDeleteAll();
                                         close();
                                     "
-                                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-500/10"
+                                    class="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-red-950/40"
                                 >
                                     {{ t('actions.clearAll') }}
                                 </button>
@@ -156,7 +156,7 @@
                 </div>
                 <div v-if="searchable" class="relative mt-4">
                     <svg
-                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -173,11 +173,11 @@
                         :placeholder="t('profiles.listSearchPlaceholder')"
                         :aria-label="t('profiles.searchPlaceholder')"
                         :disabled="isSorting"
-                        class="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-20 text-sm text-gray-900 outline-none transition focus:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500"
+                        class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-20 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
                     />
                     <span
                         v-if="searchQuery"
-                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400"
                     >
                         {{ visibleCount }}/{{ profiles.length }}
                     </span>
@@ -187,8 +187,9 @@
         <div v-if="profiles.length > 0">
             <div
                 v-if="isSorting"
-                class="mb-4 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
+                class="mb-4 flex items-center gap-2 rounded-md border border-zinc-800 bg-[#0c0c0e] px-4 py-3 text-xs text-zinc-300"
             >
+                <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                 {{ t('profiles.sortingHint') }}
             </div>
             <div
@@ -225,14 +226,14 @@
             </div>
             <div
                 v-if="!isSorting && displayProfiles.length === 0"
-                class="rounded-xl border border-dashed border-gray-300 bg-white/60 px-6 py-12 text-center dark:border-gray-700 dark:bg-gray-900/50"
+                class="rounded-md border border-zinc-800 bg-[#0c0c0e] px-6 py-12 text-center"
             >
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <p class="text-sm font-medium text-zinc-200">
                     {{ t('profiles.noSearchResults') }}
                 </p>
                 <button
                     type="button"
-                    class="mt-3 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                    class="mt-3 text-xs font-medium text-zinc-200 hover:text-white underline underline-offset-2"
                     @click="searchModel = ''"
                 >
                     {{ t('actions.clearSearch') }}
@@ -255,7 +256,7 @@
         </div>
         <div
             v-else
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-6 dark:border-gray-700 dark:bg-gray-900/50"
+            class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-2"
         >
             <EmptyState
                 :title="t('profiles.empty')"

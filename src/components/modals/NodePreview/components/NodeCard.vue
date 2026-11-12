@@ -42,33 +42,33 @@
 <template>
     <div class="min-h-0 flex-1 overflow-y-auto">
         <!-- 移动端 Mini List-Card 视图 -->
-        <div class="block space-y-3 lg:hidden">
+        <div class="block space-y-2 lg:hidden">
             <div
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="flex items-center justify-between rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all active:scale-[0.98] dark:border-white/5 dark:bg-white/5"
+                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] p-3.5 shadow-none transition-colors"
                 :class="{
-                    'bg-indigo-50/50 ring-2 ring-indigo-500/20 dark:bg-indigo-500/10':
+                    'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-zinc-900':
                         selectionMode && selectedUrls.has(node.url),
                     'cursor-pointer': selectionMode,
                 }"
             >
                 <!-- 左侧：图标与信息 -->
-                <div class="flex items-center gap-4 flex-1 min-w-0">
+                <div class="flex items-center gap-3 flex-1 min-w-0">
                     <!-- Selection Checkbox -->
                     <div v-if="selectionMode" class="flex-shrink-0">
                         <div
-                            class="w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300"
+                            class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                             :class="
                                 selectedUrls.has(node.url)
-                                    ? 'bg-indigo-600 border-indigo-600 shadow-lg shadow-indigo-500/30'
-                                    : 'border-gray-200 dark:border-gray-700'
+                                    ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                    : 'border-zinc-300 dark:border-zinc-700'
                             "
                         >
                             <svg
                                 v-if="selectedUrls.has(node.url)"
-                                class="w-3.5 h-3.5 text-white"
+                                class="w-3 h-3"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -76,7 +76,7 @@
                                 <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
-                                    stroke-width="3"
+                                    stroke-width="2.5"
                                     d="M5 13l4 4L19 7"
                                 />
                             </svg>
@@ -84,21 +84,21 @@
                     </div>
 
                     <div class="flex flex-col min-w-0">
-                        <h4 class="truncate text-sm font-black text-gray-900 dark:text-white mb-1">
+                        <h4 class="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
                             {{ parseNodeInfo(node).name }}
                         </h4>
                         <div class="flex items-center gap-2">
                             <span
-                                class="text-[9px] px-1.5 py-0.5 rounded-full uppercase font-black"
-                                :class="getProtocolStyle(parseNodeInfo(node).protocol)"
+                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm uppercase border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                             >
                                 {{ parseNodeInfo(node).protocol }}
                             </span>
                             <span
-                                class="truncate text-[10px] text-gray-500 dark:text-gray-400 font-mono tracking-tighter uppercase"
+                                class="truncate text-[11px] text-zinc-500 font-mono"
                             >
-                                {{ parseNodeInfo(node).server.split('.').slice(-2).join('.') }} :
-                                {{ parseNodeInfo(node).port }}
+                                {{ parseNodeInfo(node).server.split('.').slice(-2).join('.') }}:{{
+                                    parseNodeInfo(node).port
+                                }}
                             </span>
                         </div>
                     </div>
@@ -108,16 +108,16 @@
                 <button
                     v-if="!selectionMode"
                     @click.stop="emit('copy', node, node.url)"
-                    class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gray-50 text-gray-500 dark:text-gray-400 transition-all active:bg-indigo-600 active:text-white dark:bg-white/5"
+                    class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                     :class="{
-                        'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10':
+                        'text-emerald-500':
                             copiedNodeId === node.url,
                     }"
                     :aria-label="t('actions.copyNode')"
                 >
                     <svg
                         v-if="copiedNodeId !== node.url"
-                        class="w-4 h-4"
+                        class="w-3.5 h-3.5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -131,7 +131,7 @@
                     </svg>
                     <svg
                         v-else
-                        class="w-4 h-4"
+                        class="w-3.5 h-3.5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -147,33 +147,33 @@
             </div>
         </div>
 
-        <!-- 桌面端 Bento Grid 卡片视图 -->
-        <div class="hidden gap-4 p-4 lg:grid lg:grid-cols-2 xl:grid-cols-3">
+        <!-- 桌面端 Grid 卡片视图 -->
+        <div class="hidden gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-3">
             <div
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="relative bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-white/5 p-6 group transition-all duration-500"
+                class="relative bg-white dark:bg-[#09090b] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-colors shadow-none"
                 :class="[
                     selectionMode ? 'cursor-pointer' : '',
                     selectionMode && selectedUrls.has(node.url)
-                        ? 'ring-2 ring-indigo-500 border-transparent bg-indigo-50/30 dark:bg-indigo-500/10'
-                        : 'hover:shadow-2xl hover:translate-y-[-4px] hover:border-indigo-100 dark:hover:border-indigo-500/30 shadow-sm',
+                        ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-zinc-900'
+                        : 'hover:border-zinc-400 dark:hover:border-zinc-700',
                 ]"
             >
                 <!-- Selection Badge -->
-                <div v-if="selectionMode" class="absolute top-4 right-4 animate-scale-in">
+                <div v-if="selectionMode" class="absolute top-4 right-4">
                     <div
-                        class="w-6 h-6 rounded-full flex items-center justify-center transition-all"
+                        class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             selectedUrls.has(node.url)
-                                ? 'bg-indigo-600'
-                                : 'bg-gray-100 dark:bg-gray-700'
+                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                : 'border-zinc-300 dark:border-zinc-700'
                         "
                     >
                         <svg
                             v-if="selectedUrls.has(node.url)"
-                            class="w-3.5 h-3.5 text-white"
+                            class="w-3 h-3"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -181,7 +181,7 @@
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
-                                stroke-width="3"
+                                stroke-width="2.5"
                                 d="M5 13l4 4L19 7"
                             />
                         </svg>
@@ -190,22 +190,21 @@
 
                 <div class="flex flex-col h-full">
                     <!-- 节点名称和协议标签 -->
-                    <div class="flex items-start justify-between gap-3 mb-4">
+                    <div class="flex items-start justify-between gap-3 mb-3">
                         <div class="min-w-0 flex-1">
                             <h4
-                                class="text-base font-bold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors"
+                                class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate"
                             >
                                 {{ parseNodeInfo(node).name }}
                             </h4>
-                            <div class="flex flex-wrap gap-2 mt-2">
+                            <div class="flex flex-wrap gap-1.5 mt-2">
                                 <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-[0.1em] uppercase shadow-sm"
-                                    :class="getProtocolStyle(parseNodeInfo(node).protocol)"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                 >
                                     {{ parseNodeInfo(node).protocol }}
                                 </span>
                                 <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-gray-50 text-gray-500 dark:bg-white/5 dark:text-gray-400"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                 >
                                     {{ parseNodeInfo(node).region || 'UNKNOWN' }}
                                 </span>
@@ -213,36 +212,36 @@
                         </div>
                     </div>
 
-                    <!-- 服务器信息 (Bento Style) -->
-                    <div class="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                    <!-- 服务器信息 -->
+                    <div class="mt-auto pt-3 border-t border-zinc-200 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="min-w-0">
                                 <div
-                                    class="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5 font-medium uppercase tracking-tighter"
+                                    class="text-[10px] text-zinc-500 mb-0.5 font-medium uppercase tracking-wider"
                                 >
                                     Endpoint
                                 </div>
                                 <div
-                                    class="text-xs font-mono text-gray-600 dark:text-gray-300 truncate"
+                                    class="text-xs font-mono text-zinc-600 dark:text-zinc-400 truncate"
                                 >
                                     {{ parseNodeInfo(node).server }}:{{ parseNodeInfo(node).port }}
                                 </div>
                             </div>
 
-                            <!-- 复制按钮 (Floating when hovered, only in non-selection mode) -->
+                            <!-- 复制按钮 -->
                             <button
                                 v-if="!selectionMode"
                                 @click.stop="emit('copy', node, node.url)"
-                                class="opacity-0 group-hover:opacity-100 p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-indigo-600 hover:text-white transition-all transform scale-90 group-hover:scale-100"
+                                class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                                 :class="{
-                                    'opacity-100 bg-green-500 text-white':
+                                    'text-emerald-500':
                                         copiedNodeId === node.url,
                                 }"
                                 :aria-label="t('actions.copyNode')"
                             >
                                 <svg
                                     v-if="copiedNodeId !== node.url"
-                                    class="w-4 h-4"
+                                    class="w-3.5 h-3.5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -256,7 +255,7 @@
                                 </svg>
                                 <svg
                                     v-else
-                                    class="w-4 h-4"
+                                    class="w-3.5 h-3.5"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"

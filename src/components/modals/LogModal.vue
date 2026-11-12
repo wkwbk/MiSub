@@ -117,19 +117,19 @@
     >
         <template #title>
             <div class="flex justify-between items-center w-full">
-                <span class="text-lg font-bold text-gray-900 dark:text-white">{{
+                <span class="text-base font-semibold text-zinc-100">{{
                     t('logs.title')
                 }}</span>
                 <div class="flex gap-2">
                     <button
                         @click="fetchLogs"
-                        class="text-xs px-2 py-1 misub-radius-md bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-600 dark:text-gray-300"
+                        class="text-xs px-2.5 py-1 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors text-zinc-300 hover:text-zinc-100"
                     >
                         {{ t('common.refresh') }}
                     </button>
                     <button
                         @click="clearLogs"
-                        class="text-xs px-2 py-1 misub-radius-md bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors text-red-600 dark:text-red-400"
+                        class="text-xs px-2.5 py-1 rounded-md border border-red-900/60 bg-transparent hover:bg-red-950/30 transition-colors text-red-400"
                     >
                         {{ t('common.clear') }}
                     </button>
@@ -140,9 +140,9 @@
         <template #body>
             <div class="flex flex-col h-[60vh]">
                 <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
-                    <div v-if="isLoading" class="py-12 text-center text-gray-500">
+                    <div v-if="isLoading" class="py-12 text-center text-zinc-500">
                         <svg
-                            class="animate-spin h-8 w-8 mx-auto mb-2 text-indigo-500"
+                            class="animate-spin h-6 w-6 mx-auto mb-2 text-zinc-400"
                             xmlns="http://www.w3.org/2000/svg"
                             fill="none"
                             viewBox="0 0 24 24"
@@ -165,7 +165,7 @@
                     </div>
                     <div v-else-if="filteredLogs.length === 0" class="py-16 text-center">
                         <svg
-                            class="mx-auto h-12 w-12 text-gray-500 dark:text-gray-400"
+                            class="mx-auto h-10 w-10 text-zinc-600"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
@@ -177,7 +177,7 @@
                                 d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                             />
                         </svg>
-                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        <p class="mt-2 text-xs text-zinc-500">
                             {{ filterProfileName ? t('logs.emptyForProfile') : t('logs.empty') }}
                         </p>
                     </div>
@@ -185,70 +185,69 @@
                         <li
                             v-for="log in paginatedLogs"
                             :key="log.id || log.timestamp"
-                            class="bg-gray-50 dark:bg-gray-700/30 misub-radius-md p-2.5 text-xs border border-gray-100 dark:border-gray-700 relative overflow-hidden group hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors cursor-pointer"
+                            class="bg-transparent rounded-md p-3 text-xs border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition-colors cursor-pointer"
                             @click="toggleExpand(log.id)"
                         >
-                            <!-- Status Indicator Stripe -->
-                            <div
-                                class="absolute left-0 top-0 bottom-0 w-1"
-                                :class="{
-                                    'bg-green-500': log.status === 'success',
-                                    'bg-yellow-500': log.status === 'partial',
-                                    'bg-red-500': log.status === 'error',
-                                }"
-                            ></div>
-
-                            <div class="pl-2">
+                            <div>
                                 <div class="flex justify-between items-start mb-1.5 gap-2">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="h-1.5 w-1.5 shrink-0 rounded-full"
+                                            :class="{
+                                                'bg-emerald-400': log.status === 'success',
+                                                'bg-amber-400': log.status === 'partial',
+                                                'bg-red-400': log.status === 'error',
+                                            }"
+                                        ></span>
+                                        <span
+                                            class="font-semibold text-zinc-100 truncate text-xs"
+                                        >
+                                            {{ log.profileName || 'Unknown Profile' }}
+                                        </span>
+                                    </div>
                                     <span
-                                        class="font-bold text-gray-900 dark:text-gray-100 truncate text-sm"
-                                    >
-                                        {{ log.profileName || 'Unknown Profile' }}
-                                    </span>
-                                    <span
-                                        :class="getClientInfo(log.userAgent).className"
-                                        class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap"
+                                        class="shrink-0 px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent font-mono text-[10px] font-medium text-zinc-300 whitespace-nowrap"
                                     >
                                         {{ getClientInfo(log.userAgent).name }}
                                     </span>
                                 </div>
 
                                 <div
-                                    class="flex flex-col gap-0.5 text-xs text-gray-600 dark:text-gray-300"
+                                    class="flex flex-col gap-1 text-xs text-zinc-400"
                                 >
                                     <!-- Compact Info Rows -->
                                     <div class="flex justify-between items-center">
-                                        <div class="flex items-center gap-1.5 opacity-80">
+                                        <div class="flex items-center gap-1.5">
                                             <span
-                                                class="text-[10px] px-1 py-px rounded bg-gray-100 dark:bg-gray-700 text-gray-500 min-w-[24px] text-center"
+                                                class="text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
                                                 >{{ t('logs.time') }}</span
                                             >
-                                            <span class="font-mono text-[10px]">{{
+                                            <span class="font-mono text-[10px] text-zinc-300">{{
                                                 formatTime(log.timestamp)
                                             }}</span>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-1.5 opacity-80">
+                                    <div class="flex items-center gap-1.5">
                                         <span
-                                            class="text-[10px] px-1 py-px rounded bg-gray-100 dark:bg-gray-700 text-gray-500 min-w-[24px] text-center"
+                                            class="text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
                                             >{{ t('logs.location') }}</span
                                         >
-                                        <span class="truncate">
+                                        <span class="truncate text-zinc-300">
                                             {{ log.geoInfo?.country || 'Unknown' }}
                                             <span
                                                 v-if="log.geoInfo?.city"
-                                                class="text-gray-500 dark:text-gray-400 text-[10px]"
+                                                class="text-zinc-500 text-[10px]"
                                             >
                                                 / {{ log.geoInfo.city }}</span
                                             >
                                         </span>
                                     </div>
-                                    <div class="flex items-center gap-1.5 opacity-80">
+                                    <div class="flex items-center gap-1.5">
                                         <span
-                                            class="text-[10px] px-1 py-px rounded bg-gray-100 dark:bg-gray-700 text-gray-500 min-w-[24px] text-center"
+                                            class="font-mono text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
                                             >IP</span
                                         >
-                                        <span class="font-mono text-[10px]">{{
+                                        <span class="font-mono text-[10px] text-zinc-300">{{
                                             log.clientIp
                                         }}</span>
                                     </div>
@@ -257,15 +256,15 @@
                                 <!-- Expandable Details -->
                                 <div
                                     v-show="expandedLogId === log.id"
-                                    class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600/50 text-xs space-y-1.5 animate-fadeIn"
+                                    class="mt-3 pt-3 border-t border-zinc-800 text-xs space-y-1.5 animate-fadeIn"
                                 >
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div class="flex">
                                             <span
-                                                class="text-gray-500 dark:text-gray-400 w-16 shrink-0"
+                                                class="font-mono text-zinc-500 w-16 shrink-0"
                                                 >ISP:</span
                                             >
-                                            <span class="text-gray-700 dark:text-gray-300 truncate"
+                                            <span class="font-mono text-zinc-300 truncate"
                                                 >{{ log.geoInfo?.isp || '-' }} ({{
                                                     log.geoInfo?.asn ? 'AS' + log.geoInfo.asn : '-'
                                                 }})</span
@@ -273,19 +272,19 @@
                                         </div>
                                         <div class="flex">
                                             <span
-                                                class="text-gray-500 dark:text-gray-400 w-16 shrink-0"
+                                                class="text-zinc-500 w-16 shrink-0"
                                                 >{{ t('logs.duration') }}:</span
                                             >
-                                            <span class="text-gray-700 dark:text-gray-300"
+                                            <span class="font-mono text-zinc-300"
                                                 >{{ log.details?.duration || 0 }} ms</span
                                             >
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
                                             <span
-                                                class="text-gray-500 dark:text-gray-400 w-16 shrink-0"
+                                                class="text-zinc-500 w-16 shrink-0"
                                                 >{{ t('logs.nodes') }}:</span
                                             >
-                                            <span class="text-gray-700 dark:text-gray-300 truncate">
+                                            <span class="font-mono text-zinc-300 truncate">
                                                 {{
                                                     t('logs.nodeSummary', {
                                                         total: log.details?.totalNodes || 0,
@@ -297,11 +296,11 @@
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
                                             <span
-                                                class="text-gray-500 dark:text-gray-400 w-16 shrink-0"
+                                                class="font-mono text-zinc-500 w-16 shrink-0"
                                                 >UA:</span
                                             >
                                             <span
-                                                class="text-gray-700 dark:text-gray-300 truncate"
+                                                class="font-mono text-zinc-300 truncate"
                                                 :title="log.userAgent"
                                                 >{{ log.userAgent }}</span
                                             >
@@ -312,7 +311,7 @@
                                 <div v-show="expandedLogId !== log.id" class="mt-2 text-center">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mx-auto text-gray-500 dark:text-gray-400"
+                                        class="h-3.5 w-3.5 mx-auto text-zinc-500"
                                         fill="none"
                                         viewBox="0 0 24 24"
                                         stroke="currentColor"
@@ -333,9 +332,9 @@
                 <!-- Pagination Footer -->
                 <div
                     v-if="filteredLogs.length > 0"
-                    class="pt-4 mt-2 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center shrink-0"
+                    class="pt-4 mt-2 border-t border-zinc-800 flex justify-between items-center shrink-0"
                 >
-                    <span class="text-sm text-gray-500 dark:text-gray-400">
+                    <span class="font-mono text-xs text-zinc-400">
                         {{
                             t('logs.pageSummary', {
                                 current: currentPage,
@@ -348,14 +347,14 @@
                         <button
                             @click="prevPage"
                             :disabled="currentPage === 1"
-                            class="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 text-xs border border-zinc-800 rounded-md bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('common.previousPage') }}
                         </button>
                         <button
                             @click="nextPage"
                             :disabled="currentPage === totalPages"
-                            class="px-3 py-1 text-sm border border-gray-200 dark:border-gray-600 rounded bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 text-xs border border-zinc-800 rounded-md bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('common.nextPage') }}
                         </button>

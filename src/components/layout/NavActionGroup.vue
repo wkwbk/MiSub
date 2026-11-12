@@ -56,12 +56,10 @@
         const classes = buildBtnClass('neutral');
         if (isExploreActive.value) {
             classes.push(
-                'bg-primary-50',
-                'text-primary-600',
-                'dark:bg-primary-900/20',
-                'dark:text-primary-400',
-                'ring-1',
-                'ring-primary-400/40'
+                'bg-zinc-900',
+                'text-zinc-100',
+                'border',
+                'border-zinc-700'
             );
         }
         return classes;

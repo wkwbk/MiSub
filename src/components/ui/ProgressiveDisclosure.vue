@@ -42,19 +42,19 @@
     const levelClasses = computed(() => {
         const levels = {
             1: {
-                title: 'text-lg font-bold text-gray-900 dark:text-white',
+                title: 'text-base font-semibold text-zinc-900 dark:text-zinc-100',
                 container:
-                    'bg-white/90 dark:bg-gray-900/80 backdrop-blur-md misub-radius-lg card-shadow',
-                padding: 'p-6',
+                    'bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                padding: 'p-5',
             },
             2: {
-                title: 'text-base font-semibold text-gray-800 dark:text-gray-200',
-                container: 'bg-gray-50/80 dark:bg-gray-800/60 backdrop-blur-sm misub-radius-lg',
+                title: 'text-sm font-semibold text-zinc-800 dark:text-zinc-200',
+                container: 'bg-zinc-50 dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-4',
             },
             3: {
-                title: 'text-sm font-medium text-gray-700 dark:text-gray-300',
-                container: 'bg-gray-25/60 dark:bg-gray-700/40 misub-radius-md',
+                title: 'text-xs font-medium text-zinc-700 dark:text-zinc-300',
+                container: 'bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-3',
             },
         };
@@ -67,7 +67,7 @@
         :class="[
             levelClasses.container,
             levelClasses.padding,
-            'smooth-all ring-1 ring-black/5 dark:ring-white/10',
+            'transition-colors',
         ]"
     >
         <!-- 标题和摘要 -->
@@ -80,7 +80,7 @@
                 <h3 :class="levelClasses.title" class="truncate">
                     {{ title }}
                 </h3>
-                <p v-if="summary" class="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                <p v-if="summary" class="text-xs text-zinc-500 mt-1 truncate">
                     {{ summary }}
                 </p>
             </div>
@@ -88,11 +88,11 @@
             <!-- 展开/收起图标 -->
             <button
                 v-if="collapsible"
-                class="ml-4 p-1 misub-radius-md hover:bg-gray-100 dark:hover:bg-gray-700 smooth-all touch-target"
+                class="ml-4 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors touch-target"
                 :aria-label="t('common.toggleExpand')"
             >
                 <svg
-                    class="w-5 h-5 text-gray-500 dark:text-gray-400 smooth-transform"
+                    class="w-4 h-4 text-zinc-500 transition-transform"
                     :class="{ 'rotate-180': isExpanded }"
                     fill="none"
                     stroke="currentColor"
@@ -124,7 +124,7 @@
                 <!-- 操作区域 -->
                 <div
                     v-if="$slots.actions"
-                    class="pt-4 border-t border-gray-200 dark:border-gray-700"
+                    class="pt-4 border-t border-zinc-200 dark:border-zinc-800"
                 >
                     <slot name="actions" />
                 </div>

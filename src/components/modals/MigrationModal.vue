@@ -100,13 +100,13 @@
     const getLogClass = (type) => {
         switch (type) {
             case 'success':
-                return 'text-green-400';
+                return 'text-emerald-400';
             case 'error':
                 return 'text-red-400';
             case 'warning':
-                return 'text-yellow-400';
+                return 'text-amber-400';
             default:
-                return 'text-gray-500 dark:text-gray-400';
+                return 'text-zinc-500';
         }
     };
 
@@ -157,15 +157,10 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
     >
         <template #title>
             <div class="flex items-center gap-2">
-                <span class="text-lg font-bold text-gray-900 dark:text-white">{{
+                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{
                     t('d1Migration.title')
                 }}</span>
-                <span v-if="step === 'migrating'" class="flex h-3 w-3 relative">
-                    <span
-                        class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"
-                    ></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
-                </span>
+                <span v-if="step === 'migrating'" class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
             </div>
         </template>
 
@@ -174,22 +169,23 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                 <!-- Step 1: Checklist -->
                 <div v-if="step === 'check'" class="flex-1 space-y-4">
                     <div
-                        class="bg-blue-50 dark:bg-blue-900/20 p-4 misub-radius-md border border-blue-100 dark:border-blue-800"
+                        class="bg-transparent p-4 rounded-md border border-zinc-200 dark:border-zinc-800"
                     >
-                        <h4 class="font-medium text-blue-800 dark:text-blue-300 mb-2">
+                        <h4 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                             {{ t('d1Migration.precheckHeading') }}
                         </h4>
-                        <p class="text-sm text-blue-600 dark:text-blue-400 mb-4 leading-relaxed">
+                        <p class="text-xs text-zinc-500 mb-4 leading-relaxed">
                             {{ t('d1Migration.introText') }}<br />
                             {{ t('d1Migration.confirmChecklist') }}
                         </p>
-                        <ul class="space-y-3 text-sm text-gray-700 dark:text-gray-300">
+                        <ul class="space-y-3 text-xs text-zinc-700 dark:text-zinc-300">
                             <li class="flex items-start gap-2">
                                 <input
                                     type="checkbox"
                                     checked
                                     disabled
-                                    class="mt-1 h-4 w-4 text-indigo-600 rounded border-gray-300"
+                                    class="mt-0.5 h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100 rounded-sm border-zinc-300 dark:border-zinc-700"
                                     aria-hidden="true"
                                 />
                                 <span>{{ t('d1Migration.stepCreateDb') }}</span>
@@ -199,29 +195,29 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                                     type="checkbox"
                                     checked
                                     disabled
-                                    class="mt-1 h-4 w-4 text-indigo-600 rounded border-gray-300"
+                                    class="mt-0.5 h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100 rounded-sm border-zinc-300 dark:border-zinc-700"
                                     aria-hidden="true"
                                 />
                                 <span
                                     >{{ t('d1Migration.stepBindDbPrefix') }}
-                                    <code>MISUB_DB</code>
+                                    <code class="font-mono text-zinc-900 dark:text-zinc-100">MISUB_DB</code>
                                     {{ t('d1Migration.stepBindDbSuffix') }}</span
                                 >
                             </li>
                             <li class="flex items-start gap-2">
                                 <input
                                     type="checkbox"
-                                    class="mt-1 h-4 w-4 text-indigo-600 rounded border-gray-300 focus-visible:ring-indigo-500"
+                                    class="mt-0.5 h-3.5 w-3.5 text-zinc-900 dark:text-zinc-100 rounded-sm border-zinc-300 dark:border-zinc-700 focus:ring-0"
                                     aria-hidden="true"
                                 />
                                 <div class="flex flex-col gap-1">
                                     <span
-                                        class="font-medium text-orange-600 dark:text-orange-400"
+                                        class="font-medium text-zinc-900 dark:text-zinc-100"
                                         >{{ t('d1Migration.stepRunSchema') }}</span
                                     >
                                     <button
                                         @click="copySchema"
-                                        class="text-xs flex items-center gap-1 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 underline underline-offset-2 transition-colors w-fit"
+                                        class="text-xs flex items-center gap-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2 transition-colors w-fit"
                                     >
                                         <svg
                                             class="w-3 h-3"
@@ -243,7 +239,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                         </ul>
                     </div>
 
-                    <div class="text-xs text-gray-500 text-center">
+                    <div class="text-xs text-zinc-500 text-center">
                         {{ t('d1Migration.confirmNotice') }}
                     </div>
                 </div>
@@ -251,44 +247,30 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                 <!-- Step 2 & 3: Logs -->
                 <div v-else class="flex-1 flex flex-col min-h-0">
                     <div
-                        class="bg-gray-900 misub-radius-md p-4 font-mono text-xs overflow-y-auto flex-1 custom-scrollbar shadow-inner border border-gray-700"
+                        class="bg-[#09090b] rounded-md p-4 font-mono text-xs overflow-y-auto flex-1 custom-scrollbar shadow-none border border-zinc-800"
                     >
-                        <div v-if="logs.length === 0" class="text-gray-500 text-center mt-10">
+                        <div v-if="logs.length === 0" class="text-zinc-500 text-center mt-10">
                             {{ t('d1Migration.waiting') }}
                         </div>
                         <div v-for="(log, idx) in logs" :key="idx" class="mb-1.5 break-all">
-                            <span class="opacity-50 text-gray-500 mr-2">[{{ log.time }}]</span>
+                            <span class="text-zinc-500 mr-2">[{{ log.time }}]</span>
                             <span :class="getLogClass(log.type)">{{ log.message }}</span>
                         </div>
                     </div>
 
                     <div
                         v-if="step === 'done'"
-                        class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded border border-green-200 dark:border-green-800 text-sm flex items-center gap-2"
+                        class="mt-4 p-3 bg-transparent text-zinc-700 dark:text-zinc-300 rounded-md border border-zinc-200 dark:border-zinc-800 text-xs flex items-center gap-2"
                     >
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                         <span>{{ t('d1Migration.successNotice') }}</span>
                     </div>
 
                     <div
                         v-if="step === 'error'"
-                        class="mt-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded border border-red-200 dark:border-red-800 text-sm flex items-center gap-2"
+                        class="mt-4 p-3 bg-transparent text-red-500 rounded-md border border-zinc-200 dark:border-zinc-800 text-xs flex items-center gap-2"
                     >
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
+                        <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
                         <span>{{ t('d1Migration.errorNotice') }}</span>
                     </div>
                 </div>

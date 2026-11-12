@@ -56,10 +56,10 @@
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6">
         <!-- Announcement & Info Section -->
         <div
-            class="rounded-xl border border-indigo-100 bg-indigo-50/50 p-6 shadow-sm dark:border-indigo-500/10 dark:bg-indigo-900/10"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <SectionHeader
                 :title="t('settings.globalInfoTitle')"
@@ -69,7 +69,7 @@
                 <template #icon>
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
+                        class="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -83,14 +83,14 @@
                     </svg>
                 </template>
             </SectionHeader>
-            <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+            <p class="text-xs text-zinc-400 leading-relaxed">
                 {{ t('settings.globalInfoBody') }}
             </p>
         </div>
 
         <!-- Node Prefix Settings -->
         <div
-            class="rounded-xl border border-gray-100 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <SectionHeader
                 :title="t('settings.globalNodeSettingsTitle')"
@@ -126,13 +126,13 @@
 
                 <div>
                     <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1"
+                        class="block text-xs font-medium text-zinc-300 mb-1.5"
                         >{{ t('settings.globalManualNodePrefixSwitch') }}</label
                     >
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableManualNodes"
-                            class="w-full bg-gray-50 dark:bg-gray-800 border border-transparent dark:border-gray-700 misub-radius-md py-2.5 px-4 text-xs text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:outline-none transition-all appearance-none"
+                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"
@@ -143,7 +143,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500 dark:text-gray-400"
+                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <svg
                                 class="w-3.5 h-3.5"
@@ -160,13 +160,13 @@
                 <!-- 第二排：机场订阅前缀 与 节点国旗 EMOJI -->
                 <div>
                     <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1"
+                        class="block text-xs font-medium text-zinc-300 mb-1.5"
                         >{{ t('settings.globalSubscriptionPrefixSwitch') }}</label
                     >
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableSubscriptions"
-                            class="w-full bg-gray-50 dark:bg-gray-800 border border-transparent dark:border-gray-700 misub-radius-md py-2 px-4 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:outline-none transition-all appearance-none"
+                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"
@@ -177,7 +177,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500 dark:text-gray-400"
+                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <svg
                                 class="w-3.5 h-3.5"
@@ -193,13 +193,13 @@
 
                 <div>
                     <label
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 ml-1"
+                        class="block text-xs font-medium text-zinc-300 mb-1.5"
                         >{{ t('settings.globalFlagEmojiSwitch') }}</label
                     >
                     <div class="relative">
                         <select
                             v-model="settings.enableFlagEmoji"
-                            class="w-full bg-gray-50 dark:bg-gray-800 border border-transparent dark:border-gray-700 misub-radius-md py-2 px-4 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500/20 focus-visible:outline-none transition-all appearance-none"
+                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"
@@ -210,7 +210,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-500 dark:text-gray-400"
+                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <svg
                                 class="w-3.5 h-3.5"
@@ -228,7 +228,7 @@
 
         <!-- Region Overrides -->
         <div
-            class="rounded-xl border border-gray-100 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div
                 class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between"
@@ -258,7 +258,7 @@
                 <button
                     type="button"
                     @click="addRegionOverride"
-                    class="w-full shrink-0 whitespace-nowrap rounded-lg bg-purple-600 px-3 py-2 text-xs font-semibold leading-5 text-white transition-colors hover:bg-purple-700 sm:w-auto sm:self-start"
+                    class="w-full shrink-0 whitespace-nowrap rounded-md border border-zinc-100 bg-zinc-100 px-3 py-1.5 text-xs font-semibold leading-5 text-zinc-900 transition-colors hover:bg-white sm:w-auto sm:self-start"
                 >
                     {{ t('settings.regionOverrideAdd') }}
                 </button>
@@ -266,7 +266,7 @@
 
             <div
                 v-if="!settings.regionOverrides.length"
-                class="mt-4 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400"
+                class="mt-4 rounded-md border border-zinc-800 bg-transparent px-4 py-5 text-xs text-zinc-500"
             >
                 {{ t('settings.regionOverridesEmpty') }}
             </div>
@@ -275,7 +275,7 @@
                 <div
                     v-for="(rule, index) in settings.regionOverrides"
                     :key="index"
-                    class="grid grid-cols-1 gap-3 rounded-lg border border-gray-100 bg-gray-50/70 p-3 dark:border-gray-700 dark:bg-gray-800/50 md:grid-cols-[1fr_160px_96px_auto]"
+                    class="grid grid-cols-1 gap-3 rounded-md border border-zinc-800 bg-transparent p-3 md:grid-cols-[1fr_160px_96px_auto]"
                 >
                     <Input
                         v-model="rule.pattern"
@@ -296,7 +296,7 @@
                         <button
                             type="button"
                             @click="removeRegionOverride(index)"
-                            class="w-full rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-300 dark:hover:bg-red-500/10"
+                            class="w-full rounded-md border border-red-900/60 bg-transparent px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-950/40"
                         >
                             {{ t('actions.delete') }}
                         </button>
@@ -307,7 +307,7 @@
 
         <!-- Unified Operator Chain -->
         <div
-            class="rounded-xl border border-gray-100 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
+            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
         >
             <div class="flex items-start justify-between gap-3">
                 <SectionHeader
@@ -333,7 +333,7 @@
                     </template>
                 </SectionHeader>
                 <span
-                    class="rounded-full bg-green-100 px-2.5 py-0.5 text-[10px] font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-300"
+                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
                     >{{ t('settings.globalDefaultBadge') }}</span
                 >
             </div>

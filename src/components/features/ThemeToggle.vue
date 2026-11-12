@@ -12,7 +12,7 @@
 <template>
     <button
         @click="toggleTheme"
-        class="nav-action-btn nav-action-btn-neutral rounded-full"
+        class="nav-action-btn nav-action-btn-neutral rounded-md"
         :title="theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')"
         :aria-label="theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')"
         :aria-pressed="theme === 'dark'"

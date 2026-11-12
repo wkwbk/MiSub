@@ -148,7 +148,7 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <div ref="profilesSectionRef" data-testid="profiles-section">
             <ProfilePanel
                 :profiles="profiles"

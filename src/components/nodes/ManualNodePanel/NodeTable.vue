@@ -66,7 +66,7 @@
         <!-- 如果有搜索词，显示搜索提示 -->
         <div
             v-if="localSearchTerm && filteredNodes.length === 0"
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400"
+            class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-8 text-center text-xs text-zinc-400"
         >
             {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
         </div>
@@ -200,7 +200,7 @@
     </div>
     <div
         v-else
-        class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-6 dark:border-gray-700 dark:bg-gray-900/50"
+        class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-2"
     >
         <EmptyState
             :title="t('manualNodes.empty')"

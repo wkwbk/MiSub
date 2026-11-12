@@ -478,10 +478,10 @@
 </script>
 
 <template>
-    <div v-if="isLoading" class="w-full max-w-(--breakpoint-xl) mx-auto p-4 sm:p-6 lg:p-8">
+    <div v-if="isLoading" class="w-full">
         <SkeletonLoader type="dashboard" />
     </div>
-    <div v-else class="w-full max-w-(--breakpoint-xl) mx-auto p-4 sm:p-6 lg:p-8">
+    <div v-else class="w-full">
         <!-- Header -->
         <DashboardHeader
             :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
@@ -497,8 +497,8 @@
         />
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-1 gap-6 items-start lg:gap-7 xl:grid-cols-3 xl:gap-8">
-            <div class="space-y-8 lg:space-y-9 xl:col-span-2">
+        <div class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3">
+            <div class="space-y-4 xl:col-span-2">
                 <!-- Subscription Panel -->
                 <SubscriptionPanel
                     searchable
@@ -569,7 +569,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="space-y-6 lg:space-y-7 xl:col-span-1">
+            <div class="space-y-4 xl:col-span-1">
                 <RightPanel
                     :config="config"
                     :profiles="profiles"

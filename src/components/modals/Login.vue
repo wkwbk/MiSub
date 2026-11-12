@@ -36,35 +36,34 @@
 </script>
 
 <template>
-    <div class="w-full max-w-[420px] md:max-w-[480px] lg:max-w-[520px] relative z-10 px-6">
+    <div class="w-full max-w-[420px] relative z-10 px-6">
         <div
-            class="relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-[2rem] p-10 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] dark:shadow-none overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.15)]"
+            class="relative bg-[#0c0c0e] border border-zinc-800 rounded-md p-8 shadow-none overflow-hidden"
         >
             <div class="flex flex-col items-center relative z-10">
-                <div class="w-24 h-24 mb-8 relative group cursor-default">
+                <div class="w-16 h-16 mb-6 relative group cursor-default">
                     <div
-                        class="w-full h-full flex items-center justify-center relative z-10 animate-float-slow"
+                        class="w-full h-full flex items-center justify-center relative z-10"
                     >
                         <img
                             v-if="!logoFailed"
-                            width="96"
-                            height="96"
+                            width="64"
+                            height="64"
                             src="/logo.png"
                             alt="MiSub"
-                            class="drop-shadow-2xl"
                             @error="logoFailed = true"
                         />
                         <svg
                             v-else
-                            width="96"
-                            height="96"
+                            width="64"
+                            height="64"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="1.5"
                             stroke-linecap="round"
                             stroke-linejoin="round"
-                            class="text-primary-500 drop-shadow-2xl"
+                            class="text-zinc-300"
                             aria-hidden="true"
                         >
                             <circle cx="12" cy="12" r="9" />
@@ -74,32 +73,32 @@
                     </div>
                 </div>
 
-                <div class="text-center mb-10 animate-fade-in-up">
+                <div class="text-center mb-8">
                     <h1
-                        class="text-3xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight"
+                        class="text-xl font-semibold text-zinc-100 mb-1.5 tracking-tight"
                     >
                         {{ t('login.welcomeBack') }}
                     </h1>
-                    <p class="text-base text-gray-500 dark:text-gray-400 font-medium">
+                    <p class="text-xs text-zinc-400">
                         {{ t('login.verifyIdentity') }}
                     </p>
                 </div>
             </div>
 
-            <form @submit.prevent="submitLogin" class="space-y-8 relative z-10 w-full mb-4">
+            <form @submit.prevent="submitLogin" class="space-y-6 relative z-10 w-full mb-2">
                 <div class="relative w-full group" :class="{ 'animate-shake': error }">
                     <div
-                        class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors"
+                        class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none transition-colors"
                         :class="
                             error
-                                ? 'text-red-500'
-                                : 'text-gray-500 dark:text-gray-400 group-focus-within:text-primary-500'
+                                ? 'text-red-400'
+                                : 'text-zinc-500 group-focus-within:text-zinc-300'
                         "
                     >
                         <svg
                             v-if="!error"
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
@@ -112,7 +111,7 @@
                         <svg
                             v-else
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
@@ -130,18 +129,18 @@
                         :placeholder="t('login.passwordPlaceholder')"
                         autocomplete="current-password"
                         :disabled="isLoading"
-                        class="w-full bg-transparent border misub-radius-lg py-3.5 pl-11 pr-12 outline-none transition-all duration-300 disabled:opacity-50"
+                        class="w-full bg-[#09090b] border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
                         :class="[
                             error
-                                ? 'border-red-500 text-red-500 placeholder-red-300 focus:border-red-500 focus-visible:ring-1 focus-visible:ring-red-500/50'
-                                : 'border-gray-200 dark:border-white/20 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-600 focus:border-primary-500 dark:focus:border-primary-400 focus-visible:ring-1 focus-visible:ring-primary-500/50 dark:focus-visible:ring-primary-400/50',
+                                ? 'border-red-500 text-red-400 placeholder-red-400/60 focus:border-red-500'
+                                : 'border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600',
                         ]"
                         :aria-label="t('login.passwordPlaceholder')"
                     />
                     <button
                         type="button"
                         @click="showPassword = !showPassword"
-                        class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50 rounded-r-[1rem]"
+                        class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors focus-visible:outline-none rounded-r-md"
                         :aria-label="
                             showPassword ? t('login.hidePassword') : t('login.showPassword')
                         "
@@ -149,7 +148,7 @@
                         <svg
                             v-if="showPassword"
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
@@ -165,7 +164,7 @@
                         <svg
                             v-else
                             xmlns="http://www.w3.org/2000/svg"
-                            class="h-5 w-5"
+                            class="h-4 w-4"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
@@ -180,7 +179,7 @@
                     <transition name="fade">
                         <p
                             v-if="error"
-                            class="absolute top-full mt-2 left-0 right-0 text-center text-xs text-red-500 font-bold tracking-wide flex items-center justify-center gap-1"
+                            class="absolute top-full mt-2 left-0 right-0 text-center text-xs text-red-400 font-medium flex items-center justify-center gap-1"
                         >
                             {{ error }}
                         </p>
@@ -192,7 +191,7 @@
                     class="w-full relative overflow-hidden"
                     :loading="isLoading"
                     variant="primary"
-                    size="lg"
+                    size="md"
                 >
                     <template v-if="!isLoading">
                         <span class="relative z-10">{{ t('login.authorizeLogin') }}</span>
@@ -204,14 +203,14 @@
             </form>
         </div>
 
-        <div class="mt-8 text-center animate-fade-in-up animation-delay-300">
+        <div class="mt-6 text-center">
             <a
                 href="/"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-sm text-gray-500 dark:text-gray-400 font-medium transition-all hover:-translate-y-0.5 hover:shadow-lg"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 text-xs text-zinc-400 hover:text-zinc-100 font-medium transition-colors"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
+                    class="h-3.5 w-3.5"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                 >

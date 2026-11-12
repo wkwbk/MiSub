@@ -139,14 +139,14 @@
 <template>
     <div class="space-y-6">
         <section
-            class="bg-white/90 dark:bg-gray-900/70 misub-radius-lg p-6 border border-gray-100/80 dark:border-white/10 shadow-sm space-y-4"
+            class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-4"
         >
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         {{ t('settings.telegramNotifyBotTitle') }}
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('settings.telegramNotifyBotDesc') }}
                     </p>
                 </div>
@@ -154,30 +154,30 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5"
                         >Bot Token</label
                     >
                     <input
                         v-model="settings.BotToken"
                         type="text"
                         placeholder="123456:ABC-DEF..."
-                        class="block w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 misub-radius-lg shadow-xs focus-visible:ring-1 focus-visible:ring-blue-500 focus:border-blue-500 sm:text-sm dark:text-white transition-colors"
+                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
                     />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramBotTokenHint') }}
                     </p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5"
                         >Chat ID</label
                     >
                     <input
                         v-model="settings.ChatID"
                         type="text"
                         placeholder="123456789"
-                        class="block w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-gray-600 misub-radius-lg shadow-xs focus-visible:ring-1 focus-visible:ring-blue-500 focus:border-blue-500 sm:text-sm dark:text-white transition-colors"
+                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
                     />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramChatIdHint') }}
                     </p>
                 </div>
@@ -186,13 +186,13 @@
             <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                 <button
                     type="button"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium misub-radius-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    class="px-4 py-1.5 bg-zinc-100 hover:bg-white border border-zinc-100 text-zinc-900 text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                     :disabled="isTesting || !settings.BotToken || !settings.ChatID"
                     @click="testNotification"
                 >
                     <svg
                         v-if="isTesting"
-                        class="animate-spin h-4 w-4 text-white"
+                        class="animate-spin h-4 w-4 text-zinc-600"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -218,19 +218,23 @@
 
                 <div
                     v-if="testResult"
-                    class="text-sm"
+                    class="text-xs flex items-center gap-2"
                     :class="
                         testResult.success
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
+                            ? 'text-emerald-400'
+                            : 'text-red-400'
                     "
                 >
+                    <span
+                        class="h-1.5 w-1.5 rounded-full shrink-0"
+                        :class="testResult.success ? 'bg-emerald-500' : 'bg-red-500'"
+                    ></span>
                     <span>{{ testResult.message }}</span>
                     <details
                         v-if="testResult.detail"
-                        class="mt-2 text-xs font-mono bg-gray-100 dark:bg-gray-900 p-2 rounded max-h-32 overflow-auto"
+                        class="mt-2 text-xs font-mono bg-[#09090b] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
                     >
-                        <summary class="cursor-pointer text-gray-500">
+                        <summary class="cursor-pointer text-zinc-500">
                             {{ t('settings.telegramDetails') }}
                         </summary>
                         <pre>{{ JSON.stringify(testResult.detail, null, 2) }}</pre>
@@ -240,14 +244,14 @@
         </section>
 
         <section
-            class="bg-white/90 dark:bg-gray-900/70 misub-radius-lg p-6 border border-gray-100/80 dark:border-white/10 shadow-sm space-y-6"
+            class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-6"
         >
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                    <h3 class="text-sm font-semibold text-zinc-100">
                         Telegram Push Bot
                     </h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('settings.telegramPushBotDesc') }}
                     </p>
                 </div>
@@ -257,37 +261,37 @@
             <div v-if="telegramPushConfig.enabled" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                        <label class="block text-xs font-medium text-zinc-300"
                             >Push Bot Token</label
                         >
                         <input
                             v-model="telegramPushConfig.bot_token"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:outline-hidden focus-visible:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                         />
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-zinc-500">
                             {{ t('settings.telegramPushTokenHint') }}
                         </p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                        <label class="block text-xs font-medium text-zinc-300">{{
                             t('settings.telegramWebhookSecret')
                         }}</label>
                         <input
                             v-model="telegramPushConfig.webhook_secret"
                             type="text"
                             placeholder="random_secret-token"
-                            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:outline-hidden focus-visible:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                             :aria-label="t('settings.telegramWebhookSecret')"
                         />
-                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        <p class="mt-1 text-xs text-zinc-500">
                             {{ t('settings.telegramWebhookSecretHint') }}
                         </p>
                         <p
                             v-if="webhookSecret && !isWebhookSecretValid"
-                            class="mt-1 text-xs text-red-600 dark:text-red-400"
+                            class="mt-1 text-xs text-red-400"
                         >
                             {{ t('settings.telegramWebhookSecretInvalid') }}
                         </p>
@@ -295,57 +299,60 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                    <label class="block text-xs font-medium text-zinc-300">{{
                         t('settings.telegramAllowedUsers')
                     }}</label>
                     <textarea
                         v-model="allowedUsersStr"
                         rows="2"
                         placeholder="123456789, 987654321"
-                        class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:outline-hidden focus-visible:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
+                        class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                     />
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramAllowedUsersHint') }}
                         <a
                             href="https://t.me/userinfobot"
                             target="_blank"
-                            class="text-indigo-600 hover:text-indigo-500"
+                            class="font-mono text-zinc-300 underline hover:text-zinc-100"
                             >{{ t('settings.telegramGetUserId') }}</a
                         >
                     </p>
                 </div>
 
                 <div
-                    class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 misub-radius-md p-4"
+                    class="bg-transparent border border-zinc-800 rounded-md p-4"
                 >
                     <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-amber-900 dark:text-amber-200"
-                                >{{ t('settings.telegramPublicAccess') }}</label
-                            >
-                            <p class="mt-1 text-xs text-amber-800 dark:text-amber-300">
-                                {{ t('settings.telegramPublicAccessHint') }}
-                            </p>
+                        <div class="flex items-start gap-2.5">
+                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                            <div>
+                                <label
+                                    class="block text-sm font-medium text-zinc-100"
+                                    >{{ t('settings.telegramPublicAccess') }}</label
+                                >
+                                <p class="mt-1 text-xs text-zinc-400">
+                                    {{ t('settings.telegramPublicAccessHint') }}
+                                </p>
+                            </div>
                         </div>
                         <Switch v-model="telegramPushConfig.allow_all_users" />
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    <label class="block text-xs font-medium text-zinc-300"
                         >Webhook URL</label
                     >
-                    <div class="mt-1 flex misub-radius-md shadow-xs">
+                    <div class="mt-1.5 flex rounded-md shadow-none">
                         <input
                             :value="webhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l-md sm:text-sm dark:text-white"
+                            class="flex-1 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
                         />
                         <button
                             type="button"
-                            class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 focus-visible:outline-hidden"
+                            class="inline-flex items-center px-4 py-2 border border-l-0 border-zinc-800 rounded-r-md bg-transparent text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-hidden"
                             @click="copyText(webhookUrl, 'webhook')"
                         >
                             {{
@@ -355,26 +362,26 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramWebhookUrlHint') }}
                     </p>
                 </div>
 
                 <div v-if="setWebhookUrl">
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{
+                    <label class="block text-xs font-medium text-zinc-300">{{
                         t('settings.telegramSetWebhookLink')
                     }}</label>
-                    <div class="mt-1 flex misub-radius-md shadow-xs">
+                    <div class="mt-1.5 flex rounded-md shadow-none">
                         <input
                             :value="setWebhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l-md sm:text-sm dark:text-white font-mono text-xs"
+                            class="flex-1 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
                             :aria-label="t('settings.telegramPublicAccess')"
                         />
                         <button
                             type="button"
-                            class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 dark:border-gray-600 rounded-r-md bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 focus-visible:outline-hidden"
+                            class="inline-flex items-center px-4 py-2 border border-l-0 border-zinc-800 rounded-r-md bg-transparent text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-hidden"
                             @click="copyText(setWebhookUrl, 'setWebhook')"
                         >
                             {{
@@ -384,16 +391,17 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramSetWebhookHint') }}
                     </p>
                 </div>
 
                 <div
                     v-else
-                    class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 misub-radius-md p-3"
+                    class="flex items-center gap-2.5 bg-transparent border border-zinc-800 rounded-md p-3"
                 >
-                    <p class="text-xs text-yellow-700 dark:text-yellow-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                    <p class="text-xs text-zinc-400">
                         {{ t('settings.telegramSetWebhookEmpty') }}
                     </p>
                 </div>
@@ -401,11 +409,11 @@
                 <div class="flex flex-col sm:flex-row gap-2">
                     <button
                         type="button"
-                        class="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 text-sm font-medium misub-radius-md border transition-colors flex-1"
+                        class="flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2 text-xs font-medium rounded-md border transition-colors flex-1"
                         :class="
                             showSetupGuide
-                                ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300'
-                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
+                                : 'bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100'
                         "
                         @click="showSetupGuide = !showSetupGuide"
                     >
@@ -414,11 +422,11 @@
 
                     <button
                         type="button"
-                        class="flex items-center justify-center sm:justify-start gap-2 px-4 py-2 text-sm font-medium misub-radius-md border transition-colors flex-1"
+                        class="flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2 text-xs font-medium rounded-md border transition-colors flex-1"
                         :class="
                             showUsageGuide
-                                ? 'bg-green-50 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-700 dark:text-green-300'
-                                : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                                ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
+                                : 'bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100'
                         "
                         @click="showUsageGuide = !showUsageGuide"
                     >
@@ -428,10 +436,10 @@
 
                 <div
                     v-if="showSetupGuide"
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 misub-radius-md p-4"
+                    class="bg-transparent border border-zinc-800 rounded-md p-4"
                 >
                     <ol
-                        class="list-decimal list-inside space-y-2 text-sm text-blue-700 dark:text-blue-300"
+                        class="list-decimal list-inside space-y-2 text-xs text-zinc-300"
                     >
                         <li>{{ t('settings.telegramSetupStep1') }}</li>
                         <li>{{ t('settings.telegramSetupStep2') }}</li>
@@ -442,9 +450,9 @@
 
                 <div
                     v-if="showUsageGuide"
-                    class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 misub-radius-md p-4"
+                    class="bg-transparent border border-zinc-800 rounded-md p-4"
                 >
-                    <div class="space-y-2 text-sm text-green-700 dark:text-green-300">
+                    <div class="space-y-2 text-xs text-zinc-300">
                         <p>{{ t('settings.telegramUsageCommands') }}</p>
                         <p>{{ t('settings.telegramUsageImport') }}</p>
                         <p>{{ t('settings.telegramUsageIsolation') }}</p>

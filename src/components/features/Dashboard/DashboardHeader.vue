@@ -15,18 +15,17 @@
 
 <template>
     <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 bg-white/80 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg p-5"
+        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 bg-[#0c0c0e] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-none"
     >
-        <div class="flex flex-wrap items-center gap-4">
-            <h1
-                class="text-3xl font-display font-bold text-gray-900 dark:text-white tracking-tight"
-            >
+        <div class="flex flex-wrap items-center gap-3">
+            <h1 class="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">
                 {{ t('nav.dashboard') }}
             </h1>
             <span
                 v-if="formattedTotalRemainingTraffic !== '0 B'"
-                class="px-4 py-1.5 text-sm font-semibold text-green-700 bg-green-100/80 dark:text-green-300 dark:bg-green-500/20 rounded-full border border-green-200 dark:border-green-500/30 backdrop-blur-sm"
+                class="inline-flex items-center gap-2 px-3 py-1 text-xs font-mono font-medium text-zinc-300 bg-transparent rounded-md border border-zinc-800"
             >
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                 {{
                     t('dashboard.totalRemainingTraffic', {
                         traffic: formattedTotalRemainingTraffic,
@@ -34,21 +33,21 @@
                 }}
             </span>
         </div>
-        <div class="flex items-center gap-3 w-full md:w-auto">
+        <div class="flex items-center gap-2.5 w-full md:w-auto">
             <button
                 @click="$emit('openLog')"
-                class="flex-1 md:flex-none px-5 py-2.5 misub-radius-lg text-sm font-semibold text-gray-600 dark:text-gray-300 bg-white/80 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 transition-all shadow-sm hover:shadow-md"
+                class="flex-1 md:flex-none px-4 py-2 rounded-md text-xs sm:text-sm font-medium text-zinc-200 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 border border-zinc-800 transition-colors shadow-none"
             >
                 {{ t('actions.viewLog') }}
             </button>
             <button
                 @click="$emit('openBulkImport')"
-                class="flex-1 md:flex-none px-5 py-2.5 misub-radius-lg text-sm font-semibold text-white bg-primary-600 hover:bg-primary-500 shadow-lg shadow-primary-500/30 hover:shadow-primary-500/50 transition-all transform hover:-translate-y-0.5"
+                class="flex-1 md:flex-none px-4 py-2 rounded-md text-xs sm:text-sm font-semibold text-zinc-900 bg-zinc-100 hover:bg-white border border-zinc-100 transition-colors shadow-none"
             >
                 {{ t('actions.bulkImport') }}
             </button>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 md:mt-0 md:ml-auto">
+        <p class="text-xs text-zinc-400 mt-2 md:mt-0 md:ml-auto">
             {{ t('dashboard.dashboardHint') }}
         </p>
     </div>

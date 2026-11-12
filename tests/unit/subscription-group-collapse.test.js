@@ -126,7 +126,7 @@ describe('订阅源按站点折叠', () => {
         expect(wrapper.findAll('.stub-card')).toHaveLength(3);
         expect(wrapper.html()).toContain('Project a');
         expect(
-            wrapper.find('[aria-expanded="false"]').element.closest('.rounded-xl').textContent
+            wrapper.find('[aria-expanded="false"]').element.closest('.rounded-md, .rounded-xl').textContent
         ).toContain('2');
     });
 

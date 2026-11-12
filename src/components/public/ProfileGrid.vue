@@ -33,9 +33,9 @@
 
     // 动态网格类
     const gridClass = computed(() => {
-        if (isSingleProfile.value) return 'grid grid-cols-1 gap-8 w-full';
-        if (isTwoProfiles.value) return 'grid grid-cols-1 md:grid-cols-2 gap-8 w-full';
-        return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full';
+        if (isSingleProfile.value) return 'grid grid-cols-1 gap-4 w-full';
+        if (isTwoProfiles.value) return 'grid grid-cols-1 md:grid-cols-2 gap-4 w-full';
+        return 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full';
     });
 </script>
 

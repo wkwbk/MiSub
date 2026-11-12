@@ -40,23 +40,25 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">
+                <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
                     {{ t('changelog.title') }}
                 </h3>
                 <span
                     v-if="isLatest"
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300"
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-800 text-xs font-medium bg-transparent text-zinc-700 dark:text-zinc-300"
                 >
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ t('changelog.latestVersion') }}
                 </span>
                 <span
                     v-else
-                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 animate-pulse"
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-800 text-xs font-medium bg-transparent text-zinc-700 dark:text-zinc-300"
                 >
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                     {{ t('changelog.newVersionAvailable') }}
                 </span>
             </div>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p class="mt-1 text-xs font-mono text-zinc-500">
                 <template v-if="isLatest">{{
                     t('changelog.upToDate', { version: currentVersion })
                 }}</template>
@@ -74,16 +76,16 @@
         <template #body>
             <div class="space-y-4">
                 <div
-                    class="rounded-lg border border-indigo-200/70 bg-indigo-50/70 px-4 py-3 text-sm text-indigo-700 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300"
+                    class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-4 py-3 text-sm text-zinc-800 dark:text-zinc-200"
                 >
-                    <div class="font-semibold">
+                    <div class="font-semibold font-mono text-xs">
                         {{
                             isLatest
                                 ? t('changelog.highlightsTitle', { version: currentVersion })
                                 : release.name || release.tag_name || t('changelog.releaseNotes')
                         }}
                     </div>
-                    <div v-if="!isLatest && release.published_at" class="mt-1 text-xs opacity-80">
+                    <div v-if="!isLatest && release.published_at" class="mt-1 text-xs font-mono text-zinc-500">
                         {{
                             t('changelog.publishedAt', {
                                 date: new Date(release.published_at).toLocaleString(),
@@ -93,7 +95,7 @@
                 </div>
 
                 <div
-                    class="max-h-[420px] overflow-y-auto rounded-lg border border-gray-200 bg-gray-50/70 p-4 text-sm leading-6 text-gray-700 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 whitespace-pre-wrap"
+                    class="max-h-[420px] overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090b] p-4 text-xs font-mono leading-6 text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap"
                 >
                     <template v-if="isLatest && versionStore.localChangelog">
                         {{ versionStore.localChangelog }}
@@ -109,7 +111,7 @@
                     :href="release.html_url"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-200"
+                    class="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline underline-offset-4"
                 >
                     {{ t('changelog.viewReleasePage') }}
                     <svg
@@ -118,7 +120,7 @@
                         viewBox="0 0 24 24"
                         stroke-width="1.5"
                         stroke="currentColor"
-                        class="w-4 h-4"
+                        class="w-3.5 h-3.5"
                     >
                         <path
                             stroke-linecap="round"
@@ -131,16 +133,16 @@
         </template>
 
         <template #footer>
-            <div class="flex w-full justify-end gap-3">
+            <div class="flex w-full justify-end gap-2">
                 <button
                     @click="emit('suppress')"
-                    class="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    class="rounded-md border border-zinc-300 dark:border-zinc-800 bg-transparent px-4 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 >
                     {{ t('changelog.dontShowAgain') }}
                 </button>
                 <button
                     @click="emit('confirm')"
-                    class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+                    class="rounded-md bg-zinc-900 px-4 py-1.5 text-xs font-medium text-zinc-100 transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white"
                 >
                     {{ t('actions.confirm') }}
                 </button>

@@ -15,14 +15,14 @@
 <template>
     <!-- User-Agent -->
     <div>
-        <label for="sub-edit-ua" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label for="sub-edit-ua" class="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
             {{ t('subscriptions.uaLabel') }}
-            <span class="text-xs text-gray-500 ml-2">{{ t('subscriptions.optionalDefault') }}</span>
+            <span class="text-xs text-zinc-500 ml-2">{{ t('subscriptions.optionalDefault') }}</span>
         </label>
         <select
             id="sub-edit-ua"
             v-model="editingSubscription.customUserAgent"
-            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md dark:text-white"
+            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono focus:outline-hidden focus:border-zinc-500"
         >
             <option value="">{{ t('subscriptions.defaultUa') }}</option>
             <option value="MiSub">MiSub</option>
@@ -34,7 +34,7 @@
         </select>
         <p
             v-if="editingSubscription.customUserAgent"
-            class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+            class="text-xs font-mono text-zinc-500 mt-1"
         >
             {{ t('subscriptions.currentUa', { ua: editingSubscription.customUserAgent }) }}
         </p>
@@ -44,10 +44,10 @@
     <div>
         <label
             for="sub-edit-website"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            class="block text-xs font-medium text-zinc-700 dark:text-zinc-300"
         >
             {{ t('subscriptions.websiteLabel') }}
-            <span class="text-xs text-gray-500 ml-2">{{ t('subscriptions.websiteOptional') }}</span>
+            <span class="text-xs text-zinc-500 ml-2">{{ t('subscriptions.websiteOptional') }}</span>
         </label>
         <input
             id="sub-edit-website"
@@ -55,34 +55,34 @@
             type="url"
             inputmode="url"
             placeholder="https://example.com"
-            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md dark:text-white font-mono text-sm"
+            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono text-sm focus:outline-hidden focus:border-zinc-500"
         />
-        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p class="mt-1 text-xs text-zinc-500">
             {{ t('subscriptions.websiteHint') }}
         </p>
     </div>
 
     <!-- 备注 -->
     <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{
+        <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300">{{
             t('subscriptions.notesLabel')
         }}</label>
         <textarea
             v-model="editingSubscription.notes"
             :placeholder="t('subscriptions.notesPlaceholder')"
             rows="2"
-            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md dark:text-white"
+            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:border-zinc-500"
         ></textarea>
     </div>
 
     <!-- 开关选项 -->
-    <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-700">
+    <div class="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
         <div class="flex items-center justify-between gap-4">
             <div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
+                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
                     t('subscriptions.nodeCacheTitle')
                 }}</span>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p class="text-xs text-zinc-500 mt-0.5">
                     {{ t('subscriptions.nodeCacheDesc') }}
                 </p>
             </div>
@@ -91,10 +91,10 @@
 
         <div class="flex items-center justify-between gap-4">
             <div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
+                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
                     t('subscriptions.plusAsSpaceTitle')
                 }}</span>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p class="text-xs text-zinc-500 mt-0.5">
                     {{ t('subscriptions.plusAsSpaceDesc') }}
                 </p>
             </div>
@@ -103,10 +103,10 @@
 
         <div class="flex items-center justify-between gap-4">
             <div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
+                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
                     t('subscriptions.excludeTrafficTitle')
                 }}</span>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                <p class="text-xs text-zinc-500 mt-0.5">
                     {{ t('subscriptions.excludeTrafficDesc') }}
                 </p>
             </div>

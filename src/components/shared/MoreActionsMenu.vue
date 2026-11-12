@@ -116,11 +116,11 @@
             aria-haspopup="menu"
             :aria-label="t('actions.bulkActions')"
             :aria-controls="menuId"
-            class="p-2.5 misub-radius-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            class="p-2 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors"
         >
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5 text-gray-600 dark:text-gray-300"
+                class="h-4 w-4 text-zinc-400 hover:text-zinc-100"
                 viewBox="0 0 20 20"
                 fill="currentColor"
             >
@@ -138,7 +138,7 @@
                 role="menu"
                 @keydown="handleMenuKeydown"
                 :class="[
-                    'absolute right-0 mt-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm misub-radius-lg shadow-lg dark:shadow-2xl z-50 ring-1 ring-black/5',
+                    'absolute right-0 mt-2 bg-[#0c0c0e] border border-zinc-800 rounded-md shadow-none z-50 divide-y divide-zinc-800',
                     menuWidthClass,
                 ]"
             >
@@ -154,7 +154,7 @@
                     :id="menuId"
                     role="menu"
                     :class="[
-                        'fixed mt-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm misub-radius-lg shadow-lg dark:shadow-2xl ring-1 ring-black/5',
+                        'fixed mt-2 bg-[#0c0c0e] border border-zinc-800 rounded-md shadow-none divide-y divide-zinc-800',
                         menuWidthClass,
                     ]"
                     :style="fixedMenuPosition"

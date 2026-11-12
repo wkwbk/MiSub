@@ -376,21 +376,8 @@
     };
 
     // 获取协议类型的显示样式
-    const getProtocolStyle = (protocol) => {
-        const styles = {
-            vmess: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-            vless: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-            trojan: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-            ss: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-            ssr: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-            hysteria2: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-            hy2: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
-            tuic: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-            socks5: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-            anytls: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-            unknown: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
-        };
-        return styles[protocol] || styles.unknown;
+    const getProtocolStyle = () => {
+        return 'bg-transparent text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 font-mono';
     };
 
     // 获取地区 Emoji
@@ -541,31 +528,31 @@
 <template>
     <Modal :show="show" size="6xl" @update:show="(value) => !value && closeModal()">
         <template #title>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between px-2">
-                <div class="min-w-0 space-y-1">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div class="min-w-0 space-y-0.5">
                     <div class="flex items-center gap-2">
-                        <div class="w-1.5 h-6 bg-indigo-600 rounded-full"></div>
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                         <h3
-                            class="truncate text-lg font-black text-gray-900 dark:text-white sm:text-2xl tracking-tight"
+                            class="truncate text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg tracking-tight"
                         >
                             {{ title }}
                         </h3>
                     </div>
                     <p
-                        class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-widest pl-3.5"
+                        class="text-xs text-zinc-500 pl-3.5"
                     >
                         {{ subtitle }}
                     </p>
                 </div>
-                <div class="flex items-center gap-3 self-end sm:self-auto">
+                <div class="flex items-center gap-2 self-end sm:self-auto">
                     <button
                         v-if="profileId"
                         @click="pickingMode = !pickingMode"
-                        class="px-4 py-2 text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shadow-none"
                         :class="
                             pickingMode
-                                ? 'bg-indigo-600 text-white shadow-indigo-500/20'
-                                : 'bg-gray-100 dark:bg-gray-700/50 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                                ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                                : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
                         "
                     >
                         {{
@@ -574,14 +561,14 @@
                     </button>
                     <button
                         @click="closeModal"
-                        class="p-2.5 rounded-xl bg-gray-100 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                        class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                         :aria-label="t('common.close')"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
-                                stroke-width="2.5"
+                                stroke-width="2"
                                 d="M6 18L18 6M6 6l12 12"
                             ></path>
                         </svg>
@@ -591,185 +578,41 @@
         </template>
 
         <template #body>
-            <!-- 统计信息 -->
+            <!-- 统计信息 (Exposed Hairline Grid Style) -->
             <div
                 v-if="!loading && !error && Object.keys(protocolStats).length > 0"
-                class="border-b border-gray-100 bg-gray-50/30 px-4 py-6 dark:border-gray-800/50 dark:bg-gray-900/10 sm:px-8"
+                class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800 bg-transparent mb-4"
             >
-                <!-- 桌面端统计布局 (Premium Cards) -->
-                <div class="hidden lg:grid grid-cols-4 gap-6">
-                    <div
-                        class="group relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/5 dark:bg-white/5"
-                    >
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <div
-                                    class="text-xs font-bold text-gray-500 uppercase tracking-tighter dark:text-gray-400"
-                                >
-                                    Nodes Total
-                                </div>
-                                <div class="text-2xl font-black text-gray-900 dark:text-white">
-                                    {{ allNodes.length }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-500/10 transition-colors pointer-events-none"
-                        ></div>
+                <div class="p-4">
+                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                        Nodes Total
                     </div>
-
-                    <div
-                        class="group relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/5 dark:bg-white/5"
-                    >
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <div
-                                    class="text-xs font-bold text-gray-500 uppercase tracking-tighter dark:text-gray-400"
-                                >
-                                    Protocols
-                                </div>
-                                <div class="text-2xl font-black text-gray-900 dark:text-white">
-                                    {{ Object.keys(protocolStats).length }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-purple-500/10 transition-colors pointer-events-none"
-                        ></div>
-                    </div>
-
-                    <div
-                        class="group relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/5 dark:bg-white/5"
-                    >
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <div
-                                    class="text-xs font-bold text-gray-500 uppercase tracking-tighter dark:text-gray-400"
-                                >
-                                    Regions
-                                </div>
-                                <div class="text-2xl font-black text-gray-900 dark:text-white">
-                                    {{ Object.keys(regionStats).length }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-orange-500/10 transition-colors pointer-events-none"
-                        ></div>
-                    </div>
-
-                    <div
-                        class="group relative rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition-all hover:shadow-md dark:border-white/5 dark:bg-white/5"
-                    >
-                        <div class="flex items-center gap-4">
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                            >
-                                <svg
-                                    class="h-6 w-6"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                    />
-                                </svg>
-                            </div>
-                            <div>
-                                <div
-                                    class="text-xs font-bold text-gray-500 uppercase tracking-tighter dark:text-gray-400"
-                                >
-                                    Total Pages
-                                </div>
-                                <div class="text-2xl font-black text-gray-900 dark:text-white">
-                                    {{ totalPages }}
-                                </div>
-                            </div>
-                        </div>
-                        <div
-                            class="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-emerald-500/10 transition-colors pointer-events-none"
-                        ></div>
+                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                        {{ allNodes.length }}
                     </div>
                 </div>
-
-                <!-- 移动端统计布局 (Compact Cards) -->
-                <div class="grid grid-cols-2 gap-3 lg:hidden">
-                    <div
-                        class="flex flex-col gap-1 rounded-2xl bg-indigo-50/50 p-4 dark:bg-indigo-500/10"
-                    >
-                        <span
-                            class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider"
-                            >{{ t('nodePreview.nodesTotal') }}</span
-                        >
-                        <span class="text-2xl font-black text-indigo-600 dark:text-indigo-400">{{
-                            allNodes.length
-                        }}</span>
+                <div class="p-4">
+                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                        Protocols
                     </div>
-                    <div
-                        class="flex flex-col gap-1 rounded-2xl bg-purple-50/50 p-4 dark:bg-purple-500/10"
-                    >
-                        <span
-                            class="text-[10px] font-bold text-purple-400 uppercase tracking-wider"
-                            >{{ t('nodePreview.protocolTypes') }}</span
-                        >
-                        <span class="text-2xl font-black text-purple-600 dark:text-purple-400">{{
-                            Object.keys(protocolStats).length
-                        }}</span>
+                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                        {{ Object.keys(protocolStats).length }}
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                        Regions
+                    </div>
+                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                        {{ Object.keys(regionStats).length }}
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                        Total Pages
+                    </div>
+                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                        {{ totalPages }}
                     </div>
                 </div>
             </div>
@@ -777,7 +620,7 @@
             <!-- 筛选控件 - 统一响应式布局 -->
             <NodeFilters
                 v-if="!loading && !error && Object.keys(protocolStats).length > 0"
-                class="px-3 sm:px-6 py-2 sm:py-4 border-b border-gray-200 dark:border-gray-700"
+                class="mb-4"
                 :search-query="searchQuery"
                 :protocol-filter="protocolFilter"
                 :region-filter="regionFilter"
@@ -796,20 +639,20 @@
 
             <!-- 节点列表 -->
             <div
-                class="flex-1 overflow-hidden bg-white dark:bg-gray-800"
+                class="flex-1 overflow-hidden bg-transparent"
                 :class="{ 'pb-24 sm:pb-28': pickingMode }"
                 style="min-height: 0"
             >
-                <div class="h-full overflow-y-auto px-4 py-4 sm:px-6">
+                <div class="h-full overflow-y-auto">
                     <!-- 加载状态 -->
                     <div v-if="loading" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-xl border border-gray-200/70 bg-white px-8 py-8 text-center shadow-sm dark:border-white/10 dark:bg-white/5"
+                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-8 py-8 text-center shadow-none"
                         >
                             <div
-                                class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"
+                                class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-zinc-500"
                             ></div>
-                            <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-3 text-xs text-zinc-500">
                                 {{ t('nodePreview.loadingNodes') }}
                             </p>
                         </div>
@@ -818,25 +661,15 @@
                     <!-- 错误状态 -->
                     <div v-else-if="error" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-xl border border-red-200/70 bg-red-50/80 px-8 py-8 text-center shadow-sm dark:border-red-500/20 dark:bg-red-500/10"
+                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-8 py-8 text-center shadow-none"
                         >
-                            <svg
-                                class="mx-auto h-12 w-12 text-red-500"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
-                            </svg>
-                            <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+                            <div class="flex items-center justify-center gap-2 text-sm text-red-500">
+                                <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                <span>{{ error }}</span>
+                            </div>
                             <button
                                 @click="loadNodes"
-                                class="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+                                class="mt-4 rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-1.5 text-xs font-medium text-zinc-100 dark:text-zinc-900 transition-colors hover:bg-zinc-800 dark:hover:bg-white"
                             >
                                 {{ t('common.retry') }}
                             </button>
@@ -849,22 +682,9 @@
                         class="flex h-64 items-center justify-center"
                     >
                         <div
-                            class="rounded-xl border border-dashed border-gray-300 bg-white/70 px-8 py-8 text-center dark:border-gray-700 dark:bg-gray-900/50"
+                            class="rounded-md border border-dashed border-zinc-300 dark:border-zinc-800 bg-transparent px-8 py-8 text-center"
                         >
-                            <svg
-                                class="mx-auto h-12 w-12 text-gray-500 dark:text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                />
-                            </svg>
-                            <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="text-xs text-zinc-500">
                                 {{ t('nodePreview.noMatchingNodes') }}
                             </p>
                         </div>
@@ -919,34 +739,34 @@
             class="fixed bottom-4 left-1/2 z-50 w-[94%] max-w-2xl -translate-x-1/2 sm:bottom-6"
         >
             <div
-                class="flex items-center justify-between gap-4 rounded-2xl border border-white/20 bg-indigo-600 p-4 text-white shadow-2xl backdrop-blur-md"
+                class="flex items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 text-zinc-100 shadow-none"
             >
                 <div class="flex flex-col">
-                    <span class="text-xs opacity-80 tracking-widest font-bold">{{
+                    <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">{{
                         t('nodePreview.pickingMode')
                     }}</span>
-                    <span class="text-sm font-medium"
+                    <span class="text-xs font-medium text-zinc-300"
                         >{{ t('nodePreview.selectedNodesPrefix') }}
-                        <span class="text-lg font-black">{{ selectedUrls.size }}</span>
+                        <span class="text-sm font-mono font-bold text-zinc-100">{{ selectedUrls.size }}</span>
                         {{ t('nodePreview.selectedNodesSuffix') }}</span
                     >
                 </div>
                 <div class="flex flex-wrap items-center justify-end gap-2">
                     <button
                         @click="selectAll"
-                        class="rounded-xl bg-white/10 px-3 py-1.5 text-xs transition-colors hover:bg-white/20"
+                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
                         {{ t('actions.selectAll') }}
                     </button>
                     <button
                         @click="clearSelection"
-                        class="rounded-xl bg-white/10 px-3 py-1.5 text-xs transition-colors hover:bg-white/20"
+                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
                         {{ t('common.clear') }}
                     </button>
                     <button
                         @click="handleSaveSelection"
-                        class="rounded-xl bg-white px-4 py-2 text-sm font-bold text-indigo-600 shadow-lg transition-all hover:bg-indigo-50 active:scale-95"
+                        class="rounded-md bg-zinc-100 px-4 py-1.5 text-xs font-medium text-zinc-900 shadow-none transition-colors hover:bg-white"
                     >
                         {{ t('nodePreview.saveSelection') }}
                     </button>

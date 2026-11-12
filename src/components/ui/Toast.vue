@@ -14,24 +14,16 @@
     const getToastConfig = (type) => {
         const configs = {
             success: {
-                bg: 'bg-gradient-to-r from-green-500 to-emerald-500',
-                icon: 'M5 13l4 4L19 7',
-                ring: 'ring-green-500/20',
+                dot: 'bg-emerald-500',
             },
             error: {
-                bg: 'bg-gradient-to-r from-red-500 to-rose-500',
-                icon: 'M6 18L18 6M6 6l12 12',
-                ring: 'ring-red-500/20',
+                dot: 'bg-red-500',
             },
             info: {
-                bg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
-                icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-                ring: 'ring-blue-500/20',
+                dot: 'bg-sky-500',
             },
             warning: {
-                bg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
-                icon: 'M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-                ring: 'ring-yellow-500/20',
+                dot: 'bg-amber-500',
             },
         };
         return configs[type] || configs.info;
@@ -44,7 +36,7 @@
 
 <template>
     <div
-        class="fixed flex flex-col items-end gap-3 pointer-events-none top-20 md:top-4 right-4 left-4 md:left-auto max-h-[calc(100vh-120px)] md:max-h-[100vh] overflow-hidden pr-1 pb-safe"
+        class="fixed flex flex-col items-end gap-2.5 pointer-events-none top-20 md:top-4 right-4 left-4 md:left-auto max-h-[calc(100vh-120px)] md:max-h-[100vh] overflow-hidden pr-1 pb-safe"
         :style="{ zIndex: 'var(--z-toast)' }"
     >
         <TransitionGroup name="toast">
@@ -54,19 +46,18 @@
                 :role="getToastRole(toast.type)"
                 :aria-live="getToastAriaLive(toast.type)"
                 aria-atomic="true"
-                class="toast-container pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md backdrop-blur-lg border border-white/20 misub-radius-lg shadow-2xl overflow-hidden ring-1 transition-all duration-300 relative"
-                :class="[getToastConfig(toast.type).bg, getToastConfig(toast.type).ring]"
+                class="toast-container pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md bg-[#0c0c0e] border border-zinc-800 rounded-md shadow-none overflow-hidden transition-all duration-200 relative"
             >
                 <!-- Toast 内容 -->
-                <div class="relative p-4 pl-5">
+                <div class="relative p-3.5 pl-4">
                     <!-- 关闭按钮 -->
                     <button
                         @click="handleClose(toast.id)"
-                        class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 w-7 h-7 touch-target"
+                        class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-900 transition-colors focus-visible:outline-none w-6 h-6 touch-target"
                         :aria-label="t('common.toastClose')"
                     >
                         <svg
-                            class="w-4 h-4 text-white flex-shrink-0"
+                            class="w-3.5 h-3.5 flex-shrink-0"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -80,37 +71,25 @@
                         </svg>
                     </button>
 
-                    <!-- 图标和消息 -->
-                    <div class="flex items-start gap-3 pr-8">
-                        <!-- 动态图标 -->
-                        <div class="flex-shrink-0 w-6 h-6 flex items-center justify-center mt-0.5">
-                            <svg
-                                class="w-full h-full text-white"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    :d="getToastConfig(toast.type).icon"
-                                />
-                            </svg>
-                        </div>
+                    <!-- 圆点和消息 -->
+                    <div class="flex items-center gap-2.5 pr-7">
+                        <span
+                            class="h-1.5 w-1.5 rounded-full shrink-0"
+                            :class="getToastConfig(toast.type).dot"
+                        ></span>
 
                         <!-- 消息内容 -->
                         <div class="flex-1 min-w-0">
-                            <p class="text-sm font-medium text-white leading-relaxed break-words">
+                            <p class="text-xs font-medium text-zinc-200 leading-relaxed break-words">
                                 {{ toast.message }}
                             </p>
                         </div>
                     </div>
 
                     <!-- 进度条 -->
-                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                    <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-zinc-800">
                         <div
-                            class="h-full bg-white/60 ease-linear progress-bar"
+                            class="h-full bg-zinc-500 ease-linear progress-bar"
                             :style="{ animationDuration: `${toast.duration}ms` }"
                         ></div>
                     </div>
