@@ -59,7 +59,7 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-[#171717] hover:bg-zinc-900/60 p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_0_18px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.65)] border border-zinc-800 transition-all duration-200 focus-visible:outline-hidden focus-visible:bg-zinc-900/60';
+        'stat-card group w-full text-left bg-[#171717] p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] border border-zinc-800 hover:border-zinc-500 transition-all duration-200 focus-visible:outline-hidden focus-visible:border-zinc-400';
     const normalCardClass = 'border-zinc-800';
     const warningCardClass = 'border-zinc-800';
 
@@ -316,7 +316,7 @@
         transform: translateY(20px) scale(0.95);
         transition:
             opacity 0.6s ease-out,
-            transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.2s ease,
             border-color 0.2s ease;
         transition-delay: 0ms;
@@ -325,6 +325,15 @@
     .stat-card-visible {
         opacity: 1;
         transform: translateY(0) scale(1);
+    }
+
+    .stat-card-visible:hover {
+        transform: translateY(-4px);
+        z-index: 10;
+    }
+
+    .stat-card-visible:active {
+        transform: translateY(0);
     }
 
     @keyframes ping-slow {
