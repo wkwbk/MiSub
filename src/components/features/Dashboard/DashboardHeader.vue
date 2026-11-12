@@ -15,7 +15,7 @@
 
 <template>
     <div
-        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-none"
+        class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4 bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
     >
         <div class="flex flex-wrap items-center gap-3">
             <h1 class="text-xl sm:text-2xl font-semibold text-zinc-100 tracking-tight">

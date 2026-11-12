@@ -5,7 +5,7 @@
 
 <template>
     <div
-        class="h-full w-full bg-[#171717] md:shadow-none md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
+        class="h-full w-full bg-[#171717] md:shadow-[0_0_13px_rgba(0,0,0,0.11)] md:dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
     >
         <!-- Sidebar -->
         <aside

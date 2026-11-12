@@ -328,7 +328,7 @@
 <template>
     <div>
         <div
-            class="mb-4 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
+            class="mb-4 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
         >
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
@@ -512,7 +512,7 @@
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
                     <div
-                        class="rounded-md border border-zinc-800 bg-[#171717] shadow-none"
+                        class="rounded-md border border-zinc-800 bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                     >
                         <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
                             <button

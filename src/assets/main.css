@@ -20,6 +20,9 @@
   --color-primary-700: #4f59b8;
   --color-primary-800: #424a94;
   --color-primary-900: #373d75;
+
+  --shadow-card: 0 0 13px rgba(0, 0, 0, 0.11);
+  --shadow-card-hover: 0 0 18px rgba(0, 0, 0, 0.16);
 }
 
 :root {
@@ -55,6 +58,10 @@
   --border-subtle-dark: #262626;
   --border-standard-dark: #262626;
   --focus-ring: 0 0 0 1px #737373;
+
+  /* Card shadows (IPCheck.ing inspired soft elevation: 0 0 13px rgba(0,0,0,0.11)) */
+  --shadow-card: 0 0 13px rgba(0, 0, 0, 0.11);
+  --shadow-card-hover: 0 0 18px rgba(0, 0, 0, 0.16);
 
   --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -102,6 +109,8 @@
   .dark,
   .dark html {
     color-scheme: dark;
+    --shadow-card: 0 0 15px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: 0 0 20px rgba(0, 0, 0, 0.65);
   }
 
   body {
@@ -145,41 +154,41 @@
 .glass {
   background: var(--surface-card-light);
   border: 1px solid var(--border-subtle-light);
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 
 .dark .glass {
   background: var(--surface-card-dark);
   border-color: var(--border-subtle-dark);
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 
 .glass-panel {
   border-radius: var(--misub-radius-md);
   background: var(--surface-panel-light);
   border: 1px solid var(--border-subtle-light);
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 
 .dark .glass-panel {
   background: var(--surface-panel-dark);
   border-color: var(--border-subtle-dark);
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
 }
 
 .card-hover {
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.2s ease;
 }
 
 .card-hover:hover {
   border-color: #a1a1aa;
-  box-shadow: none;
+  box-shadow: var(--shadow-card-hover);
 }
 
 .dark .card-hover:hover {
   background: var(--surface-card-hover-dark);
   border-color: #404040;
-  box-shadow: none;
+  box-shadow: var(--shadow-card-hover);
 }
 
 @keyframes shimmer {
@@ -370,8 +379,8 @@ textarea {
 }
 
 .app-nav-bar {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .mobile-nav-glass {
@@ -382,8 +391,8 @@ textarea {
   min-height: calc(4rem + max(env(safe-area-inset-bottom, 0px), 12px));
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
   background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-top: 1px solid var(--border-subtle-light);
   box-shadow: 0 -8px 24px rgba(17, 24, 39, 0.06);
   box-sizing: border-box;
@@ -434,24 +443,48 @@ textarea {
     right: 0;
     z-index: var(--z-nav);
     background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: background-color 0.15s ease;
     min-height: calc(env(safe-area-inset-top, 0px) + 80px);
+  }
+
+  @supports (backdrop-filter: blur(0px)) {
+    .ios-fixed-header {
+      background: rgba(255, 255, 255, 0.6) !important;
+    }
   }
 
   .dark .ios-fixed-header {
     background: rgba(19, 21, 21, 0.8) !important;
   }
 
+  @supports (backdrop-filter: blur(0px)) {
+    .dark .ios-fixed-header {
+      background: rgba(19, 21, 21, 0.6) !important;
+    }
+  }
+
   .ios-status-overlay {
     background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  @supports (backdrop-filter: blur(0px)) {
+    .ios-status-overlay {
+      background: rgba(255, 255, 255, 0.6);
+    }
   }
 
   .dark .ios-status-overlay {
     background: rgba(19, 21, 21, 0.8);
+  }
+
+  @supports (backdrop-filter: blur(0px)) {
+    .dark .ios-status-overlay {
+      background: rgba(19, 21, 21, 0.6);
+    }
   }
 }
 
@@ -722,4 +755,29 @@ html:not(.dark) .text-emerald-400:not([class*="dark:text-"]) {
 html:not(.dark) .text-sky-400:not([class*="dark:text-"]) {
   color: #0284c7;
 }
+
+/* Universal Card & Panel Shadows (Soft elevation matching IPCheck.ing 0 0 13px rgba(0,0,0,0.11)) */
+.bg-\[\#171717\].rounded-md,
+.bg-\[\#171717\].rounded-lg,
+.bg-\[\#171717\].rounded-xl,
+.bg-white.rounded-md[class*="dark:bg-\[\#171717\]"],
+.bg-white.rounded-lg[class*="dark:bg-\[\#171717\]"],
+.bg-white.rounded-md[class*="dark:border-zinc-800"],
+.stat-card,
+.profile-card,
+.announcement-card,
+.card-shadow,
+[data-card-shadow="true"] {
+  box-shadow: var(--shadow-card);
+}
+
+/* Universal Interactive Card Hover Elevation */
+.bg-\[\#171717\].rounded-md.hover\:border-zinc-700:hover,
+.bg-white.rounded-md[class*="dark:bg-\[\#171717\]"]:hover,
+.profile-card:hover,
+.card-hover:hover,
+.stat-card:hover {
+  box-shadow: var(--shadow-card-hover);
+}
+
 

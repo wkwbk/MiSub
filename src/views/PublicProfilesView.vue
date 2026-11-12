@@ -634,7 +634,7 @@
                             <div
                                 v-for="client in clients"
                                 :key="client.name"
-                                class="group relative bg-[#171717] rounded-md p-5 shadow-none border border-zinc-800 hover:border-zinc-700 transition-colors"
+                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_0_18px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.65)] border border-zinc-800 hover:border-zinc-700 transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div

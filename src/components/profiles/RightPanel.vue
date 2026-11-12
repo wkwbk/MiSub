@@ -128,7 +128,7 @@
 <template>
     <div>
         <div
-            class="bg-[#171717] rounded-md border border-zinc-800 shadow-none"
+            class="bg-[#171717] rounded-md border border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
             :class="compact ? 'p-4' : 'p-5'"
         >
             <h3

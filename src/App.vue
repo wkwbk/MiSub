@@ -318,7 +318,7 @@
                 <!-- Security Banner -->
                 <div
                     v-if="isDefaultPassword"
-                    class="mb-4 px-4 py-3 bg-[#171717] text-zinc-200 rounded-md border border-zinc-800 shadow-none"
+                    class="mb-4 px-4 py-3 bg-[#171717] text-zinc-200 rounded-md border border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                 >
                     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5">
@@ -332,7 +332,7 @@
 
                 <div
                     v-if="showUpdateNotice && versionReleaseInfo"
-                    class="mb-4 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-zinc-200 shadow-none"
+                    class="mb-4 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-zinc-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">

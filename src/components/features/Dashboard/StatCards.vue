@@ -59,7 +59,7 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-[#171717] hover:bg-zinc-900/60 p-4 sm:p-5 rounded-md shadow-none border border-zinc-800 transition-colors duration-150 focus-visible:outline-hidden focus-visible:bg-zinc-900/60';
+        'stat-card group w-full text-left bg-[#171717] hover:bg-zinc-900/60 p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_0_18px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.65)] border border-zinc-800 transition-all duration-200 focus-visible:outline-hidden focus-visible:bg-zinc-900/60';
     const normalCardClass = 'border-zinc-800';
     const warningCardClass = 'border-zinc-800';
 
