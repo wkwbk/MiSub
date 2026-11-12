@@ -208,7 +208,7 @@
                     <!-- 头部 -->
                     <div
                         v-if="title || closable"
-                        class="border-b border-zinc-800 px-6 py-4"
+                        class="border-b border-zinc-800 px-6 py-4 rounded-t-md"
                     >
                         <div class="flex items-center justify-between">
                             <h3 class="text-base font-semibold leading-6 text-zinc-100">
@@ -244,7 +244,7 @@
                     <!-- 底部按钮 -->
                     <div
                         v-if="showFooter || $slots.footer"
-                        class="border-t border-zinc-800 px-6 py-4 bg-[#131515]"
+                        class="border-t border-zinc-800 px-6 py-4 bg-[#131515] rounded-b-md"
                     >
                         <!-- 自定义底部插槽 -->
                         <slot name="footer">
