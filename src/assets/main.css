@@ -369,6 +369,11 @@ textarea {
   border-radius: 0 !important;
 }
 
+.app-nav-bar {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .mobile-nav-glass {
   @apply left-0 right-0;
   position: fixed;
@@ -376,7 +381,7 @@ textarea {
   bottom: 0;
   min-height: calc(4rem + max(env(safe-area-inset-bottom, 0px), 12px));
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--border-subtle-light);
@@ -391,7 +396,7 @@ textarea {
 }
 
 .dark .mobile-nav-glass {
-  background: rgba(15, 16, 17, 0.9);
+  background: rgba(9, 9, 11, 0.8);
   border-top: 1px solid var(--border-subtle-dark);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
 }
@@ -428,7 +433,7 @@ textarea {
     left: 0;
     right: 0;
     z-index: var(--z-nav);
-    background: rgba(255, 255, 255, 0.96) !important;
+    background: rgba(255, 255, 255, 0.8) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     transition: background-color 0.15s ease;
@@ -436,17 +441,17 @@ textarea {
   }
 
   .dark .ios-fixed-header {
-    background: rgba(15, 16, 17, 0.96) !important;
+    background: rgba(9, 9, 11, 0.8) !important;
   }
 
   .ios-status-overlay {
-    background: rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
   }
 
   .dark .ios-status-overlay {
-    background: rgba(15, 16, 17, 0.96);
+    background: rgba(9, 9, 11, 0.8);
   }
 }
 

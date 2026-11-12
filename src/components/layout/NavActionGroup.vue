@@ -58,8 +58,11 @@
             classes.push(
                 'bg-zinc-900',
                 'text-zinc-100',
+                'dark:bg-zinc-100',
+                'dark:text-zinc-900',
                 'border',
-                'border-zinc-700'
+                'border-zinc-700',
+                'dark:border-zinc-300'
             );
         }
         return classes;

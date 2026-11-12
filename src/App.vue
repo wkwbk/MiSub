@@ -268,7 +268,7 @@
 <template>
     <div
         :class="theme"
-        class="min-h-screen flex flex-col text-zinc-200 transition-colors duration-300 bg-[#09090b]"
+        class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-300 bg-zinc-50 dark:bg-[#09090b]"
     >
         <!-- Navigation -->
         <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />

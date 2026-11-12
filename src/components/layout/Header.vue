@@ -41,7 +41,7 @@
 
 <template>
     <header
-        class="app-nav-bar ios-fixed-header bg-[#09090b] sticky top-0 z-50 border-b border-zinc-800 shadow-none"
+        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/80 dark:bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 transition-colors duration-200 shadow-none"
     >
         <div class="ios-status-overlay"></div>
 
@@ -57,7 +57,7 @@
                     <router-link
                         v-else
                         :to="isLoggedIn ? '/dashboard' : '/'"
-                        class="font-mono text-xs font-semibold tracking-widest uppercase text-zinc-400 hover:text-zinc-100"
+                        class="font-mono text-xs font-semibold tracking-widest uppercase text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                         >{{ t('app.home') }}</router-link
                     >
 
