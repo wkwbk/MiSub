@@ -41,7 +41,7 @@
 
 <template>
     <header
-        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/80 dark:bg-[#131515]/80 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 transition-colors duration-200 shadow-none"
+        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
     >
         <div class="ios-status-overlay"></div>
 
