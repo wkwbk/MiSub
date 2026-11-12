@@ -286,7 +286,7 @@
         <template #body>
             <div class="space-y-4">
                 <!-- 来源切换 -->
-                <div class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#09090b]">
+                <div class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]">
                     <button
                         type="button"
                         class="py-1.5 text-xs font-medium transition-colors"

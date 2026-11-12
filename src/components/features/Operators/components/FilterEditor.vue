@@ -216,7 +216,7 @@
                         v-model="rule.pattern"
                         @input="normalizeRuleFlags(type, idx)"
                         :placeholder="t('operators.regexPlaceholder')"
-                        class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 transition-all outline-none"
+                        class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 transition-all outline-none"
                         :aria-label="t('operators.regexPlaceholder')"
                     />
                     <button

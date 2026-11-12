@@ -111,7 +111,7 @@
                 rows="20"
                 spellcheck="false"
                 :placeholder="t('settings.dnsOverridePlaceholder')"
-                class="block w-full rounded-md border bg-[#09090b] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                class="block w-full rounded-md border bg-[#131515] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                 :class="
                     jsonError
                         ? 'border-red-500/60 focus:border-red-500 focus-visible:ring-red-500'

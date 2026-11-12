@@ -202,7 +202,7 @@
                     :class="
                         isRecommended(client)
                             ? 'bg-zinc-50 dark:bg-zinc-900/60 border-zinc-400 dark:border-zinc-600'
-                            : 'bg-white dark:bg-[#0c0c0e] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                            : 'bg-white dark:bg-[#171717] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
                     "
                 >
                     <div
@@ -213,7 +213,7 @@
                         {{ t('quickImport.recommended') }}
                     </div>
                     <div
-                        class="w-12 h-12 rounded-md flex items-center justify-center text-2xl bg-zinc-50 dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                        class="w-12 h-12 rounded-md flex items-center justify-center text-2xl bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 overflow-hidden"
                     >
                         <img
                             v-if="

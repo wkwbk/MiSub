@@ -33,7 +33,7 @@
 
 <template>
     <div
-        class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800 border border-zinc-800 rounded-md bg-[#0c0c0e] overflow-hidden"
+        class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800 border border-zinc-800 rounded-md bg-[#171717] overflow-hidden"
     >
         <div
             v-for="stat in statsData"

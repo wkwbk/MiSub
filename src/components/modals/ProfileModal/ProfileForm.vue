@@ -145,7 +145,7 @@
                     type="checkbox"
                     id="profile-is-public"
                     v-model="localProfile.isPublic"
-                    class="h-4 w-4 rounded-sm border-zinc-700 bg-[#09090b] text-zinc-100 focus:ring-0"
+                    class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                 />
                 <label
                     for="profile-is-public"
@@ -169,7 +169,7 @@
                 v-model="localProfile.description"
                 rows="2"
                 :placeholder="t('profiles.descriptionPlaceholder')"
-                class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-600 text-xs text-zinc-100 placeholder-zinc-600"
+                class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-600 text-xs text-zinc-100 placeholder-zinc-600"
             ></textarea>
         </div>
         <div v-else class="text-xs text-zinc-500">
@@ -223,7 +223,7 @@
                         }}</label>
                         <select
                             v-model="localProfile.subconverter.engineMode"
-                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
                         >
                             <option value="">{{ t('profileModal.followGlobalConfig') }}</option>
                             <option
@@ -254,7 +254,7 @@
                         }}</label>
                         <select
                             v-model="localProfile.transformConfigMode"
-                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100"
                         >
                             <option value="global">
                                 {{ t('profileModal.followGlobalScheme') }}
@@ -303,7 +303,7 @@
                             type="text"
                             v-model="localProfile.subconverter.backend"
                             :placeholder="t('profileModal.backendPlaceholder')"
-                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus-visible:outline-hidden"
                         />
                         <p
                             class="mt-1.5 text-[10px] leading-relaxed text-zinc-500"
@@ -388,7 +388,7 @@
                         <input
                             type="date"
                             v-model="localProfile.expiresAt"
-                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                         />
                     </div>
 
@@ -409,7 +409,7 @@
                                     localProfile.transformConfigMode !== 'builtin' &&
                                     localProfile.transformConfigMode !== 'global',
                             }"
-                            class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden transition-colors"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden transition-colors"
                         >
                             <option value="">{{ t('profileModal.followGlobalLevel') }}</option>
                             <option value="base">{{ t('profileModal.ruleBase') }}</option>
@@ -443,7 +443,7 @@
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.enableManualNodes"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
@@ -462,7 +462,7 @@
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.enableSubscriptions"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in prefixToggleOptions"
@@ -481,7 +481,7 @@
                                 }}</label>
                                 <select
                                     v-model="localProfile.prefixSettings.prependGroupName"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option
                                         v-for="option in groupPrefixToggleOptions"
@@ -511,7 +511,7 @@
                                 </div>
                                 <select
                                     v-model="localProfile.subconverter.options[flag.key]"
-                                    class="w-full px-1.5 py-1 text-[11px] bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                                    class="w-full px-1.5 py-1 text-[11px] bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
                                 >
                                     <option :value="null">
                                         {{ t('profileModal.followGlobal') }}

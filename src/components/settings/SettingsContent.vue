@@ -171,7 +171,7 @@
 
             <div
                 v-if="restartCountdown !== null"
-                class="flex items-center justify-between gap-3 rounded-md border border-zinc-800 bg-[#0c0c0e] px-4 py-3 text-xs text-zinc-200"
+                class="flex items-center justify-between gap-3 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-xs text-zinc-200"
                 role="status"
                 aria-live="polite"
             >

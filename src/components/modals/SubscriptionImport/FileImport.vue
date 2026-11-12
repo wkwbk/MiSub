@@ -70,7 +70,7 @@
 <template>
     <div class="space-y-4">
         <div
-            class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-[#09090b]"
+            class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-[#131515]"
             :class="[
                 isDragging
                     ? 'border-zinc-500 bg-zinc-900/50'

@@ -90,7 +90,7 @@
                             v-model="searchModel"
                             type="text"
                             placeholder="Search nodes..."
-                            class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-3 py-2 pr-9 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
+                            class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] px-3 py-2 pr-9 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
                             :aria-label="t('nodePreview.searchLabel')"
                         />
                         <div
@@ -167,7 +167,7 @@
                     </label>
                     <select
                         v-model="protocolModel"
-                        class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-3 py-2 text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
+                        class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] px-3 py-2 text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
                     >
                         <option value="all">ALL PROTOCOLS</option>
                         <option
@@ -189,7 +189,7 @@
                     </label>
                     <select
                         v-model="regionModel"
-                        class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
+                        class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
                     >
                         <option value="all">ALL REGIONS</option>
                         <option v-for="region in availableRegions" :key="region" :value="region">

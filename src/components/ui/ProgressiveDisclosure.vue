@@ -44,12 +44,12 @@
             1: {
                 title: 'text-base font-semibold text-zinc-900 dark:text-zinc-100',
                 container:
-                    'bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                    'bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-5',
             },
             2: {
                 title: 'text-sm font-semibold text-zinc-800 dark:text-zinc-200',
-                container: 'bg-zinc-50 dark:bg-[#09090b] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                container: 'bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-4',
             },
             3: {

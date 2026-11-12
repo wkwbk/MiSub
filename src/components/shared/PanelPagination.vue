@@ -88,7 +88,7 @@
 <template>
     <div
         v-if="shouldShow && isPanelVariant"
-        class="panel-pagination-shell mt-4 px-4 py-3 bg-[#0c0c0e] rounded-md shadow-none border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
+        class="panel-pagination-shell mt-4 px-4 py-3 bg-[#171717] rounded-md shadow-none border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
     >
         <div class="flex items-center space-x-4 text-xs font-mono text-zinc-400 whitespace-nowrap">
             <span v-if="showTotalItems">{{

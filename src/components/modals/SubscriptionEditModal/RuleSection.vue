@@ -137,7 +137,7 @@
     <div class="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden">
         <!-- 折叠头部 -->
         <div
-            class="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-[#09090b] hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+            class="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-[#131515] hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
         >
             <button
                 type="button"
@@ -167,7 +167,7 @@
                     >
                     <span
                         v-if="selectedRules.length > 0"
-                        class="px-1.5 py-0.5 text-xs font-mono font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] text-zinc-700 dark:text-zinc-300"
+                        class="px-1.5 py-0.5 text-xs font-mono font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-700 dark:text-zinc-300"
                     >
                         {{ selectedRules.length }}
                     </span>
@@ -196,7 +196,7 @@
             <div
                 v-show="isRuleExpanded"
                 id="sub-edit-rule-content"
-                class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e]"
+                class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717]"
             >
                 <!-- 可视化模式 -->
                 <div v-if="!isAdvancedMode" class="space-y-3">
@@ -333,7 +333,7 @@
                                 v-model="customKeywordModel"
                                 @keyup.enter="addCustomKeyword"
                                 :placeholder="t('subscriptions.keywordPlaceholder')"
-                                class="w-full sm:flex-1 min-w-0 px-3 py-1.5 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
+                                class="w-full sm:flex-1 min-w-0 px-3 py-1.5 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
                                 :aria-label="t('subscriptions.keywordPlaceholder')"
                             />
                             <button
@@ -363,12 +363,12 @@
                                 >)
                             </div>
                             <div
-                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#09090b] rounded-md border border-zinc-200 dark:border-zinc-800"
+                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800"
                             >
                                 <span
                                     v-for="(rule, index) in effectiveKeepRules"
                                     :key="'keep-' + index"
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
                                 >
                                     {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
                                     <button
@@ -407,12 +407,12 @@
                                 >)
                             </div>
                             <div
-                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#09090b] rounded-md border border-zinc-200 dark:border-zinc-800"
+                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800"
                             >
                                 <span
                                     v-for="(rule, index) in effectiveExcludeRules"
                                     :key="'exclude-' + index"
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
                                 >
                                     {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
                                     <button
@@ -467,7 +467,7 @@
                         v-model="editingSubscription.exclude"
                         :placeholder="t('subscriptions.excludePlaceholder')"
                         rows="8"
-                        class="w-full px-3 py-2 rounded-md sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 leading-6 resize-none bg-white dark:bg-[#09090b]"
+                        class="w-full px-3 py-2 rounded-md sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 leading-6 resize-none bg-white dark:bg-[#131515]"
                         :class="[
                             excludeRuleState.errors.length
                                 ? 'border border-red-500 focus-visible:outline-hidden'

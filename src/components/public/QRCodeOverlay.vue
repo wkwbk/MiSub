@@ -35,7 +35,7 @@
                 aria-modal="true"
             >
                 <div
-                    class="relative bg-white dark:bg-[#0c0c0e] rounded-md p-6 shadow-none max-w-sm w-full mx-4 transform transition-all border border-zinc-200 dark:border-zinc-800"
+                    class="relative bg-white dark:bg-[#171717] rounded-md p-6 shadow-none max-w-sm w-full mx-4 transform transition-all border border-zinc-200 dark:border-zinc-800"
                     @click.stop
                 >
                     <!-- Close Button -->

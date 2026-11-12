@@ -128,7 +128,7 @@
 <template>
     <div>
         <div
-            class="bg-[#0c0c0e] rounded-md border border-zinc-800 shadow-none"
+            class="bg-[#171717] rounded-md border border-zinc-800 shadow-none"
             :class="compact ? 'p-4' : 'p-5'"
         >
             <h3
@@ -173,14 +173,14 @@
                     v-model="selectedId"
                     class="w-full px-3 py-2 bg-transparent border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:border-zinc-500 text-sm text-zinc-100 font-mono"
                 >
-                    <option value="default" class="bg-[#09090b] text-zinc-100">
+                    <option value="default" class="bg-[#131515] text-zinc-100">
                         {{ t('dashboard.linkCard.defaultSubscription') }}
                     </option>
                     <option
                         v-for="profile in profiles"
                         :key="profile.id"
                         :value="profile.customId || profile.id"
-                        class="bg-[#09090b] text-zinc-100"
+                        class="bg-[#131515] text-zinc-100"
                     >
                         {{ profile.name }}
                     </option>

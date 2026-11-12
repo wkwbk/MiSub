@@ -268,7 +268,7 @@
 <template>
     <div
         :class="theme"
-        class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-300 bg-zinc-50 dark:bg-[#09090b]"
+        class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-300 bg-zinc-50 dark:bg-[#131515]"
     >
         <!-- Navigation -->
         <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />
@@ -318,7 +318,7 @@
                 <!-- Security Banner -->
                 <div
                     v-if="isDefaultPassword"
-                    class="mb-4 px-4 py-3 bg-[#0c0c0e] text-zinc-200 rounded-md border border-zinc-800 shadow-none"
+                    class="mb-4 px-4 py-3 bg-[#171717] text-zinc-200 rounded-md border border-zinc-800 shadow-none"
                 >
                     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5">
@@ -332,7 +332,7 @@
 
                 <div
                     v-if="showUpdateNotice && versionReleaseInfo"
-                    class="mb-4 rounded-md border border-zinc-800 bg-[#0c0c0e] px-4 py-3 text-zinc-200 shadow-none"
+                    class="mb-4 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-zinc-200 shadow-none"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">

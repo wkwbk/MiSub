@@ -88,7 +88,7 @@
 
     // 计算样式
     const modalClasses = computed(() => [
-        'relative transform overflow-hidden rounded-md bg-[#0c0c0e] text-left shadow-none border border-zinc-800 transition-opacity duration-150',
+        'relative transform overflow-hidden rounded-md bg-[#171717] text-left shadow-none border border-zinc-800 transition-opacity duration-150',
         sizeClasses[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
@@ -244,7 +244,7 @@
                     <!-- 底部按钮 -->
                     <div
                         v-if="showFooter || $slots.footer"
-                        class="border-t border-zinc-800 px-6 py-4 bg-[#09090b]"
+                        class="border-t border-zinc-800 px-6 py-4 bg-[#131515]"
                     >
                         <!-- 自定义底部插槽 -->
                         <slot name="footer">

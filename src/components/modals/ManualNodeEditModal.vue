@@ -404,7 +404,7 @@
                     </div>
 
                     <div
-                        class="relative border rounded-md transition-colors overflow-hidden bg-[#09090b]"
+                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
                         :class="[
                             urlFocused
                                 ? 'border-zinc-600'
@@ -414,7 +414,7 @@
                         <!-- 协议检测徽章 - 显示在右上角 -->
                         <div
                             v-if="singleProtocol && !isMultiLine"
-                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#0c0c0e] border border-zinc-800"
+                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
                         >
                             <span
                                 class="font-mono text-xs font-semibold text-zinc-200 uppercase"
@@ -482,7 +482,7 @@
                         </span>
                     </div>
                     <div
-                        class="max-h-48 overflow-y-auto rounded-md border border-zinc-800 bg-[#09090b] divide-y divide-zinc-800"
+                        class="max-h-48 overflow-y-auto rounded-md border border-zinc-800 bg-[#131515] divide-y divide-zinc-800"
                     >
                         <div
                             v-for="(node, idx) in parsedNodes.slice(0, 10)"

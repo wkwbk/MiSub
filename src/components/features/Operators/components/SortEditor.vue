@@ -223,7 +223,7 @@
                             v-for="k in availableKeys"
                             :key="k.value"
                             :value="k.value"
-                            class="bg-[#09090b] text-zinc-100"
+                            class="bg-[#131515] text-zinc-100"
                         >
                             {{ t(k.labelKey) }}
                         </option>
@@ -236,13 +236,13 @@
                     >
                         <option
                             value="asc"
-                            class="bg-[#09090b] text-zinc-100"
+                            class="bg-[#131515] text-zinc-100"
                         >
                             {{ t('operators.ascending') }}
                         </option>
                         <option
                             value="desc"
-                            class="bg-[#09090b] text-zinc-100"
+                            class="bg-[#131515] text-zinc-100"
                         >
                             {{ t('operators.descending') }}
                         </option>
@@ -268,7 +268,7 @@
                 <!-- Custom Order Editor Section -->
                 <div
                     v-if="item.key === 'region' || item.key === 'protocol'"
-                    class="mt-0.5 p-2 bg-[#09090b] rounded-md border border-zinc-800 space-y-2"
+                    class="mt-0.5 p-2 bg-[#131515] rounded-md border border-zinc-800 space-y-2"
                 >
                     <div class="flex items-center justify-between text-[10px]">
                         <span

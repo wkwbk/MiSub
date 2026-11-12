@@ -115,7 +115,7 @@
                             </svg>
                         </button>
                         <div
-                            class="absolute right-0 top-full mt-1 w-40 bg-[#0c0c0e] border border-zinc-800 rounded-md shadow-none opacity-0 invisible group-hover/presets:opacity-100 group-hover/presets:visible transition-all z-10 py-1"
+                            class="absolute right-0 top-full mt-1 w-40 bg-[#171717] border border-zinc-800 rounded-md shadow-none opacity-0 invisible group-hover/presets:opacity-100 group-hover/presets:visible transition-all z-10 py-1"
                         >
                             <button
                                 v-for="rule in presetRegexRules"
@@ -187,7 +187,7 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexFindPlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
                                 :aria-label="t('operators.regexFindPlaceholder')"
                             />
                         </div>
@@ -202,7 +202,7 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexReplacePlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
                                 :aria-label="t('operators.regexReplacePlaceholder')"
                             />
                         </div>
@@ -249,7 +249,7 @@
                             :value="props.modelValue.template.template || ''"
                             @input="(e) => updateTemplate({ template: e.target.value })"
                             placeholder="{emoji}{region}-{index}"
-                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
                             :aria-label="t('operators.templateRewrite')"
                         />
                         <div class="flex flex-wrap gap-1.5">
@@ -303,7 +303,7 @@
                                 (e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })
                             "
                             type="number"
-                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-[#09090b] border border-zinc-800 text-zinc-100 outline-none focus:border-zinc-600"
+                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 outline-none focus:border-zinc-600"
                             :aria-label="t('operators.startIndex')"
                         />
                     </div>

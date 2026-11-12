@@ -65,7 +65,7 @@
 
 <template>
     <div
-        class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 shadow-none"
+        class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
     >
         <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex min-w-0 flex-wrap items-center gap-3">

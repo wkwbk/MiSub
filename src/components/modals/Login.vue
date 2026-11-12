@@ -38,7 +38,7 @@
 <template>
     <div class="w-full max-w-[420px] relative z-10 px-6">
         <div
-            class="relative bg-[#0c0c0e] border border-zinc-800 rounded-md p-8 shadow-none overflow-hidden"
+            class="relative bg-[#171717] border border-zinc-800 rounded-md p-8 shadow-none overflow-hidden"
         >
             <div class="flex flex-col items-center relative z-10">
                 <div class="w-16 h-16 mb-6 relative group cursor-default">
@@ -129,7 +129,7 @@
                         :placeholder="t('login.passwordPlaceholder')"
                         autocomplete="current-password"
                         :disabled="isLoading"
-                        class="w-full bg-[#09090b] border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
+                        class="w-full bg-[#131515] border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
                         :class="[
                             error
                                 ? 'border-red-500 text-red-400 placeholder-red-400/60 focus:border-red-500'

@@ -104,7 +104,7 @@
                 type="text"
                 v-model="searchModel"
                 :placeholder="t('profiles.searchPlaceholder')"
-                class="w-full pl-9 pr-3 py-1.5 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-500 dark:focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
+                class="w-full pl-9 pr-3 py-1.5 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-500 dark:focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
                 :aria-label="t('profiles.searchPlaceholder')"
             />
             <svg
@@ -124,7 +124,7 @@
         </div>
 
         <div
-            class="border border-zinc-200 dark:border-zinc-800 rounded-md p-2 space-y-1 max-h-56 overflow-y-auto bg-white dark:bg-[#09090b]"
+            class="border border-zinc-200 dark:border-zinc-800 rounded-md p-2 space-y-1 max-h-56 overflow-y-auto bg-white dark:bg-[#131515]"
         >
             <div
                 v-if="filteredProfiles.length === 0"
@@ -176,11 +176,11 @@
                 v-model="orderedSelectedProfiles"
                 item-key="id"
                 handle=".drag-handle"
-                class="space-y-1 max-h-48 overflow-y-auto p-1.5 bg-zinc-50 dark:bg-[#09090b] rounded-md border border-zinc-200 dark:border-zinc-800"
+                class="space-y-1 max-h-48 overflow-y-auto p-1.5 bg-zinc-50 dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800"
             >
                 <template #item="{ element }">
                     <div
-                        class="flex items-center gap-2 p-1.5 bg-white dark:bg-[#0c0c0e] rounded-md border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-200 shadow-none"
+                        class="flex items-center gap-2 p-1.5 bg-white dark:bg-[#171717] rounded-md border border-zinc-200 dark:border-zinc-800 text-xs text-zinc-700 dark:text-zinc-200 shadow-none"
                     >
                         <span
                             class="drag-handle cursor-grab active:cursor-grabbing text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"

@@ -520,7 +520,7 @@
                                                 code: e.target.value,
                                             })
                                     "
-                                    class="w-full h-64 p-3 font-mono text-xs bg-[#09090b] text-zinc-100 border border-zinc-800 rounded-md focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors resize-none"
+                                    class="w-full h-64 p-3 font-mono text-xs bg-[#131515] text-zinc-100 border border-zinc-800 rounded-md focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors resize-none"
                                     placeholder="function operator($proxies, $context) { ... }"
                                 ></textarea>
                             </div>
@@ -533,7 +533,7 @@
         <!-- Add Control (Segmented Style) -->
         <div class="pt-4">
             <div
-                class="grid grid-cols-2 gap-1.5 rounded-md border border-zinc-800 bg-[#09090b] p-1 sm:inline-flex sm:flex-wrap"
+                class="grid grid-cols-2 gap-1.5 rounded-md border border-zinc-800 bg-[#131515] p-1 sm:inline-flex sm:flex-wrap"
             >
                 <button
                     v-for="type in operatorTypes"

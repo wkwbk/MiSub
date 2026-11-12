@@ -127,7 +127,7 @@
 
                 <div v-else class="flex-1 flex flex-col min-h-0">
                     <div
-                        class="flex-1 overflow-y-auto rounded-md border border-zinc-800 bg-[#09090b] p-4 font-mono text-xs shadow-none"
+                        class="flex-1 overflow-y-auto rounded-md border border-zinc-800 bg-[#131515] p-4 font-mono text-xs shadow-none"
                     >
                         <div v-for="(log, idx) in logs" :key="idx" class="mb-1.5 break-all">
                             <span class="mr-2 text-zinc-500">[{{ log.time }}]</span>

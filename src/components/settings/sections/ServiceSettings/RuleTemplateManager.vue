@@ -211,7 +211,7 @@ overwrite_original_rules=true`;
                         >
                         <input
                             v-model="selectedTemplate.name"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
                         />
                     </label>
                     <label class="block">
@@ -221,7 +221,7 @@ overwrite_original_rules=true`;
                         >
                         <input
                             v-model="selectedTemplate.id"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 font-mono text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
                         />
                     </label>
                 </div>
@@ -234,7 +234,7 @@ overwrite_original_rules=true`;
                     <input
                         v-model="selectedTemplate.description"
                         :placeholder="t('settings.ruleTemplateDescriptionPlaceholder')"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-hidden"
+                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-hidden"
                     />
                 </label>
 
@@ -247,7 +247,7 @@ overwrite_original_rules=true`;
                         v-model="selectedTemplate.content"
                         rows="12"
                         spellcheck="false"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 font-mono text-xs leading-relaxed text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
+                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-xs leading-relaxed text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
                     ></textarea>
                 </label>
 
@@ -258,7 +258,7 @@ overwrite_original_rules=true`;
                         <input
                             v-model="selectedTemplate.enabled"
                             type="checkbox"
-                            class="h-4 w-4 rounded-sm border-zinc-700 bg-[#09090b] text-zinc-100 focus:ring-0"
+                            class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                         />
                         {{ t('settings.ruleTemplateEnabled') }}
                     </label>

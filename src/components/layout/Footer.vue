@@ -16,7 +16,7 @@
 </script>
 
 <template>
-    <footer class="w-full text-center p-8 border-t border-zinc-800 bg-[#09090b] mt-8">
+    <footer class="w-full text-center p-8 border-t border-zinc-800 bg-[#131515] mt-8">
         <div
             class="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-zinc-500"
         >

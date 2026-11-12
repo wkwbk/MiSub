@@ -276,14 +276,14 @@
 </script>
 
 <template>
-    <div class="space-y-4 bg-[#09090b] text-zinc-100">
+    <div class="space-y-4 bg-[#131515] text-zinc-100">
         <div v-if="isLoading" class="p-4">
             <SkeletonLoader type="dashboard" />
         </div>
 
         <template v-else>
             <section
-                class="relative overflow-hidden bg-[#0c0c0e] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-none"
+                class="relative overflow-hidden bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-none"
             >
                 <div
                     class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
@@ -368,7 +368,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="lg:col-span-2 space-y-4">
                     <section
-                        class="bg-[#0c0c0e] p-5 rounded-md shadow-none border border-zinc-800"
+                        class="bg-[#171717] p-5 rounded-md shadow-none border border-zinc-800"
                     >
                         <div
                             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 mb-4 border-b border-zinc-800"
@@ -497,7 +497,7 @@
 
                     <section
                         v-if="showFullGuide"
-                        class="bg-[#0c0c0e] p-5 rounded-md shadow-none border border-zinc-800"
+                        class="bg-[#171717] p-5 rounded-md shadow-none border border-zinc-800"
                     >
                         <h3
                             class="text-base font-semibold text-zinc-100 pb-4 mb-4 border-b border-zinc-800 flex items-center gap-2"

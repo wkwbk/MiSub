@@ -161,7 +161,7 @@
                         v-model="settings.BotToken"
                         type="text"
                         placeholder="123456:ABC-DEF..."
-                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
                     />
                     <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramBotTokenHint') }}
@@ -175,7 +175,7 @@
                         v-model="settings.ChatID"
                         type="text"
                         placeholder="123456789"
-                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
                     />
                     <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramChatIdHint') }}
@@ -232,7 +232,7 @@
                     <span>{{ testResult.message }}</span>
                     <details
                         v-if="testResult.detail"
-                        class="mt-2 text-xs font-mono bg-[#09090b] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
+                        class="mt-2 text-xs font-mono bg-[#131515] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
                     >
                         <summary class="cursor-pointer text-zinc-500">
                             {{ t('settings.telegramDetails') }}
@@ -268,7 +268,7 @@
                             v-model="telegramPushConfig.bot_token"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                         />
                         <p class="mt-1 text-xs text-zinc-500">
                             {{ t('settings.telegramPushTokenHint') }}
@@ -283,7 +283,7 @@
                             v-model="telegramPushConfig.webhook_secret"
                             type="text"
                             placeholder="random_secret-token"
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                             :aria-label="t('settings.telegramWebhookSecret')"
                         />
                         <p class="mt-1 text-xs text-zinc-500">
@@ -306,7 +306,7 @@
                         v-model="allowedUsersStr"
                         rows="2"
                         placeholder="123456789, 987654321"
-                        class="mt-1.5 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                        class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                     />
                     <p class="mt-1 text-xs text-zinc-500">
                         {{ t('settings.telegramAllowedUsersHint') }}
@@ -348,7 +348,7 @@
                             :value="webhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
+                            class="flex-1 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
                         />
                         <button
                             type="button"
@@ -376,7 +376,7 @@
                             :value="setWebhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
+                            class="flex-1 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
                             :aria-label="t('settings.telegramPublicAccess')"
                         />
                         <button

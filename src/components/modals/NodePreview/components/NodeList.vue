@@ -55,14 +55,14 @@
 
 <template>
     <div
-        class="hidden lg:flex flex-1 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] shadow-none"
+        class="hidden lg:flex flex-1 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] shadow-none"
     >
         <div ref="containerRef" class="h-full overflow-y-auto w-full">
             <div class="w-full">
                 <div class="w-full overflow-hidden">
                     <!-- 表头 -->
                     <div
-                        class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#0c0c0e]"
+                        class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#171717]"
                     >
                         <div
                             class="grid min-h-[2.75rem] grid-cols-12 gap-2 px-4 py-2 items-center text-[11px] font-medium text-zinc-500 uppercase tracking-wider"
@@ -86,7 +86,7 @@
 
                     <!-- 数据行 - 虚拟滚动 -->
                     <div
-                        class="bg-white dark:bg-[#09090b]"
+                        class="bg-white dark:bg-[#131515]"
                         :style="{ height: totalHeight + 'px', position: 'relative' }"
                     >
                         <div :style="{ transform: `translateY(${offsetY}px)` }">

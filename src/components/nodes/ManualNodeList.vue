@@ -90,7 +90,7 @@
 
 <template>
     <div
-        class="group flex w-full items-center gap-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-3.5 shadow-none transition-colors duration-150 hover:border-zinc-700"
+        class="group flex w-full items-center gap-4 rounded-md border border-zinc-800 bg-[#171717] p-3.5 shadow-none transition-colors duration-150 hover:border-zinc-700"
         :class="{
             'opacity-50': !node.enabled && !isSelectionMode,
             'border-zinc-200 bg-zinc-900/50': isSelectionMode && isSelected,

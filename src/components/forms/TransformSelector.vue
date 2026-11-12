@@ -259,7 +259,7 @@
             <select
                 :value="selectedUrl"
                 @change="handleSelectChange"
-                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 pr-8 text-sm text-zinc-100 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 pr-8 text-sm text-zinc-100 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
             >
                 <option value="">
                     {{
@@ -310,7 +310,7 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>

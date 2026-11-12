@@ -647,7 +647,7 @@
                     <!-- 加载状态 -->
                     <div v-if="loading" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-8 py-8 text-center shadow-none"
+                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] px-8 py-8 text-center shadow-none"
                         >
                             <div
                                 class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-zinc-500"
@@ -661,7 +661,7 @@
                     <!-- 错误状态 -->
                     <div v-else-if="error" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] px-8 py-8 text-center shadow-none"
+                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] px-8 py-8 text-center shadow-none"
                         >
                             <div class="flex items-center justify-center gap-2 text-sm text-red-500">
                                 <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
@@ -739,7 +739,7 @@
             class="fixed bottom-4 left-1/2 z-50 w-[94%] max-w-2xl -translate-x-1/2 sm:bottom-6"
         >
             <div
-                class="flex items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 text-zinc-100 shadow-none"
+                class="flex items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#171717] p-4 text-zinc-100 shadow-none"
             >
                 <div class="flex flex-col">
                     <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">{{

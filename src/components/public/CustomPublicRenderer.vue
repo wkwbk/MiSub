@@ -293,7 +293,7 @@
                 >
                     <button
                         @click="themeStore.toggleTheme"
-                        class="theme-toggle-btn p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] shadow-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                        class="theme-toggle-btn p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
                         :title="
                             themeStore.theme === 'dark'
                                 ? t('common.switchToLight')

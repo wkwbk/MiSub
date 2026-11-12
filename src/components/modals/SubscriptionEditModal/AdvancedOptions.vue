@@ -22,7 +22,7 @@
         <select
             id="sub-edit-ua"
             v-model="editingSubscription.customUserAgent"
-            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono focus:outline-hidden focus:border-zinc-500"
+            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono focus:outline-hidden focus:border-zinc-500"
         >
             <option value="">{{ t('subscriptions.defaultUa') }}</option>
             <option value="MiSub">MiSub</option>
@@ -55,7 +55,7 @@
             type="url"
             inputmode="url"
             placeholder="https://example.com"
-            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono text-sm focus:outline-hidden focus:border-zinc-500"
+            class="mt-1 block w-full px-3 py-2 bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono text-sm focus:outline-hidden focus:border-zinc-500"
         />
         <p class="mt-1 text-xs text-zinc-500">
             {{ t('subscriptions.websiteHint') }}
@@ -71,7 +71,7 @@
             v-model="editingSubscription.notes"
             :placeholder="t('subscriptions.notesPlaceholder')"
             rows="2"
-            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:border-zinc-500"
+            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:border-zinc-500"
         ></textarea>
     </div>
 

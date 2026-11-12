@@ -142,7 +142,7 @@
                 >
                     <template #item="{ element, index }">
                         <div
-                            class="flex items-center gap-3 p-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] transition-colors"
+                            class="flex items-center gap-3 p-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] transition-colors"
                             :class="
                                 editingGroupIndex === index
                                     ? 'border-zinc-500 dark:border-zinc-500'
@@ -174,7 +174,7 @@
                                     v-if="editingGroupIndex === index"
                                     v-model="editingGroupName"
                                     type="text"
-                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-white dark:bg-[#0c0c0e] text-zinc-900 dark:text-zinc-100"
+                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-white dark:bg-[#171717] text-zinc-900 dark:text-zinc-100"
                                     @keyup.enter="confirmEdit"
                                     @keyup.esc="cancelEdit"
                                     ref="editInput"

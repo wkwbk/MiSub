@@ -152,7 +152,7 @@
                         v-if="show"
                         ref="modalPanelRef"
                         tabindex="-1"
-                        class="bg-[#0c0c0e] rounded-md shadow-none w-full text-left flex flex-col max-h-[85vh] lg:max-h-[90vh] border border-zinc-800 focus-visible:outline-none text-zinc-100"
+                        class="bg-[#171717] rounded-md shadow-none w-full text-left flex flex-col max-h-[85vh] lg:max-h-[90vh] border border-zinc-800 focus-visible:outline-none text-zinc-100"
                         :class="{
                             'max-w-sm': size === 'sm',
                             'max-w-md': size === 'md',
@@ -183,7 +183,7 @@
                         </div>
 
                         <div
-                            class="p-6 pt-4 flex justify-end space-x-3 shrink-0 border-t border-zinc-800 bg-[#09090b]"
+                            class="p-6 pt-4 flex justify-end space-x-3 shrink-0 border-t border-zinc-800 bg-[#131515]"
                         >
                             <slot name="footer">
                                 <button

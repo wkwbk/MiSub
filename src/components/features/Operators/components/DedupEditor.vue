@@ -67,7 +67,7 @@
                 <select
                     :value="params.mode"
                     @change="updateValue({ mode: $event.target.value })"
-                    class="w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
+                    class="w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
                 >
                     <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>
                     <option value="url">{{ t('operators.dedupFullUrl') }}</option>

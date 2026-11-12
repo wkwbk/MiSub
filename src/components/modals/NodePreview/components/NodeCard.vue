@@ -47,7 +47,7 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#09090b] p-3.5 shadow-none transition-colors"
+                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] p-3.5 shadow-none transition-colors"
                 :class="{
                     'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-zinc-900':
                         selectionMode && selectedUrls.has(node.url),
@@ -153,7 +153,7 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="relative bg-white dark:bg-[#09090b] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-colors shadow-none"
+                class="relative bg-white dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-colors shadow-none"
                 :class="[
                     selectionMode ? 'cursor-pointer' : '',
                     selectionMode && selectedUrls.has(node.url)

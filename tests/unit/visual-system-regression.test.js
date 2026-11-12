@@ -11,13 +11,13 @@ describe('MiSub visual system regression', () => {
     it('keeps global UI tokens aligned with the clean dashboard design system', async () => {
         const css = await readSource('src/assets/main.css');
 
-        expect(css).toContain('--bg-page-dark: #09090b');
-        expect(css).toContain('--surface-panel-dark: #0c0c0e');
-        expect(css).toContain('--surface-card-dark: #0c0c0e');
-        expect(css).toContain('--text-primary-dark: #f4f4f5');
-        expect(css).toContain('--text-secondary-dark: #a1a1aa');
-        expect(css).toContain('--text-muted-dark: #71717a');
-        expect(css).toContain('--border-subtle-dark: #27272a');
+        expect(css).toContain('--bg-page-dark: #131515');
+        expect(css).toContain('--surface-panel-dark: #171717');
+        expect(css).toContain('--surface-card-dark: #171717');
+        expect(css).toContain('--text-primary-dark: #fafafa');
+        expect(css).toContain('--text-secondary-dark: #a1a1a1');
+        expect(css).toContain('--text-muted-dark: #737373');
+        expect(css).toContain('--border-subtle-dark: #262626');
         expect(css).toContain('font-family: var(--font-body)');
         expect(css).toContain('font-feature-settings: "cv01", "ss03"');
         expect(css).toContain('scroll-behavior: auto');
@@ -60,7 +60,7 @@ describe('MiSub visual system regression', () => {
             slots: { default: '<div>content</div>' },
         });
         const html = document.body.innerHTML;
-        expect(html).toContain('bg-[#0c0c0e]');
+        expect(html).toContain('bg-[#171717]');
         expect(html).toContain('border-zinc-800');
         expect(html).toContain('backdrop-blur-sm');
         modal.unmount();

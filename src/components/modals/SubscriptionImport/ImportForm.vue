@@ -36,7 +36,7 @@
             v-model="urlModel"
             type="url"
             placeholder="https://example.com/subscription-link"
-            class="w-full px-3 py-2 text-sm font-mono border border-zinc-300 dark:border-zinc-800 rounded-md bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 focus-visible:outline-hidden focus:border-zinc-500 disabled:opacity-50"
+            class="w-full px-3 py-2 text-sm font-mono border border-zinc-300 dark:border-zinc-800 rounded-md bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 focus-visible:outline-hidden focus:border-zinc-500 disabled:opacity-50"
             @keyup.enter="emit('submit')"
             :disabled="isLoading"
         />

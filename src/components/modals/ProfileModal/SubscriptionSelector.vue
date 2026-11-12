@@ -90,7 +90,7 @@
                 type="text"
                 v-model="searchModel"
                 :placeholder="t('subscriptions.searchPlaceholder')"
-                class="w-full pl-9 pr-3 py-1.5 text-xs bg-[#09090b] border border-zinc-800 rounded-md shadow-none text-zinc-100 placeholder-zinc-600 focus-visible:outline-hidden focus:border-zinc-600"
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md shadow-none text-zinc-100 placeholder-zinc-600 focus-visible:outline-hidden focus:border-zinc-600"
                 :aria-label="t('subscriptions.searchPlaceholder')"
             />
             <svg
@@ -109,7 +109,7 @@
             </svg>
         </div>
         <div
-            class="overflow-y-auto space-y-2 p-3 bg-[#09090b] rounded-md border border-zinc-800 h-36 lg:h-64"
+            class="overflow-y-auto space-y-2 p-3 bg-[#131515] rounded-md border border-zinc-800 h-36 lg:h-64"
         >
             <div v-for="sub in filteredSubscriptions" :key="sub.id">
                 <label class="flex items-center space-x-3 cursor-pointer">
@@ -117,7 +117,7 @@
                         type="checkbox"
                         :checked="selectedIds.includes(sub.id)"
                         @change="emit('toggle-selection', sub.id)"
-                        class="h-4 w-4 rounded-sm border-zinc-700 bg-[#09090b] text-zinc-100 focus:ring-0"
+                        class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                     />
                     <span
                         class="text-xs text-zinc-200 truncate"
@@ -150,7 +150,7 @@
             >
                 <template #item="{ element, index }">
                     <div
-                        class="flex items-center gap-2 px-2 py-1.5 bg-[#09090b] rounded-md border border-zinc-800 shadow-none"
+                        class="flex items-center gap-2 px-2 py-1.5 bg-[#131515] rounded-md border border-zinc-800 shadow-none"
                     >
                         <span
                             class="drag-handle cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"

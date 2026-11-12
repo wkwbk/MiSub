@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white dark:bg-[#0c0c0e] border border-zinc-200 dark:border-zinc-800 rounded-md p-4">
+    <div class="bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md p-4">
         <div class="animate-pulse flex flex-col gap-3">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">

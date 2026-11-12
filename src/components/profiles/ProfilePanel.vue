@@ -103,7 +103,7 @@
     <div>
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
-                class="rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none"
+                class="rounded-md border border-zinc-800 bg-[#171717] shadow-none"
                 :class="compact ? 'p-3' : 'p-4'"
             >
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -187,7 +187,7 @@
         <div v-if="profiles.length > 0">
             <div
                 v-if="isSorting"
-                class="mb-4 flex items-center gap-2 rounded-md border border-zinc-800 bg-[#0c0c0e] px-4 py-3 text-xs text-zinc-300"
+                class="mb-4 flex items-center gap-2 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-xs text-zinc-300"
             >
                 <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                 {{ t('profiles.sortingHint') }}
@@ -226,7 +226,7 @@
             </div>
             <div
                 v-if="!isSorting && displayProfiles.length === 0"
-                class="rounded-md border border-zinc-800 bg-[#0c0c0e] px-6 py-12 text-center"
+                class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
             >
                 <p class="text-sm font-medium text-zinc-200">
                     {{ t('profiles.noSearchResults') }}
@@ -256,7 +256,7 @@
         </div>
         <div
             v-else
-            class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-2"
+            class="rounded-md border border-zinc-800 bg-[#171717] py-2"
         >
             <EmptyState
                 :title="t('profiles.empty')"

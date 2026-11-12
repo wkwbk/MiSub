@@ -132,7 +132,7 @@
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableManualNodes"
-                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
+                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"
@@ -166,7 +166,7 @@
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableSubscriptions"
-                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
+                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"
@@ -199,7 +199,7 @@
                     <div class="relative">
                         <select
                             v-model="settings.enableFlagEmoji"
-                            class="w-full bg-[#09090b] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
+                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
                         >
                             <option
                                 v-for="option in prefixToggleOptions"

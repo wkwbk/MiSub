@@ -1,8 +1,8 @@
 <template>
-    <div class="not-found-container bg-[#09090b] font-sans text-zinc-100">
+    <div class="not-found-container bg-[#131515] font-sans text-zinc-100">
         <!-- Content Card -->
         <div
-            class="relative z-10 border border-zinc-800 bg-[#0c0c0e] rounded-md p-10 max-w-lg w-[90%] text-center shadow-none"
+            class="relative z-10 border border-zinc-800 bg-[#171717] rounded-md p-10 max-w-lg w-[90%] text-center shadow-none"
         >
             <div
                 class="font-mono font-bold text-7xl text-zinc-100 mb-4"

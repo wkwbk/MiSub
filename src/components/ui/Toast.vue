@@ -46,7 +46,7 @@
                 :role="getToastRole(toast.type)"
                 :aria-live="getToastAriaLive(toast.type)"
                 aria-atomic="true"
-                class="toast-container pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md bg-[#0c0c0e] border border-zinc-800 rounded-md shadow-none overflow-hidden transition-all duration-200 relative"
+                class="toast-container pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md bg-[#171717] border border-zinc-800 rounded-md shadow-none overflow-hidden transition-all duration-200 relative"
             >
                 <!-- Toast 内容 -->
                 <div class="relative p-3.5 pl-4">

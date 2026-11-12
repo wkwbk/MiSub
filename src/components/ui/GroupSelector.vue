@@ -128,7 +128,7 @@
                 :value="modelValue"
                 type="text"
                 :placeholder="placeholder"
-                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#09090b] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-sm transition-colors h-[38px] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 shadow-none"
+                class="w-full pl-9 pr-4 py-2 bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-sm transition-colors h-[38px] text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 shadow-none"
                 @input="handleInput"
                 @focus="handleFocus"
                 @keydown.enter="isOpen = false"
@@ -191,7 +191,7 @@
                 <div
                     v-if="isOpen && (groups.length > 0 || modelValue)"
                     id="group-selector-dropdown"
-                    class="absolute bg-white dark:bg-[#0c0c0e] rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 max-h-60 overflow-auto py-1 custom-scrollbar"
+                    class="absolute bg-white dark:bg-[#171717] rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 max-h-60 overflow-auto py-1 custom-scrollbar"
                     :style="dropdownStyle"
                 >
                     <button

@@ -95,7 +95,7 @@
                 </div>
 
                 <div
-                    class="max-h-[420px] overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090b] p-4 text-xs font-mono leading-6 text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap"
+                    class="max-h-[420px] overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#131515] p-4 text-xs font-mono leading-6 text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap"
                 >
                     <template v-if="isLatest && versionStore.localChangelog">
                         {{ versionStore.localChangelog }}

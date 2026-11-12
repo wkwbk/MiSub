@@ -47,7 +47,7 @@
 
 <template>
     <div
-        class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none transition-colors duration-150 hover:border-zinc-700"
+        class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#171717] shadow-none transition-colors duration-150 hover:border-zinc-700"
         :class="[compact ? 'p-4' : 'p-5', { 'opacity-60': !isEnabled }]"
     >
         <div class="flex items-start justify-between gap-3" :class="compact ? 'flex-col' : ''">

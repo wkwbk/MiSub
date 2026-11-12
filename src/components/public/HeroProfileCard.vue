@@ -38,7 +38,7 @@
     <div class="relative w-full">
         <!-- Main Card Content -->
         <div
-            class="relative bg-white dark:bg-[#0c0c0e] rounded-md p-6 lg:p-8 shadow-none border border-zinc-200 dark:border-zinc-800"
+            class="relative bg-white dark:bg-[#171717] rounded-md p-6 lg:p-8 shadow-none border border-zinc-200 dark:border-zinc-800"
         >
             <div class="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
                 <!-- 1. Brand / Header Column -->

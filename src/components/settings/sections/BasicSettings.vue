@@ -215,7 +215,7 @@
             <div class="max-w-xs">
                 <select
                     v-model="settings.defaultLocale"
-                    class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
+                    class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
                 >
                     <option value="zh-CN">{{ t('settings.defaultLanguageZh') }}</option>
                     <option value="en-US">{{ t('settings.defaultLanguageEn') }}</option>
@@ -348,7 +348,7 @@
                                 "
                                 :placeholder="t('settings.customInterval')"
                                 min="5"
-                                class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
+                                class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
                                 :aria-label="t('settings.autoUpdateInterval')"
                             />
                             <span class="text-xs text-zinc-400">{{
@@ -419,7 +419,7 @@
                     </div>
                     <select
                         v-model="settings.accessLogPersistenceMode"
-                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
+                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
                     >
                         <option value="light">{{ t('settings.accessLogLight') }}</option>
                         <option value="full">{{ t('settings.accessLogFull') }}</option>
@@ -455,7 +455,7 @@
                     </div>
                     <select
                         v-model="settings.mergeExpireStrategy"
-                        class="block w-full px-3 py-2 bg-[#09090b] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
+                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
                     >
                         <option value="max">{{ t('settings.mergeExpireMax') }}</option>
                         <option value="min">{{ t('settings.mergeExpireMin') }}</option>

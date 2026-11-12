@@ -328,7 +328,7 @@
 <template>
     <div>
         <div
-            class="mb-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-4 shadow-none"
+            class="mb-4 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
         >
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
@@ -512,7 +512,7 @@
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
                     <div
-                        class="rounded-md border border-zinc-800 bg-[#0c0c0e] shadow-none"
+                        class="rounded-md border border-zinc-800 bg-[#171717] shadow-none"
                     >
                         <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
                             <button
@@ -668,7 +668,7 @@
         <div
             v-else-if="searchable && searchQuery && filteredCount === 0"
             data-testid="subscription-no-search-results"
-            class="rounded-md border border-zinc-800 bg-[#0c0c0e] px-6 py-12 text-center"
+            class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
         >
             <p class="text-sm font-medium text-zinc-200">
                 {{ t('subscriptions.noSearchResults') }}
@@ -684,7 +684,7 @@
         </div>
         <div
             v-else-if="subscriptions.length === 0"
-            class="rounded-md border border-zinc-800 bg-[#0c0c0e] py-2"
+            class="rounded-md border border-zinc-800 bg-[#171717] py-2"
         >
             <EmptyState
                 :title="t('subscriptions.empty')"
@@ -739,7 +739,7 @@
                     </p>
                     <select
                         v-model="selectedAirportGroup"
-                        class="w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500"
+                        class="w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500"
                     >
                         <option value="">{{ t('subscriptions.newAirportGroupName') }}</option>
                         <option

@@ -37,7 +37,7 @@
 
 <template>
     <div
-        class="group relative flex h-full flex-col rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#0c0c0e] p-5 transition-colors hover:border-zinc-400 dark:hover:border-zinc-700 shadow-none"
+        class="group relative flex h-full flex-col rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] p-5 transition-colors hover:border-zinc-400 dark:hover:border-zinc-700 shadow-none"
     >
         <!-- Header: Title & QR Toggle -->
         <div class="flex items-start justify-between mb-3">

@@ -294,7 +294,7 @@
                         <textarea
                             v-model="props.settings.customPage.content"
                             rows="12"
-                            class="w-full px-3 py-2.5 bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
+                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
                             :placeholder="
                                 t('settings.customPageSourcePlaceholder', {
                                     action: t('settings.customPageNormalizeSource'),
@@ -311,7 +311,7 @@
                         <textarea
                             v-model="props.settings.customPage.css"
                             rows="6"
-                            class="w-full px-3 py-2.5 bg-[#09090b] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
+                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
                             :placeholder="
                                 t('settings.customPageCssPlaceholder', {
                                     name: t('settings.customPageCss'),

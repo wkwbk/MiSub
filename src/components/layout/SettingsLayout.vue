@@ -5,7 +5,7 @@
 
 <template>
     <div
-        class="h-full w-full bg-[#0c0c0e] md:shadow-none md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
+        class="h-full w-full bg-[#171717] md:shadow-none md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
     >
         <!-- Sidebar -->
         <aside
@@ -23,7 +23,7 @@
 
             <!-- Sticky Footer Area -->
             <div
-                class="shrink-0 px-4 md:px-6 py-3 bg-[#09090b]/95 border-t border-zinc-800 flex justify-end sticky bottom-0 z-10 backdrop-blur-sm md:rounded-br-md md:rounded-bl-none"
+                class="shrink-0 px-4 md:px-6 py-3 bg-[#131515]/95 border-t border-zinc-800 flex justify-end sticky bottom-0 z-10 backdrop-blur-sm md:rounded-br-md md:rounded-bl-none"
             >
                 <slot name="footer"></slot>
             </div>

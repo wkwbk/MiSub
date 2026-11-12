@@ -247,7 +247,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                 <!-- Step 2 & 3: Logs -->
                 <div v-else class="flex-1 flex flex-col min-h-0">
                     <div
-                        class="bg-[#09090b] rounded-md p-4 font-mono text-xs overflow-y-auto flex-1 custom-scrollbar shadow-none border border-zinc-800"
+                        class="bg-[#131515] rounded-md p-4 font-mono text-xs overflow-y-auto flex-1 custom-scrollbar shadow-none border border-zinc-800"
                     >
                         <div v-if="logs.length === 0" class="text-zinc-500 text-center mt-10">
                             {{ t('d1Migration.waiting') }}

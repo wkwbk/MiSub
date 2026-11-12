@@ -456,7 +456,7 @@
                                         >{{ t('settings.clientIconPreview') }}</label
                                     >
                                     <div
-                                        class="aspect-square w-full max-w-[180px] mx-auto rounded-md flex items-center justify-center text-6xl bg-[#09090b] text-zinc-400 border border-zinc-800 overflow-hidden shadow-none"
+                                        class="aspect-square w-full max-w-[180px] mx-auto rounded-md flex items-center justify-center text-6xl bg-[#131515] text-zinc-400 border border-zinc-800 overflow-hidden shadow-none"
                                     >
                                         <img
                                             v-if="
@@ -581,7 +581,7 @@
                                                 v-model="iconInputValue"
                                                 type="text"
                                                 :placeholder="t('settings.clientIconPlaceholder')"
-                                                class="block w-full pl-11 pr-3 rounded-md border border-zinc-800 bg-[#09090b] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs py-2"
+                                                class="block w-full pl-11 pr-3 rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs py-2"
                                             />
                                         </div>
                                         <p
@@ -607,7 +607,7 @@
                                     <input
                                         v-model="editingClient.name"
                                         type="text"
-                                        class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#09090b] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
+                                        class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
                                         :placeholder="t('settings.clientNamePlaceholder')"
                                     />
                                 </div>
@@ -620,7 +620,7 @@
                                     <textarea
                                         v-model="editingClient.description"
                                         rows="3"
-                                        class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#09090b] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 resize-none"
+                                        class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 resize-none"
                                         :placeholder="t('settings.clientDescriptionPlaceholder')"
                                     ></textarea>
                                 </div>
@@ -673,7 +673,7 @@
                                         <input
                                             v-model="editingClient.url"
                                             type="text"
-                                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-zinc-800 bg-[#09090b] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
                                             placeholder="https://..."
                                             :aria-label="t('settings.clientDownloadUrl')"
                                         />
@@ -703,7 +703,7 @@
                                         <input
                                             v-model="editingClient.repo"
                                             type="text"
-                                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-zinc-800 bg-[#09090b] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                                            class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
                                             placeholder="owner/repo"
                                             :aria-label="t('settings.clientRepoLabel')"
                                         />

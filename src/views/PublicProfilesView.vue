@@ -544,7 +544,7 @@
                         <div
                             v-for="i in 6"
                             :key="i"
-                            class="h-[260px] bg-[#0c0c0e] rounded-md p-6 shadow-none border border-zinc-800 animate-pulse"
+                            class="h-[260px] bg-[#171717] rounded-md p-6 shadow-none border border-zinc-800 animate-pulse"
                         >
                             <div class="flex items-center gap-4 mb-6">
                                 <div
@@ -634,7 +634,7 @@
                             <div
                                 v-for="client in clients"
                                 :key="client.name"
-                                class="group relative bg-[#0c0c0e] rounded-md p-5 shadow-none border border-zinc-800 hover:border-zinc-700 transition-colors"
+                                class="group relative bg-[#171717] rounded-md p-5 shadow-none border border-zinc-800 hover:border-zinc-700 transition-colors"
                             >
                                 <div class="flex items-start gap-4">
                                     <div

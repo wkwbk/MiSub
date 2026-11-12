@@ -15,7 +15,7 @@
     <Transition name="slide-fade">
         <div
             v-if="isDirty || saveState === 'success'"
-            class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] w-[95%] max-w-2xl px-4 py-3 rounded-md flex flex-row items-center justify-between transition-all duration-200 gap-4 shadow-none bg-[#0c0c0e] border border-zinc-800"
+            class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] w-[95%] max-w-2xl px-4 py-3 rounded-md flex flex-row items-center justify-between transition-all duration-200 gap-4 shadow-none bg-[#171717] border border-zinc-800"
         >
             <div class="flex items-center gap-2.5">
                 <span

@@ -322,7 +322,7 @@
                     </label>
                     <select
                         v-model="settings.webdavBackup.interval"
-                        class="w-full rounded-md border border-zinc-800 bg-[#09090b] text-zinc-100 px-3 py-2 text-sm focus:border-zinc-500"
+                        class="w-full rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 px-3 py-2 text-sm focus:border-zinc-500"
                     >
                         <option value="hourly">{{ t('settings.webdavIntervalHourly') }}</option>
                         <option value="daily">{{ t('settings.webdavIntervalDaily') }}</option>

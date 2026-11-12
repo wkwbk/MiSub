@@ -32,7 +32,7 @@
     <Transition name="slide-fade-sm">
         <div
             v-if="isSelectionMode"
-            class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] sm:w-auto max-w-xl bg-[#0c0c0e] shadow-none rounded-md px-4 py-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row items-center justify-between sm:justify-center gap-3 sm:gap-4 z-50 border border-zinc-800"
+            class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] sm:w-auto max-w-xl bg-[#171717] shadow-none rounded-md px-4 py-3 sm:px-6 sm:py-3 flex flex-col sm:flex-row items-center justify-between sm:justify-center gap-3 sm:gap-4 z-50 border border-zinc-800"
         >
             <div class="flex items-center justify-between w-full sm:w-auto gap-4">
                 <button

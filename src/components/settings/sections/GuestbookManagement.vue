@@ -231,7 +231,7 @@
                 <div class="flex items-center gap-2">
                     <select
                         v-model="filterStatus"
-                        class="block w-full sm:w-auto pl-3 pr-8 py-1.5 text-xs border border-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 rounded-md bg-[#09090b] text-zinc-100"
+                        class="block w-full sm:w-auto pl-3 pr-8 py-1.5 text-xs border border-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 rounded-md bg-[#131515] text-zinc-100"
                     >
                         <option value="all">{{ t('settings.guestbookAllStatus') }}</option>
                         <option value="pending">{{ t('settings.guestbookPending') }}</option>
@@ -301,7 +301,7 @@
                     <!-- Reply Display -->
                     <div
                         v-if="msg.reply && replyingId !== msg.id"
-                        class="mb-4 ml-4 bg-[#09090b] p-3 rounded-md border border-zinc-800"
+                        class="mb-4 ml-4 bg-[#131515] p-3 rounded-md border border-zinc-800"
                     >
                         <div
                             class="text-xs text-zinc-300 font-medium mb-1 flex justify-between"
@@ -319,7 +319,7 @@
                         <textarea
                             v-model="replyContent"
                             rows="3"
-                            class="block w-full rounded-md border border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 bg-[#09090b] text-zinc-100 sm:text-sm px-3 py-2"
+                            class="block w-full rounded-md border border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 bg-[#131515] text-zinc-100 sm:text-sm px-3 py-2"
                             :placeholder="t('settings.guestbookReplyPlaceholder')"
                         ></textarea>
                         <div class="mt-2 flex justify-end gap-2">

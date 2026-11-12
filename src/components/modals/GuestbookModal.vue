@@ -163,7 +163,7 @@
                     >
                     <select
                         v-model="form.type"
-                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm"
+                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm"
                     >
                         <option value="general">{{ t('guestbook.typeGeneral') }}</option>
                         <option value="feature">{{ t('guestbook.typeFeature') }}</option>
@@ -180,7 +180,7 @@
                         type="text"
                         v-model="form.nickname"
                         :placeholder="t('guestbook.nicknamePlaceholder')"
-                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm"
+                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm"
                         :aria-label="t('settings.guestbookNickname')"
                     />
                 </div>
@@ -194,7 +194,7 @@
                         v-model="form.content"
                         rows="4"
                         :placeholder="t('guestbook.contentPlaceholder')"
-                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm resize-none"
+                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm resize-none"
                     ></textarea>
                 </div>
 
@@ -205,7 +205,7 @@
                     >
                     <div class="flex items-center gap-3">
                         <div
-                            class="min-w-[80px] select-none rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#09090b] px-3 py-2 text-center font-mono text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+                            class="min-w-[80px] select-none rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#131515] px-3 py-2 text-center font-mono text-sm font-semibold text-zinc-800 dark:text-zinc-200"
                         >
                             {{ captcha.num1 }} {{ captcha.operator }} {{ captcha.num2 }} = ?
                         </div>
@@ -213,7 +213,7 @@
                             type="number"
                             v-model="form.captcha"
                             :placeholder="t('guestbook.captchaPlaceholder')"
-                            class="block w-24 rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 font-mono py-2 px-3 text-sm"
+                            class="block w-24 rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 font-mono py-2 px-3 text-sm"
                             @keydown.enter="submitMessage"
                             :aria-label="t('settings.guestbookCaptchaAnswer')"
                         />

@@ -197,7 +197,7 @@
 
 <template>
     <div
-        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#0c0c0e] p-5 shadow-none transition-colors duration-150 hover:border-zinc-700"
+        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-5 shadow-none transition-colors duration-150 hover:border-zinc-700"
         :class="{
             'opacity-60': !misub.enabled,
         }"

@@ -103,7 +103,7 @@
 <template>
     <div class="pt-0 pb-6 min-h-[calc(100vh-80px)]">
         <div
-            class="mb-4 bg-[#0c0c0e] border border-zinc-800 rounded-md p-4 shadow-none"
+            class="mb-4 bg-[#171717] border border-zinc-800 rounded-md p-4 shadow-none"
         >
             <h1 class="text-lg font-semibold text-zinc-100">
                 {{ t('settings.title') }}

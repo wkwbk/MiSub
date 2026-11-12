@@ -185,7 +185,7 @@
 <template>
     <div class="space-y-6">
         <div
-            class="flex flex-col items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#0c0c0e] p-5 shadow-none sm:flex-row"
+            class="flex flex-col items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#171717] p-5 shadow-none sm:flex-row"
         >
             <div class="flex items-center gap-3">
                 <div
@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <div class="flex rounded-md border border-zinc-800 bg-[#09090b] p-0.5">
+            <div class="flex rounded-md border border-zinc-800 bg-[#131515] p-0.5">
                 <button
                     @click="switchToBuiltinEngine"
                     :class="
@@ -245,7 +245,7 @@
         <div
             v-if="showEngineChangeWarning"
             data-testid="engine-change-notice"
-            class="flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#0c0c0e] p-3 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#171717] p-3 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
         >
             <div class="flex min-w-0 flex-1 items-start gap-2.5">
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
@@ -314,7 +314,7 @@
                         </label>
                         <select
                             v-model="settings.transformConfigMode"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                         >
                             <option
                                 v-for="option in modeOptions"
@@ -376,7 +376,7 @@
                                 <select
                                     v-model="settings.ruleLevel"
                                     :disabled="!isBuiltinMode || isExternalEngine"
-                                    class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-xs text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                                    class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                                 >
                                     <option value="base">
                                         {{ t('settings.transformRuleBase') }}
@@ -477,7 +477,7 @@
                     }}</label>
                     <select
                         v-model="settings.subconverter.defaultBackend"
-                        class="mb-2 block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                        class="mb-2 block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                     >
                         <option
                             v-for="backend in SUBCONVERTER_BACKENDS"
@@ -491,7 +491,7 @@
                         type="text"
                         v-model="settings.subconverter.defaultBackend"
                         placeholder="subapi.cmliussss.net"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#09090b] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                         :aria-label="t('settings.transformCustomBackend')"
                     />
                     <p class="mt-1.5 text-xs leading-relaxed text-zinc-400">
