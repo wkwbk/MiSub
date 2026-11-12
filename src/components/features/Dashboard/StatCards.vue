@@ -59,7 +59,7 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-[#171717] p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] border border-zinc-800 hover:border-zinc-500 transition-all duration-200 focus-visible:outline-hidden focus-visible:border-zinc-400';
+        'stat-card group w-full text-left bg-[#171717] p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] border border-zinc-800 hover:border-zinc-500 transition-all duration-200 focus-visible:outline-hidden focus-visible:border-zinc-400 cursor-pointer';
     const normalCardClass = 'border-zinc-800';
     const warningCardClass = 'border-zinc-800';
 
@@ -107,9 +107,7 @@
                     </svg>
                 </span>
             </div>
-            <p
-                class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono"
-            >
+            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
                 {{ trafficDisplay.value }}
                 <span class="ml-1 text-xs font-normal text-zinc-500 font-mono">{{
                     trafficDisplay.unit
@@ -179,9 +177,7 @@
                     </svg>
                 </span>
             </div>
-            <p
-                class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono"
-            >
+            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
                 {{ activeSubscriptionsCount }}
                 <span class="text-xs font-normal text-zinc-500 font-mono"
                     >/ {{ subscriptionsCount }}</span
@@ -234,9 +230,7 @@
                     </svg>
                 </span>
             </div>
-            <p
-                class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono"
-            >
+            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
                 {{ totalNodesCount }}
             </p>
             <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
@@ -288,9 +282,7 @@
                     </svg>
                 </span>
             </div>
-            <p
-                class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono"
-            >
+            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
                 {{ activeProfilesCount }}
             </p>
             <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">

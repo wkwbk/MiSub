@@ -179,17 +179,16 @@
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                 <span class="text-xs text-zinc-600 dark:text-zinc-400">
                     {{ t('quickImport.detectedPrefix') }}
-                    <strong class="font-mono text-zinc-900 dark:text-zinc-100">{{ getPlatformLabel(detectedPlatform) }}</strong
+                    <strong class="font-mono text-zinc-900 dark:text-zinc-100">{{
+                        getPlatformLabel(detectedPlatform)
+                    }}</strong
                     >{{ t('quickImport.detectedSuffix') }}
                 </span>
             </div>
         </template>
 
         <template #body>
-            <div
-                v-if="groupedClients.length === 0"
-                class="py-12 text-center text-sm text-zinc-500"
-            >
+            <div v-if="groupedClients.length === 0" class="py-12 text-center text-sm text-zinc-500">
                 {{ t('quickImport.empty') }}
             </div>
 
@@ -198,7 +197,7 @@
                     v-for="client in groupedClients"
                     :key="client.id"
                     @click="handleClientClick(client)"
-                    class="group relative flex flex-col items-center gap-3 p-4 rounded-md border transition-colors shadow-none"
+                    class="group relative flex flex-col items-center gap-3 p-4 rounded-md border transition-colors shadow-none cursor-pointer"
                     :class="
                         isRecommended(client)
                             ? 'bg-zinc-50 dark:bg-zinc-900/60 border-zinc-400 dark:border-zinc-600'

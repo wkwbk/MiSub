@@ -158,16 +158,14 @@
                             </svg>
                         </div>
                         <div>
-                            <p
-                                class="text-sm font-medium text-zinc-100"
-                            >
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ client.name }}
                             </p>
                         </div>
                     </div>
 
                     <button
-                        class="px-2.5 py-1 text-xs font-medium text-zinc-900 bg-zinc-100 rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                        class="px-2.5 py-1 text-xs font-medium text-zinc-900 bg-zinc-100 rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
                     >
                         {{ t('actions.copy') }}
                     </button>
