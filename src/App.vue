@@ -292,25 +292,47 @@
         >
             <div
                 v-if="sessionState === 'loading'"
-                class="flex flex-col items-center justify-center p-8 min-h-[60vh]"
+                class="flex flex-col items-center justify-center p-8 min-h-[60vh] select-none"
                 role="status"
                 aria-live="polite"
             >
-                <div class="relative mb-8">
+                <div class="relative flex items-center justify-center mb-6">
+                    <!-- Track Ring -->
                     <div
-                        class="w-12 h-12 border border-zinc-800 rounded-md animate-pulse"
+                        class="w-12 h-12 rounded-full border border-zinc-200 dark:border-zinc-800"
                     ></div>
+                    <!-- Spinning Hairline Arc -->
                     <div
-                        class="absolute inset-0 w-12 h-12 border border-transparent border-t-zinc-100 rounded-md animate-spin"
+                        class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-zinc-900 dark:border-t-zinc-100 animate-spin"
                     ></div>
+                    <!-- Centered Brand Glyph -->
+                    <div
+                        class="absolute inset-0 flex items-center justify-center text-zinc-400 dark:text-zinc-500"
+                    >
+                        <svg
+                            class="w-5 h-5"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.75"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M3.6 9h16.8M3.6 15h16.8" />
+                            <path d="M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="flex flex-col items-center gap-3">
-                    <div
-                        class="h-5 w-32 bg-zinc-900 border border-zinc-800 rounded-md animate-pulse"
-                    ></div>
-                    <div
-                        class="h-3.5 w-24 bg-zinc-900 border border-zinc-800 rounded-md animate-pulse"
-                    ></div>
+                <div class="flex flex-col items-center gap-1.5">
+                    <span
+                        class="font-display font-semibold tracking-tight text-sm text-zinc-900 dark:text-zinc-100"
+                    >
+                        MiSub
+                    </span>
+                    <span class="text-xs font-mono text-zinc-400 dark:text-zinc-500">
+                        {{ t('common.loading') }}
+                    </span>
                 </div>
             </div>
 
