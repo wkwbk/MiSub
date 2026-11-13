@@ -117,9 +117,9 @@
             aria-haspopup="menu"
             :aria-label="t('actions.bulkActions')"
             :aria-controls="menuId"
-            class="p-2 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors"
+            class="group p-2 rounded-md border border-zinc-800 bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 hover:border-zinc-600 transition-colors"
         >
-            <MoreHorizontal class="h-4 w-4 text-zinc-400 hover:text-zinc-100" />
+            <MoreHorizontal class="h-4 w-4" />
         </button>
 
         <Transition name="slide-fade-sm">

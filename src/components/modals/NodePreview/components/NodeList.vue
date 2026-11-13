@@ -95,7 +95,7 @@
                                 v-for="node in visibleItems.items"
                                 :key="`${node.url}_${node._virtualIndex}`"
                                 @click="handleRowClick(node)"
-                                class="group border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900/60 transition-colors"
+                                class="group border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
                                 :class="{
                                     'bg-zinc-100/70 dark:bg-zinc-900':
                                         selectionMode && selectedUrls.has(node.url),

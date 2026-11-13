@@ -19,7 +19,7 @@ describe('MiSub visual system regression', () => {
         expect(css).toContain('--text-muted-dark: #737373');
         expect(css).toContain('--border-subtle-dark: #262626');
         expect(css).toContain('font-family: var(--font-body)');
-        expect(css).toContain('font-feature-settings: "cv01", "ss03"');
+        expect(css).toMatch(/font-feature-settings:\s*['"]cv01['"],\s*['"]ss03['"]/);
         expect(css).toContain('scroll-behavior: auto');
         expect(css).not.toMatch(/html\s*\{[^}]*scroll-behavior:\s*smooth/s);
         expect(css).not.toContain('COSMIC GLASS DESIGN SYSTEM');
@@ -43,6 +43,18 @@ describe('MiSub visual system regression', () => {
         });
         expect(secondary.find('button').classes().join(' ')).toContain('border-zinc-800');
         expect(secondary.find('button').classes().join(' ')).toContain('bg-transparent');
+        expect(secondary.find('button').classes().join(' ')).toContain('hover:bg-zinc-800');
+    });
+
+    it('defines high-contrast hover tokens for both light and dark modes', async () => {
+        const css = await readSource('src/assets/main.css');
+
+        expect(css).toContain('--hover-surface-light: #e4e4e7');
+        expect(css).toContain('--hover-border-light: #a1a1aa');
+        expect(css).toContain('--hover-surface-dark: #27272a');
+        expect(css).toContain('--hover-surface-elevated-dark: #303036');
+        expect(css).toContain('--hover-border-dark: #52525b');
+        expect(css).toContain('Dark Theme Global Hover Contrast Enhancement');
     });
 
     it('uses the shared surface and focus treatment for inputs and modals', () => {

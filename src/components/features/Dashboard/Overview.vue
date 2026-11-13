@@ -38,7 +38,7 @@
         <div
             v-for="stat in statsData"
             :key="stat.name"
-            class="bg-transparent hover:bg-zinc-900/60 p-5 rounded-none shadow-none transition-colors"
+            class="bg-transparent hover:bg-[#202020] p-5 rounded-none shadow-none transition-colors"
         >
             <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                 <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="stat.dotClass"></span>

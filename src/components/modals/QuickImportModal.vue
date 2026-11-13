@@ -194,8 +194,8 @@
                     class="group relative flex flex-col items-center gap-3 p-4 rounded-md border transition-colors shadow-none cursor-pointer"
                     :class="
                         isRecommended(client)
-                            ? 'bg-zinc-50 dark:bg-zinc-900/60 border-zinc-400 dark:border-zinc-600'
-                            : 'bg-white dark:bg-[#171717] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900/40'
+                            ? 'bg-zinc-50 dark:bg-[#202020] border-zinc-400 dark:border-zinc-600'
+                            : 'bg-white dark:bg-[#171717] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-[#202020]'
                     "
                 >
                     <div

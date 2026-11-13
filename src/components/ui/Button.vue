@@ -49,11 +49,11 @@
             primary:
                 'bg-zinc-100 hover:bg-white text-zinc-900 border border-zinc-100 font-semibold shadow-none',
             secondary:
-                'bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 border border-zinc-800 shadow-none',
-            danger: 'bg-transparent hover:bg-red-950/40 text-red-400 border border-zinc-800 hover:border-red-900/60 shadow-none',
-            ghost: 'bg-transparent hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100',
+                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-zinc-100 border border-zinc-800 shadow-none',
+            danger: 'bg-transparent hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-zinc-800 hover:border-red-900/60 shadow-none',
+            ghost: 'bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100',
             outline:
-                'bg-transparent hover:bg-zinc-900 text-zinc-200 border border-zinc-800 shadow-none',
+                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-200 hover:text-zinc-100 border border-zinc-800 shadow-none',
         };
         return variants[props.variant];
     });

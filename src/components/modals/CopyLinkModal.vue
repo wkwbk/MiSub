@@ -137,7 +137,7 @@
                     v-for="client in clients"
                     :key="client.type"
                     @click="copyToClipboard(client.format)"
-                    class="flex items-center justify-between p-2.5 border border-zinc-800 rounded-md hover:bg-zinc-900/60 hover:border-zinc-700 cursor-pointer transition-colors group"
+                    class="flex items-center justify-between p-2.5 border border-zinc-800 rounded-md hover:bg-[#202020] hover:border-zinc-700 cursor-pointer transition-colors group"
                 >
                     <div class="flex items-center gap-3">
                         <div

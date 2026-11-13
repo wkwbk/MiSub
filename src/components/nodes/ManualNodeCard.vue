@@ -100,7 +100,7 @@
 
 <template>
     <div
-        class="group relative flex flex-col justify-between rounded-md border border-zinc-800 bg-[#171717] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200 hover:border-zinc-700 min-h-[110px]"
+        class="group relative flex flex-col justify-between rounded-md border border-zinc-800 bg-[#171717] hover:bg-[#202020] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200 hover:border-zinc-700 min-h-[110px]"
         :class="{
             'opacity-50': !node.enabled && !isSelectionMode,
             'border-zinc-200 bg-zinc-900/50': isSelectionMode && isSelected,
@@ -216,7 +216,7 @@
                 </button>
                 <button
                     @click.stop="copyToClipboard(node.url)"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
                     :title="t('actions.copyLink')"
                     :aria-label="t('actions.copyLink')"
                 >
@@ -224,7 +224,7 @@
                 </button>
                 <button
                     @click.stop="emit('edit')"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
                     :title="t('actions.edit')"
                     :aria-label="t('actions.edit')"
                 >

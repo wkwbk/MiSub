@@ -208,7 +208,7 @@
 
 <template>
     <div
-        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200 hover:border-zinc-700"
+        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] hover:bg-[#202020] p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200 hover:border-zinc-700"
         :class="{
             'opacity-60': !misub.enabled,
         }"
@@ -297,7 +297,7 @@
                 >
                     <button
                         @click.stop="emit('preview')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.previewNodes')"
                         :aria-label="t('actions.previewNodes')"
                     >
@@ -305,7 +305,7 @@
                     </button>
                     <button
                         @click.stop="emit('qrcode')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.showQrCode')"
                         :aria-label="t('actions.showQrCode')"
                     >
@@ -313,7 +313,7 @@
                     </button>
                     <button
                         @click.stop="emit('edit')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.edit')"
                         :aria-label="t('actions.edit')"
                     >
@@ -395,7 +395,7 @@
                     <button
                         @click.stop="emit('update')"
                         :disabled="misub.isUpdating"
-                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 transition-colors disabled:opacity-50 touch-target"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors disabled:opacity-50 touch-target"
                         :title="
                             misub.isUpdating
                                 ? t('subscriptions.updating')

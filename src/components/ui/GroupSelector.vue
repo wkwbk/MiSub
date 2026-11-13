@@ -170,7 +170,7 @@
                 >
                     <button
                         v-if="normalizeGroup(modelValue) && !hasExistingGroup"
-                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 block transition-colors"
+                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800 block transition-colors"
                         @click="selectGroup(modelValue)"
                     >
                         {{ t('common.createGroup', { name: modelValue }) }}
@@ -178,7 +178,7 @@
                     <button
                         v-for="group in filteredGroups"
                         :key="group"
-                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-between group-item"
+                        class="w-full text-left pl-9 pr-4 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors flex items-center justify-between group-item"
                         :class="{
                             'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-medium':
                                 modelValue === group,
