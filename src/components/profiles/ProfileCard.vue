@@ -1,5 +1,15 @@
 <script setup>
     import { computed } from 'vue';
+    import {
+        Eye,
+        QrCode,
+        Pencil,
+        Trash2,
+        FileText,
+        Copy,
+        ChevronUp,
+        ChevronDown,
+    } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
     import Switch from '../ui/Switch.vue';
 
@@ -109,25 +119,7 @@
                     :title="t('actions.previewNodes')"
                     :aria-label="t('actions.previewNodes')"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                    </svg>
+                    <Eye class="w-4 h-4" />
                 </button>
                 <button
                     @click.stop="emit('qrcode')"
@@ -135,25 +127,7 @@
                     :title="t('actions.showQrCode')"
                     :aria-label="t('actions.showQrCode')"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"
-                        />
-                    </svg>
+                    <QrCode class="w-4 h-4" stroke-width="1.5" />
                 </button>
                 <button
                     @click.stop="emit('edit')"
@@ -161,20 +135,7 @@
                     :title="t('actions.edit')"
                     :aria-label="t('actions.edit')"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"
-                        />
-                    </svg>
+                    <Pencil class="w-4 h-4" />
                 </button>
                 <button
                     @click.stop="emit('delete')"
@@ -182,20 +143,7 @@
                     :title="t('actions.delete')"
                     :aria-label="t('actions.delete')"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                    </svg>
+                    <Trash2 class="w-4 h-4" />
                 </button>
             </div>
         </div>
@@ -230,20 +178,7 @@
                     class="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-xs font-sans font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     :title="t('actions.viewLogs')"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-3.5 w-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                    </svg>
+                    <FileText class="h-3.5 w-3.5" />
                     {{ t('actions.viewLog') }}
                 </button>
             </div>
@@ -259,20 +194,7 @@
                     class="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
                     :class="compact ? 'w-full justify-center' : ''"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-3.5 w-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                    </svg>
+                    <Copy class="h-3.5 w-3.5" />
                     {{ t('profiles.copySubscription') }}
                 </button>
             </div>
@@ -284,20 +206,7 @@
                         :title="t('actions.moveUp')"
                         :aria-label="t('actions.moveUp')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M5 15l7-7 7 7"
-                            />
-                        </svg>
+                        <ChevronUp class="h-4 w-4" />
                     </button>
                     <button
                         @click="emit('move-down')"
@@ -305,20 +214,7 @@
                         :title="t('actions.moveDown')"
                         :aria-label="t('actions.moveDown')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
+                        <ChevronDown class="h-4 w-4" />
                     </button>
                 </template>
             </div>

@@ -1,5 +1,6 @@
 <script setup>
     import { ref } from 'vue';
+    import { CloudDownload } from 'lucide-vue-next';
     import { api } from '../../../lib/http.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useI18n } from '../../../i18n/index.js';
@@ -187,27 +188,12 @@
 </script>
 
 <template>
-    <div
-        class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-    >
+    <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
         <div class="mb-5 flex items-start gap-3">
             <div
                 class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M12 12v9m0 0l-3-3m3 3l3-3"
-                    />
-                </svg>
+                <CloudDownload class="h-4 w-4" />
             </div>
             <div class="space-y-0.5">
                 <h3 class="text-sm font-semibold text-zinc-100">
@@ -266,15 +252,11 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                    class="rounded-md border border-zinc-800 p-4 bg-transparent"
-                >
+                <div class="rounded-md border border-zinc-800 p-4 bg-transparent">
                     <p class="text-sm font-medium text-zinc-100 mb-3">
                         {{ t('settings.webdavBackupScope') }}
                     </p>
-                    <label
-                        class="flex items-start gap-3 mb-3 text-sm text-zinc-200 cursor-pointer"
-                    >
+                    <label class="flex items-start gap-3 mb-3 text-sm text-zinc-200 cursor-pointer">
                         <input
                             type="radio"
                             value="dataOnly"
@@ -304,9 +286,7 @@
                     </label>
                 </div>
 
-                <div
-                    class="rounded-md border border-zinc-800 p-4 bg-transparent"
-                >
+                <div class="rounded-md border border-zinc-800 p-4 bg-transparent">
                     <p class="text-sm font-medium text-zinc-100 mb-3">
                         {{ t('settings.webdavRequestAutoBackup') }}
                     </p>

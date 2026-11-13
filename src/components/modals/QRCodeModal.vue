@@ -3,6 +3,7 @@
 
     const { t } = useI18n();
     import { ref, watch, nextTick } from 'vue';
+    import { Download } from 'lucide-vue-next';
     import QRCode from 'qrcode';
     import Modal from '../forms/Modal.vue';
     import { useToastStore } from '../../stores/toast.js';
@@ -91,20 +92,7 @@
                     @click="downloadQRCode"
                     class="flex items-center gap-2 px-5 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 rounded-md text-xs font-medium transition-colors shadow-none"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                        />
-                    </svg>
+                    <Download class="h-4 w-4" />
                     {{ t('qr.saveImage') }}
                 </button>
             </div>

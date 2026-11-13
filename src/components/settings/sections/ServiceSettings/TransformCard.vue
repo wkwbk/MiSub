@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { FileText, Link2 } from 'lucide-vue-next';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Switch from '@/components/ui/Switch.vue';
     import SectionHeader from '../../SectionHeader.vue';
@@ -89,8 +90,7 @@
     const showEngineChangeWarning = ref(false);
     const engineChangeNoticeDismissed = ref(false);
     const backendTestToneClass = computed(() => {
-        if (!backendTestStatus.value)
-            return 'border-zinc-800 bg-transparent text-zinc-400';
+        if (!backendTestStatus.value) return 'border-zinc-800 bg-transparent text-zinc-400';
         return backendTestStatus.value.success
             ? 'border-zinc-800 bg-transparent text-emerald-400'
             : 'border-zinc-800 bg-transparent text-red-400';
@@ -191,20 +191,7 @@
                 <div
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
+                    <Link2 class="h-4 w-4" />
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold text-zinc-100">
@@ -251,7 +238,9 @@
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                 <div class="flex flex-col gap-1">
                     <p class="font-medium">{{ t('settings.transformEngineChangeNotice') }}</p>
-                    <p class="text-xs text-zinc-400">{{ t('settings.transformExternalWarning') }}</p>
+                    <p class="text-xs text-zinc-400">
+                        {{ t('settings.transformExternalWarning') }}
+                    </p>
                 </div>
             </div>
             <button
@@ -278,29 +267,14 @@
             </button>
         </div>
 
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.transformRulesTitle')"
                 :description="t('settings.transformRulesDesc')"
                 tone="purple"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                    </svg>
+                    <FileText class="h-4 w-4" />
                 </template>
             </SectionHeader>
 
@@ -329,9 +303,7 @@
                                 {{ option.label }}
                             </option>
                         </select>
-                        <p
-                            class="mt-2 text-xs leading-relaxed text-zinc-400"
-                        >
+                        <p class="mt-2 text-xs leading-relaxed text-zinc-400">
                             {{ modeHint }}
                         </p>
                         <p
@@ -351,18 +323,14 @@
                         class="rounded-md border border-zinc-800 bg-transparent p-4 transition-all duration-300"
                     >
                         <div class="mb-4 flex items-center justify-between">
-                            <h4
-                                class="flex items-center gap-2 text-xs font-semibold text-zinc-100"
-                            >
+                            <h4 class="flex items-center gap-2 text-xs font-semibold text-zinc-100">
                                 <span
                                     v-if="isBuiltinEngine"
                                     class="h-1.5 w-1.5 rounded-full bg-emerald-500"
                                 ></span>
                                 {{ t('settings.transformBuiltinParams') }}
                             </h4>
-                            <span class="text-[10px] font-mono text-zinc-500"
-                                >builtin-core</span
-                            >
+                            <span class="text-[10px] font-mono text-zinc-500">builtin-core</span>
                         </div>
 
                         <div class="space-y-4">
@@ -397,19 +365,17 @@
                                 <div
                                     class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2.5"
                                 >
-                                    <span
-                                        class="text-xs font-medium text-zinc-300"
-                                        >{{ t('settings.transformBuiltinSkipCert') }}</span
-                                    >
+                                    <span class="text-xs font-medium text-zinc-300">{{
+                                        t('settings.transformBuiltinSkipCert')
+                                    }}</span>
                                     <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
                                 </div>
                                 <div
                                     class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2.5"
                                 >
-                                    <span
-                                        class="text-xs font-medium text-zinc-300"
-                                        >{{ t('settings.transformBuiltinUdp') }}</span
-                                    >
+                                    <span class="text-xs font-medium text-zinc-300">{{
+                                        t('settings.transformBuiltinUdp')
+                                    }}</span>
                                     <Switch v-model="settings.builtinEnableUdp" size="sm" />
                                 </div>
                             </div>
@@ -456,18 +422,14 @@
             class="rounded-md border border-zinc-800 bg-transparent p-5 transition-all duration-300"
         >
             <div class="mb-4 flex items-center justify-between">
-                <h4
-                    class="flex items-center gap-2 text-xs font-semibold text-zinc-100"
-                >
+                <h4 class="flex items-center gap-2 text-xs font-semibold text-zinc-100">
                     <span
                         v-if="isExternalEngine"
                         class="h-1.5 w-1.5 rounded-full bg-amber-500"
                     ></span>
                     {{ t('settings.transformExternalParams') }}
                 </h4>
-                <span class="text-[10px] font-mono text-zinc-500"
-                    >subconverter</span
-                >
+                <span class="text-[10px] font-mono text-zinc-500">subconverter</span>
             </div>
 
             <div class="space-y-4">
@@ -547,11 +509,9 @@
                         :key="flag.key"
                         class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2"
                     >
-                        <span
-                            class="truncate text-xs text-zinc-300"
-                            :title="flag.label"
-                            >{{ flag.label }}</span
-                        >
+                        <span class="truncate text-xs text-zinc-300" :title="flag.label">{{
+                            flag.label
+                        }}</span>
                         <Switch
                             v-model="settings.subconverter.defaultOptions[flag.key]"
                             size="xs"

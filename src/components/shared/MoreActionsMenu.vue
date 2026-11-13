@@ -1,5 +1,6 @@
 <script setup>
     import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
+    import { MoreHorizontal } from 'lucide-vue-next';
     import { t } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -118,16 +119,7 @@
             :aria-controls="menuId"
             class="p-2 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors"
         >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-4 w-4 text-zinc-400 hover:text-zinc-100"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-            >
-                <path
-                    d="M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"
-                />
-            </svg>
+            <MoreHorizontal class="h-4 w-4 text-zinc-400 hover:text-zinc-100" />
         </button>
 
         <Transition name="slide-fade-sm">

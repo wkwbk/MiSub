@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import Input from '../ui/Input.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
@@ -231,20 +232,7 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-zinc-400 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                </svg>
+                <Link2 class="h-5 w-5 text-zinc-400 shrink-0" />
                 <div>
                     <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('manualNodes.addTitle') : t('manualNodes.editTitle') }}
@@ -284,20 +272,7 @@
                                 @blur="nameFocused = false"
                             >
                                 <template #icon>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                        />
-                                    </svg>
+                                    <Tag class="h-4 w-4" />
                                 </template>
                             </Input>
 
@@ -314,18 +289,7 @@
                                     class="text-xs text-zinc-200 hover:text-white font-medium flex items-center gap-1 hover:underline"
                                 >
                                     {{ suggestedName }}
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <ArrowRightCircle class="h-3.5 w-3.5" />
                                 </button>
                             </div>
                         </div>
@@ -358,20 +322,7 @@
                         class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-zinc-800 bg-transparent px-3 py-2.5"
                     >
                         <div class="flex items-center gap-2 text-xs text-zinc-300">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 shrink-0 text-zinc-400"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-                                />
-                            </svg>
+                            <CloudUpload class="h-4 w-4 shrink-0 text-zinc-400" />
                             <span>{{ t('manualNodes.fileImportHint') }}</span>
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
@@ -423,20 +374,7 @@
                             <div
                                 class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-4 w-4 mt-0.5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                    />
-                                </svg>
+                                <Link2 class="h-4 w-4 mt-0.5" />
                             </div>
                             <textarea
                                 id="node-url"
@@ -456,19 +394,7 @@
                 <div v-if="isMultiLine && parsedNodes.length > 0" class="space-y-2">
                     <div class="flex items-center justify-between">
                         <h4 class="text-xs font-semibold text-zinc-300 flex items-center gap-2">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 text-zinc-400"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                            <ClipboardList class="h-4 w-4 text-zinc-400" />
                             {{ t('manualNodes.importPreview') }}
                         </h4>
                         <span class="font-mono text-xs text-zinc-400">

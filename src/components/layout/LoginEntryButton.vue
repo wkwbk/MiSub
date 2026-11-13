@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { LogIn } from 'lucide-vue-next';
     import { useSessionStore } from '../../stores/session.js';
     import { useI18n } from '../../i18n/index.js';
 
@@ -27,24 +28,11 @@
 <template>
     <router-link
         :to="loginPath"
-        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md transition-colors"
+        class="inline-flex items-center gap-1.5 px-3 h-8 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md transition-colors"
         :title="t('actions.login')"
         :aria-label="t('actions.login')"
     >
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-            />
-        </svg>
-        {{ t('actions.login') }}
+        <LogIn class="h-4 w-4" />
+        <span>{{ t('actions.login') }}</span>
     </router-link>
 </template>

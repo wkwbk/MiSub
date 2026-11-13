@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Search } from 'lucide-vue-next';
     import ProfileCard from './ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
@@ -155,17 +156,10 @@
                     </div>
                 </div>
                 <div v-if="searchable" class="relative mt-4">
-                    <svg
+                    <Search
                         class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
                         aria-hidden="true"
-                    >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m20 20-3.5-3.5" />
-                    </svg>
+                    />
                     <input
                         v-model="searchModel"
                         data-testid="profile-search"

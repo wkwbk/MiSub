@@ -7,6 +7,7 @@
      * 纯 UI 组件，解析与入库由父组件处理。
      */
     import { ref, computed } from 'vue';
+    import { CloudUpload, Loader2 } from 'lucide-vue-next';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.js';
 
     const props = defineProps({
@@ -92,20 +93,7 @@
                 aria-hidden="true"
             />
             <div class="flex flex-col items-center gap-2">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-7 w-7 text-zinc-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-                    />
-                </svg>
+                <CloudUpload class="h-7 w-7 text-zinc-400" />
                 <p class="text-xs font-medium text-zinc-200">
                     {{ t('fileImport.dropHint') }}
                 </p>
@@ -115,9 +103,7 @@
             </div>
         </div>
 
-        <div
-            class="bg-transparent border border-zinc-800 rounded-md p-3"
-        >
+        <div class="bg-transparent border border-zinc-800 rounded-md p-3">
             <h4 class="text-xs font-semibold text-zinc-200 mb-2">
                 {{ t('fileImport.detectedHeading') }}
             </h4>
@@ -145,25 +131,8 @@
             </ul>
         </div>
 
-        <div
-            v-if="statusText"
-            class="flex items-center gap-2 text-xs text-zinc-300"
-        >
-            <svg class="h-4 w-4 animate-spin text-zinc-400" viewBox="0 0 24 24" fill="none">
-                <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                ></circle>
-                <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                ></path>
-            </svg>
+        <div v-if="statusText" class="flex items-center gap-2 text-xs text-zinc-300">
+            <Loader2 class="h-4 w-4 animate-spin text-zinc-400" />
             <span>{{ statusText }}</span>
         </div>
 

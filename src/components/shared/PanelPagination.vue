@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -117,14 +118,7 @@
                 :title="t('common.firstPage')"
                 :aria-label="t('common.firstPage')"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                    />
-                </svg>
+                <ChevronsLeft class="w-4 h-4" />
             </button>
             <button
                 @click="emitPageChange(currentPage - 1)"
@@ -133,14 +127,7 @@
                 :title="t('common.prevPage')"
                 :aria-label="t('common.prevPage')"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15 19l-7-7 7-7"
-                    />
-                </svg>
+                <ChevronLeft class="w-4 h-4" />
             </button>
 
             <div class="flex items-center space-x-1 font-mono">
@@ -162,14 +149,7 @@
                 :title="t('common.nextPage')"
                 :aria-label="t('common.nextPage')"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M9 5l7 7-7 7"
-                    />
-                </svg>
+                <ChevronRight class="w-4 h-4" />
             </button>
             <button
                 @click="emitPageChange(totalPages)"
@@ -178,14 +158,7 @@
                 :title="t('common.lastPage')"
                 :aria-label="t('common.lastPage')"
             >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                    />
-                </svg>
+                <ChevronsRight class="w-4 h-4" />
             </button>
         </div>
         <div v-else class="w-[100px]"></div>

@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
+    import { Check, Folder, GripVertical, Pencil, Trash2, X } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import draggable from 'vuedraggable';
     import { useI18n } from '../../i18n/index.js';
@@ -93,40 +94,17 @@
     <Modal :show="show" @close="handleClose" max-width="max-w-2xl">
         <template #title>
             <div class="flex items-center gap-2">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 text-zinc-500"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                >
-                    <path
-                        d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                    />
-                </svg>
-                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{ t('actions.manageGroups') }}</span>
+                <Folder class="h-4 w-4 text-zinc-500" />
+                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{
+                    t('actions.manageGroups')
+                }}</span>
             </div>
         </template>
 
         <template #body>
             <div class="space-y-3">
-                <div
-                    v-if="localGroups.length === 0"
-                    class="text-center py-8 text-zinc-500"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-8 w-8 mx-auto mb-2 text-zinc-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                        />
-                    </svg>
+                <div v-if="localGroups.length === 0" class="text-center py-8 text-zinc-500">
+                    <Folder class="h-8 w-8 mx-auto mb-2 text-zinc-500" />
                     <p class="text-sm">{{ t('subscriptions.noGroups') }}</p>
                 </div>
 
@@ -156,16 +134,7 @@
                                 :title="t('common.dragToSort')"
                                 :aria-label="t('common.dragToSort')"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-4 w-4"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                >
-                                    <path
-                                        d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
-                                    />
-                                </svg>
+                                <GripVertical class="h-4 w-4" />
                             </button>
 
                             <!-- 分组名称或编辑输入框 -->
@@ -198,18 +167,7 @@
                                         :title="t('actions.confirm')"
                                         :aria-label="t('actions.confirm')"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
+                                        <Check class="h-4 w-4" />
                                     </button>
                                     <button
                                         @click="cancelEdit"
@@ -217,18 +175,7 @@
                                         :title="t('actions.cancel')"
                                         :aria-label="t('actions.cancel')"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
+                                        <X class="h-4 w-4" />
                                     </button>
                                 </template>
                                 <template v-else>
@@ -238,16 +185,7 @@
                                         :title="t('subscriptions.renameGroup')"
                                         :aria-label="t('subscriptions.renameGroup')"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
-                                            />
-                                        </svg>
+                                        <Pencil class="h-4 w-4" />
                                     </button>
                                     <button
                                         @click="handleDelete(element.name)"
@@ -255,18 +193,7 @@
                                         :title="t('actions.delete')"
                                         :aria-label="t('actions.delete')"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4"
-                                            viewBox="0 0 20 20"
-                                            fill="currentColor"
-                                        >
-                                            <path
-                                                fill-rule="evenodd"
-                                                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                                                clip-rule="evenodd"
-                                            />
-                                        </svg>
+                                        <Trash2 class="h-4 w-4" />
                                     </button>
                                 </template>
                             </div>
@@ -274,7 +201,10 @@
                     </template>
                 </draggable>
 
-                <div v-if="isDraggable" class="mt-3 p-3 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md">
+                <div
+                    v-if="isDraggable"
+                    class="mt-3 p-3 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md"
+                >
                     <p class="text-xs text-zinc-500 flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0"></span>
                         <span>{{ t('subscriptions.dragToReorder') }}</span>

@@ -13,7 +13,7 @@
     import QRCode from 'qrcode';
     import { api } from '../lib/http.js';
     import ProfileGrid from '../components/public/ProfileGrid.vue';
-    import BaseIcon from '../components/ui/BaseIcon.vue';
+    import { AlertTriangle, ArrowRight } from 'lucide-vue-next';
     import { parseCustomPageSource } from '../utils/custom-page-source.js';
 
     const isDev = import.meta.env.DEV;
@@ -306,14 +306,6 @@
         return map[p] || 'bg-gray-100 text-gray-800 border border-gray-200';
     };
 
-    const ICONS = {
-        feedback:
-            'M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z',
-        error: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z',
-        empty: 'M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2-2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4',
-        download: 'M17 8l4 4m0 0l-4 4m4-4H3',
-    };
-
     onMounted(async () => {
         fetchPublicProfiles();
         await fetchClients();
@@ -562,7 +554,7 @@
                         <div
                             class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-zinc-800 bg-transparent mb-4"
                         >
-                            <BaseIcon :path="ICONS.error" className="w-6 h-6 text-red-400" />
+                            <AlertTriangle class="w-6 h-6 text-red-400" />
                         </div>
                         <h3 class="text-base font-semibold text-zinc-100 mb-2">
                             {{ t('publicProfiles.loadFailed') }}
@@ -682,9 +674,8 @@
                                         class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link"
                                     >
                                         {{ t('publicProfiles.download') }}
-                                        <BaseIcon
-                                            :path="ICONS.download"
-                                            className="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
+                                        <ArrowRight
+                                            class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
                                         />
                                     </a>
                                 </div>

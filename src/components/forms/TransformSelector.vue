@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ChevronDown, List } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
     import { useDataStore } from '@/stores/useDataStore.js';
@@ -291,14 +292,7 @@
             <div
                 class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400"
             >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                <ChevronDown class="h-4 w-4" />
             </div>
         </div>
 
@@ -320,14 +314,7 @@
                     :title="t('operators.backToList')"
                     :aria-label="t('operators.backToList')"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"
-                        />
-                    </svg>
+                    <List class="h-5 w-5" />
                 </button>
             </div>
             <p
@@ -369,21 +356,11 @@
                         helperText
                     }}</span>
                 </span>
-                <svg
+                <ChevronDown
                     class="h-4 w-4 flex-shrink-0 text-zinc-400 transition-transform"
                     :class="showTemplateVariables ? 'rotate-180' : ''"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                     aria-hidden="true"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                />
             </button>
             <div
                 v-if="showTemplateVariables"

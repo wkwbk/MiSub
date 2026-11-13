@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import { Zap, Boxes, Globe, ClipboardList } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -91,20 +92,7 @@
                     {{ t('dashboard.remainingTraffic') }}
                 </h3>
                 <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                    </svg>
+                    <Zap class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
             <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
@@ -161,20 +149,7 @@
                     {{ t('dashboard.activeSubscriptions') }}
                 </h3>
                 <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                        />
-                    </svg>
+                    <Boxes class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
             <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
@@ -214,20 +189,7 @@
                     {{ t('dashboard.totalNodes') }}
                 </h3>
                 <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
+                    <Globe class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
             <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
@@ -266,20 +228,7 @@
                     {{ t('dashboard.combinedSubscriptions') }}
                 </h3>
                 <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="1.5"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                        />
-                    </svg>
+                    <ClipboardList class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
             <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">

@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import { Loader2 } from 'lucide-vue-next';
     import Switch from '../../../ui/Switch.vue';
     import { useI18n } from '../../../../i18n/index.js';
 
@@ -138,9 +139,7 @@
 
 <template>
     <div class="space-y-6">
-        <section
-            class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-4"
-        >
+        <section class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-4">
             <div class="flex items-center justify-between gap-4">
                 <div>
                     <h3 class="text-sm font-semibold text-zinc-100">
@@ -154,9 +153,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >Bot Token</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">Bot Token</label>
                     <input
                         v-model="settings.BotToken"
                         type="text"
@@ -168,9 +165,7 @@
                     </p>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >Chat ID</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">Chat ID</label>
                     <input
                         v-model="settings.ChatID"
                         type="text"
@@ -190,27 +185,7 @@
                     :disabled="isTesting || !settings.BotToken || !settings.ChatID"
                     @click="testNotification"
                 >
-                    <svg
-                        v-if="isTesting"
-                        class="animate-spin h-4 w-4 text-zinc-600"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        />
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                    </svg>
+                    <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-zinc-600" />
                     <span>{{
                         isTesting ? t('settings.telegramTesting') : t('settings.telegramSendTest')
                     }}</span>
@@ -219,11 +194,7 @@
                 <div
                     v-if="testResult"
                     class="text-xs flex items-center gap-2"
-                    :class="
-                        testResult.success
-                            ? 'text-emerald-400'
-                            : 'text-red-400'
-                    "
+                    :class="testResult.success ? 'text-emerald-400' : 'text-red-400'"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full shrink-0"
@@ -243,14 +214,10 @@
             </div>
         </section>
 
-        <section
-            class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-6"
-        >
+        <section class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-6">
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        Telegram Push Bot
-                    </h3>
+                    <h3 class="text-sm font-semibold text-zinc-100">Telegram Push Bot</h3>
                     <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('settings.telegramPushBotDesc') }}
                     </p>
@@ -319,17 +286,16 @@
                     </p>
                 </div>
 
-                <div
-                    class="bg-transparent border border-zinc-800 rounded-md p-4"
-                >
+                <div class="bg-transparent border border-zinc-800 rounded-md p-4">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex items-start gap-2.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"
+                            ></span>
                             <div>
-                                <label
-                                    class="block text-sm font-medium text-zinc-100"
-                                    >{{ t('settings.telegramPublicAccess') }}</label
-                                >
+                                <label class="block text-sm font-medium text-zinc-100">{{
+                                    t('settings.telegramPublicAccess')
+                                }}</label>
                                 <p class="mt-1 text-xs text-zinc-400">
                                     {{ t('settings.telegramPublicAccessHint') }}
                                 </p>
@@ -340,9 +306,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300"
-                        >Webhook URL</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300">Webhook URL</label>
                     <div class="mt-1.5 flex rounded-md shadow-none">
                         <input
                             :value="webhookUrl"
@@ -438,9 +402,7 @@
                     v-if="showSetupGuide"
                     class="bg-transparent border border-zinc-800 rounded-md p-4"
                 >
-                    <ol
-                        class="list-decimal list-inside space-y-2 text-xs text-zinc-300"
-                    >
+                    <ol class="list-decimal list-inside space-y-2 text-xs text-zinc-300">
                         <li>{{ t('settings.telegramSetupStep1') }}</li>
                         <li>{{ t('settings.telegramSetupStep2') }}</li>
                         <li>{{ t('settings.telegramSetupStep3') }}</li>

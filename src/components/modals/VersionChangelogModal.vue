@@ -3,6 +3,7 @@
 
     const { t } = useI18n();
     import { computed } from 'vue';
+    import { ExternalLink } from 'lucide-vue-next';
     import { useVersionStore } from '../../stores/version';
     import Modal from '../forms/Modal.vue';
 
@@ -85,7 +86,10 @@
                                 : release.name || release.tag_name || t('changelog.releaseNotes')
                         }}
                     </div>
-                    <div v-if="!isLatest && release.published_at" class="mt-1 text-xs font-mono text-zinc-500">
+                    <div
+                        v-if="!isLatest && release.published_at"
+                        class="mt-1 text-xs font-mono text-zinc-500"
+                    >
                         {{
                             t('changelog.publishedAt', {
                                 date: new Date(release.published_at).toLocaleString(),
@@ -114,20 +118,7 @@
                     class="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline underline-offset-4"
                 >
                     {{ t('changelog.viewReleasePage') }}
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="w-3.5 h-3.5"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                        />
-                    </svg>
+                    <ExternalLink class="w-3.5 h-3.5" />
                 </a>
             </div>
         </template>

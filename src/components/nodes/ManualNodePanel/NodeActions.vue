@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Search, LayoutGrid, List } from 'lucide-vue-next';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
@@ -149,20 +150,9 @@
                         class="w-full rounded-md border border-zinc-800 bg-transparent py-1.5 pl-9 pr-3 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus-visible:outline-none"
                         :aria-label="t('manualNodes.searchLabel')"
                     />
-                    <svg
+                    <Search
                         class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                        />
-                    </svg>
+                    />
                 </div>
                 <div
                     class="p-0.5 bg-transparent border border-zinc-800 rounded-md flex items-center shrink-0"
@@ -177,16 +167,7 @@
                         "
                         :aria-label="t('common.cardView')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                            />
-                        </svg>
+                        <LayoutGrid class="h-4 w-4" />
                     </button>
                     <button
                         @click="emit('update:viewMode', 'list')"
@@ -198,18 +179,7 @@
                         "
                         :aria-label="t('common.listView')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        <List class="h-4 w-4" />
                     </button>
                 </div>
                 <button

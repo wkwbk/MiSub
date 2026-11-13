@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { GripHorizontal, Search, X } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
@@ -70,7 +71,10 @@
                 {{ t('profileModal.selectNodes') }}
             </h4>
             <div class="space-x-2">
-                <button @click="emit('select-all')" class="text-xs text-zinc-300 hover:text-white hover:underline">
+                <button
+                    @click="emit('select-all')"
+                    class="text-xs text-zinc-300 hover:text-white hover:underline"
+                >
                     {{ t('profileModal.selectAll') }}
                 </button>
                 <button
@@ -130,20 +134,7 @@
                 class="w-full pl-9 pr-3 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md shadow-none text-zinc-100 placeholder-zinc-600 focus-visible:outline-hidden focus:border-zinc-600"
                 :aria-label="t('manualNodes.searchPlaceholder')"
             />
-            <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-            </svg>
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
         </div>
         <div
             class="overflow-y-auto space-y-2 p-3 bg-[#131515] rounded-md border border-zinc-800 h-36 lg:h-64"
@@ -156,11 +147,9 @@
                         @change="emit('toggle-selection', node.id)"
                         class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                     />
-                    <span
-                        class="text-xs text-zinc-200 truncate"
-                        :title="node.name"
-                        >{{ node.name || t('manualNodes.unnamed') }}</span
-                    >
+                    <span class="text-xs text-zinc-200 truncate" :title="node.name">{{
+                        node.name || t('manualNodes.unnamed')
+                    }}</span>
                 </label>
             </div>
             <div v-if="filteredNodes.length === 0" class="text-center text-zinc-500 text-xs py-4">
@@ -189,28 +178,12 @@
                         <span
                             class="drag-handle cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 8h16M4 16h16"
-                                />
-                            </svg>
+                            <GripHorizontal class="w-4 h-4" />
                         </span>
-                        <span
-                            class="font-mono text-xs font-medium text-zinc-400 w-5"
-                            >{{ index + 1 }}</span
-                        >
-                        <span
-                            class="text-xs text-zinc-200 truncate flex-1"
-                            :title="element.name"
-                        >
+                        <span class="font-mono text-xs font-medium text-zinc-400 w-5">{{
+                            index + 1
+                        }}</span>
+                        <span class="text-xs text-zinc-200 truncate flex-1" :title="element.name">
                             {{ element.name || t('manualNodes.unnamed') }}
                         </span>
                         <button
@@ -219,19 +192,7 @@
                             :title="t('profileModal.remove')"
                             :aria-label="t('profileModal.remove')"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
+                            <X class="w-4 h-4" />
                         </button>
                     </div>
                 </template>

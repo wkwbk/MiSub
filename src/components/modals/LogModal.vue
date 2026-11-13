@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue'; // Added watch
+    import { ChevronDown, ClipboardList, Loader2 } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import { useToastStore } from '../../stores/toast';
     import { getClientInfo } from '../../lib/utils';
@@ -139,42 +140,11 @@
             <div class="flex flex-col h-[60vh]">
                 <div class="flex-1 overflow-y-auto pr-2 min-h-0">
                     <div v-if="isLoading" class="py-12 text-center text-zinc-500">
-                        <svg
-                            class="animate-spin h-6 w-6 mx-auto mb-2 text-zinc-400"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                        </svg>
+                        <Loader2 class="animate-spin h-6 w-6 mx-auto mb-2 text-zinc-400" />
                         {{ t('common.loading') }}
                     </div>
                     <div v-else-if="filteredLogs.length === 0" class="py-16 text-center">
-                        <svg
-                            class="mx-auto h-10 w-10 text-zinc-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="1.5"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                            />
-                        </svg>
+                        <ClipboardList class="mx-auto h-10 w-10 text-zinc-600" />
                         <p class="mt-2 text-xs text-zinc-500">
                             {{ filterProfileName ? t('logs.emptyForProfile') : t('logs.empty') }}
                         </p>
@@ -299,20 +269,7 @@
                                 </div>
 
                                 <div v-show="expandedLogId !== log.id" class="mt-2 text-center">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-3.5 w-3.5 mx-auto text-zinc-500"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
+                                    <ChevronDown class="h-3.5 w-3.5 mx-auto text-zinc-500" />
                                 </div>
                             </div>
                         </li>

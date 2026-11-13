@@ -1,12 +1,11 @@
 <script setup>
     import { computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import BaseIcon from '../ui/BaseIcon.vue';
+    import { Compass, MessageSquare, Settings, LayoutGrid, LogOut } from 'lucide-vue-next';
     import ThemeToggle from '../features/ThemeToggle.vue';
     import LoginEntryButton from './LoginEntryButton.vue';
     import ExternalRepoButton from './ExternalRepoButton.vue';
     import LanguageSwitcher from './LanguageSwitcher.vue';
-    import { NAV_ICONS } from '../../constants/navigation.js';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -90,7 +89,7 @@
 </script>
 
 <template>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 sm:gap-1.5">
         <router-link
             v-if="canShowExplore"
             to="/explore"
@@ -98,7 +97,7 @@
             :title="t('nav.explore')"
             :aria-label="t('nav.explore')"
         >
-            <BaseIcon :path="NAV_ICONS.explore" className="h-5 w-5" />
+            <Compass class="h-4 w-4" />
         </router-link>
 
         <button
@@ -108,14 +107,14 @@
             :title="t('nav.feedback')"
             :aria-label="t('nav.feedback')"
         >
-            <BaseIcon :path="NAV_ICONS.feedback" className="h-5 w-5" />
+            <MessageSquare class="h-4 w-4" />
         </button>
 
         <LanguageSwitcher />
 
         <ThemeToggle />
 
-        <div v-if="showDivider" class="h-4 w-px bg-gray-200 dark:bg-white/10 mx-1"></div>
+        <div v-if="showDivider" class="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-0.5"></div>
 
         <template v-if="isLoggedIn">
             <button
@@ -125,7 +124,7 @@
                 :title="t('nav.settings')"
                 :aria-label="t('actions.openSettings')"
             >
-                <BaseIcon :path="NAV_ICONS.settings" className="h-5 w-5" />
+                <Settings class="h-4 w-4" />
             </button>
 
             <button
@@ -134,7 +133,7 @@
                 :title="t('actions.toggleLayout')"
                 :aria-label="t('actions.toggleLayout')"
             >
-                <BaseIcon :path="NAV_ICONS.layout" className="h-5 w-5" />
+                <LayoutGrid class="h-4 w-4" />
             </button>
 
             <button
@@ -143,7 +142,7 @@
                 :title="t('actions.logout')"
                 :aria-label="t('actions.logout')"
             >
-                <BaseIcon :path="NAV_ICONS.logout" className="h-5 w-5" />
+                <LogOut class="h-4 w-4" />
             </button>
         </template>
 

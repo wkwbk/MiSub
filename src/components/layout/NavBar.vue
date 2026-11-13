@@ -4,7 +4,6 @@
     import { useUIStore } from '../../stores/ui.js';
     import { useSessionStore } from '../../stores/session.js';
     import { storeToRefs } from 'pinia';
-    import BaseIcon from '../ui/BaseIcon.vue';
     import BrandLogo from './BrandLogo.vue';
     import NavActionGroup from './NavActionGroup.vue';
     import { MAIN_NAV_ITEMS } from '../../constants/navigation.js';
@@ -59,9 +58,7 @@
         :aria-label="t('nav.main')"
         class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
     >
-        <div
-            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between"
-        >
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div class="shrink-0 pr-5">
                 <BrandLogo to="/dashboard" text-size-class="text-lg" :icon-size="28" />
             </div>
@@ -78,10 +75,7 @@
                             : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900/60'
                     "
                 >
-                    <BaseIcon
-                        :path="item.iconPath"
-                        className="relative z-10 h-4 w-4 shrink-0"
-                    />
+                    <component :is="item.icon" class="relative z-10 h-4 w-4 shrink-0" />
                     <span class="relative z-10">{{ t(item.key) }}</span>
                 </router-link>
             </nav>
@@ -111,9 +105,9 @@
                 :class="isActive(item.path) ? 'nav-mobile-item-active' : 'nav-mobile-item-inactive'"
             >
                 <span class="nav-mobile-icon-wrap">
-                    <BaseIcon
-                        :path="item.iconPath"
-                        className="w-5 h-5 transition-transform duration-300"
+                    <component
+                        :is="item.icon"
+                        class="w-5 h-5 transition-transform duration-300"
                         :class="isActive(item.path) ? 'scale-110' : ''"
                     />
                 </span>

@@ -1,4 +1,5 @@
 <script setup>
+    import { Check } from 'lucide-vue-next';
     import StatusIndicator from './StatusIndicator.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -49,19 +50,7 @@
                         <span>{{ t('settings.saving') }}</span>
                     </div>
                     <div v-else-if="saveState === 'success'" class="flex items-center">
-                        <svg
-                            class="w-3.5 h-3.5 mr-1.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M5 13l4 4L19 7"
-                            ></path>
-                        </svg>
+                        <Check class="w-3.5 h-3.5 mr-1.5" />
                         <span>{{ t('common.saved') }}</span>
                     </div>
                     <span v-else>{{ t('common.saveNow') }}</span>

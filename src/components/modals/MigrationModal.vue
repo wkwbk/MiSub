@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed } from 'vue';
+    import { ClipboardCopy } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import { migrateToD1 } from '../../lib/api.js';
     import { useToastStore } from '../../stores/toast.js';
@@ -225,19 +226,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                                         @click="copySchema"
                                         class="text-xs flex items-center gap-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 underline underline-offset-2 transition-colors w-fit"
                                     >
-                                        <svg
-                                            class="w-3 h-3"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                                            />
-                                        </svg>
+                                        <ClipboardCopy class="w-3 h-3" />
                                         {{ t('d1Migration.copySchemaButton') }}
                                     </button>
                                 </div>

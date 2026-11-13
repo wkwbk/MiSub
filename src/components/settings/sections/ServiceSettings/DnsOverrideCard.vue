@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import { Globe } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
     import yaml from 'js-yaml';
 
@@ -59,28 +60,13 @@
 </script>
 
 <template>
-    <div
-        class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none space-y-4"
-    >
+    <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none space-y-4">
         <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <div
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                        />
-                    </svg>
+                    <Globe class="h-4 w-4" />
                 </div>
                 <div>
                     <h3 class="text-sm font-semibold text-zinc-100">
@@ -101,9 +87,7 @@
         </div>
 
         <div>
-            <label
-                class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-            >
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400">
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
             <textarea

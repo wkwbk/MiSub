@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { ChevronDown, ChevronUp, X } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
     import draggable from 'vuedraggable';
     import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.js';
@@ -163,11 +164,13 @@
 <template>
     <div class="space-y-3">
         <div class="flex items-center justify-between">
-            <label
-                class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
-                >{{ t('operators.sortWeights') }}</label
+            <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+                t('operators.sortWeights')
+            }}</label>
+            <button
+                @click="addKey"
+                class="text-[10px] text-zinc-200 font-semibold hover:text-white"
             >
-            <button @click="addKey" class="text-[10px] text-zinc-200 font-semibold hover:text-white">
                 + {{ t('operators.addCondition') }}
             </button>
         </div>
@@ -186,15 +189,7 @@
                             :disabled="idx === 0"
                             :aria-label="t('actions.moveUp')"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-2.5 w-2.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path d="M5 15l7-7 7 7" />
-                            </svg>
+                            <ChevronUp class="h-2.5 w-2.5" />
                         </button>
                         <button
                             @click="moveKey(idx, 1)"
@@ -202,15 +197,7 @@
                             :disabled="idx === params.keys.length - 1"
                             :aria-label="t('actions.moveDown')"
                         >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-2.5 w-2.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown class="h-2.5 w-2.5" />
                         </button>
                     </div>
 
@@ -234,16 +221,10 @@
                         @change="updateKeyField(idx, 'order', $event.target.value)"
                         class="w-14 bg-transparent border-none p-0 text-[11px] text-zinc-300 focus-visible:ring-0 outline-none"
                     >
-                        <option
-                            value="asc"
-                            class="bg-[#131515] text-zinc-100"
-                        >
+                        <option value="asc" class="bg-[#131515] text-zinc-100">
                             {{ t('operators.ascending') }}
                         </option>
-                        <option
-                            value="desc"
-                            class="bg-[#131515] text-zinc-100"
-                        >
+                        <option value="desc" class="bg-[#131515] text-zinc-100">
                             {{ t('operators.descending') }}
                         </option>
                     </select>
@@ -253,15 +234,7 @@
                         class="p-1 text-zinc-500 hover:text-red-400 touch-target"
                         :aria-label="t('operators.removeSortKey')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-3.5 w-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X class="h-3.5 w-3.5" />
                     </button>
                 </div>
 

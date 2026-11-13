@@ -1,6 +1,7 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
     import DOMPurify from 'dompurify';
+    import { X } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
     import { useToastStore } from '@/stores/toast.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
@@ -126,19 +127,7 @@
                         :title="t('common.dismissAnnouncement')"
                         :aria-label="t('common.dismissAnnouncement')"
                     >
-                        <svg
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
+                        <X class="h-4 w-4" />
                     </button>
                 </div>
 

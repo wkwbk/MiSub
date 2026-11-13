@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, onUnmounted } from 'vue';
+    import { QrCode, Check, Copy } from 'lucide-vue-next';
     import { useToastStore } from '../../stores/toast.js';
     import { useUIStore } from '../../stores/ui.js';
     import { useI18n } from '../../i18n/index.js';
@@ -235,25 +236,7 @@
                         :title="t('dashboard.linkCard.showQrCode')"
                         :aria-label="t('dashboard.linkCard.showQrCode')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"
-                            />
-                        </svg>
+                        <QrCode class="h-4 w-4" stroke-width="1.5" />
                     </button>
                     <button
                         @click="copyToClipboard"
@@ -268,36 +251,16 @@
                         :aria-label="t('dashboard.linkCard.copyLink')"
                     >
                         <Transition name="fade" mode="out-in">
-                            <svg
+                            <Check
                                 v-if="copied"
-                                xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4 text-zinc-100"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
                                 stroke-width="2.5"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
-                            <svg
+                            />
+                            <Copy
                                 v-else
-                                xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
                                 stroke-width="1.5"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                />
-                            </svg>
+                            />
                         </Transition>
                     </button>
                 </div>

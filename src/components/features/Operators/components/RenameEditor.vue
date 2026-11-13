@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { ChevronDown, X } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
 
     const props = defineProps({
@@ -89,30 +90,16 @@
         <!-- Regex Rename -->
         <div class="space-y-3">
             <div class="flex items-center justify-between">
-                <label
-                    class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
-                    >{{ t('operators.regexReplace') }}</label
-                >
+                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+                    t('operators.regexReplace')
+                }}</label>
                 <div class="flex items-center gap-2">
                     <div class="relative group/presets">
                         <button
                             class="text-[10px] text-zinc-400 font-medium hover:text-zinc-100 transition-colors flex items-center gap-0.5"
                         >
                             {{ t('operators.commonRegex') }}
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-2.5 w-2.5"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
+                            <ChevronDown class="h-2.5 w-2.5" />
                         </button>
                         <div
                             class="absolute right-0 top-full mt-1 w-40 bg-[#171717] border border-zinc-800 rounded-md shadow-none opacity-0 invisible group-hover/presets:opacity-100 group-hover/presets:visible transition-all z-10 py-1"
@@ -143,9 +130,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors ml-2',
-                            props.modelValue.regex?.enabled
-                                ? 'text-zinc-100'
-                                : 'text-zinc-500',
+                            props.modelValue.regex?.enabled ? 'text-zinc-100' : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(props.modelValue.regex?.enabled) }}
@@ -164,15 +149,7 @@
                         class="absolute top-2 right-2 p-1 text-zinc-500 hover:text-red-400 transition-colors touch-target"
                         :aria-label="t('operators.removeRule')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-3 w-3"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X class="h-3 w-3" />
                     </button>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pr-6">
@@ -223,17 +200,14 @@
         <!-- Template Rename -->
         <div class="space-y-3 pt-4 border-t border-zinc-800">
             <div class="flex items-center justify-between">
-                <label
-                    class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
-                    >{{ t('operators.templateRewrite') }}</label
-                >
+                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+                    t('operators.templateRewrite')
+                }}</label>
                 <button
                     @click="updateTemplate({ enabled: !props.modelValue.template?.enabled })"
                     :class="[
                         'text-[10px] font-medium transition-colors',
-                        props.modelValue.template?.enabled
-                            ? 'text-zinc-100'
-                            : 'text-zinc-500',
+                        props.modelValue.template?.enabled ? 'text-zinc-100' : 'text-zinc-500',
                     ]"
                 >
                     {{ statusLabel(props.modelValue.template?.enabled) }}
@@ -241,9 +215,7 @@
             </div>
 
             <div v-if="props.modelValue.template?.enabled" class="space-y-3">
-                <div
-                    class="p-3 bg-transparent rounded-md border border-zinc-800"
-                >
+                <div class="p-3 bg-transparent rounded-md border border-zinc-800">
                     <div class="space-y-2">
                         <input
                             :value="props.modelValue.template.template || ''"

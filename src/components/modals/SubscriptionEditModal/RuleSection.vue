@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { ChevronRight, X } from 'lucide-vue-next';
     import { useI18n } from '../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -147,20 +148,10 @@
                 class="flex flex-1 items-center gap-2 text-left cursor-pointer"
             >
                 <div class="flex items-center gap-2">
-                    <svg
+                    <ChevronRight
                         class="w-4 h-4 text-zinc-500 transition-transform duration-200"
                         :class="{ 'rotate-90': isRuleExpanded }"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 5l7 7-7 7"
-                        />
-                    </svg>
+                    />
                     <span
                         class="text-sm font-medium text-zinc-800 dark:text-zinc-200 cursor-pointer"
                         >{{ t('subscriptions.includeExclude') }}</span
@@ -377,19 +368,7 @@
                                         class="hover:text-red-500 text-zinc-400 transition-colors cursor-pointer !min-h-0 !min-w-0"
                                         :aria-label="t('operators.removeRule')"
                                     >
-                                        <svg
-                                            class="w-3.5 h-3.5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
+                                        <X class="w-3.5 h-3.5" />
                                     </button>
                                 </span>
                             </div>
@@ -401,9 +380,9 @@
                                 class="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5"
                             >
                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-                                {{ t('subscriptions.excludeRulesTitle') }} (<span class="font-mono">{{
-                                    effectiveExcludeRules.length
-                                }}</span
+                                {{ t('subscriptions.excludeRulesTitle') }} (<span
+                                    class="font-mono"
+                                    >{{ effectiveExcludeRules.length }}</span
                                 >)
                             </div>
                             <div
@@ -421,19 +400,7 @@
                                         class="hover:text-red-500 text-zinc-400 transition-colors cursor-pointer !min-h-0 !min-w-0"
                                         :aria-label="t('operators.removeRule')"
                                     >
-                                        <svg
-                                            class="w-3.5 h-3.5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
+                                        <X class="w-3.5 h-3.5" />
                                     </button>
                                 </span>
                             </div>

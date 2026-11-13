@@ -1,5 +1,14 @@
 <script setup>
     import { ref, onMounted, computed } from 'vue';
+    import {
+        ChevronDown,
+        ChevronUp,
+        Loader2,
+        Monitor,
+        SquarePen,
+        Trash2,
+        Upload,
+    } from 'lucide-vue-next';
     import { useI18n } from '../../../i18n/index.js';
     import { useToastStore } from '../../../stores/toast';
     import Modal from '../../forms/Modal.vue';
@@ -268,9 +277,7 @@
 
 <template>
     <div class="space-y-6">
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <SectionHeader
                     :title="t('settings.clientManagerTitle')"
@@ -278,20 +285,7 @@
                     tone="blue"
                 >
                     <template #icon>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                            />
-                        </svg>
+                        <Monitor class="h-4 w-4" />
                     </template>
                 </SectionHeader>
                 <div class="flex gap-2 w-full md:w-auto">
@@ -311,7 +305,9 @@
             </div>
         </div>
 
-        <div v-if="loading" class="text-center py-8 text-xs text-zinc-500">{{ t('common.loading') }}</div>
+        <div v-if="loading" class="text-center py-8 text-xs text-zinc-500">
+            {{ t('common.loading') }}
+        </div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div
@@ -360,19 +356,7 @@
                         :disabled="ordering || index === 0"
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
                     >
-                        <svg
-                            class="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.6"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M5 15l7-7 7 7"
-                            />
-                        </svg>
+                        <ChevronUp class="w-3.5 h-3.5" />
                         <span>{{ t('actions.moveUp') }}</span>
                     </button>
                     <button
@@ -380,57 +364,21 @@
                         :disabled="ordering || index === clients.length - 1"
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
                     >
-                        <svg
-                            class="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.6"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
+                        <ChevronDown class="w-3.5 h-3.5" />
                         <span>{{ t('actions.moveDown') }}</span>
                     </button>
                     <button
                         @click.stop="handleEdit(client)"
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
                     >
-                        <svg
-                            class="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                        </svg>
+                        <SquarePen class="w-3.5 h-3.5" />
                         <span>{{ t('actions.edit') }}</span>
                     </button>
                     <button
                         @click.stop="handleDelete(client.id)"
                         class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
                     >
-                        <svg
-                            class="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                        </svg>
+                        <Trash2 class="w-3.5 h-3.5" />
                         <span>{{ t('actions.delete') }}</span>
                     </button>
                 </div>
@@ -451,10 +399,9 @@
                                 class="bg-transparent rounded-md p-6 flex flex-col items-center gap-8 h-full border border-zinc-800"
                             >
                                 <div class="text-center space-y-3 w-full">
-                                    <label
-                                        class="block text-xs font-medium text-zinc-300"
-                                        >{{ t('settings.clientIconPreview') }}</label
-                                    >
+                                    <label class="block text-xs font-medium text-zinc-300">{{
+                                        t('settings.clientIconPreview')
+                                    }}</label>
                                     <div
                                         class="aspect-square w-full max-w-[180px] mx-auto rounded-md flex items-center justify-center text-6xl bg-[#131515] text-zinc-400 border border-zinc-800 overflow-hidden shadow-none"
                                     >
@@ -474,10 +421,9 @@
 
                                 <div class="w-full space-y-4 mt-2">
                                     <div class="space-y-2">
-                                        <label
-                                            class="block text-xs font-medium text-zinc-300"
-                                            >{{ t('settings.clientLocalIcon') }}</label
-                                        >
+                                        <label class="block text-xs font-medium text-zinc-300">{{
+                                            t('settings.clientLocalIcon')
+                                        }}</label>
                                         <input
                                             ref="iconFileInput"
                                             type="file"
@@ -492,40 +438,8 @@
                                                 class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                                                 :disabled="uploadingIcon"
                                             >
-                                                <svg
-                                                    v-if="!uploadingIcon"
-                                                    class="w-3.5 h-3.5"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                                                    />
-                                                </svg>
-                                                <svg
-                                                    v-else
-                                                    class="w-3.5 h-3.5 animate-spin"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                >
-                                                    <circle
-                                                        class="opacity-25"
-                                                        cx="12"
-                                                        cy="12"
-                                                        r="10"
-                                                        stroke="currentColor"
-                                                        stroke-width="4"
-                                                    ></circle>
-                                                    <path
-                                                        class="opacity-75"
-                                                        fill="currentColor"
-                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                    ></path>
-                                                </svg>
+                                                <Upload v-if="!uploadingIcon" class="w-3.5 h-3.5" />
+                                                <Loader2 v-else class="w-3.5 h-3.5 animate-spin" />
                                                 <span>{{
                                                     uploadingIcon
                                                         ? t('settings.clientUploading')
@@ -538,25 +452,11 @@
                                                 type="button"
                                                 class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 bg-transparent border border-zinc-800 rounded-md hover:border-red-900/60 hover:bg-red-950/40 transition-colors"
                                             >
-                                                <svg
-                                                    class="w-3.5 h-3.5"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                >
-                                                    <path
-                                                        stroke-linecap="round"
-                                                        stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                    />
-                                                </svg>
+                                                <Trash2 class="w-3.5 h-3.5" />
                                                 <span>{{ t('actions.clearAll') }}</span>
                                             </button>
                                         </div>
-                                        <p
-                                            class="text-xs text-center text-zinc-500"
-                                        >
+                                        <p class="text-xs text-center text-zinc-500">
                                             {{ t('settings.clientIconSupportHint') }}
                                         </p>
                                         <p
@@ -567,15 +467,16 @@
                                         </p>
                                     </div>
                                     <div class="space-y-2">
-                                        <label
-                                            class="block text-xs font-medium text-zinc-300"
+                                        <label class="block text-xs font-medium text-zinc-300"
                                             >URL / Emoji</label
                                         >
                                         <div class="relative rounded-md">
                                             <div
                                                 class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
                                             >
-                                                <span class="text-zinc-500 sm:text-xs font-mono">URL</span>
+                                                <span class="text-zinc-500 sm:text-xs font-mono"
+                                                    >URL</span
+                                                >
                                             </div>
                                             <input
                                                 v-model="iconInputValue"
@@ -584,9 +485,7 @@
                                                 class="block w-full pl-11 pr-3 rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs py-2"
                                             />
                                         </div>
-                                        <p
-                                            class="text-xs text-center text-zinc-500"
-                                        >
+                                        <p class="text-xs text-center text-zinc-500">
                                             {{ t('settings.clientIconInputHint') }}
                                         </p>
                                     </div>
@@ -599,8 +498,7 @@
                             <!-- Basic Info -->
                             <div class="space-y-4">
                                 <div>
-                                    <label
-                                        class="block text-xs font-medium text-zinc-300"
+                                    <label class="block text-xs font-medium text-zinc-300"
                                         >{{ t('settings.clientName') }}
                                         <span class="text-red-400">*</span></label
                                     >
@@ -613,10 +511,9 @@
                                 </div>
 
                                 <div>
-                                    <label
-                                        class="block text-xs font-medium text-zinc-300"
-                                        >{{ t('settings.clientDescription') }}</label
-                                    >
+                                    <label class="block text-xs font-medium text-zinc-300">{{
+                                        t('settings.clientDescription')
+                                    }}</label>
                                     <textarea
                                         v-model="editingClient.description"
                                         rows="3"
@@ -628,10 +525,9 @@
 
                             <!-- Platforms Grid -->
                             <div>
-                                <label
-                                    class="block text-xs font-medium text-zinc-300 mb-2"
-                                    >{{ t('settings.clientPlatforms') }}</label
-                                >
+                                <label class="block text-xs font-medium text-zinc-300 mb-2">{{
+                                    t('settings.clientPlatforms')
+                                }}</label>
                                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                                     <label
                                         v-for="opt in platformOptions"
@@ -661,10 +557,9 @@
                             <!-- Links -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                                 <div>
-                                    <label
-                                        class="block text-xs font-medium text-zinc-300"
-                                        >{{ t('settings.clientDownloadUrl') }}</label
-                                    >
+                                    <label class="block text-xs font-medium text-zinc-300">{{
+                                        t('settings.clientDownloadUrl')
+                                    }}</label>
                                     <div class="mt-1 flex rounded-md shadow-none">
                                         <span
                                             class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-zinc-800 bg-zinc-900 text-zinc-500 font-mono text-xs"
@@ -680,8 +575,7 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <label
-                                        class="block text-xs font-medium text-zinc-300"
+                                    <label class="block text-xs font-medium text-zinc-300"
                                         >GitHub Repo</label
                                     >
                                     <div class="mt-1 flex rounded-md shadow-none">

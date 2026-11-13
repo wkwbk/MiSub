@@ -1,5 +1,6 @@
 <script setup>
     import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
+    import { Globe } from 'lucide-vue-next';
     import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from './components/ui/ConfirmDialog.vue';
     import { useRoute, useRouter } from 'vue-router';
@@ -309,19 +310,7 @@
                     <div
                         class="absolute inset-0 flex items-center justify-center text-zinc-400 dark:text-zinc-500"
                     >
-                        <svg
-                            class="w-5 h-5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.75"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        >
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M3.6 9h16.8M3.6 15h16.8" />
-                            <path d="M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18" />
-                        </svg>
+                        <Globe class="w-5 h-5" stroke-width="1.75" />
                     </div>
                 </div>
                 <div class="flex flex-col items-center gap-1.5">

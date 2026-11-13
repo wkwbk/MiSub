@@ -1,5 +1,18 @@
 <script setup>
     import { ref, computed } from 'vue';
+    import {
+        Filter,
+        PenLine,
+        Code2,
+        ArrowUpDown,
+        Copy,
+        Zap,
+        Plus,
+        ChevronUp,
+        ChevronDown,
+        PauseCircle,
+        X,
+    } from 'lucide-vue-next';
     import { useI18n } from '../../../i18n/index.js';
     import FilterEditor from './components/FilterEditor.vue';
     import RenameEditor from './components/RenameEditor.vue';
@@ -208,20 +221,15 @@
     const operatorLabel = (type) => t(`operators.${type}`);
     const operatorTypes = ['filter', 'rename', 'script', 'sort', 'dedup'];
 
-    const getOperatorIcon = (type) => {
-        switch (type) {
-            case 'filter':
-                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>';
-            case 'rename':
-                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>';
-            case 'script':
-                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>';
-            case 'sort':
-                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" /></svg>';
-            case 'dedup':
-                return '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>';
-        }
+    const OPERATOR_ICONS = {
+        filter: Filter,
+        rename: PenLine,
+        script: Code2,
+        sort: ArrowUpDown,
+        dedup: Copy,
     };
+
+    const getOperatorIcon = (type) => OPERATOR_ICONS[type] || Filter;
 
     const updateOperatorParams = (index, params) => {
         const newList = [...props.modelValue];
@@ -242,20 +250,7 @@
                     <div
                         class="w-9 h-9 rounded-md border border-zinc-800 bg-transparent text-zinc-300 flex items-center justify-center shrink-0"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"
-                            />
-                        </svg>
+                        <Zap class="h-4 w-4" />
                     </div>
                     <div>
                         <h4 class="text-xs font-semibold text-zinc-100">
@@ -282,20 +277,7 @@
             <div
                 class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
+                <Plus class="h-5 w-5" />
             </div>
             <h3 class="text-xs font-semibold text-zinc-100">
                 {{ t('operators.emptyTitle') }}
@@ -329,8 +311,9 @@
                                         ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
                                         : 'bg-transparent border-zinc-800 text-zinc-400',
                                 ]"
-                                v-html="getOperatorIcon(op.type)"
-                            ></div>
+                            >
+                                <component :is="getOperatorIcon(op.type)" class="h-4 w-4" />
+                            </div>
                             <div>
                                 <div class="flex items-center gap-2">
                                     <h4 class="font-semibold text-xs text-zinc-100">
@@ -342,9 +325,7 @@
                                         >{{ t('operators.paused') }}</span
                                     >
                                 </div>
-                                <p
-                                    class="mt-1 text-[11px] text-zinc-500 sm:hidden"
-                                >
+                                <p class="mt-1 text-[11px] text-zinc-500 sm:hidden">
                                     {{
                                         op.enabled
                                             ? t('operators.enabled')
@@ -363,40 +344,14 @@
                                     class="rounded-md p-1 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
                                     :disabled="index === 0"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M5 15l7-7 7 7"
-                                        />
-                                    </svg>
+                                    <ChevronUp class="h-4 w-4" />
                                 </button>
                                 <button
                                     @click="(e) => moveOperator(e, index, 1)"
                                     class="rounded-md p-1 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
                                     :disabled="index === modelValue.length - 1"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M19 9l-7 7-7-7"
-                                        />
-                                    </svg>
+                                    <ChevronDown class="h-4 w-4" />
                                 </button>
                                 <button
                                     @click="(e) => toggleOperator(e, index)"
@@ -407,20 +362,7 @@
                                             : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100'
                                     "
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                    </svg>
+                                    <PauseCircle class="h-4 w-4" />
                                 </button>
                                 <button
                                     @click="
@@ -431,37 +373,13 @@
                                     "
                                     class="rounded-md p-1 text-zinc-400 hover:bg-red-950/40 hover:text-red-400"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
+                                    <X class="h-4 w-4" />
                                 </button>
                             </div>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
+                            <ChevronDown
                                 class="h-4 w-4 text-zinc-400 transition-transform duration-300"
                                 :class="{ 'rotate-180 text-zinc-100': expandedIndex === index }"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 9l-7 7-7-7"
-                                />
-                            </svg>
+                            />
                         </div>
                     </div>
                 </div>
@@ -475,10 +393,7 @@
                     leave-from-class="max-h-[800px] opacity-100"
                     leave-to-class="max-h-0 opacity-0"
                 >
-                    <div
-                        v-show="expandedIndex === index"
-                        class="border-t border-zinc-800"
-                    >
+                    <div v-show="expandedIndex === index" class="border-t border-zinc-800">
                         <div class="p-4 sm:p-5">
                             <FilterEditor
                                 v-if="op.type === 'filter'"

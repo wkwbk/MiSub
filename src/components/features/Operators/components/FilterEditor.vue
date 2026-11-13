@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { X } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
 
     const props = defineProps({
@@ -99,9 +100,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors',
-                            params.protocols.enabled
-                                ? 'text-zinc-100'
-                                : 'text-zinc-500',
+                            params.protocols.enabled ? 'text-zinc-100' : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params.protocols.enabled) }}
@@ -143,9 +142,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors',
-                            params.regions.enabled
-                                ? 'text-zinc-100'
-                                : 'text-zinc-500',
+                            params.regions.enabled ? 'text-zinc-100' : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params.regions.enabled) }}
@@ -175,9 +172,7 @@
         <!-- Name Rules (Include/Exclude) -->
         <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
             <div class="flex items-center justify-between">
-                <label
-                    class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
-                >
+                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">
                     {{
                         t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex')
                     }}
@@ -196,9 +191,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium',
-                            params[type].enabled
-                                ? 'text-zinc-100'
-                                : 'text-zinc-500',
+                            params[type].enabled ? 'text-zinc-100' : 'text-zinc-500',
                         ]"
                     >
                         {{ statusLabel(params[type].enabled) }}
@@ -224,15 +217,7 @@
                         class="p-1.5 text-zinc-500 hover:text-red-400 touch-target"
                         :aria-label="t('operators.removeRule')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-3.5 w-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X class="h-3.5 w-3.5" />
                     </button>
                 </div>
                 <p class="text-[10px] text-zinc-500 px-1">

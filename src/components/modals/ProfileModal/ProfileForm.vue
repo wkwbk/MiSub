@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ChevronDown } from 'lucide-vue-next';
     import TransformSelector from '../../forms/TransformSelector.vue';
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
@@ -136,9 +137,7 @@
     </div>
 
     <!-- Public Display & Description -->
-    <div
-        class="bg-transparent rounded-md p-4 border border-zinc-800 mt-4"
-    >
+    <div class="bg-transparent rounded-md p-4 border border-zinc-800 mt-4">
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
                 <input
@@ -147,10 +146,7 @@
                     v-model="localProfile.isPublic"
                     class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                 />
-                <label
-                    for="profile-is-public"
-                    class="ml-2 block text-xs font-medium text-zinc-200"
-                >
+                <label for="profile-is-public" class="ml-2 block text-xs font-medium text-zinc-200">
                     {{ t('profiles.publicDisplay') }}
                 </label>
             </div>
@@ -185,20 +181,10 @@
             class="flex items-center text-xs font-semibold text-zinc-200 hover:text-white focus-visible:outline-hidden"
         >
             <span>{{ t('profiles.advancedTitle') }}</span>
-            <svg
+            <ChevronDown
                 :class="{ 'rotate-180': showAdvanced }"
                 class="w-4 h-4 ml-1 transition-transform"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                />
-            </svg>
+            />
         </button>
 
         <div v-show="showAdvanced" class="mt-4 space-y-6 animate-fade-in-down">
@@ -295,19 +281,16 @@
                         v-if="isExternalEngine"
                         class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
-                        <label
-                            class="block text-xs font-medium text-zinc-400 mb-1.5"
-                            >{{ t('profileModal.backendOverride') }}</label
-                        >
+                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                            t('profileModal.backendOverride')
+                        }}</label>
                         <input
                             type="text"
                             v-model="localProfile.subconverter.backend"
                             :placeholder="t('profileModal.backendPlaceholder')"
                             class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus-visible:outline-hidden"
                         />
-                        <p
-                            class="mt-1.5 text-[10px] leading-relaxed text-zinc-500"
-                        >
+                        <p class="mt-1.5 text-[10px] leading-relaxed text-zinc-500">
                             {{ t('profileModal.backendHint') }}
                         </p>
                         <div
@@ -337,10 +320,9 @@
                         "
                         class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
-                        <label
-                            class="block text-xs font-medium text-zinc-400 mb-1.5"
-                            >{{ t('profileModal.templateLabel') }}</label
-                        >
+                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                            t('profileModal.templateLabel')
+                        }}</label>
                         <TransformSelector
                             v-model="localProfile.transformConfig"
                             @select-asset="selectedTransformAsset = $event"
@@ -381,10 +363,9 @@
                 >
                     <!-- 到期时间 -->
                     <div>
-                        <label
-                            class="block text-xs font-medium text-zinc-400 mb-1.5"
-                            >{{ t('profileModal.expiresLabel') }}</label
-                        >
+                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                            t('profileModal.expiresLabel')
+                        }}</label>
                         <input
                             type="date"
                             v-model="localProfile.expiresAt"
@@ -394,10 +375,9 @@
 
                     <!-- 内置规则等级 (当切换到内置引擎，或切换到第三方引擎但使用内置分流方案时显示) -->
                     <div v-if="!isExternalEngine">
-                        <label
-                            class="block text-xs font-medium text-zinc-400 mb-1.5"
-                            >{{ t('profileModal.ruleLevelLabel') }}</label
-                        >
+                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                            t('profileModal.ruleLevelLabel')
+                        }}</label>
                         <select
                             v-model="localProfile.ruleLevel"
                             :disabled="
@@ -420,9 +400,7 @@
                     </div>
 
                     <!-- 节点前缀设置 (合并) -->
-                    <div
-                        class="sm:col-span-2 space-y-3 pt-3 border-t border-zinc-800"
-                    >
+                    <div class="sm:col-span-2 space-y-3 pt-3 border-t border-zinc-800">
                         <label
                             class="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
                             >{{ t('profileModal.nodeNameVisibility') }}</label

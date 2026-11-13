@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+    import { Folder, ChevronDown, Check } from 'lucide-vue-next';
     import { t } from '@/i18n/index.js';
 
     const props = defineProps({
@@ -136,19 +137,7 @@
             />
             <div class="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
                 <slot name="icon">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z" />
-                        <path
-                            fill-rule="evenodd"
-                            d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"
-                            clip-rule="evenodd"
-                        />
-                    </svg>
+                    <Folder class="h-4 w-4" />
                 </slot>
             </div>
 
@@ -159,20 +148,7 @@
                 :class="{ 'rotate-180': isOpen }"
                 @click.stop="toggleDropdown"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                <ChevronDown class="h-4 w-4" />
             </div>
         </div>
 
@@ -210,19 +186,7 @@
                         @click="selectGroup(group)"
                     >
                         <span>{{ group }}</span>
-                        <svg
-                            v-if="modelValue === group"
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        <Check v-if="modelValue === group" class="h-4 w-4" />
                     </button>
                 </div>
             </Transition>

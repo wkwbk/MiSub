@@ -1,4 +1,5 @@
 <script setup>
+    import { Check, Copy } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -66,25 +67,18 @@
                                     : 'border-zinc-300 dark:border-zinc-700'
                             "
                         >
-                            <svg
+                            <Check
                                 v-if="selectedUrls.has(node.url)"
                                 class="w-3 h-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2.5"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
+                                :stroke-width="2.5"
+                            />
                         </div>
                     </div>
 
                     <div class="flex flex-col min-w-0">
-                        <h4 class="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                        <h4
+                            class="truncate text-xs font-semibold text-zinc-900 dark:text-zinc-100 mb-1"
+                        >
                             {{ parseNodeInfo(node).name }}
                         </h4>
                         <div class="flex items-center gap-2">
@@ -93,9 +87,7 @@
                             >
                                 {{ parseNodeInfo(node).protocol }}
                             </span>
-                            <span
-                                class="truncate text-[11px] text-zinc-500 font-mono"
-                            >
+                            <span class="truncate text-[11px] text-zinc-500 font-mono">
                                 {{ parseNodeInfo(node).server.split('.').slice(-2).join('.') }}:{{
                                     parseNodeInfo(node).port
                                 }}
@@ -110,39 +102,12 @@
                     @click.stop="emit('copy', node, node.url)"
                     class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                     :class="{
-                        'text-emerald-500':
-                            copiedNodeId === node.url,
+                        'text-emerald-500': copiedNodeId === node.url,
                     }"
                     :aria-label="t('actions.copyNode')"
                 >
-                    <svg
-                        v-if="copiedNodeId !== node.url"
-                        class="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                        />
-                    </svg>
-                    <svg
-                        v-else
-                        class="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M5 13l4 4L19 7"
-                        ></path>
-                    </svg>
+                    <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
+                    <Check v-else class="w-3.5 h-3.5" />
                 </button>
             </div>
         </div>
@@ -171,20 +136,11 @@
                                 : 'border-zinc-300 dark:border-zinc-700'
                         "
                     >
-                        <svg
+                        <Check
                             v-if="selectedUrls.has(node.url)"
                             class="w-3 h-3"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2.5"
-                                d="M5 13l4 4L19 7"
-                            />
-                        </svg>
+                            :stroke-width="2.5"
+                        />
                     </div>
                 </div>
 
@@ -234,39 +190,12 @@
                                 @click.stop="emit('copy', node, node.url)"
                                 class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                                 :class="{
-                                    'text-emerald-500':
-                                        copiedNodeId === node.url,
+                                    'text-emerald-500': copiedNodeId === node.url,
                                 }"
                                 :aria-label="t('actions.copyNode')"
                             >
-                                <svg
-                                    v-if="copiedNodeId !== node.url"
-                                    class="w-3.5 h-3.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                    />
-                                </svg>
-                                <svg
-                                    v-else
-                                    class="w-3.5 h-3.5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M5 13l4 4L19 7"
-                                    />
-                                </svg>
+                                <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
+                                <Check v-else class="w-3.5 h-3.5" />
                             </button>
                         </div>
                     </div>

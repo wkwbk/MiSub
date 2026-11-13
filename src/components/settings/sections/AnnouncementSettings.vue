@@ -1,5 +1,6 @@
 <script setup>
     import { computed, watch } from 'vue';
+    import { Megaphone } from 'lucide-vue-next';
     import DOMPurify from 'dompurify';
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.js';
@@ -62,21 +63,10 @@
             class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none animate-fade-in-down"
         >
             <div class="flex items-start gap-3">
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                        />
-                    </svg>
+                <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
+                >
+                    <Megaphone class="h-4 w-4" />
                 </div>
                 <div class="space-y-0.5">
                     <h3 class="text-sm font-semibold text-zinc-100">
@@ -111,10 +101,9 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 标题 -->
                 <div>
-                    <label
-                        class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >{{ t('settings.announcementFieldTitle') }}</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                        t('settings.announcementFieldTitle')
+                    }}</label>
                     <input
                         type="text"
                         v-model="announcement.title"
@@ -126,10 +115,9 @@
 
                 <!-- 类型 -->
                 <div>
-                    <label
-                        class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >{{ t('settings.announcementType') }}</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                        t('settings.announcementType')
+                    }}</label>
                     <select
                         v-model="announcement.type"
                         @change="handleContentUpdate"
@@ -181,15 +169,11 @@
             </div>
 
             <!-- 预览区域 (可选) -->
-            <div
-                class="mt-4 p-4 border border-zinc-800 rounded-md bg-transparent"
-            >
+            <div class="mt-4 p-4 border border-zinc-800 rounded-md bg-transparent">
                 <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
                     {{ t('settings.announcementPreview') }}
                 </h4>
-                <div
-                    class="bg-[#131515] rounded-md shadow-none border border-zinc-800 p-4"
-                >
+                <div class="bg-[#131515] rounded-md shadow-none border border-zinc-800 p-4">
                     <div class="flex items-start gap-2.5">
                         <span
                             class="h-1.5 w-1.5 rounded-full shrink-0 mt-1.5"

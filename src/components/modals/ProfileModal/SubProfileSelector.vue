@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Search } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';
     import { wouldCreateCycle } from '@/utils/profile-graph.js';
@@ -107,20 +108,7 @@
                 class="w-full pl-9 pr-3 py-1.5 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-500 dark:focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
                 :aria-label="t('profiles.searchPlaceholder')"
             />
-            <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-            </svg>
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
         </div>
 
         <div

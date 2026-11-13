@@ -1,4 +1,5 @@
 <script setup>
+    import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
     import SectionHeader from '../SectionHeader.vue';
     const props = defineProps({
         settings: {
@@ -157,59 +158,14 @@
 <template>
     <div class="space-y-6">
         <!-- 默认显示语言 -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.defaultLanguageTitle')"
                 :description="t('settings.defaultLanguageDesc')"
                 tone="amber"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m5 8 6 6"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m4 14 6-6 2-3"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M2 5h12"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M7 2h1"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m22 22-5-10-5 10"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M14 18h6"
-                        />
-                    </svg>
+                    <Languages class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <div class="max-w-xs">
@@ -224,29 +180,14 @@
         </div>
 
         <!-- 订阅基本信息配置 -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.subscriptionConfigTitle')"
                 :description="t('settings.subscriptionConfigDesc')"
                 tone="indigo"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
+                    <Info class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -291,36 +232,19 @@
         </div>
 
         <!-- 功能开关区域 -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.featureControlTitle')"
                 :description="t('settings.featureControlDesc')"
                 tone="green"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                        />
-                    </svg>
+                    <SlidersHorizontal class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- 订阅自动更新间隔 -->
-                <div
-                    class="p-4 bg-transparent border border-zinc-800 rounded-md"
-                >
+                <div class="p-4 bg-transparent border border-zinc-800 rounded-md">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium text-zinc-100">
@@ -351,9 +275,7 @@
                                 class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
                                 :aria-label="t('settings.autoUpdateInterval')"
                             />
-                            <span class="text-xs text-zinc-400">{{
-                                t('settings.minutes')
-                            }}</span>
+                            <span class="text-xs text-zinc-400">{{ t('settings.minutes') }}</span>
                         </div>
                         <span class="text-xs text-zinc-500 self-center">{{
                             t('settings.quickSelect')
@@ -442,9 +364,7 @@
                 </div>
 
                 <!-- 合并到期时间策略 -->
-                <div
-                    class="p-4 bg-transparent border border-zinc-800 rounded-md space-y-2"
-                >
+                <div class="p-4 bg-transparent border border-zinc-800 rounded-md space-y-2">
                     <div>
                         <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.mergeExpireStrategyTitle') }}
@@ -465,29 +385,14 @@
         </div>
 
         <!-- Web 访问控制 -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.webAccessTitle')"
                 :description="t('settings.webAccessDesc')"
                 tone="blue"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                        />
-                    </svg>
+                    <Globe class="h-4 w-4" />
                 </template>
             </SectionHeader>
 

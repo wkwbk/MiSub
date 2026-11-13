@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, onMounted } from 'vue';
+    import { X } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -162,14 +163,7 @@
                     class="w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                     :aria-label="t('common.close')"
                 >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
+                    <X class="w-4 h-4" />
                 </button>
             </div>
             <div

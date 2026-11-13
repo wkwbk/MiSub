@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Check, Copy } from 'lucide-vue-next';
     import { useVirtualScroll } from '@/composables/useVirtualScroll.js';
     import { useI18n } from '../../../../i18n/index.js';
 
@@ -117,20 +118,11 @@
                                                     : 'border-zinc-300 dark:border-zinc-700'
                                             "
                                         >
-                                            <svg
+                                            <Check
                                                 v-if="selectedUrls.has(node.url)"
                                                 class="w-3 h-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2.5"
-                                                    d="M5 13l4 4L19 7"
-                                                />
-                                            </svg>
+                                                :stroke-width="2.5"
+                                            />
                                         </div>
                                     </div>
 
@@ -193,39 +185,15 @@
                                             @click.stop="emit('copy', node, node.url)"
                                             class="inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-target"
                                             :class="{
-                                                'text-emerald-500':
-                                                    copiedNodeId === node.url,
+                                                'text-emerald-500': copiedNodeId === node.url,
                                             }"
                                             :aria-label="t('actions.copyNode')"
                                         >
-                                            <svg
+                                            <Copy
                                                 v-if="copiedNodeId !== node.url"
                                                 class="w-3.5 h-3.5"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                                />
-                                            </svg>
-                                            <svg
-                                                v-else
-                                                class="w-3.5 h-3.5"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M5 13l4 4L19 7"
-                                                />
-                                            </svg>
+                                            />
+                                            <Check v-else class="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 </div>
@@ -234,10 +202,7 @@
                     </div>
 
                     <!-- 空状态 -->
-                    <div
-                        v-if="nodes.length === 0"
-                        class="py-12 text-center text-xs text-zinc-500"
-                    >
+                    <div v-if="nodes.length === 0" class="py-12 text-center text-xs text-zinc-500">
                         {{ t('nodePreview.noNodes') }}
                     </div>
                 </div>

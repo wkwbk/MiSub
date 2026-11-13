@@ -340,9 +340,9 @@
 }
 
 .nav-action-btn {
-    @apply p-2 rounded-md transition-colors duration-150 focus-visible:outline-none cursor-pointer;
-    min-width: 2.25rem;
-    min-height: 2.25rem;
+    @apply inline-flex items-center justify-center p-1.5 rounded-md transition-colors duration-150 focus-visible:outline-none cursor-pointer;
+    width: 2rem;
+    height: 2rem;
 }
 
 .nav-action-btn-neutral {

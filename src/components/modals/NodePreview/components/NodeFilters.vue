@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Layers, LayoutGrid, List, Search, Zap } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -96,19 +97,7 @@
                         <div
                             class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-500"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                ></path>
-                            </svg>
+                            <Search class="w-4 h-4" />
                         </div>
                     </div>
 
@@ -124,34 +113,8 @@
                         class="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-md border transition-colors lg:hidden"
                         :aria-label="t('nodePreview.toggleProcessed')"
                     >
-                        <svg
-                            v-if="!showProcessed"
-                            class="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                            ></path>
-                        </svg>
-                        <svg
-                            v-else
-                            class="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M13 10V3L4 14h7v7l9-11h-7z"
-                            ></path>
-                        </svg>
+                        <Layers v-if="!showProcessed" class="w-4 h-4" />
+                        <Zap v-else class="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -208,7 +171,9 @@
                     >
                         Layout
                     </label>
-                    <div class="inline-flex items-center border border-zinc-300 dark:border-zinc-800 rounded-md overflow-hidden divide-x divide-zinc-300 dark:divide-zinc-800">
+                    <div
+                        class="inline-flex items-center border border-zinc-300 dark:border-zinc-800 rounded-md overflow-hidden divide-x divide-zinc-300 dark:divide-zinc-800"
+                    >
                         <button
                             @click="emit('update:viewMode', 'list')"
                             :class="
@@ -220,19 +185,7 @@
                             :title="t('common.listView')"
                             :aria-label="t('common.listView')"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 6h16M4 10h16M4 14h16"
-                                ></path>
-                            </svg>
+                            <List class="w-4 h-4" />
                         </button>
                         <button
                             @click="emit('update:viewMode', 'card')"
@@ -245,19 +198,7 @@
                             :title="t('common.cardView')"
                             :aria-label="t('common.cardView')"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"
-                                ></path>
-                            </svg>
+                            <LayoutGrid class="w-4 h-4" />
                         </button>
                     </div>
                 </div>
@@ -281,36 +222,8 @@
                             :title="t('nodePreview.toggleRawName')"
                             :aria-label="t('nodePreview.toggleRawName')"
                         >
-                            <!-- 魔法棒 Icon (处理后) -->
-                            <svg
-                                v-if="showProcessed"
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"
-                                ></path>
-                            </svg>
-                            <!-- 原材料 Icon (原始) -->
-                            <svg
-                                v-else
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                ></path>
-                            </svg>
+                            <Zap v-if="showProcessed" class="w-4 h-4" />
+                            <Layers v-else class="w-4 h-4" />
                         </button>
                     </div>
                 </div>

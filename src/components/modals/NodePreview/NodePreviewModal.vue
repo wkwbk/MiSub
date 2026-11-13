@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+    import { X } from 'lucide-vue-next';
     import { api, APIError } from '../../../lib/http.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useDataStore } from '../../../stores/useDataStore.js';
@@ -538,9 +539,7 @@
                             {{ title }}
                         </h3>
                     </div>
-                    <p
-                        class="text-xs text-zinc-500 pl-3.5"
-                    >
+                    <p class="text-xs text-zinc-500 pl-3.5">
                         {{ subtitle }}
                     </p>
                 </div>
@@ -564,14 +563,7 @@
                         class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
                         :aria-label="t('common.close')"
                     >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            ></path>
-                        </svg>
+                        <X class="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -587,7 +579,9 @@
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         Nodes Total
                     </div>
-                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                    <div
+                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                    >
                         {{ allNodes.length }}
                     </div>
                 </div>
@@ -595,7 +589,9 @@
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         Protocols
                     </div>
-                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                    <div
+                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                    >
                         {{ Object.keys(protocolStats).length }}
                     </div>
                 </div>
@@ -603,7 +599,9 @@
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         Regions
                     </div>
-                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                    <div
+                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                    >
                         {{ Object.keys(regionStats).length }}
                     </div>
                 </div>
@@ -611,7 +609,9 @@
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         Total Pages
                     </div>
-                    <div class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100">
+                    <div
+                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                    >
                         {{ totalPages }}
                     </div>
                 </div>
@@ -663,7 +663,9 @@
                         <div
                             class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] px-8 py-8 text-center shadow-none"
                         >
-                            <div class="flex items-center justify-center gap-2 text-sm text-red-500">
+                            <div
+                                class="flex items-center justify-center gap-2 text-sm text-red-500"
+                            >
                                 <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                                 <span>{{ error }}</span>
                             </div>
@@ -742,12 +744,15 @@
                 class="flex items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#171717] p-4 text-zinc-100 shadow-none"
             >
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">{{
-                        t('nodePreview.pickingMode')
-                    }}</span>
+                    <span
+                        class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold"
+                        >{{ t('nodePreview.pickingMode') }}</span
+                    >
                     <span class="text-xs font-medium text-zinc-300"
                         >{{ t('nodePreview.selectedNodesPrefix') }}
-                        <span class="text-sm font-mono font-bold text-zinc-100">{{ selectedUrls.size }}</span>
+                        <span class="text-sm font-mono font-bold text-zinc-100">{{
+                            selectedUrls.size
+                        }}</span>
                         {{ t('nodePreview.selectedNodesSuffix') }}</span
                     >
                 </div>

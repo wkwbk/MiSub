@@ -2,6 +2,7 @@
 
 <script setup>
     import { ref, computed, watch } from 'vue';
+    import { ChevronDown } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -269,21 +270,11 @@
                         :aria-expanded="!isCollapsed"
                         :aria-label="t('common.expandFilters')"
                     >
-                        <svg
+                        <ChevronDown
                             class="w-4 h-4 transition-transform"
                             :class="{ 'rotate-180': !isCollapsed }"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
                             aria-hidden="true"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M19 9l-7 7-7-7"
-                            />
-                        </svg>
+                        />
                     </button>
 
                     <!-- 重置按钮 -->

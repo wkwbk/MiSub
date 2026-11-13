@@ -1,5 +1,6 @@
 <script setup>
     import { ref, watch, computed } from 'vue';
+    import { Folder } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import ProfileForm from './ProfileModal/ProfileForm.vue';
     import SubscriptionSelector from './ProfileModal/SubscriptionSelector.vue';
@@ -369,20 +370,7 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-5 w-5 text-zinc-400 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                    />
-                </svg>
+                <Folder class="h-5 w-5 text-zinc-400 shrink-0" />
                 <div>
                     <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('profiles.addTitle') : t('profiles.editTitle') }}

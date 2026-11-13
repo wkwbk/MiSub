@@ -1,4 +1,5 @@
 <script setup>
+    import { X } from 'lucide-vue-next';
     import { useToastStore } from '../../stores/toast.js';
     import { useI18n } from '../../i18n/index.js';
 
@@ -56,19 +57,7 @@
                         class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-900 transition-colors focus-visible:outline-none w-6 h-6 touch-target"
                         :aria-label="t('common.toastClose')"
                     >
-                        <svg
-                            class="w-3.5 h-3.5 flex-shrink-0"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
+                        <X class="w-3.5 h-3.5 flex-shrink-0" />
                     </button>
 
                     <!-- 圆点和消息 -->

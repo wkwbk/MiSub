@@ -1,5 +1,6 @@
 <script setup>
     import { computed, ref, nextTick, watch } from 'vue';
+    import { Search, ChevronDown } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
@@ -432,17 +433,10 @@
                 </div>
             </div>
             <div v-if="searchable" class="relative mt-4">
-                <svg
+                <Search
                     class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
                     aria-hidden="true"
-                >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" />
-                </svg>
+                />
                 <input
                     v-model="searchModel"
                     data-testid="subscription-search"
@@ -521,19 +515,11 @@
                                 class="flex min-w-0 flex-1 items-center gap-2 text-left"
                                 @click="toggleGroup(group.key)"
                             >
-                                <svg
+                                <ChevronDown
                                     class="h-4 w-4 shrink-0 text-zinc-400 transition-transform"
                                     :class="isGroupCollapsed(group.key) ? '-rotate-90' : ''"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
                                     aria-hidden="true"
-                                >
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
+                                />
                                 <span
                                     class="truncate text-sm font-semibold text-zinc-100"
                                     >{{ groupDisplayName(group) }}</span

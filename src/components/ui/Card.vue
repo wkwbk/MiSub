@@ -1,5 +1,16 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import {
+        Lock,
+        ExternalLink,
+        Eye,
+        QrCode,
+        Pencil,
+        Trash2,
+        Link2,
+        RefreshCw,
+        MessageSquare,
+    } from 'lucide-vue-next';
     import { formatBytes } from '../../lib/utils.js';
     import { inferAirportRootDomain } from '../../utils/airport-domain.js';
     import { lookupDomainName } from '../../utils/domain-name-memory.js';
@@ -235,18 +246,7 @@
                         class="mt-1 flex items-center gap-1 text-[11px] text-zinc-400"
                         :title="t('subscriptions.detectedNameHint')"
                     >
-                        <svg
-                            class="h-3 w-3 shrink-0"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
                         <span class="truncate">{{ effectiveDetectedName }}</span>
                         <button
                             type="button"
@@ -286,14 +286,7 @@
                         :title="t('subscriptions.visitSite', { domain: rootDomain })"
                         @click.stop
                     >
-                        <svg class="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
-                            />
-                            <path
-                                d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"
-                            />
-                        </svg>
+                        <ExternalLink class="h-3 w-3 shrink-0" />
                         <span class="truncate">{{ rootDomain }}</span>
                     </a>
                 </div>
@@ -308,25 +301,7 @@
                         :title="t('actions.previewNodes')"
                         :aria-label="t('actions.previewNodes')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                        </svg>
+                        <Eye class="w-4 h-4" />
                     </button>
                     <button
                         @click.stop="emit('qrcode')"
@@ -334,25 +309,7 @@
                         :title="t('actions.showQrCode')"
                         :aria-label="t('actions.showQrCode')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"
-                            />
-                        </svg>
+                        <QrCode class="w-4 h-4" stroke-width="1.5" />
                     </button>
                     <button
                         @click.stop="emit('edit')"
@@ -360,20 +317,7 @@
                         :title="t('actions.edit')"
                         :aria-label="t('actions.edit')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"
-                            />
-                        </svg>
+                        <Pencil class="w-4 h-4" />
                     </button>
                     <button
                         @click.stop="emit('delete')"
@@ -381,20 +325,7 @@
                         :title="t('actions.delete')"
                         :aria-label="t('actions.delete')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                        </svg>
+                        <Trash2 class="w-4 h-4" />
                     </button>
                 </div>
             </div>
@@ -402,19 +333,7 @@
             <!-- URL Display -->
             <div class="relative mb-4">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                        class="h-3.5 w-3.5 text-zinc-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
+                    <Link2 class="h-3.5 w-3.5 text-zinc-500" />
                 </div>
                 <input
                     type="text"
@@ -488,19 +407,10 @@
                                 : t('subscriptions.updateNodeInfo')
                         "
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
+                        <RefreshCw
                             class="w-4 h-4"
                             :class="{ 'animate-spin text-zinc-100': misub.isUpdating }"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        />
                     </button>
                 </div>
             </div>
@@ -511,14 +421,7 @@
                 data-testid="subscription-footer-meta"
                 class="mt-3 flex items-center gap-1 truncate text-[10px] text-zinc-400"
             >
-                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                    />
-                </svg>
+                <MessageSquare class="w-3 h-3 shrink-0" />
                 <a
                     v-if="websiteUrl"
                     data-testid="subscription-website-link"
@@ -530,14 +433,7 @@
                     :title="t('subscriptions.visitWebsite')"
                 >
                     {{ t('subscriptions.website') }}
-                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                    </svg>
+                    <ExternalLink class="w-2.5 h-2.5" />
                 </a>
                 <span v-if="noteWithoutUrl" data-testid="subscription-notes" class="truncate">{{
                     noteWithoutUrl

@@ -1,6 +1,6 @@
 <script setup>
+    import { Download, Eye, Link2, QrCode } from 'lucide-vue-next';
     import QRCodeOverlay from './QRCodeOverlay.vue';
-    import BaseIcon from '../ui/BaseIcon.vue';
     import { useI18n } from '../../i18n/index.js';
 
     const { t } = useI18n();
@@ -24,15 +24,6 @@
         'download-qr',
         'register-canvas',
     ]);
-
-    // Icon Paths
-    const ICONS = {
-        import: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4',
-        qr: 'M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z',
-        preview:
-            'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
-        link: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
-    };
 </script>
 
 <template>
@@ -62,7 +53,7 @@
                 }"
                 :aria-label="t('actions.showQrCode')"
             >
-                <BaseIcon :path="ICONS.qr" className="w-4 h-4" />
+                <QrCode class="w-4 h-4" />
             </button>
         </div>
 
@@ -83,7 +74,7 @@
                 class="flex flex-1 items-center justify-center gap-2 rounded-md bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white px-4 py-2 text-xs font-medium text-zinc-100 dark:text-zinc-900 transition-colors shadow-none"
                 :aria-label="t('public.quickImportSubscription')"
             >
-                <BaseIcon :path="ICONS.import" className="w-3.5 h-3.5" />
+                <Download class="w-3.5 h-3.5" />
                 {{ t('public.quickImport') }}
             </button>
 
@@ -94,7 +85,7 @@
                 :title="t('public.previewNodes')"
                 :aria-label="t('public.previewNodes')"
             >
-                <BaseIcon :path="ICONS.preview" className="w-4 h-4" />
+                <Eye class="w-4 h-4" />
             </button>
 
             <button
@@ -103,7 +94,7 @@
                 :title="t('actions.copyLink')"
                 :aria-label="t('public.copySubscriptionLink')"
             >
-                <BaseIcon :path="ICONS.link" className="w-4 h-4" />
+                <Link2 class="w-4 h-4" />
             </button>
         </div>
 

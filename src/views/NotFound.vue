@@ -20,18 +20,7 @@
                 to="/"
                 class="inline-flex items-center justify-center px-6 py-2.5 text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md transition-colors shadow-none"
             >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="h-4 w-4 mr-2"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                >
-                    <path
-                        fill-rule="evenodd"
-                        d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z"
-                        clip-rule="evenodd"
-                    />
-                </svg>
+                <ArrowLeft class="h-4 w-4 mr-2" />
                 {{ t('actions.backToHome') }}
             </router-link>
         </div>
@@ -40,6 +29,7 @@
 
 <script setup>
     import { computed } from 'vue';
+    import { ArrowLeft } from 'lucide-vue-next';
     import { useSessionStore } from '../stores/session.js';
     import { useI18n } from '../i18n/index.js';
 

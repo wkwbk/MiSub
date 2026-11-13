@@ -1,5 +1,6 @@
 <script setup>
     import { ref, computed } from 'vue';
+    import { ChevronDown } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
 
     const { t } = useI18n();
@@ -91,20 +92,10 @@
                 class="ml-4 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors touch-target"
                 :aria-label="t('common.toggleExpand')"
             >
-                <svg
+                <ChevronDown
                     class="w-4 h-4 text-zinc-500 transition-transform"
                     :class="{ 'rotate-180': isExpanded }"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                />
             </button>
         </div>
 

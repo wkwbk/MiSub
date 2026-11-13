@@ -1,5 +1,6 @@
 <script setup>
     import { watch } from 'vue';
+    import { ChevronDown, Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
     import OperatorChain from '../../features/Operators/OperatorChain.vue';
     import Input from '../../ui/Input.vue';
     import SectionHeader from '../SectionHeader.vue';
@@ -58,29 +59,14 @@
 <template>
     <div class="space-y-6">
         <!-- Announcement & Info Section -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.globalInfoTitle')"
                 :description="t('settings.globalInfoDesc')"
                 tone="indigo"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
+                    <Info class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <p class="text-xs text-zinc-400 leading-relaxed">
@@ -89,29 +75,14 @@
         </div>
 
         <!-- Node Prefix Settings -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <SectionHeader
                 :title="t('settings.globalNodeSettingsTitle')"
                 :description="t('settings.globalNodeSettingsDesc')"
                 tone="blue"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"
-                        />
-                    </svg>
+                    <List class="h-4 w-4" />
                 </template>
             </SectionHeader>
 
@@ -125,10 +96,9 @@
                 </div>
 
                 <div>
-                    <label
-                        class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >{{ t('settings.globalManualNodePrefixSwitch') }}</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                        t('settings.globalManualNodePrefixSwitch')
+                    }}</label>
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableManualNodes"
@@ -145,24 +115,16 @@
                         <div
                             class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
-                            <svg
-                                class="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown class="w-3.5 h-3.5" />
                         </div>
                     </div>
                 </div>
 
                 <!-- 第二排：机场订阅前缀 与 节点国旗 EMOJI -->
                 <div>
-                    <label
-                        class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >{{ t('settings.globalSubscriptionPrefixSwitch') }}</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                        t('settings.globalSubscriptionPrefixSwitch')
+                    }}</label>
                     <div class="relative">
                         <select
                             v-model="settings.defaultPrefixSettings.enableSubscriptions"
@@ -179,23 +141,15 @@
                         <div
                             class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
-                            <svg
-                                class="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown class="w-3.5 h-3.5" />
                         </div>
                     </div>
                 </div>
 
                 <div>
-                    <label
-                        class="block text-xs font-medium text-zinc-300 mb-1.5"
-                        >{{ t('settings.globalFlagEmojiSwitch') }}</label
-                    >
+                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                        t('settings.globalFlagEmojiSwitch')
+                    }}</label>
                     <div class="relative">
                         <select
                             v-model="settings.enableFlagEmoji"
@@ -212,14 +166,7 @@
                         <div
                             class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
                         >
-                            <svg
-                                class="w-3.5 h-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDown class="w-3.5 h-3.5" />
                         </div>
                     </div>
                 </div>
@@ -227,9 +174,7 @@
         </div>
 
         <!-- Region Overrides -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <div
                 class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between"
             >
@@ -239,20 +184,7 @@
                     tone="purple"
                 >
                     <template #icon>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-                            />
-                        </svg>
+                        <Map class="h-4 w-4" />
                     </template>
                 </SectionHeader>
                 <button
@@ -306,9 +238,7 @@
         </div>
 
         <!-- Unified Operator Chain -->
-        <div
-            class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-        >
+        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
             <div class="flex items-start justify-between gap-3">
                 <SectionHeader
                     :title="t('settings.globalDefaultOperatorsTitle')"
@@ -316,20 +246,7 @@
                     tone="green"
                 >
                     <template #icon>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 6h16M4 10h16M4 14h10M4 18h6"
-                            />
-                        </svg>
+                        <SlidersHorizontal class="h-4 w-4" />
                     </template>
                 </SectionHeader>
                 <span
