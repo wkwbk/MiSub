@@ -102,9 +102,8 @@
 
     usePopoverGuard({
         isOpen,
-        triggerRef,
         popoverRef: menuRef,
-        onObscured: () => closeMenu(),
+        onClose: () => closeMenu(),
     });
 
     onMounted(() => {

@@ -1,49 +1,29 @@
 import { onBeforeUnmount, watch } from 'vue';
 
-export function isTriggerObscured(triggerEl) {
-    if (!triggerEl) return true;
-    const rect = triggerEl.getBoundingClientRect();
-    if (rect.bottom <= 0 || rect.top >= window.innerHeight) {
-        return true;
-    }
-
-    const isInsideModal = Boolean(triggerEl.closest('[role="dialog"][aria-modal="true"]'));
-    if (!isInsideModal) {
-        const navBars = document.querySelectorAll('.app-nav-bar');
-        for (const nav of navBars) {
-            const navRect = nav.getBoundingClientRect();
-            if (navRect.height > 0 && navRect.bottom > 0 && rect.top < navRect.bottom - 2) {
-                return true;
-            }
-        }
-    }
-
-    return false;
-}
-
-export function usePopoverGuard({ isOpen, triggerRef, popoverRef, onObscured, onReposition }) {
+export function usePopoverGuard({ isOpen, popoverRef, onClose, onReposition }) {
     let rafId = null;
 
-    const handleViewportChange = (event) => {
+    const handleScroll = (event) => {
         if (!isOpen.value) return;
-        if (event?.type === 'scroll' && popoverRef.value?.contains(event.target)) {
-            return;
-        }
+        // 下拉面板内部列表滚动不关闭，外部页面或容器一滚动立即关闭
+        if (popoverRef.value?.contains(event.target)) return;
+        onClose();
+    };
+
+    const handleResize = () => {
+        if (!isOpen.value || !onReposition) return;
         if (rafId !== null) return;
         rafId = requestAnimationFrame(() => {
             rafId = null;
-            if (!isOpen.value) return;
-            if (isTriggerObscured(triggerRef.value)) {
-                onObscured();
-                return;
+            if (isOpen.value) {
+                onReposition();
             }
-            onReposition?.();
         });
     };
 
     const detach = () => {
-        window.removeEventListener('scroll', handleViewportChange, true);
-        window.removeEventListener('resize', handleViewportChange);
+        window.removeEventListener('scroll', handleScroll, true);
+        window.removeEventListener('resize', handleResize);
         if (rafId !== null) {
             cancelAnimationFrame(rafId);
             rafId = null;
@@ -52,8 +32,8 @@ export function usePopoverGuard({ isOpen, triggerRef, popoverRef, onObscured, on
 
     watch(isOpen, (val) => {
         if (val) {
-            window.addEventListener('scroll', handleViewportChange, true);
-            window.addEventListener('resize', handleViewportChange);
+            window.addEventListener('scroll', handleScroll, true);
+            window.addEventListener('resize', handleResize);
         } else {
             detach();
         }
@@ -61,4 +41,3 @@ export function usePopoverGuard({ isOpen, triggerRef, popoverRef, onObscured, on
 
     onBeforeUnmount(detach);
 }
-

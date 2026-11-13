@@ -183,10 +183,17 @@
 
     const scrollHighlightedIntoView = () => {
         nextTick(() => {
-            if (!listRef.value || highlightedIndex.value < 0) return;
-            listRef.value
-                .querySelector(`[data-option-index="${highlightedIndex.value}"]`)
-                ?.scrollIntoView?.({ block: 'nearest' });
+            const list = listRef.value;
+            if (!list || highlightedIndex.value < 0) return;
+            const target = list.querySelector(`[data-option-index="${highlightedIndex.value}"]`);
+            if (!target) return;
+            const targetTop = target.offsetTop;
+            const targetBottom = targetTop + target.offsetHeight;
+            if (targetTop < list.scrollTop) {
+                list.scrollTop = targetTop;
+            } else if (targetBottom > list.scrollTop + list.clientHeight) {
+                list.scrollTop = targetBottom - list.clientHeight;
+            }
         });
     };
 
@@ -300,9 +307,8 @@
 
     usePopoverGuard({
         isOpen,
-        triggerRef,
         popoverRef,
-        onObscured: () => close(),
+        onClose: () => close(),
         onReposition: updatePosition,
     });
 
