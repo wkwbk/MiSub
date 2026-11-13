@@ -1,11 +1,20 @@
 <script setup>
     import { computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import { Compass, MessageSquare, Settings, LayoutGrid, LogOut } from 'lucide-vue-next';
+    import { storeToRefs } from 'pinia';
+    import {
+        Compass,
+        MessageSquare,
+        Settings,
+        LayoutGrid,
+        LayoutPanelTop,
+        LogOut,
+    } from 'lucide-vue-next';
     import ThemeToggle from '../features/ThemeToggle.vue';
     import LoginEntryButton from './LoginEntryButton.vue';
     import ExternalRepoButton from './ExternalRepoButton.vue';
     import LanguageSwitcher from './LanguageSwitcher.vue';
+    import { useUIStore } from '../../stores/ui.js';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -45,7 +54,13 @@
 
     const emit = defineEmits(['openSettings', 'toggleLayout', 'logout']);
     const route = useRoute();
+    const uiStore = useUIStore();
+    const { layoutMode } = storeToRefs(uiStore);
     const { t } = useI18n();
+    const isLegacyLayout = computed(() => layoutMode.value === 'legacy');
+    const layoutToggleLabel = computed(() =>
+        isLegacyLayout.value ? t('actions.switchToModernLayout') : t('actions.switchToLegacyLayout')
+    );
     const showPublicFeedback = computed(
         () => !props.isLoggedIn && (route.name === 'Home' || route.name === 'Explore')
     );
@@ -130,10 +145,13 @@
             <button
                 @click="emit('toggleLayout')"
                 :class="buildBtnClass('neutral')"
-                :title="t('actions.toggleLayout')"
-                :aria-label="t('actions.toggleLayout')"
+                :title="layoutToggleLabel"
+                :aria-label="layoutToggleLabel"
+                :aria-pressed="isLegacyLayout"
+                data-testid="layout-toggle-btn"
             >
-                <LayoutGrid class="h-4 w-4" />
+                <LayoutGrid v-if="isLegacyLayout" class="h-4 w-4" />
+                <LayoutPanelTop v-else class="h-4 w-4" />
             </button>
 
             <button
