@@ -405,7 +405,7 @@
                                     handleRefreshAll();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
                                 {{ t('actions.refreshAll') }}
                             </button>
@@ -414,17 +414,17 @@
                                     handleToggleSort();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
-                            <div class="border-t border-zinc-800 my-1"></div>
+                            <div class="my-1 border-t border-white/10"></div>
                             <button
                                 @click="
                                     handleDeleteAll();
                                     close();
                                 "
-                                class="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-red-950/40"
+                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                             >
                                 {{ t('actions.clearAll') }}
                             </button>
