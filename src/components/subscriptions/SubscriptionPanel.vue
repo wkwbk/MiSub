@@ -7,6 +7,7 @@
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
+    import Select from '@/components/ui/Select.vue';
     import { useUIStore } from '@/stores/ui';
     import { useI18n } from '@/i18n/index.js';
     import { inferAirportRootDomain } from '../../utils/airport-domain.js';
@@ -405,7 +406,7 @@
                                     handleRefreshAll();
                                     close();
                                 "
-                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
                                 {{ t('actions.refreshAll') }}
                             </button>
@@ -414,7 +415,7 @@
                                     handleToggleSort();
                                     close();
                                 "
-                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
@@ -424,7 +425,7 @@
                                     handleDeleteAll();
                                     close();
                                 "
-                                class="w-full text-left px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                             >
                                 {{ t('actions.clearAll') }}
                             </button>
@@ -707,26 +708,17 @@
                     <p class="text-xs text-zinc-400">
                         {{ t('subscriptions.chooseAirportGroup') }}
                     </p>
-                    <div class="relative">
-                        <select
-                            v-model="selectedAirportGroup"
-                            class="w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500 transition-colors"
-                        >
-                            <option value="">{{ t('subscriptions.newAirportGroupName') }}</option>
-                            <option
-                                v-for="airport in availableAirportGroups"
-                                :key="airport.groupId"
-                                :value="airport.groupId"
-                            >
-                                {{ airport.name }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="selectedAirportGroup"
+                        size="sm"
+                        :options="[
+                            { value: '', label: t('subscriptions.newAirportGroupName') },
+                            ...availableAirportGroups.map((airport) => ({
+                                value: airport.groupId,
+                                label: airport.name,
+                            })),
+                        ]"
+                    />
                     <input
                         v-if="!selectedAirportGroup"
                         v-model="groupNameInput"

@@ -166,7 +166,11 @@ describe('SubscriptionPanel UX', () => {
         expect(wrapper.emitted('assign-airport-group')).toBeUndefined();
 
         await wrapper.get('button[title="指定机场分组"]').trigger('click');
-        await new DOMWrapper(document.body.querySelector('[role="dialog"] select')).setValue('g1');
+        await new DOMWrapper(document.body.querySelector('[role="dialog"] button[role="combobox"]')).trigger('click');
+        const groupOption = Array.from(document.body.querySelectorAll('[role="option"]')).find(
+            (el) => el.textContent?.trim() === 'Existing'
+        );
+        await new DOMWrapper(groupOption).trigger('click');
         await dialogButtons().find((button) => button.text() === '保存机场归属').trigger('click');
         expect(wrapper.emitted('assign-airport-group')).toEqual([
             [['s1', 's2'], { groupId: 'g1', name: 'Existing' }],

@@ -1,5 +1,5 @@
 <script setup>
-    import { ChevronDown, Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
+    import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
     import SectionHeader from '../SectionHeader.vue';
     const props = defineProps({
         settings: {
@@ -18,6 +18,7 @@
     });
 
     import Input from '../../ui/Input.vue';
+    import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
     import { watch, computed } from 'vue';
     import { useToastStore } from '../../../stores/toast';
@@ -169,20 +170,13 @@
                 </template>
             </SectionHeader>
             <div class="max-w-xs">
-                <div class="relative">
-                    <select
-                        v-model="settings.defaultLocale"
-                        class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
-                    >
-                        <option value="zh-CN">{{ t('settings.defaultLanguageZh') }}</option>
-                        <option value="en-US">{{ t('settings.defaultLanguageEn') }}</option>
-                    </select>
-                    <div
-                        class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                    >
-                        <ChevronDown class="w-3.5 h-3.5" />
-                    </div>
-                </div>
+                <Select
+                    v-model="settings.defaultLocale"
+                    :options="[
+                        { value: 'zh-CN', label: t('settings.defaultLanguageZh') },
+                        { value: 'en-US', label: t('settings.defaultLanguageEn') },
+                    ]"
+                />
             </div>
         </div>
 
@@ -346,19 +340,14 @@
                             {{ t('settings.accessLogModeDesc') }}
                         </p>
                     </div>
-                    <div class="relative">
-                        <select
+                    <div class="min-w-[160px]">
+                        <Select
                             v-model="settings.accessLogPersistenceMode"
-                            class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
-                        >
-                            <option value="light">{{ t('settings.accessLogLight') }}</option>
-                            <option value="full">{{ t('settings.accessLogFull') }}</option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
+                            :options="[
+                                { value: 'light', label: t('settings.accessLogLight') },
+                                { value: 'full', label: t('settings.accessLogFull') },
+                            ]"
+                        />
                     </div>
                 </div>
 
@@ -387,20 +376,13 @@
                             {{ t('settings.mergeExpireStrategyDesc') }}
                         </p>
                     </div>
-                    <div class="relative">
-                        <select
-                            v-model="settings.mergeExpireStrategy"
-                            class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
-                        >
-                            <option value="max">{{ t('settings.mergeExpireMax') }}</option>
-                            <option value="min">{{ t('settings.mergeExpireMin') }}</option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="settings.mergeExpireStrategy"
+                        :options="[
+                            { value: 'max', label: t('settings.mergeExpireMax') },
+                            { value: 'min', label: t('settings.mergeExpireMin') },
+                        ]"
+                    />
                 </div>
             </div>
         </div>

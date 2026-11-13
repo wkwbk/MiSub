@@ -1,5 +1,5 @@
 <script setup>
-    import { ChevronDown } from 'lucide-vue-next';
+    import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -20,25 +20,21 @@
             {{ t('subscriptions.uaLabel') }}
             <span class="text-xs text-zinc-500 ml-2">{{ t('subscriptions.optionalDefault') }}</span>
         </label>
-        <div class="relative mt-1">
-            <select
+        <div class="mt-1">
+            <Select
                 id="sub-edit-ua"
                 v-model="editingSubscription.customUserAgent"
-                class="block w-full appearance-none pl-3 pr-9 py-2 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 font-mono focus:outline-hidden focus:border-zinc-500 transition-colors"
-            >
-                <option value="">{{ t('subscriptions.defaultUa') }}</option>
-                <option value="MiSub">MiSub</option>
-                <option value="clash-verge/v2.4.3">Clash Verge</option>
-                <option value="clash.meta">Clash Meta</option>
-                <option value="v2rayN/7.23">v2rayN</option>
-                <option value="Shadowrocket/1.9.0">Shadowrocket</option>
-                <option value="Mozilla/5.0">Mozilla</option>
-            </select>
-            <div
-                class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-            >
-                <ChevronDown class="w-3.5 h-3.5" />
-            </div>
+                trigger-class="font-mono"
+                :options="[
+                    { value: '', label: t('subscriptions.defaultUa') },
+                    { value: 'MiSub', label: 'MiSub' },
+                    { value: 'clash-verge/v2.4.3', label: 'Clash Verge' },
+                    { value: 'clash.meta', label: 'Clash Meta' },
+                    { value: 'v2rayN/7.23', label: 'v2rayN' },
+                    { value: 'Shadowrocket/1.9.0', label: 'Shadowrocket' },
+                    { value: 'Mozilla/5.0', label: 'Mozilla' },
+                ]"
+            />
         </div>
         <p
             v-if="editingSubscription.customUserAgent"

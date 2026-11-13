@@ -1,8 +1,9 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { Check, ChevronDown, RefreshCw } from 'lucide-vue-next';
+    import { Check, RefreshCw } from 'lucide-vue-next';
     import { api } from '../../lib/http.js';
     import Modal from '../forms/Modal.vue';
+    import Select from '../ui/Select.vue';
     import { useI18n } from '../../i18n/index.js';
 
     const { t } = useI18n();
@@ -150,21 +151,14 @@
                         class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
                         >{{ t('guestbook.feedbackType') }}</label
                     >
-                    <div class="relative">
-                        <select
-                            v-model="form.type"
-                            class="block w-full appearance-none rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 pl-3 pr-9 text-sm transition-colors"
-                        >
-                            <option value="general">{{ t('guestbook.typeGeneral') }}</option>
-                            <option value="feature">{{ t('guestbook.typeFeature') }}</option>
-                            <option value="bug">{{ t('guestbook.typeBug') }}</option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="form.type"
+                        :options="[
+                            { value: 'general', label: t('guestbook.typeGeneral') },
+                            { value: 'feature', label: t('guestbook.typeFeature') },
+                            { value: 'bug', label: t('guestbook.typeBug') },
+                        ]"
+                    />
                 </div>
 
                 <div>

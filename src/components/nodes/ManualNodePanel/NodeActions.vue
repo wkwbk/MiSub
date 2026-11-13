@@ -202,7 +202,7 @@
                                 emit('toggle-selection-mode');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
                             :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
                         >
                             {{
@@ -215,7 +215,7 @@
                                 emit('import');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.importSubscription') }}
                         </button>
@@ -224,7 +224,7 @@
                                 emit('manage-groups');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.manageGroups') }}
                         </button>
@@ -233,7 +233,7 @@
                                 emit('auto-sort');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.autoSort') }}
                         </button>
@@ -242,7 +242,7 @@
                                 emit('sort-by-latency');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.sortByLatency') }}
                         </button>
@@ -251,7 +251,7 @@
                                 emit('deduplicate');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.deduplicate') }}
                         </button>
@@ -260,7 +260,7 @@
                                 emit('toggle-sort');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs transition-colors text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                            class="w-full text-left px-3 py-2 rounded text-xs transition-colors text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
                         >
                             {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                         </button>
@@ -270,7 +270,7 @@
                                 emit('delete-all');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                         >
                             {{ t('actions.clearAll') }}
                         </button>

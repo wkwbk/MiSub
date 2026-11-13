@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
     import { ChevronDown, ChevronUp, X } from 'lucide-vue-next';
+    import Select from '../../../ui/Select.vue';
     import { useI18n } from '../../../../i18n/index.js';
     import draggable from 'vuedraggable';
     import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.js';
@@ -201,33 +202,30 @@
                         </button>
                     </div>
 
-                    <select
-                        :value="item.key"
-                        @change="updateKeyField(idx, 'key', $event.target.value)"
-                        class="flex-1 bg-transparent border-none p-0 text-[11px] font-medium text-zinc-100 focus-visible:ring-0 outline-none"
-                    >
-                        <option
-                            v-for="k in availableKeys"
-                            :key="k.value"
-                            :value="k.value"
-                            class="bg-[#131515] text-zinc-100"
-                        >
-                            {{ t(k.labelKey) }}
-                        </option>
-                    </select>
+                    <div class="min-w-0 flex-1">
+                        <Select
+                            :model-value="item.key"
+                            @update:model-value="updateKeyField(idx, 'key', $event)"
+                            size="xs"
+                            trigger-class="font-medium"
+                            :options="
+                                availableKeys.map((k) => ({ value: k.value, label: t(k.labelKey) }))
+                            "
+                        />
+                    </div>
 
-                    <select
-                        :value="item.order"
-                        @change="updateKeyField(idx, 'order', $event.target.value)"
-                        class="w-14 bg-transparent border-none p-0 text-[11px] text-zinc-300 focus-visible:ring-0 outline-none"
-                    >
-                        <option value="asc" class="bg-[#131515] text-zinc-100">
-                            {{ t('operators.ascending') }}
-                        </option>
-                        <option value="desc" class="bg-[#131515] text-zinc-100">
-                            {{ t('operators.descending') }}
-                        </option>
-                    </select>
+                    <div class="w-20 shrink-0">
+                        <Select
+                            :model-value="item.order"
+                            @update:model-value="updateKeyField(idx, 'order', $event)"
+                            size="xs"
+                            popover-min-width="110"
+                            :options="[
+                                { value: 'asc', label: t('operators.ascending') },
+                                { value: 'desc', label: t('operators.descending') },
+                            ]"
+                        />
+                    </div>
 
                     <button
                         @click="removeKey(idx)"

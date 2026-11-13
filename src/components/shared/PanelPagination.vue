@@ -1,6 +1,7 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
     import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-vue-next';
+    import Select from '../ui/Select.vue';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -81,8 +82,11 @@
         emitPageChange(pageInput.value);
     }
 
-    function handleItemsPerPageChange(event) {
-        emit('update:itemsPerPage', parseInt(event.target.value, 10));
+    function handleItemsPerPageChange(value) {
+        const parsed = parseInt(value, 10);
+        if (!Number.isNaN(parsed)) {
+            emit('update:itemsPerPage', parsed);
+        }
     }
 </script>
 
@@ -97,15 +101,21 @@
             }}</span>
             <div v-if="showItemsPerPage" class="flex items-center space-x-2">
                 <span>{{ t('common.perPage') }}</span>
-                <select
-                    :value="itemsPerPage"
-                    @change="handleItemsPerPageChange"
-                    class="form-select rounded-md text-xs font-mono py-1 pl-2 pr-6 border border-zinc-800 bg-transparent text-zinc-200 focus:border-zinc-500 focus-visible:outline-none"
-                >
-                    <option v-for="option in itemsPerPageOptions" :key="option" :value="option">
-                        {{ option === -1 ? t('common.all') : option }}
-                    </option>
-                </select>
+                <div class="w-20">
+                    <Select
+                        :model-value="itemsPerPage"
+                        @update:model-value="handleItemsPerPageChange"
+                        size="xs"
+                        trigger-class="font-mono"
+                        popover-min-width="96"
+                        :options="
+                            itemsPerPageOptions.map((option) => ({
+                                value: option,
+                                label: option === -1 ? t('common.all') : String(option),
+                            }))
+                        "
+                    />
+                </div>
             </div>
             <slot name="panel-left" />
         </div>

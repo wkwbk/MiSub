@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import { ChevronDown, Layers, LayoutGrid, List, Search, Zap } from 'lucide-vue-next';
+    import { Layers, LayoutGrid, List, Search, Zap } from 'lucide-vue-next';
+    import Select from '../../../ui/Select.vue';
     import { useI18n } from '../../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -128,26 +129,17 @@
                     >
                         Type
                     </label>
-                    <div class="relative">
-                        <select
-                            v-model="protocolModel"
-                            class="w-full appearance-none rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] pl-3 pr-9 py-2 text-sm font-mono text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
-                        >
-                            <option value="all">ALL PROTOCOLS</option>
-                            <option
-                                v-for="protocol in availableProtocols"
-                                :key="protocol"
-                                :value="protocol"
-                            >
-                                {{ protocol.toUpperCase() }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="protocolModel"
+                        trigger-class="font-mono"
+                        :options="[
+                            { value: 'all', label: 'ALL PROTOCOLS' },
+                            ...availableProtocols.map((protocol) => ({
+                                value: protocol,
+                                label: protocol.toUpperCase(),
+                            })),
+                        ]"
+                    />
                 </div>
 
                 <!-- 地区筛选 -->
@@ -157,22 +149,16 @@
                     >
                         Region
                     </label>
-                    <div class="relative">
-                        <select
-                            v-model="regionModel"
-                            class="w-full appearance-none rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] pl-3 pr-9 py-2 text-sm text-zinc-900 dark:text-zinc-100 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
-                        >
-                            <option value="all">ALL REGIONS</option>
-                            <option v-for="region in availableRegions" :key="region" :value="region">
-                                {{ region }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="regionModel"
+                        :options="[
+                            { value: 'all', label: 'ALL REGIONS' },
+                            ...availableRegions.map((region) => ({
+                                value: region,
+                                label: region,
+                            })),
+                        ]"
+                    />
                 </div>
             </div>
 

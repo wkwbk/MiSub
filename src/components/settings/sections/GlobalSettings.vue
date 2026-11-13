@@ -1,8 +1,9 @@
 <script setup>
     import { watch } from 'vue';
-    import { ChevronDown, Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
+    import { Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
     import OperatorChain from '../../features/Operators/OperatorChain.vue';
     import Input from '../../ui/Input.vue';
+    import Select from '../../ui/Select.vue';
     import SectionHeader from '../SectionHeader.vue';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -99,25 +100,12 @@
                     <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
                         t('settings.globalManualNodePrefixSwitch')
                     }}</label>
-                    <div class="relative">
-                        <select
-                            v-model="settings.defaultPrefixSettings.enableManualNodes"
-                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
-                        >
-                            <option
-                                v-for="option in prefixToggleOptions"
-                                :key="String(option.value)"
-                                :value="option.value"
-                            >
-                                {{ t(option.labelKey) }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="settings.defaultPrefixSettings.enableManualNodes"
+                        :options="
+                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                        "
+                    />
                 </div>
 
                 <!-- 第二排：机场订阅前缀 与 节点国旗 EMOJI -->
@@ -125,50 +113,24 @@
                     <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
                         t('settings.globalSubscriptionPrefixSwitch')
                     }}</label>
-                    <div class="relative">
-                        <select
-                            v-model="settings.defaultPrefixSettings.enableSubscriptions"
-                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
-                        >
-                            <option
-                                v-for="option in prefixToggleOptions"
-                                :key="String(option.value)"
-                                :value="option.value"
-                            >
-                                {{ t(option.labelKey) }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="settings.defaultPrefixSettings.enableSubscriptions"
+                        :options="
+                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                        "
+                    />
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
                         t('settings.globalFlagEmojiSwitch')
                     }}</label>
-                    <div class="relative">
-                        <select
-                            v-model="settings.enableFlagEmoji"
-                            class="w-full bg-[#131515] border border-zinc-800 rounded-md py-2 px-3 text-sm text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors appearance-none"
-                        >
-                            <option
-                                v-for="option in prefixToggleOptions"
-                                :key="String(option.value)"
-                                :value="option.value"
-                            >
-                                {{ t(option.labelKey) }}
-                            </option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="settings.enableFlagEmoji"
+                        :options="
+                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                        "
+                    />
                 </div>
             </div>
         </div>

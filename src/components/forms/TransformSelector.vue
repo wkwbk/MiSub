@@ -2,6 +2,7 @@
     import { computed, ref, watch } from 'vue';
     import { ChevronDown, List } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
+    import Select from '../ui/Select.vue';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '../../i18n/index.js';
@@ -205,10 +206,9 @@
         { immediate: true }
     );
 
-    const handleSelectChange = (e) => {
+    const handleSelectChange = (val) => {
         if (props.forceCustom) return;
 
-        const val = e.target.value;
         if (val === 'custom' && !props.customTemplatesOnly) {
             isCustom.value = true;
             emit('select-asset', null);
@@ -221,6 +221,38 @@
         emit('select-asset', assets.value.find((item) => item.url === val) || null);
         emit('update:modelValue', val);
     };
+
+    const selectOptions = computed(() => {
+        const opts = [
+            {
+                value: '',
+                label:
+                    props.placeholder ||
+                    (props.allowEmpty
+                        ? t('transformSelector.defaultGlobalOption')
+                        : t('transformSelector.pleaseSelect')),
+            },
+        ];
+
+        for (const [groupName, items] of Object.entries(groupedConfigs.value || {})) {
+            opts.push({
+                label: groupName,
+                options: items.map((item) => ({
+                    value: item.url,
+                    label: item.name,
+                })),
+            });
+        }
+
+        if (!props.customTemplatesOnly) {
+            opts.push({
+                value: 'custom',
+                label: t('transformSelector.customInputOption'),
+            });
+        }
+
+        return opts;
+    });
 
     const handleCustomInput = (e) => {
         emit('update:modelValue', e.target.value);
@@ -256,44 +288,12 @@
             <span>{{ t('transformSelector.thirdPartyNotice') }}</span>
         </div>
 
-        <div v-if="!isCustom" class="relative">
-            <select
-                :value="selectedUrl"
-                @change="handleSelectChange"
-                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none"
-            >
-                <option value="">
-                    {{
-                        placeholder ||
-                        (allowEmpty
-                            ? t('transformSelector.defaultGlobalOption')
-                            : t('transformSelector.pleaseSelect'))
-                    }}
-                </option>
-
-                <optgroup
-                    v-for="(items, groupName) in groupedConfigs"
-                    :key="groupName"
-                    :label="groupName"
-                >
-                    <option v-for="item in items" :key="item.id" :value="item.url">
-                        {{ item.name }}
-                    </option>
-                </optgroup>
-
-                <option
-                    v-if="!customTemplatesOnly"
-                    value="custom"
-                    class="border-t font-semibold text-zinc-200"
-                >
-                    {{ t('transformSelector.customInputOption') }}
-                </option>
-            </select>
-            <div
-                class="pointer-events-none absolute inset-y-0 right-px flex items-center px-3 text-zinc-500"
-            >
-                <ChevronDown class="w-3.5 h-3.5" />
-            </div>
+        <div v-if="!isCustom">
+            <Select
+                :model-value="selectedUrl"
+                @update:model-value="handleSelectChange"
+                :options="selectOptions"
+            />
         </div>
 
         <div v-else class="w-full">

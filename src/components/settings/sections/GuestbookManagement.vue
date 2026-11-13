@@ -1,8 +1,9 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue';
-    import { ChevronDown, Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from 'lucide-vue-next';
+    import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from 'lucide-vue-next';
     import { useToastStore } from '../../../stores/toast.js';
     import { api } from '../../../lib/http.js';
+    import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -219,21 +220,17 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <div class="relative w-full sm:w-auto">
-                        <select
+                    <div class="w-full sm:w-36">
+                        <Select
                             v-model="filterStatus"
-                            class="block w-full sm:w-auto appearance-none pl-3 pr-9 py-1.5 text-xs border border-zinc-800 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 rounded-md bg-[#131515] text-zinc-100"
-                        >
-                            <option value="all">{{ t('settings.guestbookAllStatus') }}</option>
-                            <option value="pending">{{ t('settings.guestbookPending') }}</option>
-                            <option value="approved">{{ t('settings.guestbookApproved') }}</option>
-                            <option value="replied">{{ t('settings.guestbookReplied') }}</option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
+                            size="sm"
+                            :options="[
+                                { value: 'all', label: t('settings.guestbookAllStatus') },
+                                { value: 'pending', label: t('settings.guestbookPending') },
+                                { value: 'approved', label: t('settings.guestbookApproved') },
+                                { value: 'replied', label: t('settings.guestbookReplied') },
+                            ]"
+                        />
                     </div>
                     <button
                         @click="fetchMessages"

@@ -1,11 +1,12 @@
 <script setup>
     import { ref } from 'vue';
-    import { ChevronDown, CloudDownload } from 'lucide-vue-next';
+    import { CloudDownload } from 'lucide-vue-next';
     import { api } from '../../../lib/http.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useI18n } from '../../../i18n/index.js';
     import { confirmAction } from '../../../composables/useConfirm.js';
     import Input from '../../ui/Input.vue';
+    import Select from '../../ui/Select.vue';
 
     const props = defineProps({
         settings: {
@@ -300,22 +301,15 @@
                         />
                         {{ t('settings.webdavEnableAutoBackup') }}
                     </label>
-                    <div class="relative">
-                        <select
-                            v-model="settings.webdavBackup.interval"
-                            class="w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 pl-3 pr-9 py-2 text-sm focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none transition-colors"
-                        >
-                            <option value="hourly">{{ t('settings.webdavIntervalHourly') }}</option>
-                            <option value="daily">{{ t('settings.webdavIntervalDaily') }}</option>
-                            <option value="weekly">{{ t('settings.webdavIntervalWeekly') }}</option>
-                            <option value="monthly">{{ t('settings.webdavIntervalMonthly') }}</option>
-                        </select>
-                        <div
-                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                        </div>
-                    </div>
+                    <Select
+                        v-model="settings.webdavBackup.interval"
+                        :options="[
+                            { value: 'hourly', label: t('settings.webdavIntervalHourly') },
+                            { value: 'daily', label: t('settings.webdavIntervalDaily') },
+                            { value: 'weekly', label: t('settings.webdavIntervalWeekly') },
+                            { value: 'monthly', label: t('settings.webdavIntervalMonthly') },
+                        ]"
+                    />
                     <p class="mt-3 text-xs text-zinc-500">
                         {{ t('settings.webdavAutoBackupHint') }}
                     </p>

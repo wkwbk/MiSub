@@ -3,6 +3,7 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
     import { ChevronDown } from 'lucide-vue-next';
+    import Select from '../ui/Select.vue';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -347,48 +348,27 @@
                         />
 
                         <!-- 选择器 -->
-                        <select
+                        <Select
                             v-else-if="filter.type === 'select'"
-                            :value="filterValue(filter)"
+                            :model-value="filterValue(filter)"
                             :disabled="loading || filter.disabled"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            @change="handleFilterChange(filter, $event.target.value)"
-                        >
-                            <option value="">{{ filter.placeholder || t('common.choose') }}</option>
-                            <option
-                                v-for="option in filter.options"
-                                :key="option.value"
-                                :value="option.value"
-                            >
-                                {{ option.label }}
-                            </option>
-                        </select>
+                            :options="[
+                                { value: '', label: filter.placeholder || t('common.choose') },
+                                ...(filter.options || []),
+                            ]"
+                            @update:model-value="handleFilterChange(filter, $event)"
+                        />
 
                         <!-- 多选器 -->
-                        <select
+                        <Select
                             v-else-if="filter.type === 'multiselect'"
                             multiple
-                            :value="Array.isArray(filterValue(filter)) ? filterValue(filter) : []"
+                            :model-value="Array.isArray(filterValue(filter)) ? filterValue(filter) : []"
                             :disabled="loading || filter.disabled"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
-                            @change="
-                                handleFilterChange(
-                                    filter,
-                                    Array.from(
-                                        $event.target.selectedOptions,
-                                        (option) => option.value
-                                    )
-                                )
-                            "
-                        >
-                            <option
-                                v-for="option in filter.options"
-                                :key="option.value"
-                                :value="option.value"
-                            >
-                                {{ option.label }}
-                            </option>
-                        </select>
+                            :placeholder="filter.placeholder || t('common.choose')"
+                            :options="filter.options || []"
+                            @update:model-value="handleFilterChange(filter, $event)"
+                        />
 
                         <!-- 复选框 -->
                         <label

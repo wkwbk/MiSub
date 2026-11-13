@@ -131,7 +131,7 @@
                                         handleToggleSort();
                                         close();
                                     "
-                                    class="w-full text-left px-3 py-2 rounded-lg text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                                 >
                                     {{
                                         isSorting
@@ -145,7 +145,7 @@
                                         handleDeleteAll();
                                         close();
                                     "
-                                    class="w-full text-left px-3 py-2 rounded-lg text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                                 >
                                     {{ t('actions.clearAll') }}
                                 </button>

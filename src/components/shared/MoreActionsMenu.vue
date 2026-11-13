@@ -1,6 +1,7 @@
 <script setup>
     import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
     import { MoreHorizontal } from 'lucide-vue-next';
+    import { usePopoverGuard } from '../../composables/usePopoverGuard.js';
     import { t } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -99,6 +100,13 @@
         }
     }
 
+    usePopoverGuard({
+        isOpen,
+        triggerRef,
+        popoverRef: menuRef,
+        onObscured: () => closeMenu(),
+    });
+
     onMounted(() => {
         document.addEventListener('click', handleClickOutside);
     });
@@ -130,7 +138,7 @@
                 role="menu"
                 @keydown="handleMenuKeydown"
                 :class="[
-                    'absolute right-0 mt-2 p-1.5 bg-[#171717] border border-zinc-800 rounded-xl shadow-xl z-50',
+                    'absolute right-0 mt-2 p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl z-10',
                     menuWidthClass,
                 ]"
             >
@@ -146,7 +154,7 @@
                     :id="menuId"
                     role="menu"
                     :class="[
-                        'fixed mt-2 p-1.5 bg-[#171717] border border-zinc-800 rounded-xl shadow-xl',
+                        'fixed mt-2 p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl',
                         menuWidthClass,
                     ]"
                     :style="fixedMenuPosition"

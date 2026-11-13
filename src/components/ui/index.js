@@ -13,6 +13,7 @@ export { default as Toast } from './Toast.vue';
 export { default as SkeletonLoader } from './SkeletonLoader.vue';
 export { default as SkeletonCard } from './SkeletonCard.vue';
 export { default as Input } from './Input.vue';
+export { default as Select } from './Select.vue';
 export { default as Switch } from './Switch.vue';
 
 export const UIComponents = {
@@ -26,6 +27,7 @@ export const UIComponents = {
     SkeletonLoader,
     SkeletonCard,
     Input,
+    Select,
     Switch,
 };
 
