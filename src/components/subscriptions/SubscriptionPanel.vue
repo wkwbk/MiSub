@@ -418,7 +418,7 @@
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
-                            <div class="my-1 border-t border-white/10"></div>
+                            <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
                             <button
                                 @click="
                                     handleDeleteAll();

@@ -209,6 +209,7 @@
                                 isSelectionMode ? t('actions.exitBatch') : t('actions.bulkActions')
                             }}
                         </button>
+                        <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
                         <button
                             @click="
                                 emit('import');
@@ -263,7 +264,7 @@
                         >
                             {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                         </button>
-                        <div class="my-1 border-t border-white/10"></div>
+                        <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
                         <button
                             @click="
                                 emit('delete-all');
