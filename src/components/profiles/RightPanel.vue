@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, onUnmounted } from 'vue';
-    import { QrCode, Check, Copy } from 'lucide-vue-next';
+    import { Check, ChevronDown, Copy, QrCode } from 'lucide-vue-next';
     import { useToastStore } from '../../stores/toast.js';
     import { useUIStore } from '../../stores/ui.js';
     import { useI18n } from '../../i18n/index.js';
@@ -170,22 +170,29 @@
                 <label class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5">{{
                     t('dashboard.linkCard.selectContent')
                 }}</label>
-                <select
-                    v-model="selectedId"
-                    class="w-full px-3 py-2 bg-transparent border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:border-zinc-500 text-sm text-zinc-100 font-mono"
-                >
-                    <option value="default" class="bg-[#131515] text-zinc-100">
-                        {{ t('dashboard.linkCard.defaultSubscription') }}
-                    </option>
-                    <option
-                        v-for="profile in profiles"
-                        :key="profile.id"
-                        :value="profile.customId || profile.id"
-                        class="bg-[#131515] text-zinc-100"
+                <div class="relative">
+                    <select
+                        v-model="selectedId"
+                        class="w-full appearance-none pl-3 pr-9 py-2 bg-transparent border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:border-zinc-500 text-sm text-zinc-100 font-mono transition-colors"
                     >
-                        {{ profile.name }}
-                    </option>
-                </select>
+                        <option value="default" class="bg-[#131515] text-zinc-100">
+                            {{ t('dashboard.linkCard.defaultSubscription') }}
+                        </option>
+                        <option
+                            v-for="profile in profiles"
+                            :key="profile.id"
+                            :value="profile.customId || profile.id"
+                            class="bg-[#131515] text-zinc-100"
+                        >
+                            {{ profile.name }}
+                        </option>
+                    </select>
+                    <div
+                        class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                    >
+                        <ChevronDown class="w-3.5 h-3.5" />
+                    </div>
+                </div>
             </div>
 
             <div class="mb-4 list-item-animation" style="--delay-index: 3">

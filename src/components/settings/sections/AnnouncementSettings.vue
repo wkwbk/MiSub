@@ -1,6 +1,6 @@
 <script setup>
     import { computed, watch } from 'vue';
-    import { Megaphone } from 'lucide-vue-next';
+    import { ChevronDown, Megaphone } from 'lucide-vue-next';
     import DOMPurify from 'dompurify';
     import Switch from '../../ui/Switch.vue';
     import { useI18n } from '../../../i18n/index.js';
@@ -118,16 +118,23 @@
                     <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
                         t('settings.announcementType')
                     }}</label>
-                    <select
-                        v-model="announcement.type"
-                        @change="handleContentUpdate"
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
-                    >
-                        <option value="info">{{ t('settings.announcementInfo') }}</option>
-                        <option value="success">{{ t('settings.announcementSuccess') }}</option>
-                        <option value="warning">{{ t('settings.announcementWarning') }}</option>
-                        <option value="error">{{ t('settings.announcementError') }}</option>
-                    </select>
+                    <div class="relative">
+                        <select
+                            v-model="announcement.type"
+                            @change="handleContentUpdate"
+                            class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
+                        >
+                            <option value="info">{{ t('settings.announcementInfo') }}</option>
+                            <option value="success">{{ t('settings.announcementSuccess') }}</option>
+                            <option value="warning">{{ t('settings.announcementWarning') }}</option>
+                            <option value="error">{{ t('settings.announcementError') }}</option>
+                        </select>
+                        <div
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                        >
+                            <ChevronDown class="w-3.5 h-3.5" />
+                        </div>
+                    </div>
                 </div>
             </div>
 

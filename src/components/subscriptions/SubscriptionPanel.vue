@@ -707,19 +707,26 @@
                     <p class="text-xs text-zinc-400">
                         {{ t('subscriptions.chooseAirportGroup') }}
                     </p>
-                    <select
-                        v-model="selectedAirportGroup"
-                        class="w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500"
-                    >
-                        <option value="">{{ t('subscriptions.newAirportGroupName') }}</option>
-                        <option
-                            v-for="airport in availableAirportGroups"
-                            :key="airport.groupId"
-                            :value="airport.groupId"
+                    <div class="relative">
+                        <select
+                            v-model="selectedAirportGroup"
+                            class="w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500 transition-colors"
                         >
-                            {{ airport.name }}
-                        </option>
-                    </select>
+                            <option value="">{{ t('subscriptions.newAirportGroupName') }}</option>
+                            <option
+                                v-for="airport in availableAirportGroups"
+                                :key="airport.groupId"
+                                :value="airport.groupId"
+                            >
+                                {{ airport.name }}
+                            </option>
+                        </select>
+                        <div
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                        >
+                            <ChevronDown class="w-3.5 h-3.5" />
+                        </div>
+                    </div>
                     <input
                         v-if="!selectedAirportGroup"
                         v-model="groupNameInput"

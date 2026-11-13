@@ -207,19 +207,26 @@
                         <label class="block text-xs font-medium text-zinc-400">{{
                             t('profileModal.engineLabel')
                         }}</label>
-                        <select
-                            v-model="localProfile.subconverter.engineMode"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
-                        >
-                            <option value="">{{ t('profileModal.followGlobalConfig') }}</option>
-                            <option
-                                v-for="opt in engineOptions"
-                                :key="opt.value"
-                                :value="opt.value"
+                        <div class="relative">
+                            <select
+                                v-model="localProfile.subconverter.engineMode"
+                                class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
                             >
-                                {{ opt.label }}
-                            </option>
-                        </select>
+                                <option value="">{{ t('profileModal.followGlobalConfig') }}</option>
+                                <option
+                                    v-for="opt in engineOptions"
+                                    :key="opt.value"
+                                    :value="opt.value"
+                                >
+                                    {{ opt.label }}
+                                </option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                            >
+                                <ChevronDown class="w-3.5 h-3.5" />
+                            </div>
+                        </div>
                         <div
                             v-if="localProfile.subconverter.engineMode === ''"
                             class="flex items-center gap-1.5 mt-1.5"
@@ -238,25 +245,32 @@
                         <label class="block text-xs font-medium text-zinc-400">{{
                             t('profileModal.schemeLabel')
                         }}</label>
-                        <select
-                            v-model="localProfile.transformConfigMode"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-600 focus-visible:outline-hidden text-xs text-zinc-100"
-                        >
-                            <option value="global">
-                                {{ t('profileModal.followGlobalScheme') }}
-                            </option>
-                            <option value="builtin" :disabled="isExternalEngine">
-                                {{ t('profileModal.builtinAutoRoute') }}
-                            </option>
-                            <option
-                                v-for="option in transformModeOptions.slice(1)"
-                                :key="option.value"
-                                :value="option.value"
-                                :disabled="option.value === 'custom_template' && isExternalEngine"
+                        <div class="relative">
+                            <select
+                                v-model="localProfile.transformConfigMode"
+                                class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden text-xs text-zinc-100 transition-colors"
                             >
-                                {{ option.label }}
-                            </option>
-                        </select>
+                                <option value="global">
+                                    {{ t('profileModal.followGlobalScheme') }}
+                                </option>
+                                <option value="builtin" :disabled="isExternalEngine">
+                                    {{ t('profileModal.builtinAutoRoute') }}
+                                </option>
+                                <option
+                                    v-for="option in transformModeOptions.slice(1)"
+                                    :key="option.value"
+                                    :value="option.value"
+                                    :disabled="option.value === 'custom_template' && isExternalEngine"
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                            >
+                                <ChevronDown class="w-3.5 h-3.5" />
+                            </div>
+                        </div>
                         <p
                             v-if="isExternalEngine"
                             class="mt-1 text-[10px] leading-relaxed text-zinc-400"
@@ -378,25 +392,32 @@
                         <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
                             t('profileModal.ruleLevelLabel')
                         }}</label>
-                        <select
-                            v-model="localProfile.ruleLevel"
-                            :disabled="
-                                localProfile.transformConfigMode !== 'builtin' &&
-                                localProfile.transformConfigMode !== 'global'
-                            "
-                            :class="{
-                                'opacity-50 cursor-not-allowed':
+                        <div class="relative">
+                            <select
+                                v-model="localProfile.ruleLevel"
+                                :disabled="
                                     localProfile.transformConfigMode !== 'builtin' &&
-                                    localProfile.transformConfigMode !== 'global',
-                            }"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden transition-colors"
-                        >
-                            <option value="">{{ t('profileModal.followGlobalLevel') }}</option>
-                            <option value="base">{{ t('profileModal.ruleBase') }}</option>
-                            <option value="std">{{ t('profileModal.ruleStandard') }}</option>
-                            <option value="full">{{ t('profileModal.ruleFull') }}</option>
-                            <option value="relay">{{ t('profileModal.ruleRelay') }}</option>
-                        </select>
+                                    localProfile.transformConfigMode !== 'global'
+                                "
+                                :class="{
+                                    'opacity-50 cursor-not-allowed':
+                                        localProfile.transformConfigMode !== 'builtin' &&
+                                        localProfile.transformConfigMode !== 'global',
+                                }"
+                                class="block w-full appearance-none pl-3 pr-9 py-2 bg-[#131515] border border-zinc-800 rounded-md text-xs text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden transition-colors"
+                            >
+                                <option value="">{{ t('profileModal.followGlobalLevel') }}</option>
+                                <option value="base">{{ t('profileModal.ruleBase') }}</option>
+                                <option value="std">{{ t('profileModal.ruleStandard') }}</option>
+                                <option value="full">{{ t('profileModal.ruleFull') }}</option>
+                                <option value="relay">{{ t('profileModal.ruleRelay') }}</option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                            >
+                                <ChevronDown class="w-3.5 h-3.5" />
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 节点前缀设置 (合并) -->
@@ -419,18 +440,25 @@
                                 <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.manualNodeDisplay')
                                 }}</label>
-                                <select
-                                    v-model="localProfile.prefixSettings.enableManualNodes"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
-                                >
-                                    <option
-                                        v-for="option in prefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                <div class="relative">
+                                    <select
+                                        v-model="localProfile.prefixSettings.enableManualNodes"
+                                        class="w-full appearance-none pl-2.5 pr-8 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden transition-colors"
                                     >
-                                        {{ option.label }}
-                                    </option>
-                                </select>
+                                        <option
+                                            v-for="option in prefixToggleOptions"
+                                            :key="String(option.value)"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <div
+                                        class="absolute inset-y-0 right-px flex items-center px-2.5 pointer-events-none text-zinc-500"
+                                    >
+                                        <ChevronDown class="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 机场订阅展示开关 (自动机场名) -->
@@ -438,18 +466,25 @@
                                 <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.subscriptionPrefix')
                                 }}</label>
-                                <select
-                                    v-model="localProfile.prefixSettings.enableSubscriptions"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
-                                >
-                                    <option
-                                        v-for="option in prefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                <div class="relative">
+                                    <select
+                                        v-model="localProfile.prefixSettings.enableSubscriptions"
+                                        class="w-full appearance-none pl-2.5 pr-8 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden transition-colors"
                                     >
-                                        {{ option.label }}
-                                    </option>
-                                </select>
+                                        <option
+                                            v-for="option in prefixToggleOptions"
+                                            :key="String(option.value)"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <div
+                                        class="absolute inset-y-0 right-px flex items-center px-2.5 pointer-events-none text-zinc-500"
+                                    >
+                                        <ChevronDown class="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- 组名前缀开关 -->
@@ -457,18 +492,25 @@
                                 <label class="block text-xs font-medium text-zinc-400">{{
                                     t('profileModal.groupPrefix')
                                 }}</label>
-                                <select
-                                    v-model="localProfile.prefixSettings.prependGroupName"
-                                    class="w-full px-2.5 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
-                                >
-                                    <option
-                                        v-for="option in groupPrefixToggleOptions"
-                                        :key="String(option.value)"
-                                        :value="option.value"
+                                <div class="relative">
+                                    <select
+                                        v-model="localProfile.prefixSettings.prependGroupName"
+                                        class="w-full appearance-none pl-2.5 pr-8 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden transition-colors"
                                     >
-                                        {{ option.label }}
-                                    </option>
-                                </select>
+                                        <option
+                                            v-for="option in groupPrefixToggleOptions"
+                                            :key="String(option.value)"
+                                            :value="option.value"
+                                        >
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <div
+                                        class="absolute inset-y-0 right-px flex items-center px-2.5 pointer-events-none text-zinc-500"
+                                    >
+                                        <ChevronDown class="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -487,16 +529,23 @@
                                         >{{ flag.label }}</span
                                     >
                                 </div>
-                                <select
-                                    v-model="localProfile.subconverter.options[flag.key]"
-                                    class="w-full px-1.5 py-1 text-[11px] bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
-                                >
-                                    <option :value="null">
-                                        {{ t('profileModal.followGlobal') }}
-                                    </option>
-                                    <option :value="true">{{ t('profileModal.on') }}</option>
-                                    <option :value="false">{{ t('profileModal.off') }}</option>
-                                </select>
+                                <div class="relative">
+                                    <select
+                                        v-model="localProfile.subconverter.options[flag.key]"
+                                        class="w-full appearance-none pl-2 pr-7 py-1 text-[11px] bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-hidden transition-colors"
+                                    >
+                                        <option :value="null">
+                                            {{ t('profileModal.followGlobal') }}
+                                        </option>
+                                        <option :value="true">{{ t('profileModal.on') }}</option>
+                                        <option :value="false">{{ t('profileModal.off') }}</option>
+                                    </select>
+                                    <div
+                                        class="absolute inset-y-0 right-px flex items-center px-2 pointer-events-none text-zinc-500"
+                                    >
+                                        <ChevronDown class="w-3 h-3" />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

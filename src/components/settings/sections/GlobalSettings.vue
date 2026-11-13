@@ -113,7 +113,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <ChevronDown class="w-3.5 h-3.5" />
                         </div>
@@ -139,7 +139,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <ChevronDown class="w-3.5 h-3.5" />
                         </div>
@@ -164,7 +164,7 @@
                             </option>
                         </select>
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-zinc-500"
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
                         >
                             <ChevronDown class="w-3.5 h-3.5" />
                         </div>

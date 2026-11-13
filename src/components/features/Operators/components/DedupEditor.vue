@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { ChevronDown } from 'lucide-vue-next';
     import { useI18n } from '../../../../i18n/index.js';
 
     const props = defineProps({
@@ -64,14 +65,21 @@
                     class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400"
                     >{{ t('operators.dedupMode') }}</label
                 >
-                <select
-                    :value="params.mode"
-                    @change="updateValue({ mode: $event.target.value })"
-                    class="w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-600"
-                >
-                    <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>
-                    <option value="url">{{ t('operators.dedupFullUrl') }}</option>
-                </select>
+                <div class="relative">
+                    <select
+                        :value="params.mode"
+                        @change="updateValue({ mode: $event.target.value })"
+                        class="w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 transition-colors"
+                    >
+                        <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>
+                        <option value="url">{{ t('operators.dedupFullUrl') }}</option>
+                    </select>
+                    <div
+                        class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                    >
+                        <ChevronDown class="w-3.5 h-3.5" />
+                    </div>
+                </div>
                 <p class="text-[10px] text-zinc-500">
                     {{ t('operators.dedupModeHint') }}
                 </p>

@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FileText, Link2 } from 'lucide-vue-next';
+    import { ChevronDown, FileText, Link2 } from 'lucide-vue-next';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Switch from '@/components/ui/Switch.vue';
     import SectionHeader from '../../SectionHeader.vue';
@@ -286,23 +286,30 @@
                         >
                             {{ t('settings.transformRuleSource') }}
                         </label>
-                        <select
-                            v-model="settings.transformConfigMode"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
-                        >
-                            <option
-                                v-for="option in modeOptions"
-                                :key="option.value"
-                                :value="option.value"
-                                :disabled="
-                                    (option.value === 'builtin' ||
-                                        option.value === 'custom_template') &&
-                                    isExternalEngine
-                                "
+                        <div class="relative">
+                            <select
+                                v-model="settings.transformConfigMode"
+                                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none"
                             >
-                                {{ option.label }}
-                            </option>
-                        </select>
+                                <option
+                                    v-for="option in modeOptions"
+                                    :key="option.value"
+                                    :value="option.value"
+                                    :disabled="
+                                        (option.value === 'builtin' ||
+                                            option.value === 'custom_template') &&
+                                        isExternalEngine
+                                    "
+                                >
+                                    {{ option.label }}
+                                </option>
+                            </select>
+                            <div
+                                class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                            >
+                                <ChevronDown class="w-3.5 h-3.5" />
+                            </div>
+                        </div>
                         <p class="mt-2 text-xs leading-relaxed text-zinc-400">
                             {{ modeHint }}
                         </p>
@@ -341,24 +348,31 @@
                                 <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
                                     t('settings.transformRuleLevel')
                                 }}</label>
-                                <select
-                                    v-model="settings.ruleLevel"
-                                    :disabled="!isBuiltinMode || isExternalEngine"
-                                    class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
-                                >
-                                    <option value="base">
-                                        {{ t('settings.transformRuleBase') }}
-                                    </option>
-                                    <option value="std">
-                                        {{ t('settings.transformRuleStd') }}
-                                    </option>
-                                    <option value="full">
-                                        {{ t('settings.transformRuleFull') }}
-                                    </option>
-                                    <option value="relay">
-                                        {{ t('settings.transformRuleRelay') }}
-                                    </option>
-                                </select>
+                                <div class="relative">
+                                    <select
+                                        v-model="settings.ruleLevel"
+                                        :disabled="!isBuiltinMode || isExternalEngine"
+                                        class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-xs text-zinc-100 transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none"
+                                    >
+                                        <option value="base">
+                                            {{ t('settings.transformRuleBase') }}
+                                        </option>
+                                        <option value="std">
+                                            {{ t('settings.transformRuleStd') }}
+                                        </option>
+                                        <option value="full">
+                                            {{ t('settings.transformRuleFull') }}
+                                        </option>
+                                        <option value="relay">
+                                            {{ t('settings.transformRuleRelay') }}
+                                        </option>
+                                    </select>
+                                    <div
+                                        class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                                    >
+                                        <ChevronDown class="w-3.5 h-3.5" />
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 gap-2.5">
@@ -437,18 +451,25 @@
                     <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
                         t('settings.transformBackend')
                     }}</label>
-                    <select
-                        v-model="settings.subconverter.defaultBackend"
-                        class="mb-2 block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
-                    >
-                        <option
-                            v-for="backend in SUBCONVERTER_BACKENDS"
-                            :key="backend.value"
-                            :value="backend.value"
+                    <div class="relative mb-2">
+                        <select
+                            v-model="settings.subconverter.defaultBackend"
+                            class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-xs font-mono text-zinc-100 transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none"
                         >
-                            {{ t(backend.labelKey) }} · {{ backend.description }}
-                        </option>
-                    </select>
+                            <option
+                                v-for="backend in SUBCONVERTER_BACKENDS"
+                                :key="backend.value"
+                                :value="backend.value"
+                            >
+                                {{ t(backend.labelKey) }} · {{ backend.description }}
+                            </option>
+                        </select>
+                        <div
+                            class="absolute inset-y-0 right-px flex items-center px-3 pointer-events-none text-zinc-500"
+                        >
+                            <ChevronDown class="w-3.5 h-3.5" />
+                        </div>
+                    </div>
                     <input
                         type="text"
                         v-model="settings.subconverter.defaultBackend"

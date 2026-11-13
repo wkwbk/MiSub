@@ -260,7 +260,7 @@
             <select
                 :value="selectedUrl"
                 @change="handleSelectChange"
-                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 pr-8 text-sm text-zinc-100 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                class="block w-full appearance-none rounded-md border border-zinc-800 bg-[#131515] pl-3 pr-9 py-2 text-sm text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus-visible:outline-none"
             >
                 <option value="">
                     {{
@@ -290,9 +290,9 @@
                 </option>
             </select>
             <div
-                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-zinc-400"
+                class="pointer-events-none absolute inset-y-0 right-px flex items-center px-3 text-zinc-500"
             >
-                <ChevronDown class="h-4 w-4" />
+                <ChevronDown class="w-3.5 h-3.5" />
             </div>
         </div>
 
@@ -357,7 +357,7 @@
                     }}</span>
                 </span>
                 <ChevronDown
-                    class="h-4 w-4 flex-shrink-0 text-zinc-400 transition-transform"
+                    class="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 transition-transform"
                     :class="showTemplateVariables ? 'rotate-180' : ''"
                     aria-hidden="true"
                 />
