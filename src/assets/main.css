@@ -147,11 +147,6 @@
         font-family: var(--font-mono);
     }
 
-    ::selection {
-        background-color: rgba(113, 112, 255, 0.28);
-        color: var(--text-primary-dark);
-    }
-
     /* ============================================
        交互指针（Interactive Pointer Cursor）
        所有可点击按钮及具有按钮角色的元素、交互控件等在悬停时均显示手型指针 (cursor: pointer)

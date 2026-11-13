@@ -341,7 +341,7 @@
 
 <template>
     <div
-        class="min-h-screen bg-transparent transition-colors duration-500 selection:bg-primary-500/30 selection:text-white relative"
+        class="min-h-screen bg-transparent transition-colors duration-500 relative"
     >
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
