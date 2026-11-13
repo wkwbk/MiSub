@@ -130,7 +130,7 @@
                 role="menu"
                 @keydown="handleMenuKeydown"
                 :class="[
-                    'absolute right-0 mt-2 bg-[#171717] border border-zinc-800 rounded-md shadow-none z-50 divide-y divide-zinc-800',
+                    'absolute right-0 mt-2 py-1 bg-[#171717] border border-zinc-800 rounded-md shadow-none z-50',
                     menuWidthClass,
                 ]"
             >
@@ -146,7 +146,7 @@
                     :id="menuId"
                     role="menu"
                     :class="[
-                        'fixed mt-2 bg-[#171717] border border-zinc-800 rounded-md shadow-none divide-y divide-zinc-800',
+                        'fixed mt-2 py-1 bg-[#171717] border border-zinc-800 rounded-md shadow-none',
                         menuWidthClass,
                     ]"
                     :style="fixedMenuPosition"

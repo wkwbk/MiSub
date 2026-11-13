@@ -678,22 +678,6 @@
                 icon="folder"
                 :total-count="0"
             />
-            <div class="-mt-6 mb-6 flex flex-col items-center gap-2.5 sm:flex-row sm:justify-center">
-                <button
-                    data-testid="empty-add-subscription"
-                    @click="handleAdd"
-                    class="inline-flex items-center justify-center rounded-md bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100 focus-visible:outline-none"
-                >
-                    {{ t('subscriptions.addEmpty') }}
-                </button>
-                <button
-                    data-testid="empty-import-subscriptions"
-                    @click="handleImport"
-                    class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-transparent px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none"
-                >
-                    {{ t('actions.bulkImport') }}
-                </button>
-            </div>
         </div>
         <div v-if="!isSorting && totalPages > 1" class="mt-4">
             <PanelPagination

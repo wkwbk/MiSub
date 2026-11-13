@@ -91,17 +91,12 @@ describe('SubscriptionPanel UX', () => {
         expect(wrapper.text()).not.toContain('状态正常');
     });
 
-    it('offers direct add and bulk import actions in the empty state', async () => {
+    it('does not duplicate add and bulk import buttons in the empty state', () => {
         const wrapper = mountPanel();
 
-        expect(wrapper.text()).toContain('添加机场订阅');
-        expect(wrapper.text()).toContain('批量导入');
-
-        await wrapper.get('[data-testid="empty-add-subscription"]').trigger('click');
-        await wrapper.get('[data-testid="empty-import-subscriptions"]').trigger('click');
-
-        expect(wrapper.emitted('add')).toHaveLength(1);
-        expect(wrapper.emitted('import')).toHaveLength(1);
+        expect(wrapper.find('[data-testid="empty-add-subscription"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="empty-import-subscriptions"]').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('添加机场订阅');
     });
 
     it('distinguishes search with no matches from an actually empty list', async () => {
