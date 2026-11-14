@@ -103,7 +103,6 @@ export const useSessionStore = defineStore('session', () => {
     }
 
     async function handleLoginSuccess() {
-        sessionState.value = 'loading';
         await checkSession();
         return sessionState.value === 'loggedIn';
     }

@@ -144,9 +144,18 @@ export async function conditionalKVPut(env, key, newData, oldData = null) {
     }
 }
 
+let fallbackCookieSecret = null;
+
+function getFallbackCookieSecret() {
+    if (!fallbackCookieSecret) {
+        fallbackCookieSecret = crypto.randomUUID();
+    }
+    return fallbackCookieSecret;
+}
+
 /**
  * 获取或生成 Cookie 加密密钥
- * 优先顺序：KV → 环境变量 COOKIE_SECRET → 随机生成（无 KV 时仅内存有效）
+ * 优先顺序：KV → 环境变量 COOKIE_SECRET → 当前实例临时密钥（无 KV 或写入失败时）
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密钥
  */
@@ -165,15 +174,15 @@ export async function getCookieSecret(env) {
             return runtimeCookieSecret;
         }
 
-        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为本次运行临时密钥
+        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为当前实例临时密钥
         const newSecret = crypto.randomUUID();
-        await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
-        return newSecret;
+        const saved = await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
+        return saved ? newSecret : getFallbackCookieSecret();
     }
 
-    // 无 KV：直接使用环境变量，无则生成临时密钥（重启后失效）
+    // 无 KV：直接使用环境变量，无则生成当前实例临时密钥（实例重启后失效）
     if (runtimeCookieSecret) return runtimeCookieSecret;
-    return crypto.randomUUID();
+    return getFallbackCookieSecret();
 }
 
 /**
