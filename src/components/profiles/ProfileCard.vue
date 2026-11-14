@@ -57,7 +57,7 @@
 
 <template>
     <div
-        class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#171717] hover:bg-[#202020] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200 hover:border-zinc-700"
+        class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="[compact ? 'p-4' : 'p-5', { 'opacity-60': !isEnabled }]"
     >
         <div class="flex items-start justify-between gap-3" :class="compact ? 'flex-col' : ''">

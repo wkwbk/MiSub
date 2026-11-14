@@ -48,7 +48,7 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] dark:hover:bg-[#202020] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
+                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
                 :class="{
                     'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]':
                         selectionMode && selectedUrls.has(node.url),
@@ -118,12 +118,12 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="relative bg-white dark:bg-[#131515] dark:hover:bg-[#202020] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-all duration-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_0_18px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_0_20px_rgba(0,0,0,0.65)]"
+                class="relative bg-white dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-all duration-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                 :class="[
                     selectionMode ? 'cursor-pointer' : '',
                     selectionMode && selectedUrls.has(node.url)
                         ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
-                        : 'hover:border-zinc-400 dark:hover:border-zinc-700',
+                        : '',
                 ]"
             >
                 <!-- Selection Badge -->

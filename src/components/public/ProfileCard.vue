@@ -28,7 +28,7 @@
 
 <template>
     <div
-        class="group relative flex h-full flex-col rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] dark:hover:bg-[#202020] p-5 transition-all duration-200 hover:border-zinc-400 dark:hover:border-zinc-700 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:shadow-[0_8px_22px_rgba(0,0,0,0.16)] dark:hover:shadow-[0_8px_26px_rgba(0,0,0,0.7)] hover:-translate-y-1 hover:z-10"
+        class="group relative flex h-full flex-col rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] p-5 transition-all duration-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10"
     >
         <!-- Header: Title & QR Toggle -->
         <div class="flex items-start justify-between mb-3">

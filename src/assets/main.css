@@ -229,17 +229,7 @@
 
 .card-hover:hover {
     transform: translateY(-4px);
-    background: var(--surface-card-hover-light);
-    border-color: var(--hover-border-light);
-    box-shadow: var(--shadow-card-hover);
     z-index: 10;
-}
-
-.dark .card-hover:hover {
-    transform: translateY(-4px);
-    background: var(--surface-card-hover-dark);
-    border-color: var(--hover-border-dark);
-    box-shadow: var(--shadow-card-hover);
 }
 
 .card-hover:active {
@@ -773,7 +763,9 @@ html:not(.dark) .focus-visible\:border-zinc-400:focus-visible {
     border-color: #52525b;
 }
 
-html:not(.dark) :where(.divide-zinc-800:not([class*='dark:divide-']) > :not(:last-child)) {
+html:not(.dark) :where(.divide-zinc-800:not([class*='dark:divide-']) > :not(:last-child)),
+html:not(.dark) :where(.divide-zinc-800\/80:not([class*='dark:divide-']) > :not(:last-child)),
+html:not(.dark) :where(.divide-zinc-800\/60:not([class*='dark:divide-']) > :not(:last-child)) {
     border-color: #e4e4e7;
 }
 
@@ -850,7 +842,8 @@ html:not(.dark) .hover\:text-red-300:hover {
     color: #dc2626;
 }
 
-html:not(.dark) .text-amber-400:not([class*='dark:text-']) {
+html:not(.dark) .text-amber-400:not([class*='dark:text-']),
+html:not(.dark) .text-amber-400\/90:not([class*='dark:text-']) {
     color: #d97706;
 }
 
@@ -923,20 +916,4 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
 .card-shadow,
 [data-card-shadow='true'] {
     box-shadow: var(--shadow-card);
-}
-
-/* Universal Interactive Card Hover Elevation */
-.bg-\[\#171717\].rounded-md.hover\:border-zinc-700:hover,
-.bg-white.rounded-md[class*='dark:bg-\[\#171717\]']:hover,
-.profile-card:hover,
-.card-hover:hover,
-.stat-card:hover {
-    box-shadow: var(--shadow-card-hover);
-}
-
-.dark .bg-\[\#171717\].rounded-md.hover\:border-zinc-700:hover,
-.dark .bg-white.rounded-md[class*='dark:bg-\[\#171717\]']:hover,
-.dark .profile-card:hover,
-.dark .stat-card:hover {
-    background-color: var(--surface-card-hover-dark);
 }
