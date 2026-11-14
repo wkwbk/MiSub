@@ -123,7 +123,7 @@
         () =>
             sessionState.value !== 'loggedIn' &&
             sessionState.value !== 'loading' &&
-            !isPublicRoute.value
+            (!isPublicRoute.value || route.name === 'Entrance')
     );
 
     const showSavePrompt = computed(
@@ -284,9 +284,13 @@
             :class="[
                 isCustomPageFullWidth
                     ? 'grow w-full min-h-[100dvh]'
-                    : 'grow w-full py-6 pb-24 md:pb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+                    : [
+                          'grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+                          shouldCenterMain
+                              ? 'py-6 flex items-center justify-center'
+                              : 'py-6 pb-24 md:pb-6',
+                      ],
                 {
-                    'flex items-center justify-center': shouldCenterMain,
                     'ios-header-padding': showLegacyHeader,
                 },
             ]"

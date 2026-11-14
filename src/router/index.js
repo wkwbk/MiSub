@@ -119,9 +119,16 @@ router.beforeEach((to) => {
         document.title = title ? `${title} - MISUB` : 'MISUB';
     }
 
+    const context = authContextResolver() || {};
+    if (context.state === 'loggedIn' && to.name === 'Entrance') {
+        const resolvedLoginPath = context.loginPath || '/login';
+        if (to.path === resolvedLoginPath) {
+            return { path: '/dashboard', replace: true };
+        }
+    }
+
     if (!to.meta.requiresAuth) return true;
 
-    const context = authContextResolver() || {};
     if (context.state === 'loading') return true;
     if (context.state === 'loggedIn') return true;
 
