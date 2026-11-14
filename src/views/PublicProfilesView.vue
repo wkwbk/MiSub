@@ -570,7 +570,7 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-14 px-6 text-center text-sm text-zinc-500 bg-white dark:bg-zinc-900/35 border border-zinc-200/80 dark:border-zinc-800/45 shadow-[0_0_13px_rgba(0,0,0,0.05)] dark:shadow-none rounded-lg"
+                        class="py-14 px-6 text-center text-sm text-zinc-500 dark:text-zinc-400 bg-white dark:bg-[#171717] border border-zinc-200/80 dark:border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.05)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] rounded-md"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
