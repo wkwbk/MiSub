@@ -221,7 +221,7 @@
                                 v-if="closable"
                                 type="button"
                                 :disabled="disabled || loading"
-                                class="rounded-md bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-150"
+                                class="rounded-md bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-200"
                                 @click="handleClose"
                             >
                                 <span class="sr-only">{{ t('common.close') }}</span>
@@ -249,7 +249,7 @@
                                     type="button"
                                     :disabled="disabled || loading"
                                     :class="cancelButtonClass"
-                                    class="inline-flex items-center px-4 py-2 border border-zinc-800 text-sm font-medium rounded-md text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-800 text-sm font-medium rounded-md text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     @click="handleCancel"
                                 >
                                     {{ resolvedCancelText }}
@@ -262,7 +262,7 @@
                                         confirmButtonClass,
                                         { 'opacity-50 cursor-not-allowed': confirmDisabled },
                                     ]"
-                                    class="inline-flex items-center px-4 py-2 border border-zinc-100 text-sm font-semibold rounded-md text-zinc-900 bg-zinc-100 hover:bg-white focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-100 text-sm font-semibold rounded-md text-zinc-900 bg-zinc-100 hover:bg-white focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     @click="handleConfirm"
                                 >
                                     <!-- 加载图标 -->

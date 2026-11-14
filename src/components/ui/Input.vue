@@ -141,7 +141,7 @@
                 :type="type"
                 :placeholder="placeholder"
                 :disabled="disabled"
-                class="w-full bg-transparent border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus-visible:outline-none transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
+                class="w-full bg-transparent border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus-visible:outline-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
                 :class="[
                     currentSize.input,
                     hasIcon || hasPrefix ? 'pl-9' : '',

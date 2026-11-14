@@ -277,14 +277,14 @@
 </script>
 
 <template>
-    <div class="space-y-4 bg-[#131515] text-zinc-100">
+    <div class="space-y-4 text-zinc-100">
         <div v-if="isLoading" class="p-4">
             <SkeletonLoader type="dashboard" />
         </div>
 
         <template v-else>
             <section
-                class="relative overflow-hidden bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+                class="relative overflow-hidden bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] transition-[color,background-color,border-color,box-shadow] duration-200"
             >
                 <div
                     class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
@@ -356,7 +356,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="lg:col-span-2 space-y-4">
                     <section
-                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800"
+                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800 transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <div
                             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 mb-4 border-b border-zinc-800"
@@ -485,7 +485,7 @@
 
                     <section
                         v-if="showFullGuide"
-                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800"
+                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800 transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <h3
                             class="text-base font-semibold text-zinc-100 pb-4 mb-4 border-b border-zinc-800 flex items-center gap-2"

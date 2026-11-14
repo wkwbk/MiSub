@@ -104,7 +104,7 @@
     <Transition name="fade-slide">
         <div
             v-if="isVisible"
-            class="group relative overflow-hidden transition-colors rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+            class="group relative overflow-hidden transition-[color,background-color,border-color,box-shadow] duration-200 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
         >
             <div class="relative p-4 sm:p-5 z-10 flex flex-col gap-2">
                 <!-- Header Area -->

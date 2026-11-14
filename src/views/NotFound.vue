@@ -1,5 +1,5 @@
 <template>
-    <div class="not-found-container bg-[#131515] font-sans text-zinc-100">
+    <div class="not-found-container font-sans text-zinc-100">
         <!-- Content Card -->
         <div
             class="relative z-10 border border-zinc-800 bg-[#171717] rounded-md p-10 max-w-lg w-[90%] text-center shadow-none"

@@ -259,7 +259,9 @@
             opacity 0.6s ease-out,
             transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
             box-shadow 0.2s ease,
-            border-color 0.2s ease;
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
         transition-delay: 0ms;
     }
 

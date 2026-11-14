@@ -339,7 +339,7 @@
             :disabled="disabled"
             @click="toggle"
             @keydown="handleTriggerKeydown"
-            class="select-trigger flex w-full items-center justify-between border bg-white dark:bg-[#131515] text-left text-zinc-900 dark:text-zinc-100 shadow-none transition-colors duration-150 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            class="select-trigger flex w-full items-center justify-between border bg-white dark:bg-[#131515] text-left text-zinc-900 dark:text-zinc-100 shadow-none transition-colors duration-200 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             :class="[
                 currentSizeClass,
                 isOpen

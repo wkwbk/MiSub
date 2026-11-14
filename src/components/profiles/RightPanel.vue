@@ -223,7 +223,7 @@
                     <button
                         @click="$emit('qrcode', subLink, t('dashboard.linkCard.qrTitle'))"
                         :disabled="!isLinkValid"
-                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-150 shadow-none"
+                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-200 shadow-none"
                         :class="
                             isLinkValid
                                 ? 'hover:text-zinc-100 hover:bg-zinc-900'
@@ -237,7 +237,7 @@
                     <button
                         @click="copyToClipboard"
                         :disabled="!isLinkValid"
-                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-150 shadow-none"
+                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-200 shadow-none"
                         :class="
                             isLinkValid
                                 ? 'hover:text-zinc-100 hover:bg-zinc-900'

@@ -68,7 +68,7 @@
                     v-for="item in navItems"
                     :key="item.path"
                     :to="item.path"
-                    class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors duration-150"
+                    class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors duration-200"
                     :class="
                         isActive(item.path)
                             ? 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 font-semibold'

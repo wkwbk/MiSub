@@ -23,6 +23,7 @@
 
     --shadow-card: 0 0 13px rgba(0, 0, 0, 0.11);
     --shadow-card-hover: 0 8px 22px rgba(0, 0, 0, 0.16);
+    --default-transition-duration: 200ms;
 }
 
 :root {
@@ -132,7 +133,7 @@
         background-attachment: fixed;
         transition:
             background-color 0.2s ease,
-            color 0.15s ease;
+            color 0.2s ease;
     }
 
     .dark body {
@@ -215,8 +216,8 @@
     cursor: pointer;
     transition:
         transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-        border-color 0.15s ease,
-        background-color 0.15s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease,
         box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform, box-shadow;
 }
@@ -339,7 +340,7 @@
 }
 
 .nav-action-btn {
-    @apply inline-flex items-center justify-center p-1.5 rounded-md transition-colors duration-150 focus-visible:outline-none cursor-pointer;
+    @apply inline-flex items-center justify-center p-1.5 rounded-md transition-colors duration-200 focus-visible:outline-none cursor-pointer;
     width: 2rem;
     height: 2rem;
 }
@@ -369,7 +370,7 @@
 }
 
 .nav-tab {
-    @apply relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 cursor-pointer;
+    @apply relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-200 cursor-pointer;
 }
 
 .nav-tab-active {
@@ -381,11 +382,11 @@
 }
 
 .nav-tab-active-pill {
-    @apply absolute inset-0 bg-zinc-900 dark:bg-zinc-100 rounded-md -z-10;
+    @apply absolute inset-0 bg-zinc-900 dark:bg-zinc-100 rounded-md -z-10 transition-colors duration-200;
 }
 
 .nav-mobile-item {
-    @apply flex flex-col items-center justify-center w-full h-full gap-1 rounded-md transition-colors duration-150 cursor-pointer;
+    @apply flex flex-col items-center justify-center w-full h-full gap-1 rounded-md transition-colors duration-200 cursor-pointer;
 }
 
 .nav-mobile-item:active,
@@ -402,7 +403,7 @@
 }
 
 .nav-mobile-icon-wrap {
-    @apply flex h-8 w-10 items-center justify-center rounded-md transition-colors duration-150;
+    @apply flex h-8 w-10 items-center justify-center rounded-md transition-colors duration-200;
 }
 
 .nav-mobile-item-active .nav-mobile-icon-wrap {
@@ -513,7 +514,7 @@ textarea {
         background: rgba(255, 255, 255, 0.8) !important;
         backdrop-filter: blur(8px);
         -webkit-backdrop-filter: blur(8px);
-        transition: background-color 0.15s ease;
+        transition: background-color 0.2s ease;
         min-height: calc(env(safe-area-inset-top, 0px) + 80px);
     }
 
@@ -922,4 +923,16 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
 .card-shadow,
 [data-card-shadow='true'] {
     box-shadow: var(--shadow-card);
+}
+
+/* Unified 200ms theme color transition for dark-first surfaces without explicit transition-* utilities */
+:where(
+    .bg-\[\#171717\]:not([class*='transition-']),
+    .bg-\[\#131515\]:not([class*='transition-'])
+) {
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease;
 }
