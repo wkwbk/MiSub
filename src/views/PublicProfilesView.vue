@@ -462,7 +462,7 @@
         <template v-else>
             <!-- Hero Section (Left Aligned & Open) -->
             <div
-                class="relative pt-10 pb-10 lg:pt-14 lg:pb-12 z-10 overflow-visible border-b border-zinc-800"
+                class="relative pt-10 pb-8 lg:pt-14 lg:pb-10 z-10 overflow-visible"
             >
                 <div
                     class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
@@ -516,7 +516,7 @@
             </div>
 
             <!-- Content Section -->
-            <div class="relative z-20 pb-24 pt-10">
+            <div class="relative z-20 pb-24 pt-4">
                 <!-- Subscription Section -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Announcement Section -->
@@ -570,7 +570,7 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-16 text-center text-zinc-500 border border-zinc-800 rounded-md"
+                        class="py-14 px-6 text-center text-sm text-zinc-500 bg-zinc-900/35 border border-zinc-800/45 rounded-lg"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
@@ -592,7 +592,7 @@
                 </div>
 
                 <!-- Clients Section (Visually Separated) -->
-                <div class="mt-16 pt-12 pb-10 border-t border-zinc-800 bg-transparent">
+                <div class="mt-16 pt-12 pb-10 border-t border-zinc-800/45 bg-transparent">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">
