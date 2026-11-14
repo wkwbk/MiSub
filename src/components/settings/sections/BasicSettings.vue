@@ -20,7 +20,7 @@
     import Input from '../../ui/Input.vue';
     import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
-    import { watch, computed } from 'vue';
+    import { watch, computed, ref } from 'vue';
     import { useToastStore } from '../../../stores/toast';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -154,6 +154,51 @@
             }
         }
     );
+
+    const QUICK_INTERVAL_VALUES = [0, 30, 60];
+    const MIN_CUSTOM_INTERVAL = 5;
+
+    const isCustomInterval = computed(
+        () => !QUICK_INTERVAL_VALUES.includes(Number(props.settings.autoUpdateInterval))
+    );
+
+    const customIntervalInput = ref(
+        isCustomInterval.value ? String(props.settings.autoUpdateInterval ?? '') : ''
+    );
+
+    watch(
+        () => props.settings.autoUpdateInterval,
+        (val) => {
+            if (QUICK_INTERVAL_VALUES.includes(Number(val))) {
+                customIntervalInput.value = '';
+            } else if (val !== undefined && val !== null) {
+                customIntervalInput.value = String(val);
+            }
+        }
+    );
+
+    const handleCustomIntervalInput = (event) => {
+        const raw = event.target.value;
+        customIntervalInput.value = raw;
+        const parsed = Number.parseInt(raw, 10);
+        if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_INTERVAL) {
+            props.settings.autoUpdateInterval = parsed;
+        }
+    };
+
+    const handleCustomIntervalBlur = () => {
+        const parsed = Number.parseInt(customIntervalInput.value, 10);
+        if (customIntervalInput.value === '' || Number.isNaN(parsed)) {
+            customIntervalInput.value = isCustomInterval.value
+                ? String(props.settings.autoUpdateInterval)
+                : '';
+            return;
+        }
+        if (parsed < MIN_CUSTOM_INTERVAL) {
+            props.settings.autoUpdateInterval = MIN_CUSTOM_INTERVAL;
+            customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
+        }
+    };
 </script>
 
 <template>
@@ -255,49 +300,56 @@
                                 {{ t('settings.autoUpdateDesc') }}
                             </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-2 shrink-0">
-                            <div class="flex items-center gap-2">
-                                <input
-                                    type="number"
-                                    :value="
-                                        ![0, 30, 60, 120].includes(settings.autoUpdateInterval)
-                                            ? settings.autoUpdateInterval
-                                            : ''
-                                    "
-                                    @input="
-                                        (e) => {
-                                            const v = parseInt(e.target.value);
-                                            if (v >= 5) settings.autoUpdateInterval = v;
-                                        }
-                                    "
-                                    :placeholder="t('settings.customInterval')"
-                                    min="5"
-                                    class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
-                                    :aria-label="t('settings.autoUpdateInterval')"
-                                />
-                                <span class="text-xs text-zinc-400">{{ t('settings.minutes') }}</span>
-                            </div>
-                            <span class="text-xs text-zinc-500 self-center">{{
-                                t('settings.quickSelect')
-                            }}</span>
-                            <button
-                                v-for="option in [
-                                    { value: 0, label: t('settings.disabledOption') },
-                                    { value: 30, label: t('settings.option30Minutes') },
-                                    { value: 60, label: t('settings.option1Hour') },
-                                ]"
-                                :key="option.value"
-                                @click="settings.autoUpdateInterval = option.value"
-                                :aria-pressed="settings.autoUpdateInterval === option.value"
+                        <div class="flex flex-wrap items-center gap-3 shrink-0">
+                            <div
                                 :class="[
-                                    'px-2.5 py-1.5 text-xs font-mono font-medium rounded-md border transition-colors',
-                                    settings.autoUpdateInterval === option.value
-                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
-                                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                    'flex items-center h-8 rounded-md border bg-[#131515] px-2.5 transition-colors',
+                                    isCustomInterval
+                                        ? 'border-zinc-400 ring-1 ring-zinc-400/20'
+                                        : 'border-zinc-800 hover:border-zinc-700 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500/40',
                                 ]"
                             >
-                                {{ option.label }}
-                            </button>
+                                <input
+                                    type="number"
+                                    inputmode="numeric"
+                                    :value="customIntervalInput"
+                                    @input="handleCustomIntervalInput"
+                                    @blur="handleCustomIntervalBlur"
+                                    :placeholder="t('settings.customInterval')"
+                                    :min="MIN_CUSTOM_INTERVAL"
+                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-zinc-100 placeholder-zinc-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    :aria-label="t('settings.autoUpdateInterval')"
+                                />
+                                <span
+                                    class="text-[11px] text-zinc-500 select-none pl-2 ml-1 border-l border-zinc-800/80 whitespace-nowrap"
+                                >
+                                    {{ t('settings.minutes') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-zinc-500 mr-0.5 whitespace-nowrap">{{
+                                    t('settings.quickSelect')
+                                }}</span>
+                                <button
+                                    v-for="option in [
+                                        { value: 0, label: t('settings.disabledOption') },
+                                        { value: 30, label: t('settings.option30Minutes') },
+                                        { value: 60, label: t('settings.option1Hour') },
+                                    ]"
+                                    :key="option.value"
+                                    type="button"
+                                    @click="settings.autoUpdateInterval = option.value"
+                                    :aria-pressed="settings.autoUpdateInterval === option.value"
+                                    :class="[
+                                        'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                                        settings.autoUpdateInterval === option.value
+                                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
+                                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                    ]"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <p
