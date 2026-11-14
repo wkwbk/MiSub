@@ -223,6 +223,11 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 在 `设置` → `环境变量` 中添加 **生产环境** 变量：
 
+> ⚠️ **安全提示（必读）**：
+> - `ADMIN_PASSWORD`、`COOKIE_SECRET`、`CRON_SECRET` 等敏感变量在 Cloudflare 控制台添加时，**类型务必选择 `Secret`（加密密钥）**，切勿选成普通文本（Text）。
+> - 使用 `wrangler deploy` / Git 自动部署时，若 `wrangler.toml` 中配置了 `[vars]` 且未开启 `keep_vars = true`，控制台手动添加的**普通文本变量会被覆盖清空**，而 `Secret` 密钥不受影响。
+> - 也可直接通过命令行注入加密密钥：`npx wrangler secret put ADMIN_PASSWORD`
+
 **可选：**
 
 | 变量名 | 说明 | 示例 |

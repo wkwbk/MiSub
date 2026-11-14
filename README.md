@@ -117,7 +117,9 @@ If schema initialization fails in the CLI, run the latest `schema.sql` manually 
 
 ### Recommended environment variables
 
-- `ADMIN_PASSWORD`: admin login password. If unset, the default password is `admin`.
+> ⚠️ **Security Note**: Always configure `ADMIN_PASSWORD`, `COOKIE_SECRET`, and `CRON_SECRET` as **Secret** (encrypted) in the Cloudflare Dashboard (or via `npx wrangler secret put <KEY>`), **not** as plaintext variables. Plaintext dashboard variables are overwritten by `[vars]` in `wrangler.toml` on deploy unless `keep_vars = true` is set.
+
+- `ADMIN_PASSWORD`: admin login password. If unset on a fresh instance, the default password is `admin` (initialized instances fail closed rather than falling back to `admin`).
 - `COOKIE_SECRET`: stable session signing secret.
 - `CORS_ORIGINS`: allowed browser origins for API requests.
 - `CRON_SECRET`: secret used by external cron triggers.
