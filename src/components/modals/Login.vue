@@ -245,14 +245,6 @@
         animation: blob 8s ease-in-out infinite;
     }
 
-    .animate-float-slow {
-        animation: float-slow 6s ease-in-out infinite;
-    }
-
-    .animate-pulse-slow {
-        animation: pulse-slow 4s ease-in-out infinite;
-    }
-
     .animate-gradient-rotate {
         animation: gradient-rotate 20s linear infinite;
     }
@@ -281,8 +273,6 @@
 
     @media (prefers-reduced-motion: reduce) {
         .animate-blob,
-        .animate-float-slow,
-        .animate-pulse-slow,
         .animate-gradient-rotate,
         .animate-fade-in-up,
         .animate-shake {

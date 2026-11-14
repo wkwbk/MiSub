@@ -31,21 +31,107 @@ function getCronDashboard(env) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cron Triggers 管理面板 - MiSub</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .status-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; }
-        .status-card h3 { margin: 0 0 10px 0; color: #333; }
-        .status-value { font-size: 2em; font-weight: bold; color: #007acc; }
-        .sync-btn { background: #007acc; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .sync-btn:hover { background: #005999; }
-        .sync-btn:disabled { background: #ccc; cursor: not-allowed; }
-        .logs { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 5px; padding: 15px; max-height: 400px; overflow-y: auto; }
-        .log-entry { margin: 5px 0; padding: 5px; border-left: 3px solid #007acc; background: white; }
-        .log-time { color: #666; font-size: 0.9em; }
-        .log-success { border-left-color: #28a745; }
-        .log-error { border-left-color: #dc3545; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #131515;
+            color: #f4f4f5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 1120px;
+            margin: 0 auto;
+            background: #171717;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 24px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #27272a;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            color: #f4f4f5;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .status-card {
+            background: #131515;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 16px 20px;
+        }
+        .status-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #a1a1aa;
+        }
+        .status-value {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f4f4f5;
+        }
+        .sync-btn {
+            background: #f4f4f5;
+            color: #18181b;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: background-color 0.15s ease;
+        }
+        .sync-btn:hover { background: #ffffff; }
+        .sync-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        h2 {
+            margin: 0 0 12px 0;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #e4e4e7;
+        }
+        .logs {
+            background: #131515;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin: 6px 0;
+            padding: 10px 12px;
+            border-left: 2px solid #52525b;
+            background: #171717;
+            border-radius: 4px;
+            font-size: 0.8125rem;
+            color: #d4d4d8;
+        }
+        .log-time {
+            color: #71717a;
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            margin-bottom: 2px;
+        }
+        .log-success { border-left-color: #22c55e; }
+        .log-error { border-left-color: #ef4444; }
     </style>
 </head>
 <body>

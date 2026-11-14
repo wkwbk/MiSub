@@ -346,19 +346,19 @@
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
                 <div class="space-y-6 animate-pulse">
-                    <div class="h-12 w-40 rounded-full bg-white/70 dark:bg-white/10"></div>
-                    <div class="space-y-4">
+                    <div class="h-9 w-36 rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                    <div class="space-y-3">
                         <div
-                            class="h-12 w-full max-w-3xl rounded-3xl bg-white/80 dark:bg-white/10"
+                            class="h-10 w-full max-w-3xl rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"
                         ></div>
                         <div
-                            class="h-12 w-full max-w-2xl rounded-3xl bg-white/70 dark:bg-white/10"
+                            class="h-10 w-full max-w-2xl rounded-md bg-zinc-200/70 dark:bg-zinc-800/70"
                         ></div>
                         <div
-                            class="h-4 w-full max-w-4xl rounded-full bg-white/60 dark:bg-white/10"
+                            class="h-4 w-full max-w-4xl rounded-md bg-zinc-200/60 dark:bg-zinc-800/60"
                         ></div>
                         <div
-                            class="h-4 w-full max-w-3xl rounded-full bg-white/50 dark:bg-white/10"
+                            class="h-4 w-full max-w-3xl rounded-md bg-zinc-200/50 dark:bg-zinc-800/50"
                         ></div>
                     </div>
 
@@ -366,7 +366,7 @@
                         <div
                             v-for="i in 6"
                             :key="i"
-                            class="h-[260px] rounded-[28px] bg-white/70 dark:bg-white/5 border border-white/60 dark:border-white/5"
+                            class="h-[260px] rounded-md bg-zinc-100 dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800"
                         ></div>
                     </div>
                 </div>

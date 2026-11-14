@@ -14,7 +14,7 @@
 export function renderDisguisePage(disguiseConfig) {
     const homeHref = resolveHomeHref(disguiseConfig);
     const homeLink = homeHref
-        ? `<a href="${escapeHtml(homeHref)}" class="home-link">返回首页</a>`
+        ? `<a href="${escapeHtml(homeHref)}" class="home-link"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>返回首页</a>`
         : '';
     const html = `
 <!DOCTYPE html>
@@ -24,13 +24,6 @@ export function renderDisguisePage(disguiseConfig) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>404 Not Found</title>
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-color: #ffffff;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -39,152 +32,91 @@ export function renderDisguisePage(disguiseConfig) {
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg-gradient);
+            background: #131515;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            color: var(--text-color);
+            color: #f4f4f5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .container {
-            text-align: center;
+        .card {
             position: relative;
             z-index: 10;
-            padding: 2rem;
-            max-width: 600px;
+            background: #171717;
+            border: 1px solid #27272a;
+            border-radius: 6px;
+            padding: 2.5rem;
+            max-width: 32rem;
             width: 90%;
-        }
-
-        /* Glassmorphism Card Effect */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 4rem 2rem;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            animation: fadeInUp 0.8s ease-out;
+            text-align: center;
         }
 
         .error-code {
-            font-size: 120px;
-            font-weight: 800;
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            font-size: 4.5rem;
+            font-weight: 700;
             line-height: 1;
+            color: #f4f4f5;
             margin-bottom: 1rem;
-            background: linear-gradient(to bottom, #ffffff, rgba(255,255,255,0.5));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.2));
-            animation: float 6s ease-in-out infinite;
         }
 
         h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.25rem;
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: -0.025em;
+            color: #f4f4f5;
+            margin-bottom: 0.75rem;
         }
 
         p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            margin-bottom: 2.5rem;
-            line-height: 1.6;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            line-height: 1.625;
+            margin-bottom: 2rem;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
         }
 
         .home-link {
             display: inline-flex;
             align-items: center;
-            padding: 14px 36px;
-            background: #ffffff;
-            color: #764ba2;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.5rem;
+            background: #f4f4f5;
+            color: #18181b;
             text-decoration: none;
-            border-radius: 50px;
+            border-radius: 6px;
             font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 0.75rem;
+            transition: background-color 0.15s ease;
         }
 
         .home-link:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            background: #f8f9fa;
+            background: #ffffff;
         }
 
-        .home-link:active {
-            transform: translateY(-1px);
-        }
-
-        /* Ambient Background Shapes */
-        .shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            opacity: 0.6;
-            animation: pulse 10s infinite alternate;
-        }
-
-        .shape-1 {
-            top: -10%;
-            left: -10%;
-            width: 300px;
-            height: 300px;
-            background: #43e97b;
-        }
-
-        .shape-2 {
-            bottom: -10%;
-            right: -10%;
-            width: 400px;
-            height: 400px;
-            background: #fa709a;
-            animation-delay: -5s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
+        @media (max-width: 640px) {
+            .card {
+                padding: 2rem 1.5rem;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .error-code {
+                font-size: 3.75rem;
             }
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 0.4; }
-            100% { transform: scale(1.2); opacity: 0.7; }
-        }
-
-        @media (max-width: 768px) {
-            .error-code { font-size: 80px; }
-            h1 { font-size: 1.5rem; }
-            .glass-card { padding: 3rem 1.5rem; }
         }
     </style>
 </head>
 <body>
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
-    
-    <div class="container">
-        <div class="glass-card">
-            <div class="error-code">404</div>
-            <h1>页面未找到</h1>
-            <p>抱歉，您访问的页面不存在或已被移除。<br>仿佛进入了数字荒原。</p>
-            ${homeLink}
-        </div>
+    <div class="card">
+        <div class="error-code">404</div>
+        <h1>页面未找到</h1>
+        <p>抱歉，您访问的页面不存在或已被移除。<br>仿佛进入了数字荒原。</p>
+        ${homeLink}
     </div>
 </body>
 </html>
