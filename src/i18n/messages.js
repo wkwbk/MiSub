@@ -801,11 +801,11 @@ export const messages = {
             disabledOption: '禁用',
             option30Minutes: '30分钟',
             option1Hour: '1小时',
-            autoUpdateDisabledHint: '⚠️ 自动更新已禁用，订阅信息需手动刷新',
+            autoUpdateDisabledHint: '自动更新已禁用，订阅信息需手动刷新',
             accessLogTitle: '开启访问日志 & 计数',
             accessLogDesc: '记录订阅访问并统计流量与IP',
             accessLogQuotaHint:
-                '⚠️ 默认使用轻量持久化模式以节省 Cloudflare 免费版 KV 配额，日志会自动去重并限流，频繁刷新不会完整落库。',
+                '默认使用轻量持久化模式以节省 Cloudflare 免费版 KV 配额，日志会自动去重并限流，频繁刷新不会完整落库。',
             accessLogMode: '访问日志持久化模式',
             accessLogModeDesc: '免费版建议保持轻量模式，仅在需要完整审计时再切到完整模式。',
             accessLogLight: '轻量持久化（推荐）',
@@ -833,7 +833,7 @@ export const messages = {
             customAdminPathHint:
                 '设置后，只有访问此路径才能进入登录页面。默认路径 /login 将失效（除非未设置）。',
             reservedPathListHint:
-                '⚠️ 不可使用系统保留路径：/settings, /login, /groups, /nodes, /subscriptions, /dashboard, /logout, /auth_debug, /auth_check',
+                '不可使用系统保留路径：/settings, /login, /groups, /nodes, /subscriptions, /dashboard, /logout, /auth_debug, /auth_check',
             disguiseStrategy: '伪装策略',
             disguiseDefault404: '默认 404',
             disguiseDefault404Desc: '显示标准的 404 Not Found 页面',
@@ -2676,11 +2676,11 @@ export const messages = {
             disabledOption: 'Disabled',
             option30Minutes: '30 min',
             option1Hour: '1 hr',
-            autoUpdateDisabledHint: '⚠️ Auto update is disabled. Refresh sources manually.',
+            autoUpdateDisabledHint: 'Auto update is disabled. Refresh sources manually.',
             accessLogTitle: 'Access logs & count',
             accessLogDesc: 'Record access and count traffic/IPs',
             accessLogQuotaHint:
-                '⚠️ Lightweight persistence saves Cloudflare free KV quota. Logs are deduped and rate-limited.',
+                'Lightweight persistence saves Cloudflare free KV quota. Logs are deduped and rate-limited.',
             accessLogMode: 'Access log persistence',
             accessLogModeDesc: 'Use lightweight mode unless full audit logs are needed.',
             accessLogLight: 'Lightweight (recommended)',
@@ -2712,7 +2712,7 @@ export const messages = {
             customAdminPathHint:
                 'After setting this, only this path opens the login page. Default /login is disabled unless unset.',
             reservedPathListHint:
-                '⚠️ Reserved paths cannot be used: /settings, /login, /groups, /nodes, /subscriptions, /dashboard, /logout, /auth_debug, /auth_check',
+                'Reserved paths cannot be used: /settings, /login, /groups, /nodes, /subscriptions, /dashboard, /logout, /auth_debug, /auth_check',
             disguiseStrategy: 'Disguise strategy',
             disguiseDefault404: 'Default 404',
             disguiseDefault404Desc: 'Show a standard 404 Not Found page',
