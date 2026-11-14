@@ -6,6 +6,7 @@ import { api } from '../lib/http.js';
 import { handleError } from '../utils/errorHandler.js';
 import { useDataStore } from './useDataStore';
 import { t } from '../i18n/index.js';
+import { resolveSafeLoginRedirect } from '../utils/login-path.js';
 
 export const useSessionStore = defineStore('session', () => {
     const sessionState = ref('loading'); // loading, loggedIn, loggedOut
@@ -95,8 +96,14 @@ export const useSessionStore = defineStore('session', () => {
             if (!authenticated) {
                 throw new Error(t('settings.sessionCheckFailed'));
             }
-            // 登录成功后跳转到仪表盘
-            await router.push({ path: '/dashboard' });
+            // 登录成功后跳转到目标页或仪表盘
+            const currentPath = router.currentRoute?.value?.path;
+            const target = resolveSafeLoginRedirect(
+                router.currentRoute?.value?.query?.redirect,
+                '/dashboard',
+                currentPath ? [currentPath] : []
+            );
+            await router.push(target);
         } else {
             throw new Error(result.error || t('settings.loginFailed'));
         }

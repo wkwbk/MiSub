@@ -1,17 +1,23 @@
 <script setup>
     import { computed } from 'vue';
+    import { useRoute } from 'vue-router';
     import { useUIStore } from '../../stores/ui.js';
     import { useSessionStore } from '../../stores/session.js';
     import BrandLogo from './BrandLogo.vue';
     import NavActionGroup from './NavActionGroup.vue';
     import { useI18n } from '../../i18n/index.js';
 
+    const route = useRoute();
     const uiStore = useUIStore();
     const sessionStore = useSessionStore();
     const { t } = useI18n();
 
     const shouldHideLoginButton = computed(() => {
         if (sessionStore.sessionState === 'loading') {
+            return true;
+        }
+
+        if (route.path === '/login') {
             return true;
         }
 

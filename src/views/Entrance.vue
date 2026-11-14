@@ -11,7 +11,7 @@
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '../stores/session';
     import { storeToRefs } from 'pinia';
-    import { isValidCustomLoginPath } from '../utils/login-path.js';
+    import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '../utils/login-path.js';
     import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.js';
 
     // Lazy load components
@@ -83,7 +83,10 @@
         if (isMatchedLoginPath) {
             if (sessionStore.sessionState === 'loggedIn') {
                 activeComponent.value = null;
-                router.replace('/dashboard').catch(() => {});
+                const target = resolveSafeLoginRedirect(route.query.redirect, '/dashboard', [
+                    currentPath,
+                ]);
+                router.replace(target).catch(() => {});
                 return;
             }
             // 匹配到配置的登录路径（自定义或默认 /login）
