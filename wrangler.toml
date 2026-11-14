@@ -30,16 +30,16 @@ crons = ["0 */6 * * *"]
 #   npx wrangler secret put CRON_SECRET
 # ==============================================================================
 
-# [[kv_namespaces]]
-# binding = "MISUB_KV"
-# id = "<YOUR_KV_NAMESPACE_ID>"
+[[kv_namespaces]]
+binding = "MISUB_KV"
+id = "1f480b4e7f3d4166b258c3fe1e77d5db"
 
-# [[d1_databases]]
-# binding = "MISUB_DB"
-# database_name = "misub"
-# database_id = "<YOUR_D1_DATABASE_ID>"
+[[d1_databases]]
+binding = "MISUB_DB"
+database_name = "misub"
+database_id = "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
 
-# [vars]
-# CORS_ORIGINS = "https://your-domain.com"
-# MISUB_PUBLIC_URL = "https://your-domain.com"
+[vars]
+CORS_ORIGINS = "https://libk.top"
+MISUB_PUBLIC_URL = "https://libk.top"
 
