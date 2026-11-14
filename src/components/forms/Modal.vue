@@ -35,6 +35,10 @@
             default: 'primary',
             validator: (value) => ['primary', 'danger'].includes(value),
         },
+        bodyClass: {
+            type: String,
+            default: '',
+        },
     });
 
     const emit = defineEmits(['update:show', 'confirm']);
@@ -174,7 +178,10 @@
                             </slot>
                         </div>
 
-                        <div class="px-6 py-5 grow overflow-y-auto">
+                        <div
+                            class="grow min-h-0 overflow-y-auto overscroll-contain"
+                            :class="bodyClass || 'px-6 py-5'"
+                        >
                             <slot name="body">
                                 <p class="text-sm text-zinc-400">
                                     {{ t('common.confirmContinue') }}

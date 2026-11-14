@@ -69,6 +69,14 @@
             type: Boolean,
             default: false,
         },
+        hideFooter: {
+            type: Boolean,
+            default: false,
+        },
+        inModal: {
+            type: Boolean,
+            default: false,
+        },
         layoutClass: {
             type: String,
             default: 'h-full',
@@ -121,7 +129,11 @@
 </script>
 
 <template>
-    <SettingsLayout :class="layoutClass">
+    <SettingsLayout
+        :class="layoutClass"
+        :hide-footer="hideFooter"
+        :in-modal="inModal"
+    >
         <template #sidebar>
             <SettingsSidebar v-model:activeTab="activeTabModel" />
         </template>

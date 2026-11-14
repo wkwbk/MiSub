@@ -1,10 +1,10 @@
 <script setup>
+    import { ref, computed } from 'vue';
     import { useI18n } from '../../i18n/index.js';
-
-    const { t } = useI18n();
-    import { ref, watch } from 'vue';
     import Modal from '../forms/Modal.vue';
     import SettingsPanel from './SettingsPanel.vue';
+
+    const { t } = useI18n();
 
     const props = defineProps({
         show: Boolean,
@@ -15,6 +15,8 @@
     const emit = defineEmits(['update:show']);
 
     const settingsPanelRef = ref(null);
+    const isSaving = computed(() => Boolean(settingsPanelRef.value?.isSaving));
+    const saveDisabled = computed(() => Boolean(settingsPanelRef.value?.saveDisabled));
 
     const handleConfirm = async () => {
         if (!settingsPanelRef.value) return;
@@ -32,6 +34,9 @@
         @update:show="emit('update:show', $event)"
         @confirm="handleConfirm"
         :close-on-confirm="false"
+        :confirm-text="isSaving ? t('settings.saving') : t('settings.saveChanges')"
+        :confirm-disabled="saveDisabled"
+        body-class="p-0"
         size="6xl"
     >
         <template #title>

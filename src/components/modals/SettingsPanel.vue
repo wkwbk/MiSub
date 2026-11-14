@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, computed, onMounted } from 'vue';
     import MigrationModal from './MigrationModal.vue';
     import { useSettingsLogic } from '../../composables/useSettingsLogic.js';
     import SettingsContent from '../settings/SettingsContent.vue';
@@ -28,18 +28,24 @@
         loadSettings();
     });
 
+    const saveDisabled = computed(
+        () => isSaving.value || hasWhitespace.value || !isStorageTypeValid.value
+    );
+
     const handleSaveAndReturnStatus = async () => {
         return handleSave();
     };
 
-    // 暴露 handleSave 给父组件
-    defineExpose({ handleSave: handleSaveAndReturnStatus });
+    // 暴露 handleSave 与保存状态给父组件（SettingsModal）
+    defineExpose({
+        handleSave: handleSaveAndReturnStatus,
+        isSaving,
+        saveDisabled,
+    });
 </script>
 
 <template>
-    <div
-        class="w-full h-full min-h-[520px] overflow-hidden bg-transparent rounded-md"
-    >
+    <div class="w-full bg-transparent">
         <SettingsContent
             v-model:activeTab="activeTab"
             :settings="settings"
@@ -53,7 +59,9 @@
             :import-backup="importBackup"
             :handle-reset="handleReset"
             always-show-header
-            layout-class="h-full !shadow-none !border-0 !rounded-none !bg-transparent"
+            hide-footer
+            in-modal
+            layout-class="!shadow-none !border-0 !rounded-none !bg-transparent"
             @save="handleSave"
             @reload-now="() => window.location.reload()"
             @migrate="showMigrationModal = true"
