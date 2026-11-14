@@ -1,5 +1,5 @@
 <script setup>
-    import { ref } from 'vue';
+    import { nextTick, onMounted, ref } from 'vue';
     import { Globe, Lock, AlertCircle, EyeOff, Eye, ArrowLeft } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
     import Button from '../ui/Button.vue';
@@ -8,6 +8,7 @@
 
     const emit = defineEmits(['success']);
     const password = ref('');
+    const passwordInput = ref(null);
     const isLoading = ref(false);
     const error = ref('');
     const showPassword = ref(false);
@@ -19,9 +20,17 @@
         login: Function,
     });
 
+    const focusPasswordInput = async () => {
+        await nextTick();
+        passwordInput.value?.focus();
+    };
+
+    onMounted(focusPasswordInput);
+
     const submitLogin = async () => {
         if (!password.value) {
             error.value = t('login.passwordRequired');
+            await focusPasswordInput();
             return;
         }
         isLoading.value = true;
@@ -32,6 +41,9 @@
             error.value = err.message || t('login.unknownError');
         } finally {
             isLoading.value = false;
+            if (error.value) {
+                await focusPasswordInput();
+            }
         }
     };
 </script>
@@ -90,11 +102,13 @@
                         <AlertCircle v-else class="h-4 w-4" />
                     </div>
                     <input
+                        ref="passwordInput"
                         v-model="password"
                         @input="error = ''"
                         :type="showPassword ? 'text' : 'password'"
                         :placeholder="t('login.passwordPlaceholder')"
                         autocomplete="current-password"
+                        autofocus
                         :disabled="isLoading"
                         class="w-full bg-[#131515] border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
                         :class="[
