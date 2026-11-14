@@ -5,6 +5,7 @@
     import { api } from '../../../lib/http.js';
     import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import { useI18n } from '../../../i18n/index.js';
 
     const props = defineProps({
@@ -165,49 +166,29 @@
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- 头部说明 -->
-        <div
-            class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none overflow-hidden"
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <!-- 头部说明 & 开关 -->
+        <SectionHeader
+            :title="t('settings.guestbookTitle')"
+            :description="t('settings.guestbookEnableDesc')"
+            :no-margin="!guestbookConfig.enabled"
         >
-            <div class="flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
-                    <MessageSquare class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.guestbookTitle') }}
-                    </h3>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                    class="flex items-center justify-between p-4 bg-transparent border border-zinc-800 rounded-md"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-zinc-100">
-                            {{ t('settings.guestbookEnable') }}
-                        </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
-                            {{ t('settings.guestbookEnableDesc') }}
-                        </p>
-                    </div>
-                    <Switch v-model="guestbookConfig.enabled" />
-                </div>
-            </div>
-        </div>
+            <template #icon>
+                <MessageSquare class="h-4 w-4" />
+            </template>
+            <template #actions>
+                <Switch v-model="guestbookConfig.enabled" />
+            </template>
+        </SectionHeader>
 
         <!-- {{ t('settings.guestbookTitle') }}区域 -->
         <div
             v-if="guestbookConfig.enabled"
-            class="bg-transparent rounded-md border border-zinc-800 shadow-none overflow-hidden"
+            class="pt-6 border-t border-zinc-800/60"
         >
             <!-- Toolbar -->
             <div
-                class="p-4 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                class="pb-4 border-b border-zinc-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
                 <div class="flex items-center gap-2">
                     <h3 class="text-sm font-semibold text-zinc-100">
@@ -243,13 +224,13 @@
             </div>
 
             <!-- List -->
-            <div class="divide-y divide-zinc-800">
-                <div v-if="loading" class="p-8 text-center text-xs text-zinc-500">
+            <div class="divide-y divide-zinc-800/60">
+                <div v-if="loading" class="py-8 text-center text-xs text-zinc-500">
                     {{ t('settings.guestbookLoading') }}
                 </div>
                 <div
                     v-else-if="filteredMessages.length === 0"
-                    class="p-8 text-center text-xs text-zinc-500"
+                    class="py-8 text-center text-xs text-zinc-500"
                 >
                     {{ t('settings.guestbookEmpty') }}
                 </div>
@@ -257,7 +238,7 @@
                 <div
                     v-for="msg in filteredMessages"
                     :key="msg.id"
-                    class="p-5 hover:bg-zinc-900/40 transition-colors"
+                    class="py-5 first:pt-4 last:pb-0 transition-colors"
                 >
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2.5">
@@ -283,33 +264,33 @@
                         }}</span>
                     </div>
 
-                    <div class="mb-4 text-sm text-zinc-300 break-words">
+                    <div class="mb-3 text-sm text-zinc-300 break-words leading-relaxed">
                         {{ msg.content }}
                     </div>
 
                     <!-- Reply Display -->
                     <div
                         v-if="msg.reply && replyingId !== msg.id"
-                        class="mb-4 ml-4 bg-[#131515] p-3 rounded-md border border-zinc-800"
+                        class="mb-3 pl-4 border-l-2 border-zinc-800 py-1"
                     >
-                        <div class="text-xs text-zinc-300 font-medium mb-1 flex justify-between">
+                        <div class="text-xs text-zinc-300 font-medium mb-0.5 flex justify-between">
                             <span>{{ t('settings.guestbookAdminReply') }}</span>
                             <span class="text-zinc-500 font-mono font-normal">{{
                                 formatDate(msg.replyAt)
                             }}</span>
                         </div>
-                        <div class="text-xs text-zinc-400">{{ msg.reply }}</div>
+                        <div class="text-xs text-zinc-400 leading-relaxed">{{ msg.reply }}</div>
                     </div>
 
                     <!-- Reply Input -->
-                    <div v-if="replyingId === msg.id" class="mb-4 ml-4">
+                    <div v-if="replyingId === msg.id" class="mb-3 pl-4 border-l-2 border-zinc-800">
                         <textarea
                             v-model="replyContent"
                             rows="3"
                             class="block w-full rounded-md border border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 bg-[#131515] text-zinc-100 sm:text-sm px-3 py-2"
                             :placeholder="t('settings.guestbookReplyPlaceholder')"
                         ></textarea>
-                        <div class="mt-2 flex justify-end gap-2">
+                        <div class="mt-2.5 flex justify-end gap-2">
                             <button
                                 @click="cancelReply"
                                 class="px-3 py-1.5 text-xs font-medium text-zinc-300 border border-zinc-800 bg-transparent hover:bg-zinc-900 rounded-md"
@@ -326,7 +307,7 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-center gap-3 text-xs">
+                    <div class="flex items-center gap-4 text-xs">
                         <button
                             v-if="!msg.isVisible"
                             @click="handleAction('toggle', msg.id)"
@@ -363,7 +344,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <style scoped></style>

@@ -2,6 +2,7 @@
     import { computed, ref } from 'vue';
     import { Globe } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
+    import SectionHeader from '../../SectionHeader.vue';
     import yaml from 'js-yaml';
 
     const { t } = useI18n();
@@ -60,39 +61,31 @@
 </script>
 
 <template>
-    <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none space-y-4">
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <SectionHeader
+            :title="t('settings.dnsOverrideTitle')"
+            :description="t('settings.dnsOverrideDesc')"
+        >
+            <template #icon>
+                <Globe class="h-4 w-4" />
+            </template>
+            <template v-if="hasValue" #actions>
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
                 >
-                    <Globe class="h-4 w-4" />
-                </div>
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.dnsOverrideTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.dnsOverrideDesc') }}
-                    </p>
-                </div>
-            </div>
-            <span
-                v-if="hasValue"
-                class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
-            >
-                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                {{ t('settings.dnsOverrideActive') }}
-            </span>
-        </div>
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    {{ t('settings.dnsOverrideActive') }}
+                </span>
+            </template>
+        </SectionHeader>
 
         <div>
-            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400">
+            <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-400">
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
             <textarea
                 v-model="inputValue"
-                rows="20"
+                rows="16"
                 spellcheck="false"
                 :placeholder="t('settings.dnsOverridePlaceholder')"
                 class="block w-full rounded-md border bg-[#131515] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
@@ -110,5 +103,5 @@
                 {{ t('settings.dnsOverrideHint') }}
             </p>
         </div>
-    </div>
+    </section>
 </template>

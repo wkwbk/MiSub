@@ -185,90 +185,83 @@
 
 <template>
     <div class="space-y-6">
-        <div
-            class="flex flex-col items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#171717] p-5 shadow-none sm:flex-row"
-        >
-            <div class="flex items-center gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.transformEngineTitle')"
+                :description="t('settings.transformEngineDesc')"
+                :no-margin="!showEngineChangeWarning"
+            >
+                <template #icon>
                     <Link2 class="h-4 w-4" />
-                </div>
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.transformEngineTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.transformEngineDesc') }}
-                    </p>
-                </div>
-            </div>
+                </template>
+                <template #actions>
+                    <div class="flex rounded-md border border-zinc-800 bg-[#131515] p-0.5 shrink-0">
+                        <button
+                            @click="switchToBuiltinEngine"
+                            :class="
+                                isBuiltinEngine
+                                    ? 'bg-zinc-100 text-zinc-900 shadow-none'
+                                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                            "
+                            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+                        >
+                            {{ t('settings.transformBuiltinEngine') }}
+                        </button>
+                        <button
+                            @click="settings.subconverter.engineMode = 'external'"
+                            :class="
+                                isExternalEngine
+                                    ? 'bg-zinc-100 text-zinc-900 shadow-none'
+                                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                            "
+                            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+                        >
+                            {{ t('settings.transformExternalEngine') }}
+                        </button>
+                    </div>
+                </template>
+            </SectionHeader>
 
-            <div class="flex rounded-md border border-zinc-800 bg-[#131515] p-0.5">
+            <div
+                v-if="showEngineChangeWarning"
+                data-testid="engine-change-notice"
+                class="flex flex-col gap-3 rounded-md bg-amber-500/10 p-3.5 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
+            >
+                <div class="flex min-w-0 flex-1 items-start gap-2.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                    <div class="flex flex-col gap-1">
+                        <p class="font-medium">{{ t('settings.transformEngineChangeNotice') }}</p>
+                        <p class="text-xs text-zinc-400 leading-relaxed">
+                            {{ t('settings.transformExternalWarning') }}
+                        </p>
+                    </div>
+                </div>
                 <button
-                    @click="switchToBuiltinEngine"
-                    :class="
-                        isBuiltinEngine
-                            ? 'bg-zinc-100 text-zinc-900 shadow-none'
-                            : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                    type="button"
+                    data-testid="dismiss-engine-change-notice"
+                    class="shrink-0 self-start rounded-md px-2 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                    :aria-label="t('actions.dismiss')"
+                    @click="
+                        engineChangeNoticeDismissed = true;
+                        showEngineChangeWarning = false;
                     "
-                    class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
                 >
-                    {{ t('settings.transformBuiltinEngine') }}
+                    ×
                 </button>
                 <button
-                    @click="settings.subconverter.engineMode = 'external'"
-                    :class="
-                        isExternalEngine
-                            ? 'bg-zinc-100 text-zinc-900 shadow-none'
-                            : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                    type="button"
+                    class="shrink-0 rounded-md border border-zinc-700 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+                    @click="
+                        restorePreviousEngineSettings();
+                        engineChangeNoticeDismissed = true;
                     "
-                    class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
                 >
-                    {{ t('settings.transformExternalEngine') }}
+                    {{ t('settings.transformRestoreEngineSettings') }}
                 </button>
             </div>
-        </div>
+        </section>
 
-        <div
-            v-if="showEngineChangeWarning"
-            data-testid="engine-change-notice"
-            class="flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#171717] p-3 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
-        >
-            <div class="flex min-w-0 flex-1 items-start gap-2.5">
-                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
-                <div class="flex flex-col gap-1">
-                    <p class="font-medium">{{ t('settings.transformEngineChangeNotice') }}</p>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.transformExternalWarning') }}
-                    </p>
-                </div>
-            </div>
-            <button
-                type="button"
-                data-testid="dismiss-engine-change-notice"
-                class="shrink-0 self-start rounded-md px-2 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                :aria-label="t('actions.dismiss')"
-                @click="
-                    engineChangeNoticeDismissed = true;
-                    showEngineChangeWarning = false;
-                "
-            >
-                ×
-            </button>
-            <button
-                type="button"
-                class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-900"
-                @click="
-                    restorePreviousEngineSettings();
-                    engineChangeNoticeDismissed = true;
-                "
-            >
-                {{ t('settings.transformRestoreEngineSettings') }}
-            </button>
-        </div>
-
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.transformRulesTitle')"
                 :description="t('settings.transformRulesDesc')"
@@ -279,8 +272,8 @@
                 </template>
             </SectionHeader>
 
-            <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div class="space-y-5">
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
                         <label
                             class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
@@ -305,114 +298,110 @@
                         </p>
                         <p
                             v-if="isExternalEngine"
-                            class="mt-1 text-xs leading-relaxed text-amber-400"
+                            class="mt-1.5 text-xs leading-relaxed text-amber-400"
                         >
                             {{ t('settings.transformExternalWarning') }}
                         </p>
                     </div>
 
                     <div
-                        :class="
-                            isBuiltinEngine
-                                ? 'border-zinc-800'
-                                : 'opacity-40 grayscale pointer-events-none select-none'
-                        "
-                        class="rounded-md border border-zinc-800 bg-transparent p-4 transition-all duration-300"
+                        :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
+                        class="transition-all"
                     >
-                        <div class="mb-4 flex items-center justify-between">
-                            <h4 class="flex items-center gap-2 text-xs font-semibold text-zinc-100">
-                                <span
-                                    v-if="isBuiltinEngine"
-                                    class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                ></span>
-                                {{ t('settings.transformBuiltinParams') }}
-                            </h4>
-                            <span class="text-[10px] font-mono text-zinc-500">builtin-core</span>
-                        </div>
-
-                        <div class="space-y-4">
-                            <div
-                                :class="{ 'opacity-60': !isBuiltinMode }"
-                                class="transition-opacity"
-                            >
-                                <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
-                                    t('settings.transformRuleLevel')
-                                }}</label>
-                                <Select
-                                    v-model="settings.ruleLevel"
-                                    size="sm"
-                                    :disabled="!isBuiltinMode || isExternalEngine"
-                                    :options="[
-                                        { value: 'base', label: t('settings.transformRuleBase') },
-                                        { value: 'std', label: t('settings.transformRuleStd') },
-                                        { value: 'full', label: t('settings.transformRuleFull') },
-                                        { value: 'relay', label: t('settings.transformRuleRelay') },
-                                    ]"
-                                />
-                            </div>
-
-                            <div class="grid grid-cols-1 gap-2.5">
-                                <div
-                                    class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2.5"
-                                >
-                                    <span class="text-xs font-medium text-zinc-300">{{
-                                        t('settings.transformBuiltinSkipCert')
-                                    }}</span>
-                                    <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
-                                </div>
-                                <div
-                                    class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2.5"
-                                >
-                                    <span class="text-xs font-medium text-zinc-300">{{
-                                        t('settings.transformBuiltinUdp')
-                                    }}</span>
-                                    <Switch v-model="settings.builtinEnableUdp" size="sm" />
-                                </div>
-                            </div>
-                        </div>
+                        <label
+                            class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                        >
+                            {{ t('settings.transformTemplateConfig') }}
+                        </label>
+                        <TransformSelector
+                            v-model="settings.transformConfig"
+                            @select-asset="selectedAsset = $event"
+                            type="config"
+                            :force-custom="settings.transformConfigMode === 'custom'"
+                            :custom-templates-only="settings.transformConfigMode === 'custom_template'"
+                            :placeholder="t('settings.transformPresetPlaceholder')"
+                            :custom-placeholder="t('settings.transformRemotePlaceholder')"
+                            :allowEmpty="settings.transformConfigMode === 'builtin'"
+                            :exclude-builtin-assets="isExternalEngine"
+                        />
+                        <p
+                            v-if="settings.transformConfigMode === 'custom_template'"
+                            class="mt-2 text-xs leading-relaxed text-zinc-500"
+                        >
+                            {{ t('settings.transformCustomTemplateSelectHint') }}
+                        </p>
                     </div>
                 </div>
 
+                <!-- 内置引擎参数 -->
                 <div
-                    :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
-                    class="transition-all"
+                    :class="
+                        isBuiltinEngine
+                            ? ''
+                            : 'opacity-40 grayscale pointer-events-none select-none'
+                    "
+                    class="pt-6 border-t border-zinc-800/60 space-y-4 transition-all duration-300"
                 >
-                    <label
-                        class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-                    >
-                        {{ t('settings.transformTemplateConfig') }}
-                    </label>
-                    <TransformSelector
-                        v-model="settings.transformConfig"
-                        @select-asset="selectedAsset = $event"
-                        type="config"
-                        :force-custom="settings.transformConfigMode === 'custom'"
-                        :custom-templates-only="settings.transformConfigMode === 'custom_template'"
-                        :placeholder="t('settings.transformPresetPlaceholder')"
-                        :custom-placeholder="t('settings.transformRemotePlaceholder')"
-                        :allowEmpty="settings.transformConfigMode === 'builtin'"
-                        :exclude-builtin-assets="isExternalEngine"
-                    />
-                    <p
-                        v-if="settings.transformConfigMode === 'custom_template'"
-                        class="mt-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs leading-relaxed text-zinc-400"
-                    >
-                        {{ t('settings.transformCustomTemplateSelectHint') }}
-                    </p>
+                    <div class="flex items-center justify-between">
+                        <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                            <span
+                                v-if="isBuiltinEngine"
+                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                            ></span>
+                            {{ t('settings.transformBuiltinParams') }}
+                        </h4>
+                        <span class="text-[10px] font-mono text-zinc-500">builtin-core</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
+                        <div
+                            :class="{ 'opacity-60': !isBuiltinMode }"
+                            class="transition-opacity"
+                        >
+                            <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
+                                t('settings.transformRuleLevel')
+                            }}</label>
+                            <Select
+                                v-model="settings.ruleLevel"
+                                size="sm"
+                                :disabled="!isBuiltinMode || isExternalEngine"
+                                :options="[
+                                    { value: 'base', label: t('settings.transformRuleBase') },
+                                    { value: 'std', label: t('settings.transformRuleStd') },
+                                    { value: 'full', label: t('settings.transformRuleFull') },
+                                    { value: 'relay', label: t('settings.transformRuleRelay') },
+                                ]"
+                            />
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                            <span class="text-xs font-medium text-zinc-300">{{
+                                t('settings.transformBuiltinSkipCert')
+                            }}</span>
+                            <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                            <span class="text-xs font-medium text-zinc-300">{{
+                                t('settings.transformBuiltinUdp')
+                            }}</span>
+                            <Switch v-model="settings.builtinEnableUdp" size="sm" />
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div
+        <section
             :class="
                 isExternalEngine
-                    ? 'border-zinc-800'
+                    ? ''
                     : 'opacity-40 grayscale pointer-events-none select-none'
             "
-            class="rounded-md border border-zinc-800 bg-transparent p-5 transition-all duration-300"
+            class="rounded-lg border border-zinc-800 bg-[#171717] p-6 transition-all duration-300"
         >
-            <div class="mb-4 flex items-center justify-between">
-                <h4 class="flex items-center gap-2 text-xs font-semibold text-zinc-100">
+            <div class="mb-6 flex items-center justify-between">
+                <h4 class="flex items-center gap-2 text-sm font-semibold text-zinc-100">
                     <span
                         v-if="isExternalEngine"
                         class="h-1.5 w-1.5 rounded-full bg-amber-500"
@@ -422,12 +411,12 @@
                 <span class="text-[10px] font-mono text-zinc-500">subconverter</span>
             </div>
 
-            <div class="space-y-4">
+            <div class="space-y-6">
                 <div>
                     <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
                         t('settings.transformBackend')
                     }}</label>
-                    <div class="mb-2">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select
                             v-model="settings.subconverter.defaultBackend"
                             size="sm"
@@ -439,25 +428,25 @@
                                 }))
                             "
                         />
+                        <input
+                            type="text"
+                            v-model="settings.subconverter.defaultBackend"
+                            placeholder="subapi.cmliussss.net"
+                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                            :aria-label="t('settings.transformCustomBackend')"
+                        />
                     </div>
-                    <input
-                        type="text"
-                        v-model="settings.subconverter.defaultBackend"
-                        placeholder="subapi.cmliussss.net"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
-                        :aria-label="t('settings.transformCustomBackend')"
-                    />
-                    <p class="mt-1.5 text-xs leading-relaxed text-zinc-400">
+                    <p class="mt-2 text-xs leading-relaxed text-zinc-400">
                         {{ t('settings.transformBackendHint') }}
                     </p>
-                    <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
                         <button
                             type="button"
                             data-testid="test-subconverter-backend"
                             @click="handleTestBackend"
                             :disabled="!isExternalEngine || isTestingBackend"
                             :aria-busy="String(isTestingBackend)"
-                            class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-transparent px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {{
                                 isTestingBackend
@@ -473,7 +462,7 @@
                         v-if="backendTestStatus"
                         data-testid="subconverter-backend-test-result"
                         :class="backendTestToneClass"
-                        class="mt-3 rounded-md border px-3 py-2 text-xs leading-relaxed"
+                        class="mt-3 pl-3 border-l-2 py-1 text-xs leading-relaxed"
                     >
                         <div class="font-medium flex items-center gap-2">
                             <span
@@ -494,11 +483,11 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="pt-4 border-t border-zinc-800/60 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div
                         v-for="flag in flagOptions"
                         :key="flag.key"
-                        class="flex items-center justify-between rounded-md border border-zinc-800 bg-transparent p-2"
+                        class="flex items-center justify-between py-2 border-b border-zinc-800/60"
                     >
                         <span class="truncate text-xs text-zinc-300" :title="flag.label">{{
                             flag.label
@@ -510,7 +499,8 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
+
         <RuleTemplateManager />
     </div>
 </template>

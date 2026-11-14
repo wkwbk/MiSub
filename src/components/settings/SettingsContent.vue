@@ -131,29 +131,22 @@
             <p class="text-xs text-zinc-500">{{ t('settings.loading') }}</p>
         </div>
 
-        <div v-else class="space-y-6 max-w-6xl w-full mx-auto">
+        <div v-else class="space-y-6 max-w-5xl w-full mx-auto">
             <div
-                class="flex-wrap items-center justify-between gap-3 p-4 bg-transparent border border-zinc-800 rounded-md shadow-none"
+                class="flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-zinc-800/80"
                 :class="alwaysShowHeader ? 'flex' : 'hidden md:flex'"
             >
-                <div>
-                    <p class="text-xs text-zinc-500">
-                        {{ t('settings.currentModule') }}
-                    </p>
-                    <p class="text-base font-semibold text-zinc-100">
-                        {{ currentTabLabel }}
-                    </p>
-                </div>
-                <div
-                    class="text-xs text-zinc-400 bg-transparent border border-zinc-800 px-3 py-1.5 rounded-md"
-                >
+                <h2 class="text-base font-semibold text-zinc-100">
+                    {{ currentTabLabel }}
+                </h2>
+                <p class="text-xs text-zinc-500">
                     {{ t('settings.saveHint') }}
-                </div>
+                </p>
             </div>
 
             <div
                 v-if="restartCountdown !== null"
-                class="flex items-center justify-between gap-3 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-xs text-zinc-200"
+                class="flex items-center justify-between gap-3 rounded-md bg-amber-500/10 px-4 py-3 text-xs text-amber-200"
                 role="status"
                 aria-live="polite"
             >
@@ -163,7 +156,7 @@
                 </span>
                 <button
                     type="button"
-                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-900"
+                    class="shrink-0 rounded-md border border-zinc-700 bg-transparent px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
                     @click="$emit('reload-now')"
                 >
                     {{ t('settings.reloadNow') }}

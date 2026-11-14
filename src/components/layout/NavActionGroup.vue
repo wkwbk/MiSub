@@ -67,19 +67,12 @@
     const canShowExplore = computed(() => props.showExplore);
     const isExploreActive = computed(() => route.path === '/explore');
     const exploreBtnClass = computed(() => {
-        const classes = buildBtnClass('neutral');
         if (isExploreActive.value) {
-            classes.push(
-                'bg-zinc-900',
-                'text-zinc-100',
-                'dark:bg-zinc-100',
-                'dark:text-zinc-900',
-                'border',
-                'border-zinc-700',
-                'dark:border-zinc-300'
-            );
+            const base = ['nav-action-btn', props.roundedClass, 'nav-action-btn-active'];
+            if (props.withFocusRing) base.push('nav-action-focus');
+            return base;
         }
-        return classes;
+        return buildBtnClass('neutral');
     });
 
     function handlePublicFeedback() {

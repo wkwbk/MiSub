@@ -1,6 +1,7 @@
 <script setup>
     import { Home } from 'lucide-vue-next';
     import Input from '../../ui/Input.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import AnnouncementSettings from './AnnouncementSettings.vue';
     import GuestbookManagement from './GuestbookManagement.vue';
     import { useI18n } from '../../../i18n/index.js';
@@ -18,22 +19,15 @@
 <template>
     <div v-if="settings" class="space-y-6">
         <!-- {{ t('settings.homeHeroTitle') }} -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.homeHeroTitle')"
+                :description="t('settings.homeHeroDesc')"
+            >
+                <template #icon>
                     <Home class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.homeHeroTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.homeHeroDesc') }}
-                    </p>
-                </div>
-            </div>
+                </template>
+            </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <Input
@@ -57,7 +51,7 @@
                     />
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Announcement Settings -->
         <AnnouncementSettings :settings="settings" />

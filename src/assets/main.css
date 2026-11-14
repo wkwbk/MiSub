@@ -348,6 +348,10 @@
     @apply text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800;
 }
 
+.nav-action-btn-active {
+    @apply bg-zinc-100 text-zinc-900 border border-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700;
+}
+
 .nav-action-btn-danger {
     @apply text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50;
 }
@@ -681,6 +685,7 @@ html:not(.dark) .bg-zinc-900:not([class*='dark:bg-']) {
 html:not(.dark) .bg-zinc-900\/60:not([class*='dark:bg-']),
 html:not(.dark) .bg-zinc-900\/50:not([class*='dark:bg-']),
 html:not(.dark) .bg-zinc-900\/40:not([class*='dark:bg-']),
+html:not(.dark) .bg-zinc-900\/35:not([class*='dark:bg-']),
 html:not(.dark) .bg-zinc-900\/30:not([class*='dark:bg-']) {
     background-color: rgba(244, 244, 245, 0.75);
 }
@@ -738,7 +743,8 @@ html:not(.dark) .bg-zinc-100.hover\:bg-white:not([class*='dark:bg-']):hover {
 /* Hairline Borders & Dividers */
 html:not(.dark) .border-zinc-800:not([class*='dark:border-']),
 html:not(.dark) .border-zinc-800\/80:not([class*='dark:border-']),
-html:not(.dark) .border-zinc-800\/60:not([class*='dark:border-']) {
+html:not(.dark) .border-zinc-800\/60:not([class*='dark:border-']),
+html:not(.dark) .border-zinc-800\/45:not([class*='dark:border-']) {
     border-color: #e4e4e7;
 }
 

@@ -4,6 +4,7 @@
     import DOMPurify from 'dompurify';
     import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import { useI18n } from '../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -58,46 +59,25 @@
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- 头部说明 -->
-        <div
-            class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none animate-fade-in-down"
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <!-- 头部说明 & 开关 -->
+        <SectionHeader
+            :title="t('settings.announcementTitle')"
+            :description="t('settings.announcementDesc')"
+            :no-margin="!announcement.enabled"
         >
-            <div class="flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
-                    <Megaphone class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.announcementTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.announcementDesc') }}
-                    </p>
-                </div>
-            </div>
-
-            <div
-                class="flex items-center justify-between p-4 bg-transparent border border-zinc-800 rounded-md"
-            >
-                <div>
-                    <p class="text-sm font-medium text-zinc-100">
-                        {{ t('settings.announcementEnable') }}
-                    </p>
-                    <p class="text-xs text-zinc-400 mt-0.5">
-                        {{ t('settings.announcementEnableDesc') }}
-                    </p>
-                </div>
+            <template #icon>
+                <Megaphone class="h-4 w-4" />
+            </template>
+            <template #actions>
                 <Switch v-model="announcement.enabled" @change="handleContentUpdate" />
-            </div>
-        </div>
+            </template>
+        </SectionHeader>
 
         <!-- 内容编辑 -->
         <div
             v-if="announcement.enabled"
-            class="bg-transparent rounded-md p-5 space-y-5 border border-zinc-800 shadow-none animate-fade-in-down"
+            class="space-y-6 animate-fade-in-down"
         >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 标题 -->
@@ -149,14 +129,14 @@
                         {{ t('settings.announcementHtmlSupported') }}
                     </div>
                 </div>
-                <p class="mt-2 text-xs text-zinc-500">
+                <p class="mt-2 text-xs text-zinc-500 leading-relaxed">
                     {{ t('settings.announcementHtmlHint') }}
                 </p>
             </div>
 
             <!-- 选项 -->
             <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 cursor-pointer">
+                <label class="flex items-center gap-2.5 cursor-pointer">
                     <input
                         type="checkbox"
                         v-model="announcement.dismissible"
@@ -169,12 +149,12 @@
                 </label>
             </div>
 
-            <!-- 预览区域 (可选) -->
-            <div class="mt-4 p-4 border border-zinc-800 rounded-md bg-transparent">
-                <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
+            <!-- 预览区域 -->
+            <div class="pt-6 border-t border-zinc-800/60">
+                <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
                     {{ t('settings.announcementPreview') }}
                 </h4>
-                <div class="bg-[#131515] rounded-md shadow-none border border-zinc-800 p-4">
+                <div class="bg-[#131515]/80 rounded-md border border-zinc-800/80 p-4">
                     <div class="flex items-start gap-2.5">
                         <span
                             class="h-1.5 w-1.5 rounded-full shrink-0 mt-1.5"
@@ -201,7 +181,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <style scoped>

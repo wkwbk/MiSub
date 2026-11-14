@@ -396,7 +396,7 @@
                 <!-- 资源类型 Tab 切换栏 -->
                 <div class="border-b border-zinc-800">
                     <nav
-                        class="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto pb-1"
+                        class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar"
                         aria-label="Tabs"
                     >
                         <button
@@ -404,18 +404,27 @@
                             @click="activeResourceTab = 'subscriptions'"
                             :class="[
                                 activeResourceTab === 'subscriptions'
-                                    ? 'border-zinc-100 text-zinc-100'
-                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
                             <span>{{ t('profileModal.tabSubscriptions') }}</span>
                             <span
                                 v-if="localProfile.subscriptions?.length"
-                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
+                                :class="
+                                    activeResourceTab === 'subscriptions'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
                                 {{ localProfile.subscriptions.length }}
                             </span>
+                            <span
+                                v-if="activeResourceTab === 'subscriptions'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
 
                         <button
@@ -423,18 +432,27 @@
                             @click="activeResourceTab = 'subProfiles'"
                             :class="[
                                 activeResourceTab === 'subProfiles'
-                                    ? 'border-zinc-100 text-zinc-100'
-                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
                             <span>{{ t('profileModal.tabSubProfiles') }}</span>
                             <span
                                 v-if="localProfile.subProfiles?.length"
-                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
+                                :class="
+                                    activeResourceTab === 'subProfiles'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
                                 {{ localProfile.subProfiles.length }}
                             </span>
+                            <span
+                                v-if="activeResourceTab === 'subProfiles'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
 
                         <button
@@ -442,18 +460,27 @@
                             @click="activeResourceTab = 'manualNodes'"
                             :class="[
                                 activeResourceTab === 'manualNodes'
-                                    ? 'border-zinc-100 text-zinc-100'
-                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
                             <span>{{ t('profileModal.tabManualNodes') }}</span>
                             <span
                                 v-if="localProfile.manualNodes?.length"
-                                class="ml-1 px-1.5 py-0.5 rounded-sm font-mono text-[10px] border border-zinc-800 bg-transparent text-zinc-300 font-semibold"
+                                :class="
+                                    activeResourceTab === 'manualNodes'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
                                 {{ localProfile.manualNodes.length }}
                             </span>
+                            <span
+                                v-if="activeResourceTab === 'manualNodes'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
 
                         <button
@@ -461,12 +488,16 @@
                             @click="activeResourceTab = 'all'"
                             :class="[
                                 activeResourceTab === 'all'
-                                    ? 'border-zinc-100 text-zinc-100'
-                                    : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-700',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
                             <span>{{ t('profileModal.tabAll') }}</span>
+                            <span
+                                v-if="activeResourceTab === 'all'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
                     </nav>
                 </div>
@@ -475,7 +506,7 @@
                     :class="
                         activeResourceTab === 'all'
                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                            : 'space-y-6'
+                            : ''
                     "
                 >
                     <div

@@ -60,23 +60,21 @@
 <template>
     <div class="space-y-6">
         <!-- Announcement & Info Section -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.globalInfoTitle')"
-                :description="t('settings.globalInfoDesc')"
+                :description="t('settings.globalInfoBody')"
                 tone="indigo"
+                no-margin
             >
                 <template #icon>
                     <Info class="h-4 w-4" />
                 </template>
             </SectionHeader>
-            <p class="text-xs text-zinc-400 leading-relaxed">
-                {{ t('settings.globalInfoBody') }}
-            </p>
-        </div>
+        </section>
 
         <!-- Node Prefix Settings -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.globalNodeSettingsTitle')"
                 :description="t('settings.globalNodeSettingsDesc')"
@@ -87,7 +85,7 @@
                 </template>
             </SectionHeader>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <!-- 第一排：手动节点文本前缀 与 开关 -->
                 <div>
                     <Input
@@ -133,43 +131,41 @@
                     />
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Region Overrides -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div
-                class="flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:justify-between"
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.regionOverridesTitle')"
+                :description="t('settings.regionOverridesDesc')"
+                tone="purple"
             >
-                <SectionHeader
-                    :title="t('settings.regionOverridesTitle')"
-                    :description="t('settings.regionOverridesDesc')"
-                    tone="purple"
-                >
-                    <template #icon>
-                        <Map class="h-4 w-4" />
-                    </template>
-                </SectionHeader>
-                <button
-                    type="button"
-                    @click="addRegionOverride"
-                    class="w-full shrink-0 whitespace-nowrap rounded-md border border-zinc-100 bg-zinc-100 px-3 py-1.5 text-xs font-semibold leading-5 text-zinc-900 transition-colors hover:bg-white sm:w-auto sm:self-start"
-                >
-                    {{ t('settings.regionOverrideAdd') }}
-                </button>
-            </div>
+                <template #icon>
+                    <Map class="h-4 w-4" />
+                </template>
+                <template #actions>
+                    <button
+                        type="button"
+                        @click="addRegionOverride"
+                        class="shrink-0 whitespace-nowrap rounded-md border border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold leading-5 text-zinc-900 transition-colors hover:bg-white"
+                    >
+                        {{ t('settings.regionOverrideAdd') }}
+                    </button>
+                </template>
+            </SectionHeader>
 
-            <div
+            <p
                 v-if="!settings.regionOverrides.length"
-                class="mt-4 rounded-md border border-zinc-800 bg-transparent px-4 py-5 text-xs text-zinc-500"
+                class="text-xs text-zinc-500"
             >
                 {{ t('settings.regionOverridesEmpty') }}
-            </div>
+            </p>
 
-            <div v-else class="mt-4 space-y-3">
+            <div v-else class="divide-y divide-zinc-800/60">
                 <div
                     v-for="(rule, index) in settings.regionOverrides"
                     :key="index"
-                    class="grid grid-cols-1 gap-3 rounded-md border border-zinc-800 bg-transparent p-3 md:grid-cols-[1fr_160px_96px_auto]"
+                    class="grid grid-cols-1 gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[1fr_160px_96px_auto]"
                 >
                     <Input
                         v-model="rule.pattern"
@@ -197,30 +193,30 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Unified Operator Chain -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="flex items-start justify-between gap-3">
-                <SectionHeader
-                    :title="t('settings.globalDefaultOperatorsTitle')"
-                    :description="t('settings.globalDefaultOperatorsDesc')"
-                    tone="green"
-                >
-                    <template #icon>
-                        <SlidersHorizontal class="h-4 w-4" />
-                    </template>
-                </SectionHeader>
-                <span
-                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
-                    >{{ t('settings.globalDefaultBadge') }}</span
-                >
-            </div>
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.globalDefaultOperatorsTitle')"
+                :description="t('settings.globalDefaultOperatorsDesc')"
+                tone="green"
+            >
+                <template #icon>
+                    <SlidersHorizontal class="h-4 w-4" />
+                </template>
+                <template #actions>
+                    <span
+                        class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-400"
+                        >{{ t('settings.globalDefaultBadge') }}</span
+                    >
+                </template>
+            </SectionHeader>
 
             <OperatorChain
                 v-model="settings.defaultOperators"
                 :legacy-data="settings.defaultNodeTransform"
             />
-        </div>
+        </section>
     </div>
 </template>

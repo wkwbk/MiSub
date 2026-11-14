@@ -102,14 +102,6 @@
 
 <template>
     <div class="pt-0 pb-6 min-h-[calc(100vh-80px)]">
-        <div
-            class="mb-4 bg-[#171717] border border-zinc-800 rounded-md p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
-        >
-            <h1 class="text-lg font-semibold text-zinc-100">
-                {{ t('settings.title') }}
-            </h1>
-        </div>
-
         <SettingsContent
             v-model:activeTab="activeTab"
             :settings="settings"

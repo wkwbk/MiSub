@@ -159,7 +159,7 @@
 <template>
     <div class="space-y-6">
         <!-- 默认显示语言 -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.defaultLanguageTitle')"
                 :description="t('settings.defaultLanguageDesc')"
@@ -178,10 +178,10 @@
                     ]"
                 />
             </div>
-        </div>
+        </section>
 
         <!-- 订阅基本信息配置 -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.subscriptionConfigTitle')"
                 :description="t('settings.subscriptionConfigDesc')"
@@ -211,9 +211,6 @@
                                 highlightedFocusId === 'setting-mytoken',
                         }"
                     />
-                    <p class="mt-2 text-xs text-zinc-400">
-                        {{ t('settings.subscriptionTokenRotationHint') }}
-                    </p>
                 </div>
                 <div>
                     <Input
@@ -230,10 +227,13 @@
                     />
                 </div>
             </div>
-        </div>
+            <p class="mt-4 text-xs text-zinc-500 leading-relaxed">
+                {{ t('settings.subscriptionTokenRotationHint') }}
+            </p>
+        </section>
 
         <!-- 功能开关区域 -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.featureControlTitle')"
                 :description="t('settings.featureControlDesc')"
@@ -243,66 +243,66 @@
                     <SlidersHorizontal class="h-4 w-4" />
                 </template>
             </SectionHeader>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="divide-y divide-zinc-800/60">
                 <!-- 订阅自动更新间隔 -->
-                <div class="p-4 bg-transparent border border-zinc-800 rounded-md">
-                    <div class="flex items-center justify-between">
-                        <div>
+                <div class="py-5 first:pt-0 last:pb-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
                             <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.autoUpdateInterval') }}
                             </p>
-                            <p class="text-xs text-zinc-400 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.autoUpdateDesc') }}
                             </p>
                         </div>
-                    </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <div class="flex items-center gap-2">
-                            <input
-                                type="number"
-                                :value="
-                                    ![0, 30, 60, 120].includes(settings.autoUpdateInterval)
-                                        ? settings.autoUpdateInterval
-                                        : ''
-                                "
-                                @input="
-                                    (e) => {
-                                        const v = parseInt(e.target.value);
-                                        if (v >= 5) settings.autoUpdateInterval = v;
-                                    }
-                                "
-                                :placeholder="t('settings.customInterval')"
-                                min="5"
-                                class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
-                                :aria-label="t('settings.autoUpdateInterval')"
-                            />
-                            <span class="text-xs text-zinc-400">{{ t('settings.minutes') }}</span>
+                        <div class="flex flex-wrap items-center gap-2 shrink-0">
+                            <div class="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    :value="
+                                        ![0, 30, 60, 120].includes(settings.autoUpdateInterval)
+                                            ? settings.autoUpdateInterval
+                                            : ''
+                                    "
+                                    @input="
+                                        (e) => {
+                                            const v = parseInt(e.target.value);
+                                            if (v >= 5) settings.autoUpdateInterval = v;
+                                        }
+                                    "
+                                    :placeholder="t('settings.customInterval')"
+                                    min="5"
+                                    class="w-24 px-2.5 py-1.5 text-xs font-mono bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors"
+                                    :aria-label="t('settings.autoUpdateInterval')"
+                                />
+                                <span class="text-xs text-zinc-400">{{ t('settings.minutes') }}</span>
+                            </div>
+                            <span class="text-xs text-zinc-500 self-center">{{
+                                t('settings.quickSelect')
+                            }}</span>
+                            <button
+                                v-for="option in [
+                                    { value: 0, label: t('settings.disabledOption') },
+                                    { value: 30, label: t('settings.option30Minutes') },
+                                    { value: 60, label: t('settings.option1Hour') },
+                                ]"
+                                :key="option.value"
+                                @click="settings.autoUpdateInterval = option.value"
+                                :aria-pressed="settings.autoUpdateInterval === option.value"
+                                :class="[
+                                    'px-2.5 py-1.5 text-xs font-mono font-medium rounded-md border transition-colors',
+                                    settings.autoUpdateInterval === option.value
+                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
+                                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                ]"
+                            >
+                                {{ option.label }}
+                            </button>
                         </div>
-                        <span class="text-xs text-zinc-500 self-center">{{
-                            t('settings.quickSelect')
-                        }}</span>
-                        <button
-                            v-for="option in [
-                                { value: 0, label: t('settings.disabledOption') },
-                                { value: 30, label: t('settings.option30Minutes') },
-                                { value: 60, label: t('settings.option1Hour') },
-                            ]"
-                            :key="option.value"
-                            @click="settings.autoUpdateInterval = option.value"
-                            :aria-pressed="settings.autoUpdateInterval === option.value"
-                            :class="[
-                                'px-2.5 py-1.5 text-xs font-mono font-medium rounded-md border transition-colors',
-                                settings.autoUpdateInterval === option.value
-                                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
-                                    : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
-                            ]"
-                        >
-                            {{ option.label }}
-                        </button>
                     </div>
                     <p
                         v-if="settings.autoUpdateInterval === 0"
-                        class="text-xs text-amber-400 mt-2 flex items-center gap-1.5"
+                        class="text-xs text-amber-400 mt-2.5 flex items-center gap-1.5"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                         {{ t('settings.autoUpdateDisabledHint') }}
@@ -310,56 +310,54 @@
                 </div>
 
                 <!-- 访问日志 -->
-                <div
-                    class="flex items-center justify-between p-4 bg-transparent border border-zinc-800 rounded-md"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-zinc-100">
-                            {{ t('settings.accessLogTitle') }}
-                        </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
-                            {{ t('settings.accessLogDesc') }}
-                        </p>
-                        <p class="text-[11px] text-amber-400 mt-1 flex items-center gap-1.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            {{ t('settings.accessLogQuotaHint') }}
-                        </p>
+                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+                    <div class="flex items-center justify-between gap-6">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-zinc-100">
+                                {{ t('settings.accessLogTitle') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.accessLogDesc') }}
+                            </p>
+                            <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
+                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                {{ t('settings.accessLogQuotaHint') }}
+                            </p>
+                        </div>
+                        <Switch v-model="settings.enableAccessLog" />
                     </div>
-                    <Switch v-model="settings.enableAccessLog" />
-                </div>
 
-                <div
-                    v-if="settings.enableAccessLog"
-                    class="p-4 bg-transparent border border-zinc-800 rounded-md space-y-2"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-zinc-100">
-                            {{ t('settings.accessLogMode') }}
-                        </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
-                            {{ t('settings.accessLogModeDesc') }}
-                        </p>
-                    </div>
-                    <div class="min-w-[160px]">
-                        <Select
-                            v-model="settings.accessLogPersistenceMode"
-                            :options="[
-                                { value: 'light', label: t('settings.accessLogLight') },
-                                { value: 'full', label: t('settings.accessLogFull') },
-                            ]"
-                        />
+                    <div
+                        v-if="settings.enableAccessLog"
+                        class="pl-4 border-l-2 border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-zinc-200">
+                                {{ t('settings.accessLogMode') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.accessLogModeDesc') }}
+                            </p>
+                        </div>
+                        <div class="sm:w-56 shrink-0">
+                            <Select
+                                v-model="settings.accessLogPersistenceMode"
+                                :options="[
+                                    { value: 'light', label: t('settings.accessLogLight') },
+                                    { value: 'full', label: t('settings.accessLogFull') },
+                                ]"
+                            />
+                        </div>
                     </div>
                 </div>
 
                 <!-- 流量与到期时间节点 -->
-                <div
-                    class="flex items-center justify-between p-4 bg-transparent border border-zinc-800 rounded-md"
-                >
-                    <div>
+                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                    <div class="space-y-1">
                         <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.trafficNodeTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.trafficNodeDesc') }}
                         </p>
                     </div>
@@ -367,28 +365,30 @@
                 </div>
 
                 <!-- 合并到期时间策略 -->
-                <div class="p-4 bg-transparent border border-zinc-800 rounded-md space-y-2">
-                    <div>
+                <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
                         <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.mergeExpireStrategyTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.mergeExpireStrategyDesc') }}
                         </p>
                     </div>
-                    <Select
-                        v-model="settings.mergeExpireStrategy"
-                        :options="[
-                            { value: 'max', label: t('settings.mergeExpireMax') },
-                            { value: 'min', label: t('settings.mergeExpireMin') },
-                        ]"
-                    />
+                    <div class="sm:w-56 shrink-0">
+                        <Select
+                            v-model="settings.mergeExpireStrategy"
+                            :options="[
+                                { value: 'max', label: t('settings.mergeExpireMax') },
+                                { value: 'min', label: t('settings.mergeExpireMin') },
+                            ]"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Web 访问控制 -->
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.webAccessTitle')"
                 :description="t('settings.webAccessDesc')"
@@ -399,18 +399,14 @@
                 </template>
             </SectionHeader>
 
-            <div
-                class="bg-transparent border border-zinc-800 rounded-md divide-y divide-zinc-800 overflow-hidden"
-            >
+            <div class="divide-y divide-zinc-800/60">
                 <!-- 公开页访问 -->
-                <div
-                    class="p-4 flex items-center justify-between hover:bg-zinc-900/40 transition-colors"
-                >
-                    <div>
+                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                    <div class="space-y-1">
                         <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.publicPageAccessTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.publicPageAccessDesc') }}
                         </p>
                     </div>
@@ -418,69 +414,29 @@
                 </div>
 
                 <!-- 伪装页面 -->
-                <div class="p-4 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
+                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+                    <div class="flex items-center justify-between gap-6">
+                        <div class="space-y-1">
                             <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.disguisePageTitle') }}
                             </p>
-                            <p class="text-xs text-zinc-400 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.disguisePageDesc') }}
                             </p>
                         </div>
                         <Switch v-model="disguiseConfig.enabled" />
                     </div>
 
-                    <!-- 自定义登录路径设置 -->
-                    <div class="pt-4 border-t border-zinc-800">
-                        <div class="max-w-md">
-                            <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
-                            <input
-                                type="text"
-                                name="fake_user_for_autofill"
-                                autocomplete="username"
-                                style="display: none"
-                                tabindex="-1"
-                                aria-hidden="true"
-                            />
-                            <input
-                                type="password"
-                                name="fake_pass_for_autofill"
-                                autocomplete="current-password"
-                                style="display: none"
-                                tabindex="-1"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                :label="t('settings.customAdminPath')"
-                                v-model="settings.customLoginPath"
-                                :error="customLoginPathError"
-                                :placeholder="t('settings.customAdminPathPlaceholder')"
-                                prefix="/"
-                                autocomplete="off"
-                                name="custom_admin_path_setting_no_autofill"
-                                type="search"
-                            />
-                        </div>
-                        <p class="text-xs text-zinc-400 mt-1">
-                            {{ t('settings.customAdminPathHint') }}
-                        </p>
-                        <p class="text-xs text-amber-400 mt-1 flex items-center gap-1.5">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                            {{ t('settings.reservedPathListHint') }}
-                        </p>
-                    </div>
-
                     <div
                         v-show="disguiseConfig.enabled"
-                        class="bg-transparent rounded-md p-4 space-y-4 border border-zinc-800 transition-all duration-300"
+                        class="pl-4 border-l-2 border-zinc-800 space-y-4 transition-all duration-300"
                     >
                         <div>
                             <label
-                                class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 block"
+                                class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2.5 block"
                                 >{{ t('settings.disguiseStrategy') }}</label
                             >
-                            <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex flex-col sm:flex-row gap-6">
                                 <label class="flex items-center cursor-pointer group">
                                     <input
                                         type="radio"
@@ -488,7 +444,7 @@
                                         v-model="disguiseConfig.pageType"
                                         class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                                     />
-                                    <div class="ml-3">
+                                    <div class="ml-3 space-y-0.5">
                                         <span
                                             class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
                                             >{{ t('settings.disguiseDefault404') }}</span
@@ -505,7 +461,7 @@
                                         v-model="disguiseConfig.pageType"
                                         class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                                     />
-                                    <div class="ml-3">
+                                    <div class="ml-3 space-y-0.5">
                                         <span
                                             class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
                                             >{{ t('settings.disguiseRedirect') }}</span
@@ -520,28 +476,64 @@
 
                         <div
                             v-if="disguiseConfig.pageType === 'redirect'"
-                            class="animate-fade-in-down"
+                            class="animate-fade-in-down max-w-md"
                         >
-                            <div>
-                                <Input
-                                    :label="t('settings.disguiseTargetUrl')"
-                                    v-model="disguiseConfig.redirectUrl"
-                                    placeholder="www.example.com"
-                                    type="url"
-                                />
-                            </div>
+                            <Input
+                                :label="t('settings.disguiseTargetUrl')"
+                                v-model="disguiseConfig.redirectUrl"
+                                placeholder="www.example.com"
+                                type="url"
+                            />
                         </div>
 
-                        <div
-                            class="flex items-center gap-2 text-xs text-zinc-400 bg-transparent border border-zinc-800 p-2.5 rounded-md"
-                        >
+                        <p class="flex items-center gap-2 text-xs text-zinc-500">
                             <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                             <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
-                        </div>
+                        </p>
                     </div>
                 </div>
+
+                <!-- 自定义登录路径设置 -->
+                <div class="py-5 first:pt-0 last:pb-0">
+                    <div class="max-w-md">
+                        <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
+                        <input
+                            type="text"
+                            name="fake_user_for_autofill"
+                            autocomplete="username"
+                            style="display: none"
+                            tabindex="-1"
+                            aria-hidden="true"
+                        />
+                        <input
+                            type="password"
+                            name="fake_pass_for_autofill"
+                            autocomplete="current-password"
+                            style="display: none"
+                            tabindex="-1"
+                            aria-hidden="true"
+                        />
+                        <Input
+                            :label="t('settings.customAdminPath')"
+                            v-model="settings.customLoginPath"
+                            :error="customLoginPathError"
+                            :placeholder="t('settings.customAdminPathPlaceholder')"
+                            prefix="/"
+                            autocomplete="off"
+                            name="custom_admin_path_setting_no_autofill"
+                            type="search"
+                        />
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-2 leading-relaxed">
+                        {{ t('settings.customAdminPathHint') }}
+                    </p>
+                    <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                        {{ t('settings.reservedPathListHint') }}
+                    </p>
+                </div>
             </div>
-        </div>
+        </section>
     </div>
 </template>
 

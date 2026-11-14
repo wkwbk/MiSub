@@ -570,7 +570,7 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-14 px-6 text-center text-sm text-zinc-500 bg-zinc-900/35 border border-zinc-800/45 rounded-lg"
+                        class="py-14 px-6 text-center text-sm text-zinc-500 bg-white dark:bg-zinc-900/35 border border-zinc-200/80 dark:border-zinc-800/45 shadow-[0_0_13px_rgba(0,0,0,0.05)] dark:shadow-none rounded-lg"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
@@ -592,7 +592,7 @@
                 </div>
 
                 <!-- Clients Section (Visually Separated) -->
-                <div class="mt-16 pt-12 pb-10 border-t border-zinc-800/45 bg-transparent">
+                <div class="mt-16 pt-12 pb-10 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">

@@ -1,7 +1,8 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Loader2 } from 'lucide-vue-next';
+    import { Loader2, Send } from 'lucide-vue-next';
     import Switch from '../../../ui/Switch.vue';
+    import SectionHeader from '../../SectionHeader.vue';
     import { useI18n } from '../../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -139,91 +140,94 @@
 
 <template>
     <div class="space-y-6">
-        <section class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-4">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('settings.telegramNotifyBotTitle') }}
-                    </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
-                        {{ t('settings.telegramNotifyBotDesc') }}
-                    </p>
-                </div>
-            </div>
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.telegramNotifyBotTitle')"
+                :description="t('settings.telegramNotifyBotDesc')"
+            >
+                <template #icon>
+                    <Send class="h-4 w-4" />
+                </template>
+            </SectionHeader>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">Bot Token</label>
-                    <input
-                        v-model="settings.BotToken"
-                        type="text"
-                        placeholder="123456:ABC-DEF..."
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
-                    />
-                    <p class="mt-1 text-xs text-zinc-500">
-                        {{ t('settings.telegramBotTokenHint') }}
-                    </p>
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Bot Token</label>
+                        <input
+                            v-model="settings.BotToken"
+                            type="text"
+                            placeholder="123456:ABC-DEF..."
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                        />
+                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                            {{ t('settings.telegramBotTokenHint') }}
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Chat ID</label>
+                        <input
+                            v-model="settings.ChatID"
+                            type="text"
+                            placeholder="123456789"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                        />
+                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                            {{ t('settings.telegramChatIdHint') }}
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">Chat ID</label>
-                    <input
-                        v-model="settings.ChatID"
-                        type="text"
-                        placeholder="123456789"
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
-                    />
-                    <p class="mt-1 text-xs text-zinc-500">
-                        {{ t('settings.telegramChatIdHint') }}
-                    </p>
-                </div>
-            </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-                <button
-                    type="button"
-                    class="px-4 py-1.5 bg-zinc-100 hover:bg-white border border-zinc-100 text-zinc-900 text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-                    :disabled="isTesting || !settings.BotToken || !settings.ChatID"
-                    @click="testNotification"
-                >
-                    <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-zinc-600" />
-                    <span>{{
-                        isTesting ? t('settings.telegramTesting') : t('settings.telegramSendTest')
-                    }}</span>
-                </button>
-
-                <div
-                    v-if="testResult"
-                    class="text-xs flex items-center gap-2"
-                    :class="testResult.success ? 'text-emerald-400' : 'text-red-400'"
-                >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full shrink-0"
-                        :class="testResult.success ? 'bg-emerald-500' : 'bg-red-500'"
-                    ></span>
-                    <span>{{ testResult.message }}</span>
-                    <details
-                        v-if="testResult.detail"
-                        class="mt-2 text-xs font-mono bg-[#131515] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <button
+                        type="button"
+                        class="px-4 py-1.5 bg-zinc-100 hover:bg-white border border-zinc-100 text-zinc-900 text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                        :disabled="isTesting || !settings.BotToken || !settings.ChatID"
+                        @click="testNotification"
                     >
-                        <summary class="cursor-pointer text-zinc-500">
-                            {{ t('settings.telegramDetails') }}
-                        </summary>
-                        <pre>{{ JSON.stringify(testResult.detail, null, 2) }}</pre>
-                    </details>
+                        <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-zinc-600" />
+                        <span>{{
+                            isTesting ? t('settings.telegramTesting') : t('settings.telegramSendTest')
+                        }}</span>
+                    </button>
+
+                    <div
+                        v-if="testResult"
+                        class="text-xs flex items-center gap-2"
+                        :class="testResult.success ? 'text-emerald-400' : 'text-red-400'"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 rounded-full shrink-0"
+                            :class="testResult.success ? 'bg-emerald-500' : 'bg-red-500'"
+                        ></span>
+                        <span>{{ testResult.message }}</span>
+                        <details
+                            v-if="testResult.detail"
+                            class="mt-2 text-xs font-mono bg-[#131515] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
+                        >
+                            <summary class="cursor-pointer text-zinc-500">
+                                {{ t('settings.telegramDetails') }}
+                            </summary>
+                            <pre>{{ JSON.stringify(testResult.detail, null, 2) }}</pre>
+                        </details>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <section class="bg-transparent rounded-md p-5 border border-zinc-800 shadow-none space-y-6">
-            <div class="flex items-center justify-between gap-4">
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-100">Telegram Push Bot</h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
-                        {{ t('settings.telegramPushBotDesc') }}
-                    </p>
-                </div>
-                <Switch v-model="telegramPushConfig.enabled" />
-            </div>
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                title="Telegram Push Bot"
+                :description="t('settings.telegramPushBotDesc')"
+                :no-margin="!telegramPushConfig.enabled"
+            >
+                <template #icon>
+                    <Send class="h-4 w-4" />
+                </template>
+                <template #actions>
+                    <Switch v-model="telegramPushConfig.enabled" />
+                </template>
+            </SectionHeader>
 
             <div v-if="telegramPushConfig.enabled" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -237,7 +241,7 @@
                             placeholder="123456:ABC-DEF..."
                             class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                         />
-                        <p class="mt-1 text-xs text-zinc-500">
+                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                             {{ t('settings.telegramPushTokenHint') }}
                         </p>
                     </div>
@@ -253,12 +257,12 @@
                             class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                             :aria-label="t('settings.telegramWebhookSecret')"
                         />
-                        <p class="mt-1 text-xs text-zinc-500">
+                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                             {{ t('settings.telegramWebhookSecretHint') }}
                         </p>
                         <p
                             v-if="webhookSecret && !isWebhookSecretValid"
-                            class="mt-1 text-xs text-red-400"
+                            class="mt-1.5 text-xs text-red-400"
                         >
                             {{ t('settings.telegramWebhookSecretInvalid') }}
                         </p>
@@ -275,7 +279,7 @@
                         placeholder="123456789, 987654321"
                         class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
                     />
-                    <p class="mt-1 text-xs text-zinc-500">
+                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.telegramAllowedUsersHint') }}
                         <a
                             href="https://t.me/userinfobot"
@@ -286,23 +290,21 @@
                     </p>
                 </div>
 
-                <div class="bg-transparent border border-zinc-800 rounded-md p-4">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex items-start gap-2.5">
-                            <span
-                                class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"
-                            ></span>
-                            <div>
-                                <label class="block text-sm font-medium text-zinc-100">{{
-                                    t('settings.telegramPublicAccess')
-                                }}</label>
-                                <p class="mt-1 text-xs text-zinc-400">
-                                    {{ t('settings.telegramPublicAccessHint') }}
-                                </p>
-                            </div>
+                <div class="flex items-center justify-between gap-6 py-4 border-y border-zinc-800/60">
+                    <div class="flex items-start gap-2.5">
+                        <span
+                            class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"
+                        ></span>
+                        <div class="space-y-1">
+                            <label class="block text-sm font-medium text-zinc-100">{{
+                                t('settings.telegramPublicAccess')
+                            }}</label>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.telegramPublicAccessHint') }}
+                            </p>
                         </div>
-                        <Switch v-model="telegramPushConfig.allow_all_users" />
                     </div>
+                    <Switch v-model="telegramPushConfig.allow_all_users" />
                 </div>
 
                 <div>
@@ -326,7 +328,7 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-zinc-500">
+                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.telegramWebhookUrlHint') }}
                     </p>
                 </div>
@@ -355,25 +357,23 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1 text-xs text-zinc-500">
+                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.telegramSetWebhookHint') }}
                     </p>
                 </div>
 
-                <div
+                <p
                     v-else
-                    class="flex items-center gap-2.5 bg-transparent border border-zinc-800 rounded-md p-3"
+                    class="flex items-center gap-2 text-xs text-zinc-500"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('settings.telegramSetWebhookEmpty') }}
-                    </p>
-                </div>
+                    <span>{{ t('settings.telegramSetWebhookEmpty') }}</span>
+                </p>
 
-                <div class="flex flex-col sm:flex-row gap-2">
+                <div class="flex flex-wrap gap-2.5">
                     <button
                         type="button"
-                        class="flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2 text-xs font-medium rounded-md border transition-colors flex-1"
+                        class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
                         :class="
                             showSetupGuide
                                 ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
@@ -386,7 +386,7 @@
 
                     <button
                         type="button"
-                        class="flex items-center justify-center sm:justify-start gap-2 px-3.5 py-2 text-xs font-medium rounded-md border transition-colors flex-1"
+                        class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
                         :class="
                             showUsageGuide
                                 ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
@@ -400,9 +400,9 @@
 
                 <div
                     v-if="showSetupGuide"
-                    class="bg-transparent border border-zinc-800 rounded-md p-4"
+                    class="pl-4 border-l-2 border-zinc-800 py-1"
                 >
-                    <ol class="list-decimal list-inside space-y-2 text-xs text-zinc-300">
+                    <ol class="list-decimal list-inside space-y-1.5 text-xs text-zinc-400 leading-relaxed">
                         <li>{{ t('settings.telegramSetupStep1') }}</li>
                         <li>{{ t('settings.telegramSetupStep2') }}</li>
                         <li>{{ t('settings.telegramSetupStep3') }}</li>
@@ -412,9 +412,9 @@
 
                 <div
                     v-if="showUsageGuide"
-                    class="bg-transparent border border-zinc-800 rounded-md p-4"
+                    class="pl-4 border-l-2 border-zinc-800 py-1"
                 >
-                    <div class="space-y-2 text-xs text-zinc-300">
+                    <div class="space-y-1.5 text-xs text-zinc-400 leading-relaxed">
                         <p>{{ t('settings.telegramUsageCommands') }}</p>
                         <p>{{ t('settings.telegramUsageImport') }}</p>
                         <p>{{ t('settings.telegramUsageIsolation') }}</p>

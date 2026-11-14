@@ -2,6 +2,7 @@
     import { computed, ref, watch } from 'vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
+    import SectionHeader from '../../SectionHeader.vue';
 
     const { t } = useI18n();
 
@@ -119,19 +120,12 @@ overwrite_original_rules=true`;
 </script>
 
 <template>
-    <div
-        class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none"
-    >
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h3 class="text-sm font-semibold text-zinc-100">
-                    {{ t('settings.ruleTemplatesTitle') }}
-                </h3>
-                <p class="mt-1 text-xs text-zinc-400">
-                    {{ t('settings.ruleTemplatesDesc') }}
-                </p>
-            </div>
-            <div class="flex flex-wrap gap-2">
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <SectionHeader
+            :title="t('settings.ruleTemplatesTitle')"
+            :description="t('settings.ruleTemplatesDesc')"
+        >
+            <template #actions>
                 <button
                     type="button"
                     @click="refreshTemplates"
@@ -163,23 +157,23 @@ overwrite_original_rules=true`;
                             : t('settings.ruleTemplatesSave')
                     }}
                 </button>
-            </div>
-        </div>
+            </template>
+        </SectionHeader>
 
         <div
             v-if="!hasTemplates"
-            class="mt-5 rounded-md border border-zinc-800 p-6 text-center"
+            class="text-xs text-zinc-500"
         >
-            <p class="text-sm font-medium text-zinc-300">
+            <p class="font-medium text-zinc-300">
                 {{ t('settings.ruleTemplatesEmpty') }}
             </p>
-            <p class="mt-1 text-xs text-zinc-500">
+            <p class="mt-1 text-zinc-500">
                 {{ t('settings.ruleTemplatesEmptyHint') }}
             </p>
         </div>
 
-        <div v-else class="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
-            <div class="space-y-2">
+        <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
+            <div class="space-y-1.5">
                 <button
                     v-for="template in localTemplates"
                     :key="template.id"
@@ -201,7 +195,7 @@ overwrite_original_rules=true`;
 
             <div
                 v-if="selectedTemplate"
-                class="space-y-4 rounded-md border border-zinc-800 bg-transparent p-4"
+                class="space-y-4 lg:pl-6 lg:border-l lg:border-zinc-800/80"
             >
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="block">
@@ -281,5 +275,5 @@ overwrite_original_rules=true`;
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>

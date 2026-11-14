@@ -7,6 +7,7 @@
     import { confirmAction } from '../../../composables/useConfirm.js';
     import Input from '../../ui/Input.vue';
     import Select from '../../ui/Select.vue';
+    import SectionHeader from '../SectionHeader.vue';
 
     const props = defineProps({
         settings: {
@@ -189,34 +190,28 @@
 </script>
 
 <template>
-    <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-        <div class="mb-5 flex items-start gap-3">
-            <div
-                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-            >
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <SectionHeader
+            :title="t('settings.webdavTitle')"
+            :description="t('settings.webdavDesc')"
+        >
+            <template #icon>
                 <CloudDownload class="h-4 w-4" />
-            </div>
-            <div class="space-y-0.5">
-                <h3 class="text-sm font-semibold text-zinc-100">
-                    {{ t('settings.webdavTitle') }}
-                </h3>
-                <p class="text-xs text-zinc-400">
-                    {{ t('settings.webdavDesc') }}
-                </p>
-            </div>
-        </div>
+            </template>
+            <template #actions>
+                <label class="flex items-center gap-2.5 text-xs font-medium text-zinc-200 cursor-pointer shrink-0">
+                    <input
+                        type="checkbox"
+                        v-model="settings.webdavBackup.enabled"
+                        class="h-4 w-4 text-zinc-100 rounded border-zinc-700 bg-zinc-900"
+                    />
+                    {{ t('settings.webdavEnable') }}
+                </label>
+            </template>
+        </SectionHeader>
 
-        <div class="space-y-5">
-            <label class="flex items-center gap-3 text-sm text-zinc-200 cursor-pointer">
-                <input
-                    type="checkbox"
-                    v-model="settings.webdavBackup.enabled"
-                    class="h-4 w-4 text-zinc-100 rounded border-zinc-700 bg-zinc-900"
-                />
-                {{ t('settings.webdavEnable') }}
-            </label>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Input
                     :label="t('settings.webdavEndpoint')"
                     v-model="settings.webdavBackup.endpoint"
@@ -252,47 +247,47 @@
                 />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="rounded-md border border-zinc-800 p-4 bg-transparent">
-                    <p class="text-sm font-medium text-zinc-100 mb-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
+                <div class="space-y-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                         {{ t('settings.webdavBackupScope') }}
                     </p>
-                    <label class="flex items-start gap-3 mb-3 text-sm text-zinc-200 cursor-pointer">
+                    <label class="flex items-start gap-2.5 text-sm text-zinc-200 cursor-pointer">
                         <input
                             type="radio"
                             value="dataOnly"
                             v-model="settings.webdavBackup.backupScope"
-                            class="mt-0.5 border-zinc-700 bg-zinc-900 text-zinc-100"
+                            class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
                         />
                         <span
-                            ><strong>{{ t('settings.webdavScopeDataOnly') }}</strong
-                            ><br /><span class="text-xs text-zinc-500">{{
+                            ><strong class="font-medium">{{ t('settings.webdavScopeDataOnly') }}</strong
+                            ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
                                 t('settings.webdavScopeDataOnlyDesc')
                             }}</span></span
                         >
                     </label>
-                    <label class="flex items-start gap-3 text-sm text-zinc-200 cursor-pointer">
+                    <label class="flex items-start gap-2.5 text-sm text-zinc-200 cursor-pointer">
                         <input
                             type="radio"
                             value="dataAndSettings"
                             v-model="settings.webdavBackup.backupScope"
-                            class="mt-0.5 border-zinc-700 bg-zinc-900 text-zinc-100"
+                            class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
                         />
                         <span
-                            ><strong>{{ t('settings.webdavScopeDataAndSettings') }}</strong
-                            ><br /><span class="text-xs text-zinc-500">{{
+                            ><strong class="font-medium">{{ t('settings.webdavScopeDataAndSettings') }}</strong
+                            ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
                                 t('settings.webdavScopeDataAndSettingsDesc')
                             }}</span></span
                         >
                     </label>
                 </div>
 
-                <div class="rounded-md border border-zinc-800 p-4 bg-transparent">
-                    <p class="text-sm font-medium text-zinc-100 mb-3">
+                <div class="space-y-3">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                         {{ t('settings.webdavRequestAutoBackup') }}
                     </p>
                     <label
-                        class="flex items-center gap-3 text-sm text-zinc-200 mb-3 cursor-pointer"
+                        class="flex items-center gap-2.5 text-sm text-zinc-200 cursor-pointer"
                     >
                         <input
                             type="checkbox"
@@ -310,24 +305,20 @@
                             { value: 'monthly', label: t('settings.webdavIntervalMonthly') },
                         ]"
                     />
-                    <p class="mt-3 text-xs text-zinc-500">
+                    <p class="text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.webdavAutoBackupHint') }}
                     </p>
                 </div>
             </div>
 
-            <div
-                class="flex items-start gap-2.5 rounded-md bg-transparent border border-zinc-800 p-4 text-xs text-zinc-400 leading-5"
-            >
+            <p class="flex items-start gap-2 text-xs text-zinc-500 leading-relaxed">
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                 <span>{{ t('settings.webdavSecurityHint') }}</span>
-            </div>
+            </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div
-                    class="rounded-md border border-zinc-800 p-4 bg-transparent space-y-1 font-mono"
-                >
-                    <p class="font-sans text-sm font-medium text-zinc-100 mb-2">
+            <div class="pt-6 border-t border-zinc-800/60 flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs">
+                <div class="space-y-1.5 font-mono">
+                    <p class="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                         {{ t('settings.webdavRecentStatus') }}
                     </p>
                     <p class="text-zinc-400">
@@ -351,7 +342,7 @@
                         }}
                     </p>
                 </div>
-                <div class="flex flex-wrap items-end gap-2">
+                <div class="flex flex-wrap items-center gap-2.5">
                     <button
                         @click="testConnection"
                         :disabled="isTesting"
@@ -407,16 +398,16 @@
 
             <div
                 v-if="remoteFiles.length"
-                class="rounded-md border border-zinc-800 bg-transparent p-4"
+                class="pt-6 border-t border-zinc-800/60"
             >
-                <p class="text-sm font-medium text-zinc-100 mb-3">
+                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
                     {{ t('settings.webdavRemoteFiles') }}
                 </p>
-                <div class="space-y-2 max-h-56 overflow-y-auto">
+                <div class="divide-y divide-zinc-800/60 max-h-56 overflow-y-auto">
                     <div
                         v-for="file in remoteFiles"
                         :key="file.path"
-                        class="flex items-center justify-between gap-3 rounded-md border border-zinc-800 px-3 py-2"
+                        class="flex items-center justify-between gap-3 py-2.5"
                     >
                         <span class="text-xs font-mono text-zinc-300 break-all">{{
                             file.name
@@ -432,5 +423,5 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>

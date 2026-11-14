@@ -277,44 +277,41 @@
 
 <template>
     <div class="space-y-6">
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <SectionHeader
-                    :title="t('settings.clientManagerTitle')"
-                    :description="t('settings.clientManagerDesc')"
-                    tone="blue"
-                >
-                    <template #icon>
-                        <Monitor class="h-4 w-4" />
-                    </template>
-                </SectionHeader>
-                <div class="flex gap-2 w-full md:w-auto">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.clientManagerTitle')"
+                :description="t('settings.clientManagerDesc')"
+                tone="blue"
+            >
+                <template #icon>
+                    <Monitor class="h-4 w-4" />
+                </template>
+                <template #actions>
                     <button
                         @click="handleInit"
-                        class="flex-1 md:flex-none px-3 py-1.5 text-center text-xs font-medium text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 rounded-md border border-zinc-800"
+                        class="px-3.5 py-1.5 text-center text-xs font-medium text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 rounded-md border border-zinc-800"
                     >
                         {{ t('settings.clientResetDefault') }}
                     </button>
                     <button
                         @click="handleAdd"
-                        class="flex-1 md:flex-none px-4 py-1.5 text-center text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md border border-zinc-100 shadow-none"
+                        class="px-4 py-1.5 text-center text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md border border-zinc-100 shadow-none"
                     >
                         {{ t('settings.clientAdd') }}
                     </button>
-                </div>
+                </template>
+            </SectionHeader>
+
+            <div v-if="loading" class="text-center py-8 text-xs text-zinc-500">
+                {{ t('common.loading') }}
             </div>
-        </div>
 
-        <div v-if="loading" class="text-center py-8 text-xs text-zinc-500">
-            {{ t('common.loading') }}
-        </div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div
-                v-for="(client, index) in clients"
-                :key="client.id"
-                class="relative bg-transparent border border-zinc-800 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
-            >
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                    v-for="(client, index) in clients"
+                    :key="client.id"
+                    class="relative bg-transparent border border-zinc-800/80 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
+                >
                 <div class="flex items-start gap-3 min-w-0">
                     <div
                         class="h-11 w-11 rounded-md flex items-center justify-center text-xl shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
@@ -383,7 +380,8 @@
                     </button>
                 </div>
             </div>
-        </div>
+            </div>
+        </section>
 
         <Modal
             v-model:show="showEditModal"

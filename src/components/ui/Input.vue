@@ -65,18 +65,18 @@
     // 尺寸映射支持
     const sizeMap = {
         sm: {
-            input: 'py-1.5 text-xs rounded-md px-2',
-            label: 'text-xs mb-1 ml-1',
+            input: 'h-8 py-1 text-xs rounded-md px-2.5',
+            label: 'text-xs mb-1',
             icon: 'h-4 w-4',
         },
         md: {
-            input: 'py-2 text-sm rounded-md px-3',
-            label: 'text-sm mb-1.5 ml-1',
+            input: 'h-9 py-1.5 text-sm rounded-md px-3',
+            label: 'text-xs mb-1.5',
             icon: 'h-4 w-4',
         },
         lg: {
-            input: 'py-2.5 text-base rounded-md px-4',
-            label: 'text-sm mb-1.5 ml-1',
+            input: 'h-10 py-2 text-base rounded-md px-3.5',
+            label: 'text-xs mb-1.5',
             icon: 'h-5 w-5',
         },
     };
@@ -152,7 +152,7 @@
             />
         </div>
 
-        <p v-if="error" class="mt-1 text-xs text-red-400 ml-1">
+        <p v-if="error" class="mt-1 text-xs text-red-400">
             {{ error }}
         </p>
     </div>

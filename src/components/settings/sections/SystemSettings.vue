@@ -12,6 +12,7 @@
     import { useToastStore } from '../../../stores/toast.js';
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import { useI18n } from '../../../i18n/index.js';
 
     const props = defineProps({
@@ -157,65 +158,62 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
 
 <template>
     <div class="space-y-6">
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
+        <!-- 数据存储类型 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.storageTypeTitle')"
+                :description="t('systemSettings.storageTypeDesc')"
+            >
+                <template #icon>
                     <Database class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('systemSettings.storageTypeTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('systemSettings.storageTypeDesc') }}
-                    </p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div class="flex items-center">
-                    <input
-                        type="radio"
-                        value="kv"
-                        v-model="settings.storageType"
-                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
-                        :aria-label="t('systemSettings.kvStorage')"
-                    />
-                    <span class="ml-3 text-sm text-zinc-300">{{
-                        t('systemSettings.kvStorage')
-                    }}</span>
-                </div>
-                <div class="flex items-center">
-                    <input
-                        type="radio"
-                        value="d1"
-                        v-model="settings.storageType"
-                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
-                        :aria-label="t('systemSettings.d1DatabaseRecommended')"
-                    />
-                    <span class="ml-3 text-sm text-zinc-300">{{
-                        t('systemSettings.d1DatabaseRecommended')
-                    }}</span>
+                </template>
+            </SectionHeader>
+
+            <div class="space-y-4">
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center cursor-pointer">
+                        <input
+                            type="radio"
+                            value="kv"
+                            v-model="settings.storageType"
+                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                            :aria-label="t('systemSettings.kvStorage')"
+                        />
+                        <span class="ml-2.5 text-sm text-zinc-300">{{
+                            t('systemSettings.kvStorage')
+                        }}</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input
+                            type="radio"
+                            value="d1"
+                            v-model="settings.storageType"
+                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                            :aria-label="t('systemSettings.d1DatabaseRecommended')"
+                        />
+                        <span class="ml-2.5 text-sm text-zinc-300">{{
+                            t('systemSettings.d1DatabaseRecommended')
+                        }}</span>
+                    </label>
                 </div>
 
                 <div
                     v-if="settings.storageType === 'kv'"
-                    class="mt-4 p-4 bg-transparent rounded-md border border-zinc-800"
+                    class="pl-4 border-l-2 border-zinc-800 space-y-2.5"
                 >
-                    <h4 class="text-xs font-semibold text-zinc-200 mb-2 flex items-center gap-2">
+                    <h4 class="text-xs font-semibold text-zinc-200 flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                         {{ t('systemSettings.migrateToD1') }}
                     </h4>
-                    <p class="text-xs text-zinc-400 mb-3">
+                    <p class="text-xs text-zinc-400 leading-relaxed">
                         {{ t('systemSettings.d1MigrationDesc') }}
                     </p>
-                    <ol class="list-decimal list-inside text-xs text-zinc-400 mb-3 space-y-1">
+                    <ol class="list-decimal list-inside text-xs text-zinc-400 space-y-1.5">
                         <li><span v-html="t('systemSettings.d1StepCreate')"></span></li>
                         <li><span v-html="t('systemSettings.d1StepSchema')"></span></li>
                         <li>{{ t('systemSettings.d1StepMigrate') }}</li>
                     </ol>
-                    <div class="flex flex-col sm:flex-row gap-2">
+                    <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
                         <button
                             @click="emit('migrate')"
                             class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors bg-zinc-100 hover:bg-white border border-zinc-100 flex items-center justify-center min-w-[120px] shadow-none"
@@ -232,38 +230,36 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
+        <!-- 外部管理 API -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.externalApiTitle')"
+                :description="t('systemSettings.externalApiDesc')"
+            >
+                <template #icon>
                     <Lock class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5 flex-1">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('systemSettings.externalApiTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('systemSettings.externalApiDesc') }}
+                </template>
+                <template #actions>
+                    <Switch
+                        v-model="settings.externalApi.enabled"
+                        @update:modelValue="ensureExternalApiDefaults(settings)"
+                    />
+                </template>
+            </SectionHeader>
+
+            <div class="space-y-5">
+                <div class="space-y-1.5">
+                    <p class="text-xs leading-relaxed text-zinc-400">
+                        {{ t('systemSettings.externalApiHint') }}
+                    </p>
+                    <p class="text-xs font-mono leading-relaxed text-zinc-500">
+                        {{ t('systemSettings.externalApiPathHint') }}
                     </p>
                 </div>
-                <Switch
-                    v-model="settings.externalApi.enabled"
-                    @update:modelValue="ensureExternalApiDefaults(settings)"
-                />
-            </div>
 
-            <div class="space-y-4 rounded-md border border-zinc-800 bg-transparent p-4">
-                <p class="text-xs leading-5 text-zinc-300">
-                    {{ t('systemSettings.externalApiHint') }}
-                </p>
-                <p class="text-xs font-mono leading-5 text-zinc-500">
-                    {{ t('systemSettings.externalApiPathHint') }}
-                </p>
-
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-6 md:grid-cols-2 max-w-2xl">
                     <Input
                         :label="t('systemSettings.externalApiTokenName')"
                         v-model="settings.externalApi.tokens[0].name"
@@ -276,7 +272,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     />
                 </div>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2.5">
                     <button
                         @click="handleGenerateExternalApiToken(settings)"
                         class="px-3.5 py-1.5 text-xs font-semibold text-zinc-900 rounded-md bg-zinc-100 border border-zinc-100 hover:bg-white transition-colors"
@@ -291,138 +287,110 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
+        <!-- 备份与恢复 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.backupRestoreTitle')"
+                :description="t('systemSettings.backupRestoreDesc')"
+                no-margin
+            >
+                <template #icon>
                     <Archive class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('systemSettings.backupRestoreTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('systemSettings.backupRestoreDesc') }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button
-                    @click="exportBackup"
-                    class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-100 border border-zinc-100 hover:bg-white"
-                >
-                    {{ t('systemSettings.exportBackup') }}
-                </button>
-                <button
-                    @click="importBackup"
-                    class="px-4 py-1.5 text-xs font-medium text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
-                >
-                    {{ t('systemSettings.importBackup') }}
-                </button>
-            </div>
-        </div>
-
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-300"
-                >
-                    <KeyRound class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100">
-                        {{ t('systemSettings.adminSecurityTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('systemSettings.adminSecurityDesc') }}
-                    </p>
-                </div>
-            </div>
-
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-transparent p-5 rounded-md border border-zinc-800"
-            >
-                <div class="space-y-4">
-                    <div>
-                        <Input
-                            :label="t('systemSettings.newPassword')"
-                            v-model="passwordForm.newPassword"
-                            type="password"
-                            :placeholder="t('systemSettings.newPasswordPlaceholder')"
-                            class="rounded-md"
-                        />
-                    </div>
-                    <div>
-                        <Input
-                            :label="t('systemSettings.confirmPassword')"
-                            v-model="passwordForm.confirmPassword"
-                            type="password"
-                            :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
-                            class="rounded-md"
-                        />
-                    </div>
-                </div>
-                <div class="flex items-end">
+                </template>
+                <template #actions>
                     <button
-                        @click="handleUpdatePassword"
-                        :disabled="isUpdatingPassword || !passwordForm.newPassword"
-                        class="px-5 py-2 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        @click="exportBackup"
+                        class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-100 border border-zinc-100 hover:bg-white"
                     >
-                        <Loader2
-                            v-if="isUpdatingPassword"
-                            class="animate-spin h-4 w-4 text-zinc-600"
-                        />
-                        <span>{{
-                            isUpdatingPassword
-                                ? t('systemSettings.updating')
-                                : t('systemSettings.updatePassword')
-                        }}</span>
+                        {{ t('systemSettings.exportBackup') }}
                     </button>
-                </div>
-            </div>
-        </div>
+                    <button
+                        @click="importBackup"
+                        class="px-4 py-1.5 text-xs font-medium text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
+                    >
+                        {{ t('systemSettings.importBackup') }}
+                    </button>
+                </template>
+            </SectionHeader>
+        </section>
 
-        <div class="rounded-md border border-zinc-800 bg-transparent p-5 shadow-none">
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-red-400"
-                >
-                    <AlertTriangle class="h-4 w-4" />
-                </div>
-                <div class="space-y-0.5">
-                    <h3 class="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                        <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
-                        {{ t('systemSettings.dangerZoneTitle') }}
-                    </h3>
-                    <p class="text-xs text-zinc-400">
-                        {{ t('systemSettings.dangerZoneDesc') }}
-                    </p>
-                </div>
-            </div>
-
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-transparent p-5 rounded-md border border-zinc-800"
+        <!-- 管理员安全设置 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.adminSecurityTitle')"
+                :description="t('systemSettings.adminSecurityDesc')"
             >
-                <div class="space-y-1.5">
+                <template #icon>
+                    <KeyRound class="h-4 w-4" />
+                </template>
+            </SectionHeader>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                <Input
+                    :label="t('systemSettings.newPassword')"
+                    v-model="passwordForm.newPassword"
+                    type="password"
+                    :placeholder="t('systemSettings.newPasswordPlaceholder')"
+                    class="rounded-md"
+                />
+                <Input
+                    :label="t('systemSettings.confirmPassword')"
+                    v-model="passwordForm.confirmPassword"
+                    type="password"
+                    :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
+                    class="rounded-md"
+                />
+            </div>
+            <div class="mt-5">
+                <button
+                    @click="handleUpdatePassword"
+                    :disabled="isUpdatingPassword || !passwordForm.newPassword"
+                    class="px-4 py-1.5 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Loader2
+                        v-if="isUpdatingPassword"
+                        class="animate-spin h-4 w-4 text-zinc-600"
+                    />
+                    <span>{{
+                        isUpdatingPassword
+                            ? t('systemSettings.updating')
+                            : t('systemSettings.updatePassword')
+                    }}</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 危险区域 -->
+        <section class="rounded-lg border border-red-900/50 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.dangerZoneTitle')"
+                :description="t('systemSettings.dangerZoneDesc')"
+            >
+                <template #icon>
+                    <AlertTriangle class="h-4 w-4 text-red-400" />
+                </template>
+            </SectionHeader>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1">
                     <h4 class="text-sm font-medium text-zinc-100">
                         {{ t('systemSettings.factoryResetTitle') }}
                     </h4>
-                    <p class="text-xs text-zinc-400">
+                    <p class="text-xs text-zinc-400 leading-relaxed">
                         <span v-html="t('systemSettings.factoryResetDesc')"></span>
                     </p>
                 </div>
-                <div class="flex items-center sm:justify-end">
+                <div class="shrink-0">
                     <button
                         @click="handleReset"
-                        class="px-4 py-2 rounded-md text-red-400 text-xs font-semibold border border-red-900/60 bg-transparent hover:bg-red-950/40 hover:text-red-300 transition-colors"
+                        class="px-4 py-1.5 rounded-md text-red-400 text-xs font-semibold border border-red-900/60 bg-transparent hover:bg-red-950/40 hover:text-red-300 transition-colors"
                     >
                         {{ t('systemSettings.factoryResetTitle') }}
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 </template>

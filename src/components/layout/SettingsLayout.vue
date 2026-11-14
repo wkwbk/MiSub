@@ -5,7 +5,7 @@
 
 <template>
     <div
-        class="h-full w-full bg-[#171717] md:shadow-[0_0_13px_rgba(0,0,0,0.11)] md:dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] md:rounded-md md:border md:border-zinc-800 flex flex-col md:flex-row relative"
+        class="h-full w-full bg-[#171717] md:shadow-[0_0_13px_rgba(0,0,0,0.11)] md:dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] md:rounded-md md:border border-zinc-800 flex flex-col md:flex-row relative"
     >
         <!-- Sidebar -->
         <aside
@@ -17,7 +17,7 @@
         <!-- Main Content Area -->
         <main class="flex-1 flex flex-col min-w-0 min-h-[520px] relative">
             <!-- Scrollable Content -->
-            <div class="flex-1 p-4 md:p-6 overflow-y-auto">
+            <div class="flex-1 p-5 md:p-8 overflow-y-auto">
                 <slot></slot>
             </div>
 
