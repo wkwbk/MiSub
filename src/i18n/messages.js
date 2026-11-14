@@ -94,6 +94,7 @@ export const messages = {
         },
         profiles: {
             title: '我的订阅组',
+            subtitle: '组合订阅与节点，生成专属链接。',
             empty: '没有订阅组',
             emptyDesc: '创建一个订阅组来组合你的节点吧！',
             sortingHint:
@@ -212,6 +213,7 @@ export const messages = {
         },
         manualNodes: {
             title: '手动节点',
+            subtitle: '管理自建与导入节点，支持分组与测速。',
             unnamed: '未命名节点',
             ungrouped: '未分组',
             allGroups: '全部',
@@ -1875,6 +1877,7 @@ export const messages = {
         },
         profiles: {
             title: 'My Subs',
+            subtitle: 'Combine subscriptions and nodes into custom profiles with shareable links.',
             empty: 'No profiles',
             emptyDesc: 'Create a profile to combine nodes.',
             searchPlaceholder: 'Search profile name, description, or custom ID...',
@@ -2068,6 +2071,7 @@ export const messages = {
         },
         manualNodes: {
             title: 'Nodes',
+            subtitle: 'Manage custom or imported nodes with groups, ping tests, and batch actions.',
             unnamed: 'Unnamed',
             ungrouped: 'Ungrouped',
             allGroups: 'All',

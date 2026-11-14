@@ -105,19 +105,27 @@
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
                 class="rounded-md border border-zinc-800 bg-[#171717] shadow-none"
-                :class="compact ? 'p-3' : 'p-4'"
+                :class="[
+                    compact ? 'p-3' : 'p-4',
+                    !compact && searchable ? 'flex flex-col justify-between md:min-h-[132px]' : '',
+                ]"
             >
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="flex items-center gap-3 shrink-0">
-                        <h2 class="text-lg font-semibold text-zinc-100">
-                            {{ t('profiles.title') }}
-                        </h2>
-                        <span
-                            class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
-                            >{{ profiles.length }}</span
-                        >
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-3 shrink-0">
+                            <h2 class="text-lg font-semibold text-zinc-100">
+                                {{ t('profiles.title') }}
+                            </h2>
+                            <span
+                                class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                                >{{ profiles.length }}</span
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-zinc-400">
+                            {{ t('profiles.subtitle') }}
+                        </p>
                     </div>
-                    <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start">
+                    <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0">
                         <button
                             @click="handleAdd"
                             class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"

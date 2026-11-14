@@ -331,6 +331,7 @@
     <div>
         <div
             class="mb-4 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+            :class="{ 'flex flex-col justify-between md:min-h-[132px]': searchable }"
         >
             <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
@@ -347,6 +348,7 @@
                         {{ t('subscriptions.subtitle') }}
                     </p>
                     <p
+                        v-if="isRefreshing || refreshError || refreshTime"
                         data-testid="subscriptions-refresh-status"
                         aria-live="polite"
                         class="mt-1 text-xs font-mono text-zinc-500"

@@ -188,6 +188,12 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        filteredProfiles,
+        searchQuery: profileSearchQuery,
+        profilesCurrentPage,
+        profilesTotalPages,
+        paginatedProfiles,
+        changeProfilesPage,
         copyProfileLink,
         copyClashLink,
         cleanupSubscriptions,
@@ -584,8 +590,16 @@
                 />
                 <ProfilePanel
                     :profiles="profiles"
+                    :paginated-profiles="paginatedProfiles"
+                    :current-page="profilesCurrentPage"
+                    :total-pages="profilesTotalPages"
+                    :search-query="profileSearchQuery"
+                    :filtered-count="filteredProfiles.length"
+                    searchable
                     :compact="true"
                     :is-sorting="isSortingProfiles"
+                    @update-search="(query) => (profileSearchQuery = query)"
+                    @change-page="changeProfilesPage"
                     @add="handleAddProfile"
                     @edit="handleEditProfile"
                     @delete="handleDeleteProfile"

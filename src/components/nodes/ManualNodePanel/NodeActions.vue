@@ -66,22 +66,39 @@
 
 <template>
     <div
-        class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
+        class="mb-4 min-w-0 flex flex-col justify-between rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none md:min-h-[132px]"
     >
-        <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex min-w-0 flex-wrap items-center gap-3">
-                <h2 class="text-lg font-semibold text-zinc-100">
-                    {{ t('manualNodes.title') }}
-                </h2>
-                <span
-                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
-                    >{{ manualNodesCount }}</span
-                >
+        <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="min-w-0 flex-1">
+                <div class="flex min-w-0 flex-wrap items-center gap-3">
+                    <h2 class="text-lg font-semibold text-zinc-100">
+                        {{ t('manualNodes.title') }}
+                    </h2>
+                    <span
+                        class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                        >{{ manualNodesCount }}</span
+                    >
+                    <span
+                        v-if="searchTerm"
+                        class="mt-2 w-full rounded-md border border-zinc-800 bg-transparent px-2.5 py-0.5 text-xs font-mono text-zinc-300 sm:mt-0 sm:w-auto"
+                    >
+                        {{
+                            t('manualNodes.searchResult', {
+                                keyword: searchTerm,
+                                filtered: filteredNodesCount,
+                                total: manualNodesCount,
+                            })
+                        }}
+                    </span>
+                </div>
+                <p class="mt-1 text-xs text-zinc-400">
+                    {{ t('manualNodes.subtitle') }}
+                </p>
 
                 <!-- Mobile Group Filter -->
                 <div
                     data-testid="manual-node-mobile-groups"
-                    class="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 no-scrollbar md:hidden"
+                    class="mt-2 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 no-scrollbar md:hidden"
                 >
                     <button
                         @click="emit('set-group-filter', null)"
@@ -121,27 +138,14 @@
                         {{ group }}
                     </button>
                 </div>
-
-                <span
-                    v-if="searchTerm"
-                    class="mt-2 w-full rounded-md border border-zinc-800 bg-transparent px-2.5 py-0.5 text-xs font-mono text-zinc-300 sm:mt-0 sm:w-auto"
-                >
-                    {{
-                        t('manualNodes.searchResult', {
-                            keyword: searchTerm,
-                            filtered: filteredNodesCount,
-                            total: manualNodesCount,
-                        })
-                    }}
-                </span>
             </div>
             <div
                 data-testid="manual-node-toolbar-actions"
-                class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap"
+                class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap lg:shrink-0"
             >
                 <div
                     data-testid="manual-node-search"
-                    class="relative min-w-0 grow basis-full sm:basis-auto lg:min-w-[240px]"
+                    class="relative min-w-0 grow basis-full sm:basis-auto lg:w-44 lg:grow-0 xl:w-52"
                 >
                     <input
                         type="text"
@@ -281,7 +285,7 @@
 
         <!-- Group Filter Chips (New Line) -->
         <div
-            class="hidden md:flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800 overflow-x-auto no-scrollbar mask-gradient-r pb-1"
+            class="hidden md:flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800 overflow-x-auto no-scrollbar mask-gradient-r"
         >
             <button
                 @click="emit('set-group-filter', null)"
