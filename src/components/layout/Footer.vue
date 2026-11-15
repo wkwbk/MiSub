@@ -24,7 +24,7 @@
                 <template v-if="!hideBranding">
                     Copyright © {{ currentYear }}
                     <a
-                        href="https://github.com/imzyb/MiSub"
+                        href="https://github.com/wkwbk/MiSub"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="font-semibold text-zinc-300 hover:text-zinc-100 hover:underline transition-colors"

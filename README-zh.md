@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange.svg)](https://pages.cloudflare.com/)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
-[![Version](https://img.shields.io/badge/version-v2.7.0-indigo.svg)](#-更新日志)
+[![Version](https://img.shields.io/badge/version-v2.8.0-indigo.svg)](#-更新日志)
 
 [功能特性](#-功能特性) • [快速开始](#-快速开始) • [部署指南](#-部署指南) • [使用说明](#-使用说明) • [External API 使用说明](docs/external-management-api-usage.md) • [Wiki 文档](docs/OPERATOR_CHAIN_GUIDE.md) • [v2.5.0 升级指南](docs/UPGRADE_V2.5.md) • [更新日志](#-更新日志)
 
@@ -61,6 +61,22 @@
   - 管理员分享：精选中转/直连机场订阅
   - 一键复制：访客可直接复制订阅链接
   - 客户端推荐：主流全平台客户端下载指引
+
+### 🆕 v2.8.0 更新亮点
+
+- **🎨 Exposed Hairline Grid 视觉重构**
+  - 统一深浅色主题配色（深色底色 `#131515`、卡片 `#171717`）与高对比度悬停反馈
+  - 引入 `lucide-vue-next` 图标库与统一封装的自定义 `Select` 组件
+  - 优化顶部毛玻璃导航栏、主题切换对角扫光动画及桌面端双栏双向吸顶滚动
+
+- **📦 机场订阅与分组交互升级**
+  - 拆分机场订阅专用批量导入，支持单条订阅分组与新增/编辑选组
+  - 改用标签筛选分组，并由按条数分页改为按分组单元滚动无限加载
+  - 优化分组模式下的两级拖拽排序（组内与组间）及统一排序模式交互
+
+- **🔐 部署与安全加固**
+  - 支持 Cloudflare Workers 静态资源托管与原生 Cron Trigger 部署
+  - 防止已初始化实例回退默认管理员密码，稳定 Cookie Secret 回退逻辑
 
 ### 🆕 v2.7.0 更新亮点
 
@@ -239,9 +255,9 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
-| `CORS_ORIGINS` | 允许跨域访问的来源(逗号分隔)，同域可不填 | `https://example.com,http://localhost:5173` |
-| `MISUB_PUBLIC_URL` | 站点对外访问的公开域名，用于生成订阅转换回调地址 | `https://your-domain.pages.dev` |
-| `MISUB_CALLBACK_URL` | 订阅转换回调基础地址（优先级高于 MISUB_PUBLIC_URL），通常保持默认即可 | `https://your-domain.pages.dev` |
+| `CORS_ORIGINS` | 允许跨域访问的来源(逗号分隔)，同域可不填 | `https://libk.top,http://localhost:5173` |
+| `MISUB_PUBLIC_URL` | 站点对外访问的公开域名，用于生成订阅转换回调地址 | `https://libk.top` |
+| `MISUB_CALLBACK_URL` | 订阅转换回调基础地址（优先级高于 MISUB_PUBLIC_URL），通常保持默认即可 | `https://libk.top` |
 
 **前端构建变量（可选）：**
 
@@ -408,6 +424,14 @@ MiSub 提供 `/cron` 接口用于外部定时服务触发订阅刷新，适合 C
 - [数据模型](docs/data-model.md)
 
 ## 📝 更新日志
+
+### v2.8.0 (2026-11-15)
+
+**✨ 重点更新：全新极简网格 UI 重构、分组交互升级与 Workers 部署支持**
+- **Exposed Hairline Grid 视觉重构** - 统一深浅色主题配色、按钮与输入框质感，引入 `lucide-vue-next` 图标库及自定义 `Select` 组件。
+- **机场订阅与分组体验升级** - 拆分机场订阅专用批量导入并支持单条选组，改用标签筛选分组与按分组单元无限加载，支持组内与组间两级拖拽排序。
+- **订阅组与弹窗优化** - 支持订阅组拖拽排序、加宽订阅组弹窗、对齐资源列表并补充订阅分组筛选。
+- **Workers 部署与安全加固** - 支持 Cloudflare Workers Static Assets 与原生 Cron 部署，防止已初始化实例回退默认管理员密码。
 
 ### v2.7.0 (2026-05-20)
 
