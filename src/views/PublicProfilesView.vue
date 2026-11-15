@@ -341,7 +341,7 @@
 
 <template>
     <div
-        class="min-h-screen bg-transparent transition-colors duration-200 relative"
+        class="bg-transparent transition-colors duration-200 relative"
     >
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
@@ -516,7 +516,7 @@
             </div>
 
             <!-- Content Section -->
-            <div class="relative z-20 pb-24 pt-4">
+            <div class="relative z-20 pt-4">
                 <!-- Subscription Section -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Announcement Section -->
@@ -592,7 +592,7 @@
                 </div>
 
                 <!-- Clients Section (Visually Separated) -->
-                <div class="mt-16 pt-12 pb-10 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent">
+                <div class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent">
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">
