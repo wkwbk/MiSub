@@ -197,9 +197,7 @@ For detailed historical changes, see [README-zh.md](README-zh.md) and the reposi
 
 ## Acknowledgements
 
-Thanks to sponsor [ForZTN](https://sponsorship.forztn.com/github/wkwbk/MiSub) for supporting the project server.
-
-MiSub is developed from [CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB). Thanks to CM for the open-source contribution.
+This project is based on [imzyb/MiSub](https://github.com/imzyb/MiSub) and [CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB). Thanks to the original authors for their open-source contributions.
 
 ## License
 
