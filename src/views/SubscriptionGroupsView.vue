@@ -31,6 +31,15 @@
     const isSortingSubs = ref(false);
     const showDeleteSubsModal = ref(false);
 
+    watch(
+        () => dataStore.isDirty,
+        (newVal, oldVal) => {
+            if (oldVal && !newVal && isSortingSubs.value) {
+                isSortingSubs.value = false;
+            }
+        }
+    );
+
     const {
         subscriptions,
         filteredSubscriptions,

@@ -318,6 +318,9 @@
     const handleDiscard = async () => {
         // 强制刷新数据，忽略缓存
         await dataStore.fetchData(true);
+        isSortingSubs.value = false;
+        isSortingNodes.value = false;
+        isSortingProfiles.value = false;
         showToast(t('notices.discardedChanges'));
     };
 
@@ -329,7 +332,9 @@
 
             saveState.value = 'success';
 
-            if (isSortingNodes.value) isSortingNodes.value = false;
+            isSortingSubs.value = false;
+            isSortingNodes.value = false;
+            isSortingProfiles.value = false;
 
             setTimeout(() => {
                 saveState.value = 'idle';

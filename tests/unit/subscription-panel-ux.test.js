@@ -229,4 +229,23 @@ describe('SubscriptionPanel UX', () => {
         expect(card.classes()).toContain('pointer-events-none');
         expect(card.classes()).toContain('select-none');
     });
+
+    it('does not emit markDirty when drag ends at the same index', async () => {
+        const subs = [
+            { id: 's1', name: 'A', url: 'https://a.test/sub' },
+            { id: 's2', name: 'B', url: 'https://b.test/sub' },
+        ];
+        const wrapper = mountPanel({
+            subscriptions: subs,
+            paginatedSubscriptions: subs,
+            isSorting: true,
+        });
+
+        const draggableComp = wrapper.findComponent('.contents');
+        await draggableComp.vm.$emit('end', { oldIndex: 0, newIndex: 0 });
+        expect(wrapper.emitted('markDirty')).toBeUndefined();
+
+        await draggableComp.vm.$emit('end', { oldIndex: 0, newIndex: 1 });
+        expect(wrapper.emitted('markDirty')).toHaveLength(1);
+    });
 });

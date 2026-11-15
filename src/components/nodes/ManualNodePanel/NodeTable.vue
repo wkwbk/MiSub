@@ -61,6 +61,13 @@
         if (p > displayTotalPages.value) p = displayTotalPages.value;
         emit('change-page', p);
     };
+
+    const handleDragEnd = (evt) => {
+        if (evt && typeof evt.oldIndex === 'number' && evt.oldIndex === evt.newIndex) {
+            return;
+        }
+        emit('sort-end');
+    };
 </script>
 
 <template>
@@ -115,11 +122,12 @@
                     v-model="draggableModel"
                     item-key="id"
                     animation="300"
-                    @end="emit('sort-end')"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
                 >
                     <template #item="{ element: node }">
                         <div
-                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5 transition-colors hover:border-sky-400/70"
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
                         >
                             <ManualNodeCard
                                 class="pointer-events-none select-none"
@@ -145,11 +153,12 @@
                     v-model="draggableModel"
                     item-key="id"
                     animation="300"
-                    @end="emit('sort-end')"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
                 >
                     <template #item="{ element: node, index }">
                         <div
-                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5 transition-colors hover:border-sky-400/70"
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
                         >
                             <ManualNodeList
                                 :node="node"

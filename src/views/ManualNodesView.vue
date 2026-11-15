@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, defineAsyncComponent } from 'vue';
+    import { ref, defineAsyncComponent, watch } from 'vue';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useManualNodes } from '../composables/useManualNodes.js';
     import { useNodeForms } from '../composables/useNodeForms.js'; // Added
@@ -26,6 +26,15 @@
     // Component Logic Reuse
     const isSortingNodes = ref(false);
     const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
+
+    watch(
+        () => dataStore.isDirty,
+        (newVal, oldVal) => {
+            if (oldVal && !newVal && isSortingNodes.value) {
+                isSortingNodes.value = false;
+            }
+        }
+    );
     const showDeleteNodesModal = ref(false);
     const showBatchDeleteModal = ref(false);
     const batchDeleteIds = ref([]);

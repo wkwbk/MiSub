@@ -92,6 +92,12 @@
     const handleChangePage = (page) => emit('changePage', page);
     const handleToggleSort = () => emit('toggleSort');
     const handleSortEnd = () => emit('markDirty');
+    const handleDragEnd = (evt) => {
+        if (evt && typeof evt.oldIndex === 'number' && evt.oldIndex === evt.newIndex) {
+            return;
+        }
+        handleSortEnd();
+    };
     const handleDeleteAll = () => emit('deleteAll');
     const handleRefreshAll = () => emit('refreshAll');
     const handleImport = () => emit('import');
@@ -510,11 +516,12 @@
                     v-model="draggableSubscriptions"
                     item-key="id"
                     animation="300"
-                    @end="handleSortEnd"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
                 >
                     <template #item="{ element: subscription }">
                         <div
-                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5 transition-colors hover:border-sky-400/70"
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
                         >
                             <Card
                                 class="pointer-events-none select-none"
