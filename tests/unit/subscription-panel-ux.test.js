@@ -250,4 +250,35 @@ describe('SubscriptionPanel UX', () => {
         await draggableComp.vm.$emit('end', { oldIndex: 0, newIndex: 1 });
         expect(wrapper.emitted('markDirty')).toHaveLength(1);
     });
+
+    it('preserves group structure and supports group + intra-group reordering during sorting', async () => {
+        const subs = [
+            { id: 'a1', name: '共享', url: 'https://sub.libk.top/x/share' },
+            { id: 'c1', name: '免费', url: 'https://ijg.cc/helloworld' },
+            { id: 'a2', name: '自建', url: 'https://sub.libk.top/x/lisir' },
+            { id: 'b1', name: '甲1', url: 'https://alpha.example.com/1' },
+            { id: 'b2', name: '甲2', url: 'https://alpha.example.com/2' },
+        ];
+        const wrapper = mountPanel({
+            subscriptions: subs,
+            paginatedSubscriptions: subs,
+            isSorting: true,
+        });
+
+        const groupCards = wrapper.findAll('[data-testid="sortable-subscription-group"]');
+        expect(groupCards).toHaveLength(2);
+        expect(groupCards[0].text()).toContain('Libk');
+        expect(groupCards[1].text()).toContain('Example');
+
+        // 组内排序：把 Libk 组的「自建」移到「共享」前面
+        const innerDraggable = groupCards[0].findComponent('.contents');
+        await innerDraggable.vm.$emit('update:modelValue', [subs[2], subs[0]]);
+        expect(wrapper.emitted('reorder')?.[0][0].map((item) => item.id)).toEqual([
+            'a2',
+            'a1',
+            'b1',
+            'b2',
+            'c1',
+        ]);
+    });
 });

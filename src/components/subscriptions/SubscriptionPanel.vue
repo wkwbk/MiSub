@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, nextTick, watch } from 'vue';
-    import { Search, ChevronDown, X } from 'lucide-vue-next';
+    import { Search, ChevronDown, X, GripVertical } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
@@ -318,6 +318,40 @@
         )
     );
 
+    const ungroupedAllSubscriptions = computed(() =>
+        groupedSubscriptions.value.filter((g) => g.items.length === 1).flatMap((g) => g.items)
+    );
+
+    const draggableGroups = computed({
+        get: () => collapsibleGroups.value,
+        set: (nextGroups) => {
+            emit('reorder', [
+                ...nextGroups.flatMap((g) => g.items),
+                ...ungroupedAllSubscriptions.value,
+            ]);
+        },
+    });
+
+    const draggableUngroupedSubscriptions = computed({
+        get: () => ungroupedAllSubscriptions.value,
+        set: (nextUngrouped) => {
+            emit('reorder', [
+                ...collapsibleGroups.value.flatMap((g) => g.items),
+                ...nextUngrouped,
+            ]);
+        },
+    });
+
+    const reorderGroupItems = (groupKey, nextItems) => {
+        const nextGroups = collapsibleGroups.value.map((g) =>
+            g.key === groupKey ? { ...g, items: nextItems } : g
+        );
+        emit('reorder', [
+            ...nextGroups.flatMap((g) => g.items),
+            ...ungroupedAllSubscriptions.value,
+        ]);
+    };
+
     /** 单条目站点仅在当前页平铺展示。 */
     const ungroupedSubscriptions = computed(() =>
         groupedSubscriptions.value
@@ -543,7 +577,128 @@
                 button-test-id="subscription-finish-sort"
                 @finish="handleToggleSort"
             />
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-if="isGrouped" class="space-y-4">
+                <draggable
+                    tag="div"
+                    class="space-y-4"
+                    v-model="draggableGroups"
+                    item-key="key"
+                    handle=".group-drag-handle"
+                    animation="300"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
+                >
+                    <template #item="{ element: group }">
+                        <div
+                            data-testid="sortable-subscription-group"
+                            class="rounded-md border border-dashed border-sky-500/40 bg-[#171717]"
+                        >
+                            <div class="flex w-full items-center justify-between gap-3 px-4 py-3">
+                                <div class="flex min-w-0 flex-1 items-center gap-2">
+                                    <span
+                                        class="group-drag-handle cursor-move rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                    >
+                                        <GripVertical class="h-4 w-4" aria-hidden="true" />
+                                    </span>
+                                    <button
+                                        type="button"
+                                        :aria-expanded="String(!isGroupCollapsed(group.key))"
+                                        class="flex min-w-0 flex-1 items-center gap-2 text-left"
+                                        @click="toggleGroup(group.key)"
+                                    >
+                                        <ChevronDown
+                                            class="h-4 w-4 shrink-0 text-zinc-400 transition-transform"
+                                            :class="isGroupCollapsed(group.key) ? '-rotate-90' : ''"
+                                            aria-hidden="true"
+                                        />
+                                        <span
+                                            class="truncate text-sm font-semibold text-zinc-100"
+                                            >{{ groupDisplayName(group) }}</span
+                                        >
+                                        <span
+                                            class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono text-zinc-300"
+                                            >{{ group.items.length }}</span
+                                        >
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                v-show="!isGroupCollapsed(group.key)"
+                                class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 p-4"
+                            >
+                                <draggable
+                                    tag="div"
+                                    class="contents"
+                                    :model-value="group.items"
+                                    @update:model-value="
+                                        (items) => reorderGroupItems(group.key, items)
+                                    "
+                                    item-key="id"
+                                    animation="300"
+                                    ghost-class="opacity-50"
+                                    @end="handleDragEnd"
+                                >
+                                    <template #item="{ element: subscription }">
+                                        <div
+                                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                                        >
+                                            <Card
+                                                class="pointer-events-none select-none"
+                                                :misub="subscription"
+                                                @delete="handleDelete(subscription.id)"
+                                                @change="handleSortEnd"
+                                                @update="handleUpdate(subscription.id)"
+                                                @edit="handleEdit(subscription.id)"
+                                                @preview="handlePreview(subscription.id)"
+                                                @qrcode="handleQRCode(subscription.id)"
+                                                @applyDetectedName="
+                                                    (name) =>
+                                                        handleApplyDetectedName(subscription, name)
+                                                "
+                                            />
+                                        </div>
+                                    </template>
+                                </draggable>
+                            </div>
+                        </div>
+                    </template>
+                </draggable>
+                <div
+                    v-if="draggableUngroupedSubscriptions.length > 0"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
+                >
+                    <draggable
+                        tag="div"
+                        class="contents"
+                        v-model="draggableUngroupedSubscriptions"
+                        item-key="id"
+                        animation="300"
+                        ghost-class="opacity-50"
+                        @end="handleDragEnd"
+                    >
+                        <template #item="{ element: subscription }">
+                            <div
+                                class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                            >
+                                <Card
+                                    class="pointer-events-none select-none"
+                                    :misub="subscription"
+                                    @delete="handleDelete(subscription.id)"
+                                    @change="handleSortEnd"
+                                    @update="handleUpdate(subscription.id)"
+                                    @edit="handleEdit(subscription.id)"
+                                    @preview="handlePreview(subscription.id)"
+                                    @qrcode="handleQRCode(subscription.id)"
+                                    @applyDetectedName="
+                                        (name) => handleApplyDetectedName(subscription, name)
+                                    "
+                                />
+                            </div>
+                        </template>
+                    </draggable>
+                </div>
+            </div>
+            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <draggable
                     tag="div"
                     class="contents"
