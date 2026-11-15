@@ -87,11 +87,11 @@ describe('dashboard health helpers', () => {
             actionQuery: { focus: 'mytoken' },
         });
         expect(items.find((item) => item.id === 'subscription-errors')).toMatchObject({
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'error' },
         });
         expect(items.find((item) => item.id === 'disabled-subscriptions')).toMatchObject({
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'disabled' },
         });
     });

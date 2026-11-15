@@ -53,6 +53,10 @@
     });
 
     const subscriptionsCount = computed(() => (subscriptions.value || []).length);
+    const manualNodesCount = computed(() => (manualNodes.value || []).length);
+    const enabledManualNodesCount = computed(
+        () => (manualNodes.value || []).filter((node) => node.enabled).length
+    );
     const activeProfilesCount = computed(() => (activeProfiles || []).length);
 
     const lastUpdatedTime = computed(() => {
@@ -346,6 +350,8 @@
             <StatCards
                 :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
                 :traffic-stats="trafficStats"
+                :manual-nodes-count="manualNodesCount"
+                :enabled-manual-nodes-count="enabledManualNodesCount"
                 :active-subscriptions-count="enabledSubscriptionsCount"
                 :subscriptions-count="subscriptionsCount"
                 :total-nodes-count="totalNodesCount"

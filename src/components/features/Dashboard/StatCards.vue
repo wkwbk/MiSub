@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Zap, Boxes, Globe, ClipboardList } from 'lucide-vue-next';
+    import { Zap, Boxes, Server, ClipboardList } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -13,6 +13,14 @@
         trafficStats: {
             type: Object,
             required: true,
+        },
+        manualNodesCount: {
+            type: Number,
+            default: 0,
+        },
+        enabledManualNodesCount: {
+            type: Number,
+            default: 0,
         },
         activeSubscriptionsCount: {
             type: Number,
@@ -55,6 +63,9 @@
     const hasNodeWarning = computed(
         () => props.subscriptionsCount > 0 && props.totalNodesCount === 0
     );
+    const hasManualNodeWarning = computed(
+        () => props.manualNodesCount > 0 && props.enabledManualNodesCount === 0
+    );
     const hasProfileWarning = computed(() => props.activeProfilesCount === 0);
 
     const isVisible = ref(true);
@@ -82,7 +93,7 @@
             style="--delay: 0ms"
             @click="
                 navigate(
-                    '/dashboard/subscriptions',
+                    '/dashboard/groups',
                     hasTrafficWarning ? { status: 'low-traffic' } : {}
                 )
             "
@@ -128,19 +139,71 @@
 
         <button
             type="button"
-            data-testid="stat-card-subscriptions"
+            data-testid="stat-card-nodes"
             :class="[
                 cardBaseClass,
-                hasSubscriptionWarning ? warningCardClass : normalCardClass,
+                hasManualNodeWarning ? warningCardClass : normalCardClass,
                 { 'stat-card-visible': isVisible },
             ]"
             style="--delay: 100ms"
+            @click="navigate('/dashboard/nodes')"
+        >
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                    {{ t('dashboard.manualNodes') }}
+                </h3>
+                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                    <Server class="h-4 w-4" stroke-width="1.5" />
+                </span>
+            </div>
+            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
+                {{ enabledManualNodesCount }}
+                <span class="text-xs font-normal text-zinc-500 font-mono"
+                    >/ {{ manualNodesCount }}</span
+                >
+            </p>
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
+                <span
+                    class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                    :class="
+                        hasManualNodeWarning
+                            ? 'bg-amber-500'
+                            : manualNodesCount === 0
+                              ? 'bg-zinc-500'
+                              : 'bg-emerald-500'
+                    "
+                ></span>
+                <span>
+                    {{
+                        hasManualNodeWarning
+                            ? t('dashboard.allManualNodesDisabled')
+                            : manualNodesCount === 0
+                              ? t('dashboard.noManualNodes')
+                              : t('dashboard.enabledManualNodes', {
+                                    count: enabledManualNodesCount,
+                                })
+                    }}
+                </span>
+            </p>
+        </button>
+
+        <button
+            type="button"
+            data-testid="stat-card-subscriptions"
+            :class="[
+                cardBaseClass,
+                hasSubscriptionWarning || hasNodeWarning ? warningCardClass : normalCardClass,
+                { 'stat-card-visible': isVisible },
+            ]"
+            style="--delay: 200ms"
             @click="
                 navigate(
-                    '/dashboard/subscriptions',
+                    '/dashboard/groups',
                     hasSubscriptionWarning
                         ? { status: subscriptionsCount === 0 ? 'missing' : 'disabled' }
-                        : {}
+                        : hasNodeWarning
+                          ? { status: 'zero-nodes' }
+                          : {}
                 )
             "
         >
@@ -158,55 +221,20 @@
                     >/ {{ subscriptionsCount }}</span
                 >
             </p>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400">
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
                 <span
                     class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                    :class="hasSubscriptionWarning ? 'bg-amber-500' : 'bg-emerald-500'"
+                    :class="
+                        hasSubscriptionWarning || hasNodeWarning ? 'bg-amber-500' : 'bg-emerald-500'
+                    "
                 ></span>
                 <span>{{
                     hasSubscriptionWarning
                         ? t('dashboard.needsEnableSubscriptions')
-                        : t('dashboard.normalRunning')
+                        : hasNodeWarning
+                          ? t('dashboard.needsRefreshNodes')
+                          : t('dashboard.normalRunningWithNodes', { count: totalNodesCount })
                 }}</span>
-            </p>
-        </button>
-
-        <button
-            type="button"
-            data-testid="stat-card-nodes"
-            :class="[
-                cardBaseClass,
-                hasNodeWarning ? warningCardClass : normalCardClass,
-                { 'stat-card-visible': isVisible },
-            ]"
-            style="--delay: 200ms"
-            @click="
-                navigate('/dashboard/subscriptions', hasNodeWarning ? { status: 'zero-nodes' } : {})
-            "
-        >
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-                    {{ t('dashboard.totalNodes') }}
-                </h3>
-                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
-                    <Globe class="h-4 w-4" stroke-width="1.5" />
-                </span>
-            </div>
-            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
-                {{ totalNodesCount }}
-            </p>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
-                <span
-                    class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                    :class="hasNodeWarning ? 'bg-amber-500' : 'bg-emerald-500'"
-                ></span>
-                <span>
-                    {{
-                        hasNodeWarning
-                            ? t('dashboard.needsRefreshNodes')
-                            : t('dashboard.fromSources', { count: subscriptionsCount })
-                    }}
-                </span>
             </p>
         </button>
 

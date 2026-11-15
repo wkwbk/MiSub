@@ -287,7 +287,7 @@ describe('DashboardView 待处理事项', () => {
         await primary.trigger('click');
 
         expect(pushMock).toHaveBeenCalledWith({
-            path: '/dashboard/subscriptions',
+            path: '/dashboard/groups',
             query: { status: 'error' },
         });
     });
@@ -304,12 +304,12 @@ describe('DashboardView 待处理事项', () => {
         const item = wrapper.vm.dashboardHealthItems.find((i) => i.id === 'subscription-errors');
         // Precondition: this item genuinely carries both an action and a route.
         expect(item.action).toBe('openLog');
-        expect(item.actionRoute).toBe('/dashboard/subscriptions');
+        expect(item.actionRoute).toBe('/dashboard/groups');
 
         wrapper.vm.handleHealthAction(item);
 
         expect(pushMock).toHaveBeenCalledWith({
-            path: '/dashboard/subscriptions',
+            path: '/dashboard/groups',
             query: { status: 'error' },
         });
         expect(wrapper.vm.showLogModal).toBe(false);
