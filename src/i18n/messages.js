@@ -377,6 +377,7 @@ export const messages = {
             searchPlaceholder: '搜索机场订阅名称、备注或链接...',
             listSearchPlaceholder: '搜索名称、备注或链接',
             noSearchResults: '没有找到匹配的机场订阅',
+            loadMoreRemaining: '加载更多（剩余 {count} 项）',
             sortingHint:
                 '当前处于排序模式，拖拽卡片即可调整顺序，卡片内操作已临时锁定。',
             clearStatusFilter: '清除筛选',
@@ -2271,6 +2272,7 @@ export const messages = {
             searchPlaceholder: 'Search source name, notes, or URL...',
             listSearchPlaceholder: 'Search name, notes, or URL',
             noSearchResults: 'No matching sources found',
+            loadMoreRemaining: 'Load more ({count} remaining)',
             sortingHint:
                 'Sorting mode active. Drag cards to reorder; card actions are temporarily locked.',
             clearStatusFilter: 'Clear filter',

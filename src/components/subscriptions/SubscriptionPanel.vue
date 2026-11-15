@@ -1,10 +1,9 @@
 <script setup>
-    import { computed, ref, nextTick, watch } from 'vue';
+    import { computed, ref, nextTick, watch, onBeforeUnmount } from 'vue';
     import { Search, ChevronDown, X, GripVertical } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
-    import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
@@ -24,9 +23,7 @@
 
     const props = defineProps({
         subscriptions: { type: Array, default: () => [] },
-        paginatedSubscriptions: Array,
-        currentPage: Number,
-        totalPages: Number,
+        batchSize: { type: Number, default: 12 },
         isSorting: Boolean,
         searchable: { type: Boolean, default: false },
         searchQuery: { type: String, default: '' },
@@ -54,7 +51,6 @@
     const emit = defineEmits([
         'add',
         'delete',
-        'changePage',
         'updateNodeCount',
         'edit',
         'toggleSort',
@@ -78,7 +74,31 @@
         set: (value) => emit('updateSearch', value),
     });
 
-    const visibleCount = computed(() => props.filteredCount ?? props.subscriptions.length);
+    const matchedSubscriptions = computed(() => {
+        const list = props.subscriptions || [];
+        const query = String(props.searchQuery || '')
+            .trim()
+            .toLowerCase();
+        if (!query) return list;
+
+        return list.filter((sub) =>
+            [
+                sub.name,
+                sub.description,
+                sub.remark,
+                sub.note,
+                sub.website,
+                sub.url,
+                sub.customId,
+            ].some((value) =>
+                String(value || '')
+                    .toLowerCase()
+                    .includes(query)
+            )
+        );
+    });
+
+    const visibleCount = computed(() => props.filteredCount ?? matchedSubscriptions.value.length);
     const refreshTime = computed(() => {
         if (!props.lastRefreshAt) return '';
         const date = new Date(props.lastRefreshAt);
@@ -98,7 +118,6 @@
     const handlePreview = (id) => emit('preview', id);
     const handleQRCode = (id) => emit('qrcode', id);
     const handleAdd = () => emit('add');
-    const handleChangePage = (page) => emit('changePage', page);
     const handleToggleSort = () => emit('toggleSort');
     const handleSortEnd = () => emit('markDirty');
     const handleDragEnd = (evt) => {
@@ -278,11 +297,11 @@
     };
 
     /**
-     * 始终按完整筛选结果分组，避免分页把同一机场的订阅拆散到不同页；
-     * 页面切换由分组列表分页，而非先分页订阅再尝试分组。
+     * 按完整筛选结果分组后，以「顶级展示单元（分组或独立订阅）」为单位进行滚动无限加载，
+     * 避免按订阅条数分页时把同一机场分组拆散或跨页重复显示。
      */
     const groupedSubscriptions = computed(() => {
-        const list = props.subscriptions || [];
+        const list = matchedSubscriptions.value || [];
         const order = [];
         const map = new Map();
 
@@ -314,19 +333,29 @@
         groupedSubscriptions.value.filter(isGroupedCard)
     );
 
-    const pageSubscriptionIds = computed(
-        () => new Set((props.paginatedSubscriptions || []).map((sub) => sub.id))
-    );
-
-    /** 当前分页命中组内任一条时显示组；组本身完整呈现但按首条排序锚定。 */
-    const visibleCollapsibleGroups = computed(() =>
-        collapsibleGroups.value.filter((group) =>
-            group.items.some((item) => pageSubscriptionIds.value.has(item.id))
-        )
-    );
-
     const ungroupedAllSubscriptions = computed(() =>
         groupedSubscriptions.value.filter((g) => !isGroupedCard(g)).flatMap((g) => g.items)
+    );
+
+    const topLevelUnits = computed(() => [
+        ...collapsibleGroups.value.map((group) => ({ type: 'group', group })),
+        ...ungroupedAllSubscriptions.value.map((subscription) => ({
+            type: 'single',
+            subscription,
+        })),
+    ]);
+
+    const normalizedBatchSize = computed(() => Math.max(1, Number(props.batchSize) || 12));
+    const visibleUnitLimit = ref(normalizedBatchSize.value);
+
+    const visibleTopLevelUnits = computed(() =>
+        topLevelUnits.value.slice(0, visibleUnitLimit.value)
+    );
+
+    const visibleCollapsibleGroups = computed(() =>
+        visibleTopLevelUnits.value
+            .filter((unit) => unit.type === 'group')
+            .map((unit) => unit.group)
     );
 
     const draggableGroups = computed({
@@ -359,12 +388,68 @@
         ]);
     };
 
-    /** 未显式分组的单条目站点仅在当前页平铺展示。 */
+    /** 当前已加载批次中的未分组单条目订阅。 */
     const ungroupedSubscriptions = computed(() =>
-        groupedSubscriptions.value
-            .filter((g) => !isGroupedCard(g) && pageSubscriptionIds.value.has(g.items[0].id))
-            .flatMap((g) => g.items)
+        visibleTopLevelUnits.value
+            .filter((unit) => unit.type === 'single')
+            .map((unit) => unit.subscription)
     );
+
+    const remainingUnitCount = computed(() =>
+        Math.max(0, topLevelUnits.value.length - visibleTopLevelUnits.value.length)
+    );
+    const hasMoreUnits = computed(() => remainingUnitCount.value > 0);
+
+    const loadMoreUnits = () => {
+        if (!hasMoreUnits.value) return;
+        visibleUnitLimit.value += normalizedBatchSize.value;
+    };
+
+    watch([() => props.searchQuery, () => props.statusFilter, normalizedBatchSize], () => {
+        visibleUnitLimit.value = normalizedBatchSize.value;
+    });
+
+    const loadMoreSentinelRef = ref(null);
+    let loadMoreObserver = null;
+
+    const disconnectLoadMoreObserver = () => {
+        if (loadMoreObserver) {
+            loadMoreObserver.disconnect();
+            loadMoreObserver = null;
+        }
+    };
+
+    const setupLoadMoreObserver = () => {
+        disconnectLoadMoreObserver();
+        if (typeof IntersectionObserver === 'undefined' || !loadMoreSentinelRef.value) return;
+
+        loadMoreObserver = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    loadMoreUnits();
+                }
+            },
+            { rootMargin: '200px 0px' }
+        );
+        loadMoreObserver.observe(loadMoreSentinelRef.value);
+    };
+
+    watch(
+        [loadMoreSentinelRef, hasMoreUnits, () => props.isSorting],
+        async () => {
+            await nextTick();
+            if (!props.isSorting && hasMoreUnits.value && loadMoreSentinelRef.value) {
+                setupLoadMoreObserver();
+            } else {
+                disconnectLoadMoreObserver();
+            }
+        },
+        { immediate: true }
+    );
+
+    onBeforeUnmount(() => {
+        disconnectLoadMoreObserver();
+    });
 
     const toggleGroup = (key) => {
         const next = new Set(collapsedGroups.value);
@@ -737,7 +822,7 @@
                 </draggable>
             </div>
         </div>
-        <div v-else-if="paginatedSubscriptions.length > 0" class="space-y-4">
+        <div v-else-if="matchedSubscriptions.length > 0" class="space-y-4">
             <!-- 按站点分组：同站点的多个订阅源折叠为一组 -->
             <template v-if="isGrouped">
                 <template v-for="group in visibleCollapsibleGroups" :key="group.key">
@@ -848,7 +933,7 @@
                 class="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
                 <div
-                    v-for="(subscription, index) in paginatedSubscriptions"
+                    v-for="(subscription, index) in ungroupedSubscriptions"
                     :key="subscription.id"
                     class="list-item-animation"
                     :style="{ '--delay-index': index }"
@@ -867,7 +952,7 @@
             </div>
         </div>
         <div
-            v-else-if="searchable && searchQuery && filteredCount === 0"
+            v-else-if="searchable && searchQuery && visibleCount === 0"
             data-testid="subscription-no-search-results"
             class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
         >
@@ -894,15 +979,20 @@
                 :total-count="0"
             />
         </div>
-        <div v-if="!isSorting && totalPages > 1" class="mt-4">
-            <PanelPagination
-                variant="panel"
-                :current-page="currentPage"
-                :total-pages="totalPages"
-                :total-items="visibleCount"
-                :show-total-items="true"
-                @change-page="handleChangePage"
-            />
+        <div
+            v-if="!isSorting && hasMoreUnits"
+            ref="loadMoreSentinelRef"
+            data-testid="subscription-load-more-sentinel"
+            class="mt-4 flex justify-center"
+        >
+            <button
+                type="button"
+                data-testid="subscription-load-more-btn"
+                class="rounded-md border border-zinc-800 bg-[#171717] px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-100 cursor-pointer"
+                @click="loadMoreUnits"
+            >
+                {{ t('subscriptions.loadMoreRemaining', { count: remainingUnitCount }) }}
+            </button>
         </div>
         <Modal
             :show="showAirportIdentityEditor"

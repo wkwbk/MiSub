@@ -5,8 +5,6 @@ import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPa
 import { createI18n } from '../../src/i18n/index.js';
 
 const baseProps = {
-    currentPage: 1,
-    totalPages: 1,
     isSorting: false,
 };
 
@@ -16,7 +14,6 @@ function mountPanel(props = {}) {
         props: {
             ...baseProps,
             subscriptions: [],
-            paginatedSubscriptions: [],
             ...props,
         },
         global: {
@@ -26,7 +23,6 @@ function mountPanel(props = {}) {
                     props: ['misub'],
                     template: '<article class="card-stub">{{ misub.name }}</article>',
                 },
-                PanelPagination: true,
                 EmptyState: {
                     props: ['title', 'description'],
                     template:
@@ -78,7 +74,6 @@ describe('SubscriptionPanel UX', () => {
                     isUpdating: true,
                 },
             ],
-            paginatedSubscriptions: [],
         });
 
         expect(wrapper.text()).toContain('机场订阅');
@@ -115,17 +110,14 @@ describe('SubscriptionPanel UX', () => {
         expect(wrapper.emitted('updateSearch')).toEqual([['']]);
     });
 
-    it('renders paginated results inside collapsed site groups', async () => {
+    it('renders batched results inside collapsed site groups', async () => {
         const wrapper = mountPanel({
             subscriptions: [
                 { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
                 { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
                 { id: 'b1', name: 'B1', url: 'https://other.test/1' },
             ],
-            paginatedSubscriptions: [
-                { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
-                { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
-            ],
+            batchSize: 1,
         });
 
         expect(wrapper.text()).toContain('A1');

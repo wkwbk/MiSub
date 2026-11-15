@@ -127,11 +127,7 @@
         isRefreshing: isRefreshingSubscriptions,
         refreshError: subscriptionRefreshError,
         lastRefreshAt: lastSubscriptionRefreshAt,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
         totalRemainingTraffic,
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -528,14 +524,10 @@
                     :refresh-error="subscriptionRefreshError"
                     :last-refresh-at="lastSubscriptionRefreshAt"
                     :subscriptions="subscriptions"
-                    :paginated-subscriptions="paginatedSubscriptions"
-                    :current-page="subsCurrentPage"
-                    :total-pages="subsTotalPages"
                     :is-sorting="isSortingSubs"
                     @update-search="(query) => (subscriptionSearchQuery = query)"
                     @add="handleAddSubscription"
                     @delete="handleDeleteSubscriptionWithCleanup"
-                    @change-page="changeSubsPage"
                     @update-node-count="handleUpdateNodeCount"
                     @refresh-all="batchUpdateAllSubscriptions"
                     @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"

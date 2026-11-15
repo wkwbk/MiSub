@@ -1,5 +1,5 @@
 // FILE: src/composables/useSubscriptions.js
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '../stores/useDataStore';
 import { useToastStore } from '../stores/toast.js';
@@ -7,7 +7,6 @@ import { fetchNodeCount, batchUpdateNodes } from '../lib/api.js';
 import { handleError } from '../utils/errorHandler.js';
 import { TIMING } from '../constants/timing.js';
 import { t } from '../i18n/index.js';
-import { getAirportIdentityKey } from '../utils/airport-identity.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -49,29 +48,7 @@ export function useSubscriptions(markDirty) {
         );
     });
 
-    const subsCurrentPage = ref(1);
-    const subsItemsPerPage = 6;
     const enabledSubscriptions = computed(() => subscriptions.value.filter((s) => s.enabled));
-
-    /** 保持同一站点订阅相邻，避免分页后多个机场组交错出现。 */
-    const orderedFilteredSubscriptions = computed(() => {
-        const filteredIds = new Set(filteredSubscriptions.value.map((sub) => sub.id));
-        const ordered = [];
-        const groups = new Map();
-        (allSubscriptions.value || []).forEach((sub) => {
-            if (!filteredIds.has(sub.id) || !/^https?:\/\//i.test(String(sub.url || ''))) return;
-            const key = getAirportIdentityKey(sub);
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(sub);
-        });
-        const grouped = [...groups.entries()].sort(([, left], [, right]) => {
-            const leftMerged = left.length > 1 ? 1 : 0;
-            const rightMerged = right.length > 1 ? 1 : 0;
-            return rightMerged - leftMerged;
-        });
-        grouped.forEach(([, items]) => ordered.push(...items));
-        return ordered;
-    });
 
     const totalRemainingTraffic = computed(() => {
         const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024; // 10 PB in bytes
@@ -90,30 +67,6 @@ export function useSubscriptions(markDirty) {
             return acc;
         }, 0);
     });
-
-    const subsTotalPages = computed(() =>
-        Math.ceil(orderedFilteredSubscriptions.value.length / subsItemsPerPage)
-    );
-    const paginatedSubscriptions = computed(() => {
-        const start = (subsCurrentPage.value - 1) * subsItemsPerPage;
-        const end = start + subsItemsPerPage;
-        return orderedFilteredSubscriptions.value.slice(start, end);
-    });
-
-    watch([searchQuery, () => filteredSubscriptions.value.length], () => {
-        subsCurrentPage.value = 1;
-    });
-
-    watch([filteredSubscriptions, subsTotalPages], () => {
-        if (subsCurrentPage.value > subsTotalPages.value) {
-            subsCurrentPage.value = Math.max(1, subsTotalPages.value);
-        }
-    });
-
-    function changeSubsPage(page) {
-        if (page < 1 || page > subsTotalPages.value) return;
-        subsCurrentPage.value = page;
-    }
 
     async function handleUpdateNodeCount(subId, isInitialLoad = false) {
         // Find in the filtered list
@@ -249,7 +202,6 @@ export function useSubscriptions(markDirty) {
 
     function addSubscription(sub) {
         dataStore.addSubscription(sub);
-        subsCurrentPage.value = 1;
         handleUpdateNodeCount(sub.id);
         markDirty();
     }
@@ -277,9 +229,6 @@ export function useSubscriptions(markDirty) {
         dataStore.removeSubscription(subId);
         // 清理组合订阅中对该订阅源的引用
         dataStore.removeSubscriptionFromProfiles(subId);
-        if (paginatedSubscriptions.value.length === 0 && subsCurrentPage.value > 1) {
-            subsCurrentPage.value--;
-        }
         markDirty();
     }
 
@@ -298,7 +247,6 @@ export function useSubscriptions(markDirty) {
         // 清理组合订阅中对这些订阅源的引用
         dataStore.removeSubscriptionFromProfiles(idsToRemove);
 
-        subsCurrentPage.value = 1;
         markDirty();
         showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
     }
@@ -536,12 +484,8 @@ export function useSubscriptions(markDirty) {
         isRefreshing,
         refreshError,
         lastRefreshAt,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
         totalRemainingTraffic,
         enabledSubscriptionsCount: computed(() => enabledSubscriptions.value.length),
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,

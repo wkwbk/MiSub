@@ -16,13 +16,11 @@ import { clearDomainNameMemory } from '../../src/utils/domain-name-memory.js';
 
 const makeSub = (id, name, url) => ({ id, name, url, enabled: true });
 
-const mountPanel = (subscriptions) =>
+const mountPanel = (subscriptions, extraProps = {}) =>
     mount(SubscriptionPanel, {
         props: {
             subscriptions,
-            paginatedSubscriptions: subscriptions,
-            currentPage: 1,
-            totalPages: 1,
+            ...extraProps,
         },
         global: {
             plugins: [createPinia()],
@@ -30,7 +28,6 @@ const mountPanel = (subscriptions) =>
                 draggable: true,
                 Card: { template: '<div class="stub-card" />' },
                 MoreActionsMenu: { template: '<div><slot name="menu" /></div>' },
-                PanelPagination: true,
                 EmptyState: true,
             },
         },
@@ -84,30 +81,30 @@ describe('订阅源按站点折叠', () => {
         await wrapper.find('[aria-expanded="false"]').trigger('click');
         expect(wrapper.find('[aria-expanded="true"]').exists()).toBe(true);
 
-        await wrapper.setProps({ paginatedSubscriptions: [...subs] });
+        await wrapper.setProps({ subscriptions: [...subs] });
         expect(wrapper.find('[aria-expanded="true"]').exists()).toBe(true);
     });
 
-    it('搜索结果跨页时仍显示完整同站点分组，单条目只显示在当前页', async () => {
+    it('按顶级展示单元分批无限加载时，完整保留分组不拆散，并可继续加载后续独立订阅', async () => {
         const subs = [
             makeSub('a', 's1', 'https://api.foo.example.com/1'),
             makeSub('b', 's2', 'https://sub.foo.example.com/2'),
             makeSub('c', 's3', 'https://foo.example.com/3'),
             makeSub('d', 'other', 'https://other.example.net/1'),
         ];
-        const wrapper = mountPanel(subs.slice(0, 2));
-        await wrapper.setProps({
-            subscriptions: subs,
-            paginatedSubscriptions: subs.slice(0, 2),
-        });
-        // 当前页只命中组内两项，但完整同站点组的三项均出现，组头总数正确。
+        const wrapper = mountPanel(subs, { batchSize: 1 });
+        await wrapper.vm.$nextTick();
+
+        // 第一批仅加载 1 个顶级单元（完整同站点分组的 3 项），不会拆散分组。
         expect(wrapper.findAll('.stub-card')).toHaveLength(3);
         expect(wrapper.find('[aria-expanded="false"]').text()).toContain('3');
+        const loadMoreBtn = wrapper.find('[data-testid="subscription-load-more-btn"]');
+        expect(loadMoreBtn.exists()).toBe(true);
 
-        // 下一页命中该组的第三项时仍显示完整组，并显示当前页的单条目。
-        await wrapper.setProps({ paginatedSubscriptions: subs.slice(2, 4) });
+        // 触发加载下一批后，追加显示剩余的独立订阅。
+        await loadMoreBtn.trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(4);
-        expect(wrapper.find('[aria-expanded="false"]').text()).toContain('3');
+        expect(wrapper.find('[data-testid="subscription-load-more-btn"]').exists()).toBe(false);
     });
 
     it('wd-blue sources group by airport root across subdomains and URLs', async () => {

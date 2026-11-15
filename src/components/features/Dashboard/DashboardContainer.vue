@@ -52,11 +52,7 @@
     // Initialize composables
     const {
         subscriptions,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
         totalRemainingTraffic,
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -226,13 +222,9 @@
                     <!-- Subscription Manager -->
                     <SubscriptionManager
                         :subscriptions="subscriptions"
-                        :paginated-subscriptions="paginatedSubscriptions"
-                        :current-page="subsCurrentPage"
-                        :total-pages="subsTotalPages"
                         :total-remaining-traffic="totalRemainingTraffic"
                         @add="addSubscription"
                         @delete="deleteSubscription"
-                        @change-page="changeSubsPage"
                         @update-node-count="handleUpdateNodeCount"
                         @edit="updateSubscription"
                         @mark-dirty="markDirty"

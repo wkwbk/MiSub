@@ -36,10 +36,6 @@
         subscriptions,
         filteredSubscriptions,
         searchQuery: subscriptionSearchQuery,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -204,19 +200,15 @@
     <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
-            :paginated-subscriptions="paginatedSubscriptions"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
             :status-filter-label="statusFilterLabel"
-            :current-page="subsCurrentPage"
-            :total-pages="subsTotalPages"
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
-            @change-page="changeSubsPage"
             @update-node-count="handleUpdateNodeCount"
             @refresh-all="batchUpdateAllSubscriptions"
             @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"

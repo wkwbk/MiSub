@@ -11,7 +11,7 @@ describe('subscription list search', () => {
         setActivePinia(createPinia());
     });
 
-    it('filters airport subscriptions by name, note, and URL while resetting pagination', async () => {
+    it('filters airport subscriptions by name, note, and URL', async () => {
         const dataStore = useDataStore();
         dataStore.subscriptions = [
             { id: 's1', name: '香港主力', remark: '低延迟', url: 'https://hk.example/sub' },
@@ -19,20 +19,18 @@ describe('subscription list search', () => {
             { id: 'n1', name: '手动节点', url: 'ss://example' },
         ];
 
-        const { filteredSubscriptions, searchQuery, subsCurrentPage } = useSubscriptions(vi.fn());
+        const { filteredSubscriptions, searchQuery } = useSubscriptions(vi.fn());
 
-        subsCurrentPage.value = 2;
         searchQuery.value = '流媒体';
         await nextTick();
 
         expect(filteredSubscriptions.value.map((item) => item.id)).toEqual(['s2']);
-        expect(subsCurrentPage.value).toBe(1);
 
         searchQuery.value = 'hk.example';
         expect(filteredSubscriptions.value.map((item) => item.id)).toEqual(['s1']);
     });
 
-    it('sorts each airport subscriptions together while paginating the list', () => {
+    it('preserves all filtered airport subscriptions without page slicing', () => {
         const dataStore = useDataStore();
         dataStore.subscriptions = [
             ...Array.from({ length: 5 }, (_, i) => ({
@@ -52,11 +50,8 @@ describe('subscription list search', () => {
             })),
         ];
 
-        const { paginatedSubscriptions, filteredSubscriptions } = useSubscriptions(vi.fn());
+        const { filteredSubscriptions } = useSubscriptions(vi.fn());
         expect(filteredSubscriptions.value.map((item) => item.id)).toHaveLength(12);
-        expect(paginatedSubscriptions.value.map((item) => item.id)).toEqual([
-            'airport-0', 'airport-1', 'airport-2', 'other-0', 'other-1', 'other-2',
-        ]);
     });
 
     it('filters my subscriptions by name, description, and custom ID', () => {
