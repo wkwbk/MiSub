@@ -1,5 +1,5 @@
 <script setup>
-    import { computed, onMounted, onUnmounted, ref, nextTick } from 'vue';
+    import { onMounted, onUnmounted, ref, nextTick } from 'vue';
     import { MoreHorizontal } from 'lucide-vue-next';
     import { usePopoverGuard } from '../../composables/usePopoverGuard.js';
     import { t } from '../../i18n/index.js';
@@ -7,7 +7,7 @@
     const props = defineProps({
         teleportToBody: {
             type: Boolean,
-            default: false,
+            default: true,
         },
         menuWidthClass: {
             type: String,
@@ -18,25 +18,53 @@
     const isOpen = ref(false);
     const triggerRef = ref(null);
     const menuRef = ref(null);
+    const menuStyle = ref({});
     const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
 
     const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(
         ', '
     );
 
-    const fixedMenuPosition = computed(() => {
-        if (!props.teleportToBody || !triggerRef.value) return {};
+    function updatePosition() {
+        if (!props.teleportToBody || !triggerRef.value) {
+            menuStyle.value = {};
+            return;
+        }
 
         const buttonRect = triggerRef.value.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const viewportPadding = 8;
+        const gap = 8;
+
+        const menuWidth = menuRef.value?.offsetWidth || 144;
+        const menuHeight = menuRef.value?.offsetHeight || 200;
+
+        const spaceBelow = viewportHeight - buttonRect.bottom - viewportPadding;
+        const spaceAbove = buttonRect.top - viewportPadding;
+        const openUpward = spaceBelow < menuHeight + gap && spaceAbove > spaceBelow;
+
+        const idealLeft = buttonRect.right - menuWidth;
+        const maxLeft = Math.max(viewportPadding, viewportWidth - menuWidth - viewportPadding);
+        const left = Math.min(Math.max(viewportPadding, idealLeft), maxLeft);
+
         const isInsideModal = Boolean(
             triggerRef.value.closest('[role="dialog"][aria-modal="true"]')
         );
-        return {
-            top: `${buttonRect.bottom}px`,
-            right: `${window.innerWidth - buttonRect.right}px`,
+
+        const availableHeight = openUpward
+            ? Math.max(80, spaceAbove - gap)
+            : Math.max(80, spaceBelow - gap);
+
+        menuStyle.value = {
+            left: `${left}px`,
+            maxHeight: `${availableHeight}px`,
             zIndex: isInsideModal ? 'var(--z-modal-popover)' : 'var(--z-popover)',
+            ...(openUpward
+                ? { bottom: `${viewportHeight - buttonRect.top + gap}px` }
+                : { top: `${buttonRect.bottom + gap}px` }),
         };
-    });
+    }
 
     function getFocusableItems() {
         return menuRef.value ? Array.from(menuRef.value.querySelectorAll(FOCUSABLE)) : [];
@@ -44,7 +72,9 @@
 
     async function openMenu() {
         isOpen.value = true;
+        updatePosition();
         await nextTick();
+        updatePosition();
         const [firstItem] = getFocusableItems();
         firstItem?.focus();
     }
@@ -104,6 +134,7 @@
         isOpen,
         popoverRef: menuRef,
         onClose: () => closeMenu(),
+        onReposition: updatePosition,
     });
 
     onMounted(() => {
@@ -153,10 +184,10 @@
                     :id="menuId"
                     role="menu"
                     :class="[
-                        'fixed mt-2 p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl',
+                        'fixed overflow-y-auto p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl',
                         menuWidthClass,
                     ]"
-                    :style="fixedMenuPosition"
+                    :style="menuStyle"
                     @click.stop
                     @keydown="handleMenuKeydown"
                 >
