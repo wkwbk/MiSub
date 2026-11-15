@@ -41,6 +41,14 @@ binding = "MISUB_DB"
 database_name = "misub"
 database_id = "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
 
+[[previews.kv_namespaces]]
+binding = "MISUB_KV"
+id = "1f480b4e7f3d4166b258c3fe1e77d5db"
+
+[[previews.d1_databases]]
+binding = "MISUB_DB"
+database_id = "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
+
 [vars]
 CORS_ORIGINS = "https://libk.top"
 MISUB_PUBLIC_URL = "https://libk.top"
