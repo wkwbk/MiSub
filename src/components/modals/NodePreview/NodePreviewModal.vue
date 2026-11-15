@@ -577,7 +577,7 @@
             >
                 <div class="p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
-                        Nodes Total
+                        {{ t('nodePreview.nodesTotal') }}
                     </div>
                     <div
                         class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
@@ -587,7 +587,7 @@
                 </div>
                 <div class="p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
-                        Protocols
+                        {{ t('nodePreview.protocolTypes') }}
                     </div>
                     <div
                         class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
@@ -597,7 +597,7 @@
                 </div>
                 <div class="p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
-                        Regions
+                        {{ t('nodePreview.regionsCount') }}
                     </div>
                     <div
                         class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
@@ -607,7 +607,7 @@
                 </div>
                 <div class="p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
-                        Total Pages
+                        {{ t('nodePreview.totalPages') }}
                     </div>
                     <div
                         class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
@@ -640,7 +640,6 @@
             <!-- 节点列表 -->
             <div
                 class="flex-1 overflow-hidden bg-transparent"
-                :class="{ 'pb-24 sm:pb-28': pickingMode }"
                 style="min-height: 0"
             >
                 <div class="h-full overflow-y-auto">
@@ -732,66 +731,61 @@
                 @go-to-page="goToPage"
             />
         </template>
-    </Modal>
 
-    <!-- [New] Floating Selection Bar -->
-    <Transition name="slide-up">
-        <div
-            v-if="show && pickingMode"
-            class="fixed bottom-4 left-1/2 z-50 w-[94%] max-w-2xl -translate-x-1/2 sm:bottom-6"
-        >
+        <template #footer>
             <div
-                class="flex items-center justify-between gap-4 rounded-md border border-zinc-800 bg-[#171717] p-4 text-zinc-100 shadow-none"
+                v-if="pickingMode"
+                class="flex w-full flex-wrap items-center justify-between gap-3"
             >
                 <div class="flex flex-col">
-                    <span
-                        class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold"
-                        >{{ t('nodePreview.pickingMode') }}</span
-                    >
-                    <span class="text-xs font-medium text-zinc-300"
-                        >{{ t('nodePreview.selectedNodesPrefix') }}
+                    <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">
+                        {{ t('nodePreview.pickingMode') }}
+                    </span>
+                    <span class="text-xs font-medium text-zinc-300">
+                        {{ t('nodePreview.selectedNodesPrefix') }}
                         <span class="text-sm font-mono font-bold text-zinc-100">{{
                             selectedUrls.size
                         }}</span>
-                        {{ t('nodePreview.selectedNodesSuffix') }}</span
-                    >
+                        {{ t('nodePreview.selectedNodesSuffix') }}
+                    </span>
                 </div>
-                <div class="flex flex-wrap items-center justify-end gap-2">
+                <div class="flex flex-wrap items-center justify-end gap-3">
                     <button
                         @click="selectAll"
-                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                        class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
                     >
                         {{ t('actions.selectAll') }}
                     </button>
                     <button
                         @click="clearSelection"
-                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                        class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
                     >
                         {{ t('common.clear') }}
                     </button>
                     <button
                         @click="handleSaveSelection"
-                        class="rounded-md bg-zinc-100 px-4 py-1.5 text-xs font-medium text-zinc-900 shadow-none transition-colors hover:bg-white"
+                        class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
                     >
                         {{ t('nodePreview.saveSelection') }}
                     </button>
                 </div>
             </div>
-        </div>
-    </Transition>
+            <template v-else>
+                <button
+                    @click="closeModal"
+                    class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
+                >
+                    {{ t('actions.cancel') }}
+                </button>
+                <button
+                    @click="closeModal"
+                    class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
+                >
+                    {{ t('actions.confirm') }}
+                </button>
+            </template>
+        </template>
+    </Modal>
 </template>
 
-<style scoped>
-    .slide-up-enter-active,
-    .slide-up-leave-active {
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    .slide-up-enter-from {
-        transform: translate(-50%, 100%);
-        opacity: 0;
-    }
-    .slide-up-leave-to {
-        transform: translate(-50%, 100%);
-        opacity: 0;
-    }
-</style>
+<style scoped></style>

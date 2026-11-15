@@ -1,7 +1,5 @@
 <script setup>
-    import { computed } from 'vue';
     import { Check, Copy } from 'lucide-vue-next';
-    import { useVirtualScroll } from '@/composables/useVirtualScroll.js';
     import { useI18n } from '../../../../i18n/index.js';
 
     const { t } = useI18n();
@@ -36,17 +34,6 @@
 
     const emit = defineEmits(['copy', 'toggle-select']);
 
-    const nodesRef = computed(() => props.nodes);
-    const containerHeight = 500;
-    const itemHeight = 52;
-
-    const { containerRef, visibleItems, totalHeight, offsetY } = useVirtualScroll({
-        items: nodesRef,
-        itemHeight,
-        containerHeight,
-        overscan: 10,
-    });
-
     const handleRowClick = (node) => {
         if (props.selectionMode) {
             emit('toggle-select', node.url);
@@ -58,9 +45,9 @@
     <div
         class="hidden lg:flex flex-1 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] shadow-none"
     >
-        <div ref="containerRef" class="h-full overflow-y-auto w-full">
+        <div class="h-full overflow-y-auto w-full">
             <div class="w-full">
-                <div class="w-full overflow-hidden">
+                <div class="w-full">
                     <!-- 表头 -->
                     <div
                         class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#171717]"
@@ -72,36 +59,42 @@
                                 v-if="selectionMode"
                                 class="col-span-1 flex justify-center text-zinc-500"
                             >
-                                Pick
+                                {{ t('nodePreview.columnPick') }}
                             </div>
                             <div :class="selectionMode ? 'col-span-3' : 'col-span-4'">
-                                Node Name
+                                {{ t('nodePreview.columnName') }}
                             </div>
-                            <div class="col-span-3 hidden sm:block">Server Address</div>
-                            <div class="col-span-2 hidden md:block text-center">Port</div>
-                            <div class="col-span-1 hidden sm:block text-center">Type</div>
-                            <div class="col-span-1 hidden sm:block text-center">Region</div>
-                            <div class="col-span-1 text-center">Action</div>
+                            <div class="col-span-3 hidden sm:block">
+                                {{ t('nodePreview.columnServer') }}
+                            </div>
+                            <div class="col-span-2 hidden md:block text-center">
+                                {{ t('nodePreview.columnPort') }}
+                            </div>
+                            <div class="col-span-1 hidden sm:block text-center">
+                                {{ t('nodePreview.columnType') }}
+                            </div>
+                            <div class="col-span-1 hidden sm:block text-center">
+                                {{ t('nodePreview.columnRegion') }}
+                            </div>
+                            <div class="col-span-1 text-center">
+                                {{ t('nodePreview.columnAction') }}
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 数据行 - 虚拟滚动 -->
-                    <div
-                        class="bg-white dark:bg-[#131515]"
-                        :style="{ height: totalHeight + 'px', position: 'relative' }"
-                    >
-                        <div :style="{ transform: `translateY(${offsetY}px)` }">
-                            <div
-                                v-for="node in visibleItems.items"
-                                :key="`${node.url}_${node._virtualIndex}`"
-                                @click="handleRowClick(node)"
-                                class="group border-b border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
-                                :class="{
-                                    'bg-zinc-100/70 dark:bg-zinc-900':
-                                        selectionMode && selectedUrls.has(node.url),
-                                    'cursor-pointer': selectionMode,
-                                }"
-                            >
+                    <!-- 数据行 -->
+                    <div class="bg-white dark:bg-[#131515]">
+                        <div
+                            v-for="(node, index) in nodes"
+                            :key="`${node.url}_${index}`"
+                            @click="handleRowClick(node)"
+                            class="group border-b last:border-b-0 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+                            :class="{
+                                'bg-zinc-50 dark:bg-[#202020]':
+                                    selectionMode && selectedUrls.has(node.url),
+                                'cursor-pointer': selectionMode,
+                            }"
+                        >
                                 <div
                                     class="grid min-h-[3.25rem] grid-cols-12 gap-2 px-4 py-2.5 items-center"
                                 >
@@ -199,7 +192,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
                     <!-- 空状态 -->
                     <div v-if="nodes.length === 0" class="py-12 text-center text-xs text-zinc-500">

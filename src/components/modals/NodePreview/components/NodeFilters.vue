@@ -84,14 +84,14 @@
                 <label
                     class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
                 >
-                    Node Search
+                    {{ t('nodePreview.searchLabel') }}
                 </label>
                 <div class="flex gap-2">
                     <div class="relative flex-1 group">
                         <input
                             v-model="searchModel"
                             type="text"
-                            placeholder="Search nodes..."
+                            :placeholder="t('nodePreview.searchPlaceholder')"
                             class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] px-3 py-2 pr-9 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
                             :aria-label="t('nodePreview.searchLabel')"
                         />
@@ -127,13 +127,13 @@
                     <label
                         class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
                     >
-                        Type
+                        {{ t('nodePreview.protocolFilterLabel') }}
                     </label>
                     <Select
                         v-model="protocolModel"
                         trigger-class="font-mono"
                         :options="[
-                            { value: 'all', label: 'ALL PROTOCOLS' },
+                            { value: 'all', label: t('nodePreview.allProtocols') },
                             ...availableProtocols.map((protocol) => ({
                                 value: protocol,
                                 label: protocol.toUpperCase(),
@@ -147,12 +147,12 @@
                     <label
                         class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
                     >
-                        Region
+                        {{ t('nodePreview.regionFilterLabel') }}
                     </label>
                     <Select
                         v-model="regionModel"
                         :options="[
-                            { value: 'all', label: 'ALL REGIONS' },
+                            { value: 'all', label: t('nodePreview.allRegions') },
                             ...availableRegions.map((region) => ({
                                 value: region,
                                 label: region,
@@ -169,7 +169,7 @@
                     <label
                         class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
                     >
-                        Layout
+                        {{ t('nodePreview.layoutLabel') }}
                     </label>
                     <div
                         class="inline-flex items-center border border-zinc-300 dark:border-zinc-800 rounded-md overflow-hidden divide-x divide-zinc-300 dark:divide-zinc-800"
@@ -208,7 +208,7 @@
                     <label
                         class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
                     >
-                        Optimization
+                        {{ t('nodePreview.optimizationLabel') }}
                     </label>
                     <div class="flex items-center gap-2">
                         <button
