@@ -146,6 +146,12 @@ export function useProfiles(markDirty) {
         showDeleteProfilesModal.value = false;
     };
 
+    const reorderProfiles = (newOrder) => {
+        if (!Array.isArray(newOrder)) return;
+        dataStore.overwriteProfiles(newOrder);
+        markDirty();
+    };
+
     const copyProfileLink = (profileId) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
@@ -278,6 +284,7 @@ export function useProfiles(markDirty) {
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        reorderProfiles,
         copyProfileLink,
         copyClashLink,
         cleanupSubscriptions,

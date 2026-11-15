@@ -98,7 +98,7 @@ export const messages = {
             empty: '没有订阅组',
             emptyDesc: '创建一个订阅组来组合你的节点吧！',
             sortingHint:
-                '当前为排序模式，已显示全部订阅组。使用卡片右下角的上下箭头调整顺序，完成后点击"完成排序"。',
+                '当前处于排序模式，已显示全部订阅组。拖拽卡片即可调整顺序，卡片内操作已临时锁定。',
             deleteAllConfirmTitle: '确认清空订阅组',
             deleteAllConfirmBody: '您确定要删除所有**订阅组**吗？此操作不可逆。',
             qrCodeTitle: '订阅组二维码',
@@ -1904,7 +1904,7 @@ export const messages = {
             listSearchPlaceholder: 'Search name, notes, or ID',
             noSearchResults: 'No matching profiles found',
             sortingHint:
-                'Sorting mode active. All profiles shown. Use arrow buttons at bottom-right of cards to reorder, then click "Done".',
+                'Sorting mode active. All profiles shown. Drag cards to reorder; card actions are temporarily locked.',
             deleteAllConfirmTitle: 'Confirm Clear',
             deleteAllConfirmBody: 'Delete all **profiles**? This cannot be undone.',
             qrCodeTitle: 'QR Code',

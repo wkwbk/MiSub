@@ -188,6 +188,7 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        reorderProfiles,
         filteredProfiles,
         searchQuery: profileSearchQuery,
         profilesCurrentPage,
@@ -461,20 +462,6 @@
         }
     };
 
-    const handleProfileReorder = (profileId, direction) => {
-        const fromIndex = profiles.value.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (fromIndex === -1) return;
-
-        const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
-        if (toIndex < 0 || toIndex >= profiles.value.length) return;
-
-        const [item] = profiles.value.splice(fromIndex, 1);
-        profiles.value.splice(toIndex, 0, item);
-        markDirty();
-    };
-
     // 备份函数由 useBackupLogic 提供
     // 格式化函数由 utils.js 提供
     const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemainingTraffic.value));
@@ -610,7 +597,7 @@
                     @copyClashLink="copyClashLink"
                     @preview="handlePreviewProfile"
                     @viewLogs="handleViewLogs"
-                    @reorder="handleProfileReorder"
+                    @reorder="reorderProfiles"
                     @qrcode="(id) => handleQRCode(id, 'profile')"
                     @toggle-sort="isSortingProfiles = !isSortingProfiles"
                 />

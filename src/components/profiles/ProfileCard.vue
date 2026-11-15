@@ -7,8 +7,6 @@
         Trash2,
         FileText,
         Copy,
-        ChevronUp,
-        ChevronDown,
     } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
     import Switch from '../ui/Switch.vue';
@@ -36,8 +34,6 @@
         'edit',
         'open-copy',
         'preview',
-        'move-up',
-        'move-down',
         'view-logs',
         'qrcode',
     ]);
@@ -197,24 +193,6 @@
                     <FileText class="h-3.5 w-3.5" />
                     {{ t('actions.viewLog') }}
                 </button>
-                <template v-if="isSorting">
-                    <button
-                        @click="emit('move-up')"
-                        class="p-1.5 rounded-md border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 touch-target"
-                        :title="t('actions.moveUp')"
-                        :aria-label="t('actions.moveUp')"
-                    >
-                        <ChevronUp class="h-4 w-4" />
-                    </button>
-                    <button
-                        @click="emit('move-down')"
-                        class="p-1.5 rounded-md border border-zinc-800 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 touch-target"
-                        :title="t('actions.moveDown')"
-                        :aria-label="t('actions.moveDown')"
-                    >
-                        <ChevronDown class="h-4 w-4" />
-                    </button>
-                </template>
             </div>
         </div>
     </div>

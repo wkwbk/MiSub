@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
     import { Search, X } from 'lucide-vue-next';
+    import draggable from 'vuedraggable';
     import ProfileCard from './ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
@@ -80,24 +81,10 @@
 
     const handleQRCode = (profileId) => emit('qrcode', profileId);
 
-    // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
-    const handleMoveUp = (profileId) => {
-        const index = props.profiles.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (index > 0) {
-            emit('reorder', profileId, 'up');
-        }
-    };
-
-    const handleMoveDown = (profileId) => {
-        const index = props.profiles.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (index !== -1 && index < props.profiles.length - 1) {
-            emit('reorder', profileId, 'down');
-        }
-    };
+    const draggableProfiles = computed({
+        get: () => [...(props.profiles || [])],
+        set: (val) => emit('reorder', val),
+    });
 </script>
 
 <template>
@@ -203,6 +190,31 @@
                 {{ t('profiles.sortingHint') }}
             </div>
             <div
+                v-if="isSorting"
+                class="grid gap-4"
+                :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
+            >
+                <draggable
+                    tag="div"
+                    class="contents"
+                    v-model="draggableProfiles"
+                    item-key="id"
+                    animation="300"
+                >
+                    <template #item="{ element: profile }">
+                        <div class="cursor-move">
+                            <ProfileCard
+                                class="pointer-events-none select-none"
+                                :profile="profile"
+                                :is-sorting="isSorting"
+                                :compact="compact"
+                            />
+                        </div>
+                    </template>
+                </draggable>
+            </div>
+            <div
+                v-else
                 class="grid gap-4"
                 :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
             >
@@ -221,8 +233,6 @@
                         @change="handleToggle($event)"
                         @preview="handlePreview(profile.id)"
                         @qrcode="handleQRCode(profile.id)"
-                        @move-up="handleMoveUp(profile.id)"
-                        @move-down="handleMoveDown(profile.id)"
                         @view-logs="emit('viewLogs', profile.id)"
                         @open-copy="handleOpenCopy(profile.id)"
                     />
