@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from 'lucide-vue-next';
+    import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import Input from '@/components/ui/Input.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added

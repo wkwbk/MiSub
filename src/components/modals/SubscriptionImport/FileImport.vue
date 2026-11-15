@@ -7,7 +7,7 @@
      * 纯 UI 组件，解析与入库由父组件处理。
      */
     import { ref, computed } from 'vue';
-    import { CloudUpload, Loader2 } from 'lucide-vue-next';
+    import { CloudUpload, Loader2 } from '@lucide/vue';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
 
     const props = defineProps({

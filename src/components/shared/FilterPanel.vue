@@ -2,7 +2,7 @@
 
 <script setup>
     import { ref, computed, watch } from 'vue';
-    import { ChevronDown } from 'lucide-vue-next';
+    import { ChevronDown } from '@lucide/vue';
     import Select from '@/components/ui/Select.vue';
     import { useI18n } from '@/i18n/index.js';
 

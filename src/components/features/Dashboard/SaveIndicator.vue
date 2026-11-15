@@ -2,7 +2,7 @@
 
 <script setup>
     import { computed, toRefs } from 'vue';
-    import { Check, X } from 'lucide-vue-next';
+    import { Check, X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

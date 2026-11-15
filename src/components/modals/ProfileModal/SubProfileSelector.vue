@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { GripHorizontal, Search, X } from 'lucide-vue-next';
+    import { GripHorizontal, Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';
     import { wouldCreateCycle } from '@/utils/profile-graph.js';

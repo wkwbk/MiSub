@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
-    import { Search, X } from 'lucide-vue-next';
+    import { Search, X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

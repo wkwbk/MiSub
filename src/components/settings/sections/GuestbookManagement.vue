@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue';
-    import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from 'lucide-vue-next';
+    import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from '@lucide/vue';
     import { useToastStore } from '@/stores/toast.js';
     import { api } from '@/lib/http.js';
     import Select from '@/components/ui/Select.vue';

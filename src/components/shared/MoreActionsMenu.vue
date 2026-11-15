@@ -1,6 +1,6 @@
 <script setup>
     import { onMounted, onUnmounted, ref, nextTick } from 'vue';
-    import { MoreHorizontal } from 'lucide-vue-next';
+    import { MoreHorizontal } from '@lucide/vue';
     import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
     import { t } from '@/i18n/index.js';
 

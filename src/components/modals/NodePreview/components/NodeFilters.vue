@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Layers, LayoutGrid, List, Search, Zap } from 'lucide-vue-next';
+    import { Layers, LayoutGrid, List, Search, Zap } from '@lucide/vue';
     import Select from '@/components/ui/Select.vue';
     import { useI18n } from '@/i18n/index.js';
 

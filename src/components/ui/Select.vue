@@ -1,6 +1,6 @@
 <script setup>
     import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-    import { Check, ChevronDown } from 'lucide-vue-next';
+    import { Check, ChevronDown } from '@lucide/vue';
     import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 
     const props = defineProps({

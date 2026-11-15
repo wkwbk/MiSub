@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FileText, Link2 } from 'lucide-vue-next';
+    import { FileText, Link2 } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';

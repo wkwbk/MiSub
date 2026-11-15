@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
 import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';

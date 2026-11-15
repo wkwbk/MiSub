@@ -1,6 +1,6 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { Layers } from 'lucide-vue-next';
+    import { Layers } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // New import
     import { useI18n } from '@/i18n/index.js';

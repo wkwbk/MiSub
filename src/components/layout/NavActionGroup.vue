@@ -9,7 +9,7 @@
         LayoutGrid,
         LayoutPanelTop,
         LogOut,
-    } from 'lucide-vue-next';
+    } from '@lucide/vue';
     import ThemeToggle from '@/components/features/ThemeToggle.vue';
     import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
     import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';

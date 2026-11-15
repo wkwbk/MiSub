@@ -2,7 +2,7 @@
 
 <script setup>
     import { ref, computed, watch } from 'vue';
-    import { ChevronsUpDown, Loader2 } from 'lucide-vue-next';
+    import { ChevronsUpDown, Loader2 } from '@lucide/vue';
     import { t } from '@/i18n/index.js';
 
     const props = defineProps({

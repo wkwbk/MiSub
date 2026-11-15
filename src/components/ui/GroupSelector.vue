@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue';
-    import { Folder, ChevronDown, Check } from 'lucide-vue-next';
+    import { Folder, ChevronDown, Check } from '@lucide/vue';
     import { t } from '@/i18n/index.js';
     import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 

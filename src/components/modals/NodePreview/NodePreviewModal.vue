@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
-    import { X } from 'lucide-vue-next';
+    import { X } from '@lucide/vue';
     import { api, APIError } from '@/lib/http.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useDataStore } from '@/stores/useDataStore.js';

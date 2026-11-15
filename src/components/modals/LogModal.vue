@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue'; // Added watch
-    import { ChevronDown, ClipboardList, Loader2 } from 'lucide-vue-next';
+    import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import { useToastStore } from '@/stores/toast';
     import { getClientInfo } from '@/lib/utils';

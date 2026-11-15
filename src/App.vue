@@ -1,6 +1,6 @@
 <script setup>
     import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
-    import { Globe } from 'lucide-vue-next';
+    import { Globe } from '@lucide/vue';
     import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
     import { useRoute, useRouter } from 'vue-router';

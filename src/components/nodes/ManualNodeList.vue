@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Check, Zap, Copy, Pencil, Trash2 } from 'lucide-vue-next';
+    import { Check, Zap, Copy, Pencil, Trash2 } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';

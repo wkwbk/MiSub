@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { ChevronRight, X } from 'lucide-vue-next';
+    import { ChevronRight, X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

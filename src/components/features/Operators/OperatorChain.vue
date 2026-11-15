@@ -12,7 +12,7 @@
         ChevronDown,
         PauseCircle,
         X,
-    } from 'lucide-vue-next';
+    } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import FilterEditor from '@/components/features/Operators/components/FilterEditor.vue';
     import RenameEditor from '@/components/features/Operators/components/RenameEditor.vue';

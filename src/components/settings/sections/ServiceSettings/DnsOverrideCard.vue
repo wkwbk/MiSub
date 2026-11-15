@@ -1,9 +1,9 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Globe } from 'lucide-vue-next';
+    import { Globe } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
-    import yaml from 'js-yaml';
+    import * as yaml from 'js-yaml';
 
     const { t } = useI18n();
 

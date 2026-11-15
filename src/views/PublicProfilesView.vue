@@ -13,7 +13,7 @@
     import QRCode from 'qrcode';
     import { api } from '@/lib/http.js';
     import ProfileGrid from '@/components/public/ProfileGrid.vue';
-    import { AlertTriangle, ArrowRight } from 'lucide-vue-next';
+    import { AlertTriangle, ArrowRight } from '@lucide/vue';
     import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 
     const isDev = import.meta.env.DEV;

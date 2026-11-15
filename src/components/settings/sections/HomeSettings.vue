@@ -1,5 +1,5 @@
 <script setup>
-    import { Home } from 'lucide-vue-next';
+    import { Home } from '@lucide/vue';
     import Input from '@/components/ui/Input.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import AnnouncementSettings from '@/components/settings/sections/AnnouncementSettings.vue';

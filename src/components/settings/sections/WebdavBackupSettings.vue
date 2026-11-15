@@ -1,6 +1,6 @@
 <script setup>
     import { ref } from 'vue';
-    import { CloudDownload } from 'lucide-vue-next';
+    import { CloudDownload } from '@lucide/vue';
     import { api } from '@/lib/http.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';

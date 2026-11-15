@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Loader2 } from 'lucide-vue-next';
+    import { Loader2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import SettingsLayout from '@/components/layout/SettingsLayout.vue';
     import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';

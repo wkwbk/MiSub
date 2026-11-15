@@ -8,7 +8,7 @@
         SquarePen,
         Trash2,
         Upload,
-    } from 'lucide-vue-next';
+    } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import { useToastStore } from '@/stores/toast';
     import Modal from '@/components/forms/Modal.vue';

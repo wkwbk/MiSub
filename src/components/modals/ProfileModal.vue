@@ -1,6 +1,6 @@
 <script setup>
     import { ref, watch, computed } from 'vue';
-    import { Folder } from 'lucide-vue-next';
+    import { Folder } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
     import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';

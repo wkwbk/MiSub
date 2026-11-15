@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { ChevronDown, ChevronUp, X } from 'lucide-vue-next';
+    import { ChevronDown, ChevronUp, X } from '@lucide/vue';
     import Select from '@/components/ui/Select.vue';
     import { useI18n } from '@/i18n/index.js';
     import draggable from 'vuedraggable';

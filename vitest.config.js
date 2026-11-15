@@ -2,7 +2,13 @@ import { defineConfig } from 'vitest/config';
 import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-    plugins: [vue()],
+    plugins: [
+        vue({
+            template: {
+                transformAssetUrls: false,
+            },
+        }),
+    ],
     test: {
         globals: true,
         environment: 'happy-dom',

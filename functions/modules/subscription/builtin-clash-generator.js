@@ -17,7 +17,7 @@ import {
     DEFAULT_RELAY_GROUP,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 /**
  * 清理字符串中的控制字符（保留换行和制表符）

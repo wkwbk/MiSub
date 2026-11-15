@@ -1,7 +1,7 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
     import DOMPurify from 'dompurify';
-    import { X } from 'lucide-vue-next';
+    import { X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import { useToastStore } from '@/stores/toast.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';

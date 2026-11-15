@@ -1,7 +1,7 @@
 <script setup>
     import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
-    import { Sun, Moon } from 'lucide-vue-next';
+    import { Sun, Moon } from '@lucide/vue';
     import DOMPurify from 'dompurify';
     import { useThemeStore } from '@/stores/theme.js';
     import { parseCustomPageSource } from '@/utils/custom-page-source.js';

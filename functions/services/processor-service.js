@@ -17,7 +17,7 @@ import { getBuiltinTemplate } from '../modules/subscription/builtin-template-reg
 import { fetchTransformTemplate } from '../modules/subscription/transform-template-cache.js';
 import { resolveRuleTemplateSource } from '../modules/rule-template-handler.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { urlsToClashProxies } from '../utils/url-to-clash.js';
 import { resolveSafeDnsConfig } from '../modules/subscription/safe-dns.js';
 import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/mihomo-chain-proxy.js';

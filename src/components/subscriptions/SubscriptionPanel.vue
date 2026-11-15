@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, nextTick, watch, onBeforeUnmount } from 'vue';
-    import { Search, X } from 'lucide-vue-next';
+    import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import Card from '@/components/ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';

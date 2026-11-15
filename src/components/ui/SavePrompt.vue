@@ -1,5 +1,5 @@
 <script setup>
-    import { Check, Loader2 } from 'lucide-vue-next';
+    import { Check, Loader2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     defineProps({

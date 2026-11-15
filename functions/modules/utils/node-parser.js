@@ -3,7 +3,7 @@
  * 提供节点URL解析和处理功能
  */
 
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { parseNodeInfo, extractNodeRegion } from './geo-utils.js';
 // [注意] node-parser.js 在 functions/modules/utils/，而 node-utils.js 在 functions/utils/
 // 所以需要向上两级找到 functions/utils/

@@ -1,5 +1,5 @@
 <script setup>
-    import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
+    import { Globe, Info, Languages, SlidersHorizontal } from '@lucide/vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     const props = defineProps({
         settings: {

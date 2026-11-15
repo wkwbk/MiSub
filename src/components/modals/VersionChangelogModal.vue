@@ -3,7 +3,7 @@
 
     const { t } = useI18n();
     import { computed } from 'vue';
-    import { ExternalLink } from 'lucide-vue-next';
+    import { ExternalLink } from '@lucide/vue';
     import { useVersionStore } from '@/stores/version';
     import Modal from '@/components/forms/Modal.vue';
 

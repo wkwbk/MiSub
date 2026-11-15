@@ -1,7 +1,7 @@
 /** * 节点预览头部组件 * @author MiSub Team */
 
 <script setup>
-    import { X } from 'lucide-vue-next';
+    import { X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

@@ -3,7 +3,7 @@
 
     const { t } = useI18n();
     import { ref, watch, nextTick } from 'vue';
-    import { Download } from 'lucide-vue-next';
+    import { Download } from '@lucide/vue';
     import QRCode from 'qrcode';
     import Modal from '@/components/forms/Modal.vue';
     import { useToastStore } from '@/stores/toast.js';

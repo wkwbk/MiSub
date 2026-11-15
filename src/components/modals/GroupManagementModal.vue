@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
-    import { Check, Folder, GripVertical, Pencil, Trash2, X } from 'lucide-vue-next';
+    import { Check, Folder, GripVertical, Pencil, Trash2, X } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';

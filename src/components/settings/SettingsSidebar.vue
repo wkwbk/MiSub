@@ -1,6 +1,6 @@
 <script setup>
     import { markRaw } from 'vue';
-    import { Settings, Home, FileText, Globe, Zap, Monitor, Server } from 'lucide-vue-next';
+    import { Settings, Home, FileText, Globe, Zap, Monitor, Server } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

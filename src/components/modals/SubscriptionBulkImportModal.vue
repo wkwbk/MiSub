@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FilePlus2, Layers } from 'lucide-vue-next';
+    import { FilePlus2, Layers } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue';
     import { useDataStore } from '@/stores/useDataStore.js';

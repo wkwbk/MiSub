@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { X } from 'lucide-vue-next';
+    import { X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({

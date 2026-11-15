@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { Link2 } from 'lucide-vue-next';
+    import { Link2 } from '@lucide/vue';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
     import Modal from '@/components/forms/Modal.vue';

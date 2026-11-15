@@ -1,6 +1,6 @@
 <script setup>
     import { computed, watch } from 'vue';
-    import { Megaphone } from 'lucide-vue-next';
+    import { Megaphone } from '@lucide/vue';
     import DOMPurify from 'dompurify';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';

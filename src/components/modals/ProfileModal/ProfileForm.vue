@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronDown } from 'lucide-vue-next';
+    import { ChevronDown } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';

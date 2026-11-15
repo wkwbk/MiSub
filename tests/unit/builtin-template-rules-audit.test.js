@@ -12,7 +12,7 @@ import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.j
 import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
 import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
 import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const sampleProxies = [
     {

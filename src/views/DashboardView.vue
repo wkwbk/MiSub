@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, defineAsyncComponent, onMounted } from 'vue';
-    import { FileText } from 'lucide-vue-next';
+    import { FileText } from '@lucide/vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
     import { storeToRefs } from 'pinia';

@@ -8,7 +8,7 @@
         KeyRound,
         Loader2,
         Lock,
-    } from 'lucide-vue-next';
+    } from '@lucide/vue';
     import { useToastStore } from '@/stores/toast.js';
     import Input from '@/components/ui/Input.vue';
     import Switch from '@/components/ui/Switch.vue';

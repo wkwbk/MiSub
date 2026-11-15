@@ -9,7 +9,7 @@
     import Switch from '@/components/ui/Switch.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue';
     import { computed, ref, watch } from 'vue';
-    import { Loader2, Zap } from 'lucide-vue-next';
+    import { Loader2, Zap } from '@lucide/vue';
     import { fetchNodeCount } from '@/lib/api.js';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';

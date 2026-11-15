@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { transformBuiltinSubscription } from '../../functions/modules/subscription/transformer-factory.js';
 
 const NODE_LIST = [

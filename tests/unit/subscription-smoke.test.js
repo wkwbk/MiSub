@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
 import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
 import { validateClashConfig, validateSingboxConfig } from '../../scripts/smoke-subscription.mjs';

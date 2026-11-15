@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronDown, List } from 'lucide-vue-next';
+    import { ChevronDown, List } from '@lucide/vue';
     import { storeToRefs } from 'pinia';
     import Select from '@/components/ui/Select.vue';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';

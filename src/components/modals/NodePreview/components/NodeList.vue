@@ -1,5 +1,5 @@
 <script setup>
-    import { Check, Copy } from 'lucide-vue-next';
+    import { Check, Copy } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

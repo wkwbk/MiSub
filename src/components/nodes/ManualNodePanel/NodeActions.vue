@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Search, LayoutGrid, List, X } from 'lucide-vue-next';
+    import { Search, LayoutGrid, List, X } from '@lucide/vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';

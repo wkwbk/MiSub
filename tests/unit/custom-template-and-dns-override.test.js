@@ -5,7 +5,7 @@ import {
     resolveSafeDnsConfig,
     DNS_PROXY_GROUP,
 } from '../../functions/modules/subscription/safe-dns.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 const sampleNodeList = [
     'ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206ZXhhbXBsZVBhc3N3b3JkMTIz@hk.example.com:443#%F0%9F%87%AD%F0%9F%87%B0%20%E9%A6%99%E6%B8%AF%2001',

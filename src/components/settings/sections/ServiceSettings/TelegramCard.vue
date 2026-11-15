@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Loader2, Send } from 'lucide-vue-next';
+    import { Loader2, Send } from '@lucide/vue';
     import Switch from '@/components/ui/Switch.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';

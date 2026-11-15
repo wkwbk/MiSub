@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { urlToClashProxy, urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';

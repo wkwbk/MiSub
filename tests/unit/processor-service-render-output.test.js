@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import {
     ProcessorService,
     isClashYamlProfileTemplate,

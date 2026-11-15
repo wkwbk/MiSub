@@ -1,6 +1,6 @@
 <script setup>
     import { watch } from 'vue';
-    import { Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
+    import { Info, List, Map, SlidersHorizontal } from '@lucide/vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';

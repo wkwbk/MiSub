@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed } from 'vue';
-    import { ClipboardCopy } from 'lucide-vue-next';
+    import { ClipboardCopy } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import { migrateToD1 } from '@/lib/api.js';
     import { useToastStore } from '@/stores/toast.js';

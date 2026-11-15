@@ -1,6 +1,6 @@
 <script setup>
     import { ref, computed, onUnmounted } from 'vue';
-    import { Check, Copy, QrCode } from 'lucide-vue-next';
+    import { Check, Copy, QrCode } from '@lucide/vue';
     import Select from '@/components/ui/Select.vue';
     import { useToastStore } from '@/stores/toast.js';
     import { useUIStore } from '@/stores/ui.js';

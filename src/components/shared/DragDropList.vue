@@ -2,7 +2,7 @@
 
 <script setup>
     import { ref, computed } from 'vue';
-    import { Loader2, ArrowUpDown, GripVertical, Trash2 } from 'lucide-vue-next';
+    import { Loader2, ArrowUpDown, GripVertical, Trash2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({

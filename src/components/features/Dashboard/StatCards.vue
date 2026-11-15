@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Zap, Boxes, Server, ClipboardList } from 'lucide-vue-next';
+    import { Zap, Boxes, Server, ClipboardList } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();

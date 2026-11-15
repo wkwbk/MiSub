@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { LogIn } from 'lucide-vue-next';
+    import { LogIn } from '@lucide/vue';
     import { useSessionStore } from '@/stores/session.js';
     import { useI18n } from '@/i18n/index.js';
 

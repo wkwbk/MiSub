@@ -10,7 +10,7 @@
         Link2,
         RefreshCw,
         MessageSquare,
-    } from 'lucide-vue-next';
+    } from '@lucide/vue';
     import { formatBytes } from '@/lib/utils.js';
     import { inferAirportRootDomain } from '@/utils/airport-domain.js';
     import { lookupDomainName } from '@/utils/domain-name-memory.js';
