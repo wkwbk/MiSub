@@ -5,11 +5,13 @@
     import Card from '../ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
+    import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
     import Select from '@/components/ui/Select.vue';
     import { useUIStore } from '@/stores/ui';
     import { useI18n } from '@/i18n/index.js';
+    import { hasDragOrderChanged } from '../../composables/useSortingMode.js';
     import { inferAirportRootDomain } from '../../utils/airport-domain.js';
     import { lookupDomainName } from '../../utils/domain-name-memory.js';
     import {
@@ -93,10 +95,9 @@
     const handleToggleSort = () => emit('toggleSort');
     const handleSortEnd = () => emit('markDirty');
     const handleDragEnd = (evt) => {
-        if (evt && typeof evt.oldIndex === 'number' && evt.oldIndex === evt.newIndex) {
-            return;
+        if (hasDragOrderChanged(evt)) {
+            handleSortEnd();
         }
-        handleSortEnd();
     };
     const handleDeleteAll = () => emit('deleteAll');
     const handleRefreshAll = () => emit('refreshAll');
@@ -492,23 +493,12 @@
             </div>
         </div>
         <div v-if="subscriptions.length > 0 && isSorting">
-            <div
-                data-testid="subscription-sorting-banner"
-                class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs text-zinc-200"
-            >
-                <div class="flex items-center gap-2">
-                    <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-                    <span>{{ t('subscriptions.sortingHint') }}</span>
-                </div>
-                <button
-                    type="button"
-                    data-testid="subscription-finish-sort"
-                    class="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-300 transition-colors hover:bg-sky-500/20 hover:text-sky-200 cursor-pointer"
-                    @click="handleToggleSort"
-                >
-                    {{ t('actions.finishSort') }}
-                </button>
-            </div>
+            <SortingBanner
+                :hint="t('subscriptions.sortingHint')"
+                banner-test-id="subscription-sorting-banner"
+                button-test-id="subscription-finish-sort"
+                @finish="handleToggleSort"
+            />
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <draggable
                     tag="div"

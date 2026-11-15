@@ -6,6 +6,7 @@
     import { useSubscriptions } from '../composables/useSubscriptions.js';
     import { useManualNodes } from '../composables/useManualNodes.js';
     import { useProfiles } from '../composables/useProfiles.js';
+    import { useSortingMode } from '../composables/useSortingMode.js';
     import { useSubscriptionForms } from '../composables/useSubscriptionForms.js'; // Added
     import { useBulkImportLogic } from '../composables/useBulkImportLogic.js'; // Added
     import SubscriptionPanel from '../components/subscriptions/SubscriptionPanel.vue';
@@ -28,17 +29,8 @@
 
     // State
     // State
-    const isSortingSubs = ref(false);
+    const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
-
-    watch(
-        () => dataStore.isDirty,
-        (newVal, oldVal) => {
-            if (oldVal && !newVal && isSortingSubs.value) {
-                isSortingSubs.value = false;
-            }
-        }
-    );
 
     const {
         subscriptions,

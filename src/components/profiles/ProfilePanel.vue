@@ -5,6 +5,7 @@
     import ProfileCard from './ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
+    import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '../../i18n/index.js';
 
@@ -182,13 +183,13 @@
             </div>
         </div>
         <div v-if="profiles.length > 0">
-            <div
+            <SortingBanner
                 v-if="isSorting"
-                class="mb-4 flex items-center gap-2 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-xs text-zinc-300"
-            >
-                <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-                {{ t('profiles.sortingHint') }}
-            </div>
+                :hint="t('profiles.sortingHint')"
+                banner-test-id="profile-sorting-banner"
+                button-test-id="profile-finish-sort"
+                @finish="handleToggleSort"
+            />
             <div
                 v-if="isSorting"
                 class="grid gap-4"
@@ -200,9 +201,12 @@
                     v-model="draggableProfiles"
                     item-key="id"
                     animation="300"
+                    ghost-class="opacity-50"
                 >
                     <template #item="{ element: profile }">
-                        <div class="cursor-move">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                        >
                             <ProfileCard
                                 class="pointer-events-none select-none"
                                 :profile="profile"

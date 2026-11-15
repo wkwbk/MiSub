@@ -4,8 +4,10 @@
     import ManualNodeCard from '../ManualNodeCard.vue';
     import ManualNodeList from '../ManualNodeList.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
+    import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '@/i18n/index.js';
+    import { hasDragOrderChanged } from '../../../composables/useSortingMode.js';
 
     const { t } = useI18n();
 
@@ -63,10 +65,9 @@
     };
 
     const handleDragEnd = (evt) => {
-        if (evt && typeof evt.oldIndex === 'number' && evt.oldIndex === evt.newIndex) {
-            return;
+        if (hasDragOrderChanged(evt)) {
+            emit('sort-end');
         }
-        emit('sort-end');
     };
 </script>
 
@@ -92,23 +93,12 @@
         </div>
 
         <div v-if="isSorting">
-            <div
-                data-testid="node-sorting-banner"
-                class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs text-zinc-200"
-            >
-                <div class="flex items-center gap-2">
-                    <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-                    <span>{{ t('manualNodes.sortingHint') }}</span>
-                </div>
-                <button
-                    type="button"
-                    data-testid="node-finish-sort"
-                    class="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-300 transition-colors hover:bg-sky-500/20 hover:text-sky-200 cursor-pointer"
-                    @click="emit('toggle-sort')"
-                >
-                    {{ t('actions.finishSort') }}
-                </button>
-            </div>
+            <SortingBanner
+                :hint="t('manualNodes.sortingHint')"
+                banner-test-id="node-sorting-banner"
+                button-test-id="node-finish-sort"
+                @finish="emit('toggle-sort')"
+            />
             <!-- 排序模式保持原有扁平列表，方便跨组排序 -->
             <div v-if="viewMode === 'card'">
                 <draggable

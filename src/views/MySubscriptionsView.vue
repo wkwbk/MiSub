@@ -3,6 +3,7 @@
     import { useRoute } from 'vue-router';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useProfiles } from '../composables/useProfiles.js';
+    import { useSortingMode } from '../composables/useSortingMode.js';
     import ProfilePanel from '../components/profiles/ProfilePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import { storeToRefs } from 'pinia';
@@ -17,7 +18,7 @@
     const dataStore = useDataStore();
     const { markDirty } = dataStore;
     const { showToast } = useToastStore();
-    const isProfileSorting = ref(false);
+    const isProfileSorting = useSortingMode(dataStore);
 
     // --- Dashboard deep-link (?focus=profiles) ---
     // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
