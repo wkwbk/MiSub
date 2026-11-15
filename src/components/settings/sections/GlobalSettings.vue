@@ -1,11 +1,11 @@
 <script setup>
     import { watch } from 'vue';
     import { Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
-    import OperatorChain from '../../features/Operators/OperatorChain.vue';
-    import Input from '../../ui/Input.vue';
-    import Select from '../../ui/Select.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+    import Input from '@/components/ui/Input.vue';
+    import Select from '@/components/ui/Select.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

@@ -1,8 +1,8 @@
 <script setup>
     import { onMounted, onUnmounted, ref, nextTick } from 'vue';
     import { MoreHorizontal } from 'lucide-vue-next';
-    import { usePopoverGuard } from '../../composables/usePopoverGuard.js';
-    import { t } from '../../i18n/index.js';
+    import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
+    import { t } from '@/i18n/index.js';
 
     const props = defineProps({
         teleportToBody: {

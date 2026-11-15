@@ -3,10 +3,10 @@ import { createPinia, setActivePinia } from 'pinia';
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }));
 
-vi.mock('../../src/lib/http.js', () => ({ api: { post } }));
+vi.mock('@/lib/http.js', () => ({ api: { post } }));
 
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useBulkImportLogic } from '../../src/composables/useBulkImportLogic.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 
 const V2RAYN_LINK =
     'v2rayn://hysteria2/eyJDb25maWdUeXBlIjo3LCJSZW1hcmtzIjoiaHkyIiwiQWRkcmVzcyI6IjEuMi4zLjQiLCJQb3J0Ijo4ODgzLCJQYXNzd29yZCI6InB3ZCJ9';

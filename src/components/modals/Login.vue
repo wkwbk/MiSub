@@ -1,8 +1,8 @@
 <script setup>
     import { nextTick, onMounted, ref } from 'vue';
     import { Globe, Lock, AlertCircle, EyeOff, Eye, ArrowLeft } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
-    import Button from '../ui/Button.vue';
+    import { useI18n } from '@/i18n/index.js';
+    import Button from '@/components/ui/Button.vue';
 
     const { t } = useI18n();
 

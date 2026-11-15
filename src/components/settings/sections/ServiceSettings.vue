@@ -1,8 +1,8 @@
 <script setup>
-    import TransformCard from './ServiceSettings/TransformCard.vue';
-    import DnsOverrideCard from './ServiceSettings/DnsOverrideCard.vue';
-    import TelegramCard from './ServiceSettings/TelegramCard.vue';
-    import CronCard from './ServiceSettings/CronCard.vue';
+    import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
+    import DnsOverrideCard from '@/components/settings/sections/ServiceSettings/DnsOverrideCard.vue';
+    import TelegramCard from '@/components/settings/sections/ServiceSettings/TelegramCard.vue';
+    import CronCard from '@/components/settings/sections/ServiceSettings/CronCard.vue';
 
     defineProps({
         settings: {

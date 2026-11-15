@@ -4,8 +4,8 @@
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
-    import SectionHeader from '../../SectionHeader.vue';
-    import RuleTemplateManager from './RuleTemplateManager.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
     import {
         DEFAULT_SUBCONVERTER_BACKEND,
         SUBCONVERTER_BACKENDS,

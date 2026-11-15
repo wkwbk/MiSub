@@ -2,10 +2,10 @@
     import { computed, watch } from 'vue';
     import { Megaphone } from 'lucide-vue-next';
     import DOMPurify from 'dompurify';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

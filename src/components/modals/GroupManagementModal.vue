@@ -1,10 +1,10 @@
 <script setup>
     import { ref, computed, watch } from 'vue';
     import { Check, Folder, GripVertical, Pencil, Trash2, X } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
+    import Modal from '@/components/forms/Modal.vue';
     import draggable from 'vuedraggable';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { confirmAction } from '@/composables/useConfirm.js';
 
     const { t } = useI18n();
 

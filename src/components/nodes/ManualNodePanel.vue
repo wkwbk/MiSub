@@ -1,8 +1,8 @@
 <script setup>
     import { ref, computed, nextTick } from 'vue';
-    import BulkOperations from './ManualNodePanel/BulkOperations.vue';
-    import NodeActions from './ManualNodePanel/NodeActions.vue';
-    import NodeTable from './ManualNodePanel/NodeTable.vue';
+    import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
+    import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
+    import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
     import {
         normalizeManualNodeGroupName,

@@ -8,8 +8,8 @@
         FileText,
         Copy,
     } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
-    import Switch from '../ui/Switch.vue';
+    import { useI18n } from '@/i18n/index.js';
+    import Switch from '@/components/ui/Switch.vue';
 
     const { t } = useI18n();
 

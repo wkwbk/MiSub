@@ -10,9 +10,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import BrandLogo from '../../src/components/layout/BrandLogo.vue';
-import Header from '../../src/components/layout/Header.vue';
-import NavBar from '../../src/components/layout/NavBar.vue';
+import BrandLogo from '@/components/layout/BrandLogo.vue';
+import Header from '@/components/layout/Header.vue';
+import NavBar from '@/components/layout/NavBar.vue';
 
 function makeRouter() {
     return createRouter({

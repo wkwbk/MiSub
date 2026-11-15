@@ -1,8 +1,8 @@
 <script setup>
     import { ref, computed } from 'vue';
     import { Clock, Copy } from 'lucide-vue-next';
-    import SectionHeader from '../../SectionHeader.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

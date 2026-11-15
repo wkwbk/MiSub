@@ -23,10 +23,10 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale, t } from '../../src/i18n/index.js';
-import { isNetworkErrorMessage } from '../../src/utils/network-error.js';
-import { ErrorHandler } from '../../src/utils/errorHandler.js';
+import { messages } from '@/i18n/messages.js';
+import { setLocale, t } from '@/i18n/index.js';
+import { isNetworkErrorMessage } from '@/utils/network-error.js';
+import { ErrorHandler } from '@/utils/errorHandler.js';
 
 const handler = new ErrorHandler();
 

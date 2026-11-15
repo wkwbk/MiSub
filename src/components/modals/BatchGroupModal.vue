@@ -1,9 +1,9 @@
 <script setup>
     import { ref, watch } from 'vue';
     import { Layers } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import GroupSelector from '../ui/GroupSelector.vue'; // New import
-    import { useI18n } from '../../i18n/index.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import GroupSelector from '@/components/ui/GroupSelector.vue'; // New import
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         show: Boolean,

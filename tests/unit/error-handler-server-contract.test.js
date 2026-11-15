@@ -20,9 +20,9 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '../../src/utils/errorHandler.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+import { ErrorHandler } from '@/utils/errorHandler.js';
+import { messages } from '@/i18n/messages.js';
+import { setLocale } from '@/i18n/index.js';
 
 const FUNCTIONS_ROOT = path.resolve(__dirname, '../../functions');
 const zh = messages['zh-CN'].errors;

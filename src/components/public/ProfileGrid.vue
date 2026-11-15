@@ -1,7 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import ProfileCard from './ProfileCard.vue';
-    import HeroProfileCard from './HeroProfileCard.vue';
+    import ProfileCard from '@/components/public/ProfileCard.vue';
+    import HeroProfileCard from '@/components/public/HeroProfileCard.vue';
 
     const props = defineProps({
         profiles: {

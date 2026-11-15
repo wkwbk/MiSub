@@ -1,16 +1,16 @@
 <script setup>
     import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useProfiles } from '../composables/useProfiles.js';
-    import { useSortingMode } from '../composables/useSortingMode.js';
-    import ProfilePanel from '../components/profiles/ProfilePanel.vue';
-    import Modal from '../components/forms/Modal.vue';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useProfiles } from '@/composables/useProfiles.js';
+    import { useSortingMode } from '@/composables/useSortingMode.js';
+    import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
+    import Modal from '@/components/forms/Modal.vue';
     import { storeToRefs } from 'pinia';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
-    import { resolveProfileFocus } from '../utils/dashboard-deeplink.js';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
 
     const { t } = useI18n();
     const route = useRoute();
@@ -65,7 +65,7 @@
     };
 
     const NodePreviewModal = defineAsyncComponent(
-        () => import('../components/modals/NodePreview/NodePreviewModal.vue')
+        () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
     const previewProfileId = ref(null);
@@ -81,11 +81,11 @@
     };
 
     const ProfileModal = defineAsyncComponent(
-        () => import('../components/modals/ProfileModal.vue')
+        () => import('@/components/modals/ProfileModal.vue')
     );
-    const LogModal = defineAsyncComponent(() => import('../components/modals/LogModal.vue'));
+    const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
     const CopyLinkModal = defineAsyncComponent(
-        () => import('../components/modals/CopyLinkModal.vue')
+        () => import('@/components/modals/CopyLinkModal.vue')
     );
 
     const showLogModal = ref(false);
@@ -111,7 +111,7 @@
     };
 
     // QRCode
-    const QRCodeModal = defineAsyncComponent(() => import('../components/modals/QRCodeModal.vue'));
+    const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');

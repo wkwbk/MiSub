@@ -1,7 +1,7 @@
 <script setup>
     import { X } from 'lucide-vue-next';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const toastStore = useToastStore();
     const { t } = useI18n();

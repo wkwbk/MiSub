@@ -1,12 +1,12 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue'; // Added watch
     import { ChevronDown, ClipboardList, Loader2 } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import { useToastStore } from '../../stores/toast';
-    import { getClientInfo } from '../../lib/utils';
-    import { api } from '../../lib/http.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import { useToastStore } from '@/stores/toast';
+    import { getClientInfo } from '@/lib/utils';
+    import { api } from '@/lib/http.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { confirmAction } from '@/composables/useConfirm.js';
 
     const props = defineProps({
         show: Boolean,

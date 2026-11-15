@@ -2,10 +2,10 @@
     import { computed, ref, watch } from 'vue';
     import { ChevronDown, List } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
-    import Select from '../ui/Select.vue';
+    import Select from '@/components/ui/Select.vue';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
     import { useDataStore } from '@/stores/useDataStore.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

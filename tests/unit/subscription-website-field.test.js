@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { useSubscriptionForms } from '../../src/composables/useSubscriptionForms.js';
-import AdvancedOptions from '../../src/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
-import Card from '../../src/components/ui/Card.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
+import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
+import Card from '@/components/ui/Card.vue';
+import { createI18n } from '@/i18n/index.js';
 
 function withZhI18n(stubs = {}) {
     return {
@@ -12,7 +12,7 @@ function withZhI18n(stubs = {}) {
     };
 }
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: vi.fn(),
     }),

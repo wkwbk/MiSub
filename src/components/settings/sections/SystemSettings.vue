@@ -9,11 +9,11 @@
         Loader2,
         Lock,
     } from 'lucide-vue-next';
-    import { useToastStore } from '../../../stores/toast.js';
-    import Input from '../../ui/Input.vue';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import Input from '@/components/ui/Input.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         settings: {

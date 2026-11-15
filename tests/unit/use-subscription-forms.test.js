@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { useSubscriptionForms } from '../../src/composables/useSubscriptionForms.js';
+import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: vi.fn(),
     }),

@@ -8,30 +8,30 @@
         computed,
         watch,
     } from 'vue';
-    import { useToastStore } from '../stores/toast.js';
-    import { hasStoredLocale, useI18n } from '../i18n/index.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { hasStoredLocale, useI18n } from '@/i18n/index.js';
     import QRCode from 'qrcode';
-    import { api } from '../lib/http.js';
-    import ProfileGrid from '../components/public/ProfileGrid.vue';
+    import { api } from '@/lib/http.js';
+    import ProfileGrid from '@/components/public/ProfileGrid.vue';
     import { AlertTriangle, ArrowRight } from 'lucide-vue-next';
-    import { parseCustomPageSource } from '../utils/custom-page-source.js';
+    import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 
     const isDev = import.meta.env.DEV;
 
     const NodePreviewModal = defineAsyncComponent(
-        () => import('../components/modals/NodePreview/NodePreviewModal.vue')
+        () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
     const AnnouncementCard = defineAsyncComponent(
-        () => import('../components/features/AnnouncementCard.vue')
+        () => import('@/components/features/AnnouncementCard.vue')
     );
     const GuestbookModal = defineAsyncComponent(
-        () => import('../components/modals/GuestbookModal.vue')
+        () => import('@/components/modals/GuestbookModal.vue')
     );
     const QuickImportModal = defineAsyncComponent(
-        () => import('../components/modals/QuickImportModal.vue')
+        () => import('@/components/modals/QuickImportModal.vue')
     );
     const CustomPublicRenderer = defineAsyncComponent(
-        () => import('../components/public/CustomPublicRenderer.vue')
+        () => import('@/components/public/CustomPublicRenderer.vue')
     );
 
     const publicProfiles = ref([]);

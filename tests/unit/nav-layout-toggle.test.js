@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createMemoryHistory, createRouter } from 'vue-router';
-import NavActionGroup from '../../src/components/layout/NavActionGroup.vue';
-import { useUIStore } from '../../src/stores/ui.js';
+import NavActionGroup from '@/components/layout/NavActionGroup.vue';
+import { useUIStore } from '@/stores/ui.js';
 
 function makeRouter() {
     return createRouter({

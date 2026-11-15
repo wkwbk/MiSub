@@ -1,12 +1,12 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
     import { Link2 } from 'lucide-vue-next';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
-    import Modal from '../forms/Modal.vue';
-    import EditForm from './SubscriptionEditModal/EditForm.vue';
-    import RuleSection from './SubscriptionEditModal/RuleSection.vue';
-    import AdvancedOptions from './SubscriptionEditModal/AdvancedOptions.vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import EditForm from '@/components/modals/SubscriptionEditModal/EditForm.vue';
+    import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
+    import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
     const props = defineProps({
         show: Boolean,
         isNew: Boolean,

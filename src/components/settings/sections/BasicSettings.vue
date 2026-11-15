@@ -1,6 +1,6 @@
 <script setup>
     import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
-    import SectionHeader from '../SectionHeader.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
     const props = defineProps({
         settings: {
             type: Object,
@@ -17,12 +17,12 @@
         },
     });
 
-    import Input from '../../ui/Input.vue';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
+    import Input from '@/components/ui/Input.vue';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
     import { watch, computed, ref } from 'vue';
-    import { useToastStore } from '../../../stores/toast';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useToastStore } from '@/stores/toast';
+    import { useI18n } from '@/i18n/index.js';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();

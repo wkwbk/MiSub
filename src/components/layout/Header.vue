@@ -1,11 +1,11 @@
 <script setup>
     import { computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useSessionStore } from '../../stores/session.js';
-    import BrandLogo from './BrandLogo.vue';
-    import NavActionGroup from './NavActionGroup.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useUIStore } from '@/stores/ui.js';
+    import { useSessionStore } from '@/stores/session.js';
+    import BrandLogo from '@/components/layout/BrandLogo.vue';
+    import NavActionGroup from '@/components/layout/NavActionGroup.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const route = useRoute();
     const uiStore = useUIStore();

@@ -2,8 +2,8 @@ import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
-import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPanel.vue';
-import { createI18n, t } from '../../src/i18n/index.js';
+import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+import { createI18n, t } from '@/i18n/index.js';
 
 const mocks = vi.hoisted(() => ({
     subscriptions: null,
@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
     handleError: vi.fn(),
 }));
 
-vi.mock('../../src/stores/useDataStore', () => ({
+vi.mock('@/stores/useDataStore', () => ({
     useDataStore: () => ({
         subscriptions: mocks.subscriptions,
         settings: ref({ autoUpdateInterval: 0 }),
@@ -23,22 +23,22 @@ vi.mock('../../src/stores/useDataStore', () => ({
     }),
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: mocks.showToast,
     }),
 }));
 
-vi.mock('../../src/lib/api.js', () => ({
+vi.mock('@/lib/api.js', () => ({
     fetchNodeCount: mocks.fetchNodeCount,
     batchUpdateNodes: mocks.batchUpdateNodes,
 }));
 
-vi.mock('../../src/utils/errorHandler.js', () => ({
+vi.mock('@/utils/errorHandler.js', () => ({
     handleError: mocks.handleError,
 }));
 
-import { useSubscriptions } from '../../src/composables/useSubscriptions.js';
+import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
 
 function mountPanel(props = {}) {

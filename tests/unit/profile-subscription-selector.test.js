@@ -2,11 +2,11 @@ import { computed, defineComponent } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import ProfileModal from '../../src/components/modals/ProfileModal.vue';
-import SubscriptionSelector from '../../src/components/modals/ProfileModal/SubscriptionSelector.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import ProfileModal from '@/components/modals/ProfileModal.vue';
+import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
+import { createI18n } from '@/i18n/index.js';
 
-vi.mock('../../src/composables/useManualNodes.js', () => ({
+vi.mock('@/composables/useManualNodes.js', () => ({
     useManualNodes: () => ({ manualNodeGroups: computed(() => []) }),
 }));
 

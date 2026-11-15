@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useToastStore } from '../../src/stores/toast.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useToastStore } from '@/stores/toast.js';
 import {
     useSubscriptionBulkImport,
     extractAirportGroupNames,
     isValidSubscriptionUrl,
-} from '../../src/composables/useSubscriptionBulkImport.js';
+} from '@/composables/useSubscriptionBulkImport.js';
 
 describe('机场订阅专用批量导入', () => {
     let dataStore;

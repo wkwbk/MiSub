@@ -15,24 +15,24 @@ vi.mock('pinia', () => ({
     }),
 }));
 
-vi.mock('../../src/stores/useDataStore', () => ({
+vi.mock('@/stores/useDataStore', () => ({
     useDataStore: () => ({
         saveData: mocks.saveData,
     }),
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: mocks.showToast,
     }),
 }));
 
-vi.mock('../../src/lib/api.js', () => ({
+vi.mock('@/lib/api.js', () => ({
     fetchNodeCount: mocks.fetchNodeCount,
     batchUpdateNodes: mocks.batchUpdateNodes,
 }));
 
-vi.mock('../../src/utils/errorHandler.js', () => ({
+vi.mock('@/utils/errorHandler.js', () => ({
     handleError: mocks.handleError,
 }));
 
@@ -67,7 +67,7 @@ describe('useSubscriptions manual node refresh failures', () => {
             status: 403,
         });
 
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
         const markDirty = vi.fn();
         const { handleUpdateNodeCount } = useSubscriptions(markDirty);
 
@@ -109,7 +109,7 @@ describe('useSubscriptions manual node refresh failures', () => {
             status: 403,
         });
 
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
         const markDirty = vi.fn();
         const { handleUpdateNodeCount } = useSubscriptions(markDirty);
 

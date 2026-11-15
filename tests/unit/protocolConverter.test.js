@@ -21,7 +21,7 @@ import {
     parseLoonConfig,
     parseSurgeConfig,
     parseQuantumultXConfig,
-} from '../../src/utils/protocolConverter.js';
+} from '@/utils/protocolConverter.js';
 
 describe('protocolConverter', () => {
     describe('convertClashProxyToUrl', () => {

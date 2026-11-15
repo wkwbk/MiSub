@@ -3,9 +3,9 @@
     import { useRoute } from 'vue-router';
     import { Sun, Moon } from 'lucide-vue-next';
     import DOMPurify from 'dompurify';
-    import { useThemeStore } from '../../stores/theme.js';
-    import { parseCustomPageSource } from '../../utils/custom-page-source.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useThemeStore } from '@/stores/theme.js';
+    import { parseCustomPageSource } from '@/utils/custom-page-source.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const route = useRoute();
     const themeStore = useThemeStore();

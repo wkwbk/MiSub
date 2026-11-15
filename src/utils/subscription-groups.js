@@ -1,4 +1,4 @@
-import { DEFAULT_GROUP_KEY } from '../composables/manual-nodes/groups.js';
+import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
 
 export { DEFAULT_GROUP_KEY };
 

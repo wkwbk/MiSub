@@ -3,9 +3,9 @@
  * @author MiSub Team
  */
 
-export { default as ProfileCard } from './ProfileCard.vue';
-export { default as ProfilePanel } from './ProfilePanel.vue';
-export { default as RightPanel } from './RightPanel.vue';
+export { default as ProfileCard } from '@/components/profiles/ProfileCard.vue';
+export { default as ProfilePanel } from '@/components/profiles/ProfilePanel.vue';
+export { default as RightPanel } from '@/components/profiles/RightPanel.vue';
 
 export const ProfileComponents = {
     ProfileCard,

@@ -1,9 +1,9 @@
 <script setup>
     import { computed, ref } from 'vue';
     import { Loader2, Send } from 'lucide-vue-next';
-    import Switch from '../../../ui/Switch.vue';
-    import SectionHeader from '../../SectionHeader.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

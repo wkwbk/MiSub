@@ -1,17 +1,17 @@
 // FILE: src/composables/useSubscriptions.js
 import { ref, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDataStore } from '../stores/useDataStore';
-import { useToastStore } from '../stores/toast.js';
-import { fetchNodeCount, batchUpdateNodes } from '../lib/api.js';
-import { handleError } from '../utils/errorHandler.js';
-import { TIMING } from '../constants/timing.js';
-import { t } from '../i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore';
+import { useToastStore } from '@/stores/toast.js';
+import { fetchNodeCount, batchUpdateNodes } from '@/lib/api.js';
+import { handleError } from '@/utils/errorHandler.js';
+import { TIMING } from '@/constants/timing.js';
+import { t } from '@/i18n/index.js';
 import {
     collectSubscriptionGroups,
     getSubscriptionGroup,
     normalizeSubscriptionGroupName,
-} from '../utils/subscription-groups.js';
+} from '@/utils/subscription-groups.js';
 
 const isDev = import.meta.env.DEV;
 

@@ -1,20 +1,20 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
     import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import Input from '../ui/Input.vue';
-    import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSubscriptions } from '../../composables/useSubscriptions.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import Input from '@/components/ui/Input.vue';
+    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useSubscriptions } from '@/composables/useSubscriptions.js';
     import {
         useBulkImportLogic,
         needsServerParsing,
-    } from '../../composables/useBulkImportLogic.js';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { parseSurgeConfig } from '../../utils/protocolConverter.js';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
+    } from '@/composables/useBulkImportLogic.js';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { parseSurgeConfig } from '@/utils/protocolConverter.js';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
+    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
 
     const props = defineProps({
         show: Boolean,

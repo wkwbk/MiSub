@@ -11,7 +11,7 @@
  * 这些格式后端 parseNodeList 已能识别，因此这里只负责「拿到正确文本」：
  * 必要的解包（base64 包裹、JSON 外壳）交给后端，避免前端重复实现解析器。
  */
-import { t } from '../i18n/index.js';
+import { t } from '@/i18n/index.js';
 
 /** 单个文件大小上限（字节）——后端 JSON body 限制为 2MB，留出余量。 */
 export const MAX_IMPORT_FILE_SIZE = 1.5 * 1024 * 1024;

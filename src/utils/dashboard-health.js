@@ -1,4 +1,4 @@
-import { getSubscriptionTrafficState } from './dashboard-deeplink.js';
+import { getSubscriptionTrafficState } from '@/utils/dashboard-deeplink.js';
 
 const DEFAULT_NOW = () => Date.now();
 

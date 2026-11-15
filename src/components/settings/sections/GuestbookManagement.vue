@@ -1,12 +1,12 @@
 <script setup>
     import { ref, computed, onMounted, watch } from 'vue';
     import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from 'lucide-vue-next';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { api } from '../../../lib/http.js';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { api } from '@/lib/http.js';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         settings: {

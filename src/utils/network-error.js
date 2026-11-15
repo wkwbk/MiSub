@@ -1,4 +1,4 @@
-import { isChunkLoadError } from './chunk-reload.js';
+import { isChunkLoadError } from '@/utils/chunk-reload.js';
 
 /**
  * 判断一条错误消息是否代表「网络不可用」。

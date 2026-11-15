@@ -1,17 +1,17 @@
 <script setup>
     import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
     import { X } from 'lucide-vue-next';
-    import { api, APIError } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { useManualNodes } from '../../../composables/useManualNodes.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { isNetworkErrorMessage } from '../../../utils/network-error.js';
-    import Modal from '../../forms/Modal.vue';
-    import NodeFilters from './components/NodeFilters.vue';
-    import NodeList from './components/NodeList.vue';
-    import NodeCard from './components/NodeCard.vue';
-    import NodePagination from './components/NodePagination.vue';
+    import { api, APIError } from '@/lib/http.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { isNetworkErrorMessage } from '@/utils/network-error.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';
+    import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
+    import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
+    import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
     import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
 
     const isDev = import.meta.env.DEV;

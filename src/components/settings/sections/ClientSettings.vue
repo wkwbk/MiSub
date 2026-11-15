@@ -9,11 +9,11 @@
         Trash2,
         Upload,
     } from 'lucide-vue-next';
-    import { useI18n } from '../../../i18n/index.js';
-    import { useToastStore } from '../../../stores/toast';
-    import Modal from '../../forms/Modal.vue';
-    import { api } from '../../../lib/http.js';
-    import SectionHeader from '../SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
+    import { useToastStore } from '@/stores/toast';
+    import Modal from '@/components/forms/Modal.vue';
+    import { api } from '@/lib/http.js';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
 
     const clients = ref([]);
     const loading = ref(false);

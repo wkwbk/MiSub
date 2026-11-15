@@ -1,10 +1,10 @@
 import { nextTick } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import FormModal from '../../src/components/shared/FormModal.vue';
-import Modal from '../../src/components/forms/Modal.vue';
-import QRCodeOverlay from '../../src/components/public/QRCodeOverlay.vue';
-import { useBackdropDismiss } from '../../src/composables/useBackdropDismiss.js';
+import FormModal from '@/components/shared/FormModal.vue';
+import Modal from '@/components/forms/Modal.vue';
+import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
+import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 
 const dispatchBubbled = async (element, type) => {
     element.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));

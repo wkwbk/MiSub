@@ -1,7 +1,7 @@
 <script setup>
     import { X, Download } from 'lucide-vue-next';
-    import { useBackdropDismiss } from '../../composables/useBackdropDismiss.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

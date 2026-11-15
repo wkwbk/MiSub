@@ -1,14 +1,14 @@
 <script setup>
     import { ref, watch, computed } from 'vue';
     import { Folder } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import ProfileForm from './ProfileModal/ProfileForm.vue';
-    import SubscriptionSelector from './ProfileModal/SubscriptionSelector.vue';
-    import SubProfileSelector from './ProfileModal/SubProfileSelector.vue';
-    import NodeSelector from './ProfileModal/NodeSelector.vue';
-    import { useManualNodes } from '../../composables/useManualNodes.js';
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { useSettingsStore } from '../../stores/settings.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
+    import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
+    import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
+    import NodeSelector from '@/components/modals/ProfileModal/NodeSelector.vue';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useSettingsStore } from '@/stores/settings.js';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
     import {

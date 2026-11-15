@@ -15,10 +15,10 @@ import {
     DEFAULT_GROUP_KEY,
     buildGroupedManualNodes,
     normalizeManualNodeGroupName,
-} from '../../src/composables/manual-nodes/groups.js';
-import { filterManualNodes, isManualNodeEntry } from '../../src/composables/manual-nodes/filters.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+} from '@/composables/manual-nodes/groups.js';
+import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
+import { messages } from '@/i18n/messages.js';
+import { setLocale } from '@/i18n/index.js';
 
 const NODES = [
     { id: 'a', name: 'ungrouped-1', url: 'ss://x' },

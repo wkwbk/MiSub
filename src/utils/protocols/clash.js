@@ -1,13 +1,13 @@
-import { convertVmessToUrl } from './converters/vmess.js';
-import { convertShadowsocksToUrl, convertShadowsocksRToUrl } from './converters/shadowsocks.js';
-import { convertTrojanToUrl } from './converters/trojan.js';
-import { convertVlessToUrl } from './converters/vless.js';
-import { convertHysteriaToUrl } from './converters/hysteria.js';
-import { convertAnytlsToUrl } from './converters/anytls.js';
-import { convertTuicToUrl } from './converters/tuic.js';
-import { convertSocks5ToUrl } from './converters/socks5.js';
-import { convertHttpToUrl } from './converters/http.js';
-import { convertWireguardToUrl } from './converters/wireguard.js';
+import { convertVmessToUrl } from '@/utils/protocols/converters/vmess.js';
+import { convertShadowsocksToUrl, convertShadowsocksRToUrl } from '@/utils/protocols/converters/shadowsocks.js';
+import { convertTrojanToUrl } from '@/utils/protocols/converters/trojan.js';
+import { convertVlessToUrl } from '@/utils/protocols/converters/vless.js';
+import { convertHysteriaToUrl } from '@/utils/protocols/converters/hysteria.js';
+import { convertAnytlsToUrl } from '@/utils/protocols/converters/anytls.js';
+import { convertTuicToUrl } from '@/utils/protocols/converters/tuic.js';
+import { convertSocks5ToUrl } from '@/utils/protocols/converters/socks5.js';
+import { convertHttpToUrl } from '@/utils/protocols/converters/http.js';
+import { convertWireguardToUrl } from '@/utils/protocols/converters/wireguard.js';
 
 /**
  * 转换Clash代理配置为标准URL

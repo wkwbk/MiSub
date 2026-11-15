@@ -1,8 +1,8 @@
 import { DOMWrapper, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
-import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPanel.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const baseProps = {
     isSorting: false,

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import Button from '../../src/components/ui/Button.vue';
-import Input from '../../src/components/ui/Input.vue';
-import FormModal from '../../src/components/shared/FormModal.vue';
+import Button from '@/components/ui/Button.vue';
+import Input from '@/components/ui/Input.vue';
+import FormModal from '@/components/shared/FormModal.vue';
 
 const readSource = async (path) =>
     await import('node:fs/promises').then(({ readFile }) => readFile(path, 'utf8'));

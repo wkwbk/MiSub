@@ -1,7 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import Select from '../../../ui/Select.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import Select from '@/components/ui/Select.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         modelValue: {

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
+import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
 export const useUIStore = defineStore('ui', () => {
     const isSettingsModalVisible = ref(false);

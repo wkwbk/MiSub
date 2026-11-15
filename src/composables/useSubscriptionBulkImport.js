@@ -1,13 +1,13 @@
 import { ref } from 'vue';
-import { useToastStore } from '../stores/toast.js';
-import { useDataStore } from '../stores/useDataStore.js';
-import { extractNodeName } from '../lib/utils.js';
-import { generateSubscriptionId } from '../utils/id.js';
+import { useToastStore } from '@/stores/toast.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { extractNodeName } from '@/lib/utils.js';
+import { generateSubscriptionId } from '@/utils/id.js';
 import {
     collectSubscriptionGroups,
     normalizeSubscriptionGroupName,
-} from '../utils/subscription-groups.js';
-import { t } from '../i18n/index.js';
+} from '@/utils/subscription-groups.js';
+import { t } from '@/i18n/index.js';
 
 /**
  * 从现有机场订阅中提取当前所有分组名称。

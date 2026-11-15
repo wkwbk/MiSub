@@ -3,15 +3,15 @@
  * @author MiSub Team
  */
 
-import Header from './Header.vue';
-import NavBar from './NavBar.vue';
-import Footer from './Footer.vue';
-import BrandLogo from './BrandLogo.vue';
-import NavActionGroup from './NavActionGroup.vue';
-import LoginEntryButton from './LoginEntryButton.vue';
-import ExternalRepoButton from './ExternalRepoButton.vue';
-import AdaptiveGrid from './AdaptiveGrid.vue';
-import DashboardSkeleton from './DashboardSkeleton.vue';
+import Header from '@/components/layout/Header.vue';
+import NavBar from '@/components/layout/NavBar.vue';
+import Footer from '@/components/layout/Footer.vue';
+import BrandLogo from '@/components/layout/BrandLogo.vue';
+import NavActionGroup from '@/components/layout/NavActionGroup.vue';
+import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
+import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
+import AdaptiveGrid from '@/components/layout/AdaptiveGrid.vue';
+import DashboardSkeleton from '@/components/layout/DashboardSkeleton.vue';
 
 export {
     Header,

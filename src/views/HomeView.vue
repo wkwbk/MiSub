@@ -1,12 +1,12 @@
 <script setup>
     import { defineAsyncComponent, computed, watchEffect, h } from 'vue';
-    import { useSessionStore } from '../stores/session';
+    import { useSessionStore } from '@/stores/session';
     import { storeToRefs } from 'pinia';
     import { useRoute, useRouter } from 'vue-router';
 
     // Lazy load components
-    const PublicProfilesView = defineAsyncComponent(() => import('./PublicProfilesView.vue'));
-    const NotFoundView = defineAsyncComponent(() => import('./NotFound.vue'));
+    const PublicProfilesView = defineAsyncComponent(() => import('@/views/PublicProfilesView.vue'));
+    const NotFoundView = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 
     // 已登录等待重定向时的占位组件。
     // 必须使用 render 函数而不是运行时模板字符串（{ template: '<div></div>' }）：

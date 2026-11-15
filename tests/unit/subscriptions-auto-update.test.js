@@ -14,20 +14,20 @@ vi.mock('pinia', () => ({
     }),
 }));
 
-vi.mock('../../src/stores/useDataStore', () => ({
+vi.mock('@/stores/useDataStore', () => ({
     useDataStore: () => mocks.dataStore,
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({ showToast: vi.fn() }),
 }));
 
-vi.mock('../../src/lib/api.js', () => ({
+vi.mock('@/lib/api.js', () => ({
     fetchNodeCount: vi.fn(),
     batchUpdateNodes: vi.fn(),
 }));
 
-vi.mock('../../src/utils/errorHandler.js', () => ({
+vi.mock('@/utils/errorHandler.js', () => ({
     handleError: vi.fn(),
 }));
 
@@ -45,7 +45,7 @@ describe('subscription auto-update scheduling', () => {
 
     it('does not create a timer when the setting is zero', async () => {
         const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
         const { startAutoUpdate } = useSubscriptions(vi.fn());
 
         startAutoUpdate();
@@ -55,7 +55,7 @@ describe('subscription auto-update scheduling', () => {
 
     it('creates a timer for a positive setting', async () => {
         const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
-        const { useSubscriptions } = await import('../../src/composables/useSubscriptions.js');
+        const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
         const { startAutoUpdate, stopAutoUpdate } = useSubscriptions(vi.fn());
 
         mocks.dataStore.settings = { autoUpdateInterval: 5 };

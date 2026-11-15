@@ -1,5 +1,5 @@
-import { convertClashProxyToUrl } from './clash.js';
-import { validateGeneratedUrl } from './validator.js';
+import { convertClashProxyToUrl } from '@/utils/protocols/clash.js';
+import { validateGeneratedUrl } from '@/utils/protocols/validator.js';
 
 /**
  * 批量转换Clash代理

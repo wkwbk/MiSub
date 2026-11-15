@@ -1,7 +1,7 @@
 <script setup>
     import { ref, computed, onMounted } from 'vue';
     import { X } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
+    import Modal from '@/components/forms/Modal.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({

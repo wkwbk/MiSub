@@ -1,9 +1,9 @@
 import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDataStore } from '../stores/useDataStore';
-import { useToastStore } from '../stores/toast';
-import { generateProfileId } from '../utils/id.js';
-import { t } from '../i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore';
+import { useToastStore } from '@/stores/toast';
+import { generateProfileId } from '@/utils/id.js';
+import { t } from '@/i18n/index.js';
 
 export function useProfiles(markDirty) {
     const { showToast } = useToastStore();

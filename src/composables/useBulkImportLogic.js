@@ -1,13 +1,13 @@
 import { ref } from 'vue';
-import { useToastStore } from '../stores/toast.js';
-import { useDataStore } from '../stores/useDataStore.js';
-import { extractNodeName } from '../lib/utils.js';
-import { generateNodeId, generateSubscriptionId } from '../utils/id.js';
+import { useToastStore } from '@/stores/toast.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { extractNodeName } from '@/lib/utils.js';
+import { generateNodeId, generateSubscriptionId } from '@/utils/id.js';
 import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@/constants/nodeProtocols.js';
-import { normalizeManualNodeGroupName } from './manual-nodes/groups.js';
-import { parseSurgeConfig } from '../utils/protocolConverter.js';
-import { api } from '../lib/http.js';
-import { t } from '../i18n/index.js';
+import { normalizeManualNodeGroupName } from '@/composables/manual-nodes/groups.js';
+import { parseSurgeConfig } from '@/utils/protocolConverter.js';
+import { api } from '@/lib/http.js';
+import { t } from '@/i18n/index.js';
 
 const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS;
 const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);

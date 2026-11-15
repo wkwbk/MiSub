@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { fetchGithubLatestRelease } from '../lib/api.js';
-import { t } from '../i18n/index.js';
-import { useToastStore } from './toast.js';
-import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
+import { fetchGithubLatestRelease } from '@/lib/api.js';
+import { t } from '@/i18n/index.js';
+import { useToastStore } from '@/stores/toast.js';
+import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 import packageJson from '../../package.json';
 
 export const useVersionStore = defineStore('version', () => {

@@ -2,8 +2,8 @@
 // src/lib/api.js
 //
 
-import { api, APIError } from './http.js';
-import { t } from '../i18n/index.js';
+import { api, APIError } from '@/lib/http.js';
+import { t } from '@/i18n/index.js';
 
 /**
  * 统一的 API 错误处理辅助函数

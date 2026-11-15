@@ -16,11 +16,11 @@ import { createPinia, setActivePinia } from 'pinia';
 const { showToast } = vi.hoisted(() => ({ showToast: vi.fn() }));
 const { apiGet, apiPost } = vi.hoisted(() => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({ showToast }),
 }));
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: { get: apiGet, post: apiPost, put: vi.fn(), del: vi.fn(), patch: vi.fn() },
     APIError: class APIError extends Error {},
 }));
@@ -36,7 +36,7 @@ describe('useDataStore 错误提示契约（单次提示、不冒泡拒绝）', 
 
     it('fetchData 失败时提示一次、返回 false 且不抛出', async () => {
         apiGet.mockRejectedValue(new Error('network down'));
-        const { useDataStore } = await import('../../src/stores/useDataStore.js');
+        const { useDataStore } = await import('@/stores/useDataStore.js');
         const store = useDataStore();
 
         await expect(store.fetchData()).resolves.toBe(false);
@@ -46,7 +46,7 @@ describe('useDataStore 错误提示契约（单次提示、不冒泡拒绝）', 
 
     it('fetchData 成功时返回 true', async () => {
         apiGet.mockResolvedValue({ misubs: [], profiles: [], ruleTemplates: [], config: {} });
-        const { useDataStore } = await import('../../src/stores/useDataStore.js');
+        const { useDataStore } = await import('@/stores/useDataStore.js');
         const store = useDataStore();
 
         await expect(store.fetchData()).resolves.toBe(true);
@@ -55,7 +55,7 @@ describe('useDataStore 错误提示契约（单次提示、不冒泡拒绝）', 
 
     it('saveData 失败时提示一次、返回 false 且不抛出', async () => {
         apiPost.mockRejectedValue(new Error('save failed'));
-        const { useDataStore } = await import('../../src/stores/useDataStore.js');
+        const { useDataStore } = await import('@/stores/useDataStore.js');
         const store = useDataStore();
 
         await expect(store.saveData()).resolves.toBe(false);
@@ -65,7 +65,7 @@ describe('useDataStore 错误提示契约（单次提示、不冒泡拒绝）', 
 
     it('saveData 成功时返回 true', async () => {
         apiPost.mockResolvedValue({ success: true, data: { misubs: [], profiles: [] } });
-        const { useDataStore } = await import('../../src/stores/useDataStore.js');
+        const { useDataStore } = await import('@/stores/useDataStore.js');
         const store = useDataStore();
 
         await expect(store.saveData()).resolves.toBe(true);

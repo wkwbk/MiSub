@@ -1,4 +1,4 @@
-import { base64Encode } from '../common/base64.js';
+import { base64Encode } from '@/utils/protocols/common/base64.js';
 
 /**
  * VMess配置转换为URL

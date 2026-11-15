@@ -1,13 +1,13 @@
 <script setup>
     import { ref } from 'vue';
     import { CloudDownload } from 'lucide-vue-next';
-    import { api } from '../../../lib/http.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
-    import Input from '../../ui/Input.vue';
-    import Select from '../../ui/Select.vue';
-    import SectionHeader from '../SectionHeader.vue';
+    import { api } from '@/lib/http.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { confirmAction } from '@/composables/useConfirm.js';
+    import Input from '@/components/ui/Input.vue';
+    import Select from '@/components/ui/Select.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
 
     const props = defineProps({
         settings: {

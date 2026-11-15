@@ -1,10 +1,10 @@
 <script setup>
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
     import { computed, markRaw } from 'vue';
     import { Box, Code2, Link2, Monitor, Send, Zap } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
+    import Modal from '@/components/forms/Modal.vue';
     import { useToastStore } from '@/stores/toast';
 
     const props = defineProps({

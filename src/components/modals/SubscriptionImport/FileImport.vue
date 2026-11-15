@@ -1,5 +1,5 @@
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
     /**
@@ -8,7 +8,7 @@
      */
     import { ref, computed } from 'vue';
     import { CloudUpload, Loader2 } from 'lucide-vue-next';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.js';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
 
     const props = defineProps({
         isProcessing: {

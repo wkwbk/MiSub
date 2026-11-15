@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount, flushPromises } from '@vue/test-utils';
-import LogModal from '../../src/components/modals/LogModal.vue';
-import QuickImportModal from '../../src/components/modals/QuickImportModal.vue';
-import ManualNodeDedupModal from '../../src/components/modals/ManualNodeDedupModal.vue';
-import ManualNodeEditModal from '../../src/components/modals/ManualNodeEditModal.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import LogModal from '@/components/modals/LogModal.vue';
+import QuickImportModal from '@/components/modals/QuickImportModal.vue';
+import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
+import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
+import { createI18n } from '@/i18n/index.js';
 import { createPinia, setActivePinia } from 'pinia';
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: {
         get: vi.fn(async () => ({ data: [] })),
         del: vi.fn(async () => ({})),
     },
 }));
 
-vi.mock('../../src/stores/toast', () => ({
+vi.mock('@/stores/toast', () => ({
     useToastStore: () => ({ showToast: vi.fn() }),
 }));
 

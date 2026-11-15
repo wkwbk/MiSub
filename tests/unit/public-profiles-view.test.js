@@ -1,33 +1,33 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import PublicProfilesView from '../../src/views/PublicProfilesView.vue';
+import PublicProfilesView from '@/views/PublicProfilesView.vue';
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: {
         get: vi.fn(),
     },
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: vi.fn(),
     }),
 }));
 
-vi.mock('../../src/components/modals/NodePreview/NodePreviewModal.vue', () => ({
+vi.mock('@/components/modals/NodePreview/NodePreviewModal.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/features/AnnouncementCard.vue', () => ({
+vi.mock('@/components/features/AnnouncementCard.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/modals/GuestbookModal.vue', () => ({
+vi.mock('@/components/modals/GuestbookModal.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/modals/QuickImportModal.vue', () => ({
+vi.mock('@/components/modals/QuickImportModal.vue', () => ({
     default: { template: '<div />' },
 }));
 
-import { api } from '../../src/lib/http.js';
+import { api } from '@/lib/http.js';
 
 describe('PublicProfilesView hero loading state', () => {
     let wrapper;

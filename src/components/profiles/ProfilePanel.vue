@@ -2,12 +2,12 @@
     import { computed } from 'vue';
     import { Search, X } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
-    import ProfileCard from './ProfileCard.vue';
+    import ProfileCard from '@/components/profiles/ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

@@ -16,7 +16,7 @@ vi.mock('vue-router', async () => {
 
 // The view loads settings on mount; stub the composable so the suite stays
 // offline and focused on the deep-link behaviour.
-vi.mock('../../src/composables/useSettingsLogic.js', () => ({
+vi.mock('@/composables/useSettingsLogic.js', () => ({
     useSettingsLogic: () => ({
         settings: { mytoken: 'stable-token', profileToken: 'share-token' },
         disguiseConfig: {},
@@ -34,8 +34,8 @@ vi.mock('../../src/composables/useSettingsLogic.js', () => ({
     }),
 }));
 
-import SettingsView from '../../src/views/SettingsView.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import SettingsView from '@/views/SettingsView.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const scrollSpy = vi.fn();
 

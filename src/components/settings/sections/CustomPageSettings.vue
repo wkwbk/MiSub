@@ -1,10 +1,10 @@
 <script setup>
     import { computed } from 'vue';
-    import { parseCustomPageSource } from '../../../utils/custom-page-source.js';
-    import { useI18n } from '../../../i18n/index.js';
-    import { confirmAction } from '../../../composables/useConfirm.js';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
+    import { parseCustomPageSource } from '@/utils/custom-page-source.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { confirmAction } from '@/composables/useConfirm.js';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
 
     const { t } = useI18n();
 

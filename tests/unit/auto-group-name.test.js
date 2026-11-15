@@ -3,7 +3,7 @@ import {
     buildAutoGroupName,
     groupNameFromFile,
     groupNameFromTime,
-} from '../../src/utils/auto-group-name.js';
+} from '@/utils/auto-group-name.js';
 
 /**
  * 自动分组命名测试。

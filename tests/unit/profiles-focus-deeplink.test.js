@@ -3,24 +3,24 @@ import { createPinia, setActivePinia } from 'pinia';
 import { reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../src/components/modals/LogModal.vue', () => ({ default: { template: '<div />' } }));
-vi.mock('../../src/components/modals/ProfileModal.vue', () => ({
+vi.mock('@/components/modals/LogModal.vue', () => ({ default: { template: '<div />' } }));
+vi.mock('@/components/modals/ProfileModal.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/modals/NodePreview/NodePreviewModal.vue', () => ({
+vi.mock('@/components/modals/NodePreview/NodePreviewModal.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/profiles/ProfilePanel.vue', () => ({
+vi.mock('@/components/profiles/ProfilePanel.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/utils/network-error.js', () => ({
+vi.mock('@/utils/network-error.js', () => ({
     showNetworkError: vi.fn(),
     isNetworkError: vi.fn(() => false),
 }));
-vi.mock('../../src/components/modals/QRCodeModal.vue', () => ({
+vi.mock('@/components/modals/QRCodeModal.vue', () => ({
     default: { template: '<div />' },
 }));
-vi.mock('../../src/components/modals/CopyLinkModal.vue', () => ({
+vi.mock('@/components/modals/CopyLinkModal.vue', () => ({
     default: { template: '<div />' },
 }));
 
@@ -35,9 +35,9 @@ vi.mock('vue-router', async () => {
     };
 });
 
-import MySubscriptionsView from '../../src/views/MySubscriptionsView.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import MySubscriptionsView from '@/views/MySubscriptionsView.vue';
+import { createI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 
 const scrollSpy = vi.fn();
 const mountedWrappers = [];

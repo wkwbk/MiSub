@@ -2,7 +2,7 @@
     import { computed, ref, watch } from 'vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
-    import SectionHeader from '../../SectionHeader.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
 
     const { t } = useI18n();
 

@@ -1,16 +1,16 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-import './assets/main.css';
-import App from './App.vue';
-import router from './router';
-import { handleError, setToastHandler, configureErrorMonitoring } from './utils/errorHandler.js';
-import { isAppScriptError, isForeignRejection } from './utils/error-source.js';
-import { i18n } from './i18n/index.js';
-import { useToastStore } from './stores/toast.js';
-import { configureUnauthorizedHandler } from './lib/http.js';
-import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from './utils/url-origin.js';
-import { isChunkLoadError, shouldReloadForChunkError } from './utils/chunk-reload.js';
-import { readSessionPreference, writeSessionPreference } from './utils/session-preference.js';
+import '@/assets/main.css';
+import App from '@/App.vue';
+import router from '@/router';
+import { handleError, setToastHandler, configureErrorMonitoring } from '@/utils/errorHandler.js';
+import { isAppScriptError, isForeignRejection } from '@/utils/error-source.js';
+import { i18n } from '@/i18n/index.js';
+import { useToastStore } from '@/stores/toast.js';
+import { configureUnauthorizedHandler } from '@/lib/http.js';
+import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from '@/utils/url-origin.js';
+import { isChunkLoadError, shouldReloadForChunkError } from '@/utils/chunk-reload.js';
+import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 
 // 全局错误处理
 if (typeof window !== 'undefined') {

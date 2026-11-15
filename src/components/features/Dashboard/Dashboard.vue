@@ -8,56 +8,56 @@
         watch,
         nextTick,
     } from 'vue';
-    import { formatBytes } from '../../../lib/utils.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useUIStore } from '../../../stores/ui.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { useSubscriptions } from '../../../composables/useSubscriptions.js';
-    import { useManualNodes } from '../../../composables/useManualNodes.js';
-    import { useProfiles } from '../../../composables/useProfiles.js';
-    import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
-    import { useNodeForms } from '../../../composables/useNodeForms.js';
-    import { useBulkImportLogic } from '../../../composables/useBulkImportLogic.js';
-    import { useSubscriptionBulkImport } from '../../../composables/useSubscriptionBulkImport.js';
-    import { useBackupLogic } from '../../../composables/useBackupLogic.js';
+    import { formatBytes } from '@/lib/utils.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useUIStore } from '@/stores/ui.js';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useSubscriptions } from '@/composables/useSubscriptions.js';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { useProfiles } from '@/composables/useProfiles.js';
+    import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
+    import { useNodeForms } from '@/composables/useNodeForms.js';
+    import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
+    import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImport.js';
+    import { useBackupLogic } from '@/composables/useBackupLogic.js';
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
-    import { useStickyColumns } from '../../../composables/useStickyColumn.js';
+    import { useStickyColumns } from '@/composables/useStickyColumn.js';
 
     const isDev = import.meta.env.DEV;
 
     // --- Component Imports ---
-    import RightPanel from '../../profiles/RightPanel.vue';
-    import ProfilePanel from '../../profiles/ProfilePanel.vue';
-    import SubscriptionPanel from '../../subscriptions/SubscriptionPanel.vue';
-    import ManualNodePanel from '../../nodes/ManualNodePanel.vue';
-    import Modal from '../../forms/Modal.vue';
-    import SubscriptionEditModal from '../../modals/SubscriptionEditModal.vue';
-    import ManualNodeEditModal from '../../modals/ManualNodeEditModal.vue';
-    import ManualNodeDedupModal from '../../modals/ManualNodeDedupModal.vue';
-    import SkeletonLoader from '../../ui/SkeletonLoader.vue';
+    import RightPanel from '@/components/profiles/RightPanel.vue';
+    import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
+    import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+    import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
+    import Modal from '@/components/forms/Modal.vue';
+    import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
+    import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
+    import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
+    import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
 
-    const SettingsModal = defineAsyncComponent(() => import('../../modals/SettingsModal.vue'));
-    const BulkImportModal = defineAsyncComponent(() => import('../../modals/BulkImportModal.vue'));
+    const SettingsModal = defineAsyncComponent(() => import('@/components/modals/SettingsModal.vue'));
+    const BulkImportModal = defineAsyncComponent(() => import('@/components/modals/BulkImportModal.vue'));
     const SubscriptionBulkImportModal = defineAsyncComponent(
-        () => import('../../modals/SubscriptionBulkImportModal.vue')
+        () => import('@/components/modals/SubscriptionBulkImportModal.vue')
     );
-    const ProfileModal = defineAsyncComponent(() => import('../../modals/ProfileModal.vue'));
+    const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
     const SubscriptionImportModal = defineAsyncComponent(
-        () => import('../../modals/SubscriptionImportModal.vue')
+        () => import('@/components/modals/SubscriptionImportModal.vue')
     );
-    const LogModal = defineAsyncComponent(() => import('../../modals/LogModal.vue'));
+    const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
     const NodePreviewModal = defineAsyncComponent(
-        () => import('../../modals/NodePreview/NodePreviewModal.vue')
+        () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
 
-    const BatchGroupModal = defineAsyncComponent(() => import('../../modals/BatchGroupModal.vue'));
+    const BatchGroupModal = defineAsyncComponent(() => import('@/components/modals/BatchGroupModal.vue'));
     const GroupManagementModal = defineAsyncComponent(
-        () => import('../../modals/GroupManagementModal.vue')
+        () => import('@/components/modals/GroupManagementModal.vue')
     );
-    const QRCodeModal = defineAsyncComponent(() => import('../../modals/QRCodeModal.vue'));
-    const CopyLinkModal = defineAsyncComponent(() => import('../../modals/CopyLinkModal.vue'));
+    const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
+    const CopyLinkModal = defineAsyncComponent(() => import('@/components/modals/CopyLinkModal.vue'));
 
     // --- 基礎 Props 和狀態 ---
     const props = defineProps({ data: Object });
@@ -518,8 +518,8 @@
     // 格式化函数由 utils.js 提供
     const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemainingTraffic.value));
 
-    import DashboardHeader from './DashboardHeader.vue';
-    import SavePrompt from '../../ui/SavePrompt.vue';
+    import DashboardHeader from '@/components/features/Dashboard/DashboardHeader.vue';
+    import SavePrompt from '@/components/ui/SavePrompt.vue';
 </script>
 
 <template>

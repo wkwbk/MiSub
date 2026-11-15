@@ -1,7 +1,7 @@
 <script setup>
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

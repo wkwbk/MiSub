@@ -1,7 +1,7 @@
 <script setup>
     import { Download, Eye, Link2, QrCode } from 'lucide-vue-next';
-    import QRCodeOverlay from './QRCodeOverlay.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

@@ -13,7 +13,7 @@ const manualNodesRef = { value: [] };
 // 所以要把 http 层挡掉，才能断言「确实发出了同步请求」以及「同步失败时的表现」。
 const { postMock } = vi.hoisted(() => ({ postMock: vi.fn() }));
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: {
         get: vi.fn(),
         post: postMock,
@@ -31,7 +31,7 @@ vi.mock('vue-router', async () => {
     };
 });
 
-vi.mock('../../src/composables/useSubscriptions.js', () => ({
+vi.mock('@/composables/useSubscriptions.js', () => ({
     useSubscriptions: () => ({
         totalRemainingTraffic: computed(() => 0),
         enabledSubscriptionsCount: computed(
@@ -42,18 +42,18 @@ vi.mock('../../src/composables/useSubscriptions.js', () => ({
     }),
 }));
 
-vi.mock('../../src/composables/useManualNodes.js', () => ({
+vi.mock('@/composables/useManualNodes.js', () => ({
     useManualNodes: () => ({
         manualNodes: manualNodesRef,
         addNodesFromBulk: vi.fn(),
     }),
 }));
-import DashboardView from '../../src/views/DashboardView.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { messages } from '../../src/i18n/messages.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useSettingsStore } from '../../src/stores/settings.js';
-import { useToastStore } from '../../src/stores/toast.js';
+import DashboardView from '@/views/DashboardView.vue';
+import { createI18n } from '@/i18n/index.js';
+import { messages } from '@/i18n/messages.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useSettingsStore } from '@/stores/settings.js';
+import { useToastStore } from '@/stores/toast.js';
 
 function mountDashboard(locale = 'zh-CN') {
     return mount(DashboardView, {

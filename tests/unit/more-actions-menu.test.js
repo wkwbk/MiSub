@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
-import MoreActionsMenu from '../../src/components/shared/MoreActionsMenu.vue';
+import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 
 describe('MoreActionsMenu component', () => {
     let wrapper = null;

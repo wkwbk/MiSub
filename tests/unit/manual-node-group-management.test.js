@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useManualNodes } from '../../src/composables/useManualNodes.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useManualNodes } from '@/composables/useManualNodes.js';
 
 describe('手动节点分组管理', () => {
     let dataStore;
