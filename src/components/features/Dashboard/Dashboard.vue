@@ -5,6 +5,7 @@
     import { useUIStore } from '../../../stores/ui.js';
     import { useDataStore } from '../../../stores/useDataStore.js';
     import { useSubscriptions } from '../../../composables/useSubscriptions.js';
+    import { useAirportGroupActions } from '../../../composables/useAirportGroupActions.js';
     import { useManualNodes } from '../../../composables/useManualNodes.js';
     import { useProfiles } from '../../../composables/useProfiles.js';
     import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
@@ -421,6 +422,17 @@
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
+    const {
+        handleAssignAirportGroup,
+        handleSplitAirportGroup,
+        handleResetAirportIdentity,
+    } = useAirportGroupActions({
+        subscriptions,
+        updateSubscription,
+        showToast,
+        t,
+    });
+
     const handleApplyDetectedName = (subscriptionId, name) => {
         const target = String(name || '').trim();
         if (!target) return;
@@ -518,6 +530,9 @@
                     @refresh-all="batchUpdateAllSubscriptions"
                     @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
                     @applyDetectedName="handleApplyDetectedName"
+                    @assign-airport-group="handleAssignAirportGroup"
+                    @split-airport-group="handleSplitAirportGroup"
+                    @reset-group="handleResetAirportIdentity"
                     @toggle-sort="isSortingSubs = !isSortingSubs"
                     @mark-dirty="markDirty"
                     @delete-all="showDeleteSubsModal = true"

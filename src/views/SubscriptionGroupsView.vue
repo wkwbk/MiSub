@@ -4,6 +4,7 @@
     import { extractNodeName } from '../lib/utils.js';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useSubscriptions } from '../composables/useSubscriptions.js';
+    import { useAirportGroupActions } from '../composables/useAirportGroupActions.js';
     import { useManualNodes } from '../composables/useManualNodes.js';
     import { useProfiles } from '../composables/useProfiles.js';
     import { useSortingMode } from '../composables/useSortingMode.js';
@@ -94,35 +95,16 @@
     const previewSubscriptionUrl = ref('');
 
     // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleRenameGroup = (ids, baseName, requestedGroupId) => {
-        const base = String(baseName || '').trim();
-        if (!base || !Array.isArray(ids) || ids.length === 0) return;
-        const groupId =
-            ids
-                .map(
-                    (id) =>
-                        subscriptions.value.find((sub) => sub.id === id)?.airportIdentity?.groupId
-                )
-                .find(Boolean) ||
-            requestedGroupId ||
-            createAirportGroupId();
-        const name = base;
-        let updated = 0;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (!target) return;
-            const identity = { groupId, name: base };
-            if (
-                target.airportIdentity?.groupId === groupId &&
-                target.airportIdentity?.name === base
-            )
-                return;
-            updateSubscription({ ...target, airportIdentity: identity });
-            updated++;
-        });
-        if (updated)
-            showToast(t('subscriptions.groupRenamed', { name: base, count: updated }), 'success');
-    };
+    const {
+        handleAssignAirportGroup,
+        handleSplitAirportGroup,
+        handleResetAirportIdentity,
+    } = useAirportGroupActions({
+        subscriptions,
+        updateSubscription,
+        showToast,
+        t,
+    });
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
     const handleApplyDetectedName = (subscriptionId, name) => {
@@ -140,34 +122,6 @@
             },
         });
         showToast(t('subscriptions.nameApplied', { name: target }), 'success');
-    };
-
-    const handleAssignAirportGroup = (ids, identity) => {
-        const groupId = String(identity?.groupId || '').trim();
-        const name = String(identity?.name || '').trim();
-        if (!groupId || !name || !Array.isArray(ids)) return;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: { groupId, name } });
-        });
-    };
-
-    const handleSplitAirportGroup = (ids, identity) => {
-        const groupId = String(identity?.groupId || '').trim();
-        const name = String(identity?.name || '').trim();
-        if (!groupId || !name || !Array.isArray(ids)) return;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: { groupId, name } });
-        });
-    };
-
-    const handleResetAirportIdentity = (ids) => {
-        (ids || []).forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: null });
-        });
-        showToast(t('subscriptions.airportIdentityReset'), 'success');
     };
 
     const handlePreviewSubscription = (subscriptionId) => {
@@ -277,7 +231,6 @@
             @qrcode="handleQRCode"
             @update-search="subscriptionSearchQuery = $event"
             @applyDetectedName="handleApplyDetectedName"
-            @rename-group="handleRenameGroup"
             @assign-airport-group="handleAssignAirportGroup"
             @split-airport-group="handleSplitAirportGroup"
             @reset-group="handleResetAirportIdentity"

@@ -8,7 +8,6 @@
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import Modal from '@/components/forms/Modal.vue';
-    import Select from '@/components/ui/Select.vue';
     import { useUIStore } from '@/stores/ui';
     import { useI18n } from '@/i18n/index.js';
     import { hasDragOrderChanged } from '../../composables/useSortingMode.js';
@@ -40,9 +39,18 @@
     });
 
     const groupNameInput = ref('');
-    const selectedAirportGroup = ref('');
-    const editingSubscriptionIds = ref([]);
+    const selectedSubscriptionIds = ref([]);
+    const originalGroupIds = ref([]);
+    const editingGroupId = ref('');
+    const isCreatingNewGroup = ref(false);
     const showAirportIdentityEditor = ref(false);
+    const extractHost = (url) => {
+        try {
+            return new URL(url).hostname;
+        } catch {
+            return '';
+        }
+    };
     const emit = defineEmits([
         'add',
         'delete',
@@ -59,7 +67,6 @@
         'qrcode',
         'updateSearch',
         'applyDetectedName',
-        'rename-group',
         'reset-group',
         'assign-airport-group',
         'split-airport-group',
@@ -103,38 +110,57 @@
     const handleRefreshAll = () => emit('refreshAll');
     const handleImport = () => emit('import');
 
-    // 应用识别到的机场名：模板内联箭头函数无法访问 emit，需用具名函数转发
-    // 一键重命名整组：转发给父组件并刷新折叠标题
-    const availableAirportGroups = computed(() => {
-        const groups = new Map();
-        props.subscriptions.forEach((item) => {
-            const identity = item.airportIdentity;
-            if (identity?.groupId && identity?.name) groups.set(identity.groupId, identity.name);
-        });
-        return [...groups].map(([groupId, name]) => ({ groupId, name }));
-    });
+    const hasExplicitAirportIdentity = computed(() =>
+        props.subscriptions.some((item) => item.airportIdentity?.groupId)
+    );
     const handleResetGroup = (group) =>
         emit(
             'reset-group',
             group.items.map((it) => it.id)
         );
-    const openAirportIdentityEditor = (ids = props.subscriptions.map((item) => item.id)) => {
-        groupNameInput.value = '';
-        selectedAirportGroup.value = '';
-        editingSubscriptionIds.value = [...ids];
+    const handleResetAllGroups = () => {
+        const ids = props.subscriptions
+            .filter((item) => item.airportIdentity?.groupId)
+            .map((item) => item.id);
+        if (ids.length > 0) emit('reset-group', ids);
+    };
+    const openAirportIdentityEditor = (group = null) => {
+        if (group && Array.isArray(group.items)) {
+            isCreatingNewGroup.value = false;
+            groupNameInput.value = groupDisplayName(group);
+            const ids = group.items.map((item) => item.id);
+            originalGroupIds.value = [...ids];
+            selectedSubscriptionIds.value = [...ids];
+            editingGroupId.value =
+                group.items.map((item) => item.airportIdentity?.groupId).find(Boolean) || '';
+        } else {
+            isCreatingNewGroup.value = true;
+            groupNameInput.value = '';
+            originalGroupIds.value = [];
+            selectedSubscriptionIds.value = [];
+            editingGroupId.value = '';
+        }
         showAirportIdentityEditor.value = true;
+    };
+    const toggleSubscriptionSelection = (id) => {
+        if (selectedSubscriptionIds.value.includes(id)) {
+            selectedSubscriptionIds.value = selectedSubscriptionIds.value.filter(
+                (itemId) => itemId !== id
+            );
+        } else {
+            selectedSubscriptionIds.value = [...selectedSubscriptionIds.value, id];
+        }
     };
     const saveAirportIdentity = () => {
         const name = groupNameInput.value.trim();
-        const existing = props.subscriptions
-            .map((item) => item.airportIdentity)
-            .find((identity) => identity?.groupId === selectedAirportGroup.value);
-        if (!selectedAirportGroup.value && !name) return;
-        const groupId = selectedAirportGroup.value || createAirportGroupId();
-        emit('assign-airport-group', [...editingSubscriptionIds.value], {
-            groupId,
-            name: existing?.name || name,
-        });
+        const selected = [...selectedSubscriptionIds.value];
+        if (!name || selected.length === 0) return;
+        const groupId = editingGroupId.value || createAirportGroupId();
+        emit('assign-airport-group', selected, { groupId, name });
+        const removedIds = originalGroupIds.value.filter((id) => !selected.includes(id));
+        if (removedIds.length > 0) {
+            emit('reset-group', removedIds);
+        }
         showAirportIdentityEditor.value = false;
     };
     const handleSplitAirportGroup = (group) => {
@@ -145,20 +171,6 @@
                 name: item.airportIdentity?.name || groupDetectedName(group),
             });
         });
-    };
-    const handleConfirmDetectedName = (group) => {
-        const name = groupDetectedName(group);
-        if (!name) return;
-        const retainedGroupId = group.items
-            .map((item) => item.airportIdentity?.groupId)
-            .find(Boolean);
-        emit(
-            'rename-group',
-            group.items.map((item) => item.id),
-            name,
-            retainedGroupId || createAirportGroupId()
-        );
-        setTimeout(refreshNameMemory, 0);
     };
 
     const handleApplyDetectedName = (subscription, name) => {
@@ -193,12 +205,26 @@
         return base.charAt(0).toUpperCase() + base.slice(1);
     };
 
+    const resolveGroupItemHost = (group) => {
+        if (group?.host && !String(group.host).startsWith('identity:')) {
+            return group.host;
+        }
+        const firstUrl = (group?.items || []).find((item) => item?.url)?.url;
+        if (!firstUrl) return '';
+        try {
+            return new URL(firstUrl).hostname;
+        } catch {
+            return '';
+        }
+    };
+
     const groupDetectedName = (group) => {
         const hit = (group?.items || []).find(
             (item) => typeof item?.detectedName === 'string' && item.detectedName.trim()
         );
         if (hit) return hit.detectedName.trim();
-        if (group?.host) return prettifyHost(group.host);
+        const host = resolveGroupItemHost(group);
+        if (host) return prettifyHost(host);
         return '';
     };
 
@@ -217,7 +243,7 @@
         void nameMemoryVersion.value;
         const confirmed = (group?.items || []).map(getAirportIdentityName).find(Boolean);
         if (confirmed) return confirmed;
-        const host = group?.host || '';
+        const host = resolveGroupItemHost(group);
         if (host) {
             const rootDomain = inferAirportRootDomain(`https://${host}`) || host;
             const remembered = lookupDomainName(rootDomain);
@@ -325,12 +351,18 @@
 
     const isGrouped = computed(() => collapsibleGroups.value.length > 0);
 
-    const collapseAllGroups = () => {
-        collapsedGroups.value = new Set(collapsibleGroups.value.map((g) => g.key));
-    };
+    const areAllGroupsCollapsed = computed(
+        () =>
+            collapsibleGroups.value.length > 0 &&
+            collapsibleGroups.value.every((g) => collapsedGroups.value.has(g.key))
+    );
 
-    const expandAllGroups = () => {
-        collapsedGroups.value = new Set();
+    const toggleAllGroups = () => {
+        if (areAllGroupsCollapsed.value) {
+            collapsedGroups.value = new Set();
+        } else {
+            collapsedGroups.value = new Set(collapsibleGroups.value.map((g) => g.key));
+        }
     };
 </script>
 
@@ -373,16 +405,6 @@
                     class="flex flex-wrap items-center gap-2 sm:w-auto justify-end sm:justify-start"
                 >
                     <button
-                        v-if="subscriptions.length > 1"
-                        type="button"
-                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
-                        :title="t('subscriptions.assignAirportGroup')"
-                        @click.stop="openAirportIdentityEditor()"
-                    >
-                        {{ t('subscriptions.assignAirportGroup') }}
-                    </button>
-
-                    <button
                         @click="handleImport"
                         class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
@@ -390,17 +412,16 @@
                     </button>
                     <button
                         v-if="isGrouped && !isSorting"
-                        @click="collapseAllGroups"
+                        type="button"
+                        data-testid="toggle-all-groups"
+                        @click="toggleAllGroups"
                         class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     >
-                        {{ t('subscriptions.collapseAll') }}
-                    </button>
-                    <button
-                        v-if="isGrouped && !isSorting"
-                        @click="expandAllGroups"
-                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
-                    >
-                        {{ t('subscriptions.expandAll') }}
+                        {{
+                            areAllGroupsCollapsed
+                                ? t('subscriptions.expandAll')
+                                : t('subscriptions.collapseAll')
+                        }}
                     </button>
                     <button
                         @click="handleAdd"
@@ -413,7 +434,7 @@
                             <button
                                 @click="
                                     handleRefreshAll();
-                                    close();
+                                    close?.();
                                 "
                                 class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
@@ -422,17 +443,40 @@
                             <button
                                 @click="
                                     handleToggleSort();
-                                    close();
+                                    close?.();
                                 "
                                 class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
+                            <button
+                                v-if="subscriptions.length > 1"
+                                type="button"
+                                data-testid="create-airport-group"
+                                @click="
+                                    openAirportIdentityEditor();
+                                    close?.();
+                                "
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            >
+                                {{ t('subscriptions.createAirportGroup') }}
+                            </button>
+                            <button
+                                v-if="hasExplicitAirportIdentity"
+                                data-testid="reset-all-airport-groups"
+                                @click="
+                                    handleResetAllGroups();
+                                    close?.();
+                                "
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            >
+                                {{ t('subscriptions.automaticAirportIdentity') }}
+                            </button>
                             <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
                             <button
                                 @click="
                                     handleDeleteAll();
-                                    close();
+                                    close?.();
                                 "
                                 class="w-full text-left px-3 py-2 rounded text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                             >
@@ -559,55 +603,31 @@
                                     >{{ group.items.length }}</span
                                 >
                             </button>
-                            <div class="flex shrink-0 items-center gap-2">
-                                <button
-                                    v-if="groupDetectedName(group)"
-                                    type="button"
-                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-200 transition-colors hover:bg-zinc-900"
-                                    :title="
-                                        t('subscriptions.renameGroupHint', {
-                                            name: groupDetectedName(group),
-                                        })
-                                    "
-                                    @click.stop="handleConfirmDetectedName(group)"
-                                >
-                                    {{ t('subscriptions.renameGroup') }}
-                                </button>
+                            <div class="flex shrink-0 items-center gap-1.5">
                                 <button
                                     type="button"
-                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
-                                    :title="t('subscriptions.assignAirportGroup')"
-                                    @click.stop="
-                                        openAirportIdentityEditor(
-                                            group.items.map((item) => item.id)
-                                        )
-                                    "
+                                    data-testid="edit-airport-group"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                                    @click.stop="openAirportIdentityEditor(group)"
                                 >
-                                    {{ t('subscriptions.assignAirportGroup') }}
-                                </button>
-                                <button
-                                    v-if="group.items.length > 1"
-                                    type="button"
-                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
-                                    :title="t('subscriptions.splitAirportGroup')"
-                                    @click.stop="handleSplitAirportGroup(group)"
-                                >
-                                    {{ t('subscriptions.splitAirportGroup') }}
+                                    {{ t('subscriptions.editAirportGroup') }}
                                 </button>
                                 <button
                                     v-if="group.items.some((item) => item.airportIdentity?.groupId)"
                                     type="button"
-                                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
-                                    :title="t('subscriptions.automaticAirportIdentity')"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                                     @click.stop="handleResetGroup(group)"
                                 >
                                     {{ t('subscriptions.automaticAirportIdentity') }}
                                 </button>
-                                <span class="text-xs text-zinc-400">{{
-                                    isGroupCollapsed(group.key)
-                                        ? t('subscriptions.expand')
-                                        : t('subscriptions.collapse')
-                                }}</span>
+                                <button
+                                    v-else-if="group.items.length > 1"
+                                    type="button"
+                                    class="rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-[11px] font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                                    @click.stop="handleSplitAirportGroup(group)"
+                                >
+                                    {{ t('subscriptions.splitAirportGroup') }}
+                                </button>
                             </div>
                         </div>
                         <div
@@ -725,38 +745,62 @@
         <Modal
             :show="showAirportIdentityEditor"
             size="md"
-            :confirm-text="t('subscriptions.saveAirportIdentity')"
-            :confirm-disabled="!selectedAirportGroup && !groupNameInput.trim()"
+            :confirm-text="t('subscriptions.saveGroup')"
+            :confirm-disabled="!groupNameInput.trim() || selectedSubscriptionIds.length === 0"
             @update:show="showAirportIdentityEditor = $event"
             @confirm="saveAirportIdentity"
         >
             <template #title>
                 <h3 class="text-base font-semibold text-zinc-100">
-                    {{ t('subscriptions.assignAirportGroup') }}
+                    {{
+                        isCreatingNewGroup
+                            ? t('subscriptions.createAirportGroup')
+                            : t('subscriptions.editAirportGroup')
+                    }}
                 </h3>
             </template>
             <template #body>
                 <div class="space-y-4">
-                    <p class="text-xs text-zinc-400">
-                        {{ t('subscriptions.chooseAirportGroup') }}
-                    </p>
-                    <Select
-                        v-model="selectedAirportGroup"
-                        size="sm"
-                        :options="[
-                            { value: '', label: t('subscriptions.newAirportGroupName') },
-                            ...availableAirportGroups.map((airport) => ({
-                                value: airport.groupId,
-                                label: airport.name,
-                            })),
-                        ]"
-                    />
-                    <input
-                        v-if="!selectedAirportGroup"
-                        v-model="groupNameInput"
-                        class="w-full rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500 placeholder:text-zinc-500"
-                        :placeholder="t('subscriptions.newAirportGroupName')"
-                    />
+                    <div>
+                        <label class="mb-1.5 block text-xs font-medium text-zinc-300">
+                            {{ t('subscriptions.airportGroupName') }}
+                        </label>
+                        <input
+                            v-model="groupNameInput"
+                            data-testid="airport-group-name-input"
+                            class="w-full rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-100 outline-none focus:border-zinc-500 placeholder:text-zinc-500"
+                            :placeholder="t('subscriptions.newAirportGroupName')"
+                        />
+                    </div>
+                    <div>
+                        <label class="mb-1.5 block text-xs font-medium text-zinc-300">
+                            {{ t('subscriptions.airportGroupMembers') }}
+                        </label>
+                        <div
+                            class="max-h-60 space-y-1.5 overflow-y-auto rounded-md border border-zinc-800 p-2"
+                        >
+                            <label
+                                v-for="sub in subscriptions"
+                                :key="sub.id"
+                                class="flex cursor-pointer items-center justify-between gap-3 rounded px-2 py-1.5 text-xs transition-colors hover:bg-zinc-900"
+                            >
+                                <span class="flex min-w-0 items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        :checked="selectedSubscriptionIds.includes(sub.id)"
+                                        class="h-3.5 w-3.5 rounded border-zinc-700 bg-transparent text-zinc-100"
+                                        @change="toggleSubscriptionSelection(sub.id)"
+                                    />
+                                    <span class="truncate font-medium text-zinc-200">{{
+                                        sub.name || t('subscriptions.unnamed')
+                                    }}</span>
+                                </span>
+                                <span class="shrink-0 truncate max-w-[160px] text-[11px] text-zinc-500">
+                                    {{ extractHost(sub.url) }}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </template>
         </Modal>
