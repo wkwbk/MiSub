@@ -5,10 +5,16 @@ export function useAirportGroupActions({ subscriptions, updateSubscription, show
     const applyAirportIdentity = (ids, identity) => {
         const groupId = String(identity?.groupId || '').trim();
         const name = String(identity?.name || '').trim();
+        const split = Boolean(identity?.split);
         if (!groupId || !name || !Array.isArray(ids)) return;
         ids.forEach((id) => {
             const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: { groupId, name } });
+            if (target) {
+                updateSubscription({
+                    ...target,
+                    airportIdentity: split ? { groupId, name, split: true } : { groupId, name },
+                });
+            }
         });
     };
 

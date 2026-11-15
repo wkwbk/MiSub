@@ -202,6 +202,25 @@ describe('订阅源按站点折叠', () => {
         expect(wrapper.emitted('split-airport-group')[0][1].groupId).not.toBe(
             wrapper.emitted('split-airport-group')[1][1].groupId
         );
+        expect(wrapper.emitted('split-airport-group')[0][1].split).toBe(true);
+    });
+
+    it('拆分后的独立订阅直接平铺渲染，不显示为单条折叠组', async () => {
+        const subs = [
+            {
+                ...makeSub('a', 's1', 'https://sub.libk.top/x/1'),
+                airportIdentity: { groupId: 'split-1', name: 'Libk', split: true },
+            },
+            {
+                ...makeSub('b', 's2', 'https://sub.libk.top/x/2'),
+                airportIdentity: { groupId: 'split-2', name: 'Libk', split: true },
+            },
+        ];
+        const wrapper = mountPanel(subs);
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.findAll('.stub-card')).toHaveLength(2);
+        expect(wrapper.find('[data-testid="edit-airport-group"]').exists()).toBe(false);
     });
 
     it('assigns only the selected group ids from the group header editor', async () => {

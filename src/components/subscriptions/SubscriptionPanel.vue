@@ -99,6 +99,13 @@
     });
 
     const visibleCount = computed(() => props.filteredCount ?? matchedSubscriptions.value.length);
+    const refreshingCount = computed(() => {
+        const updating = props.subscriptions.filter((sub) => sub.isUpdating).length;
+        if (updating > 0) return updating;
+        return props.subscriptions.filter(
+            (sub) => sub.enabled && sub.url && sub.url.startsWith('http')
+        ).length;
+    });
     const refreshTime = computed(() => {
         if (!props.lastRefreshAt) return '';
         const date = new Date(props.lastRefreshAt);
@@ -188,6 +195,7 @@
             emit('split-airport-group', [item.id], {
                 groupId: createAirportGroupId(),
                 name: item.airportIdentity?.name || groupDetectedName(group),
+                split: true,
             });
         });
     };
@@ -326,8 +334,12 @@
             Boolean(String(item?.airportIdentity?.groupId || '').trim())
         );
 
-    /** 多条目站点，或用户显式创建的机场分组（即使只有 1 条订阅），都以分组卡片展示。 */
-    const isGroupedCard = (group) => group.items.length > 1 || isExplicitAirportGroup(group);
+    const isSplitStandalone = (group) =>
+        group.items.length === 1 && Boolean(group.items[0]?.airportIdentity?.split);
+
+    /** 多条目站点，或用户显式创建的机场分组（拆分出的独立订阅除外），以分组卡片展示。 */
+    const isGroupedCard = (group) =>
+        group.items.length > 1 || (isExplicitAirportGroup(group) && !isSplitStandalone(group));
 
     const collapsibleGroups = computed(() =>
         groupedSubscriptions.value.filter(isGroupedCard)
@@ -518,7 +530,9 @@
                         aria-live="polite"
                         class="mt-1 text-xs font-mono text-zinc-500"
                     >
-                        <span v-if="isRefreshing">{{ t('subscriptions.refreshing') }}</span>
+                        <span v-if="isRefreshing">{{
+                            t('subscriptions.refreshing', { count: refreshingCount })
+                        }}</span>
                         <span v-else-if="refreshError">{{
                             t('subscriptions.refreshFailedShort')
                         }}</span>
@@ -558,11 +572,12 @@
                     <MoreActionsMenu menu-width-class="w-36">
                         <template #menu="{ close }">
                             <button
+                                :disabled="isRefreshing"
                                 @click="
                                     handleRefreshAll();
                                     close?.();
                                 "
-                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {{ t('actions.refreshAll') }}
                             </button>

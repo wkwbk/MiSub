@@ -290,7 +290,40 @@ export function useSubscriptions(markDirty) {
         }
     }
 
+    function finalizeRefreshSummary(successCount, totalCount) {
+        const failedCount = totalCount - successCount;
+        refreshError.value = failedCount > 0;
+        showToast(
+            t('subscriptions.refreshDone', {
+                success: successCount,
+                total: totalCount,
+                failed: failedCount,
+            }),
+            failedCount === 0 ? 'success' : successCount > 0 ? 'warning' : 'error'
+        );
+
+        if (successCount > 0) {
+            markDirty();
+            void dataStore.saveData();
+        }
+    }
+
+    async function runSequentialFallbackUpdate(subsToUpdate) {
+        showToast(t('subscriptions.refreshFallback'), 'warning');
+        let fallbackSuccessCount = 0;
+        for (const sub of subsToUpdate) {
+            if (await handleUpdateNodeCount(sub.id, true)) {
+                fallbackSuccessCount++;
+            }
+        }
+        finalizeRefreshSummary(fallbackSuccessCount, subsToUpdate.length);
+    }
+
     async function batchUpdateAllSubscriptions() {
+        if (isRefreshing.value) {
+            return;
+        }
+
         const subsToUpdate = subscriptions.value.filter(
             (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && !sub.isUpdating
         );
@@ -308,71 +341,61 @@ export function useSubscriptions(markDirty) {
         showToast(t('subscriptions.refreshing', { count: subsToUpdate.length }), 'info');
 
         try {
-            const result = await batchUpdateNodes(subsToUpdate.map((sub) => sub.id));
+            const result = await batchUpdateNodes(
+                subsToUpdate.map((sub) => sub.id),
+                subsToUpdate.map((sub) => ({
+                    id: sub.id,
+                    name: sub.name,
+                    url: sub.url,
+                    enabled: sub.enabled,
+                    fetchProxy: sub.fetchProxy,
+                    plusAsSpace: Boolean(sub.plusAsSpace),
+                    customUserAgent: sub.customUserAgent,
+                }))
+            );
 
-            if (result && result.success) {
+            if (result?.success) {
                 let successCount = 0;
-                const resultList = Array.isArray(result.results) ? result.results : [];
+                const resultMap = new Map(
+                    (Array.isArray(result.results) ? result.results : [])
+                        .map((item) => [item.subscriptionId || item.id, item])
+                        .filter(([id]) => Boolean(id))
+                );
 
-                resultList.forEach((updateResult) => {
-                    const id = updateResult.subscriptionId || updateResult.id;
-                    const sub = subscriptions.value.find((s) => s.id === id);
-                    if (!sub) return;
-
-                    if (updateResult.success) {
-                        sub.nodeCount = updateResult.nodeCount || 0;
+                for (const sub of subsToUpdate) {
+                    const updateResult = resultMap.get(sub.id);
+                    if (updateResult?.success) {
+                        sub.nodeCount = updateResult.nodeCount ?? 0;
+                        if (updateResult.userInfo !== undefined) {
+                            sub.userInfo = updateResult.userInfo;
+                        }
+                        sub.lastError = null;
                         successCount++;
-                    }
-                });
-
-                for (const sub of subsToUpdate) {
-                    try {
-                        const result = await fetchNodeCount(sub.url);
-                        if (result.success && result.data.userInfo) {
-                            sub.userInfo = result.data.userInfo;
-                        }
-                    } catch (error) {
-                        if (isDev) {
-                            console.debug(
-                                '[Subscriptions] Failed to fetch node info during batch update:',
-                                error
-                            );
+                    } else {
+                        sub.lastError =
+                            updateResult?.error || t('subscriptions.unknownError');
+                        if (sub.enableNodeCache !== true) {
+                            sub.nodeCount = 0;
+                            sub.userInfo = null;
                         }
                     }
                 }
 
-                const failedCount = subsToUpdate.length - successCount;
-                refreshError.value = failedCount > 0;
-                showToast(
-                    t('subscriptions.refreshDone', {
-                        success: successCount,
-                        total: subsToUpdate.length,
-                        failed: failedCount,
-                    }),
-                    'success'
-                );
-                markDirty();
+                finalizeRefreshSummary(successCount, subsToUpdate.length);
             } else {
-                showToast(
-                    t('subscriptions.refreshFailed', {
-                        message: result?.message || t('subscriptions.unknownError'),
-                    }),
-                    'error'
+                const failureReason =
+                    result?.error || result?.message || t('subscriptions.unknownError');
+                console.warn(
+                    '[Subscriptions] Batch update failed, falling back to sequential update:',
+                    failureReason
                 );
-                refreshError.value = true;
-                for (const sub of subsToUpdate) {
-                    await handleUpdateNodeCount(sub.id);
-                }
+                await runSequentialFallbackUpdate(subsToUpdate);
             }
         } catch (error) {
-            refreshError.value = true;
             handleError(error, 'Batch Subscription Update Error', {
                 subscriptionCount: subsToUpdate.length,
             });
-            showToast(t('subscriptions.refreshFallback'), 'error');
-            for (const sub of subsToUpdate) {
-                await handleUpdateNodeCount(sub.id);
-            }
+            await runSequentialFallbackUpdate(subsToUpdate);
         } finally {
             lastRefreshAt.value = new Date().toISOString();
             isRefreshing.value = false;

@@ -220,19 +220,23 @@ export async function resetSettings() {
 /**
  * 批量更新订阅的节点信息
  * @param {string[]} subscriptionIds - 要更新的订阅ID数组
+ * @param {Array<Object>|null} subscriptions - 可选的订阅元数据（支持未保存或刚修改的订阅）
  * @returns {Promise<Object>} - 更新结果
  */
-export async function batchUpdateNodes(subscriptionIds) {
+export async function batchUpdateNodes(subscriptionIds, subscriptions = null) {
     let timeoutId;
     try {
         const controller = new AbortController();
         timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒超时
 
-        const result = await api.post(
-            '/api/batch_update_nodes',
-            { subscriptionIds },
-            { signal: controller.signal }
-        );
+        const payload = { subscriptionIds };
+        if (Array.isArray(subscriptions) && subscriptions.length > 0) {
+            payload.subscriptions = subscriptions;
+        }
+
+        const result = await api.post('/api/batch_update_nodes', payload, {
+            signal: controller.signal,
+        });
 
         if (result?.success === false) {
             return normalizeApiFailure(result, '批量更新节点信息失败');

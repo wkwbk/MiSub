@@ -44,6 +44,9 @@
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
         reorderSubscriptions,
+        isRefreshing,
+        refreshError,
+        lastRefreshAt,
     } = useSubscriptions(markDirty);
 
     const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
@@ -204,6 +207,9 @@
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
             :status-filter-label="statusFilterLabel"
+            :is-refreshing="isRefreshing"
+            :refresh-error="refreshError"
+            :last-refresh-at="lastRefreshAt"
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
