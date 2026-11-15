@@ -31,7 +31,7 @@
     const subscriptionSearchTerm = ref('');
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
-    const activeResourceTab = ref('subscriptions');
+    const activeResourceTab = ref('manualNodes');
     const activeManualNodeGroupFilter = ref(null);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
@@ -401,6 +401,34 @@
                     >
                         <button
                             type="button"
+                            @click="activeResourceTab = 'manualNodes'"
+                            :class="[
+                                activeResourceTab === 'manualNodes'
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                            ]"
+                        >
+                            <span>{{ t('profileModal.tabManualNodes') }}</span>
+                            <span
+                                v-if="localProfile.manualNodes?.length"
+                                :class="
+                                    activeResourceTab === 'manualNodes'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
+                            >
+                                {{ localProfile.manualNodes.length }}
+                            </span>
+                            <span
+                                v-if="activeResourceTab === 'manualNodes'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
+                        </button>
+
+                        <button
+                            type="button"
                             @click="activeResourceTab = 'subscriptions'"
                             :class="[
                                 activeResourceTab === 'subscriptions'
@@ -457,34 +485,6 @@
 
                         <button
                             type="button"
-                            @click="activeResourceTab = 'manualNodes'"
-                            :class="[
-                                activeResourceTab === 'manualNodes'
-                                    ? 'text-zinc-100 font-semibold'
-                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
-                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
-                            ]"
-                        >
-                            <span>{{ t('profileModal.tabManualNodes') }}</span>
-                            <span
-                                v-if="localProfile.manualNodes?.length"
-                                :class="
-                                    activeResourceTab === 'manualNodes'
-                                        ? 'border-zinc-700 text-zinc-200'
-                                        : 'border-zinc-800 text-zinc-400'
-                                "
-                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
-                            >
-                                {{ localProfile.manualNodes.length }}
-                            </span>
-                            <span
-                                v-if="activeResourceTab === 'manualNodes'"
-                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
-                            ></span>
-                        </button>
-
-                        <button
-                            type="button"
                             @click="activeResourceTab = 'all'"
                             :class="[
                                 activeResourceTab === 'all'
@@ -509,6 +509,25 @@
                             : ''
                     "
                 >
+                    <div
+                        v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'"
+                    >
+                        <NodeSelector
+                            :nodes="allManualNodes"
+                            :filtered-nodes="filteredManualNodes"
+                            :search-term="nodeSearchTerm"
+                            :active-group-filter="activeManualNodeGroupFilter"
+                            :groups="manualNodeGroups"
+                            :selected-ids="localProfile.manualNodes || []"
+                            @update:search-term="nodeSearchTerm = $event"
+                            @update:group-filter="activeManualNodeGroupFilter = $event"
+                            @update:selected-ids="updateSelectedIds('manualNodes', $event)"
+                            @toggle-selection="toggleSelection('manualNodes', $event)"
+                            @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
+                            @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
+                        />
+                    </div>
+
                     <div
                         v-show="
                             activeResourceTab === 'subscriptions' || activeResourceTab === 'all'
@@ -544,25 +563,6 @@
                             @toggle-selection="toggleSelection('subProfiles', $event)"
                             @select-all="handleSelectAll('subProfiles', $event)"
                             @deselect-all="handleDeselectAll('subProfiles', filteredSubProfiles)"
-                        />
-                    </div>
-
-                    <div
-                        v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'"
-                    >
-                        <NodeSelector
-                            :nodes="allManualNodes"
-                            :filtered-nodes="filteredManualNodes"
-                            :search-term="nodeSearchTerm"
-                            :active-group-filter="activeManualNodeGroupFilter"
-                            :groups="manualNodeGroups"
-                            :selected-ids="localProfile.manualNodes || []"
-                            @update:search-term="nodeSearchTerm = $event"
-                            @update:group-filter="activeManualNodeGroupFilter = $event"
-                            @update:selected-ids="updateSelectedIds('manualNodes', $event)"
-                            @toggle-selection="toggleSelection('manualNodes', $event)"
-                            @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
-                            @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
                         />
                     </div>
                 </div>

@@ -9,20 +9,20 @@ export const MAIN_NAV_ITEMS = [
         icon: markRaw(LayoutDashboard),
     },
     {
-        key: 'nav.groups',
-        name: '机场订阅',
-        path: '/dashboard/groups',
-        icon: markRaw(Boxes),
-    },
-    {
         key: 'nav.nodes',
-        name: '手动节点',
+        name: '节点管理',
         path: '/dashboard/nodes',
         icon: markRaw(Server),
     },
     {
+        key: 'nav.groups',
+        name: '订阅管理',
+        path: '/dashboard/groups',
+        icon: markRaw(Boxes),
+    },
+    {
         key: 'nav.subscriptions',
-        name: '我的订阅',
+        name: '分享管理',
         path: '/dashboard/subscriptions',
         icon: markRaw(CloudDownload),
     },
