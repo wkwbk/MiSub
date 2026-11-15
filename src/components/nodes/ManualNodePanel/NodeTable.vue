@@ -102,6 +102,7 @@
                     <template #item="{ element: node }">
                         <div class="cursor-move">
                             <ManualNodeCard
+                                class="pointer-events-none select-none"
                                 :node="node"
                                 :is-selection-mode="isSelectionMode"
                                 :is-selected="selectedNodeIds.has(node.id)"
@@ -131,7 +132,7 @@
                             <ManualNodeList
                                 :node="node"
                                 :index="index + 1"
-                                class="list-item-animation"
+                                class="list-item-animation pointer-events-none select-none"
                                 :style="{ '--delay-index': Math.min(index, 20) }"
                                 :ping-result="pingResults[node.id]"
                                 :is-pinging="pingingNodes.has(node.id)"
