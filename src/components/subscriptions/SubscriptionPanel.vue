@@ -476,7 +476,14 @@
             </div>
         </div>
         <div v-if="subscriptions.length > 0 && isSorting">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div
+                class="grid gap-4"
+                :class="
+                    draggableSubscriptions.length > 1
+                        ? 'grid-cols-1 md:grid-cols-2'
+                        : 'grid-cols-1'
+                "
+            >
                 <draggable
                     tag="div"
                     class="contents"
@@ -585,7 +592,12 @@
                         </div>
                         <div
                             v-show="!isGroupCollapsed(group.key)"
-                            class="grid grid-cols-1 gap-4 border-t border-zinc-800 p-4 md:grid-cols-2"
+                            class="grid gap-4 border-t border-zinc-800 p-4"
+                            :class="
+                                group.items.length > 1
+                                    ? 'grid-cols-1 md:grid-cols-2'
+                                    : 'grid-cols-1'
+                            "
                         >
                             <div
                                 v-for="(subscription, index) in group.items"
@@ -611,7 +623,12 @@
                 </template>
                 <div
                     v-if="ungroupedSubscriptions.length > 0"
-                    class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                    class="grid gap-4"
+                    :class="
+                        ungroupedSubscriptions.length > 1
+                            ? 'grid-cols-1 md:grid-cols-2'
+                            : 'grid-cols-1'
+                    "
                 >
                     <div
                         v-for="(subscription, index) in ungroupedSubscriptions"
@@ -634,7 +651,15 @@
                     </div>
                 </div>
             </template>
-            <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div
+                v-else
+                class="grid gap-4"
+                :class="
+                    paginatedSubscriptions.length > 1
+                        ? 'grid-cols-1 md:grid-cols-2'
+                        : 'grid-cols-1'
+                "
+            >
                 <div
                     v-for="(subscription, index) in paginatedSubscriptions"
                     :key="subscription.id"

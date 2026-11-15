@@ -60,7 +60,7 @@
         class="group flex min-h-[180px] flex-col rounded-md border border-zinc-800 bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="[compact ? 'p-4' : 'p-5', { 'opacity-60': !isEnabled }]"
     >
-        <div class="flex items-start justify-between gap-3" :class="compact ? 'flex-col' : ''">
+        <div class="flex items-start justify-between" :class="compact ? 'gap-2' : 'gap-3'">
             <div class="min-w-0 flex-1 space-y-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span
@@ -110,8 +110,7 @@
             </div>
 
             <div
-                class="shrink-0 flex items-center gap-1 opacity-100 transition-opacity duration-200"
-                :class="compact ? 'self-end flex-wrap justify-end' : ''"
+                class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
             >
                 <button
                     @click.stop="emit('preview')"
