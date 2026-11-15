@@ -925,7 +925,7 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
     box-shadow: var(--shadow-card);
 }
 
-/* Unified 200ms theme color transition for dark-first surfaces without explicit transition-* utilities */
+/* Unified 200ms color transition for dark-first surfaces without explicit transition-* utilities */
 :where(
     .bg-\[\#171717\]:not([class*='transition-']),
     .bg-\[\#131515\]:not([class*='transition-'])
@@ -933,6 +933,27 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
     transition:
         background-color 0.2s ease,
         border-color 0.2s ease,
-        color 0.2s ease,
-        box-shadow 0.2s ease;
+        color 0.2s ease;
+}
+
+/* Suppress per-element CSS transitions during theme switch to avoid simultaneous repaints */
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+    transition: none !important;
+}
+
+/* GPU-composited View Transition for diagonal theme sweep */
+html.theme-view-transition-sweep::view-transition-old(root),
+html.theme-view-transition-sweep::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+html.theme-view-transition-sweep::view-transition-old(root) {
+    z-index: 1;
+}
+
+html.theme-view-transition-sweep::view-transition-new(root) {
+    z-index: 2;
 }
