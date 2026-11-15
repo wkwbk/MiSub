@@ -132,6 +132,7 @@
         if (!targetSub) return;
         updateSubscription({
             ...targetSub,
+            name: target,
             airportIdentity: {
                 groupId: targetSub.airportIdentity?.groupId || createAirportGroupId(),
                 name: target,
