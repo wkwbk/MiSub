@@ -208,96 +208,39 @@
 
 <template>
     <div
-        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
+        class="group relative flex h-full flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="{
             'opacity-60': !misub.enabled,
         }"
     >
         <div class="relative z-10 flex flex-col h-full">
             <!-- Header -->
-            <div class="flex items-start justify-between gap-3 mb-4">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
-                            :class="protocolStyle.style"
-                        >
-                            <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
-                            {{ protocolStyle.text }}
-                        </span>
-                        <span
-                            v-if="expiryInfo"
-                            class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
-                            :class="expiryInfo.style"
-                        >
-                            <span class="h-1.5 w-1.5 rounded-full" :class="expiryInfo.dot"></span>
-                            {{ expiryInfo.daysRemaining }}
-                        </span>
-                    </div>
-                    <h3
-                        class="truncate text-base font-semibold leading-tight text-zinc-100"
-                        :title="misub.name || t('subscriptions.unnamed')"
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
+                        :class="protocolStyle.style"
                     >
-                        {{ misub.name || t('subscriptions.unnamed') }}
-                    </h3>
-                    <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
-                    <div
-                        v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
-                        class="mt-1 flex items-center gap-1 text-[11px] text-zinc-400"
-                        :title="t('subscriptions.detectedNameHint')"
+                        <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
+                        {{ protocolStyle.text }}
+                    </span>
+                    <span
+                        v-if="expiryInfo"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
+                        :class="expiryInfo.style"
                     >
-                        <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
-                        <span class="truncate">{{ effectiveDetectedName }}</span>
-                        <button
-                            type="button"
-                            class="shrink-0 text-[11px] font-medium text-zinc-200 hover:text-white underline underline-offset-2"
-                            :title="t('subscriptions.applyDetectedName')"
-                            @click.stop="emit('applyDetectedName', effectiveDetectedName)"
-                        >
-                            {{ t('subscriptions.applyDetectedNameShort') }}
-                        </button>
-                    </div>
-                    <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
-                    <div
-                        v-else-if="rootDomain && !localDetectedName"
-                        class="mt-1 flex items-center gap-1"
-                    >
-                        <button
-                            type="button"
-                            class="shrink-0 text-[11px] text-zinc-500 hover:text-zinc-200"
-                            :disabled="detecting"
-                            :title="t('subscriptions.detectNameHint')"
-                            @click.stop="handleDetect"
-                        >
-                            {{
-                                detecting
-                                    ? t('subscriptions.detecting')
-                                    : t('subscriptions.detectName')
-                            }}
-                        </button>
-                    </div>
-                    <!-- 机场主域名：可点击访问官网 -->
-                    <a
-                        v-if="rootDomain"
-                        :href="`https://${rootDomain}`"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mt-0.5 inline-flex items-center gap-1 font-mono text-[11px] text-zinc-500 hover:text-zinc-200"
-                        :title="t('subscriptions.visitSite', { domain: rootDomain })"
-                        @click.stop
-                    >
-                        <ExternalLink class="h-3 w-3 shrink-0" />
-                        <span class="truncate">{{ rootDomain }}</span>
-                    </a>
+                        <span class="h-1.5 w-1.5 rounded-full" :class="expiryInfo.dot"></span>
+                        {{ expiryInfo.daysRemaining }}
+                    </span>
                 </div>
 
-                <!-- Action Buttons (Visible on Hover/Touch) -->
+                <!-- Action Buttons (Always visible, subtle at rest) -->
                 <div
-                    class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200"
+                    class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
                 >
                     <button
                         @click.stop="emit('preview')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.previewNodes')"
                         :aria-label="t('actions.previewNodes')"
                     >
@@ -305,7 +248,7 @@
                     </button>
                     <button
                         @click.stop="emit('qrcode')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.showQrCode')"
                         :aria-label="t('actions.showQrCode')"
                     >
@@ -313,7 +256,7 @@
                     </button>
                     <button
                         @click.stop="emit('edit')"
-                        class="p-2 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.edit')"
                         :aria-label="t('actions.edit')"
                     >
@@ -321,7 +264,7 @@
                     </button>
                     <button
                         @click.stop="emit('delete')"
-                        class="p-2 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.delete')"
                         :aria-label="t('actions.delete')"
                     >
@@ -330,8 +273,75 @@
                 </div>
             </div>
 
-            <!-- URL Display -->
-            <div class="relative mb-4">
+            <h3
+                class="mt-2 truncate text-base font-semibold leading-snug text-zinc-100"
+                :title="misub.name || t('subscriptions.unnamed')"
+            >
+                {{ misub.name || t('subscriptions.unnamed') }}
+            </h3>
+
+        <div
+            v-if="
+                rootDomain ||
+                (effectiveDetectedName && effectiveDetectedName !== misub.name)
+            "
+            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400"
+        >
+            <!-- 机场主域名：可点击访问官网 -->
+            <a
+                v-if="rootDomain"
+                :href="`https://${rootDomain}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex min-w-0 items-center gap-1 font-mono text-zinc-400 hover:text-zinc-200"
+                :title="t('subscriptions.visitSite', { domain: rootDomain })"
+                @click.stop
+            >
+                <ExternalLink class="h-3 w-3 shrink-0" />
+                <span class="truncate">{{ rootDomain }}</span>
+            </a>
+            <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
+            <template
+                v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
+            >
+                <span v-if="rootDomain" class="text-zinc-600" aria-hidden="true">·</span>
+                <div
+                    class="inline-flex min-w-0 items-center gap-1 text-zinc-400"
+                    :title="t('subscriptions.detectedNameHint')"
+                >
+                    <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span class="truncate">{{ effectiveDetectedName }}</span>
+                    <button
+                        type="button"
+                        class="shrink-0 font-medium text-zinc-200 hover:text-white underline underline-offset-2"
+                        :title="t('subscriptions.applyDetectedName')"
+                        @click.stop="emit('applyDetectedName', effectiveDetectedName)"
+                    >
+                        {{ t('subscriptions.applyDetectedNameShort') }}
+                    </button>
+                </div>
+            </template>
+            <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
+            <template v-else-if="rootDomain && !localDetectedName">
+                <span class="text-zinc-600" aria-hidden="true">·</span>
+                <button
+                    type="button"
+                    class="shrink-0 text-zinc-500 hover:text-zinc-200 transition-colors"
+                    :disabled="detecting"
+                    :title="t('subscriptions.detectNameHint')"
+                    @click.stop="handleDetect"
+                >
+                    {{
+                        detecting
+                            ? t('subscriptions.detecting')
+                            : t('subscriptions.detectName')
+                    }}
+                </button>
+            </template>
+        </div>
+
+        <!-- URL Display -->
+        <div class="relative mt-3 mb-3">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Link2 class="h-3.5 w-3.5 text-zinc-500" />
                 </div>
@@ -387,15 +397,19 @@
 
             <!-- Footer Actions -->
             <div
-                class="mt-4 flex items-center justify-between border-t border-zinc-800 pt-3"
+                class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3"
             >
-                <Switch v-model="misub.enabled" @change="emit('change')" />
+                <Switch
+                    v-model="misub.enabled"
+                    :label="misub.enabled ? t('common.enabled') : t('common.disabled')"
+                    @change="emit('change')"
+                />
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <button
                         @click.stop="emit('update')"
                         :disabled="misub.isUpdating"
-                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors disabled:opacity-50 touch-target"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 touch-target"
                         :title="
                             misub.isUpdating
                                 ? t('subscriptions.updating')
@@ -408,9 +422,16 @@
                         "
                     >
                         <RefreshCw
-                            class="w-4 h-4"
+                            class="w-3.5 h-3.5"
                             :class="{ 'animate-spin text-zinc-100': misub.isUpdating }"
                         />
+                        <span>
+                            {{
+                                misub.isUpdating
+                                    ? t('subscriptions.updating')
+                                    : t('subscriptions.updateNodeInfo')
+                            }}
+                        </span>
                     </button>
                 </div>
             </div>

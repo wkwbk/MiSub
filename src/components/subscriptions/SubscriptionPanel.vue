@@ -602,12 +602,7 @@
                         </div>
                         <div
                             v-show="!isGroupCollapsed(group.key)"
-                            class="grid gap-4 border-t border-zinc-800 p-4"
-                            :class="
-                                group.items.length > 1
-                                    ? 'grid-cols-1 md:grid-cols-2'
-                                    : 'grid-cols-1'
-                            "
+                            class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-zinc-800 p-4"
                         >
                             <div
                                 v-for="(subscription, index) in group.items"
@@ -633,12 +628,7 @@
                 </template>
                 <div
                     v-if="ungroupedSubscriptions.length > 0"
-                    class="grid gap-4"
-                    :class="
-                        ungroupedSubscriptions.length > 1
-                            ? 'grid-cols-1 md:grid-cols-2'
-                            : 'grid-cols-1'
-                    "
+                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                     <div
                         v-for="(subscription, index) in ungroupedSubscriptions"
@@ -663,12 +653,7 @@
             </template>
             <div
                 v-else
-                class="grid gap-4"
-                :class="
-                    paginatedSubscriptions.length > 1
-                        ? 'grid-cols-1 md:grid-cols-2'
-                        : 'grid-cols-1'
-                "
+                class="grid grid-cols-1 md:grid-cols-2 gap-4"
             >
                 <div
                     v-for="(subscription, index) in paginatedSubscriptions"

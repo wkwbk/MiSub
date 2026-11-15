@@ -204,13 +204,7 @@
             </div>
             <div
                 class="grid gap-4"
-                :class="
-                    compact
-                        ? 'grid-cols-1'
-                        : displayProfiles.length > 1
-                          ? 'grid-cols-1 md:grid-cols-2'
-                          : 'grid-cols-1'
-                "
+                :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
             >
                 <div
                     v-for="(profile, index) in displayProfiles"
