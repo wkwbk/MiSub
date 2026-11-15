@@ -1,6 +1,5 @@
 <script setup>
-    import { Check } from 'lucide-vue-next';
-    import StatusIndicator from './StatusIndicator.vue';
+    import { Check, Loader2 } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
 
     defineProps({
@@ -46,7 +45,7 @@
                     class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
                 >
                     <div v-if="saveState === 'saving'" class="flex items-center">
-                        <StatusIndicator status="loading" size="sm" class="mr-2" />
+                        <Loader2 class="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" />
                         <span>{{ t('settings.saving') }}</span>
                     </div>
                     <div v-else-if="saveState === 'success'" class="flex items-center">
