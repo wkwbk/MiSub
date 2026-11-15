@@ -92,13 +92,10 @@
     <div>
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
-                class="rounded-md border border-zinc-800 bg-[#171717] shadow-none"
-                :class="[
-                    compact ? 'p-3' : 'p-4',
-                    !compact && searchable ? 'flex flex-col justify-between md:min-h-[132px]' : '',
-                ]"
+                class="min-w-0 rounded-md border border-zinc-800 bg-[#171717] shadow-none"
+                :class="[compact ? 'p-3' : 'p-4']"
             >
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div class="min-w-0">
                         <div class="flex items-center gap-3 shrink-0">
                             <h2 class="text-lg font-semibold text-zinc-100">

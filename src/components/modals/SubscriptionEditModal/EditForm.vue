@@ -13,6 +13,10 @@
     import { fetchNodeCount } from '../../../lib/api.js';
     import { useDataStore } from '../../../stores/useDataStore.js';
     import { extractAirportGroupNames } from '../../../composables/useSubscriptionBulkImport.js';
+    import {
+        getSubscriptionGroup,
+        normalizeSubscriptionGroupName,
+    } from '../../../utils/subscription-groups.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -25,11 +29,13 @@
     );
 
     const selectedAirportGroup = computed({
-        get: () => props.editingSubscription?.airportIdentity?.name || '',
+        get: () => getSubscriptionGroup(props.editingSubscription),
         set: (val) => {
             if (!props.editingSubscription) return;
-            const trimmed = String(val || '').trim();
-            props.editingSubscription.airportIdentity = trimmed ? { name: trimmed } : null;
+            props.editingSubscription.group = normalizeSubscriptionGroupName(val);
+            if ('airportIdentity' in props.editingSubscription) {
+                delete props.editingSubscription.airportIdentity;
+            }
         },
     });
 

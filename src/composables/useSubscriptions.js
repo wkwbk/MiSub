@@ -7,6 +7,11 @@ import { fetchNodeCount, batchUpdateNodes } from '../lib/api.js';
 import { handleError } from '../utils/errorHandler.js';
 import { TIMING } from '../constants/timing.js';
 import { t } from '../i18n/index.js';
+import {
+    collectSubscriptionGroups,
+    getSubscriptionGroup,
+    normalizeSubscriptionGroupName,
+} from '../utils/subscription-groups.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -24,9 +29,58 @@ export function useSubscriptions(markDirty) {
     });
 
     const searchQuery = ref('');
+    const activeGroupFilter = ref(null);
     const refreshError = ref(false);
     const lastRefreshAt = ref(null);
     const isRefreshing = ref(false);
+    const subscriptionGroups = computed(() => collectSubscriptionGroups(subscriptions.value));
+
+    function setGroupFilter(group) {
+        activeGroupFilter.value = group || null;
+    }
+
+    function renameSubscriptionGroup(oldName, newName) {
+        const normalizedOld = normalizeSubscriptionGroupName(oldName);
+        const normalizedNew = normalizeSubscriptionGroupName(newName);
+        if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
+
+        let changed = false;
+        subscriptions.value.forEach((sub) => {
+            if (getSubscriptionGroup(sub) === normalizedOld) {
+                dataStore.updateSubscription(sub.id, {
+                    ...sub,
+                    group: normalizedNew,
+                    airportIdentity: null,
+                });
+                changed = true;
+            }
+        });
+        if (activeGroupFilter.value === normalizedOld) {
+            activeGroupFilter.value = normalizedNew;
+        }
+        if (changed) markDirty();
+    }
+
+    function deleteSubscriptionGroup(groupName) {
+        const normalized = normalizeSubscriptionGroupName(groupName);
+        if (!normalized) return;
+
+        let changed = false;
+        subscriptions.value.forEach((sub) => {
+            if (getSubscriptionGroup(sub) === normalized) {
+                dataStore.updateSubscription(sub.id, {
+                    ...sub,
+                    group: '',
+                    airportIdentity: null,
+                });
+                changed = true;
+            }
+        });
+        if (activeGroupFilter.value === normalized) {
+            activeGroupFilter.value = null;
+        }
+        if (changed) markDirty();
+    }
     const filteredSubscriptions = computed(() => {
         const query = searchQuery.value.trim().toLowerCase();
         if (!query) return subscriptions.value;
@@ -501,6 +555,11 @@ export function useSubscriptions(markDirty) {
 
     return {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter,
+        setGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         searchQuery,
         filteredSubscriptions,
         filteredCount: computed(() => filteredSubscriptions.value.length),

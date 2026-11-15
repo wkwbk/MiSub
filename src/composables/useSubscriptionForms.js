@@ -1,8 +1,6 @@
 import { ref } from 'vue';
-import { getActivePinia } from 'pinia';
 import { useToastStore } from '../stores/toast.js';
-import { useDataStore } from '../stores/useDataStore.js';
-import { resolveAirportIdentityForGroup } from './useSubscriptionBulkImport.js';
+import { normalizeSubscriptionGroupName } from '../utils/subscription-groups.js';
 import { generateSubscriptionId } from '../utils/id.js';
 import { t } from '../i18n/index.js';
 
@@ -28,7 +26,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             excludeTraffic: false,
             website: '',
             notes: '',
-            airportIdentity: null,
+            group: '',
         };
         showModal.value = true;
     };
@@ -69,15 +67,13 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             return;
         }
 
-        const currentSubs = getActivePinia() ? useDataStore().subscriptions || [] : [];
-        const groupName = String(editingSubscription.value.airportIdentity?.name || '').trim();
-        const resolvedIdentity = groupName
-            ? resolveAirportIdentityForGroup(groupName, currentSubs, updateSubscription)
-            : null;
         const payload = {
             ...editingSubscription.value,
-            airportIdentity: resolvedIdentity,
+            group: normalizeSubscriptionGroupName(
+                editingSubscription.value.group ?? editingSubscription.value.airportIdentity?.name
+            ),
         };
+        delete payload.airportIdentity;
 
         if (isNew.value) {
             addSubscription({ ...payload, id: generateSubscriptionId() });

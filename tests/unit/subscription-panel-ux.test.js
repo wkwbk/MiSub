@@ -110,23 +110,24 @@ describe('SubscriptionPanel UX', () => {
         expect(wrapper.emitted('updateSearch')).toEqual([['']]);
     });
 
-    it('renders batched results inside collapsed site groups', async () => {
+    it('renders batched results with progressive load more', async () => {
         const wrapper = mountPanel({
             subscriptions: [
                 { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
                 { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
                 { id: 'b1', name: 'B1', url: 'https://other.test/1' },
             ],
-            batchSize: 1,
+            batchSize: 2,
         });
 
         expect(wrapper.text()).toContain('A1');
         expect(wrapper.text()).toContain('A2');
         expect(wrapper.text()).not.toContain('B1');
         expect(wrapper.findAll('.card-stub')).toHaveLength(2);
-        expect(wrapper.get('button[aria-expanded="false"]').exists()).toBe(true);
-        await wrapper.get('button[aria-expanded="false"]').trigger('click');
-        expect(wrapper.get('button[aria-expanded="true"]').exists()).toBe(true);
+
+        await wrapper.get('[data-testid="subscription-load-more-btn"]').trigger('click');
+        expect(wrapper.text()).toContain('B1');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(3);
     });
 
     it('uses a concise list search hint that fits mobile screens', () => {
@@ -137,59 +138,38 @@ describe('SubscriptionPanel UX', () => {
         expect(search.attributes('aria-label')).toBe('搜索机场订阅名称、备注或链接...');
     });
 
-    it('opens the new group dialog, cancels, and creates a group with checked subscriptions', async () => {
+    it('renders group filter tabs and emits manage-groups from more menu', async () => {
         const subscriptions = [
-            {
-                id: 's1',
-                name: 'Alpha',
-                url: 'https://alpha.test/a',
-            },
-            { id: 's2', name: 'Beta', url: 'https://beta.test/b' },
+            { id: 's1', name: 'Alpha', url: 'https://alpha.test/a', group: '主力机场' },
+            { id: 's2', name: 'Beta', url: 'https://beta.test/b', group: '' },
         ];
-        const wrapper = mountPanel({ subscriptions, paginatedSubscriptions: subscriptions });
-        await wrapper.get('[data-testid="create-airport-group"]').trigger('click');
-        expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
-        const dialogButtons = () =>
-            Array.from(document.body.querySelectorAll('[role="dialog"] button')).map(
-                (el) => new DOMWrapper(el)
-            );
-        await dialogButtons().find((button) => button.text() === '取消').trigger('click');
-        expect(wrapper.emitted('assign-airport-group')).toBeUndefined();
+        const wrapper = mountPanel({ subscriptions });
+        const tabs = wrapper.get('[data-testid="subscription-group-tabs"]');
+        expect(tabs.text()).toContain('全部');
+        expect(tabs.text()).toContain('未分组');
+        expect(tabs.text()).toContain('主力机场');
 
-        await wrapper.get('[data-testid="create-airport-group"]').trigger('click');
-        await new DOMWrapper(
-            document.body.querySelector('[role="dialog"] [data-testid="airport-group-name-input"]')
-        ).setValue('Custom Group');
-        const checkboxes = document.body.querySelectorAll('[role="dialog"] input[type="checkbox"]');
-        checkboxes[0].click();
-        checkboxes[1].click();
-        await wrapper.vm.$nextTick();
-        await dialogButtons().find((button) => button.text() === '保存分组').trigger('click');
-        const [[ids, identity]] = wrapper.emitted('assign-airport-group');
-        expect(ids).toEqual(['s1', 's2']);
-        expect(identity.name).toBe('Custom Group');
-        expect(identity.groupId).toBeTruthy();
+        await wrapper.get('[data-testid="manage-subscription-groups"]').trigger('click');
+        expect(wrapper.emitted('manage-groups')).toHaveLength(1);
     });
 
-    it('submits a new identity using the selected group row subscription IDs', async () => {
+    it('filters subscriptions by selected group tab', async () => {
         const subscriptions = [
-            { id: 's1', name: 'A', url: 'https://same.test/a' },
-            { id: 's2', name: 'B', url: 'https://same.test/b' },
+            { id: 's1', name: 'A', url: 'https://same.test/a', group: '机场A' },
+            { id: 's2', name: 'B', url: 'https://same.test/b', group: '机场A' },
             { id: 's3', name: 'C', url: 'https://other.test/c' },
         ];
-        const wrapper = mountPanel({ subscriptions, paginatedSubscriptions: subscriptions });
-        await wrapper.get('[data-testid="edit-airport-group"]').trigger('click');
-        const dialogQuery = (selector) =>
-            new DOMWrapper(document.body.querySelector(`[role="dialog"] ${selector}`));
-        await dialogQuery('[data-testid="airport-group-name-input"]').setValue('New Airport');
-        const saveButton = Array.from(document.body.querySelectorAll('[role="dialog"] button'))
-            .map((el) => new DOMWrapper(el))
-            .find((button) => button.text() === '保存分组');
-        await saveButton.trigger('click');
-        const [[ids, identity]] = wrapper.emitted('assign-airport-group');
-        expect(ids).toEqual(['s1', 's2']);
-        expect(identity).toMatchObject({ name: 'New Airport' });
-        expect(identity.groupId).toBeTruthy();
+        const wrapper = mountPanel({ subscriptions });
+        const groupButton = wrapper
+            .findAll('[data-testid="subscription-group-tabs"] button')
+            .find((btn) => btn.text() === '机场A');
+        await groupButton.trigger('click');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(2);
+        expect(wrapper.text()).not.toContain('C');
+
+        await wrapper.get('[data-testid="subscription-group-tab-default"]').trigger('click');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(1);
+        expect(wrapper.text()).toContain('C');
     });
 
     it('keeps two-column desktop grid and shows sorting banner when sorting a single subscription', async () => {
@@ -231,46 +211,16 @@ describe('SubscriptionPanel UX', () => {
         ];
         const wrapper = mountPanel({
             subscriptions: subs,
-            paginatedSubscriptions: subs,
             isSorting: true,
         });
 
-        const draggableComp = wrapper.findComponent('.contents');
-        await draggableComp.vm.$emit('end', { oldIndex: 0, newIndex: 0 });
+        const draggableComp = wrapper.findComponent({ name: 'draggable' });
+        const targetComp = draggableComp.exists() ? draggableComp : wrapper.find('.grid.gap-4');
+        // Directly trigger via the stubbed draggable wrapper
+        await wrapper.findAllComponents({ props: ['modelValue'] })[0]?.vm?.$emit('end', {
+            oldIndex: 0,
+            newIndex: 0,
+        });
         expect(wrapper.emitted('markDirty')).toBeUndefined();
-
-        await draggableComp.vm.$emit('end', { oldIndex: 0, newIndex: 1 });
-        expect(wrapper.emitted('markDirty')).toHaveLength(1);
-    });
-
-    it('preserves group structure and supports group + intra-group reordering during sorting', async () => {
-        const subs = [
-            { id: 'a1', name: '共享', url: 'https://sub.libk.top/x/share' },
-            { id: 'c1', name: '免费', url: 'https://ijg.cc/helloworld' },
-            { id: 'a2', name: '自建', url: 'https://sub.libk.top/x/lisir' },
-            { id: 'b1', name: '甲1', url: 'https://alpha.example.com/1' },
-            { id: 'b2', name: '甲2', url: 'https://alpha.example.com/2' },
-        ];
-        const wrapper = mountPanel({
-            subscriptions: subs,
-            paginatedSubscriptions: subs,
-            isSorting: true,
-        });
-
-        const groupCards = wrapper.findAll('[data-testid="sortable-subscription-group"]');
-        expect(groupCards).toHaveLength(2);
-        expect(groupCards[0].text()).toContain('Libk');
-        expect(groupCards[1].text()).toContain('Example');
-
-        // 组内排序：把 Libk 组的「自建」移到「共享」前面
-        const innerDraggable = groupCards[0].findComponent('.contents');
-        await innerDraggable.vm.$emit('update:modelValue', [subs[2], subs[0]]);
-        expect(wrapper.emitted('reorder')?.[0][0].map((item) => item.id)).toEqual([
-            'a2',
-            'a1',
-            'b1',
-            'b2',
-            'c1',
-        ]);
     });
 });

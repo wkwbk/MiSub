@@ -4,7 +4,6 @@
     import { extractNodeName } from '../lib/utils.js';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useSubscriptions } from '../composables/useSubscriptions.js';
-    import { useAirportGroupActions } from '../composables/useAirportGroupActions.js';
     import { useProfiles } from '../composables/useProfiles.js';
     import { useSortingMode } from '../composables/useSortingMode.js';
     import { useSubscriptionForms } from '../composables/useSubscriptionForms.js';
@@ -14,7 +13,9 @@
     import SubscriptionEditModal from '../components/modals/SubscriptionEditModal.vue';
     import { useToastStore } from '../stores/toast.js';
     import { useI18n } from '../i18n/index.js';
-    import { createAirportGroupId } from '../utils/airport-identity.js';
+    const GroupManagementModal = defineAsyncComponent(
+        () => import('../components/modals/GroupManagementModal.vue')
+    );
     import {
         resolveSubscriptionStatusFilter,
         matchesSubscriptionStatus,
@@ -31,9 +32,15 @@
     // State
     const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
+    const showGroupManagementModal = ref(false);
 
     const {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter,
+        setGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         filteredSubscriptions,
         searchQuery: subscriptionSearchQuery,
         addSubscription,
@@ -92,16 +99,15 @@
     const previewSubscriptionUrl = ref('');
 
     // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const {
-        handleAssignAirportGroup,
-        handleSplitAirportGroup,
-        handleResetAirportIdentity,
-    } = useAirportGroupActions({
-        subscriptions,
-        updateSubscription,
-        showToast,
-        t,
-    });
+    const handleGroupRename = (oldName, newName) => {
+        renameSubscriptionGroup(oldName, newName);
+        showToast(t('manualNodes.groupRenamed'), 'success');
+    };
+
+    const handleGroupDelete = (groupName) => {
+        deleteSubscriptionGroup(groupName);
+        showToast(t('manualNodes.groupDeleted'), 'success');
+    };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
     const handleApplyDetectedName = (subscriptionId, name) => {
@@ -113,10 +119,6 @@
         updateSubscription({
             ...targetSub,
             name: target,
-            airportIdentity: {
-                groupId: targetSub.airportIdentity?.groupId || createAirportGroupId(),
-                name: target,
-            },
         });
         showToast(t('subscriptions.nameApplied', { name: target }), 'success');
     };
@@ -203,6 +205,8 @@
     <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
+            :groups="subscriptionGroups"
+            :active-group-filter="activeGroupFilter"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
@@ -213,6 +217,8 @@
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
+            @set-group-filter="setGroupFilter"
+            @manage-groups="showGroupManagementModal = true"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
             @update-node-count="handleUpdateNodeCount"
@@ -227,12 +233,14 @@
             @qrcode="handleQRCode"
             @update-search="subscriptionSearchQuery = $event"
             @applyDetectedName="handleApplyDetectedName"
-            @assign-airport-group="handleAssignAirportGroup"
-            @split-airport-group="handleSplitAirportGroup"
-            @reset-group="handleResetAirportIdentity"
-        >
-            <!-- Slot removed as user requested button move to dropdown -->
-        </SubscriptionPanel>
+        />
+
+        <GroupManagementModal
+            v-model:show="showGroupManagementModal"
+            :groups="subscriptionGroups"
+            @rename="handleGroupRename"
+            @delete="handleGroupDelete"
+        />
 
         <!-- Dialogs -->
         <SubscriptionEditModal

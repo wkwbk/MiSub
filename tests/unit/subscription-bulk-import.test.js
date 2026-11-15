@@ -46,23 +46,20 @@ describe('机场订阅专用批量导入', () => {
         expect(isValidSubscriptionUrl('not a url')).toBe(false);
     });
 
-    it('extractAirportGroupNames 能提取显式命名与按域名/识别名自动聚合的机场分组', () => {
+    it('extractAirportGroupNames 能提取现有订阅的分组标签（含兼容旧版 airportIdentity.name）', () => {
         dataStore.subscriptions.push(
-            { id: 'sub-2', url: 'https://a2.com/sub', airportIdentity: { groupId: 'group-a-id', name: '机场A' } },
+            { id: 'sub-2', url: 'https://a2.com/sub', group: '机场A' },
             { id: 'sub-3', url: 'https://b.com/sub', airportIdentity: { groupId: 'group-b-id', name: '机场B' } },
-            { id: 'sub-4', url: 'https://sub.gsafevpn.com/link', detectedName: 'GSafe机场', airportIdentity: null },
-            { id: 'sub-5', url: 'https://sub.mycloud.io/link', airportIdentity: null },
-            { id: 'node-1', url: 'vless://uuid@host:443#node' }
+            { id: 'sub-4', url: 'https://sub.gsafevpn.com/link', detectedName: 'GSafe机场' },
+            { id: 'node-1', url: 'vless://uuid@host:443#node', group: '节点组' }
         );
         expect(extractAirportGroupNames(dataStore.subscriptions)).toEqual([
             '机场A',
             '机场B',
-            'GSafe机场',
-            'Mycloud',
         ]);
     });
 
-    it('只导入 http/https 订阅链接，忽略节点分享链接，且不填写分组时 airportIdentity 为 null', () => {
+    it('只导入 http/https 订阅链接，忽略节点分享链接，且不填写分组时 group 为空字符串', () => {
         const input = [
             'https://new-sub.com/api/v1/client/subscribe?token=abc#MySub',
             'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443#OKRA',
@@ -77,24 +74,19 @@ describe('机场订阅专用批量导入', () => {
         expect(urls).not.toContain('vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443#OKRA');
 
         const added = dataStore.subscriptions.find((s) => s.url === 'http://another-sub.com/link');
-        expect(added.airportIdentity).toBeNull();
+        expect(added.group).toBe('');
         expect(toastStore.toasts.at(-1)?.type).toBe('success');
         expect(toastStore.toasts.at(-1)?.message).toContain('2');
     });
 
-    it('选择已有机场分组时复用其 groupId，输入新分组时生成新 groupId', () => {
+    it('填写分组名称时直接写入 group 字段', () => {
         importer.handleSubscriptionBulkImport('https://sub-a2.com/sub', '机场A');
-        const reused = dataStore.subscriptions.find((s) => s.url === 'https://sub-a2.com/sub');
-        expect(reused.airportIdentity).toEqual({
-            groupId: 'group-a-id',
-            name: '机场A',
-        });
+        const grouped = dataStore.subscriptions.find((s) => s.url === 'https://sub-a2.com/sub');
+        expect(grouped.group).toBe('机场A');
 
-        importer.handleSubscriptionBulkImport('https://sub-c.com/sub', '新机场C');
+        importer.handleSubscriptionBulkImport('https://sub-c.com/sub', '  新机场C  ');
         const created = dataStore.subscriptions.find((s) => s.url === 'https://sub-c.com/sub');
-        expect(created.airportIdentity?.name).toBe('新机场C');
-        expect(created.airportIdentity?.groupId).toBeTruthy();
-        expect(created.airportIdentity?.groupId).not.toBe('group-a-id');
+        expect(created.group).toBe('新机场C');
     });
 
     it('全部为非订阅链接时给出明确警告且不写入数据', () => {

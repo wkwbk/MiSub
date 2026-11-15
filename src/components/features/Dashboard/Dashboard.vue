@@ -5,7 +5,6 @@
     import { useUIStore } from '../../../stores/ui.js';
     import { useDataStore } from '../../../stores/useDataStore.js';
     import { useSubscriptions } from '../../../composables/useSubscriptions.js';
-    import { useAirportGroupActions } from '../../../composables/useAirportGroupActions.js';
     import { useManualNodes } from '../../../composables/useManualNodes.js';
     import { useProfiles } from '../../../composables/useProfiles.js';
     import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
@@ -121,6 +120,11 @@
 
     const {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter: subscriptionGroupFilter,
+        setGroupFilter: setSubscriptionGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         searchQuery: subscriptionSearchQuery,
         filteredSubscriptions: filteredSubscriptionList,
         filteredCount: filteredSubscriptionCount,
@@ -427,17 +431,17 @@
         showToast(t('manualNodes.groupOrderUpdated'), 'success');
     };
 
-    // 应用识别到的机场名（来自订阅响应头 / 官网标题）
-    const {
-        handleAssignAirportGroup,
-        handleSplitAirportGroup,
-        handleResetAirportIdentity,
-    } = useAirportGroupActions({
-        subscriptions,
-        updateSubscription,
-        showToast,
-        t,
-    });
+    const showSubGroupManagementModal = ref(false);
+
+    const handleSubGroupRename = (oldName, newName) => {
+        renameSubscriptionGroup(oldName, newName);
+        showToast(t('manualNodes.groupRenamed'), 'success');
+    };
+
+    const handleSubGroupDelete = (groupName) => {
+        deleteSubscriptionGroup(groupName);
+        showToast(t('manualNodes.groupDeleted'), 'success');
+    };
 
     const handleApplyDetectedName = (subscriptionId, name) => {
         const target = String(name || '').trim();
@@ -524,17 +528,18 @@
                     :refresh-error="subscriptionRefreshError"
                     :last-refresh-at="lastSubscriptionRefreshAt"
                     :subscriptions="subscriptions"
+                    :groups="subscriptionGroups"
+                    :active-group-filter="subscriptionGroupFilter"
                     :is-sorting="isSortingSubs"
                     @update-search="(query) => (subscriptionSearchQuery = query)"
+                    @set-group-filter="setSubscriptionGroupFilter"
+                    @manage-groups="showSubGroupManagementModal = true"
                     @add="handleAddSubscription"
                     @delete="handleDeleteSubscriptionWithCleanup"
                     @update-node-count="handleUpdateNodeCount"
                     @refresh-all="batchUpdateAllSubscriptions"
                     @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
                     @applyDetectedName="handleApplyDetectedName"
-                    @assign-airport-group="handleAssignAirportGroup"
-                    @split-airport-group="handleSplitAirportGroup"
-                    @reset-group="handleResetAirportIdentity"
                     @toggle-sort="isSortingSubs = !isSortingSubs"
                     @mark-dirty="markDirty"
                     @delete-all="showDeleteSubsModal = true"
@@ -723,6 +728,13 @@
         @rename="handleGroupRename"
         @delete="handleGroupDelete"
         @reorder="handleGroupReorder"
+    />
+
+    <GroupManagementModal
+        v-model:show="showSubGroupManagementModal"
+        :groups="subscriptionGroups"
+        @rename="handleSubGroupRename"
+        @delete="handleSubGroupDelete"
     />
 
     <SubscriptionEditModal

@@ -66,7 +66,7 @@
 
 <template>
     <div
-        class="mb-4 min-w-0 flex flex-col justify-between rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none md:min-h-[132px]"
+        class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
     >
         <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="min-w-0 flex-1">
@@ -289,7 +289,7 @@
 
         <!-- Group Filter Chips (New Line) -->
         <div
-            class="hidden md:flex items-center gap-1.5 mt-3 pt-3 border-t border-zinc-800 overflow-x-auto no-scrollbar mask-gradient-r"
+            class="hidden md:flex items-center gap-1.5 mt-3 overflow-x-auto no-scrollbar mask-gradient-r"
         >
             <button
                 @click="emit('set-group-filter', null)"
