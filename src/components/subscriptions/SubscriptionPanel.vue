@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, nextTick, watch } from 'vue';
-    import { Search, ChevronDown } from 'lucide-vue-next';
+    import { Search, ChevronDown, X } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import Card from '../ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
@@ -443,18 +443,28 @@
                 <input
                     v-model="searchModel"
                     data-testid="subscription-search"
-                    type="search"
+                    type="text"
                     :placeholder="t('subscriptions.listSearchPlaceholder')"
                     :aria-label="t('subscriptions.searchPlaceholder')"
                     :disabled="isSorting"
-                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-20 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
+                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
                 />
-                <span
+                <div
                     v-if="searchQuery"
-                    class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-mono text-zinc-400"
+                    class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
                 >
-                    {{ visibleCount }}/{{ subscriptions.length }}
-                </span>
+                    <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                        {{ visibleCount }}/{{ subscriptions.length }}
+                    </span>
+                    <button
+                        type="button"
+                        class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                        :aria-label="t('actions.clearSearch')"
+                        @click="searchModel = ''"
+                    >
+                        <X class="h-3.5 w-3.5" />
+                    </button>
+                </div>
             </div>
 
             <div
@@ -690,7 +700,7 @@
             <button
                 data-testid="clear-subscription-search"
                 type="button"
-                class="mt-3 text-xs font-medium text-zinc-200 hover:text-white underline underline-offset-2"
+                class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
                 @click="searchModel = ''"
             >
                 {{ t('actions.clearSearch') }}

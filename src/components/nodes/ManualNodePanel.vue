@@ -243,6 +243,7 @@
             :pinging-nodes="pingingNodes"
             :compact-grid="compactGrid"
             @ping="emit('ping', $event)"
+            @clear-search="handleSearchTermUpdate('')"
         />
     </div>
 </template>

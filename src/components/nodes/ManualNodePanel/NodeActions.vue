@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Search, LayoutGrid, List } from 'lucide-vue-next';
+    import { Search, LayoutGrid, List, X } from 'lucide-vue-next';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
@@ -78,18 +78,6 @@
                         class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
                         >{{ manualNodesCount }}</span
                     >
-                    <span
-                        v-if="searchTerm"
-                        class="mt-2 w-full rounded-md border border-zinc-800 bg-transparent px-2.5 py-0.5 text-xs font-mono text-zinc-300 sm:mt-0 sm:w-auto"
-                    >
-                        {{
-                            t('manualNodes.searchResult', {
-                                keyword: searchTerm,
-                                filtered: filteredNodesCount,
-                                total: manualNodesCount,
-                            })
-                        }}
-                    </span>
                 </div>
                 <p class="mt-1 text-xs text-zinc-400">
                     {{ t('manualNodes.subtitle') }}
@@ -143,21 +131,6 @@
                 data-testid="manual-node-toolbar-actions"
                 class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap lg:shrink-0"
             >
-                <div
-                    data-testid="manual-node-search"
-                    class="relative min-w-0 grow basis-full sm:basis-auto lg:w-44 lg:grow-0 xl:w-52"
-                >
-                    <input
-                        type="text"
-                        v-model="searchModel"
-                        :placeholder="t('manualNodes.searchPlaceholder')"
-                        class="w-full rounded-md border border-zinc-800 bg-transparent py-1.5 pl-9 pr-3 text-xs text-zinc-100 placeholder:text-zinc-500 focus:border-zinc-500 focus-visible:outline-none"
-                        :aria-label="t('manualNodes.searchLabel')"
-                    />
-                    <Search
-                        class="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500"
-                    />
-                </div>
                 <div
                     class="p-0.5 bg-transparent border border-zinc-800 rounded-md flex items-center shrink-0"
                 >
@@ -280,6 +253,37 @@
                         </button>
                     </template>
                 </MoreActionsMenu>
+            </div>
+        </div>
+
+        <div data-testid="manual-node-search" class="relative mt-4">
+            <Search
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
+                aria-hidden="true"
+            />
+            <input
+                v-model="searchModel"
+                type="text"
+                :placeholder="t('manualNodes.searchPlaceholder')"
+                :aria-label="t('manualNodes.searchLabel')"
+                :disabled="isSorting"
+                class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
+            />
+            <div
+                v-if="searchTerm"
+                class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
+            >
+                <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                    {{ filteredNodesCount }}/{{ manualNodesCount }}
+                </span>
+                <button
+                    type="button"
+                    class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                    :aria-label="t('actions.clearSearch')"
+                    @click="searchModel = ''"
+                >
+                    <X class="h-3.5 w-3.5" />
+                </button>
             </div>
         </div>
 

@@ -108,7 +108,7 @@ describe('SubscriptionPanel UX', () => {
             filteredCount: 0,
         });
 
-        expect(wrapper.text()).toContain('没有找到匹配的机场订阅。');
+        expect(wrapper.text()).toContain('没有找到匹配的机场订阅');
         expect(wrapper.get('[data-testid="subscription-no-search-results"]').exists()).toBe(true);
         expect(wrapper.get('[data-testid="clear-subscription-search"]').exists()).toBe(true);
         await wrapper.get('[data-testid="clear-subscription-search"]').trigger('click');

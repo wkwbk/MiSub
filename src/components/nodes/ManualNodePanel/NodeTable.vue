@@ -39,6 +39,7 @@
         'update:itemsPerPage', // Added
         'set-group-filter', // Added
         'ping',
+        'clear-search',
     ]);
 
     const draggableModel = computed({
@@ -66,9 +67,20 @@
         <!-- 如果有搜索词，显示搜索提示 -->
         <div
             v-if="localSearchTerm && filteredNodes.length === 0"
-            class="rounded-md border border-zinc-800 bg-[#171717] py-8 text-center text-xs text-zinc-400"
+            data-testid="manual-node-no-search-results"
+            class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
         >
-            {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
+            <p class="text-sm font-medium text-zinc-200">
+                {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
+            </p>
+            <button
+                data-testid="clear-manual-node-search"
+                type="button"
+                class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                @click="emit('clear-search')"
+            >
+                {{ t('actions.clearSearch') }}
+            </button>
         </div>
 
         <div v-if="isSorting">
