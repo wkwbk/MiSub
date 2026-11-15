@@ -9,7 +9,7 @@
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
 [![Version](https://img.shields.io/badge/version-v2.8.0-indigo.svg)](#更新日志)
 
-[功能特性](#功能特性) • [快速开始](#快速开始) • [部署指南](#部署指南) • [使用说明](#使用说明) • [External API 使用说明](docs/external-management-api-usage.md) • [Wiki 文档](docs/OPERATOR_CHAIN_GUIDE.md) • [更新日志](#更新日志)
+[功能特性](#功能特性) • [快速开始](#快速开始) • [部署指南](#部署指南) • [使用说明](#使用说明) • [External API 使用说明](docs/external-management-api-usage.md) • [操作符链指南](docs/operator-chain-guide.md) • [更新日志](#更新日志)
 
 </div>
 
@@ -288,7 +288,7 @@ wrangler d1 execute misub --file=schema.sql --remote
 2. 填写订阅名称和链接
 3. (可选) 设置自定义 UA
 4. (可选) 添加备注信息
-5. (可选) 设置操作符链（详情请参考 [操作符指南](docs/OPERATOR_CHAIN_GUIDE.md)）
+5. (可选) 设置操作符链（详情请参考 [操作符指南](docs/operator-chain-guide.md)）
 6. 保存订阅
 
 ### 创建订阅组
@@ -418,7 +418,7 @@ MiSub 提供 `/cron` 接口用于外部定时服务触发订阅刷新，适合 C
 - [External API 使用说明](docs/external-management-api-usage.md)
 - [External API 接口总览](docs/external-management-api.md)
 - [External API OpenAPI 规范](docs/external-management-api.openapi.yaml)
-- [操作符链指南](docs/OPERATOR_CHAIN_GUIDE.md)
+- [操作符链指南](docs/operator-chain-guide.md)
 - [架构说明](docs/architecture.md)
 - [数据模型](docs/data-model.md)
 
