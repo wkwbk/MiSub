@@ -384,7 +384,7 @@
                         ref="listRef"
                         role="listbox"
                         :aria-multiselectable="multiple || undefined"
-                        class="max-h-60 overflow-y-auto overscroll-contain space-y-0.5 pr-0.5 select-scrollbar"
+                        class="max-h-60 overflow-y-auto overscroll-contain space-y-0.5 select-scrollbar"
                     >
                         <template v-if="renderItems.length > 0">
                             <template v-for="(item, idx) in renderItems" :key="idx">
