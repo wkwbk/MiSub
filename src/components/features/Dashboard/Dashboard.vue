@@ -1,5 +1,13 @@
 <script setup>
-    import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue';
+    import {
+        ref,
+        computed,
+        onMounted,
+        onUnmounted,
+        defineAsyncComponent,
+        watch,
+        nextTick,
+    } from 'vue';
     import { formatBytes } from '../../../lib/utils.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useUIStore } from '../../../stores/ui.js';
@@ -15,6 +23,7 @@
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+    import { useStickyColumns } from '../../../composables/useStickyColumn.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -293,6 +302,22 @@
         }
     };
 
+    const mainGridRef = ref(null);
+    const leftColRef = ref(null);
+    const rightColRef = ref(null);
+
+    const { refreshStickyColumns, reobserveStickyColumns } = useStickyColumns(mainGridRef, [
+        leftColRef,
+        rightColRef,
+    ]);
+
+    watch([isLoading, mainGridRef], () => {
+        nextTick(() => {
+            reobserveStickyColumns();
+            refreshStickyColumns();
+        });
+    });
+
     onMounted(() => {
         initializeState();
         window.addEventListener('beforeunload', handleBeforeUnload);
@@ -517,8 +542,11 @@
         />
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3">
-            <div class="space-y-4 xl:col-span-2">
+        <div
+            ref="mainGridRef"
+            class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3"
+        >
+            <div ref="leftColRef" class="space-y-4 xl:col-span-2">
                 <!-- Subscription Panel -->
                 <SubscriptionPanel
                     searchable
@@ -589,7 +617,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="space-y-4 xl:col-span-1">
+            <div ref="rightColRef" class="space-y-4 xl:col-span-1">
                 <RightPanel
                     :config="config"
                     :profiles="profiles"
