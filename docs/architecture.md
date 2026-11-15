@@ -34,7 +34,8 @@ MiSub/
 ├── package.json           # npm 脚本和依赖
 ├── vite.config.js         # Vite 构建配置
 ├── vitest.config.js       # Vitest 测试配置
-├── wrangler-cf-pages.toml # Cloudflare Pages 本地/部署配置
+├── worker.js              # Cloudflare Workers 入口适配器
+├── wrangler.toml          # Cloudflare Workers 部署配置
 └── schema.sql             # D1 表结构参考
 ```
 
