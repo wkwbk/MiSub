@@ -29,7 +29,7 @@ describe('MiSub visual system regression', () => {
     it('uses subdued, consistent button variant classes', () => {
         const primary = mount(Button, { slots: { default: '保存' } });
         expect(primary.classes().join(' ')).toContain('rounded-md');
-        expect(primary.classes().join(' ')).toContain('duration-150');
+        expect(primary.classes().join(' ')).toContain('duration-200');
 
         const primaryButton = primary.find('button');
         expect(primaryButton.classes().join(' ')).toContain('bg-zinc-100');

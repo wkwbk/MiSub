@@ -91,7 +91,7 @@ describe('SubscriptionGroupsView 深链状态筛选 (?status=)', () => {
 
         expect(wrapper.vm.activeStatusFilter).toBe('error');
         expect(wrapper.vm.visibleSubscriptions.map((s) => s.id)).toEqual(['failed']);
-        expect(wrapper.find('[data-testid="subscription-status-filter"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(true);
         expect(wrapper.text()).toContain('仅显示最近更新失败的订阅');
     });
 
@@ -151,7 +151,7 @@ describe('SubscriptionGroupsView 深链状态筛选 (?status=)', () => {
         const wrapper = mountView('en-US');
         await wrapper.vm.$nextTick();
 
-        expect(wrapper.find('[data-testid="subscription-status-filter"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(true);
         expect(wrapper.text()).toContain('Showing sources that failed to update');
         expect(wrapper.text()).not.toContain('subscriptions.');
     });

@@ -74,8 +74,8 @@ describe('NodePreviewModal English translations', () => {
         expect(wrapper.text()).toContain('CMSS');
         expect(wrapper.text()).toContain('Profile node overview');
         expect(wrapper.text()).toContain('Pick nodes');
-        expect(wrapper.text()).toContain('Nodes Total');
-        expect(wrapper.text()).toContain('Protocols');
+        expect(wrapper.text()).toContain('Nodes total');
+        expect(wrapper.text()).toContain('Protocol types');
         expect(wrapper.text()).toContain('Regions');
         expect(wrapper.text()).toContain('Total Pages');
         expectNoChineseOrKeys(wrapper.text());
