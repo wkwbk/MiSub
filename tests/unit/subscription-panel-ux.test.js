@@ -197,4 +197,23 @@ describe('SubscriptionPanel UX', () => {
         expect(identity).toMatchObject({ name: 'New Airport' });
         expect(identity.groupId).toBeTruthy();
     });
+
+    it('keeps two-column desktop grid when sorting a single subscription', () => {
+        const single = [{ id: 's1', name: '免费', url: 'https://ijg.cc/helloworld' }];
+        const wrapper = mountPanel({
+            subscriptions: single,
+            paginatedSubscriptions: single,
+            isSorting: true,
+        });
+
+        const sortGrid = wrapper.find('.grid.gap-4');
+        expect(sortGrid.exists()).toBe(true);
+        expect(sortGrid.classes()).toContain('grid-cols-1');
+        expect(sortGrid.classes()).toContain('md:grid-cols-2');
+
+        const card = sortGrid.find('.card-stub');
+        expect(card.exists()).toBe(true);
+        expect(card.classes()).toContain('pointer-events-none');
+        expect(card.classes()).toContain('select-none');
+    });
 });

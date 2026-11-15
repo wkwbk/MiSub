@@ -486,14 +486,7 @@
             </div>
         </div>
         <div v-if="subscriptions.length > 0 && isSorting">
-            <div
-                class="grid gap-4"
-                :class="
-                    draggableSubscriptions.length > 1
-                        ? 'grid-cols-1 md:grid-cols-2'
-                        : 'grid-cols-1'
-                "
-            >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <draggable
                     tag="div"
                     class="contents"
@@ -505,6 +498,7 @@
                     <template #item="{ element: subscription }">
                         <div class="cursor-move">
                             <Card
+                                class="pointer-events-none select-none"
                                 :misub="subscription"
                                 @delete="handleDelete(subscription.id)"
                                 @change="handleSortEnd"
