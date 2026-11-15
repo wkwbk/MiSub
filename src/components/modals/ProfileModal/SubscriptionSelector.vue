@@ -3,6 +3,7 @@
     import { GripHorizontal, Search, X } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';
+    import { DEFAULT_GROUP_KEY } from '@/utils/subscription-groups.js';
 
     const { t } = useI18n();
 
@@ -19,6 +20,14 @@
             type: String,
             default: '',
         },
+        activeGroupFilter: {
+            type: String,
+            default: null,
+        },
+        groups: {
+            type: Array,
+            default: () => [],
+        },
         selectedIds: {
             type: Array,
             default: () => [],
@@ -27,6 +36,7 @@
 
     const emit = defineEmits([
         'update:searchTerm',
+        'update:groupFilter',
         'update:selectedIds',
         'toggle-selection',
         'select-all',
@@ -37,6 +47,14 @@
         get: () => props.searchTerm,
         set: (val) => emit('update:searchTerm', val),
     });
+
+    const handleGroupWheel = (e) => {
+        const el = e.currentTarget;
+        if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        }
+    };
 
     // 根据 selectedIds 顺序获取已选订阅对象列表
     const orderedSelectedSubs = computed({
@@ -68,11 +86,11 @@
 
 <template>
     <div v-if="subscriptions.length > 0" class="space-y-2">
-        <div class="flex justify-between items-center mb-2">
-            <h4 class="text-xs font-semibold text-zinc-300">
+        <div class="flex justify-between items-center gap-2 h-6">
+            <h4 class="text-xs font-semibold text-zinc-300 truncate">
                 {{ t('profileModal.selectSubscriptions') }}
             </h4>
-            <div class="space-x-2">
+            <div class="space-x-2 shrink-0 whitespace-nowrap">
                 <button
                     @click="emit('select-all')"
                     class="text-xs text-zinc-300 hover:text-white hover:underline"
@@ -87,9 +105,51 @@
                 </button>
             </div>
         </div>
-        <!-- 占位区域，与右侧分组筛选高度一致 -->
-        <div class="h-[42px]"></div>
-        <div class="relative mb-2">
+        <!-- Group Filter -->
+        <div
+            class="flex items-center gap-1.5 h-8 overflow-x-auto no-scrollbar"
+            @wheel="handleGroupWheel"
+        >
+            <button
+                type="button"
+                @click="emit('update:groupFilter', null)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    !activeGroupFilter
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ t('manualNodes.allGroups') }}
+            </button>
+            <button
+                type="button"
+                @click="emit('update:groupFilter', DEFAULT_GROUP_KEY)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    activeGroupFilter === DEFAULT_GROUP_KEY
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ t('manualNodes.ungrouped') }}
+            </button>
+            <button
+                v-for="group in groups"
+                :key="group"
+                type="button"
+                @click="emit('update:groupFilter', activeGroupFilter === group ? null : group)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    activeGroupFilter === group
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ group }}
+            </button>
+        </div>
+        <div class="relative">
             <input
                 type="text"
                 v-model="searchModel"

@@ -553,7 +553,6 @@
                 :all-subscriptions="subscriptions"
                 :all-manual-nodes="manualNodes"
                 @save="handleSaveProfile"
-                size="2xl"
             />
 
             <LogModal :show="showLogModal" @update:show="showLogModal = $event" />

@@ -323,7 +323,6 @@
             :all-subscriptions="subscriptions"
             :all-manual-nodes="manualNodes"
             @save="handleSaveProfile"
-            size="6xl"
         />
 
         <SubscriptionImportModal

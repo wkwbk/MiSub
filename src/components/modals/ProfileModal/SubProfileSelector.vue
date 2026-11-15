@@ -32,6 +32,10 @@
             type: Array,
             default: () => [],
         },
+        alignSpacer: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const emit = defineEmits([
@@ -76,11 +80,11 @@
 
 <template>
     <div v-if="profiles.length > 0" class="space-y-2">
-        <div class="flex justify-between items-center mb-2">
-            <h4 class="text-xs font-semibold text-zinc-300">
+        <div class="flex justify-between items-center gap-2 h-6">
+            <h4 class="text-xs font-semibold text-zinc-300 truncate">
                 {{ t('profileModal.selectSubProfiles') }}
             </h4>
-            <div class="space-x-2">
+            <div class="space-x-2 shrink-0 whitespace-nowrap">
                 <button
                     type="button"
                     @click="handleSelectAllValid"
@@ -97,9 +101,9 @@
                 </button>
             </div>
         </div>
-        <!-- 占位区域，与右侧分组筛选高度一致 -->
-        <div class="h-[42px]"></div>
-        <div class="relative mb-2">
+        <!-- 占位区域，与左侧分组筛选高度一致 -->
+        <div v-if="alignSpacer" class="h-8 hidden lg:block" aria-hidden="true"></div>
+        <div class="relative">
             <input
                 type="text"
                 v-model="searchModel"

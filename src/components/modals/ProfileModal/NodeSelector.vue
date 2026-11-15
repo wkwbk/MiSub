@@ -48,6 +48,14 @@
         set: (val) => emit('update:searchTerm', val),
     });
 
+    const handleGroupWheel = (e) => {
+        const el = e.currentTarget;
+        if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        }
+    };
+
     // 根据 selectedIds 顺序获取已选节点对象列表
     const orderedSelectedNodes = computed({
         get() {
@@ -66,11 +74,11 @@
 
 <template>
     <div v-if="nodes.length > 0" class="space-y-2">
-        <div class="flex justify-between items-center mb-2">
-            <h4 class="text-xs font-semibold text-zinc-300">
+        <div class="flex justify-between items-center gap-2 h-6">
+            <h4 class="text-xs font-semibold text-zinc-300 truncate">
                 {{ t('profileModal.selectNodes') }}
             </h4>
-            <div class="space-x-2">
+            <div class="space-x-2 shrink-0 whitespace-nowrap">
                 <button
                     @click="emit('select-all')"
                     class="text-xs text-zinc-300 hover:text-white hover:underline"
@@ -87,7 +95,8 @@
         </div>
         <!-- Group Filter -->
         <div
-            class="flex items-center gap-1.5 mb-2 p-1.5 rounded-md border-b border-zinc-800 overflow-x-auto no-scrollbar"
+            class="flex items-center gap-1.5 h-8 overflow-x-auto no-scrollbar"
+            @wheel="handleGroupWheel"
         >
             <button
                 @click="emit('update:groupFilter', null)"
@@ -126,7 +135,7 @@
             </button>
         </div>
 
-        <div class="relative mb-2">
+        <div class="relative">
             <input
                 type="text"
                 v-model="searchModel"

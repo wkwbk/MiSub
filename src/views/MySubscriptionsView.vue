@@ -177,7 +177,6 @@
             :all-subscriptions="subscriptions"
             :all-manual-nodes="manualNodes"
             @save="handleSaveProfile"
-            size="6xl"
         />
 
         <Modal v-model:show="showDeleteProfilesModal" @confirm="handleDeleteAllProfiles">

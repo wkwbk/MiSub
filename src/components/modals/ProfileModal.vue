@@ -11,6 +11,10 @@
     import { useSettingsStore } from '../../stores/settings.js';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import {
+        collectSubscriptionGroups,
+        getSubscriptionGroup,
+    } from '@/utils/subscription-groups.js';
 
     const { t } = useI18n();
     const dataStore = useDataStore();
@@ -32,6 +36,7 @@
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
     const activeResourceTab = ref('manualNodes');
+    const activeSubscriptionGroupFilter = ref(null);
     const activeManualNodeGroupFilter = ref(null);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
@@ -118,8 +123,22 @@
         );
     });
 
+    const subscriptionGroups = computed(() => {
+        return collectSubscriptionGroups(selectableSubscriptions.value);
+    });
+
     const filteredSubscriptions = computed(() => {
-        const validSubs = selectableSubscriptions.value;
+        let validSubs = selectableSubscriptions.value;
+
+        if (activeSubscriptionGroupFilter.value) {
+            if (activeSubscriptionGroupFilter.value === DEFAULT_GROUP_KEY) {
+                validSubs = validSubs.filter((sub) => !getSubscriptionGroup(sub));
+            } else {
+                validSubs = validSubs.filter(
+                    (sub) => getSubscriptionGroup(sub) === activeSubscriptionGroupFilter.value
+                );
+            }
+        }
 
         if (!subscriptionSearchTerm.value) {
             return validSubs;
@@ -366,7 +385,7 @@
         :show="show"
         @update:show="emit('update:show', $event)"
         @confirm="handleConfirm"
-        size="6xl"
+        size="7xl"
     >
         <template #title>
             <div class="flex items-center gap-3">
@@ -537,8 +556,11 @@
                             :subscriptions="selectableSubscriptions"
                             :filtered-subscriptions="filteredSubscriptions"
                             :search-term="subscriptionSearchTerm"
+                            :active-group-filter="activeSubscriptionGroupFilter"
+                            :groups="subscriptionGroups"
                             :selected-ids="localProfile.subscriptions || []"
                             @update:search-term="subscriptionSearchTerm = $event"
+                            @update:group-filter="activeSubscriptionGroupFilter = $event"
                             @update:selected-ids="updateSelectedIds('subscriptions', $event)"
                             @toggle-selection="toggleSelection('subscriptions', $event)"
                             @select-all="handleSelectAll('subscriptions', filteredSubscriptions)"
@@ -558,6 +580,7 @@
                             :selected-ids="localProfile.subProfiles || []"
                             :target-profile-id="localProfile.id || props.profile?.id || ''"
                             :all-profiles="dataStore.profiles || []"
+                            :align-spacer="activeResourceTab === 'all'"
                             @update:search-term="subProfileSearchTerm = $event"
                             @update:selected-ids="updateSelectedIds('subProfiles', $event)"
                             @toggle-selection="toggleSelection('subProfiles', $event)"
