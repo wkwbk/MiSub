@@ -198,7 +198,7 @@ describe('SubscriptionPanel UX', () => {
         expect(identity.groupId).toBeTruthy();
     });
 
-    it('keeps two-column desktop grid when sorting a single subscription', () => {
+    it('keeps two-column desktop grid and shows sorting banner when sorting a single subscription', async () => {
         const single = [{ id: 's1', name: '免费', url: 'https://ijg.cc/helloworld' }];
         const wrapper = mountPanel({
             subscriptions: single,
@@ -206,10 +206,23 @@ describe('SubscriptionPanel UX', () => {
             isSorting: true,
         });
 
+        const banner = wrapper.find('[data-testid="subscription-sorting-banner"]');
+        expect(banner.exists()).toBe(true);
+        expect(banner.text()).toContain('当前处于排序模式');
+
+        const finishButton = wrapper.find('[data-testid="subscription-finish-sort"]');
+        expect(finishButton.exists()).toBe(true);
+        await finishButton.trigger('click');
+        expect(wrapper.emitted('toggleSort')).toHaveLength(1);
+
         const sortGrid = wrapper.find('.grid.gap-4');
         expect(sortGrid.exists()).toBe(true);
         expect(sortGrid.classes()).toContain('grid-cols-1');
         expect(sortGrid.classes()).toContain('md:grid-cols-2');
+
+        const dragItem = sortGrid.find('.cursor-move');
+        expect(dragItem.exists()).toBe(true);
+        expect(dragItem.classes()).toContain('border-dashed');
 
         const card = sortGrid.find('.card-stub');
         expect(card.exists()).toBe(true);

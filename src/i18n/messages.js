@@ -221,6 +221,8 @@ export const messages = {
             searchPlaceholder: '搜索节点...',
             searchResult: '搜索: "{keyword}" ({filtered}/{total})',
             noSearchResult: '没有找到匹配的手动节点',
+            sortingHint:
+                '当前处于排序模式，拖拽节点即可调整顺序，节点内操作已临时锁定。',
             empty: '没有手动节点',
             emptyDesc: '添加分享链接或单个节点。',
             selectedCount: '已选 {count}',
@@ -375,6 +377,8 @@ export const messages = {
             searchPlaceholder: '搜索机场订阅名称、备注或链接...',
             listSearchPlaceholder: '搜索名称、备注或链接',
             noSearchResults: '没有找到匹配的机场订阅',
+            sortingHint:
+                '当前处于排序模式，拖拽卡片即可调整顺序，卡片内操作已临时锁定。',
             clearStatusFilter: '清除筛选',
             filterStatusDisabled: '仅显示已停用的订阅',
             filterStatusError: '仅显示最近更新失败的订阅',
@@ -2095,6 +2099,8 @@ export const messages = {
             searchPlaceholder: 'Search nodes...',
             searchResult: 'Search: "{keyword}" ({filtered}/{total})',
             noSearchResult: 'No matching manual nodes found',
+            sortingHint:
+                'Sorting mode active. Drag nodes to reorder; item actions are temporarily locked.',
             empty: 'No nodes',
             emptyDesc: 'Add links or nodes.',
             selectedCount: '{count} selected',
@@ -2253,6 +2259,8 @@ export const messages = {
             searchPlaceholder: 'Search source name, notes, or URL...',
             listSearchPlaceholder: 'Search name, notes, or URL',
             noSearchResults: 'No matching sources found',
+            sortingHint:
+                'Sorting mode active. Drag cards to reorder; card actions are temporarily locked.',
             clearStatusFilter: 'Clear filter',
             filterStatusDisabled: 'Showing disabled sources only',
             filterStatusError: 'Showing sources that failed to update',

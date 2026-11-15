@@ -40,6 +40,7 @@
         'set-group-filter', // Added
         'ping',
         'clear-search',
+        'toggle-sort',
     ]);
 
     const draggableModel = computed({
@@ -84,6 +85,23 @@
         </div>
 
         <div v-if="isSorting">
+            <div
+                data-testid="node-sorting-banner"
+                class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs text-zinc-200"
+            >
+                <div class="flex items-center gap-2">
+                    <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
+                    <span>{{ t('manualNodes.sortingHint') }}</span>
+                </div>
+                <button
+                    type="button"
+                    data-testid="node-finish-sort"
+                    class="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-300 transition-colors hover:bg-sky-500/20 hover:text-sky-200 cursor-pointer"
+                    @click="emit('toggle-sort')"
+                >
+                    {{ t('actions.finishSort') }}
+                </button>
+            </div>
             <!-- 排序模式保持原有扁平列表，方便跨组排序 -->
             <div v-if="viewMode === 'card'">
                 <draggable
@@ -100,7 +118,9 @@
                     @end="emit('sort-end')"
                 >
                     <template #item="{ element: node }">
-                        <div class="cursor-move">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5 transition-colors hover:border-sky-400/70"
+                        >
                             <ManualNodeCard
                                 class="pointer-events-none select-none"
                                 :node="node"
@@ -128,7 +148,9 @@
                     @end="emit('sort-end')"
                 >
                     <template #item="{ element: node, index }">
-                        <div class="cursor-move">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5 transition-colors hover:border-sky-400/70"
+                        >
                             <ManualNodeList
                                 :node="node"
                                 :index="index + 1"
