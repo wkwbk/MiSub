@@ -2,6 +2,7 @@
     import { ref, defineAsyncComponent } from 'vue';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useManualNodes } from '../composables/useManualNodes.js';
+    import { useSortingMode } from '../composables/useSortingMode.js';
     import { useNodeForms } from '../composables/useNodeForms.js'; // Added
     import { useToastStore } from '../stores/toast.js';
     import { extractNodeName } from '../lib/utils.js';
@@ -24,7 +25,7 @@
     const { t } = useI18n();
 
     // Component Logic Reuse
-    const isSortingNodes = ref(false);
+    const isSortingNodes = useSortingMode(dataStore);
     const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
     const showDeleteNodesModal = ref(false);
     const showBatchDeleteModal = ref(false);
@@ -178,7 +179,7 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <ManualNodePanel
             :manual-nodes="manualNodes"
             :paginated-manual-nodes="paginatedManualNodes"

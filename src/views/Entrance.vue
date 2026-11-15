@@ -11,7 +11,7 @@
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '../stores/session';
     import { storeToRefs } from 'pinia';
-    import { isValidCustomLoginPath } from '../utils/login-path.js';
+    import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '../utils/login-path.js';
     import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.js';
 
     // Lazy load components
@@ -77,12 +77,19 @@
             writeSessionPreference('misub:login-path', inferredPath);
         }
 
-        if (currentPath === configuredPath) {
+        const isMatchedLoginPath =
+            currentPath === configuredPath || (currentPath === '/login' && !hasCustomPath);
+
+        if (isMatchedLoginPath) {
+            if (sessionStore.sessionState === 'loggedIn') {
+                activeComponent.value = null;
+                const target = resolveSafeLoginRedirect(route.query.redirect, '/dashboard', [
+                    currentPath,
+                ]);
+                router.replace(target).catch(() => {});
+                return;
+            }
             // 匹配到配置的登录路径（自定义或默认 /login）
-            activeComponent.value = markRaw(Login);
-            componentProps.value = { login: sessionStore.login };
-        } else if (currentPath === '/login' && !hasCustomPath) {
-            // 没有自定义路径时，/login 也是有效的登录入口
             activeComponent.value = markRaw(Login);
             componentProps.value = { login: sessionStore.login };
         } else {
@@ -95,7 +102,6 @@
 <style scoped>
     .entrance-container {
         width: 100%;
-        min-height: 80vh;
         display: flex;
         justify-content: center;
         align-items: center;

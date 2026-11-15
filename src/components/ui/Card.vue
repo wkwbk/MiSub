@@ -1,5 +1,16 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import {
+        Lock,
+        ExternalLink,
+        Eye,
+        QrCode,
+        Pencil,
+        Trash2,
+        Link2,
+        RefreshCw,
+        MessageSquare,
+    } from 'lucide-vue-next';
     import { formatBytes } from '../../lib/utils.js';
     import { inferAirportRootDomain } from '../../utils/airport-domain.js';
     import { lookupDomainName } from '../../utils/domain-name-memory.js';
@@ -87,22 +98,26 @@
             case 'https':
                 return {
                     text: 'HTTPS',
-                    style: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20',
+                    dot: 'bg-emerald-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             case 'clash':
                 return {
                     text: 'CLASH',
-                    style: 'bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20',
+                    dot: 'bg-sky-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             case 'http':
                 return {
                     text: 'HTTP',
-                    style: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20',
+                    dot: 'bg-amber-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-300',
                 };
             default:
                 return {
                     text: 'SUB',
-                    style: 'bg-gray-500/10 text-gray-500 dark:text-gray-400 border border-gray-500/20',
+                    dot: 'bg-zinc-500',
+                    style: 'border-zinc-800 bg-transparent text-zinc-400',
                 };
         }
     });
@@ -141,9 +156,15 @@
         if (diffDays > REASONABLE_EXPIRY_LIMIT_DAYS) {
             return null;
         }
-        let style = 'text-gray-500 dark:text-gray-400';
-        if (diffDays < 0) style = 'text-red-500 font-bold';
-        else if (diffDays <= 7) style = 'text-orange-500 font-semibold';
+        let style = 'text-zinc-400';
+        let dot = 'bg-zinc-500';
+        if (diffDays < 0) {
+            style = 'text-red-400 font-semibold';
+            dot = 'bg-red-500';
+        } else if (diffDays <= 7) {
+            style = 'text-amber-400 font-semibold';
+            dot = 'bg-amber-500';
+        }
         return {
             date: expiryDate.toLocaleDateString(),
             daysRemaining:
@@ -152,7 +173,8 @@
                     : diffDays === 0
                       ? t('subscriptions.expiresToday')
                       : t('subscriptions.expiresInDays', { count: diffDays }),
-            style: style,
+            style,
+            dot,
         };
     });
 
@@ -186,264 +208,184 @@
 
 <template>
     <div
-        class="group relative flex h-full min-h-[200px] flex-col overflow-hidden rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary-500/5 dark:border-white/10 dark:bg-gray-900/70"
+        class="group relative flex h-full flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="{
-            'opacity-75 grayscale-[0.8]': !misub.enabled,
+            'opacity-60': !misub.enabled,
         }"
     >
         <div class="relative z-10 flex flex-col h-full">
             <!-- Header -->
-            <div class="flex items-start justify-between gap-3 mb-4">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2 mb-1.5">
-                        <span
-                            class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
-                            :class="protocolStyle.style"
-                        >
-                            {{ protocolStyle.text }}
-                        </span>
-                        <span
-                            v-if="expiryInfo"
-                            class="rounded-full border border-transparent bg-gray-100 px-2 py-0.5 text-[10px] font-medium dark:bg-white/5"
-                            :class="expiryInfo.style"
-                        >
-                            {{ expiryInfo.daysRemaining }}
-                        </span>
-                    </div>
-                    <h3
-                        class="truncate text-lg font-semibold leading-tight text-gray-900 dark:text-white"
-                        :title="misub.name || t('subscriptions.unnamed')"
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex min-w-0 flex-wrap items-center gap-2">
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
+                        :class="protocolStyle.style"
                     >
-                        {{ misub.name || t('subscriptions.unnamed') }}
-                    </h3>
-                    <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
-                    <div
-                        v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
-                        class="mt-1 flex items-center gap-1 text-[11px] text-gray-500 dark:text-gray-400"
-                        :title="t('subscriptions.detectedNameHint')"
+                        <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
+                        {{ protocolStyle.text }}
+                    </span>
+                    <span
+                        v-if="expiryInfo"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
+                        :class="expiryInfo.style"
                     >
-                        <svg
-                            class="h-3 w-3 shrink-0"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            aria-hidden="true"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
-                        <span class="truncate">{{ effectiveDetectedName }}</span>
-                        <button
-                            type="button"
-                            class="shrink-0 text-[11px] font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400"
-                            :title="t('subscriptions.applyDetectedName')"
-                            @click.stop="emit('applyDetectedName', effectiveDetectedName)"
-                        >
-                            {{ t('subscriptions.applyDetectedNameShort') }}
-                        </button>
-                    </div>
-                    <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
-                    <div
-                        v-else-if="rootDomain && !localDetectedName"
-                        class="mt-1 flex items-center gap-1"
-                    >
-                        <button
-                            type="button"
-                            class="shrink-0 text-[11px] text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400"
-                            :disabled="detecting"
-                            :title="t('subscriptions.detectNameHint')"
-                            @click.stop="handleDetect"
-                        >
-                            {{
-                                detecting
-                                    ? t('subscriptions.detecting')
-                                    : t('subscriptions.detectName')
-                            }}
-                        </button>
-                    </div>
-                    <!-- 机场主域名：可点击访问官网 -->
-                    <a
-                        v-if="rootDomain"
-                        :href="`https://${rootDomain}`"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mt-0.5 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-primary-500 dark:text-gray-400 dark:hover:text-primary-400"
-                        :title="t('subscriptions.visitSite', { domain: rootDomain })"
-                        @click.stop
-                    >
-                        <svg class="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
-                            />
-                            <path
-                                d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z"
-                            />
-                        </svg>
-                        <span class="truncate">{{ rootDomain }}</span>
-                    </a>
+                        <span class="h-1.5 w-1.5 rounded-full" :class="expiryInfo.dot"></span>
+                        {{ expiryInfo.daysRemaining }}
+                    </span>
                 </div>
 
-                <!-- Action Buttons (Visible on Hover/Touch) -->
+                <!-- Action Buttons (Always visible, subtle at rest) -->
                 <div
-                    class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200"
+                    class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
                 >
                     <button
                         @click.stop="emit('preview')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.previewNodes')"
                         :aria-label="t('actions.previewNodes')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                            />
-                        </svg>
+                        <Eye class="w-4 h-4" />
                     </button>
                     <button
                         @click.stop="emit('qrcode')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.showQrCode')"
                         :aria-label="t('actions.showQrCode')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5Z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z"
-                            />
-                        </svg>
+                        <QrCode class="w-4 h-4" stroke-width="1.5" />
                     </button>
                     <button
                         @click.stop="emit('edit')"
-                        class="p-2.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.edit')"
                         :aria-label="t('actions.edit')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"
-                            />
-                        </svg>
+                        <Pencil class="w-4 h-4" />
                     </button>
                     <button
                         @click.stop="emit('delete')"
-                        class="p-2.5 rounded-full hover:bg-red-50 dark:hover:bg-red-500/20 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                        class="p-1.5 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                         :title="t('actions.delete')"
                         :aria-label="t('actions.delete')"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            stroke-width="2"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                        </svg>
+                        <Trash2 class="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
-            <!-- URL Display -->
-            <div class="relative mb-4">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg
-                        class="h-3.5 w-3.5 text-gray-500 dark:text-gray-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+            <h3
+                class="mt-2 truncate text-base font-semibold leading-snug text-zinc-100"
+                :title="misub.name || t('subscriptions.unnamed')"
+            >
+                {{ misub.name || t('subscriptions.unnamed') }}
+            </h3>
+
+        <div
+            v-if="
+                rootDomain ||
+                (effectiveDetectedName && effectiveDetectedName !== misub.name)
+            "
+            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400"
+        >
+            <!-- 机场主域名：可点击访问官网 -->
+            <a
+                v-if="rootDomain"
+                :href="`https://${rootDomain}`"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex min-w-0 items-center gap-1 font-mono text-zinc-400 hover:text-zinc-200"
+                :title="t('subscriptions.visitSite', { domain: rootDomain })"
+                @click.stop
+            >
+                <ExternalLink class="h-3 w-3 shrink-0" />
+                <span class="truncate">{{ rootDomain }}</span>
+            </a>
+            <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
+            <template
+                v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
+            >
+                <span v-if="rootDomain" class="text-zinc-600" aria-hidden="true">·</span>
+                <div
+                    class="inline-flex min-w-0 items-center gap-1 text-zinc-400"
+                    :title="t('subscriptions.detectedNameHint')"
+                >
+                    <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span class="truncate">{{ effectiveDetectedName }}</span>
+                    <button
+                        type="button"
+                        class="shrink-0 font-medium text-zinc-200 hover:text-white underline underline-offset-2"
+                        :title="t('subscriptions.applyDetectedName')"
+                        @click.stop="emit('applyDetectedName', effectiveDetectedName)"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
+                        {{ t('subscriptions.applyDetectedNameShort') }}
+                    </button>
+                </div>
+            </template>
+            <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
+            <template v-else-if="rootDomain && !localDetectedName">
+                <span class="text-zinc-600" aria-hidden="true">·</span>
+                <button
+                    type="button"
+                    class="shrink-0 text-zinc-500 hover:text-zinc-200 transition-colors"
+                    :disabled="detecting"
+                    :title="t('subscriptions.detectNameHint')"
+                    @click.stop="handleDetect"
+                >
+                    {{
+                        detecting
+                            ? t('subscriptions.detecting')
+                            : t('subscriptions.detectName')
+                    }}
+                </button>
+            </template>
+        </div>
+
+        <!-- URL Display -->
+        <div class="relative mt-3 mb-3">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Link2 class="h-3.5 w-3.5 text-zinc-500" />
                 </div>
                 <input
                     type="text"
                     :value="misub.url"
                     readonly
-                    class="w-full rounded-lg border border-gray-100 bg-gray-50/80 py-2 pl-9 pr-3 font-mono text-xs text-gray-500 transition-all focus:border-primary-500/30 focus:bg-white focus-visible:outline-none dark:border-white/5 dark:bg-black/20 dark:text-gray-400 dark:focus:bg-black/40"
+                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-3 font-mono text-xs text-zinc-400 transition-colors focus:border-zinc-500 focus-visible:outline-none"
                     :aria-label="t('subscriptions.urlLabel')"
                 />
             </div>
 
             <div
-                class="grid gap-3 rounded-lg border border-gray-100 bg-gray-50/80 p-3 dark:border-white/10 dark:bg-white/5"
+                class="grid gap-3 rounded-md border border-zinc-800 bg-transparent p-3"
             >
                 <div v-if="trafficInfo" class="space-y-2">
                     <div class="flex items-end justify-between text-xs">
-                        <span class="text-gray-500 dark:text-gray-400"
+                        <span class="text-zinc-400"
                             >{{ t('subscriptions.usedTraffic') }}
-                            <span class="font-semibold text-gray-700 dark:text-gray-200">{{
+                            <span class="font-mono font-semibold text-zinc-200">{{
                                 trafficInfo.used
                             }}</span></span
                         >
-                        <span class="text-gray-500 dark:text-gray-400">{{
+                        <span class="font-mono text-zinc-400">{{
                             trafficInfo.total
                         }}</span>
                     </div>
                     <div
-                        class="h-1.5 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-white/10"
+                        class="h-1 w-full overflow-hidden rounded-none bg-zinc-800"
                     >
                         <div
-                            class="h-full rounded-full bg-gradient-to-r from-primary-400 to-cyan-400 transition-all duration-500"
+                            class="h-full bg-zinc-100 transition-all duration-500"
                             :style="{ width: trafficInfo.percentage + '%' }"
                         ></div>
                     </div>
                 </div>
-                <div v-else class="text-xs text-gray-500 dark:text-gray-400">
+                <div v-else class="text-xs text-zinc-500">
                     {{ t('subscriptions.noTrafficData') }}
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                    <span class="text-gray-500 dark:text-gray-400">{{
+                    <span class="text-zinc-400">{{
                         t('subscriptions.nodeCountLabel')
                     }}</span>
-                    <span class="font-semibold text-gray-700 dark:text-gray-200">
+                    <span class="font-mono font-semibold text-zinc-200">
                         {{
                             misub.isUpdating
                                 ? t('subscriptions.updating')
@@ -455,15 +397,19 @@
 
             <!-- Footer Actions -->
             <div
-                class="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-white/10"
+                class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3"
             >
-                <Switch v-model="misub.enabled" @change="emit('change')" />
+                <Switch
+                    v-model="misub.enabled"
+                    :label="misub.enabled ? t('common.enabled') : t('common.disabled')"
+                    @change="emit('change')"
+                />
 
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
                     <button
                         @click.stop="emit('update')"
                         :disabled="misub.isUpdating"
-                        class="p-1.5 rounded-full hover:bg-primary-50 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-primary-500 transition-colors disabled:opacity-50 touch-target"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 touch-target"
                         :title="
                             misub.isUpdating
                                 ? t('subscriptions.updating')
@@ -475,19 +421,17 @@
                                 : t('subscriptions.updateNodeInfo')
                         "
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="w-4 h-4"
-                            :class="{ 'animate-spin text-primary-500': misub.isUpdating }"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        <RefreshCw
+                            class="w-3.5 h-3.5"
+                            :class="{ 'animate-spin text-zinc-100': misub.isUpdating }"
+                        />
+                        <span>
+                            {{
+                                misub.isUpdating
+                                    ? t('subscriptions.updating')
+                                    : t('subscriptions.updateNodeInfo')
+                            }}
+                        </span>
                     </button>
                 </div>
             </div>
@@ -496,16 +440,9 @@
             <div
                 v-if="hasFooterMeta"
                 data-testid="subscription-footer-meta"
-                class="mt-3 flex items-center gap-1 truncate text-[10px] text-gray-500 dark:text-gray-400"
+                class="mt-3 flex items-center gap-1 truncate text-[10px] text-zinc-400"
             >
-                <svg class="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"
-                    />
-                </svg>
+                <MessageSquare class="w-3 h-3 shrink-0" />
                 <a
                     v-if="websiteUrl"
                     data-testid="subscription-website-link"
@@ -513,18 +450,11 @@
                     target="_blank"
                     rel="noopener noreferrer"
                     @click.stop
-                    class="flex items-center gap-0.5 text-primary-500 hover:text-primary-600 font-medium transition-colors cursor-pointer"
+                    class="flex items-center gap-0.5 font-mono text-zinc-200 hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
                     :title="t('subscriptions.visitWebsite')"
                 >
                     {{ t('subscriptions.website') }}
-                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                    </svg>
+                    <ExternalLink class="w-2.5 h-2.5" />
                 </a>
                 <span v-if="noteWithoutUrl" data-testid="subscription-notes" class="truncate">{{
                     noteWithoutUrl

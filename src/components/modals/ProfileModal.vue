@@ -1,5 +1,6 @@
 <script setup>
     import { ref, watch, computed } from 'vue';
+    import { Folder } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import ProfileForm from './ProfileModal/ProfileForm.vue';
     import SubscriptionSelector from './ProfileModal/SubscriptionSelector.vue';
@@ -10,6 +11,10 @@
     import { useSettingsStore } from '../../stores/settings.js';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+    import {
+        collectSubscriptionGroups,
+        getSubscriptionGroup,
+    } from '@/utils/subscription-groups.js';
 
     const { t } = useI18n();
     const dataStore = useDataStore();
@@ -30,7 +35,8 @@
     const subscriptionSearchTerm = ref('');
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
-    const activeResourceTab = ref('subscriptions');
+    const activeResourceTab = ref('manualNodes');
+    const activeSubscriptionGroupFilter = ref(null);
     const activeManualNodeGroupFilter = ref(null);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
@@ -117,8 +123,22 @@
         );
     });
 
+    const subscriptionGroups = computed(() => {
+        return collectSubscriptionGroups(selectableSubscriptions.value);
+    });
+
     const filteredSubscriptions = computed(() => {
-        const validSubs = selectableSubscriptions.value;
+        let validSubs = selectableSubscriptions.value;
+
+        if (activeSubscriptionGroupFilter.value) {
+            if (activeSubscriptionGroupFilter.value === DEFAULT_GROUP_KEY) {
+                validSubs = validSubs.filter((sub) => !getSubscriptionGroup(sub));
+            } else {
+                validSubs = validSubs.filter(
+                    (sub) => getSubscriptionGroup(sub) === activeSubscriptionGroupFilter.value
+                );
+            }
+        }
 
         if (!subscriptionSearchTerm.value) {
             return validSubs;
@@ -365,32 +385,16 @@
         :show="show"
         @update:show="emit('update:show', $event)"
         @confirm="handleConfirm"
-        size="6xl"
+        size="7xl"
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <div class="p-2 misub-radius-lg bg-indigo-500/10">
-                    <!-- Folder Icon for Profile -->
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 text-indigo-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                        />
-                    </svg>
-                </div>
+                <Folder class="h-5 w-5 text-zinc-400 shrink-0" />
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                    <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('profiles.addTitle') : t('profiles.editTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-0.5 text-xs text-zinc-400">
                         {{ t('profiles.modalDescription') }}
                     </p>
                 </div>
@@ -409,28 +413,65 @@
                 />
 
                 <!-- 资源类型 Tab 切换栏 -->
-                <div class="border-b border-gray-200 dark:border-gray-700">
+                <div class="border-b border-zinc-800">
                     <nav
-                        class="-mb-px flex space-x-2 sm:space-x-4 overflow-x-auto pb-1"
+                        class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar"
                         aria-label="Tabs"
                     >
+                        <button
+                            type="button"
+                            @click="activeResourceTab = 'manualNodes'"
+                            :class="[
+                                activeResourceTab === 'manualNodes'
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                            ]"
+                        >
+                            <span>{{ t('profileModal.tabManualNodes') }}</span>
+                            <span
+                                v-if="localProfile.manualNodes?.length"
+                                :class="
+                                    activeResourceTab === 'manualNodes'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
+                            >
+                                {{ localProfile.manualNodes.length }}
+                            </span>
+                            <span
+                                v-if="activeResourceTab === 'manualNodes'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
+                        </button>
+
                         <button
                             type="button"
                             @click="activeResourceTab = 'subscriptions'"
                             :class="[
                                 activeResourceTab === 'subscriptions'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>📡 {{ t('profileModal.tabSubscriptions') }}</span>
+                            <span>{{ t('profileModal.tabSubscriptions') }}</span>
                             <span
                                 v-if="localProfile.subscriptions?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
+                                :class="
+                                    activeResourceTab === 'subscriptions'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
                                 {{ localProfile.subscriptions.length }}
                             </span>
+                            <span
+                                v-if="activeResourceTab === 'subscriptions'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
 
                         <button
@@ -438,37 +479,27 @@
                             @click="activeResourceTab = 'subProfiles'"
                             :class="[
                                 activeResourceTab === 'subProfiles'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>🧩 {{ t('profileModal.tabSubProfiles') }}</span>
+                            <span>{{ t('profileModal.tabSubProfiles') }}</span>
                             <span
                                 v-if="localProfile.subProfiles?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
+                                :class="
+                                    activeResourceTab === 'subProfiles'
+                                        ? 'border-zinc-700 text-zinc-200'
+                                        : 'border-zinc-800 text-zinc-400'
+                                "
+                                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
                                 {{ localProfile.subProfiles.length }}
                             </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            @click="activeResourceTab = 'manualNodes'"
-                            :class="[
-                                activeResourceTab === 'manualNodes'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
-                            ]"
-                        >
-                            <span>📌 {{ t('profileModal.tabManualNodes') }}</span>
                             <span
-                                v-if="localProfile.manualNodes?.length"
-                                class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 font-semibold"
-                            >
-                                {{ localProfile.manualNodes.length }}
-                            </span>
+                                v-if="activeResourceTab === 'subProfiles'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
 
                         <button
@@ -476,12 +507,16 @@
                             @click="activeResourceTab = 'all'"
                             :class="[
                                 activeResourceTab === 'all'
-                                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200',
-                                'whitespace-nowrap pb-3 px-2 border-b-2 font-medium text-sm flex items-center gap-1.5 transition-colors cursor-pointer',
+                                    ? 'text-zinc-100 font-semibold'
+                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
-                            <span>⚡ {{ t('profileModal.tabAll') }}</span>
+                            <span>{{ t('profileModal.tabAll') }}</span>
+                            <span
+                                v-if="activeResourceTab === 'all'"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                            ></span>
                         </button>
                     </nav>
                 </div>
@@ -490,9 +525,28 @@
                     :class="
                         activeResourceTab === 'all'
                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'
-                            : 'space-y-6'
+                            : ''
                     "
                 >
+                    <div
+                        v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'"
+                    >
+                        <NodeSelector
+                            :nodes="allManualNodes"
+                            :filtered-nodes="filteredManualNodes"
+                            :search-term="nodeSearchTerm"
+                            :active-group-filter="activeManualNodeGroupFilter"
+                            :groups="manualNodeGroups"
+                            :selected-ids="localProfile.manualNodes || []"
+                            @update:search-term="nodeSearchTerm = $event"
+                            @update:group-filter="activeManualNodeGroupFilter = $event"
+                            @update:selected-ids="updateSelectedIds('manualNodes', $event)"
+                            @toggle-selection="toggleSelection('manualNodes', $event)"
+                            @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
+                            @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
+                        />
+                    </div>
+
                     <div
                         v-show="
                             activeResourceTab === 'subscriptions' || activeResourceTab === 'all'
@@ -502,8 +556,11 @@
                             :subscriptions="selectableSubscriptions"
                             :filtered-subscriptions="filteredSubscriptions"
                             :search-term="subscriptionSearchTerm"
+                            :active-group-filter="activeSubscriptionGroupFilter"
+                            :groups="subscriptionGroups"
                             :selected-ids="localProfile.subscriptions || []"
                             @update:search-term="subscriptionSearchTerm = $event"
+                            @update:group-filter="activeSubscriptionGroupFilter = $event"
                             @update:selected-ids="updateSelectedIds('subscriptions', $event)"
                             @toggle-selection="toggleSelection('subscriptions', $event)"
                             @select-all="handleSelectAll('subscriptions', filteredSubscriptions)"
@@ -523,30 +580,12 @@
                             :selected-ids="localProfile.subProfiles || []"
                             :target-profile-id="localProfile.id || props.profile?.id || ''"
                             :all-profiles="dataStore.profiles || []"
+                            :align-spacer="activeResourceTab === 'all'"
                             @update:search-term="subProfileSearchTerm = $event"
                             @update:selected-ids="updateSelectedIds('subProfiles', $event)"
                             @toggle-selection="toggleSelection('subProfiles', $event)"
                             @select-all="handleSelectAll('subProfiles', $event)"
                             @deselect-all="handleDeselectAll('subProfiles', filteredSubProfiles)"
-                        />
-                    </div>
-
-                    <div
-                        v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'"
-                    >
-                        <NodeSelector
-                            :nodes="allManualNodes"
-                            :filtered-nodes="filteredManualNodes"
-                            :search-term="nodeSearchTerm"
-                            :active-group-filter="activeManualNodeGroupFilter"
-                            :groups="manualNodeGroups"
-                            :selected-ids="localProfile.manualNodes || []"
-                            @update:search-term="nodeSearchTerm = $event"
-                            @update:group-filter="activeManualNodeGroupFilter = $event"
-                            @update:selected-ids="updateSelectedIds('manualNodes', $event)"
-                            @toggle-selection="toggleSelection('manualNodes', $event)"
-                            @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
-                            @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
                         />
                     </div>
                 </div>

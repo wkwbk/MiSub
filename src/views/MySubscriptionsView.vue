@@ -3,6 +3,7 @@
     import { useRoute } from 'vue-router';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useProfiles } from '../composables/useProfiles.js';
+    import { useSortingMode } from '../composables/useSortingMode.js';
     import ProfilePanel from '../components/profiles/ProfilePanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import { storeToRefs } from 'pinia';
@@ -17,7 +18,7 @@
     const dataStore = useDataStore();
     const { markDirty } = dataStore;
     const { showToast } = useToastStore();
-    const isProfileSorting = ref(false);
+    const isProfileSorting = useSortingMode(dataStore);
 
     // --- Dashboard deep-link (?focus=profiles) ---
     // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
@@ -46,6 +47,7 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        reorderProfiles,
         filteredProfiles,
         searchQuery: profileSearchQuery,
         profilesCurrentPage,
@@ -57,20 +59,6 @@
     // For ProfileModal need access to all subscriptions and nodes
     const { subscriptions } = storeToRefs(dataStore);
     const { manualNodes } = useManualNodes(markDirty);
-
-    const handleProfileReorder = (profileId, direction) => {
-        const fromIndex = profiles.value.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (fromIndex === -1) return;
-
-        const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
-        if (toIndex < 0 || toIndex >= profiles.value.length) return;
-
-        const [item] = profiles.value.splice(fromIndex, 1);
-        profiles.value.splice(toIndex, 0, item);
-        markDirty();
-    };
 
     const toggleProfileSorting = () => {
         isProfileSorting.value = !isProfileSorting.value;
@@ -148,7 +136,7 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <div ref="profilesSectionRef" data-testid="profiles-section">
             <ProfilePanel
                 :profiles="profiles"
@@ -166,7 +154,7 @@
                 @toggle="handleProfileToggle"
                 @openCopy="handleOpenCopy"
                 @preview="handlePreviewProfile"
-                @reorder="handleProfileReorder"
+                @reorder="reorderProfiles"
                 @toggle-sort="toggleProfileSorting"
                 @change-page="changeProfilesPage"
                 @viewLogs="handleViewLogs"
@@ -189,7 +177,6 @@
             :all-subscriptions="subscriptions"
             :all-manual-nodes="manualNodes"
             @save="handleSaveProfile"
-            size="6xl"
         />
 
         <Modal v-model:show="showDeleteProfilesModal" @confirm="handleDeleteAllProfiles">

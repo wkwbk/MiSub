@@ -1,6 +1,8 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ChevronDown, List } from 'lucide-vue-next';
     import { storeToRefs } from 'pinia';
+    import Select from '../ui/Select.vue';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '../../i18n/index.js';
@@ -204,10 +206,9 @@
         { immediate: true }
     );
 
-    const handleSelectChange = (e) => {
+    const handleSelectChange = (val) => {
         if (props.forceCustom) return;
 
-        const val = e.target.value;
         if (val === 'custom' && !props.customTemplatesOnly) {
             isCustom.value = true;
             emit('select-asset', null);
@@ -220,6 +221,38 @@
         emit('select-asset', assets.value.find((item) => item.url === val) || null);
         emit('update:modelValue', val);
     };
+
+    const selectOptions = computed(() => {
+        const opts = [
+            {
+                value: '',
+                label:
+                    props.placeholder ||
+                    (props.allowEmpty
+                        ? t('transformSelector.defaultGlobalOption')
+                        : t('transformSelector.pleaseSelect')),
+            },
+        ];
+
+        for (const [groupName, items] of Object.entries(groupedConfigs.value || {})) {
+            opts.push({
+                label: groupName,
+                options: items.map((item) => ({
+                    value: item.url,
+                    label: item.name,
+                })),
+            });
+        }
+
+        if (!props.customTemplatesOnly) {
+            opts.push({
+                value: 'custom',
+                label: t('transformSelector.customInputOption'),
+            });
+        }
+
+        return opts;
+    });
 
     const handleCustomInput = (e) => {
         emit('update:modelValue', e.target.value);
@@ -249,56 +282,18 @@
     <div>
         <div
             v-if="type === 'config' && excludeBuiltinAssets"
-            class="mb-3 rounded-lg border border-amber-300/60 bg-amber-50/90 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-200"
+            class="mb-3 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-300"
         >
-            {{ t('transformSelector.thirdPartyNotice') }}
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
+            <span>{{ t('transformSelector.thirdPartyNotice') }}</span>
         </div>
 
-        <div v-if="!isCustom" class="relative">
-            <select
-                :value="selectedUrl"
-                @change="handleSelectChange"
-                class="block w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2 pr-8 text-sm shadow-xs focus:border-indigo-500 focus-visible:outline-hidden focus-visible:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-            >
-                <option value="">
-                    {{
-                        placeholder ||
-                        (allowEmpty
-                            ? t('transformSelector.defaultGlobalOption')
-                            : t('transformSelector.pleaseSelect'))
-                    }}
-                </option>
-
-                <optgroup
-                    v-for="(items, groupName) in groupedConfigs"
-                    :key="groupName"
-                    :label="groupName"
-                >
-                    <option v-for="item in items" :key="item.id" :value="item.url">
-                        {{ item.name }}
-                    </option>
-                </optgroup>
-
-                <option
-                    v-if="!customTemplatesOnly"
-                    value="custom"
-                    class="border-t font-bold text-indigo-600 dark:text-indigo-400"
-                >
-                    {{ t('transformSelector.customInputOption') }}
-                </option>
-            </select>
-            <div
-                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300"
-            >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
-            </div>
+        <div v-if="!isCustom">
+            <Select
+                :model-value="selectedUrl"
+                @update:model-value="handleSelectChange"
+                :options="selectOptions"
+            />
         </div>
 
         <div v-else class="w-full">
@@ -309,29 +304,22 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm shadow-xs focus:border-indigo-500 focus-visible:outline-hidden focus-visible:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>
                 <button
                     @click="switchToSelect"
-                    class="flex-shrink-0 rounded-lg bg-gray-100 p-2 text-gray-500 transition-colors hover:bg-gray-200 hover:text-indigo-600 dark:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-indigo-400"
+                    class="flex-shrink-0 rounded-md border border-zinc-800 bg-transparent p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     :title="t('operators.backToList')"
                     :aria-label="t('operators.backToList')"
                 >
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 6h16M4 12h16M4 18h16"
-                        />
-                    </svg>
+                    <List class="h-5 w-5" />
                 </button>
             </div>
             <p
                 v-if="modelValue"
-                class="mt-1 truncate text-xs text-indigo-500"
+                class="mt-1 truncate font-mono text-xs text-zinc-400"
                 :title="t('transformSelector.currentCustomValue')"
             >
                 {{ t('transformSelector.currentValue') }}: {{ modelValue }}
@@ -340,63 +328,56 @@
 
         <div
             v-if="missingCustomTemplateValue"
-            class="mt-2 rounded-lg border border-amber-300/60 bg-amber-50/90 px-3 py-2 text-xs leading-relaxed text-amber-800 dark:border-amber-500/30 dark:bg-amber-900/20 dark:text-amber-200"
+            class="mt-2 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs leading-relaxed text-zinc-300"
         >
-            <span>{{ t('transformSelector.missingTemplatePrefix') }}</span
-            ><code class="font-mono">{{ missingCustomTemplateValue }}</code
-            ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
+            <div>
+                <span>{{ t('transformSelector.missingTemplatePrefix') }}</span
+                ><code class="font-mono text-zinc-100">{{ missingCustomTemplateValue }}</code
+                ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
+            </div>
         </div>
 
         <div
             v-if="type === 'config'"
-            class="mt-3 rounded-lg border border-gray-200 bg-gray-50/80 text-xs dark:border-gray-700 dark:bg-gray-800/40"
+            class="mt-3 rounded-md border border-zinc-800 bg-transparent text-xs"
         >
             <button
                 type="button"
-                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-gray-100/70 dark:hover:bg-gray-700/30"
+                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-zinc-900/60"
                 :aria-expanded="showTemplateVariables"
                 @click="showTemplateVariables = !showTemplateVariables"
             >
                 <span>
-                    <span class="font-medium text-gray-700 dark:text-gray-200">{{
+                    <span class="font-medium text-zinc-200">{{
                         t('transformSelector.templateVariablesTitle')
                     }}</span>
-                    <span class="ml-2 text-[11px] text-gray-500 dark:text-gray-400">{{
+                    <span class="ml-2 text-[11px] text-zinc-500">{{
                         helperText
                     }}</span>
                 </span>
-                <svg
-                    class="h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400 transition-transform"
+                <ChevronDown
+                    class="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 transition-transform"
                     :class="showTemplateVariables ? 'rotate-180' : ''"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
                     aria-hidden="true"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 9l-7 7-7-7"
-                    />
-                </svg>
+                />
             </button>
             <div
                 v-if="showTemplateVariables"
-                class="grid gap-3 border-t border-gray-200 p-3 md:grid-cols-2 dark:border-gray-700"
+                class="grid gap-3 border-t border-zinc-800 p-3 md:grid-cols-2"
             >
                 <div
                     v-for="group in templateVariableGroups"
                     :key="group.title"
-                    class="rounded-lg border border-gray-200 bg-white/80 p-3 dark:border-gray-700 dark:bg-gray-900/20"
+                    class="rounded-md border border-zinc-800 bg-transparent p-3"
                 >
-                    <p class="font-medium text-gray-700 dark:text-gray-200">{{ group.title }}</p>
+                    <p class="font-medium text-zinc-200">{{ group.title }}</p>
                     <div class="mt-2 space-y-2">
                         <div v-for="item in group.items" :key="item.key">
-                            <code class="text-[11px] text-indigo-600 dark:text-indigo-300">{{
+                            <code class="font-mono text-[11px] text-zinc-200">{{
                                 item.key
                             }}</code>
-                            <p class="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
+                            <p class="mt-0.5 text-[11px] text-zinc-500">
                                 {{ t('transformSelector.exampleLabel') }}: {{ item.example }}
                             </p>
                         </div>

@@ -1,5 +1,13 @@
 <script setup>
-    import { ref, computed, onMounted, onUnmounted, defineAsyncComponent, watch } from 'vue';
+    import {
+        ref,
+        computed,
+        onMounted,
+        onUnmounted,
+        defineAsyncComponent,
+        watch,
+        nextTick,
+    } from 'vue';
     import { formatBytes } from '../../../lib/utils.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useUIStore } from '../../../stores/ui.js';
@@ -10,10 +18,12 @@
     import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
     import { useNodeForms } from '../../../composables/useNodeForms.js';
     import { useBulkImportLogic } from '../../../composables/useBulkImportLogic.js';
+    import { useSubscriptionBulkImport } from '../../../composables/useSubscriptionBulkImport.js';
     import { useBackupLogic } from '../../../composables/useBackupLogic.js';
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+    import { useStickyColumns } from '../../../composables/useStickyColumn.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -30,6 +40,9 @@
 
     const SettingsModal = defineAsyncComponent(() => import('../../modals/SettingsModal.vue'));
     const BulkImportModal = defineAsyncComponent(() => import('../../modals/BulkImportModal.vue'));
+    const SubscriptionBulkImportModal = defineAsyncComponent(
+        () => import('../../modals/SubscriptionBulkImportModal.vue')
+    );
     const ProfileModal = defineAsyncComponent(() => import('../../modals/ProfileModal.vue'));
     const SubscriptionImportModal = defineAsyncComponent(
         () => import('../../modals/SubscriptionImportModal.vue')
@@ -116,17 +129,18 @@
 
     const {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter: subscriptionGroupFilter,
+        setGroupFilter: setSubscriptionGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         searchQuery: subscriptionSearchQuery,
         filteredSubscriptions: filteredSubscriptionList,
         filteredCount: filteredSubscriptionCount,
         isRefreshing: isRefreshingSubscriptions,
         refreshError: subscriptionRefreshError,
         lastRefreshAt: lastSubscriptionRefreshAt,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
         totalRemainingTraffic,
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -188,6 +202,13 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        reorderProfiles,
+        filteredProfiles,
+        searchQuery: profileSearchQuery,
+        profilesCurrentPage,
+        profilesTotalPages,
+        paginatedProfiles,
+        changeProfilesPage,
         copyProfileLink,
         copyClashLink,
         cleanupSubscriptions,
@@ -222,6 +243,12 @@
         addSubscriptionsFromBulk,
         addNodesFromBulk,
     });
+
+    const { showModal: showSubBulkImportModal, handleSubscriptionBulkImport } =
+        useSubscriptionBulkImport({
+            addSubscriptionsFromBulk,
+            updateSubscription,
+        });
 
     // 使用备份 composable
     const { exportBackup, importBackup } = useBackupLogic();
@@ -275,6 +302,22 @@
         }
     };
 
+    const mainGridRef = ref(null);
+    const leftColRef = ref(null);
+    const rightColRef = ref(null);
+
+    const { refreshStickyColumns, reobserveStickyColumns } = useStickyColumns(mainGridRef, [
+        leftColRef,
+        rightColRef,
+    ]);
+
+    watch([isLoading, mainGridRef], () => {
+        nextTick(() => {
+            reobserveStickyColumns();
+            refreshStickyColumns();
+        });
+    });
+
     onMounted(() => {
         initializeState();
         window.addEventListener('beforeunload', handleBeforeUnload);
@@ -311,6 +354,9 @@
     const handleDiscard = async () => {
         // 强制刷新数据，忽略缓存
         await dataStore.fetchData(true);
+        isSortingSubs.value = false;
+        isSortingNodes.value = false;
+        isSortingProfiles.value = false;
         showToast(t('notices.discardedChanges'));
     };
 
@@ -322,7 +368,9 @@
 
             saveState.value = 'success';
 
-            if (isSortingNodes.value) isSortingNodes.value = false;
+            isSortingSubs.value = false;
+            isSortingNodes.value = false;
+            isSortingProfiles.value = false;
 
             setTimeout(() => {
                 saveState.value = 'idle';
@@ -408,7 +456,18 @@
         showToast(t('manualNodes.groupOrderUpdated'), 'success');
     };
 
-    // 应用识别到的机场名（来自订阅响应头 / 官网标题）
+    const showSubGroupManagementModal = ref(false);
+
+    const handleSubGroupRename = (oldName, newName) => {
+        renameSubscriptionGroup(oldName, newName);
+        showToast(t('manualNodes.groupRenamed'), 'success');
+    };
+
+    const handleSubGroupDelete = (groupName) => {
+        deleteSubscriptionGroup(groupName);
+        showToast(t('manualNodes.groupDeleted'), 'success');
+    };
+
     const handleApplyDetectedName = (subscriptionId, name) => {
         const target = String(name || '').trim();
         if (!target) return;
@@ -455,20 +514,6 @@
         }
     };
 
-    const handleProfileReorder = (profileId, direction) => {
-        const fromIndex = profiles.value.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (fromIndex === -1) return;
-
-        const toIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1;
-        if (toIndex < 0 || toIndex >= profiles.value.length) return;
-
-        const [item] = profiles.value.splice(fromIndex, 1);
-        profiles.value.splice(toIndex, 0, item);
-        markDirty();
-    };
-
     // 备份函数由 useBackupLogic 提供
     // 格式化函数由 utils.js 提供
     const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemainingTraffic.value));
@@ -478,10 +523,10 @@
 </script>
 
 <template>
-    <div v-if="isLoading" class="w-full max-w-(--breakpoint-xl) mx-auto p-4 sm:p-6 lg:p-8">
+    <div v-if="isLoading" class="w-full">
         <SkeletonLoader type="dashboard" />
     </div>
-    <div v-else class="w-full max-w-(--breakpoint-xl) mx-auto p-4 sm:p-6 lg:p-8">
+    <div v-else class="w-full">
         <!-- Header -->
         <DashboardHeader
             :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
@@ -497,8 +542,11 @@
         />
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-1 gap-6 items-start lg:gap-7 xl:grid-cols-3 xl:gap-8">
-            <div class="space-y-8 lg:space-y-9 xl:col-span-2">
+        <div
+            ref="mainGridRef"
+            class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3"
+        >
+            <div ref="leftColRef" class="space-y-4 xl:col-span-2">
                 <!-- Subscription Panel -->
                 <SubscriptionPanel
                     searchable
@@ -508,14 +556,14 @@
                     :refresh-error="subscriptionRefreshError"
                     :last-refresh-at="lastSubscriptionRefreshAt"
                     :subscriptions="subscriptions"
-                    :paginated-subscriptions="paginatedSubscriptions"
-                    :current-page="subsCurrentPage"
-                    :total-pages="subsTotalPages"
+                    :groups="subscriptionGroups"
+                    :active-group-filter="subscriptionGroupFilter"
                     :is-sorting="isSortingSubs"
                     @update-search="(query) => (subscriptionSearchQuery = query)"
+                    @set-group-filter="setSubscriptionGroupFilter"
+                    @manage-groups="showSubGroupManagementModal = true"
                     @add="handleAddSubscription"
                     @delete="handleDeleteSubscriptionWithCleanup"
-                    @change-page="changeSubsPage"
                     @update-node-count="handleUpdateNodeCount"
                     @refresh-all="batchUpdateAllSubscriptions"
                     @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
@@ -526,7 +574,7 @@
                     @preview="handlePreviewSubscription"
                     @reorder="reorderSubscriptions"
                     @qrcode="(id) => handleQRCode(id, 'subscription')"
-                    @import="showBulkImportModal = true"
+                    @import="showSubBulkImportModal = true"
                 />
 
                 <!-- Manual Node Panel -->
@@ -569,7 +617,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="space-y-6 lg:space-y-7 xl:col-span-1">
+            <div ref="rightColRef" class="space-y-4 xl:col-span-1">
                 <RightPanel
                     :config="config"
                     :profiles="profiles"
@@ -584,8 +632,16 @@
                 />
                 <ProfilePanel
                     :profiles="profiles"
+                    :paginated-profiles="paginatedProfiles"
+                    :current-page="profilesCurrentPage"
+                    :total-pages="profilesTotalPages"
+                    :search-query="profileSearchQuery"
+                    :filtered-count="filteredProfiles.length"
+                    searchable
                     :compact="true"
                     :is-sorting="isSortingProfiles"
+                    @update-search="(query) => (profileSearchQuery = query)"
+                    @change-page="changeProfilesPage"
                     @add="handleAddProfile"
                     @edit="handleEditProfile"
                     @delete="handleDeleteProfile"
@@ -596,7 +652,7 @@
                     @copyClashLink="copyClashLink"
                     @preview="handlePreviewProfile"
                     @viewLogs="handleViewLogs"
-                    @reorder="handleProfileReorder"
+                    @reorder="reorderProfiles"
                     @qrcode="(id) => handleQRCode(id, 'profile')"
                     @toggle-sort="isSortingProfiles = !isSortingProfiles"
                 />
@@ -607,6 +663,10 @@
     <BulkImportModal
         v-model:show="showBulkImportModal"
         @import="(txt, tag) => handleBulkImport(txt, tag)"
+    />
+    <SubscriptionBulkImportModal
+        v-model:show="showSubBulkImportModal"
+        @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
     />
     <LogModal v-model:show="showLogModal" />
     <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup"
@@ -663,7 +723,6 @@
         :all-subscriptions="subscriptions"
         :all-manual-nodes="manualNodes"
         @save="handleSaveProfile"
-        size="6xl"
     />
 
     <ManualNodeEditModal
@@ -696,6 +755,13 @@
         @rename="handleGroupRename"
         @delete="handleGroupDelete"
         @reorder="handleGroupReorder"
+    />
+
+    <GroupManagementModal
+        v-model:show="showSubGroupManagementModal"
+        :groups="subscriptionGroups"
+        @rename="handleSubGroupRename"
+        @delete="handleSubGroupDelete"
     />
 
     <SubscriptionEditModal

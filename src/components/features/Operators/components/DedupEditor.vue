@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import Select from '../../../ui/Select.vue';
     import { useI18n } from '../../../../i18n/index.js';
 
     const props = defineProps({
@@ -61,31 +62,31 @@
         <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
                 <label
-                    class="text-[11px] font-bold uppercase tracking-tight text-gray-500 dark:text-gray-400"
+                    class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400"
                     >{{ t('operators.dedupMode') }}</label
                 >
-                <select
-                    :value="params.mode"
-                    @change="updateValue({ mode: $event.target.value })"
-                    class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-indigo-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                >
-                    <option value="serverPort">{{ t('operators.dedupServerPort') }}</option>
-                    <option value="url">{{ t('operators.dedupFullUrl') }}</option>
-                </select>
-                <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                <Select
+                    :model-value="params.mode"
+                    @update:model-value="updateValue({ mode: $event })"
+                    :options="[
+                        { value: 'serverPort', label: t('operators.dedupServerPort') },
+                        { value: 'url', label: t('operators.dedupFullUrl') },
+                    ]"
+                />
+                <p class="text-[10px] text-zinc-500">
                     {{ t('operators.dedupModeHint') }}
                 </p>
             </div>
 
             <div
-                class="space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 dark:border-gray-800 dark:bg-gray-900/40"
+                class="space-y-2 rounded-md border border-zinc-800 bg-transparent p-3"
             >
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                        <p class="text-sm font-medium text-zinc-100">
                             {{ t('operators.includeProtocolDedup') }}
                         </p>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                        <p class="text-[10px] text-zinc-500">
                             {{ t('operators.includeProtocolDedupHint') }}
                         </p>
                     </div>
@@ -93,10 +94,10 @@
                         @click="updateValue({ includeProtocol: !params.includeProtocol })"
                         :class="
                             params.includeProtocol
-                                ? 'bg-indigo-600 text-white'
-                                : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                                ? 'bg-zinc-100 text-zinc-900'
+                                : 'border border-zinc-800 bg-transparent text-zinc-400'
                         "
-                        class="rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                        class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
                     >
                         {{ statusLabel(params.includeProtocol) }}
                     </button>
@@ -106,11 +107,11 @@
 
         <div class="space-y-2">
             <label
-                class="text-[11px] font-bold uppercase tracking-tight text-gray-500 dark:text-gray-400"
+                class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400"
                 >{{ t('operators.preferredProtocols') }}</label
             >
             <div
-                class="flex flex-wrap gap-2 rounded-xl border border-gray-100 bg-gray-50/60 p-3 dark:border-gray-800 dark:bg-gray-900/40"
+                class="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-transparent p-3"
             >
                 <button
                     v-for="protocol in protocolOptions"
@@ -118,15 +119,15 @@
                     @click="toggleProtocol(protocol)"
                     :class="
                         (params.prefer?.protocolOrder || []).includes(protocol)
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'border border-gray-200 bg-white text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                            ? 'bg-zinc-100 text-zinc-900'
+                            : 'border border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
                     "
-                    class="rounded-lg px-3 py-1.5 text-xs font-medium uppercase transition-colors"
+                    class="rounded-md px-3 py-1.5 font-mono text-xs font-medium uppercase transition-colors"
                 >
                     {{ protocol }}
                 </button>
             </div>
-            <p class="text-[10px] text-gray-500 dark:text-gray-400">
+            <p class="text-[10px] text-zinc-500">
                 {{ t('operators.preferredProtocolsHint') }}
             </p>
         </div>

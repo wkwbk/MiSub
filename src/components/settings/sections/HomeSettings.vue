@@ -1,5 +1,7 @@
 <script setup>
+    import { Home } from 'lucide-vue-next';
     import Input from '../../ui/Input.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import AnnouncementSettings from './AnnouncementSettings.vue';
     import GuestbookManagement from './GuestbookManagement.vue';
     import { useI18n } from '../../../i18n/index.js';
@@ -15,39 +17,17 @@
 </script>
 
 <template>
-    <div v-if="settings" class="space-y-8">
+    <div v-if="settings" class="space-y-6">
         <!-- {{ t('settings.homeHeroTitle') }} -->
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-300"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                        />
-                    </svg>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('settings.homeHeroTitle') }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('settings.homeHeroDesc') }}
-                    </p>
-                </div>
-            </div>
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.homeHeroTitle')"
+                :description="t('settings.homeHeroDesc')"
+            >
+                <template #icon>
+                    <Home class="h-4 w-4" />
+                </template>
+            </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <Input
@@ -71,7 +51,7 @@
                     />
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Announcement Settings -->
         <AnnouncementSettings :settings="settings" />

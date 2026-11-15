@@ -4,6 +4,7 @@
     import { useI18n } from '../../../i18n/index.js';
     import { confirmAction } from '../../../composables/useConfirm.js';
     import Switch from '../../ui/Switch.vue';
+    import SectionHeader from '../SectionHeader.vue';
 
     const { t } = useI18n();
 
@@ -131,145 +132,127 @@
 
 <template>
     <div class="space-y-6 animate-fade-in">
-        <div
-            class="bg-white dark:bg-gray-800 misub-radius-lg p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700"
-        >
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div>
-                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">
-                        {{ t('settings.customPageTitle') }}
-                    </h2>
-                    <p class="text-sm text-gray-500">{{ t('settings.customPageDesc') }}</p>
-                </div>
-                <div class="flex items-center self-start sm:self-center gap-2">
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('settings.customPageTitle')"
+                :description="t('settings.customPageDesc')"
+                :no-margin="!customPage.enabled"
+            >
+                <template #actions>
                     <Switch v-model="props.settings.customPage.enabled" />
-                </div>
-            </div>
+                </template>
+            </SectionHeader>
 
             <div v-if="customPage.enabled" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div
-                        class="flex flex-col gap-2 md:col-span-2 p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                    >
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
-                            {{ t('settings.customPageRenderMode') }}
-                        </p>
-                        <div class="flex items-center gap-2 mt-1">
-                            <span
-                                class="px-3 py-1.5 rounded-xl bg-primary-600 text-white border border-primary-600 text-xs font-medium"
-                                >{{ t('settings.customPageHtmlCssRender') }}</span
-                            >
+                <div class="divide-y divide-zinc-800/60">
+                    <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-zinc-100">
+                                {{ t('settings.customPageRenderMode') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.customPageRenderDesc') }}
+                            </p>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">
-                            {{ t('settings.customPageRenderDesc') }}
-                        </p>
+                        <span
+                            class="self-start sm:self-center shrink-0 px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-900 border border-zinc-100 text-xs font-mono font-semibold"
+                            >{{ t('settings.customPageHtmlCssRender') }}</span
+                        >
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.customPageUseDefaultLayout') }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageUseDefaultLayoutDesc') }}
                             </p>
                         </div>
                         <Switch v-model="props.settings.customPage.useDefaultLayout" />
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.customPageHideBranding') }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageHideBrandingDesc') }}
                             </p>
                         </div>
                         <Switch v-model="props.settings.customPage.hideBranding" />
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.customPageHideHeader') }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageHideHeaderDesc') }}
                             </p>
                         </div>
                         <Switch v-model="props.settings.customPage.hideHeader" />
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.customPageHideFooter') }}
                             </p>
-                            <p class="text-xs text-gray-500 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageHideFooterDesc') }}
                             </p>
                         </div>
                         <Switch v-model="props.settings.customPage.hideFooter" />
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-blue-50/70 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-200">
                                 {{ t('settings.customPageExternalStylesDisabled') }}
                             </p>
-                            <p class="text-xs text-blue-700/80 dark:text-blue-300/80 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageExternalStylesDisabledDesc') }}
                             </p>
                         </div>
                         <span
-                            class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-medium"
+                            class="shrink-0 px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-400 text-xs font-mono"
                             >{{ t('settings.customPageFixedDisabled') }}</span
                         >
                     </div>
 
-                    <div
-                        class="flex items-center justify-between p-4 bg-blue-50/70 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 misub-radius-lg"
-                    >
-                        <div class="flex-1 mr-4">
-                            <p class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                    <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                        <div class="space-y-1 flex-1">
+                            <p class="text-sm font-medium text-zinc-200">
                                 {{ t('settings.customPageScriptsDisabled') }}
                             </p>
-                            <p class="text-xs text-blue-700/80 dark:text-blue-300/80 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.customPageScriptsDisabledDesc') }}
                             </p>
                         </div>
                         <span
-                            class="px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-medium"
+                            class="shrink-0 px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-400 text-xs font-mono"
                             >{{ t('settings.customPageFixedDisabled') }}</span
                         >
                     </div>
                 </div>
 
-                <hr class="border-gray-100 dark:border-gray-700" />
+                <hr class="border-zinc-800/60" />
 
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <div>
                         <div
-                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2"
+                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5"
                         >
-                            <label class="text-sm font-bold text-gray-700 dark:text-gray-300">{{
+                            <label class="text-xs font-semibold text-zinc-300">{{
                                 t('settings.customPageHtmlContent')
                             }}</label>
                             <div class="flex flex-wrap gap-1.5 justify-start sm:justify-end">
                                 <button
                                     @click="normalizeFullPageSource"
-                                    class="text-[10px] px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 transition-colors"
+                                    class="text-[11px] font-mono px-2 py-1 bg-zinc-100 text-zinc-900 rounded-md border border-zinc-100 hover:bg-white transition-colors font-medium"
                                 >
                                     {{ t('settings.customPageNormalizeSource') }}
                                 </button>
@@ -285,7 +268,7 @@
                                     ]"
                                     :key="p"
                                     @click="insertPlaceholder(p)"
-                                    class="text-[10px] px-2 py-1 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded border border-primary-100 dark:border-primary-800 hover:bg-primary-100 transition-colors"
+                                    class="text-[11px] font-mono px-2 py-1 bg-transparent text-zinc-300 rounded-md border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                                 >
                                     {&#123;{{ p }}&#125;}
                                 </button>
@@ -294,7 +277,7 @@
                         <textarea
                             v-model="props.settings.customPage.content"
                             rows="12"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus-visible:ring-2 focus-visible:ring-primary-500 font-mono text-sm leading-relaxed outline-none transition-all"
+                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
                             :placeholder="
                                 t('settings.customPageSourcePlaceholder', {
                                     action: t('settings.customPageNormalizeSource'),
@@ -305,13 +288,13 @@
 
                     <div>
                         <label
-                            class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2"
+                            class="block text-xs font-semibold text-zinc-300 mb-2.5"
                             >{{ t('settings.customPageCss') }}</label
                         >
                         <textarea
                             v-model="props.settings.customPage.css"
                             rows="6"
-                            class="w-full px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl focus-visible:ring-2 focus-visible:ring-primary-500 font-mono text-sm leading-relaxed outline-none transition-all"
+                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
                             :placeholder="
                                 t('settings.customPageCssPlaceholder', {
                                     name: t('settings.customPageCss'),
@@ -321,87 +304,82 @@
                     </div>
                 </div>
 
-                <div
-                    class="bg-primary-50/50 dark:bg-primary-900/5 p-4 rounded-2xl border border-primary-100/50 dark:border-primary-800/30"
-                >
+                <div class="pt-2">
                     <h3
-                        class="text-sm font-bold text-primary-900 dark:text-primary-400 mb-3 flex items-center gap-2"
+                        class="text-xs font-semibold text-zinc-300 mb-3 flex items-center gap-2"
                     >
-                        <span class="text-lg">✨</span> {{ t('settings.customPageTemplatesTitle') }}
+                        <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+                        {{ t('settings.customPageTemplatesTitle') }}
                     </h3>
-                    <div class="flex flex-wrap gap-3">
+                    <div class="flex flex-wrap gap-2.5">
                         <button
                             v-for="tpl in templates"
                             :key="tpl.name"
                             data-testid="custom-page-template"
                             @click="applyTemplate(tpl)"
-                            class="px-4 py-2 bg-white dark:bg-gray-800 border border-primary-200 dark:border-primary-800 rounded-xl text-sm font-medium text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all active:scale-95 shadow-sm"
+                            class="px-3.5 py-1.5 bg-transparent border border-zinc-800 rounded-md text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors shadow-none"
                         >
                             {{ t(tpl.nameKey) }}
                         </button>
                     </div>
                 </div>
 
-                <div
-                    class="flex gap-3 p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 misub-radius-lg"
-                >
-                    <div class="text-amber-500 shrink-0">💡</div>
-                    <div class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                        <p class="font-bold mb-1">
-                            {{ t('settings.customPagePlaceholdersTitle') }}
-                        </p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                            <ul class="list-disc list-inside space-y-1">
-                                <li class="font-bold text-primary-700 dark:text-primary-400">
-                                    {{ t('settings.customPageComponentPlaceholders') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;profiles&#125;}</strong>:
-                                    {{ t('settings.customPageProfilesHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;announcements&#125;}</strong>:
-                                    {{ t('settings.customPageAnnouncementsHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;hero&#125;}</strong>:
-                                    {{ t('settings.customPageHeroHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;guestbook&#125;}</strong>:
-                                    {{ t('settings.customPageGuestbookHint') }}
-                                </li>
-                            </ul>
-                            <ul class="list-disc list-inside space-y-1">
-                                <li class="font-bold text-indigo-700 dark:text-indigo-400">
-                                    {{ t('settings.customPageDataPlaceholders') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;version&#125;}</strong>:
-                                    {{ t('settings.customPageVersionHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;node_count&#125;}</strong>:
-                                    {{ t('settings.customPageNodeCountHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;profile_count&#125;}</strong>:
-                                    {{ t('settings.customPageProfileCountHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;title&#125;}</strong>:
-                                    {{ t('settings.customPageTitleHint') }}
-                                </li>
-                                <li>
-                                    <strong>{&#123;description&#125;}</strong>:
-                                    {{ t('settings.customPageDescriptionHint') }}
-                                </li>
-                            </ul>
-                        </div>
-                        <p class="mt-2 opacity-80">{{ t('settings.customPageModeHint') }}</p>
+                <div class="pl-4 border-l-2 border-zinc-800 text-xs text-zinc-400 leading-relaxed space-y-2">
+                    <p class="font-semibold text-zinc-200 flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                        {{ t('settings.customPagePlaceholdersTitle') }}
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+                        <ul class="list-disc list-inside space-y-1">
+                            <li class="font-semibold text-zinc-200">
+                                {{ t('settings.customPageComponentPlaceholders') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;profiles&#125;}</strong>:
+                                {{ t('settings.customPageProfilesHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;announcements&#125;}</strong>:
+                                {{ t('settings.customPageAnnouncementsHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;hero&#125;}</strong>:
+                                {{ t('settings.customPageHeroHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;guestbook&#125;}</strong>:
+                                {{ t('settings.customPageGuestbookHint') }}
+                            </li>
+                        </ul>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li class="font-semibold text-zinc-200">
+                                {{ t('settings.customPageDataPlaceholders') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;version&#125;}</strong>:
+                                {{ t('settings.customPageVersionHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;node_count&#125;}</strong>:
+                                {{ t('settings.customPageNodeCountHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;profile_count&#125;}</strong>:
+                                {{ t('settings.customPageProfileCountHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;title&#125;}</strong>:
+                                {{ t('settings.customPageTitleHint') }}
+                            </li>
+                            <li>
+                                <strong class="font-mono text-zinc-300">{&#123;description&#125;}</strong>:
+                                {{ t('settings.customPageDescriptionHint') }}
+                            </li>
+                        </ul>
                     </div>
+                    <p class="text-zinc-500">{{ t('settings.customPageModeHint') }}</p>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 </template>

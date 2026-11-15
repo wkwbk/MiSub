@@ -1,17 +1,23 @@
 <script setup>
     import { computed } from 'vue';
+    import { useRoute } from 'vue-router';
     import { useUIStore } from '../../stores/ui.js';
     import { useSessionStore } from '../../stores/session.js';
     import BrandLogo from './BrandLogo.vue';
     import NavActionGroup from './NavActionGroup.vue';
     import { useI18n } from '../../i18n/index.js';
 
+    const route = useRoute();
     const uiStore = useUIStore();
     const sessionStore = useSessionStore();
     const { t } = useI18n();
 
     const shouldHideLoginButton = computed(() => {
         if (sessionStore.sessionState === 'loading') {
+            return true;
+        }
+
+        if (route.path === '/login') {
             return true;
         }
 
@@ -41,23 +47,23 @@
 
 <template>
     <header
-        class="app-nav-bar ios-fixed-header bg-gradient-to-b from-white/95 via-white/90 to-white/95 dark:from-slate-950/95 dark:via-slate-950/90 dark:to-slate-950/95 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-200/30 dark:border-white/5 supports-[backdrop-filter]:bg-white/80 supports-[backdrop-filter]:dark:bg-slate-950/80 transition-all duration-300"
+        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
     >
         <div class="ios-status-overlay"></div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="safe-top-inset">
-                <div class="flex justify-between items-center h-16 md:h-[76px]">
+                <div class="flex justify-between items-center h-14">
                     <BrandLogo
                         v-if="!hideBranding"
                         :to="isLoggedIn ? '/dashboard' : '/'"
-                        text-size-class="text-lg"
-                        :icon-size="32"
+                        text-size-class="text-base"
+                        :icon-size="24"
                     />
                     <router-link
                         v-else
                         :to="isLoggedIn ? '/dashboard' : '/'"
-                        class="text-sm font-semibold tracking-[0.24em] uppercase text-gray-500 dark:text-gray-400"
+                        class="font-mono text-xs font-semibold tracking-widest uppercase text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                         >{{ t('app.home') }}</router-link
                     >
 
@@ -68,7 +74,7 @@
                         :show-login-button="!shouldHideLoginButton"
                         :hide-external-repo="hideBranding"
                         :with-focus-ring="true"
-                        rounded-class="misub-radius-md"
+                        rounded-class="rounded-md"
                         @open-settings="uiStore.show()"
                         @toggle-layout="uiStore.toggleLayout()"
                         @logout="emit('logout')"

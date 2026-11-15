@@ -1,7 +1,9 @@
 <script setup>
     import { computed } from 'vue';
+    import { GripHorizontal, Search, X } from 'lucide-vue-next';
     import draggable from 'vuedraggable';
     import { useI18n } from '@/i18n/index.js';
+    import { DEFAULT_GROUP_KEY } from '@/utils/subscription-groups.js';
 
     const { t } = useI18n();
 
@@ -18,6 +20,14 @@
             type: String,
             default: '',
         },
+        activeGroupFilter: {
+            type: String,
+            default: null,
+        },
+        groups: {
+            type: Array,
+            default: () => [],
+        },
         selectedIds: {
             type: Array,
             default: () => [],
@@ -26,6 +36,7 @@
 
     const emit = defineEmits([
         'update:searchTerm',
+        'update:groupFilter',
         'update:selectedIds',
         'toggle-selection',
         'select-all',
@@ -36,6 +47,14 @@
         get: () => props.searchTerm,
         set: (val) => emit('update:searchTerm', val),
     });
+
+    const handleGroupWheel = (e) => {
+        const el = e.currentTarget;
+        if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
+            e.preventDefault();
+            el.scrollLeft += e.deltaY;
+        }
+    };
 
     // 根据 selectedIds 顺序获取已选订阅对象列表
     const orderedSelectedSubs = computed({
@@ -67,49 +86,81 @@
 
 <template>
     <div v-if="subscriptions.length > 0" class="space-y-2">
-        <div class="flex justify-between items-center mb-2">
-            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div class="flex justify-between items-center gap-2 h-6">
+            <h4 class="text-xs font-semibold text-zinc-300 truncate">
                 {{ t('profileModal.selectSubscriptions') }}
             </h4>
-            <div class="space-x-2">
-                <button @click="emit('select-all')" class="text-xs text-indigo-600 hover:underline">
+            <div class="space-x-2 shrink-0 whitespace-nowrap">
+                <button
+                    @click="emit('select-all')"
+                    class="text-xs text-zinc-300 hover:text-white hover:underline"
+                >
                     {{ t('profileModal.selectAll') }}
                 </button>
                 <button
                     @click="emit('deselect-all')"
-                    class="text-xs text-indigo-600 hover:underline"
+                    class="text-xs text-zinc-400 hover:text-white hover:underline"
                 >
                     {{ t('profileModal.deselectAll') }}
                 </button>
             </div>
         </div>
-        <!-- 占位区域，与右侧分组筛选高度一致 -->
-        <div class="h-[42px]"></div>
-        <div class="relative mb-2">
+        <!-- Group Filter -->
+        <div
+            class="flex items-center gap-1.5 h-8 overflow-x-auto no-scrollbar"
+            @wheel="handleGroupWheel"
+        >
+            <button
+                type="button"
+                @click="emit('update:groupFilter', null)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    !activeGroupFilter
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ t('manualNodes.allGroups') }}
+            </button>
+            <button
+                type="button"
+                @click="emit('update:groupFilter', DEFAULT_GROUP_KEY)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    activeGroupFilter === DEFAULT_GROUP_KEY
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ t('manualNodes.ungrouped') }}
+            </button>
+            <button
+                v-for="group in groups"
+                :key="group"
+                type="button"
+                @click="emit('update:groupFilter', activeGroupFilter === group ? null : group)"
+                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
+                :class="
+                    activeGroupFilter === group
+                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                "
+            >
+                {{ group }}
+            </button>
+        </div>
+        <div class="relative">
             <input
                 type="text"
                 v-model="searchModel"
                 :placeholder="t('subscriptions.searchPlaceholder')"
-                class="w-full pl-9 pr-3 py-1.5 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 misub-radius-md shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-indigo-500 focus:border-indigo-500"
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md shadow-none text-zinc-100 placeholder-zinc-600 focus-visible:outline-hidden focus:border-zinc-600"
                 :aria-label="t('subscriptions.searchPlaceholder')"
             />
-            <svg
-                class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 dark:text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-            </svg>
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
         </div>
         <div
-            class="overflow-y-auto space-y-2 p-3 bg-gray-50 dark:bg-gray-900/50 misub-radius-md border dark:border-gray-700 h-36 lg:h-64"
+            class="overflow-y-auto space-y-2 p-3 bg-[#131515] rounded-md border border-zinc-800 h-36 lg:h-64"
         >
             <div v-for="sub in filteredSubscriptions" :key="sub.id">
                 <label class="flex items-center space-x-3 cursor-pointer">
@@ -117,18 +168,16 @@
                         type="checkbox"
                         :checked="selectedIds.includes(sub.id)"
                         @change="emit('toggle-selection', sub.id)"
-                        class="h-4 w-4 rounded-sm border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                        class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
                     />
-                    <span
-                        class="text-sm text-gray-800 dark:text-gray-200 truncate"
-                        :title="sub.name"
-                        >{{ sub.name || t('subscriptions.unnamed') }}</span
-                    >
+                    <span class="text-xs text-zinc-200 truncate" :title="sub.name">{{
+                        sub.name || t('subscriptions.unnamed')
+                    }}</span>
                 </label>
             </div>
             <div
                 v-if="filteredSubscriptions.length === 0"
-                class="text-center text-gray-500 text-sm py-4"
+                class="text-center text-zinc-500 text-xs py-4"
             >
                 {{ t('profileModal.noMatchedSubscriptions') }}
             </div>
@@ -137,7 +186,7 @@
         <!-- 已选订阅拖拽排序区域 -->
         <div v-if="orderedSelectedSubs.length > 0" class="mt-3">
             <div class="flex justify-between items-center mb-1.5">
-                <h5 class="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <h5 class="text-xs font-medium text-zinc-400">
                     {{ t('profileModal.selectedDrag', { count: orderedSelectedSubs.length }) }}
                 </h5>
             </div>
@@ -146,58 +195,30 @@
                 item-key="id"
                 handle=".drag-handle"
                 ghost-class="opacity-40"
-                class="space-y-1 p-2 bg-indigo-50 dark:bg-indigo-900/20 misub-radius-md border border-indigo-200 dark:border-indigo-800 h-32 lg:h-48 overflow-y-auto"
+                class="space-y-1 p-2 bg-transparent rounded-md border border-zinc-800 h-32 lg:h-48 overflow-y-auto"
             >
                 <template #item="{ element, index }">
                     <div
-                        class="flex items-center gap-2 px-2 py-1.5 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 shadow-xs"
+                        class="flex items-center gap-2 px-2 py-1.5 bg-[#131515] rounded-md border border-zinc-800 shadow-none"
                     >
                         <span
-                            class="drag-handle cursor-grab active:cursor-grabbing text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            class="drag-handle cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M4 8h16M4 16h16"
-                                />
-                            </svg>
+                            <GripHorizontal class="w-4 h-4" />
                         </span>
-                        <span
-                            class="text-xs font-medium text-indigo-600 dark:text-indigo-400 w-5"
-                            >{{ index + 1 }}</span
-                        >
-                        <span
-                            class="text-sm text-gray-800 dark:text-gray-200 truncate flex-1"
-                            :title="element.name"
-                        >
+                        <span class="font-mono text-xs font-medium text-zinc-400 w-5">{{
+                            index + 1
+                        }}</span>
+                        <span class="text-xs text-zinc-200 truncate flex-1" :title="element.name">
                             {{ element.name || t('subscriptions.unnamed') }}
                         </span>
                         <button
                             @click="emit('toggle-selection', element.id)"
-                            class="text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
+                            class="text-zinc-500 hover:text-red-400 transition-colors"
                             :title="t('profileModal.remove')"
                             :aria-label="t('profileModal.remove')"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
+                            <X class="w-4 h-4" />
                         </button>
                     </div>
                 </template>
@@ -206,7 +227,7 @@
     </div>
     <div
         v-else
-        class="text-center text-sm text-gray-500 p-4 bg-gray-50 dark:bg-gray-900/50 misub-radius-md flex items-center justify-center h-full"
+        class="text-center text-xs text-zinc-500 p-4 bg-transparent border border-zinc-800 rounded-md flex items-center justify-center h-full"
     >
         {{ t('profileModal.noAvailableSubscriptions') }}
     </div>

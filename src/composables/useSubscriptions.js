@@ -1,5 +1,5 @@
 // FILE: src/composables/useSubscriptions.js
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '../stores/useDataStore';
 import { useToastStore } from '../stores/toast.js';
@@ -7,7 +7,11 @@ import { fetchNodeCount, batchUpdateNodes } from '../lib/api.js';
 import { handleError } from '../utils/errorHandler.js';
 import { TIMING } from '../constants/timing.js';
 import { t } from '../i18n/index.js';
-import { getAirportIdentityKey } from '../utils/airport-identity.js';
+import {
+    collectSubscriptionGroups,
+    getSubscriptionGroup,
+    normalizeSubscriptionGroupName,
+} from '../utils/subscription-groups.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -25,9 +29,58 @@ export function useSubscriptions(markDirty) {
     });
 
     const searchQuery = ref('');
+    const activeGroupFilter = ref(null);
     const refreshError = ref(false);
     const lastRefreshAt = ref(null);
     const isRefreshing = ref(false);
+    const subscriptionGroups = computed(() => collectSubscriptionGroups(subscriptions.value));
+
+    function setGroupFilter(group) {
+        activeGroupFilter.value = group || null;
+    }
+
+    function renameSubscriptionGroup(oldName, newName) {
+        const normalizedOld = normalizeSubscriptionGroupName(oldName);
+        const normalizedNew = normalizeSubscriptionGroupName(newName);
+        if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
+
+        let changed = false;
+        subscriptions.value.forEach((sub) => {
+            if (getSubscriptionGroup(sub) === normalizedOld) {
+                dataStore.updateSubscription(sub.id, {
+                    ...sub,
+                    group: normalizedNew,
+                    airportIdentity: null,
+                });
+                changed = true;
+            }
+        });
+        if (activeGroupFilter.value === normalizedOld) {
+            activeGroupFilter.value = normalizedNew;
+        }
+        if (changed) markDirty();
+    }
+
+    function deleteSubscriptionGroup(groupName) {
+        const normalized = normalizeSubscriptionGroupName(groupName);
+        if (!normalized) return;
+
+        let changed = false;
+        subscriptions.value.forEach((sub) => {
+            if (getSubscriptionGroup(sub) === normalized) {
+                dataStore.updateSubscription(sub.id, {
+                    ...sub,
+                    group: '',
+                    airportIdentity: null,
+                });
+                changed = true;
+            }
+        });
+        if (activeGroupFilter.value === normalized) {
+            activeGroupFilter.value = null;
+        }
+        if (changed) markDirty();
+    }
     const filteredSubscriptions = computed(() => {
         const query = searchQuery.value.trim().toLowerCase();
         if (!query) return subscriptions.value;
@@ -49,29 +102,7 @@ export function useSubscriptions(markDirty) {
         );
     });
 
-    const subsCurrentPage = ref(1);
-    const subsItemsPerPage = 6;
     const enabledSubscriptions = computed(() => subscriptions.value.filter((s) => s.enabled));
-
-    /** 保持同一站点订阅相邻，避免分页后多个机场组交错出现。 */
-    const orderedFilteredSubscriptions = computed(() => {
-        const filteredIds = new Set(filteredSubscriptions.value.map((sub) => sub.id));
-        const ordered = [];
-        const groups = new Map();
-        (allSubscriptions.value || []).forEach((sub) => {
-            if (!filteredIds.has(sub.id) || !/^https?:\/\//i.test(String(sub.url || ''))) return;
-            const key = getAirportIdentityKey(sub);
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key).push(sub);
-        });
-        const grouped = [...groups.entries()].sort(([, left], [, right]) => {
-            const leftMerged = left.length > 1 ? 1 : 0;
-            const rightMerged = right.length > 1 ? 1 : 0;
-            return rightMerged - leftMerged;
-        });
-        grouped.forEach(([, items]) => ordered.push(...items));
-        return ordered;
-    });
 
     const totalRemainingTraffic = computed(() => {
         const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024; // 10 PB in bytes
@@ -90,30 +121,6 @@ export function useSubscriptions(markDirty) {
             return acc;
         }, 0);
     });
-
-    const subsTotalPages = computed(() =>
-        Math.ceil(orderedFilteredSubscriptions.value.length / subsItemsPerPage)
-    );
-    const paginatedSubscriptions = computed(() => {
-        const start = (subsCurrentPage.value - 1) * subsItemsPerPage;
-        const end = start + subsItemsPerPage;
-        return orderedFilteredSubscriptions.value.slice(start, end);
-    });
-
-    watch([searchQuery, () => filteredSubscriptions.value.length], () => {
-        subsCurrentPage.value = 1;
-    });
-
-    watch([filteredSubscriptions, subsTotalPages], () => {
-        if (subsCurrentPage.value > subsTotalPages.value) {
-            subsCurrentPage.value = Math.max(1, subsTotalPages.value);
-        }
-    });
-
-    function changeSubsPage(page) {
-        if (page < 1 || page > subsTotalPages.value) return;
-        subsCurrentPage.value = page;
-    }
 
     async function handleUpdateNodeCount(subId, isInitialLoad = false) {
         // Find in the filtered list
@@ -249,7 +256,6 @@ export function useSubscriptions(markDirty) {
 
     function addSubscription(sub) {
         dataStore.addSubscription(sub);
-        subsCurrentPage.value = 1;
         handleUpdateNodeCount(sub.id);
         markDirty();
     }
@@ -277,9 +283,6 @@ export function useSubscriptions(markDirty) {
         dataStore.removeSubscription(subId);
         // 清理组合订阅中对该订阅源的引用
         dataStore.removeSubscriptionFromProfiles(subId);
-        if (paginatedSubscriptions.value.length === 0 && subsCurrentPage.value > 1) {
-            subsCurrentPage.value--;
-        }
         markDirty();
     }
 
@@ -298,7 +301,6 @@ export function useSubscriptions(markDirty) {
         // 清理组合订阅中对这些订阅源的引用
         dataStore.removeSubscriptionFromProfiles(idsToRemove);
 
-        subsCurrentPage.value = 1;
         markDirty();
         showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
     }
@@ -342,7 +344,40 @@ export function useSubscriptions(markDirty) {
         }
     }
 
+    function finalizeRefreshSummary(successCount, totalCount) {
+        const failedCount = totalCount - successCount;
+        refreshError.value = failedCount > 0;
+        showToast(
+            t('subscriptions.refreshDone', {
+                success: successCount,
+                total: totalCount,
+                failed: failedCount,
+            }),
+            failedCount === 0 ? 'success' : successCount > 0 ? 'warning' : 'error'
+        );
+
+        if (successCount > 0) {
+            markDirty();
+            void dataStore.saveData();
+        }
+    }
+
+    async function runSequentialFallbackUpdate(subsToUpdate) {
+        showToast(t('subscriptions.refreshFallback'), 'warning');
+        let fallbackSuccessCount = 0;
+        for (const sub of subsToUpdate) {
+            if (await handleUpdateNodeCount(sub.id, true)) {
+                fallbackSuccessCount++;
+            }
+        }
+        finalizeRefreshSummary(fallbackSuccessCount, subsToUpdate.length);
+    }
+
     async function batchUpdateAllSubscriptions() {
+        if (isRefreshing.value) {
+            return;
+        }
+
         const subsToUpdate = subscriptions.value.filter(
             (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && !sub.isUpdating
         );
@@ -360,71 +395,61 @@ export function useSubscriptions(markDirty) {
         showToast(t('subscriptions.refreshing', { count: subsToUpdate.length }), 'info');
 
         try {
-            const result = await batchUpdateNodes(subsToUpdate.map((sub) => sub.id));
+            const result = await batchUpdateNodes(
+                subsToUpdate.map((sub) => sub.id),
+                subsToUpdate.map((sub) => ({
+                    id: sub.id,
+                    name: sub.name,
+                    url: sub.url,
+                    enabled: sub.enabled,
+                    fetchProxy: sub.fetchProxy,
+                    plusAsSpace: Boolean(sub.plusAsSpace),
+                    customUserAgent: sub.customUserAgent,
+                }))
+            );
 
-            if (result && result.success) {
+            if (result?.success) {
                 let successCount = 0;
-                const resultList = Array.isArray(result.results) ? result.results : [];
+                const resultMap = new Map(
+                    (Array.isArray(result.results) ? result.results : [])
+                        .map((item) => [item.subscriptionId || item.id, item])
+                        .filter(([id]) => Boolean(id))
+                );
 
-                resultList.forEach((updateResult) => {
-                    const id = updateResult.subscriptionId || updateResult.id;
-                    const sub = subscriptions.value.find((s) => s.id === id);
-                    if (!sub) return;
-
-                    if (updateResult.success) {
-                        sub.nodeCount = updateResult.nodeCount || 0;
+                for (const sub of subsToUpdate) {
+                    const updateResult = resultMap.get(sub.id);
+                    if (updateResult?.success) {
+                        sub.nodeCount = updateResult.nodeCount ?? 0;
+                        if (updateResult.userInfo !== undefined) {
+                            sub.userInfo = updateResult.userInfo;
+                        }
+                        sub.lastError = null;
                         successCount++;
-                    }
-                });
-
-                for (const sub of subsToUpdate) {
-                    try {
-                        const result = await fetchNodeCount(sub.url);
-                        if (result.success && result.data.userInfo) {
-                            sub.userInfo = result.data.userInfo;
-                        }
-                    } catch (error) {
-                        if (isDev) {
-                            console.debug(
-                                '[Subscriptions] Failed to fetch node info during batch update:',
-                                error
-                            );
+                    } else {
+                        sub.lastError =
+                            updateResult?.error || t('subscriptions.unknownError');
+                        if (sub.enableNodeCache !== true) {
+                            sub.nodeCount = 0;
+                            sub.userInfo = null;
                         }
                     }
                 }
 
-                const failedCount = subsToUpdate.length - successCount;
-                refreshError.value = failedCount > 0;
-                showToast(
-                    t('subscriptions.refreshDone', {
-                        success: successCount,
-                        total: subsToUpdate.length,
-                        failed: failedCount,
-                    }),
-                    'success'
-                );
-                markDirty();
+                finalizeRefreshSummary(successCount, subsToUpdate.length);
             } else {
-                showToast(
-                    t('subscriptions.refreshFailed', {
-                        message: result?.message || t('subscriptions.unknownError'),
-                    }),
-                    'error'
+                const failureReason =
+                    result?.error || result?.message || t('subscriptions.unknownError');
+                console.warn(
+                    '[Subscriptions] Batch update failed, falling back to sequential update:',
+                    failureReason
                 );
-                refreshError.value = true;
-                for (const sub of subsToUpdate) {
-                    await handleUpdateNodeCount(sub.id);
-                }
+                await runSequentialFallbackUpdate(subsToUpdate);
             }
         } catch (error) {
-            refreshError.value = true;
             handleError(error, 'Batch Subscription Update Error', {
                 subscriptionCount: subsToUpdate.length,
             });
-            showToast(t('subscriptions.refreshFallback'), 'error');
-            for (const sub of subsToUpdate) {
-                await handleUpdateNodeCount(sub.id);
-            }
+            await runSequentialFallbackUpdate(subsToUpdate);
         } finally {
             lastRefreshAt.value = new Date().toISOString();
             isRefreshing.value = false;
@@ -530,18 +555,19 @@ export function useSubscriptions(markDirty) {
 
     return {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter,
+        setGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         searchQuery,
         filteredSubscriptions,
         filteredCount: computed(() => filteredSubscriptions.value.length),
         isRefreshing,
         refreshError,
         lastRefreshAt,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
         totalRemainingTraffic,
         enabledSubscriptionsCount: computed(() => enabledSubscriptions.value.length),
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,

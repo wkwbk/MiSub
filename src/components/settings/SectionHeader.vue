@@ -12,32 +12,31 @@
             type: String,
             default: 'indigo',
         },
+        noMargin: {
+            type: Boolean,
+            default: false,
+        },
     });
-
-    const toneClassMap = {
-        indigo: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-300',
-        blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-300',
-        green: 'bg-green-500/10 text-green-600 dark:text-green-300',
-        emerald: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
-        orange: 'bg-orange-500/10 text-orange-600 dark:text-orange-300',
-        purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-300',
-        red: 'bg-red-500/10 text-red-600 dark:text-red-300',
-    };
 </script>
 
 <template>
-    <div class="mb-5 flex items-start gap-3">
-        <div
-            class="flex h-10 w-10 items-center justify-center rounded-xl"
-            :class="toneClassMap[tone] || toneClassMap.indigo"
-        >
-            <slot name="icon" />
-        </div>
-        <div class="space-y-1">
-            <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ title }}</h3>
-            <p v-if="description" class="text-sm text-gray-500 dark:text-gray-400">
+    <div
+        class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+        :class="noMargin ? 'mb-0' : 'mb-6'"
+    >
+        <div class="space-y-1.5 min-w-0">
+            <div class="flex items-center gap-2">
+                <span v-if="$slots.icon" class="text-zinc-400 shrink-0 flex items-center">
+                    <slot name="icon" />
+                </span>
+                <h3 class="text-sm font-semibold text-zinc-100">{{ title }}</h3>
+            </div>
+            <p v-if="description" class="text-xs text-zinc-400 leading-relaxed">
                 {{ description }}
             </p>
+        </div>
+        <div v-if="$slots.actions" class="shrink-0 flex items-center gap-2 sm:self-start">
+            <slot name="actions" />
         </div>
     </div>
 </template>

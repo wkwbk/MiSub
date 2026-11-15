@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Loader2 } from 'lucide-vue-next';
     import { useI18n } from '../../i18n/index.js';
     import SettingsLayout from '../layout/SettingsLayout.vue';
     import SettingsSidebar from './SettingsSidebar.vue';
@@ -68,6 +69,14 @@
             type: Boolean,
             default: false,
         },
+        hideFooter: {
+            type: Boolean,
+            default: false,
+        },
+        inModal: {
+            type: Boolean,
+            default: false,
+        },
         layoutClass: {
             type: String,
             default: 'h-full',
@@ -120,65 +129,46 @@
 </script>
 
 <template>
-    <SettingsLayout :class="layoutClass">
+    <SettingsLayout
+        :class="layoutClass"
+        :hide-footer="hideFooter"
+        :in-modal="inModal"
+    >
         <template #sidebar>
             <SettingsSidebar v-model:activeTab="activeTabModel" />
         </template>
 
         <div v-if="isLoading" class="text-center p-12">
-            <svg
-                class="animate-spin h-8 w-8 text-indigo-500 mx-auto mb-4"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-            >
-                <circle
-                    class="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    stroke-width="4"
-                ></circle>
-                <path
-                    class="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                ></path>
-            </svg>
-            <p class="text-gray-500">{{ t('settings.loading') }}</p>
+            <Loader2 class="animate-spin h-6 w-6 text-zinc-400 mx-auto mb-3" />
+            <p class="text-xs text-zinc-500">{{ t('settings.loading') }}</p>
         </div>
 
-        <div v-else class="space-y-6 max-w-6xl w-full mx-auto">
+        <div v-else class="space-y-6 max-w-5xl w-full mx-auto">
             <div
-                class="flex-wrap items-center justify-between gap-3 p-4 bg-white/70 dark:bg-gray-900/60 border border-gray-100/80 dark:border-white/10 misub-radius-lg shadow-sm"
+                class="flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-zinc-800/80"
                 :class="alwaysShowHeader ? 'flex' : 'hidden md:flex'"
             >
-                <div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ t('settings.currentModule') }}
-                    </p>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-white">
-                        {{ currentTabLabel }}
-                    </p>
-                </div>
-                <div
-                    class="text-xs text-gray-500 dark:text-gray-400 bg-white/70 dark:bg-white/5 border border-gray-200/60 dark:border-white/10 px-3 py-1.5 misub-radius-pill"
-                >
+                <h2 class="text-base font-semibold text-zinc-100">
+                    {{ currentTabLabel }}
+                </h2>
+                <p class="text-xs text-zinc-500">
                     {{ t('settings.saveHint') }}
-                </div>
+                </p>
             </div>
 
             <div
                 v-if="restartCountdown !== null"
-                class="flex items-center justify-between gap-3 rounded-xl border border-amber-300/60 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100"
+                class="flex items-center justify-between gap-3 rounded-md bg-amber-500/10 px-4 py-3 text-xs text-amber-200"
                 role="status"
                 aria-live="polite"
             >
-                <span>{{ t('settings.reloadCountdown', { seconds: restartCountdown }) }}</span>
+                <span class="flex items-center gap-2 font-mono">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                    {{ t('settings.reloadCountdown', { seconds: restartCountdown }) }}
+                </span>
                 <button
                     type="button"
-                    class="shrink-0 rounded-lg px-3 py-1.5 font-medium hover:bg-amber-100 dark:hover:bg-white/10"
+                    class="shrink-0 rounded-md border border-zinc-700 bg-transparent px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
                     @click="$emit('reload-now')"
                 >
                     {{ t('settings.reloadNow') }}
@@ -212,34 +202,17 @@
             <button
                 @click="emit('save')"
                 :disabled="saveDisabled"
-                class="px-6 py-2.5 misub-radius-lg text-white text-sm font-medium shadow-sm transition-all flex items-center gap-2"
+                class="px-5 py-2 rounded-md text-xs font-semibold shadow-none transition-colors flex items-center gap-2 border"
                 :class="
                     isSaving
-                        ? 'bg-gray-400 cursor-not-allowed'
-                        : 'bg-primary-600 hover:bg-primary-700 hover:shadow-md active:scale-95'
+                        ? 'bg-zinc-800 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                        : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
                 "
             >
-                <svg
+                <Loader2
                     v-if="isSaving"
-                    class="animate-spin h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                >
-                    <circle
-                        class="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        stroke-width="4"
-                    ></circle>
-                    <path
-                        class="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                </svg>
+                    class="animate-spin h-4 w-4 text-zinc-500"
+                />
                 <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
             </button>
         </template>

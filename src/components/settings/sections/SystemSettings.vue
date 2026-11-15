@@ -1,8 +1,18 @@
 <script setup>
     import { ref } from 'vue';
+    import {
+        AlertTriangle,
+        Archive,
+        ClipboardCopy,
+        Database,
+        KeyRound,
+        Loader2,
+        Lock,
+    } from 'lucide-vue-next';
     import { useToastStore } from '../../../stores/toast.js';
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
+    import SectionHeader from '../SectionHeader.vue';
     import { useI18n } from '../../../i18n/index.js';
 
     const props = defineProps({
@@ -147,159 +157,109 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
 </script>
 
 <template>
-    <div class="space-y-8">
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 dark:text-orange-300"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"
+    <div class="space-y-6">
+        <!-- 数据存储类型 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.storageTypeTitle')"
+                :description="t('systemSettings.storageTypeDesc')"
+            >
+                <template #icon>
+                    <Database class="h-4 w-4" />
+                </template>
+            </SectionHeader>
+
+            <div class="space-y-4">
+                <div class="flex flex-wrap gap-6">
+                    <label class="flex items-center cursor-pointer">
+                        <input
+                            type="radio"
+                            value="kv"
+                            v-model="settings.storageType"
+                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                            :aria-label="t('systemSettings.kvStorage')"
                         />
-                    </svg>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('systemSettings.storageTypeTitle') }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('systemSettings.storageTypeDesc') }}
-                    </p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div class="flex items-center">
-                    <input
-                        type="radio"
-                        value="kv"
-                        v-model="settings.storageType"
-                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        :aria-label="t('systemSettings.kvStorage')"
-                    />
-                    <span class="ml-3 text-sm dark:text-gray-300">{{
-                        t('systemSettings.kvStorage')
-                    }}</span>
-                </div>
-                <div class="flex items-center">
-                    <input
-                        type="radio"
-                        value="d1"
-                        v-model="settings.storageType"
-                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
-                        :aria-label="t('systemSettings.d1DatabaseRecommended')"
-                    />
-                    <span class="ml-3 text-sm dark:text-gray-300">{{
-                        t('systemSettings.d1DatabaseRecommended')
-                    }}</span>
+                        <span class="ml-2.5 text-sm text-zinc-300">{{
+                            t('systemSettings.kvStorage')
+                        }}</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input
+                            type="radio"
+                            value="d1"
+                            v-model="settings.storageType"
+                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                            :aria-label="t('systemSettings.d1DatabaseRecommended')"
+                        />
+                        <span class="ml-2.5 text-sm text-zinc-300">{{
+                            t('systemSettings.d1DatabaseRecommended')
+                        }}</span>
+                    </label>
                 </div>
 
                 <div
                     v-if="settings.storageType === 'kv'"
-                    class="mt-4 p-4 bg-blue-50/80 dark:bg-blue-900/20 misub-radius-lg border border-blue-100/80 dark:border-blue-800/60"
+                    class="pl-4 border-l-2 border-zinc-800 space-y-2.5"
                 >
-                    <h4 class="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+                    <h4 class="text-xs font-semibold text-zinc-200 flex items-center gap-2">
+                        <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                         {{ t('systemSettings.migrateToD1') }}
                     </h4>
-                    <p class="text-xs text-blue-600 dark:text-blue-400 mb-3">
+                    <p class="text-xs text-zinc-400 leading-relaxed">
                         {{ t('systemSettings.d1MigrationDesc') }}
                     </p>
-                    <ol
-                        class="list-decimal list-inside text-xs text-blue-600 dark:text-blue-400 mb-3 space-y-1"
-                    >
+                    <ol class="list-decimal list-inside text-xs text-zinc-400 space-y-1.5">
                         <li><span v-html="t('systemSettings.d1StepCreate')"></span></li>
                         <li><span v-html="t('systemSettings.d1StepSchema')"></span></li>
                         <li>{{ t('systemSettings.d1StepMigrate') }}</li>
                     </ol>
-                    <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
                         <button
                             @click="emit('migrate')"
-                            class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 bg-blue-600 hover:bg-blue-700 flex items-center justify-center min-w-[120px] shadow-sm"
+                            class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors bg-zinc-100 hover:bg-white border border-zinc-100 flex items-center justify-center min-w-[120px] shadow-none"
                         >
                             {{ t('systemSettings.startMigration') }}
                         </button>
                         <button
                             @click="copySchema"
-                            class="px-4 py-2 text-sm font-medium text-blue-700 dark:text-blue-300 bg-white/80 dark:bg-gray-900/60 border border-blue-200 dark:border-blue-700/70 misub-radius-lg hover:bg-blue-50 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                            class="px-4 py-1.5 text-xs font-medium text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100 transition-colors flex items-center justify-center gap-2 shadow-none"
                         >
-                            <svg
-                                class="w-4 h-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                                />
-                            </svg>
+                            <ClipboardCopy class="w-3.5 h-3.5" />
                             {{ t('systemSettings.copySchemaSql') }}
                         </button>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V7a5 5 0 00-10 0v4H6a2 2 0 00-2 2v6a2 2 0 002 2h6z"
-                        />
-                    </svg>
-                </div>
-                <div class="space-y-1 flex-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('systemSettings.externalApiTitle') }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('systemSettings.externalApiDesc') }}
+        <!-- 外部管理 API -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.externalApiTitle')"
+                :description="t('systemSettings.externalApiDesc')"
+            >
+                <template #icon>
+                    <Lock class="h-4 w-4" />
+                </template>
+                <template #actions>
+                    <Switch
+                        v-model="settings.externalApi.enabled"
+                        @update:modelValue="ensureExternalApiDefaults(settings)"
+                    />
+                </template>
+            </SectionHeader>
+
+            <div class="space-y-5">
+                <div class="space-y-1.5">
+                    <p class="text-xs leading-relaxed text-zinc-400">
+                        {{ t('systemSettings.externalApiHint') }}
+                    </p>
+                    <p class="text-xs font-mono leading-relaxed text-zinc-500">
+                        {{ t('systemSettings.externalApiPathHint') }}
                     </p>
                 </div>
-                <Switch
-                    v-model="settings.externalApi.enabled"
-                    @update:modelValue="ensureExternalApiDefaults(settings)"
-                />
-            </div>
 
-            <div
-                class="space-y-4 rounded-xl border border-violet-100 bg-violet-50/50 p-4 dark:border-violet-900/30 dark:bg-violet-900/10"
-            >
-                <p class="text-xs leading-5 text-violet-700 dark:text-violet-300">
-                    {{ t('systemSettings.externalApiHint') }}
-                </p>
-                <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">
-                    {{ t('systemSettings.externalApiPathHint') }}
-                </p>
-
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-6 md:grid-cols-2 max-w-2xl">
                     <Input
                         :label="t('systemSettings.externalApiTokenName')"
                         v-model="settings.externalApi.tokens[0].name"
@@ -312,214 +272,125 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     />
                 </div>
 
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-2.5">
                     <button
                         @click="handleGenerateExternalApiToken(settings)"
-                        class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-violet-600 hover:bg-violet-700 transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-semibold text-zinc-900 rounded-md bg-zinc-100 border border-zinc-100 hover:bg-white transition-colors"
                     >
                         {{ t('systemSettings.externalApiGenerateToken') }}
                     </button>
                     <button
                         @click="handleCopyExternalApiToken(settings)"
-                        class="px-4 py-2 text-sm font-medium rounded-lg border border-violet-200 text-violet-700 hover:bg-violet-50 dark:border-violet-800 dark:text-violet-300 dark:hover:bg-violet-900/30 transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                     >
                         {{ t('systemSettings.externalApiCopyToken') }}
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                        />
-                    </svg>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('systemSettings.backupRestoreTitle') }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('systemSettings.backupRestoreDesc') }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-4">
-                <button
-                    @click="exportBackup"
-                    class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-green-600 hover:bg-green-700"
-                >
-                    {{ t('systemSettings.exportBackup') }}
-                </button>
-                <button
-                    @click="importBackup"
-                    class="px-4 py-2 text-sm font-medium text-white misub-radius-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed bg-orange-500 hover:bg-orange-600"
-                >
-                    {{ t('systemSettings.importBackup') }}
-                </button>
-            </div>
-        </div>
-
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-300"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                    </svg>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('systemSettings.adminSecurityTitle') }}
-                    </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ t('systemSettings.adminSecurityDesc') }}
-                    </p>
-                </div>
-            </div>
-
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/70 dark:bg-gray-900/50 p-6 misub-radius-lg border border-gray-200/70 dark:border-white/10"
+        <!-- 备份与恢复 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.backupRestoreTitle')"
+                :description="t('systemSettings.backupRestoreDesc')"
+                no-margin
             >
-                <div class="space-y-4">
-                    <div>
-                        <Input
-                            :label="t('systemSettings.newPassword')"
-                            v-model="passwordForm.newPassword"
-                            type="password"
-                            :placeholder="t('systemSettings.newPasswordPlaceholder')"
-                            class="misub-radius-lg"
-                        />
-                    </div>
-                    <div>
-                        <Input
-                            :label="t('systemSettings.confirmPassword')"
-                            v-model="passwordForm.confirmPassword"
-                            type="password"
-                            :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
-                            class="misub-radius-lg"
-                        />
-                    </div>
-                </div>
-                <div class="flex items-end">
+                <template #icon>
+                    <Archive class="h-4 w-4" />
+                </template>
+                <template #actions>
                     <button
-                        @click="handleUpdatePassword"
-                        :disabled="isUpdatingPassword || !passwordForm.newPassword"
-                        class="px-6 py-2.5 misub-radius-lg text-white text-sm font-medium shadow-sm transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        @click="exportBackup"
+                        class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-100 border border-zinc-100 hover:bg-white"
                     >
-                        <svg
-                            v-if="isUpdatingPassword"
-                            class="animate-spin h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                        </svg>
-                        <span>{{
-                            isUpdatingPassword
-                                ? t('systemSettings.updating')
-                                : t('systemSettings.updatePassword')
-                        }}</span>
+                        {{ t('systemSettings.exportBackup') }}
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <div
-            class="rounded-xl border border-red-200/60 bg-red-50/30 p-6 shadow-sm dark:border-red-900/30 dark:bg-red-900/10"
-        >
-            <div class="mb-5 flex items-start gap-3">
-                <div
-                    class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-600 dark:text-red-400"
-                >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                    <button
+                        @click="importBackup"
+                        class="px-4 py-1.5 text-xs font-medium text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                        />
-                    </svg>
-                </div>
-                <div class="space-y-1">
-                    <h3 class="text-base font-semibold text-red-900 dark:text-red-300">
-                        {{ t('systemSettings.dangerZoneTitle') }}
-                    </h3>
-                    <p class="text-sm text-red-600/80 dark:text-red-400/80">
-                        {{ t('systemSettings.dangerZoneDesc') }}
-                    </p>
-                </div>
-            </div>
+                        {{ t('systemSettings.importBackup') }}
+                    </button>
+                </template>
+            </SectionHeader>
+        </section>
 
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-white/50 dark:bg-gray-900/40 p-6 misub-radius-lg border border-red-100 dark:border-red-900/20"
+        <!-- 管理员安全设置 -->
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.adminSecurityTitle')"
+                :description="t('systemSettings.adminSecurityDesc')"
             >
-                <div class="space-y-2">
-                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                <template #icon>
+                    <KeyRound class="h-4 w-4" />
+                </template>
+            </SectionHeader>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                <Input
+                    :label="t('systemSettings.newPassword')"
+                    v-model="passwordForm.newPassword"
+                    type="password"
+                    :placeholder="t('systemSettings.newPasswordPlaceholder')"
+                    class="rounded-md"
+                />
+                <Input
+                    :label="t('systemSettings.confirmPassword')"
+                    v-model="passwordForm.confirmPassword"
+                    type="password"
+                    :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
+                    class="rounded-md"
+                />
+            </div>
+            <div class="mt-5">
+                <button
+                    @click="handleUpdatePassword"
+                    :disabled="isUpdatingPassword || !passwordForm.newPassword"
+                    class="px-4 py-1.5 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Loader2
+                        v-if="isUpdatingPassword"
+                        class="animate-spin h-4 w-4 text-zinc-600"
+                    />
+                    <span>{{
+                        isUpdatingPassword
+                            ? t('systemSettings.updating')
+                            : t('systemSettings.updatePassword')
+                    }}</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 危险区域 -->
+        <section class="rounded-lg border border-red-900/50 bg-[#171717] p-6">
+            <SectionHeader
+                :title="t('systemSettings.dangerZoneTitle')"
+                :description="t('systemSettings.dangerZoneDesc')"
+            >
+                <template #icon>
+                    <AlertTriangle class="h-4 w-4 text-red-400" />
+                </template>
+            </SectionHeader>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <h4 class="text-sm font-medium text-zinc-100">
                         {{ t('systemSettings.factoryResetTitle') }}
                     </h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <p class="text-xs text-zinc-400 leading-relaxed">
                         <span v-html="t('systemSettings.factoryResetDesc')"></span>
                     </p>
                 </div>
-                <div class="flex items-center sm:justify-end">
+                <div class="shrink-0">
                     <button
                         @click="handleReset"
-                        class="px-5 py-2.5 misub-radius-lg text-red-600 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-900/50 hover:bg-red-600 hover:text-white dark:hover:bg-red-600 dark:hover:text-white transition-all active:scale-95"
+                        class="px-4 py-1.5 rounded-md text-red-400 text-xs font-semibold border border-red-900/60 bg-transparent hover:bg-red-950/40 hover:text-red-300 transition-colors"
                     >
                         {{ t('systemSettings.factoryResetTitle') }}
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
     </div>
 </template>

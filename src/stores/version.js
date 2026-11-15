@@ -12,15 +12,14 @@ export const useVersionStore = defineStore('version', () => {
     const latestRelease = ref(null);
     const showModal = ref(false);
     const showUpdateNotice = ref(false);
-    const upstreamRepo = 'imzyb/MiSub';
+    const upstreamRepo = 'wkwbk/MiSub';
 
-    // 本地更新日志 (v2.7.0)
-    const localChangelog = `✨ **订阅生成链路、内置模板与安全兼容性增强**
-- **第三方转换链路修复**：第三方后端模式会先由 MiSub 完成节点预处理，再以内联节点发送给转换后端，避免外部服务回调 MiSub 链接时出现 \`No nodes were found!\`。
-- **多节点外部转换兼容**：多节点内联统一使用 \`|\` 分隔，提升 FatSheep / subconverter 兼容性。
-- **内置模板与规则集增强**：补强 ACL4SSR provider、远程规则集、Sing-Box 规则源、Hysteria2 realm 等输出细节。
-- **服务集成 Cron 兼容恢复**：\`/cron?secret=[REDACTED]\` 兼容链接与 Bearer Token Header 推荐方式均可使用。
-- **UI 与导入体验优化**：优化模板变量提示、自定义规则模板、客户端导入链接和节点刷新错误提示。`;
+    // 本地更新日志 (v2.8.0)
+    const localChangelog = `✨ **全新极简网格 UI 重构、分组交互升级与安全增强**
+- **Exposed Hairline Grid 视觉重构**：统一深浅色主题配色与高对比度悬停反馈，引入 \`lucide-vue-next\` 图标库与自定义 \`Select\` 组件，优化顶部导航栏与双栏吸顶滚动体验。
+- **订阅与分组体验升级**：支持机场订阅专用批量导入与单条选组、标签筛选分组、按分组单元无限加载，以及组内与组间两级拖拽排序。
+- **订阅组与弹窗优化**：支持订阅组拖拽排序、加宽订阅组弹窗、对齐资源列表并补充订阅分组筛选，优化节点预览与批量去重交互。
+- **认证与安全加固**：防止已初始化实例回退默认管理员密码，稳定 Cookie Secret 回退逻辑，优化登录页自动聚焦与重定向体验。`;
 
     // --- Getters ---
     const hasUpdate = computed(() => {

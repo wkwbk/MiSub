@@ -1,8 +1,11 @@
 <script setup>
     import { computed } from 'vue';
+    import { Search, X } from 'lucide-vue-next';
+    import draggable from 'vuedraggable';
     import ProfileCard from './ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
+    import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '../../i18n/index.js';
 
@@ -79,47 +82,38 @@
 
     const handleQRCode = (profileId) => emit('qrcode', profileId);
 
-    // 始终基于真实 profile id 排序，避免分页视图把页内索引用到全量列表上。
-    const handleMoveUp = (profileId) => {
-        const index = props.profiles.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (index > 0) {
-            emit('reorder', profileId, 'up');
-        }
-    };
-
-    const handleMoveDown = (profileId) => {
-        const index = props.profiles.findIndex(
-            (profile) => profile.id === profileId || profile.customId === profileId
-        );
-        if (index !== -1 && index < props.profiles.length - 1) {
-            emit('reorder', profileId, 'down');
-        }
-    };
+    const draggableProfiles = computed({
+        get: () => [...(props.profiles || [])],
+        set: (val) => emit('reorder', val),
+    });
 </script>
 
 <template>
     <div>
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
-                class="rounded-xl border border-gray-100/80 bg-white/85 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-                :class="compact ? 'p-3' : 'p-4'"
+                class="min-w-0 rounded-md border border-zinc-800 bg-[#171717] shadow-none"
+                :class="[compact ? 'p-3' : 'p-4']"
             >
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div class="flex items-center gap-3 shrink-0">
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-                            {{ t('profiles.title') }}
-                        </h2>
-                        <span
-                            class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-200"
-                            >{{ profiles.length }}</span
-                        >
+                <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-3 shrink-0">
+                            <h2 class="text-lg font-semibold text-zinc-100">
+                                {{ t('profiles.title') }}
+                            </h2>
+                            <span
+                                class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                                >{{ profiles.length }}</span
+                            >
+                        </div>
+                        <p class="mt-1 text-xs text-zinc-400">
+                            {{ t('profiles.subtitle') }}
+                        </p>
                     </div>
-                    <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start">
+                    <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0">
                         <button
                             @click="handleAdd"
-                            class="shrink-0 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
+                            class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
                         >
                             {{ t('actions.add') }}
                         </button>
@@ -130,7 +124,7 @@
                                         handleToggleSort();
                                         close();
                                     "
-                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                                 >
                                     {{
                                         isSorting
@@ -138,15 +132,13 @@
                                             : t('actions.manualSort')
                                     }}
                                 </button>
-                                <div
-                                    class="border-t border-gray-200 dark:border-gray-700 my-1"
-                                ></div>
+                                <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
                                 <button
                                     @click="
                                         handleDeleteAll();
                                         close();
                                     "
-                                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-500/10"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-red-400 hover:bg-red-500/15 hover:text-red-400 transition-colors"
                                 >
                                     {{ t('actions.clearAll') }}
                                 </button>
@@ -155,51 +147,77 @@
                     </div>
                 </div>
                 <div v-if="searchable" class="relative mt-4">
-                    <svg
-                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
+                    <Search
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
                         aria-hidden="true"
-                    >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m20 20-3.5-3.5" />
-                    </svg>
+                    />
                     <input
                         v-model="searchModel"
                         data-testid="profile-search"
-                        type="search"
+                        type="text"
                         :placeholder="t('profiles.listSearchPlaceholder')"
                         :aria-label="t('profiles.searchPlaceholder')"
                         :disabled="isSorting"
-                        class="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-20 text-sm text-gray-900 outline-none transition focus:border-primary-500 focus-visible:ring-2 focus-visible:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500"
+                        class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
                     />
-                    <span
+                    <div
                         v-if="searchQuery"
-                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 dark:text-gray-400"
+                        class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
                     >
-                        {{ visibleCount }}/{{ profiles.length }}
-                    </span>
+                        <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                            {{ visibleCount }}/{{ profiles.length }}
+                        </span>
+                        <button
+                            type="button"
+                            class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                            :aria-label="t('actions.clearSearch')"
+                            @click="searchModel = ''"
+                        >
+                            <X class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         <div v-if="profiles.length > 0">
+            <SortingBanner
+                v-if="isSorting"
+                :hint="t('profiles.sortingHint')"
+                banner-test-id="profile-sorting-banner"
+                button-test-id="profile-finish-sort"
+                @finish="handleToggleSort"
+            />
             <div
                 v-if="isSorting"
-                class="mb-4 rounded-xl border border-indigo-200/70 bg-indigo-50/80 px-4 py-3 text-sm text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:text-indigo-300"
+                class="grid gap-4"
+                :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
             >
-                {{ t('profiles.sortingHint') }}
+                <draggable
+                    tag="div"
+                    class="contents"
+                    v-model="draggableProfiles"
+                    item-key="id"
+                    animation="300"
+                    ghost-class="opacity-50"
+                >
+                    <template #item="{ element: profile }">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                        >
+                            <ProfileCard
+                                class="pointer-events-none select-none"
+                                :profile="profile"
+                                :is-sorting="isSorting"
+                                :compact="compact"
+                            />
+                        </div>
+                    </template>
+                </draggable>
             </div>
             <div
+                v-else
                 class="grid gap-4"
-                :class="
-                    compact
-                        ? 'grid-cols-1'
-                        : displayProfiles.length > 1
-                          ? 'grid-cols-1 md:grid-cols-2'
-                          : 'grid-cols-1'
-                "
+                :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'"
             >
                 <div
                     v-for="(profile, index) in displayProfiles"
@@ -216,8 +234,6 @@
                         @change="handleToggle($event)"
                         @preview="handlePreview(profile.id)"
                         @qrcode="handleQRCode(profile.id)"
-                        @move-up="handleMoveUp(profile.id)"
-                        @move-down="handleMoveDown(profile.id)"
                         @view-logs="emit('viewLogs', profile.id)"
                         @open-copy="handleOpenCopy(profile.id)"
                     />
@@ -225,14 +241,14 @@
             </div>
             <div
                 v-if="!isSorting && displayProfiles.length === 0"
-                class="rounded-xl border border-dashed border-gray-300 bg-white/60 px-6 py-12 text-center dark:border-gray-700 dark:bg-gray-900/50"
+                class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
             >
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                <p class="text-sm font-medium text-zinc-200">
                     {{ t('profiles.noSearchResults') }}
                 </p>
                 <button
                     type="button"
-                    class="mt-3 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                    class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
                     @click="searchModel = ''"
                 >
                     {{ t('actions.clearSearch') }}
@@ -255,7 +271,7 @@
         </div>
         <div
             v-else
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-6 dark:border-gray-700 dark:bg-gray-900/50"
+            class="rounded-md border border-zinc-800 bg-[#171717] py-2"
         >
             <EmptyState
                 :title="t('profiles.empty')"

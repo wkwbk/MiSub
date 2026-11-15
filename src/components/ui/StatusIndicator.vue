@@ -22,30 +22,19 @@
     const statusConfig = computed(() => {
         const configs = {
             idle: {
-                color: 'text-gray-500 dark:text-gray-400',
-                bg: 'bg-gray-100 dark:bg-gray-800',
-                icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+                dot: 'bg-zinc-500',
             },
             loading: {
-                color: 'text-blue-500 dark:text-blue-400',
-                bg: 'bg-blue-50 dark:bg-blue-900/20',
-                icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
-                animate: 'animate-spin',
+                dot: 'bg-sky-500 animate-pulse',
             },
             success: {
-                color: 'text-green-500 dark:text-green-400',
-                bg: 'bg-green-50 dark:bg-green-900/20',
-                icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+                dot: 'bg-emerald-500',
             },
             error: {
-                color: 'text-red-500 dark:text-red-400',
-                bg: 'bg-red-50 dark:bg-red-900/20',
-                icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.5 6L12 10.5 8.5 8 7 9.5 10.5 12 7 14.5 8.5 16 12 13.5 15.5 16 17 14.5 13.5 12 17 9.5 15.5 8z',
+                dot: 'bg-red-500',
             },
             warning: {
-                color: 'text-yellow-500 dark:text-yellow-400',
-                bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-                icon: 'M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z',
+                dot: 'bg-amber-500',
             },
         };
         return configs[props.status] || configs.idle;
@@ -54,16 +43,13 @@
     const sizeClasses = computed(() => {
         const sizes = {
             sm: {
-                container: 'px-2 py-1 text-xs',
-                icon: 'w-3 h-3',
+                container: 'px-2 py-0.5 text-xs',
             },
             md: {
-                container: 'px-3 py-1.5 text-sm',
-                icon: 'w-4 h-4',
+                container: 'px-2.5 py-1 text-xs',
             },
             lg: {
-                container: 'px-4 py-2 text-base',
-                icon: 'w-5 h-5',
+                container: 'px-3 py-1.5 text-sm',
             },
         };
         return sizes[props.size];
@@ -72,19 +58,16 @@
 
 <template>
     <div
-        class="inline-flex items-center gap-2 rounded-full font-medium transition-all duration-300"
-        :class="[statusConfig.color, statusConfig.bg, sizeClasses.container]"
+        class="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent text-zinc-300 font-medium transition-colors"
+        :class="[sizeClasses.container]"
         role="status"
         aria-live="polite"
     >
-        <svg
-            :class="[sizeClasses.icon, statusConfig.animate]"
-            fill="currentColor"
-            viewBox="0 0 24 24"
+        <span
+            class="h-1.5 w-1.5 rounded-full shrink-0"
+            :class="[statusConfig.dot]"
             aria-hidden="true"
-        >
-            <path :d="statusConfig.icon" />
-        </svg>
+        ></span>
         <span v-if="message">{{ message }}</span>
         <slot v-else />
     </div>

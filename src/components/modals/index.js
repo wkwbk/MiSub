@@ -8,6 +8,7 @@ export { default as Login } from './Login.vue';
 export { default as SettingsModal } from './SettingsModal.vue';
 export { default as ProfileModal } from './ProfileModal.vue';
 export { default as BulkImportModal } from './BulkImportModal.vue';
+export { default as SubscriptionBulkImportModal } from './SubscriptionBulkImportModal.vue';
 export { default as SubscriptionImportModal } from './SubscriptionImportModal.vue';
 
 // 导入NodePreview相关组件
@@ -29,6 +30,7 @@ export const ModalComponents = {
     SettingsModal,
     ProfileModal,
     BulkImportModal,
+    SubscriptionBulkImportModal,
     SubscriptionImportModal,
 
     // 节点预览相关

@@ -79,4 +79,29 @@ describe('auth gracefully handles exhausted KV write quota', () => {
             },
         });
     });
+
+    it('reuses the same in-memory fallback secret when KV and COOKIE_SECRET are both unavailable', async () => {
+        const first = await getCookieSecret({});
+        const second = await getCookieSecret({});
+
+        expect(first).toBeTruthy();
+        expect(second).toBe(first);
+    });
+
+    it('reuses the same in-memory fallback secret when KV put fails and COOKIE_SECRET is unset', async () => {
+        const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const env = {
+            MISUB_KV: createLimitExceededKv(),
+        };
+
+        try {
+            const first = await getCookieSecret(env);
+            const second = await getCookieSecret(env);
+
+            expect(first).toBeTruthy();
+            expect(second).toBe(first);
+        } finally {
+            warnSpy.mockRestore();
+        }
+    });
 });

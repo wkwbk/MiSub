@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useDataStore } from '../../src/stores/useDataStore.js';
+import { useToastStore } from '../../src/stores/toast.js';
 import { useBulkImportLogic } from '../../src/composables/useBulkImportLogic.js';
 
 describe('批量导入去重', () => {
@@ -93,5 +94,21 @@ ss://new@server5.com:10000`;
         expect(imported).toBeDefined();
         expect(dataStore.subscriptions).toHaveLength(3);
         expect(imported.url).toBe('http://alice:p%40ss%3Aword@proxy.example.com:8080#plain-http');
+    });
+
+    it('应支持导入带 xhttp/ech 参数的 vless:// 节点，并在全部重复时提示已存在而非未检测到有效链接', async () => {
+        const toastStore = useToastStore();
+        const vlessUrl =
+            'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443?encryption=none&security=tls&sni=okra.ijg.cc&fp=chrome&alpn=h3&ech=cloudflare-ech.com%2Bhttps%3A%2F%2Fdns.alidns.com%2Fdns-query&type=xhttp&path=%2Fapi%2Fv2%2Fsync&mode=packet-up#OKRA%7CXHTTP%7CCDN';
+
+        await bulkImport.handleBulkImport(vlessUrl, '');
+        expect(dataStore.subscriptions.some((s) => s.url === vlessUrl)).toBe(true);
+        expect(toastStore.toasts.at(-1)?.type).toBe('success');
+
+        await bulkImport.handleBulkImport(vlessUrl, '');
+        const lastToast = toastStore.toasts.at(-1);
+        expect(lastToast?.type).toBe('info');
+        expect(lastToast?.message).toContain('1');
+        expect(lastToast?.message).not.toContain('未检测到有效的链接');
     });
 });

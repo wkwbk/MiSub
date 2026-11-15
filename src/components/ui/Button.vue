@@ -1,5 +1,6 @@
 <script setup>
     import { computed } from 'vue';
+    import { Loader2 } from 'lucide-vue-next';
 
     const props = defineProps({
         variant: {
@@ -46,13 +47,13 @@
     const variantClasses = computed(() => {
         const variants = {
             primary:
-                'bg-primary-600 hover:bg-primary-500 text-white border border-primary-500/70 active:scale-[0.98]',
+                'bg-zinc-100 hover:bg-white text-zinc-900 border border-zinc-100 font-semibold shadow-none',
             secondary:
-                'bg-white dark:bg-white/[0.04] hover:bg-gray-50 dark:hover:bg-white/[0.055] text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-white/10',
-            danger: 'bg-red-500 hover:bg-red-400 text-white border border-red-400/70 active:scale-[0.98]',
-            ghost: 'bg-transparent hover:bg-gray-100 dark:hover:bg-white/[0.055] text-gray-600 dark:text-gray-300',
+                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-zinc-100 border border-zinc-800 shadow-none',
+            danger: 'bg-transparent hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-zinc-800 hover:border-red-900/60 shadow-none',
+            ghost: 'bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100',
             outline:
-                'bg-transparent hover:bg-primary-50 dark:hover:bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/40 dark:border-primary-400/40',
+                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-200 hover:text-zinc-100 border border-zinc-800 shadow-none',
         };
         return variants[props.variant];
     });
@@ -87,29 +88,10 @@
         :disabled="disabled || loading"
         :aria-label="ariaLabel"
         @click="handleClick"
-        class="relative inline-flex items-center justify-center rounded-[var(--misub-radius-md)] font-medium tap-effect disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group tracking-normal transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30"
+        class="relative inline-flex items-center justify-center rounded-md font-medium tap-effect cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden group tracking-normal transition-colors duration-200 focus-visible:outline-none"
         :class="[variantClasses, sizeClasses]"
     >
-        <svg
-            v-if="loading"
-            class="w-4 h-4 animate-spin relative z-10"
-            fill="none"
-            viewBox="0 0 24 24"
-        >
-            <circle
-                class="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                stroke-width="3"
-            ></circle>
-            <path
-                class="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            ></path>
-        </svg>
+        <Loader2 v-if="loading" class="w-4 h-4 animate-spin relative z-10" />
 
         <svg
             v-else-if="icon"

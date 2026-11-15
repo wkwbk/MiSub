@@ -4,16 +4,18 @@
     import { extractNodeName } from '../lib/utils.js';
     import { useDataStore } from '../stores/useDataStore.js';
     import { useSubscriptions } from '../composables/useSubscriptions.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
     import { useProfiles } from '../composables/useProfiles.js';
-    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js'; // Added
-    import { useBulkImportLogic } from '../composables/useBulkImportLogic.js'; // Added
+    import { useSortingMode } from '../composables/useSortingMode.js';
+    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js';
+    import { useSubscriptionBulkImport } from '../composables/useSubscriptionBulkImport.js';
     import SubscriptionPanel from '../components/subscriptions/SubscriptionPanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import SubscriptionEditModal from '../components/modals/SubscriptionEditModal.vue';
     import { useToastStore } from '../stores/toast.js';
     import { useI18n } from '../i18n/index.js';
-    import { createAirportGroupId } from '../utils/airport-identity.js';
+    const GroupManagementModal = defineAsyncComponent(
+        () => import('../components/modals/GroupManagementModal.vue')
+    );
     import {
         resolveSubscriptionStatusFilter,
         matchesSubscriptionStatus,
@@ -28,17 +30,19 @@
 
     // State
     // State
-    const isSortingSubs = ref(false);
+    const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
+    const showGroupManagementModal = ref(false);
 
     const {
         subscriptions,
+        subscriptionGroups,
+        activeGroupFilter,
+        setGroupFilter,
+        renameSubscriptionGroup,
+        deleteSubscriptionGroup,
         filteredSubscriptions,
         searchQuery: subscriptionSearchQuery,
-        subsCurrentPage,
-        subsTotalPages,
-        paginatedSubscriptions,
-        changeSubsPage,
         addSubscription,
         updateSubscription,
         deleteSubscription,
@@ -47,9 +51,10 @@
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
         reorderSubscriptions,
+        isRefreshing,
+        refreshError,
+        lastRefreshAt,
     } = useSubscriptions(markDirty);
-
-    const { addNodesFromBulk } = useManualNodes(markDirty);
 
     const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
 
@@ -63,10 +68,11 @@
         handleSave: handleSaveSubscription,
     } = useSubscriptionForms({ addSubscription, updateSubscription });
 
-    const { showModal: showBulkImportModal, handleBulkImport } = useBulkImportLogic({
-        addSubscriptionsFromBulk,
-        addNodesFromBulk,
-    });
+    const { showModal: showBulkImportModal, handleSubscriptionBulkImport } =
+        useSubscriptionBulkImport({
+            addSubscriptionsFromBulk,
+            updateSubscription,
+        });
 
     const openBulkImportModal = () => {
         showBulkImportModal.value = true;
@@ -93,34 +99,14 @@
     const previewSubscriptionUrl = ref('');
 
     // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleRenameGroup = (ids, baseName, requestedGroupId) => {
-        const base = String(baseName || '').trim();
-        if (!base || !Array.isArray(ids) || ids.length === 0) return;
-        const groupId =
-            ids
-                .map(
-                    (id) =>
-                        subscriptions.value.find((sub) => sub.id === id)?.airportIdentity?.groupId
-                )
-                .find(Boolean) ||
-            requestedGroupId ||
-            createAirportGroupId();
-        const name = base;
-        let updated = 0;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (!target) return;
-            const identity = { groupId, name: base };
-            if (
-                target.airportIdentity?.groupId === groupId &&
-                target.airportIdentity?.name === base
-            )
-                return;
-            updateSubscription({ ...target, airportIdentity: identity });
-            updated++;
-        });
-        if (updated)
-            showToast(t('subscriptions.groupRenamed', { name: base, count: updated }), 'success');
+    const handleGroupRename = (oldName, newName) => {
+        renameSubscriptionGroup(oldName, newName);
+        showToast(t('manualNodes.groupRenamed'), 'success');
+    };
+
+    const handleGroupDelete = (groupName) => {
+        deleteSubscriptionGroup(groupName);
+        showToast(t('manualNodes.groupDeleted'), 'success');
     };
 
     // 应用识别到的机场名（来自订阅响应头 / 官网标题）
@@ -132,40 +118,9 @@
         if (!targetSub) return;
         updateSubscription({
             ...targetSub,
-            airportIdentity: {
-                groupId: targetSub.airportIdentity?.groupId || createAirportGroupId(),
-                name: target,
-            },
+            name: target,
         });
         showToast(t('subscriptions.nameApplied', { name: target }), 'success');
-    };
-
-    const handleAssignAirportGroup = (ids, identity) => {
-        const groupId = String(identity?.groupId || '').trim();
-        const name = String(identity?.name || '').trim();
-        if (!groupId || !name || !Array.isArray(ids)) return;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: { groupId, name } });
-        });
-    };
-
-    const handleSplitAirportGroup = (ids, identity) => {
-        const groupId = String(identity?.groupId || '').trim();
-        const name = String(identity?.name || '').trim();
-        if (!groupId || !name || !Array.isArray(ids)) return;
-        ids.forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: { groupId, name } });
-        });
-    };
-
-    const handleResetAirportIdentity = (ids) => {
-        (ids || []).forEach((id) => {
-            const target = subscriptions.value.find((sub) => sub.id === id);
-            if (target) updateSubscription({ ...target, airportIdentity: null });
-        });
-        showToast(t('subscriptions.airportIdentityReset'), 'success');
     };
 
     const handlePreviewSubscription = (subscriptionId) => {
@@ -178,9 +133,9 @@
         }
     };
 
-    // Bulk Import Logic
-    const BulkImportModal = defineAsyncComponent(
-        () => import('../components/modals/BulkImportModal.vue')
+    // Subscription Bulk Import Logic
+    const SubscriptionBulkImportModal = defineAsyncComponent(
+        () => import('../components/modals/SubscriptionBulkImportModal.vue')
     );
 
     // QRCode
@@ -247,22 +202,25 @@
 </script>
 
 <template>
-    <div class="max-w-(--breakpoint-xl) mx-auto">
+    <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
-            :paginated-subscriptions="paginatedSubscriptions"
+            :groups="subscriptionGroups"
+            :active-group-filter="activeGroupFilter"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
             :status-filter-label="statusFilterLabel"
-            :current-page="subsCurrentPage"
-            :total-pages="subsTotalPages"
+            :is-refreshing="isRefreshing"
+            :refresh-error="refreshError"
+            :last-refresh-at="lastRefreshAt"
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
+            @set-group-filter="setGroupFilter"
+            @manage-groups="showGroupManagementModal = true"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
-            @change-page="changeSubsPage"
             @update-node-count="handleUpdateNodeCount"
             @refresh-all="batchUpdateAllSubscriptions"
             @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
@@ -275,13 +233,14 @@
             @qrcode="handleQRCode"
             @update-search="subscriptionSearchQuery = $event"
             @applyDetectedName="handleApplyDetectedName"
-            @rename-group="handleRenameGroup"
-            @assign-airport-group="handleAssignAirportGroup"
-            @split-airport-group="handleSplitAirportGroup"
-            @reset-group="handleResetAirportIdentity"
-        >
-            <!-- Slot removed as user requested button move to dropdown -->
-        </SubscriptionPanel>
+        />
+
+        <GroupManagementModal
+            v-model:show="showGroupManagementModal"
+            :groups="subscriptionGroups"
+            @rename="handleGroupRename"
+            @delete="handleGroupDelete"
+        />
 
         <!-- Dialogs -->
         <SubscriptionEditModal
@@ -307,12 +266,11 @@
             >
         </Modal>
 
-        <BulkImportModal
+        <SubscriptionBulkImportModal
             v-if="showBulkImportModal"
             :show="showBulkImportModal"
             @update:show="showBulkImportModal = $event"
-            @import="(txt, tag) => handleBulkImport(txt, tag)"
-            @files-imported="(nodes, group) => addNodesFromBulk(nodes, group)"
+            @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
         />
 
         <NodePreviewModal

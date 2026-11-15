@@ -5,8 +5,6 @@ import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPa
 import { createI18n } from '../../src/i18n/index.js';
 
 const baseProps = {
-    currentPage: 1,
-    totalPages: 1,
     isSorting: false,
 };
 
@@ -16,7 +14,6 @@ function mountPanel(props = {}) {
         props: {
             ...baseProps,
             subscriptions: [],
-            paginatedSubscriptions: [],
             ...props,
         },
         global: {
@@ -26,7 +23,6 @@ function mountPanel(props = {}) {
                     props: ['misub'],
                     template: '<article class="card-stub">{{ misub.name }}</article>',
                 },
-                PanelPagination: true,
                 EmptyState: {
                     props: ['title', 'description'],
                     template:
@@ -78,7 +74,6 @@ describe('SubscriptionPanel UX', () => {
                     isUpdating: true,
                 },
             ],
-            paginatedSubscriptions: [],
         });
 
         expect(wrapper.text()).toContain('机场订阅');
@@ -91,17 +86,12 @@ describe('SubscriptionPanel UX', () => {
         expect(wrapper.text()).not.toContain('状态正常');
     });
 
-    it('offers direct add and bulk import actions in the empty state', async () => {
+    it('does not duplicate add and bulk import buttons in the empty state', () => {
         const wrapper = mountPanel();
 
-        expect(wrapper.text()).toContain('添加机场订阅');
-        expect(wrapper.text()).toContain('批量导入');
-
-        await wrapper.get('[data-testid="empty-add-subscription"]').trigger('click');
-        await wrapper.get('[data-testid="empty-import-subscriptions"]').trigger('click');
-
-        expect(wrapper.emitted('add')).toHaveLength(1);
-        expect(wrapper.emitted('import')).toHaveLength(1);
+        expect(wrapper.find('[data-testid="empty-add-subscription"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="empty-import-subscriptions"]').exists()).toBe(false);
+        expect(wrapper.text()).not.toContain('添加机场订阅');
     });
 
     it('distinguishes search with no matches from an actually empty list', async () => {
@@ -113,33 +103,31 @@ describe('SubscriptionPanel UX', () => {
             filteredCount: 0,
         });
 
-        expect(wrapper.text()).toContain('没有找到匹配的机场订阅。');
+        expect(wrapper.text()).toContain('没有找到匹配的机场订阅');
         expect(wrapper.get('[data-testid="subscription-no-search-results"]').exists()).toBe(true);
         expect(wrapper.get('[data-testid="clear-subscription-search"]').exists()).toBe(true);
         await wrapper.get('[data-testid="clear-subscription-search"]').trigger('click');
         expect(wrapper.emitted('updateSearch')).toEqual([['']]);
     });
 
-    it('renders paginated results inside collapsed site groups', async () => {
+    it('renders batched results with progressive load more', async () => {
         const wrapper = mountPanel({
             subscriptions: [
                 { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
                 { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
                 { id: 'b1', name: 'B1', url: 'https://other.test/1' },
             ],
-            paginatedSubscriptions: [
-                { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
-                { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
-            ],
+            batchSize: 2,
         });
 
         expect(wrapper.text()).toContain('A1');
         expect(wrapper.text()).toContain('A2');
         expect(wrapper.text()).not.toContain('B1');
         expect(wrapper.findAll('.card-stub')).toHaveLength(2);
-        expect(wrapper.get('button[aria-expanded="false"]').exists()).toBe(true);
-        await wrapper.get('button[aria-expanded="false"]').trigger('click');
-        expect(wrapper.get('button[aria-expanded="true"]').exists()).toBe(true);
+
+        await wrapper.get('[data-testid="subscription-load-more-btn"]').trigger('click');
+        expect(wrapper.text()).toContain('B1');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(3);
     });
 
     it('uses a concise list search hint that fits mobile screens', () => {
@@ -150,52 +138,89 @@ describe('SubscriptionPanel UX', () => {
         expect(search.attributes('aria-label')).toBe('搜索机场订阅名称、备注或链接...');
     });
 
-    it('opens the assignment dialog, cancels, and submits selected group for all subscriptions', async () => {
+    it('renders group filter tabs and emits manage-groups from more menu', async () => {
         const subscriptions = [
-            {
-                id: 's1',
-                name: 'Alpha',
-                url: 'https://alpha.test/a',
-                airportIdentity: { groupId: 'g1', name: 'Existing' },
-            },
-            { id: 's2', name: 'Beta', url: 'https://beta.test/b' },
+            { id: 's1', name: 'Alpha', url: 'https://alpha.test/a', group: '主力机场' },
+            { id: 's2', name: 'Beta', url: 'https://beta.test/b', group: '' },
         ];
-        const wrapper = mountPanel({ subscriptions, paginatedSubscriptions: subscriptions });
-        await wrapper.get('button[title="指定机场分组"]').trigger('click');
-        expect(document.body.querySelector('[role="dialog"]')).not.toBeNull();
-        const dialogButtons = () =>
-            Array.from(document.body.querySelectorAll('[role="dialog"] button')).map(
-                (el) => new DOMWrapper(el)
-            );
-        await dialogButtons().find((button) => button.text() === '取消').trigger('click');
-        expect(wrapper.emitted('assign-airport-group')).toBeUndefined();
+        const wrapper = mountPanel({ subscriptions });
+        const tabs = wrapper.get('[data-testid="subscription-group-tabs"]');
+        expect(tabs.text()).toContain('全部');
+        expect(tabs.text()).toContain('未分组');
+        expect(tabs.text()).toContain('主力机场');
 
-        await wrapper.get('button[title="指定机场分组"]').trigger('click');
-        await new DOMWrapper(document.body.querySelector('[role="dialog"] select')).setValue('g1');
-        await dialogButtons().find((button) => button.text() === '保存机场归属').trigger('click');
-        expect(wrapper.emitted('assign-airport-group')).toEqual([
-            [['s1', 's2'], { groupId: 'g1', name: 'Existing' }],
-        ]);
+        await wrapper.get('[data-testid="manage-subscription-groups"]').trigger('click');
+        expect(wrapper.emitted('manage-groups')).toHaveLength(1);
     });
 
-    it('submits a new identity using the selected group row subscription IDs', async () => {
+    it('filters subscriptions by selected group tab', async () => {
         const subscriptions = [
-            { id: 's1', name: 'A', url: 'https://same.test/a' },
-            { id: 's2', name: 'B', url: 'https://same.test/b' },
+            { id: 's1', name: 'A', url: 'https://same.test/a', group: '机场A' },
+            { id: 's2', name: 'B', url: 'https://same.test/b', group: '机场A' },
             { id: 's3', name: 'C', url: 'https://other.test/c' },
         ];
-        const wrapper = mountPanel({ subscriptions, paginatedSubscriptions: subscriptions });
-        await wrapper.findAll('button[title="指定机场分组"]')[1].trigger('click');
-        const dialogQuery = (selector) =>
-            new DOMWrapper(document.body.querySelector(`[role="dialog"] ${selector}`));
-        await dialogQuery('input[placeholder="新机场名称"]').setValue('New Airport');
-        const saveButton = Array.from(document.body.querySelectorAll('[role="dialog"] button'))
-            .map((el) => new DOMWrapper(el))
-            .find((button) => button.text() === '保存机场归属');
-        await saveButton.trigger('click');
-        const [[ids, identity]] = wrapper.emitted('assign-airport-group');
-        expect(ids).toEqual(['s1', 's2']);
-        expect(identity).toMatchObject({ name: 'New Airport' });
-        expect(identity.groupId).toBeTruthy();
+        const wrapper = mountPanel({ subscriptions });
+        const groupButton = wrapper
+            .findAll('[data-testid="subscription-group-tabs"] button')
+            .find((btn) => btn.text() === '机场A');
+        await groupButton.trigger('click');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(2);
+        expect(wrapper.text()).not.toContain('C');
+
+        await wrapper.get('[data-testid="subscription-group-tab-default"]').trigger('click');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(1);
+        expect(wrapper.text()).toContain('C');
+    });
+
+    it('keeps two-column desktop grid and shows sorting banner when sorting a single subscription', async () => {
+        const single = [{ id: 's1', name: '免费', url: 'https://ijg.cc/helloworld' }];
+        const wrapper = mountPanel({
+            subscriptions: single,
+            paginatedSubscriptions: single,
+            isSorting: true,
+        });
+
+        const banner = wrapper.find('[data-testid="subscription-sorting-banner"]');
+        expect(banner.exists()).toBe(true);
+        expect(banner.text()).toContain('当前处于排序模式');
+
+        const finishButton = wrapper.find('[data-testid="subscription-finish-sort"]');
+        expect(finishButton.exists()).toBe(true);
+        await finishButton.trigger('click');
+        expect(wrapper.emitted('toggleSort')).toHaveLength(1);
+
+        const sortGrid = wrapper.find('.grid.gap-4');
+        expect(sortGrid.exists()).toBe(true);
+        expect(sortGrid.classes()).toContain('grid-cols-1');
+        expect(sortGrid.classes()).toContain('md:grid-cols-2');
+
+        const dragItem = sortGrid.find('.cursor-move');
+        expect(dragItem.exists()).toBe(true);
+        expect(dragItem.classes()).toContain('border-dashed');
+
+        const card = sortGrid.find('.card-stub');
+        expect(card.exists()).toBe(true);
+        expect(card.classes()).toContain('pointer-events-none');
+        expect(card.classes()).toContain('select-none');
+    });
+
+    it('does not emit markDirty when drag ends at the same index', async () => {
+        const subs = [
+            { id: 's1', name: 'A', url: 'https://a.test/sub' },
+            { id: 's2', name: 'B', url: 'https://b.test/sub' },
+        ];
+        const wrapper = mountPanel({
+            subscriptions: subs,
+            isSorting: true,
+        });
+
+        const draggableComp = wrapper.findComponent({ name: 'draggable' });
+        const targetComp = draggableComp.exists() ? draggableComp : wrapper.find('.grid.gap-4');
+        // Directly trigger via the stubbed draggable wrapper
+        await wrapper.findAllComponents({ props: ['modelValue'] })[0]?.vm?.$emit('end', {
+            oldIndex: 0,
+            newIndex: 0,
+        });
+        expect(wrapper.emitted('markDirty')).toBeUndefined();
     });
 });

@@ -2,6 +2,7 @@
 
 <script setup>
     import { ref, watch, nextTick, computed } from 'vue';
+    import { X, Loader2 } from 'lucide-vue-next';
     import { t } from '../../i18n/index.js';
     import { useBackdropDismiss } from '../../composables/useBackdropDismiss.js';
 
@@ -88,7 +89,7 @@
 
     // 计算样式
     const modalClasses = computed(() => [
-        'relative transform overflow-hidden rounded-[var(--misub-radius-lg)] bg-white dark:bg-[var(--surface-panel-dark)] text-left shadow-xl border border-gray-200 dark:border-white/10 transition-opacity duration-150',
+        'relative transform overflow-hidden rounded-md bg-[#171717] text-left shadow-none border border-zinc-800 transition-opacity duration-150',
         sizeClasses[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
@@ -208,10 +209,10 @@
                     <!-- 头部 -->
                     <div
                         v-if="title || closable"
-                        class="border-b border-gray-200 dark:border-white/10 px-6 py-4"
+                        class="border-b border-zinc-800 px-6 py-4 rounded-t-md"
                     >
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">
+                            <h3 class="text-base font-semibold leading-6 text-zinc-100">
                                 {{ title }}
                             </h3>
 
@@ -220,17 +221,11 @@
                                 v-if="closable"
                                 type="button"
                                 :disabled="disabled || loading"
-                                class="rounded-[var(--misub-radius-md)] bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-150"
+                                class="rounded-md bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-200"
                                 @click="handleClose"
                             >
                                 <span class="sr-only">{{ t('common.close') }}</span>
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        fill-rule="evenodd"
-                                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                        clip-rule="evenodd"
-                                    />
-                                </svg>
+                                <X class="h-5 w-5" />
                             </button>
                         </div>
                     </div>
@@ -244,7 +239,7 @@
                     <!-- 底部按钮 -->
                     <div
                         v-if="showFooter || $slots.footer"
-                        class="border-t border-gray-200 dark:border-white/10 px-6 py-4 bg-gray-50 dark:bg-white/[0.02]"
+                        class="border-t border-zinc-800 px-6 py-4 bg-[#131515] rounded-b-md"
                     >
                         <!-- 自定义底部插槽 -->
                         <slot name="footer">
@@ -254,7 +249,7 @@
                                     type="button"
                                     :disabled="disabled || loading"
                                     :class="cancelButtonClass"
-                                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-white/10 text-sm font-medium rounded-[var(--misub-radius-md)] text-gray-700 dark:text-gray-300 bg-white dark:bg-white/[0.04] hover:bg-gray-50 dark:hover:bg-white/[0.055] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-800 text-sm font-medium rounded-md text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     @click="handleCancel"
                                 >
                                     {{ resolvedCancelText }}
@@ -267,30 +262,14 @@
                                         confirmButtonClass,
                                         { 'opacity-50 cursor-not-allowed': confirmDisabled },
                                     ]"
-                                    class="inline-flex items-center px-4 py-2 border border-primary-500/70 text-sm font-medium rounded-[var(--misub-radius-md)] text-white bg-primary-600 hover:bg-primary-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                                    class="inline-flex items-center px-4 py-2 border border-zinc-100 text-sm font-semibold rounded-md text-zinc-900 bg-zinc-100 hover:bg-white focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     @click="handleConfirm"
                                 >
                                     <!-- 加载图标 -->
-                                    <svg
+                                    <Loader2
                                         v-if="loading"
                                         class="animate-spin -ml-1 mr-2 h-4 w-4"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <circle
-                                            class="opacity-25"
-                                            cx="12"
-                                            cy="12"
-                                            r="10"
-                                            stroke="currentColor"
-                                            stroke-width="4"
-                                        ></circle>
-                                        <path
-                                            class="opacity-75"
-                                            fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                        ></path>
-                                    </svg>
+                                    />
 
                                     {{ resolvedConfirmText }}
                                 </button>

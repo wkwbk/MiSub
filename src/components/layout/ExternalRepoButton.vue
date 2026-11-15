@@ -6,7 +6,7 @@
     defineProps({
         href: {
             type: String,
-            default: 'https://github.com/imzyb/MiSub',
+            default: 'https://github.com/wkwbk/MiSub',
         },
         className: {
             type: [String, Array, Object],
@@ -26,7 +26,7 @@
     >
         <svg
             xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5"
+            class="h-4 w-4"
             fill="currentColor"
             viewBox="0 0 24 24"
         >

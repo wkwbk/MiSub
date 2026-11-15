@@ -1,6 +1,8 @@
 <script setup>
     import { computed, ref } from 'vue';
+    import { Globe } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
+    import SectionHeader from '../../SectionHeader.vue';
     import yaml from 'js-yaml';
 
     const { t } = useI18n();
@@ -59,71 +61,47 @@
 </script>
 
 <template>
-    <div
-        class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-xs dark:border-white/10 dark:bg-gray-900/70 space-y-4"
-    >
-        <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-                <div
-                    class="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-50 dark:bg-teal-500/10"
+    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <SectionHeader
+            :title="t('settings.dnsOverrideTitle')"
+            :description="t('settings.dnsOverrideDesc')"
+        >
+            <template #icon>
+                <Globe class="h-4 w-4" />
+            </template>
+            <template v-if="hasValue" #actions>
+                <span
+                    class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5 text-teal-600 dark:text-teal-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                        />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ t('settings.dnsOverrideTitle') }}
-                    </h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">
-                        {{ t('settings.dnsOverrideDesc') }}
-                    </p>
-                </div>
-            </div>
-            <span
-                v-if="hasValue"
-                class="inline-flex items-center rounded-full bg-teal-50 px-2.5 py-0.5 text-[10px] font-semibold text-teal-700 dark:bg-teal-500/15 dark:text-teal-300"
-            >
-                {{ t('settings.dnsOverrideActive') }}
-            </span>
-        </div>
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                    {{ t('settings.dnsOverrideActive') }}
+                </span>
+            </template>
+        </SectionHeader>
 
         <div>
-            <label
-                class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
-            >
+            <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-400">
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
             <textarea
                 v-model="inputValue"
-                rows="20"
+                rows="16"
                 spellcheck="false"
                 :placeholder="t('settings.dnsOverridePlaceholder')"
-                class="block w-full rounded-lg border bg-white px-4 py-3 font-mono text-xs leading-relaxed text-gray-900 shadow-sm transition-colors duration-200 focus:border-teal-500 focus-visible:ring-teal-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                class="block w-full rounded-md border bg-[#131515] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
                 :class="
                     jsonError
-                        ? 'border-red-300 focus:border-red-500 focus-visible:ring-red-500 dark:border-red-500/50'
-                        : 'border-gray-200 dark:border-gray-700'
+                        ? 'border-red-500/60 focus:border-red-500 focus-visible:ring-red-500'
+                        : 'border-zinc-800'
                 "
                 @blur="validateInput"
             />
-            <p v-if="jsonError" class="mt-2 text-xs text-red-600 dark:text-red-400">
+            <p v-if="jsonError" class="mt-2 text-xs text-red-400">
                 {{ jsonError }}
             </p>
-            <p v-else class="mt-2 text-[10px] leading-relaxed text-gray-500 dark:text-gray-400">
+            <p v-else class="mt-2 text-xs leading-relaxed text-zinc-500">
                 {{ t('settings.dnsOverrideHint') }}
             </p>
         </div>
-    </div>
+    </section>
 </template>

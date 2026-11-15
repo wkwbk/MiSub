@@ -7,13 +7,37 @@
     });
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
-    import { ref, watch } from 'vue';
+    import GroupSelector from '../../ui/GroupSelector.vue';
+    import { computed, ref, watch } from 'vue';
+    import { Loader2, Zap } from 'lucide-vue-next';
     import { fetchNodeCount } from '../../../lib/api.js';
+    import { useDataStore } from '../../../stores/useDataStore.js';
+    import { extractAirportGroupNames } from '../../../composables/useSubscriptionBulkImport.js';
+    import {
+        getSubscriptionGroup,
+        normalizeSubscriptionGroupName,
+    } from '../../../utils/subscription-groups.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useI18n } from '../../../i18n/index.js';
 
     const { showToast } = useToastStore();
+    const dataStore = useDataStore();
     const { t } = useI18n();
+
+    const airportGroupNames = computed(() =>
+        extractAirportGroupNames(dataStore.subscriptions || [])
+    );
+
+    const selectedAirportGroup = computed({
+        get: () => getSubscriptionGroup(props.editingSubscription),
+        set: (val) => {
+            if (!props.editingSubscription) return;
+            props.editingSubscription.group = normalizeSubscriptionGroupName(val);
+            if ('airportIdentity' in props.editingSubscription) {
+                delete props.editingSubscription.airportIdentity;
+            }
+        },
+    });
 
     // 使用独立的本地状态，防止用户清空输入框时开关自动跳回关闭状态
     const useFetchProxy = ref(false);
@@ -88,14 +112,26 @@
         />
     </div>
 
+    <!-- 机场分组 (可选) -->
+    <div>
+        <label class="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1.5">
+            {{ t('subscriptionBulkImport.groupLabel') }}
+        </label>
+        <GroupSelector
+            v-model="selectedAirportGroup"
+            :groups="airportGroupNames"
+            :placeholder="t('subscriptionBulkImport.groupPlaceholder')"
+        />
+    </div>
+
     <!-- 专属拉取代理 -->
-    <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+    <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800">
         <div class="flex items-center justify-between mb-2">
             <div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">{{
+                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
                     t('subscriptions.fetchProxyTitle')
                 }}</span>
-                <p class="text-xs text-gray-500 mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
+                <p class="text-xs text-zinc-500 mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
             </div>
             <Switch v-model="useFetchProxy" />
         </div>
@@ -117,48 +153,17 @@
                         !editingSubscription.fetchProxy ||
                         !editingSubscription.url
                     "
-                    class="h-[46px] px-4 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-500/20 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
+                    class="h-[38px] px-3.5 bg-transparent border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
                 >
-                    <svg
+                    <Loader2
                         v-if="isTestingProxy"
-                        class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-500"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                    >
-                        <circle
-                            class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4"
-                        ></circle>
-                        <path
-                            class="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                    </svg>
-                    <svg
-                        v-else
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="w-4 h-4 mr-1.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M13 10V3L4 14h7v7l9-11h-7z"
-                        />
-                    </svg>
+                        class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-zinc-400"
+                    />
+                    <Zap v-else class="w-3.5 h-3.5 mr-1.5" />
                     {{ isTestingProxy ? t('subscriptions.testing') : t('subscriptions.testProxy') }}
                 </button>
             </div>
-            <p class="text-[11px] text-indigo-600 dark:text-indigo-400">
+            <p class="text-[11px] text-zinc-500">
                 {{ t('subscriptions.fetchProxyHint') }}
             </p>
         </div>

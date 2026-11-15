@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { useToastStore } from '../stores/toast.js';
+import { normalizeSubscriptionGroupName } from '../utils/subscription-groups.js';
 import { generateSubscriptionId } from '../utils/id.js';
 import { t } from '../i18n/index.js';
 
@@ -25,6 +26,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             excludeTraffic: false,
             website: '',
             notes: '',
+            group: '',
         };
         showModal.value = true;
     };
@@ -65,10 +67,18 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             return;
         }
 
+        const payload = {
+            ...editingSubscription.value,
+            group: normalizeSubscriptionGroupName(
+                editingSubscription.value.group ?? editingSubscription.value.airportIdentity?.name
+            ),
+        };
+        delete payload.airportIdentity;
+
         if (isNew.value) {
-            addSubscription({ ...editingSubscription.value, id: generateSubscriptionId() });
+            addSubscription({ ...payload, id: generateSubscriptionId() });
         } else {
-            updateSubscription(editingSubscription.value);
+            updateSubscription(payload);
         }
         showModal.value = false;
     };

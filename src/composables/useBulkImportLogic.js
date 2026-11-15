@@ -80,6 +80,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
             .filter(Boolean);
         const validSubs = [];
         const validNodes = [];
+        let duplicateCount = 0;
 
         // 如果成功解析出 Surge 节点，使用解析结果
         if (surgeNodes && surgeNodes.length > 0) {
@@ -98,6 +99,8 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
                         customUserAgent: '',
                         notes: '',
                     });
+                } else {
+                    duplicateCount++;
                 }
             });
         }
@@ -121,13 +124,19 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
                 // 去重检查：订阅 URL
                 if (!existingUrls.has(line)) {
                     validSubs.push({ ...baseItem, id: generateSubscriptionId() });
+                } else {
+                    duplicateCount++;
                 }
             } else if (BULK_IMPORT_NODE_REGEX.test(line)) {
                 // 避免重复添加已从 Surge 格式解析的节点
                 const alreadyParsed = validNodes.some((n) => n.url === line);
                 // 去重检查：节点 URL
-                if (!alreadyParsed && !existingUrls.has(line)) {
-                    validNodes.push({ ...baseItem, id: generateNodeId() });
+                if (!alreadyParsed) {
+                    if (!existingUrls.has(line)) {
+                        validNodes.push({ ...baseItem, id: generateNodeId() });
+                    } else {
+                        duplicateCount++;
+                    }
                 }
             }
         });
@@ -145,7 +154,15 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         }
 
         if (message) {
-            showToast(message, 'success');
+            const trimmedMessage = message.trim();
+            showToast(
+                duplicateCount > 0
+                    ? `${trimmedMessage} (${t('bulkImport.skippedDuplicates', { count: duplicateCount })})`
+                    : trimmedMessage,
+                'success'
+            );
+        } else if (duplicateCount > 0) {
+            showToast(t('bulkImport.allDuplicates', { count: duplicateCount }), 'info');
         } else {
             showToast(t('bulkImport.noValidLinks'), 'warning');
         }

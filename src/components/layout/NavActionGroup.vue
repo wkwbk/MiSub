@@ -1,12 +1,20 @@
 <script setup>
     import { computed } from 'vue';
     import { useRoute } from 'vue-router';
-    import BaseIcon from '../ui/BaseIcon.vue';
+    import { storeToRefs } from 'pinia';
+    import {
+        Compass,
+        MessageSquare,
+        Settings,
+        LayoutGrid,
+        LayoutPanelTop,
+        LogOut,
+    } from 'lucide-vue-next';
     import ThemeToggle from '../features/ThemeToggle.vue';
     import LoginEntryButton from './LoginEntryButton.vue';
     import ExternalRepoButton from './ExternalRepoButton.vue';
     import LanguageSwitcher from './LanguageSwitcher.vue';
-    import { NAV_ICONS } from '../../constants/navigation.js';
+    import { useUIStore } from '../../stores/ui.js';
     import { useI18n } from '../../i18n/index.js';
 
     const props = defineProps({
@@ -46,25 +54,25 @@
 
     const emit = defineEmits(['openSettings', 'toggleLayout', 'logout']);
     const route = useRoute();
+    const uiStore = useUIStore();
+    const { layoutMode } = storeToRefs(uiStore);
     const { t } = useI18n();
+    const isLegacyLayout = computed(() => layoutMode.value === 'legacy');
+    const layoutToggleLabel = computed(() =>
+        isLegacyLayout.value ? t('actions.switchToModernLayout') : t('actions.switchToLegacyLayout')
+    );
     const showPublicFeedback = computed(
         () => !props.isLoggedIn && (route.name === 'Home' || route.name === 'Explore')
     );
     const canShowExplore = computed(() => props.showExplore);
     const isExploreActive = computed(() => route.path === '/explore');
     const exploreBtnClass = computed(() => {
-        const classes = buildBtnClass('neutral');
         if (isExploreActive.value) {
-            classes.push(
-                'bg-primary-50',
-                'text-primary-600',
-                'dark:bg-primary-900/20',
-                'dark:text-primary-400',
-                'ring-1',
-                'ring-primary-400/40'
-            );
+            const base = ['nav-action-btn', props.roundedClass, 'nav-action-btn-active'];
+            if (props.withFocusRing) base.push('nav-action-focus');
+            return base;
         }
-        return classes;
+        return buildBtnClass('neutral');
     });
 
     function handlePublicFeedback() {
@@ -89,7 +97,7 @@
 </script>
 
 <template>
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1 sm:gap-1.5">
         <router-link
             v-if="canShowExplore"
             to="/explore"
@@ -97,7 +105,7 @@
             :title="t('nav.explore')"
             :aria-label="t('nav.explore')"
         >
-            <BaseIcon :path="NAV_ICONS.explore" className="h-5 w-5" />
+            <Compass class="h-4 w-4" />
         </router-link>
 
         <button
@@ -107,14 +115,14 @@
             :title="t('nav.feedback')"
             :aria-label="t('nav.feedback')"
         >
-            <BaseIcon :path="NAV_ICONS.feedback" className="h-5 w-5" />
+            <MessageSquare class="h-4 w-4" />
         </button>
 
         <LanguageSwitcher />
 
         <ThemeToggle />
 
-        <div v-if="showDivider" class="h-4 w-px bg-gray-200 dark:bg-white/10 mx-1"></div>
+        <div v-if="showDivider" class="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-0.5"></div>
 
         <template v-if="isLoggedIn">
             <button
@@ -124,16 +132,19 @@
                 :title="t('nav.settings')"
                 :aria-label="t('actions.openSettings')"
             >
-                <BaseIcon :path="NAV_ICONS.settings" className="h-5 w-5" />
+                <Settings class="h-4 w-4" />
             </button>
 
             <button
                 @click="emit('toggleLayout')"
                 :class="buildBtnClass('neutral')"
-                :title="t('actions.toggleLayout')"
-                :aria-label="t('actions.toggleLayout')"
+                :title="layoutToggleLabel"
+                :aria-label="layoutToggleLabel"
+                :aria-pressed="isLegacyLayout"
+                data-testid="layout-toggle-btn"
             >
-                <BaseIcon :path="NAV_ICONS.layout" className="h-5 w-5" />
+                <LayoutGrid v-if="isLegacyLayout" class="h-4 w-4" />
+                <LayoutPanelTop v-else class="h-4 w-4" />
             </button>
 
             <button
@@ -142,7 +153,7 @@
                 :title="t('actions.logout')"
                 :aria-label="t('actions.logout')"
             >
-                <BaseIcon :path="NAV_ICONS.logout" className="h-5 w-5" />
+                <LogOut class="h-4 w-4" />
             </button>
         </template>
 

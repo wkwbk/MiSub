@@ -27,8 +27,10 @@ describe('dashboard UI components', () => {
         const wrapper = mount(StatCards, {
             props: {
                 formattedTotalRemainingTraffic: '0 B',
-                trafficStats: { used: '0 B', total: '0 B', percentage: 0 },
-                activeSubscriptionsCount: 0,
+                trafficStats: { used: '90 GB', total: '100 GB', percentage: 90 },
+                manualNodesCount: 4,
+                enabledManualNodesCount: 2,
+                activeSubscriptionsCount: 1,
                 subscriptionsCount: 2,
                 totalNodesCount: 0,
                 activeProfilesCount: 0,
@@ -39,13 +41,30 @@ describe('dashboard UI components', () => {
         });
 
         const nodeCard = wrapper.find('[data-testid="stat-card-nodes"]');
-        expect(nodeCard.text()).toContain('需要刷新节点');
-        expect(nodeCard.classes().join(' ')).toContain('border-amber-200/80');
+        expect(nodeCard.text()).toContain('2 / 4');
+        expect(nodeCard.text()).toContain('共 2 个节点');
 
         await nodeCard.trigger('click');
-        expect(wrapper.emitted('navigate')?.[0]).toEqual([
-            '/dashboard/subscriptions',
+        expect(wrapper.emitted('navigate')?.[0]).toEqual(['/dashboard/nodes', {}]);
+
+        await wrapper.find('[data-testid="stat-card-traffic"]').trigger('click');
+        expect(wrapper.emitted('navigate')?.[1]).toEqual([
+            '/dashboard/groups',
+            { status: 'low-traffic' },
+        ]);
+
+        const subCard = wrapper.find('[data-testid="stat-card-subscriptions"]');
+        expect(subCard.text()).toContain('需要刷新节点');
+        await subCard.trigger('click');
+        expect(wrapper.emitted('navigate')?.[2]).toEqual([
+            '/dashboard/groups',
             { status: 'zero-nodes' },
+        ]);
+
+        await wrapper.find('[data-testid="stat-card-profiles"]').trigger('click');
+        expect(wrapper.emitted('navigate')?.[3]).toEqual([
+            '/dashboard/subscriptions',
+            { focus: 'profiles' },
         ]);
     });
 
@@ -108,6 +127,8 @@ describe('dashboard UI components', () => {
             props: {
                 formattedTotalRemainingTraffic: '155.89 TB',
                 trafficStats: { used: '1 TB', total: '2 TB', percentage: 50 },
+                manualNodesCount: 5,
+                enabledManualNodesCount: 3,
                 activeSubscriptionsCount: 1,
                 subscriptionsCount: 1,
                 totalNodesCount: 12,
@@ -119,8 +140,10 @@ describe('dashboard UI components', () => {
         });
 
         expect(statCards.text()).toContain('Remaining traffic');
+        expect(statCards.text()).toContain('Manual nodes');
+        expect(statCards.text()).toContain('3 nodes');
         expect(statCards.text()).toContain('Active sources');
-        expect(statCards.text()).toContain('Total nodes');
+        expect(statCards.text()).toContain('Running · 12 nodes');
         expect(statCards.text()).toContain('Profiles');
         expect(statCards.text()).not.toContain('dashboard.');
         expect(statCards.text()).not.toContain('DASHBOARD.');

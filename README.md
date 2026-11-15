@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange.svg)](https://pages.cloudflare.com/)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
-[![Version](https://img.shields.io/badge/version-v2.7.0-indigo.svg)](#version)
+[![Version](https://img.shields.io/badge/version-v2.8.0-indigo.svg)](#version)
 
 [Features](#features) • [Quick Start](#quick-start) • [Deployment](#deployment) • [Usage](#usage) • [Documentation](#documentation)
 
@@ -117,7 +117,9 @@ If schema initialization fails in the CLI, run the latest `schema.sql` manually 
 
 ### Recommended environment variables
 
-- `ADMIN_PASSWORD`: admin login password. If unset, the default password is `admin`.
+> **Security Note**: Always configure `ADMIN_PASSWORD`, `COOKIE_SECRET`, and `CRON_SECRET` as **Secret** (encrypted) in the Cloudflare Dashboard (or via `npx wrangler secret put <KEY>`), **not** as plaintext variables. Plaintext dashboard variables are overwritten by `[vars]` in `wrangler.toml` on deploy unless `keep_vars = true` is set.
+
+- `ADMIN_PASSWORD`: admin login password. If unset on a fresh instance, the default password is `admin` (initialized instances fail closed rather than falling back to `admin`).
 - `COOKIE_SECRET`: stable session signing secret.
 - `CORS_ORIGINS`: allowed browser origins for API requests.
 - `CRON_SECRET`: secret used by external cron triggers.
@@ -184,21 +186,18 @@ See [Operator Chain Guide](docs/OPERATOR_CHAIN_GUIDE.md) for details.
 - [External API Reference](docs/external-management-api.md)
 - [External API OpenAPI Spec](docs/external-management-api.openapi.yaml)
 - [Operator Chain Guide](docs/OPERATOR_CHAIN_GUIDE.md)
-- [v2.5.0 Upgrade Guide](docs/UPGRADE_V2.5.md)
 - [Architecture](docs/architecture.md)
 - [Data Model](docs/data-model.md)
 
 ## Version
 
-Current version: `v2.7.0`
+Current version: `v2.8.0`
 
 For detailed historical changes, see [README-zh.md](README-zh.md) and the repository commit history.
 
 ## Acknowledgements
 
-Thanks to sponsor [ForZTN](https://sponsorship.forztn.com/github/imzyb/MiSub) for supporting the project server.
-
-MiSub is developed from [CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB). Thanks to CM for the open-source contribution.
+This project is based on [imzyb/MiSub](https://github.com/imzyb/MiSub) and [CF-Workers-SUB](https://github.com/cmliu/CF-Workers-SUB). Thanks to the original authors for their open-source contributions.
 
 ## License
 

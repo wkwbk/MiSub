@@ -2,6 +2,7 @@
 
 <script setup>
     import { computed, toRefs } from 'vue';
+    import { Check, X } from 'lucide-vue-next';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -83,20 +84,14 @@
                         v-else-if="saveState === 'success'"
                         class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center"
                     >
-                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
-                            <path d="M6.564.75l-3.59 3.612-1.538-1.55L0 4.26 2.974 7.25 8 2.193z" />
-                        </svg>
+                        <Check class="w-2.5 h-2.5 text-white" stroke-width="3" />
                     </div>
 
                     <div
                         v-else-if="saveState === 'error'"
                         class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center"
                     >
-                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
-                            <path
-                                d="M2.146 2.854a.5.5 0 1 1 .708-.708L4 3.293l1.146-1.147a.5.5 0 1 1 .708.708L4.707 4l1.147 1.146a.5.5 0 0 1-.708.708L4 4.707l-1.146 1.147a.5.5 0 0 1-.708-.708L3.293 4 2.146 2.854z"
-                            />
-                        </svg>
+                        <X class="w-2.5 h-2.5 text-white" stroke-width="3" />
                     </div>
 
                     <div

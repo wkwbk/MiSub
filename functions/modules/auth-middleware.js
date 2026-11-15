@@ -5,9 +5,11 @@
 
 import { COOKIE_NAME, SESSION_DURATION, SESSION_RENEW_THRESHOLD } from './config.js';
 import {
+    AdminPasswordMissingError,
     getCookieSecret,
     getAdminPassword,
     getAuthDebugInfo,
+    markAuthInitialized,
     JSON_BODY_LIMITS,
     RequestBodyTooLargeError,
     readJsonWithLimit,
@@ -349,12 +351,15 @@ export async function handleLogin(request, env) {
             const isSecure = request.url.startsWith('https');
             const cookieString = `${COOKIE_NAME}=${token}; Path=/; HttpOnly; ${isSecure ? 'Secure;' : ''} SameSite=Lax; Max-Age=${SESSION_DURATION / 1000}`;
             const responseBody = { success: true };
-            if (await isUsingDefaultAdminPassword(env)) {
+            const isDefaultPassword = await isUsingDefaultAdminPassword(env);
+            if (isDefaultPassword) {
                 responseBody.securityWarning = {
                     type: 'default_admin_password',
                     shouldChangePassword: true,
                     message: '当前正在使用默认管理员密码 admin，请登录后立即修改。',
                 };
+            } else {
+                await markAuthInitialized(env);
             }
             return new Response(JSON.stringify(responseBody), {
                 headers: {
@@ -365,6 +370,22 @@ export async function handleLogin(request, env) {
         }
         return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
     } catch (e) {
+        if (e instanceof AdminPasswordMissingError) {
+            console.error(
+                '[API Error /login] Admin password missing on initialized instance',
+                logMeta
+            );
+            return new Response(
+                JSON.stringify({
+                    error: e.message,
+                    code: e.code,
+                }),
+                {
+                    status: e.status || 503,
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
+        }
         console.error('[API Error /login] Login handler failed', { ...logMeta, error: e?.message });
         return new Response(JSON.stringify({ error: '登录处理失败' }), { status: 500 });
     }

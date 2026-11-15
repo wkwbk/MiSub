@@ -1,4 +1,5 @@
 <script setup>
+    import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
     import SectionHeader from '../SectionHeader.vue';
     const props = defineProps({
         settings: {
@@ -17,8 +18,9 @@
     });
 
     import Input from '../../ui/Input.vue';
+    import Select from '../../ui/Select.vue';
     import Switch from '../../ui/Switch.vue';
-    import { watch, computed } from 'vue';
+    import { watch, computed, ref } from 'vue';
     import { useToastStore } from '../../../stores/toast';
     import { useI18n } from '../../../i18n/index.js';
 
@@ -152,101 +154,86 @@
             }
         }
     );
+
+    const QUICK_INTERVAL_VALUES = [0, 30, 60];
+    const MIN_CUSTOM_INTERVAL = 5;
+
+    const isCustomInterval = computed(
+        () => !QUICK_INTERVAL_VALUES.includes(Number(props.settings.autoUpdateInterval))
+    );
+
+    const customIntervalInput = ref(
+        isCustomInterval.value ? String(props.settings.autoUpdateInterval ?? '') : ''
+    );
+
+    watch(
+        () => props.settings.autoUpdateInterval,
+        (val) => {
+            if (QUICK_INTERVAL_VALUES.includes(Number(val))) {
+                customIntervalInput.value = '';
+            } else if (val !== undefined && val !== null) {
+                customIntervalInput.value = String(val);
+            }
+        }
+    );
+
+    const handleCustomIntervalInput = (event) => {
+        const raw = event.target.value;
+        customIntervalInput.value = raw;
+        const parsed = Number.parseInt(raw, 10);
+        if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_INTERVAL) {
+            props.settings.autoUpdateInterval = parsed;
+        }
+    };
+
+    const handleCustomIntervalBlur = () => {
+        const parsed = Number.parseInt(customIntervalInput.value, 10);
+        if (customIntervalInput.value === '' || Number.isNaN(parsed)) {
+            customIntervalInput.value = isCustomInterval.value
+                ? String(props.settings.autoUpdateInterval)
+                : '';
+            return;
+        }
+        if (parsed < MIN_CUSTOM_INTERVAL) {
+            props.settings.autoUpdateInterval = MIN_CUSTOM_INTERVAL;
+            customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
+        }
+    };
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6">
         <!-- 默认显示语言 -->
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.defaultLanguageTitle')"
                 :description="t('settings.defaultLanguageDesc')"
                 tone="amber"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m5 8 6 6"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m4 14 6-6 2-3"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M2 5h12"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M7 2h1"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="m22 22-5-10-5 10"
-                        />
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M14 18h6"
-                        />
-                    </svg>
+                    <Languages class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <div class="max-w-xs">
-                <select
+                <Select
                     v-model="settings.defaultLocale"
-                    class="block w-full px-3 py-2.5 bg-white/80 dark:bg-gray-900/60 border border-gray-200/80 dark:border-white/10 misub-radius-lg shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500/40 focus:border-amber-500 sm:text-sm dark:text-white transition-colors"
-                >
-                    <option value="zh-CN">{{ t('settings.defaultLanguageZh') }}</option>
-                    <option value="en-US">{{ t('settings.defaultLanguageEn') }}</option>
-                </select>
+                    :options="[
+                        { value: 'zh-CN', label: t('settings.defaultLanguageZh') },
+                        { value: 'en-US', label: t('settings.defaultLanguageEn') },
+                    ]"
+                />
             </div>
-        </div>
+        </section>
 
         <!-- 订阅基本信息配置 -->
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.subscriptionConfigTitle')"
                 :description="t('settings.subscriptionConfigDesc')"
                 tone="indigo"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
+                    <Info class="h-4 w-4" />
                 </template>
             </SectionHeader>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -254,7 +241,7 @@
                     <Input
                         :label="t('settings.customFileName')"
                         v-model="settings.FileName"
-                        class="misub-radius-lg"
+                        class="rounded-md font-mono"
                     />
                 </div>
                 <div>
@@ -263,15 +250,12 @@
                         :label="t('settings.customToken')"
                         v-model="settings.mytoken"
                         :error="myTokenError"
-                        class="misub-radius-lg transition-shadow duration-300"
+                        class="rounded-md font-mono transition-shadow duration-300"
                         :class="{
-                            'ring-2 ring-primary-500/60 ring-offset-2 rounded-lg':
+                            'ring-1 ring-zinc-400 rounded-md':
                                 highlightedFocusId === 'setting-mytoken',
                         }"
                     />
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        {{ t('settings.subscriptionTokenRotationHint') }}
-                    </p>
                 </div>
                 <div>
                     <Input
@@ -280,159 +264,152 @@
                         v-model="settings.profileToken"
                         :placeholder="t('settings.profileTokenPlaceholder')"
                         :error="profileTokenError"
-                        class="misub-radius-lg transition-shadow duration-300"
+                        class="rounded-md font-mono transition-shadow duration-300"
                         :class="{
-                            'ring-2 ring-primary-500/60 ring-offset-2 rounded-lg':
+                            'ring-1 ring-zinc-400 rounded-md':
                                 highlightedFocusId === 'setting-profileToken',
                         }"
                     />
                 </div>
             </div>
-        </div>
+            <p class="mt-4 text-xs text-zinc-500 leading-relaxed">
+                {{ t('settings.subscriptionTokenRotationHint') }}
+            </p>
+        </section>
 
         <!-- 功能开关区域 -->
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.featureControlTitle')"
                 :description="t('settings.featureControlDesc')"
                 tone="green"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                        />
-                    </svg>
+                    <SlidersHorizontal class="h-4 w-4" />
                 </template>
             </SectionHeader>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="divide-y divide-zinc-800/60">
                 <!-- 订阅自动更新间隔 -->
-                <div
-                    class="p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                >
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                <div class="py-5 first:pt-0 last:pb-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.autoUpdateInterval') }}
                             </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.autoUpdateDesc') }}
                             </p>
                         </div>
-                    </div>
-                    <div class="mt-3 flex flex-wrap gap-3">
-                        <div class="flex items-center gap-2">
-                            <input
-                                type="number"
-                                :value="
-                                    ![0, 30, 60, 120].includes(settings.autoUpdateInterval)
-                                        ? settings.autoUpdateInterval
-                                        : ''
-                                "
-                                @input="
-                                    (e) => {
-                                        const v = parseInt(e.target.value);
-                                        if (v >= 5) settings.autoUpdateInterval = v;
-                                    }
-                                "
-                                :placeholder="t('settings.customInterval')"
-                                min="5"
-                                class="w-24 px-2.5 py-2 text-sm bg-white/70 dark:bg-black/20 border border-gray-200/80 dark:border-white/10 misub-radius-md text-gray-900 dark:text-white placeholder-gray-400 focus-visible:ring-2 focus-visible:ring-primary-500/40 focus:border-primary-500 outline-none transition-all"
-                                :aria-label="t('settings.autoUpdateInterval')"
-                            />
-                            <span class="text-xs text-gray-500 dark:text-gray-400">{{
-                                t('settings.minutes')
-                            }}</span>
+                        <div class="flex flex-wrap items-center gap-3 shrink-0">
+                            <div
+                                :class="[
+                                    'flex items-center h-8 rounded-md border bg-[#131515] px-2.5 transition-colors',
+                                    isCustomInterval
+                                        ? 'border-zinc-400 ring-1 ring-zinc-400/20'
+                                        : 'border-zinc-800 hover:border-zinc-700 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500/40',
+                                ]"
+                            >
+                                <input
+                                    type="number"
+                                    inputmode="numeric"
+                                    :value="customIntervalInput"
+                                    @input="handleCustomIntervalInput"
+                                    @blur="handleCustomIntervalBlur"
+                                    :placeholder="t('settings.customInterval')"
+                                    :min="MIN_CUSTOM_INTERVAL"
+                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-zinc-100 placeholder-zinc-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    :aria-label="t('settings.autoUpdateInterval')"
+                                />
+                                <span
+                                    class="text-[11px] text-zinc-500 select-none pl-2 ml-1 border-l border-zinc-800/80 whitespace-nowrap"
+                                >
+                                    {{ t('settings.minutes') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-zinc-500 mr-0.5 whitespace-nowrap">{{
+                                    t('settings.quickSelect')
+                                }}</span>
+                                <button
+                                    v-for="option in [
+                                        { value: 0, label: t('settings.disabledOption') },
+                                        { value: 30, label: t('settings.option30Minutes') },
+                                        { value: 60, label: t('settings.option1Hour') },
+                                    ]"
+                                    :key="option.value"
+                                    type="button"
+                                    @click="settings.autoUpdateInterval = option.value"
+                                    :aria-pressed="settings.autoUpdateInterval === option.value"
+                                    :class="[
+                                        'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                                        settings.autoUpdateInterval === option.value
+                                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
+                                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                    ]"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
                         </div>
-                        <span class="text-xs text-gray-500 dark:text-gray-400 self-center">{{
-                            t('settings.quickSelect')
-                        }}</span>
-                        <button
-                            v-for="option in [
-                                { value: 0, label: t('settings.disabledOption') },
-                                { value: 30, label: t('settings.option30Minutes') },
-                                { value: 60, label: t('settings.option1Hour') },
-                            ]"
-                            :key="option.value"
-                            @click="settings.autoUpdateInterval = option.value"
-                            :aria-pressed="settings.autoUpdateInterval === option.value"
-                            :class="[
-                                'px-3 py-2 text-xs font-medium misub-radius-md border transition-colors',
-                                settings.autoUpdateInterval === option.value
-                                    ? 'bg-primary-600 text-white border-primary-600 shadow-sm shadow-primary-500/30'
-                                    : 'bg-white/70 dark:bg-gray-800/60 text-gray-700 dark:text-gray-300 border-gray-200/70 dark:border-white/10 hover:bg-white dark:hover:bg-gray-800',
-                            ]"
-                        >
-                            {{ option.label }}
-                        </button>
                     </div>
                     <p
                         v-if="settings.autoUpdateInterval === 0"
-                        class="text-xs text-amber-600 dark:text-amber-400 mt-2"
+                        class="text-xs text-amber-400 mt-2.5 flex items-center gap-1.5"
                     >
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                         {{ t('settings.autoUpdateDisabledHint') }}
                     </p>
                 </div>
 
                 <!-- 访问日志 -->
-                <div
-                    class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
-                            {{ t('settings.accessLogTitle') }}
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {{ t('settings.accessLogDesc') }}
-                        </p>
-                        <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
-                            {{ t('settings.accessLogQuotaHint') }}
-                        </p>
+                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+                    <div class="flex items-center justify-between gap-6">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-zinc-100">
+                                {{ t('settings.accessLogTitle') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.accessLogDesc') }}
+                            </p>
+                            <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
+                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                                {{ t('settings.accessLogQuotaHint') }}
+                            </p>
+                        </div>
+                        <Switch v-model="settings.enableAccessLog" />
                     </div>
-                    <Switch v-model="settings.enableAccessLog" />
-                </div>
 
-                <div
-                    v-if="settings.enableAccessLog"
-                    class="p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg space-y-2"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
-                            {{ t('settings.accessLogMode') }}
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {{ t('settings.accessLogModeDesc') }}
-                        </p>
-                    </div>
-                    <select
-                        v-model="settings.accessLogPersistenceMode"
-                        class="block w-full px-3 py-2 bg-white/80 dark:bg-gray-900/60 border border-gray-200/80 dark:border-white/10 misub-radius-lg shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus:border-indigo-500 sm:text-sm dark:text-white transition-colors"
+                    <div
+                        v-if="settings.enableAccessLog"
+                        class="pl-4 border-l-2 border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
-                        <option value="light">{{ t('settings.accessLogLight') }}</option>
-                        <option value="full">{{ t('settings.accessLogFull') }}</option>
-                    </select>
+                        <div class="space-y-1">
+                            <p class="text-xs font-medium text-zinc-200">
+                                {{ t('settings.accessLogMode') }}
+                            </p>
+                            <p class="text-xs text-zinc-400 leading-relaxed">
+                                {{ t('settings.accessLogModeDesc') }}
+                            </p>
+                        </div>
+                        <div class="sm:w-56 shrink-0">
+                            <Select
+                                v-model="settings.accessLogPersistenceMode"
+                                :options="[
+                                    { value: 'light', label: t('settings.accessLogLight') },
+                                    { value: 'full', label: t('settings.accessLogFull') },
+                                ]"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 流量与到期时间节点 -->
-                <div
-                    class="flex items-center justify-between p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                    <div class="space-y-1">
+                        <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.trafficNodeTitle') }}
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.trafficNodeDesc') }}
                         </p>
                     </div>
@@ -440,67 +417,48 @@
                 </div>
 
                 <!-- 合并到期时间策略 -->
-                <div
-                    class="p-4 bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg space-y-2"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.mergeExpireStrategyTitle') }}
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.mergeExpireStrategyDesc') }}
                         </p>
                     </div>
-                    <select
-                        v-model="settings.mergeExpireStrategy"
-                        class="block w-full px-3 py-2 bg-white/80 dark:bg-gray-900/60 border border-gray-200/80 dark:border-white/10 misub-radius-lg shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus:border-indigo-500 sm:text-sm dark:text-white transition-colors"
-                    >
-                        <option value="max">{{ t('settings.mergeExpireMax') }}</option>
-                        <option value="min">{{ t('settings.mergeExpireMin') }}</option>
-                    </select>
+                    <div class="sm:w-56 shrink-0">
+                        <Select
+                            v-model="settings.mergeExpireStrategy"
+                            :options="[
+                                { value: 'max', label: t('settings.mergeExpireMax') },
+                                { value: 'min', label: t('settings.mergeExpireMin') },
+                            ]"
+                        />
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Web 访问控制 -->
-        <div
-            class="rounded-xl border border-gray-100/80 bg-white/90 p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/70"
-        >
+        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.webAccessTitle')"
                 :description="t('settings.webAccessDesc')"
                 tone="blue"
             >
                 <template #icon>
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                        />
-                    </svg>
+                    <Globe class="h-4 w-4" />
                 </template>
             </SectionHeader>
 
-            <div
-                class="bg-white/70 dark:bg-gray-900/50 border border-gray-200/70 dark:border-white/10 misub-radius-lg divide-y divide-gray-200/60 dark:divide-white/10 overflow-hidden"
-            >
+            <div class="divide-y divide-zinc-800/60">
                 <!-- 公开页访问 -->
-                <div
-                    class="p-4 flex items-center justify-between hover:bg-gray-50/80 dark:hover:bg-white/5 transition-colors"
-                >
-                    <div>
-                        <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+                    <div class="space-y-1">
+                        <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.publicPageAccessTitle') }}
                         </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p class="text-xs text-zinc-400 leading-relaxed">
                             {{ t('settings.publicPageAccessDesc') }}
                         </p>
                     </div>
@@ -508,81 +466,42 @@
                 </div>
 
                 <!-- 伪装页面 -->
-                <div class="p-4 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+                    <div class="flex items-center justify-between gap-6">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.disguisePageTitle') }}
                             </p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p class="text-xs text-zinc-400 leading-relaxed">
                                 {{ t('settings.disguisePageDesc') }}
                             </p>
                         </div>
                         <Switch v-model="disguiseConfig.enabled" />
                     </div>
 
-                    <!-- 自定义登录路径设置 -->
-                    <div class="pt-4 border-t border-gray-200/70 dark:border-white/10">
-                        <div class="max-w-md">
-                            <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
-                            <input
-                                type="text"
-                                name="fake_user_for_autofill"
-                                autocomplete="username"
-                                style="display: none"
-                                tabindex="-1"
-                                aria-hidden="true"
-                            />
-                            <input
-                                type="password"
-                                name="fake_pass_for_autofill"
-                                autocomplete="current-password"
-                                style="display: none"
-                                tabindex="-1"
-                                aria-hidden="true"
-                            />
-                            <Input
-                                :label="t('settings.customAdminPath')"
-                                v-model="settings.customLoginPath"
-                                :error="customLoginPathError"
-                                :placeholder="t('settings.customAdminPathPlaceholder')"
-                                prefix="/"
-                                autocomplete="off"
-                                name="custom_admin_path_setting_no_autofill"
-                                type="search"
-                            />
-                        </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {{ t('settings.customAdminPathHint') }}
-                        </p>
-                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                            {{ t('settings.reservedPathListHint') }}
-                        </p>
-                    </div>
-
                     <div
                         v-show="disguiseConfig.enabled"
-                        class="bg-white/80 dark:bg-gray-900/60 misub-radius-lg p-4 space-y-4 border border-gray-200/70 dark:border-white/10 transition-all duration-300"
+                        class="pl-4 border-l-2 border-zinc-800 space-y-4 transition-all duration-300"
                     >
                         <div>
                             <label
-                                class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 block"
+                                class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2.5 block"
                                 >{{ t('settings.disguiseStrategy') }}</label
                             >
-                            <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex flex-col sm:flex-row gap-6">
                                 <label class="flex items-center cursor-pointer group">
                                     <input
                                         type="radio"
                                         value="default"
                                         v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                                     />
-                                    <div class="ml-3">
+                                    <div class="ml-3 space-y-0.5">
                                         <span
-                                            class="block text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"
+                                            class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
                                             >{{ t('settings.disguiseDefault404') }}</span
                                         >
-                                        <span class="block text-xs text-gray-500">{{
+                                        <span class="block text-xs text-zinc-500">{{
                                             t('settings.disguiseDefault404Desc')
                                         }}</span>
                                     </div>
@@ -592,14 +511,14 @@
                                         type="radio"
                                         value="redirect"
                                         v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-indigo-600 focus-visible:ring-indigo-500 border-gray-300 dark:border-gray-600 dark:bg-gray-800"
+                                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
                                     />
-                                    <div class="ml-3">
+                                    <div class="ml-3 space-y-0.5">
                                         <span
-                                            class="block text-sm font-medium text-gray-900 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400"
+                                            class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
                                             >{{ t('settings.disguiseRedirect') }}</span
                                         >
-                                        <span class="block text-xs text-gray-500">{{
+                                        <span class="block text-xs text-zinc-500">{{
                                             t('settings.disguiseRedirectDesc')
                                         }}</span>
                                     </div>
@@ -609,39 +528,64 @@
 
                         <div
                             v-if="disguiseConfig.pageType === 'redirect'"
-                            class="animate-fade-in-down"
+                            class="animate-fade-in-down max-w-md"
                         >
-                            <div>
-                                <Input
-                                    :label="t('settings.disguiseTargetUrl')"
-                                    v-model="disguiseConfig.redirectUrl"
-                                    placeholder="www.example.com"
-                                    type="url"
-                                />
-                            </div>
+                            <Input
+                                :label="t('settings.disguiseTargetUrl')"
+                                v-model="disguiseConfig.redirectUrl"
+                                placeholder="www.example.com"
+                                type="url"
+                            />
                         </div>
 
-                        <div
-                            class="flex items-start gap-2 text-xs text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/20 p-2.5 misub-radius-md"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 flex-shrink-0 mt-0.5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                        <p class="flex items-center gap-2 text-xs text-zinc-500">
+                            <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                             <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
-                        </div>
+                        </p>
                     </div>
                 </div>
+
+                <!-- 自定义登录路径设置 -->
+                <div class="py-5 first:pt-0 last:pb-0">
+                    <div class="max-w-md">
+                        <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
+                        <input
+                            type="text"
+                            name="fake_user_for_autofill"
+                            autocomplete="username"
+                            style="display: none"
+                            tabindex="-1"
+                            aria-hidden="true"
+                        />
+                        <input
+                            type="password"
+                            name="fake_pass_for_autofill"
+                            autocomplete="current-password"
+                            style="display: none"
+                            tabindex="-1"
+                            aria-hidden="true"
+                        />
+                        <Input
+                            :label="t('settings.customAdminPath')"
+                            v-model="settings.customLoginPath"
+                            :error="customLoginPathError"
+                            :placeholder="t('settings.customAdminPathPlaceholder')"
+                            prefix="/"
+                            autocomplete="off"
+                            name="custom_admin_path_setting_no_autofill"
+                            type="search"
+                        />
+                    </div>
+                    <p class="text-xs text-zinc-500 mt-2 leading-relaxed">
+                        {{ t('settings.customAdminPathHint') }}
+                    </p>
+                    <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                        {{ t('settings.reservedPathListHint') }}
+                    </p>
+                </div>
             </div>
-        </div>
+        </section>
     </div>
 </template>
 

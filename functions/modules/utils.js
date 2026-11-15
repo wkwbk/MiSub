@@ -144,9 +144,18 @@ export async function conditionalKVPut(env, key, newData, oldData = null) {
     }
 }
 
+let fallbackCookieSecret = null;
+
+function getFallbackCookieSecret() {
+    if (!fallbackCookieSecret) {
+        fallbackCookieSecret = crypto.randomUUID();
+    }
+    return fallbackCookieSecret;
+}
+
 /**
  * 获取或生成 Cookie 加密密钥
- * 优先顺序：KV → 环境变量 COOKIE_SECRET → 随机生成（无 KV 时仅内存有效）
+ * 优先顺序：KV → 环境变量 COOKIE_SECRET → 当前实例临时密钥（无 KV 或写入失败时）
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密钥
  */
@@ -165,20 +174,86 @@ export async function getCookieSecret(env) {
             return runtimeCookieSecret;
         }
 
-        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为本次运行临时密钥
+        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为当前实例临时密钥
         const newSecret = crypto.randomUUID();
-        await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
-        return newSecret;
+        const saved = await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
+        return saved ? newSecret : getFallbackCookieSecret();
     }
 
-    // 无 KV：直接使用环境变量，无则生成临时密钥（重启后失效）
+    // 无 KV：直接使用环境变量，无则生成当前实例临时密钥（实例重启后失效）
     if (runtimeCookieSecret) return runtimeCookieSecret;
-    return crypto.randomUUID();
+    return getFallbackCookieSecret();
+}
+
+const SYSTEM_AUTH_INITIALIZED_KEY = 'SYSTEM_AUTH_INITIALIZED';
+const INITIALIZED_KV_KEYS = [
+    SYSTEM_AUTH_INITIALIZED_KEY,
+    'misub_subscriptions_v1',
+    'misub_profiles_v1',
+    'worker_settings_v1',
+];
+
+export class AdminPasswordMissingError extends Error {
+    constructor(
+        message = '管理员密码未配置：检测到实例已初始化或已有数据，但缺少 ADMIN_PASSWORD。请在平台控制台将其设置为 Secret 密钥后重试。'
+    ) {
+        super(message);
+        this.name = 'AdminPasswordMissingError';
+        this.status = 503;
+        this.code = 'ADMIN_PASSWORD_MISSING';
+    }
+}
+
+/**
+ * Check whether the instance already has initialized auth state or persisted user data.
+ * Storage read errors propagate so callers fail closed instead of falling back to defaults.
+ * @param {Object} env
+ * @returns {Promise<boolean>}
+ */
+export async function hasInitializedInstanceState(env) {
+    const kv = getKV(env);
+    if (kv) {
+        for (const key of INITIALIZED_KV_KEYS) {
+            const value = await kv.get(key);
+            if (value !== null && value !== undefined && String(value) !== '') {
+                return true;
+            }
+        }
+    }
+
+    const db = env?.MISUB_DB;
+    if (db && typeof db.prepare === 'function') {
+        for (const table of ['subscriptions', 'profiles', 'settings']) {
+            try {
+                const row = await db.prepare(`SELECT 1 AS ok FROM ${table} LIMIT 1`).first();
+                if (row) return true;
+            } catch (error) {
+                const message = String(error?.message || error || '').toLowerCase();
+                if (message.includes('no such table')) {
+                    continue;
+                }
+                throw error;
+            }
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Record that this instance has been initialized with a non-default admin password.
+ * @param {Object} env
+ * @returns {Promise<boolean>}
+ */
+export async function markAuthInitialized(env) {
+    const kv = getKV(env);
+    if (!kv) return false;
+    return safeKvPut(kv, SYSTEM_AUTH_INITIALIZED_KEY, '1');
 }
 
 /**
  * 获取管理员密码
- * 优先顺序：环境变量 ADMIN_PASSWORD → KV → 默认值 'admin'
+ * 优先顺序：环境变量 ADMIN_PASSWORD → KV → 默认值 'admin'（仅限未初始化的全新实例）
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密码
  */
@@ -192,7 +267,10 @@ export async function getAdminPassword(env) {
     if (kv) {
         const kvPassword = await getAdminPasswordFromKv(env);
         if (kvPassword) return String(kvPassword).trim();
-        return 'admin';
+    }
+
+    if (await hasInitializedInstanceState(env)) {
+        throw new AdminPasswordMissingError();
     }
 
     return 'admin';
@@ -254,8 +332,15 @@ export async function getAuthDebugInfo(env) {
  * @returns {Promise<boolean>}
  */
 export async function isUsingDefaultPassword(env) {
-    const current = await getAdminPassword(env);
-    return current === 'admin';
+    try {
+        const current = await getAdminPassword(env);
+        return current === 'admin';
+    } catch (error) {
+        if (error instanceof AdminPasswordMissingError) {
+            return false;
+        }
+        throw error;
+    }
 }
 
 /**
@@ -273,6 +358,7 @@ export async function setAdminPassword(env, newPassword) {
         throw new Error('当前部署未绑定 KV，请在平台控制台通过环境变量 ADMIN_PASSWORD 修改密码');
     }
     await kv.put('SYSTEM_ADMIN_PASSWORD', newPassword);
+    await markAuthInitialized(env);
 }
 
 export { formatBytes } from '../../src/shared/utils.js';

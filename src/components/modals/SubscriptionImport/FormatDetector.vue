@@ -6,40 +6,41 @@
 
 <template>
     <div
-        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 misub-radius-md p-3"
+        class="bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md p-3"
     >
-        <h4 class="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
+        <h4 class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
             {{ t('formatDetector.heading') }}
         </h4>
-        <ul class="text-xs text-blue-700 dark:text-blue-300 space-y-1">
+        <ul class="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
             <li>
-                • <strong>{{ t('formatDetector.base64') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.base64') }}</strong
                 >：{{ t('formatDetector.base64Desc') }}
             </li>
             <li>
-                • <strong>{{ t('formatDetector.clash') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.clash') }}</strong
                 >：{{ t('formatDetector.clashDesc') }}
             </li>
             <li>
-                • <strong>{{ t('formatDetector.singbox') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.singbox') }}</strong
                 >：{{ t('formatDetector.singboxDesc') }}
             </li>
             <li>
-                • <strong>{{ t('formatDetector.surge') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.surge') }}</strong
                 >：{{ t('formatDetector.surgeDesc') }}
             </li>
             <li>
-                • <strong>{{ t('formatDetector.quantumultx') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.quantumultx') }}</strong
                 >：{{ t('formatDetector.quantumultxDesc') }}
             </li>
             <li>
-                • <strong>{{ t('formatDetector.plainText') }}</strong
+                • <strong class="font-mono text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.plainText') }}</strong
                 >：{{ t('formatDetector.plainTextDesc') }}
             </li>
             <li>
                 •
-                <strong>{{ t('formatDetector.protocols') }}</strong
-                >：VMess、VLESS、Trojan、Shadowsocks、ShadowsocksR、Hysteria、TUIC、SOCKS5、HTTP
+                <strong class="text-zinc-800 dark:text-zinc-200">{{ t('formatDetector.protocols') }}</strong
+                >：<span class="font-mono">VMess、VLESS、Trojan、Shadowsocks、ShadowsocksR、Hysteria、TUIC、SOCKS5、HTTP</span>
             </li>
         </ul>
     </div>

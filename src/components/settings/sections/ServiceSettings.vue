@@ -13,7 +13,7 @@
 </script>
 
 <template>
-    <div class="space-y-8">
+    <div class="space-y-6">
         <TransformCard :settings="settings" />
         <DnsOverrideCard :settings="settings" />
         <TelegramCard :settings="settings" />

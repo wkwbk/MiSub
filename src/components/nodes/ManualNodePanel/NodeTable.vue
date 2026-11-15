@@ -4,8 +4,10 @@
     import ManualNodeCard from '../ManualNodeCard.vue';
     import ManualNodeList from '../ManualNodeList.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
+    import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '@/i18n/index.js';
+    import { hasDragOrderChanged } from '../../../composables/useSortingMode.js';
 
     const { t } = useI18n();
 
@@ -39,6 +41,8 @@
         'update:itemsPerPage', // Added
         'set-group-filter', // Added
         'ping',
+        'clear-search',
+        'toggle-sort',
     ]);
 
     const draggableModel = computed({
@@ -59,6 +63,12 @@
         if (p > displayTotalPages.value) p = displayTotalPages.value;
         emit('change-page', p);
     };
+
+    const handleDragEnd = (evt) => {
+        if (hasDragOrderChanged(evt)) {
+            emit('sort-end');
+        }
+    };
 </script>
 
 <template>
@@ -66,12 +76,29 @@
         <!-- 如果有搜索词，显示搜索提示 -->
         <div
             v-if="localSearchTerm && filteredNodes.length === 0"
-            class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400"
+            data-testid="manual-node-no-search-results"
+            class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
         >
-            {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
+            <p class="text-sm font-medium text-zinc-200">
+                {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
+            </p>
+            <button
+                data-testid="clear-manual-node-search"
+                type="button"
+                class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                @click="emit('clear-search')"
+            >
+                {{ t('actions.clearSearch') }}
+            </button>
         </div>
 
         <div v-if="isSorting">
+            <SortingBanner
+                :hint="t('manualNodes.sortingHint')"
+                banner-test-id="node-sorting-banner"
+                button-test-id="node-finish-sort"
+                @finish="emit('toggle-sort')"
+            />
             <!-- 排序模式保持原有扁平列表，方便跨组排序 -->
             <div v-if="viewMode === 'card'">
                 <draggable
@@ -85,11 +112,15 @@
                     v-model="draggableModel"
                     item-key="id"
                     animation="300"
-                    @end="emit('sort-end')"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
                 >
                     <template #item="{ element: node }">
-                        <div class="cursor-move">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                        >
                             <ManualNodeCard
+                                class="pointer-events-none select-none"
                                 :node="node"
                                 :is-selection-mode="isSelectionMode"
                                 :is-selected="selectedNodeIds.has(node.id)"
@@ -112,14 +143,17 @@
                     v-model="draggableModel"
                     item-key="id"
                     animation="300"
-                    @end="emit('sort-end')"
+                    ghost-class="opacity-50"
+                    @end="handleDragEnd"
                 >
                     <template #item="{ element: node, index }">
-                        <div class="cursor-move">
+                        <div
+                            class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5"
+                        >
                             <ManualNodeList
                                 :node="node"
                                 :index="index + 1"
-                                class="list-item-animation"
+                                class="list-item-animation pointer-events-none select-none"
                                 :style="{ '--delay-index': Math.min(index, 20) }"
                                 :ping-result="pingResults[node.id]"
                                 :is-pinging="pingingNodes.has(node.id)"
@@ -200,7 +234,7 @@
     </div>
     <div
         v-else
-        class="rounded-xl border border-dashed border-gray-300 bg-white/60 py-6 dark:border-gray-700 dark:bg-gray-900/50"
+        class="rounded-md border border-zinc-800 bg-[#171717] py-2"
     >
         <EmptyState
             :title="t('manualNodes.empty')"

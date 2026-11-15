@@ -68,7 +68,7 @@ export function getDashboardHealthItems({
             titleKey: 'dashboard.healthItems.missingSubscriptions.title',
             descriptionKey: 'dashboard.healthItems.missingSubscriptions.description',
             actionLabelKey: 'dashboard.healthItems.missingSubscriptions.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'missing' },
         });
     } else if (enabledSubscriptions.length === 0) {
@@ -78,7 +78,7 @@ export function getDashboardHealthItems({
             titleKey: 'dashboard.healthItems.noEnabledSubscriptions.title',
             descriptionKey: 'dashboard.healthItems.noEnabledSubscriptions.description',
             actionLabelKey: 'dashboard.healthItems.noEnabledSubscriptions.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'disabled' },
         });
     }
@@ -134,7 +134,7 @@ export function getDashboardHealthItems({
             titleKey: 'dashboard.healthItems.zeroNodes.title',
             descriptionKey: 'dashboard.healthItems.zeroNodes.description',
             actionLabelKey: 'dashboard.healthItems.zeroNodes.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'zero-nodes' },
         });
     }
@@ -147,7 +147,7 @@ export function getDashboardHealthItems({
             titleParams: { count: errorSubscriptions.length },
             descriptionKey: 'dashboard.healthItems.subscriptionErrors.description',
             actionLabelKey: 'dashboard.healthItems.subscriptionErrors.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'error' },
             secondaryActionLabelKey: 'dashboard.healthItems.subscriptionErrors.secondaryAction',
             action: 'openLog',
@@ -163,7 +163,7 @@ export function getDashboardHealthItems({
             titleParams: { count: expiredSubscriptions.length },
             descriptionKey: 'dashboard.healthItems.expiredSubscriptions.description',
             actionLabelKey: 'dashboard.healthItems.expiredSubscriptions.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'expired' },
             count: expiredSubscriptions.length,
         });
@@ -177,7 +177,7 @@ export function getDashboardHealthItems({
             titleParams: { count: lowTrafficSubscriptions.length },
             descriptionKey: 'dashboard.healthItems.lowTraffic.description',
             actionLabelKey: 'dashboard.healthItems.lowTraffic.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'low-traffic' },
             count: lowTrafficSubscriptions.length,
         });
@@ -191,7 +191,7 @@ export function getDashboardHealthItems({
             titleParams: { count: disabledSubscriptions.length },
             descriptionKey: 'dashboard.healthItems.disabledSubscriptions.description',
             actionLabelKey: 'dashboard.healthItems.disabledSubscriptions.action',
-            actionRoute: '/dashboard/subscriptions',
+            actionRoute: '/dashboard/groups',
             actionQuery: { status: 'disabled' },
             count: disabledSubscriptions.length,
         });

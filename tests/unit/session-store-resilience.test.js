@@ -147,4 +147,26 @@ describe('session store resilience', () => {
             shouldChangePassword: true,
         });
     });
+
+    it('keeps sessionState as loggedOut without switching to loading when post-login session check fails', async () => {
+        const { useSessionStore } = await import('../../src/stores/session.js');
+        const store = useSessionStore();
+        store.sessionState = 'loggedOut';
+
+        const observedStates = [];
+        apiMocks.login.mockResolvedValue({ success: true, data: {} });
+        apiMocks.fetchInitialData.mockImplementation(async () => {
+            observedStates.push(store.sessionState);
+            return {
+                success: false,
+                error: '认证失败,请重新登录',
+                errorType: 'auth',
+            };
+        });
+        apiMocks.fetchPublicConfig.mockResolvedValue({ success: true, data: {} });
+
+        await expect(store.login('admin')).rejects.toThrow();
+        expect(observedStates).toEqual(['loggedOut']);
+        expect(store.sessionState).toBe('loggedOut');
+    });
 });

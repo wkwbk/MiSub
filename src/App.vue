@@ -1,5 +1,6 @@
 <script setup>
     import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
+    import { Globe } from 'lucide-vue-next';
     import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from './components/ui/ConfirmDialog.vue';
     import { useRoute, useRouter } from 'vue-router';
@@ -122,7 +123,7 @@
         () =>
             sessionState.value !== 'loggedIn' &&
             sessionState.value !== 'loading' &&
-            !isPublicRoute.value
+            (!isPublicRoute.value || route.name === 'Entrance')
     );
 
     const showSavePrompt = computed(
@@ -268,7 +269,7 @@
 <template>
     <div
         :class="theme"
-        class="min-h-screen flex flex-col text-gray-800 dark:text-gray-200 transition-colors duration-300 bg-gray-100 dark:bg-slate-950"
+        class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-200 bg-zinc-50 dark:bg-[#131515]"
     >
         <!-- Navigation -->
         <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />
@@ -283,34 +284,48 @@
             :class="[
                 isCustomPageFullWidth
                     ? 'grow w-full min-h-[100dvh]'
-                    : 'grow w-full py-6 pb-24 md:pb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+                    : [
+                          'grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
+                          shouldCenterMain
+                              ? 'py-6 flex items-center justify-center'
+                              : 'py-6 pb-24 md:pb-6',
+                      ],
                 {
-                    'flex items-center justify-center': shouldCenterMain,
                     'ios-header-padding': showLegacyHeader,
                 },
             ]"
         >
             <div
                 v-if="sessionState === 'loading'"
-                class="flex flex-col items-center justify-center p-8 min-h-[60vh]"
+                class="flex flex-col items-center justify-center p-8 min-h-[60vh] select-none"
                 role="status"
                 aria-live="polite"
             >
-                <div class="relative mb-8">
+                <div class="relative flex items-center justify-center mb-6">
+                    <!-- Track Ring -->
                     <div
-                        class="w-16 h-16 border-4 border-primary-200 dark:border-primary-800 rounded-full animate-pulse"
+                        class="w-12 h-12 rounded-full border border-zinc-200 dark:border-zinc-800"
                     ></div>
+                    <!-- Spinning Hairline Arc -->
                     <div
-                        class="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-primary-500 rounded-full animate-spin"
+                        class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-zinc-900 dark:border-t-zinc-100 animate-spin"
                     ></div>
+                    <!-- Centered Brand Glyph -->
+                    <div
+                        class="absolute inset-0 flex items-center justify-center text-zinc-400 dark:text-zinc-500"
+                    >
+                        <Globe class="w-5 h-5" stroke-width="1.75" />
+                    </div>
                 </div>
-                <div class="flex flex-col items-center gap-3">
-                    <div
-                        class="h-6 w-32 bg-gradient-to-r from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded animate-pulse"
-                    ></div>
-                    <div
-                        class="h-4 w-24 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded animate-pulse"
-                    ></div>
+                <div class="flex flex-col items-center gap-1.5">
+                    <span
+                        class="font-display font-semibold tracking-tight text-sm text-zinc-900 dark:text-zinc-100"
+                    >
+                        MiSub
+                    </span>
+                    <span class="text-xs font-mono text-zinc-400 dark:text-zinc-500">
+                        {{ t('common.loading') }}
+                    </span>
                 </div>
             </div>
 
@@ -318,46 +333,33 @@
                 <!-- Security Banner -->
                 <div
                     v-if="isDefaultPassword"
-                    class="mb-4 px-4 py-4 bg-gradient-to-r from-red-500/90 via-red-600/90 to-red-500/90 backdrop-blur-xl text-white misub-radius-lg border border-red-400/30 shadow-lg shadow-red-500/20"
+                    class="mb-4 px-4 py-3 bg-[#171717] text-zinc-200 rounded-md border border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                 >
-                    <div class="mx-auto flex max-w-7xl items-center justify-center gap-4">
-                        <div class="relative">
-                            <div
-                                class="absolute inset-0 bg-white/30 rounded-full blur-md animate-pulse"
-                            ></div>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                                class="w-6 h-6 relative z-10"
-                            >
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                    <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
+                            <p class="text-xs sm:text-sm font-medium text-zinc-200">
+                                {{ defaultPasswordWarningMessage }}
+                            </p>
                         </div>
-                        <p class="text-sm font-medium">
-                            {{ defaultPasswordWarningMessage }}
-                        </p>
                     </div>
                 </div>
 
                 <div
                     v-if="showUpdateNotice && versionReleaseInfo"
-                    class="mb-4 rounded-lg border border-amber-200/70 bg-amber-50/90 px-4 py-3 text-amber-800 shadow-sm dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-200"
+                    class="mb-4 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-zinc-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
-                            <p class="text-sm font-semibold">
+                            <p class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
+                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                 {{
                                     t('notices.updateAvailable', {
                                         version: versionReleaseInfo.tag_name,
                                     })
                                 }}
                             </p>
-                            <p class="text-sm opacity-90">
+                            <p class="text-xs sm:text-sm text-zinc-400 font-mono">
                                 {{ t('notices.currentVersion', { version: currentVersion }) }}
                             </p>
                             <a
@@ -365,14 +367,14 @@
                                 :href="versionReleaseInfo.html_url"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="inline-flex items-center gap-2 text-sm font-medium underline underline-offset-2"
+                                class="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-medium text-zinc-200 underline decoration-zinc-600 underline-offset-4 hover:text-white"
                             >
                                 {{ t('actions.viewReleaseNotes') }}
                             </a>
                         </div>
                         <button
                             @click="showUpdateNotice = false"
-                            class="rounded-md px-2 py-1 text-sm hover:bg-amber-100/80 dark:hover:bg-white/10"
+                            class="rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
                             {{ t('actions.gotIt') }}
                         </button>

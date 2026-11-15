@@ -1,6 +1,7 @@
 <script setup>
     import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
+    import { Sun, Moon } from 'lucide-vue-next';
     import DOMPurify from 'dompurify';
     import { useThemeStore } from '../../stores/theme.js';
     import { parseCustomPageSource } from '../../utils/custom-page-source.js';
@@ -117,7 +118,7 @@
             0
         );
         const textVars = {
-            version: '2.7.0',
+            version: '2.8.0',
             title: props.config?.hero?.title1 || '',
             description: props.config?.hero?.description || '',
             profile_count: props.profiles.length,
@@ -293,7 +294,7 @@
                 >
                     <button
                         @click="themeStore.toggleTheme"
-                        class="theme-toggle-btn p-2 rounded-full border border-gray-200 dark:border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur-md shadow-sm transition-all active:scale-90"
+                        class="theme-toggle-btn p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
                         :title="
                             themeStore.theme === 'dark'
                                 ? t('common.switchToLight')
@@ -305,34 +306,14 @@
                                 : t('common.switchToDark')
                         "
                     >
-                        <svg
+                        <Sun
                             v-if="themeStore.theme === 'dark'"
-                            class="w-5 h-5 text-amber-400"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                            />
-                        </svg>
-                        <svg
+                            class="w-4 h-4 text-zinc-200"
+                        />
+                        <Moon
                             v-else
-                            class="w-5 h-5 text-indigo-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                            />
-                        </svg>
+                            class="w-4 h-4 text-zinc-700"
+                        />
                     </button>
                 </Teleport>
             </template>

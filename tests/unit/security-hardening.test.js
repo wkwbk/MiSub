@@ -697,4 +697,34 @@ describe('security hardening', () => {
         expect(text).not.toContain('debug-token-secret');
         expect(text).not.toContain('debug-node-password@server.example');
     });
+
+    it('serves /logo.png to unauthenticated requests even when disguise is enabled', async () => {
+        const env = {
+            MISUB_KV: createKv({
+                misub_settings_v1: JSON.stringify({
+                    disguise: { enabled: true, pageType: 'default' },
+                }),
+            }),
+            ASSETS: {
+                async fetch(req) {
+                    const pathname = new URL(req.url).pathname;
+                    if (pathname === '/logo.png') {
+                        return new Response('png-bytes', {
+                            status: 200,
+                            headers: { 'Content-Type': 'image/png' },
+                        });
+                    }
+                    return new Response('Not Found', { status: 404 });
+                },
+            },
+        };
+
+        const response = await onRequest({
+            request: new Request('https://example.com/logo.png'),
+            env,
+        });
+
+        expect(response.status).toBe(200);
+        expect(response.headers.get('Content-Type')).toBe('image/png');
+    });
 });

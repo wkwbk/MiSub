@@ -76,6 +76,116 @@ async function resolveNodeCountFetchCfOptions(env) {
     return {};
 }
 
+// 辅助函数：从响应头提取用户信息
+function extractUserInfo(response) {
+    const userInfoHeader = response?.headers?.get('subscription-userinfo');
+    if (userInfoHeader) {
+        const info = {};
+        userInfoHeader.split(';').forEach((part) => {
+            const [key, value] = part.trim().split('=');
+            if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
+        });
+        return info;
+    }
+    return null;
+}
+
+function decodeBase64SubscriptionText(text) {
+    let decodedText = text;
+    try {
+        const cleanedText = text.replace(/\s/g, '');
+        let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = normalized.length % 4;
+        if (padding) normalized += '='.repeat(4 - padding);
+        if (/^[A-Za-z0-9+/=]+$/.test(normalized) && normalized.length >= 20) {
+            const binaryString = atob(normalized);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            decodedText = new TextDecoder('utf-8').decode(bytes);
+        }
+    } catch {
+        /* 已经是明文 */
+    }
+    return decodedText;
+}
+
+// 辅助函数：从响应体伪节点名称中解析流量和到期信息
+// 许多机场会在节点列表中嵌入 "剩余流量：985.4 GB" / "套餐到期：2025-12-31" 等伪节点
+function extractUserInfoFromBody(decodedText) {
+    if (!decodedText) return null;
+
+    const info = {};
+    // 解析所有 URI fragment（# 后面的部分）
+    const fragments = [];
+    const lines = decodedText.split('\n');
+    for (const line of lines) {
+        const hashIdx = line.indexOf('#');
+        if (hashIdx !== -1) {
+            try {
+                fragments.push(decodeURIComponent(line.slice(hashIdx + 1).trim()));
+            } catch {
+                fragments.push(line.slice(hashIdx + 1).trim());
+            }
+        }
+    }
+    const fullText = fragments.join('\n');
+
+    // 解析剩余流量（支持多种格式）
+    const trafficPatterns = [
+        /剩余流量[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
+        /Remaining[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
+        /剩余[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
+        /Traffic[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
+    ];
+    for (const pattern of trafficPatterns) {
+        const match = fullText.match(pattern);
+        if (match) {
+            const value = parseFloat(match[1]);
+            const unit = match[2].toUpperCase();
+            const multipliers = {
+                KB: 1024,
+                MB: 1024 ** 2,
+                GB: 1024 ** 3,
+                TB: 1024 ** 4,
+            };
+            const bytes = Math.round(value * (multipliers[unit] || 1));
+            // 用 total = bytes, upload = 0, download = 0 表示剩余流量
+            info.total = bytes;
+            info.upload = 0;
+            info.download = 0;
+            break;
+        }
+    }
+
+    // 解析到期时间
+    const expirePatterns = [/(?:套餐到期|到期时间|过期时间|Expire)[：:]\s*(.+)/i];
+    for (const pattern of expirePatterns) {
+        const match = fullText.match(pattern);
+        if (match) {
+            const expireStr = match[1].trim();
+            if (/长期有效|永久|永不过期|unlimited|forever/i.test(expireStr)) {
+                // 设置一个非常远的到期时间表示长期有效
+                info.expire = Math.floor(new Date('2099-12-31').getTime() / 1000);
+            } else {
+                // 尝试解析日期
+                const dateMatch = expireStr.match(/(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})/);
+                if (dateMatch) {
+                    const ts = new Date(dateMatch[1].replace(/\//g, '-')).getTime();
+                    if (!isNaN(ts)) {
+                        info.expire = Math.floor(ts / 1000);
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    // 只有当至少解析到一项信息时才返回
+    return Object.keys(info).length > 0 ? info : null;
+}
+
 /**
  * 获取订阅节点数量和用户信息
  * @param {Object} request - HTTP请求对象
@@ -132,95 +242,6 @@ export async function handleNodeCountRequest(request, env) {
             const responses = await Promise.allSettled([trafficRequest, nodeCountRequest]);
 
             // 1. 处理流量请求的结果
-            // 辅助函数：从响应头提取用户信息
-            const extractUserInfo = (response) => {
-                const userInfoHeader = response.headers.get('subscription-userinfo');
-                if (userInfoHeader) {
-                    const info = {};
-                    userInfoHeader.split(';').forEach((part) => {
-                        const [key, value] = part.trim().split('=');
-                        if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
-                    });
-                    return info;
-                }
-                return null;
-            };
-
-            // 辅助函数：从响应体伪节点名称中解析流量和到期信息
-            // 许多机场会在节点列表中嵌入 "剩余流量：985.4 GB" / "套餐到期：2025-12-31" 等伪节点
-            const extractUserInfoFromBody = (decodedText) => {
-                if (!decodedText) return null;
-
-                const info = {};
-                // 解析所有 URI fragment（# 后面的部分）
-                const fragments = [];
-                const lines = decodedText.split('\n');
-                for (const line of lines) {
-                    const hashIdx = line.indexOf('#');
-                    if (hashIdx !== -1) {
-                        try {
-                            fragments.push(decodeURIComponent(line.slice(hashIdx + 1).trim()));
-                        } catch {
-                            fragments.push(line.slice(hashIdx + 1).trim());
-                        }
-                    }
-                }
-                const fullText = fragments.join('\n');
-
-                // 解析剩余流量（支持多种格式）
-                const trafficPatterns = [
-                    /剩余流量[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
-                    /Remaining[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
-                    /剩余[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
-                    /Traffic[：:]\s*([\d.]+)\s*(GB|MB|TB|KB)/i,
-                ];
-                for (const pattern of trafficPatterns) {
-                    const match = fullText.match(pattern);
-                    if (match) {
-                        const value = parseFloat(match[1]);
-                        const unit = match[2].toUpperCase();
-                        const multipliers = {
-                            KB: 1024,
-                            MB: 1024 ** 2,
-                            GB: 1024 ** 3,
-                            TB: 1024 ** 4,
-                        };
-                        const bytes = Math.round(value * (multipliers[unit] || 1));
-                        // 用 total = bytes, upload = 0, download = 0 表示剩余流量
-                        info.total = bytes;
-                        info.upload = 0;
-                        info.download = 0;
-                        break;
-                    }
-                }
-
-                // 解析到期时间
-                const expirePatterns = [/(?:套餐到期|到期时间|过期时间|Expire)[：:]\s*(.+)/i];
-                for (const pattern of expirePatterns) {
-                    const match = fullText.match(pattern);
-                    if (match) {
-                        const expireStr = match[1].trim();
-                        if (/长期有效|永久|永不过期|unlimited|forever/i.test(expireStr)) {
-                            // 设置一个非常远的到期时间表示长期有效
-                            info.expire = Math.floor(new Date('2099-12-31').getTime() / 1000);
-                        } else {
-                            // 尝试解析日期
-                            const dateMatch = expireStr.match(/(\d{4}[-/.]\d{1,2}[-/.]\d{1,2})/);
-                            if (dateMatch) {
-                                const ts = new Date(dateMatch[1].replace(/\//g, '-')).getTime();
-                                if (!isNaN(ts)) {
-                                    info.expire = Math.floor(ts / 1000);
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                // 只有当至少解析到一项信息时才返回
-                return Object.keys(info).length > 0 ? info : null;
-            };
-
             // 1. 处理流量请求的结果
             if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
                 const info = extractUserInfo(responses[0].value);
@@ -274,26 +295,7 @@ export async function handleNodeCountRequest(request, env) {
                     // [回退2] 如果响应头中也没有流量信息，尝试从 body 伪节点中解析
                     // 这在使用 FetchProxy（如 Vercel）时非常重要，因为代理会丢弃上游响应头
                     if (!result.userInfo) {
-                        // 需要先解码 base64（如果是 base64 编码的话）
-                        let decodedText = text;
-                        try {
-                            const cleanedText = text.replace(/\s/g, '');
-                            let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
-                            const padding = normalized.length % 4;
-                            if (padding) normalized += '='.repeat(4 - padding);
-                            if (/^[A-Za-z0-9+/=]+$/.test(normalized) && normalized.length >= 20) {
-                                const binaryString = atob(normalized);
-                                const bytes = new Uint8Array(binaryString.length);
-                                for (let i = 0; i < binaryString.length; i++) {
-                                    bytes[i] = binaryString.charCodeAt(i);
-                                }
-                                decodedText = new TextDecoder('utf-8').decode(bytes);
-                            }
-                        } catch {
-                            /* 已经是明文 */
-                        }
-
-                        const bodyInfo = extractUserInfoFromBody(decodedText);
+                        const bodyInfo = extractUserInfoFromBody(decodeBase64SubscriptionText(text));
                         if (bodyInfo) {
                             console.info(
                                 '[NodeHandler] Successfully extracted traffic info from body fake nodes (Fallback 2).'
@@ -502,7 +504,11 @@ export async function handleBatchUpdateNodesRequest(request, env) {
 
     try {
         const requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
-        const { subscriptionIds, userAgent = 'MiSub-Batch-Update/1.0' } = requestData;
+        const {
+            subscriptionIds,
+            subscriptions: providedSubscriptions,
+            userAgent = 'MiSub-Batch-Update/1.0',
+        } = requestData;
 
         // 验证必需参数
         if (!subscriptionIds || !Array.isArray(subscriptionIds) || subscriptionIds.length === 0) {
@@ -519,15 +525,29 @@ export async function handleBatchUpdateNodesRequest(request, env) {
             await StorageFactory.getStorageType(env)
         );
         const allSubscriptions = (await storageAdapter.get('misub_subscriptions_v1')) || [];
+        const subscriptionMap = new Map();
+        for (const sub of allSubscriptions) {
+            if (sub?.id) {
+                subscriptionMap.set(sub.id, sub);
+            }
+        }
+        if (Array.isArray(providedSubscriptions)) {
+            for (const sub of providedSubscriptions) {
+                if (sub?.id) {
+                    subscriptionMap.set(sub.id, {
+                        ...(subscriptionMap.get(sub.id) || {}),
+                        ...sub,
+                    });
+                }
+            }
+        }
 
         // 过滤出要更新的订阅
-        const targetSubscriptions = allSubscriptions.filter(
-            (sub) =>
-                subscriptionIds.includes(sub.id) &&
-                sub.enabled &&
-                sub.url &&
-                sub.url.startsWith('http')
-        );
+        const targetSubscriptions = subscriptionIds
+            .map((id) => subscriptionMap.get(id))
+            .filter(
+                (sub) => sub && sub.enabled && sub.url && sub.url.startsWith('http')
+            );
 
         if (targetSubscriptions.length === 0) {
             return createJsonResponse(
@@ -540,9 +560,11 @@ export async function handleBatchUpdateNodesRequest(request, env) {
 
         // 单个订阅超时时间（毫秒）
         const SINGLE_SUB_TIMEOUT = 15000;
+        const fetchCfOptions = await resolveNodeCountFetchCfOptions(env);
 
         // 并行获取所有订阅的节点（带超时）
         const updatePromises = targetSubscriptions.map(async (subscription) => {
+            let timeoutId;
             try {
                 const effectiveUserAgent =
                     (typeof subscription.customUserAgent === 'string' &&
@@ -567,12 +589,15 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                         headers: { 'User-Agent': effectiveUserAgent },
                         redirect: 'follow',
                     }),
-                    { cf: { insecureSkipVerify: true } }
+                    fetchCfOptions
                 );
 
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('请求超时')), SINGLE_SUB_TIMEOUT)
-                );
+                const timeoutPromise = new Promise((_, reject) => {
+                    timeoutId = setTimeout(
+                        () => reject(new Error('请求超时')),
+                        SINGLE_SUB_TIMEOUT
+                    );
+                });
 
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
 
@@ -581,31 +606,31 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                 }
 
                 const text = await response.text();
+                const bodyError = detectSubscriptionBodyError(text);
+                if (bodyError) {
+                    throw bodyError;
+                }
+
+                let userInfo = extractUserInfo(response);
+                if (!userInfo) {
+                    userInfo = extractUserInfoFromBody(decodeBase64SubscriptionText(text));
+                }
 
                 // 使用与预览功能相同的解码和节点统计逻辑
                 let nodeCount = 0;
                 try {
                     // 使用 parseNodeList 函数，与预览功能完全一致
-                    const parsedNodes = parseNodeList(text);
+                    const parsedNodes = parseNodeList(text, {
+                        plusAsSpace: Boolean(subscription.plusAsSpace),
+                    });
                     nodeCount = parsedNodes.length;
                 } catch (e) {
                     // 解码失败，尝试简单统计
                     console.error('Batch update decode error:', e);
                     try {
-                        const cleanedText = text.replace(/\s/g, '');
-                        const base64Regex = /^[A-Za-z0-9+\/=]+$/;
-                        if (base64Regex.test(cleanedText) && cleanedText.length >= 20) {
-                            const binaryString = atob(cleanedText);
-                            const bytes = new Uint8Array(binaryString.length);
-                            for (let i = 0; i < binaryString.length; i++) {
-                                bytes[i] = binaryString.charCodeAt(i);
-                            }
-                            const processedText = new TextDecoder('utf-8').decode(bytes);
-                            nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || [])
-                                .length;
-                        } else {
-                            nodeCount = (text.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
-                        }
+                        const processedText = decodeBase64SubscriptionText(text);
+                        nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || [])
+                            .length;
                     } catch {
                         // 如果都失败，使用原始文本进行统计
                         nodeCount = (text.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
@@ -617,6 +642,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                     subscriptionName: subscription.name,
                     success: true,
                     nodeCount,
+                    userInfo: userInfo || null,
                     error: null,
                     lastUpdated: new Date().toISOString(),
                 };
@@ -626,9 +652,12 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                     subscriptionName: subscription.name,
                     success: false,
                     nodeCount: 0,
+                    userInfo: null,
                     error: e.message,
                     lastUpdated: new Date().toISOString(),
                 };
+            } finally {
+                clearTimeout(timeoutId);
             }
         });
 

@@ -1,11 +1,15 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from 'lucide-vue-next';
     import Modal from '../forms/Modal.vue';
     import Input from '../ui/Input.vue';
     import GroupSelector from '../ui/GroupSelector.vue'; // Added
     import { useDataStore } from '../../stores/useDataStore.js';
     import { useSubscriptions } from '../../composables/useSubscriptions.js';
-    import { useBulkImportLogic, needsServerParsing } from '../../composables/useBulkImportLogic.js';
+    import {
+        useBulkImportLogic,
+        needsServerParsing,
+    } from '../../composables/useBulkImportLogic.js';
     import { useManualNodes } from '../../composables/useManualNodes.js';
     import { useI18n } from '../../i18n/index.js';
     import { parseSurgeConfig } from '../../utils/protocolConverter.js';
@@ -228,48 +232,19 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <div class="p-2 misub-radius-lg bg-indigo-500/10">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-6 w-6 text-indigo-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                        />
-                    </svg>
-                </div>
+                <Link2 class="h-5 w-5 text-zinc-400 shrink-0" />
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                    <h3 class="text-base font-semibold text-zinc-100">
                         {{ isNew ? t('manualNodes.addTitle') : t('manualNodes.editTitle') }}
                     </h3>
-                    <p
-                        v-if="!(isNew && isMultiLine)"
-                        class="mt-0.5 text-sm text-gray-500 dark:text-gray-400"
-                    >
+                    <p v-if="!(isNew && isMultiLine)" class="mt-0.5 text-xs text-zinc-400">
                         {{ t('manualNodes.modalDescription') }}
                     </p>
                     <p
                         v-if="isNew && isMultiLine"
-                        class="text-sm text-indigo-500 mt-0.5 font-medium flex items-center gap-1"
+                        class="text-xs text-zinc-300 mt-0.5 font-medium flex items-center gap-1.5"
                     >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="h-4 w-4"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                        >
-                            <path
-                                fill-rule="evenodd"
-                                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                clip-rule="evenodd"
-                            />
-                        </svg>
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                         {{ t('manualNodes.validLinksDetected', { count: validLineCount }) }}
                     </p>
                 </div>
@@ -277,7 +252,7 @@
         </template>
 
         <template #body>
-            <div class="space-y-6">
+            <div class="space-y-5">
                 <!-- 名称和颜色标签 - 两栏布局 -->
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <!-- 节点名称 -->
@@ -285,7 +260,7 @@
                         <div class="flex flex-col">
                             <label
                                 for="node-name"
-                                class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 ml-1"
+                                class="text-xs font-semibold text-zinc-400 mb-1.5"
                             >
                                 {{ t('manualNodes.nameOptional') }}
                             </label>
@@ -297,48 +272,24 @@
                                 @blur="nameFocused = false"
                             >
                                 <template #icon>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        stroke-width="2"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                        />
-                                    </svg>
+                                    <Tag class="h-4 w-4" />
                                 </template>
                             </Input>
 
                             <!-- 名称建议 -->
                             <div
                                 v-if="suggestedName && !editingNode.name"
-                                class="mt-1.5 flex items-center gap-1.5 ml-1"
+                                class="mt-1.5 flex items-center gap-1.5"
                             >
-                                <span class="text-xs text-gray-500 dark:text-gray-400">{{
+                                <span class="text-xs text-zinc-500">{{
                                     t('manualNodes.suggestion')
                                 }}</span>
                                 <button
                                     @click="applySuggestedName"
-                                    class="text-xs text-indigo-500 hover:text-indigo-600 font-medium flex items-center gap-1 hover:underline"
+                                    class="text-xs text-zinc-200 hover:text-white font-medium flex items-center gap-1 hover:underline"
                                 >
                                     {{ suggestedName }}
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        class="h-3.5 w-3.5"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
+                                    <ArrowRightCircle class="h-3.5 w-3.5" />
                                 </button>
                             </div>
                         </div>
@@ -349,7 +300,7 @@
                         <div class="flex flex-col">
                             <label
                                 for="node-group"
-                                class="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 ml-1"
+                                class="text-xs font-semibold text-zinc-400 mb-1.5"
                             >
                                 {{ t('manualNodes.groupOptional') }}
                             </label>
@@ -368,25 +319,10 @@
                          选中的文件会写入编辑框，复用既有的多行预览 + 批量导入流程。 -->
                     <div
                         v-if="isNew"
-                        class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-dashed border-indigo-300/70 dark:border-indigo-500/40 bg-indigo-50/60 dark:bg-indigo-500/10 px-3 py-2.5"
+                        class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-zinc-800 bg-transparent px-3 py-2.5"
                     >
-                        <div
-                            class="flex items-center gap-2 text-xs text-indigo-700 dark:text-indigo-300"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
-                                />
-                            </svg>
+                        <div class="flex items-center gap-2 text-xs text-zinc-300">
+                            <CloudUpload class="h-4 w-4 shrink-0 text-zinc-400" />
                             <span>{{ t('manualNodes.fileImportHint') }}</span>
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
@@ -401,14 +337,14 @@
                             />
                             <button
                                 type="button"
-                                class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                class="text-xs font-semibold text-zinc-100 hover:underline"
                                 @click="openFilePicker"
                             >
                                 {{ t('manualNodes.fileImportPick') }}
                             </button>
                             <span
                                 v-if="fileNameHint"
-                                class="text-xs text-gray-500 dark:text-gray-400 max-w-[10rem] truncate"
+                                class="font-mono text-xs text-zinc-500 max-w-[10rem] truncate"
                                 :title="fileNameHint"
                             >
                                 {{ fileNameHint }}
@@ -417,44 +353,28 @@
                     </div>
 
                     <div
-                        class="relative border misub-radius-lg transition-all duration-300 overflow-hidden bg-gray-50 dark:bg-black/20 border-gray-200 dark:border-white/10"
+                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
                         :class="[
                             urlFocused
-                                ? 'ring-2 ring-primary-500/50 border-primary-500 dark:border-primary-500'
-                                : 'hover:border-gray-300 dark:hover:border-white/20',
+                                ? 'border-zinc-600'
+                                : 'border-zinc-800 hover:border-zinc-700',
                         ]"
                     >
                         <!-- 协议检测徽章 - 显示在右上角 -->
                         <div
                             v-if="singleProtocol && !isMultiLine"
-                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm"
+                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
                         >
-                            <span
-                                class="text-xs font-bold"
-                                :class="protocolColorMap[singleProtocol.color]"
-                            >
+                            <span class="font-mono text-xs font-semibold text-zinc-200 uppercase">
                                 {{ singleProtocol.name }}
                             </span>
                         </div>
 
                         <div class="flex h-full">
                             <div
-                                class="py-3 pl-3 flex items-start text-gray-500 dark:text-gray-400 group-focus-within:text-primary-500 transition-colors pointer-events-none"
+                                class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
                             >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 mt-0.5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                    />
-                                </svg>
+                                <Link2 class="h-4 w-4 mt-0.5" />
                             </div>
                             <textarea
                                 id="node-url"
@@ -463,74 +383,54 @@
                                 @focus="urlFocused = true"
                                 @blur="urlFocused = false"
                                 @input="$emit('input-url', $event)"
-                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 dark:text-white placeholder-gray-400 text-sm font-mono resize-none py-3 pl-3 pr-20 min-h-[160px]"
+                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono resize-none py-3 pl-3 pr-20 min-h-[160px]"
                                 :placeholder="t('manualNodes.urlPlaceholder')"
                             ></textarea>
                         </div>
-
-                        <!-- Focus Glow -->
-                        <div
-                            class="absolute inset-0 misub-radius-lg pointer-events-none transition-opacity duration-300 opacity-0 group-focus-within:opacity-100 ring-1 ring-primary-500/20"
-                        ></div>
                     </div>
                 </div>
 
                 <!-- 批量导入预览 -->
                 <div v-if="isMultiLine && parsedNodes.length > 0" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <h4
-                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2"
-                        >
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 text-indigo-500"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                            >
-                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
-                                    clip-rule="evenodd"
-                                />
-                            </svg>
+                        <h4 class="text-xs font-semibold text-zinc-300 flex items-center gap-2">
+                            <ClipboardList class="h-4 w-4 text-zinc-400" />
                             {{ t('manualNodes.importPreview') }}
                         </h4>
-                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                        <span class="font-mono text-xs text-zinc-400">
                             {{ t('manualNodes.nodeCountPreview', { count: parsedNodes.length }) }}
                         </span>
                     </div>
                     <div
-                        class="max-h-48 overflow-y-auto misub-radius-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50"
+                        class="max-h-48 overflow-y-auto rounded-md border border-zinc-800 bg-[#131515] divide-y divide-zinc-800"
                     >
                         <div
                             v-for="(node, idx) in parsedNodes.slice(0, 10)"
                             :key="idx"
-                            class="flex items-center gap-3 px-3 py-2 border-b border-gray-100 dark:border-gray-700/50 last:border-b-0"
+                            class="flex items-center gap-3 px-3 py-2"
                         >
-                            <span class="text-xs text-gray-500 dark:text-gray-400 w-5 text-right">{{
+                            <span class="font-mono text-xs text-zinc-500 w-5 text-right">{{
                                 idx + 1
                             }}</span>
                             <span
                                 v-if="node.protocol"
-                                class="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
-                                :class="protocolColorMap[node.protocol.color]"
+                                class="font-mono text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-300 shrink-0"
                             >
                                 {{ node.protocol.name }}
                             </span>
                             <span
                                 v-else
-                                class="text-xs text-gray-500 dark:text-gray-400 px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 shrink-0"
+                                class="font-mono text-[10px] text-zinc-500 px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent shrink-0"
                             >
                                 {{ t('manualNodes.unknownProtocol') }}
                             </span>
-                            <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1">
+                            <span class="text-xs text-zinc-200 truncate flex-1">
                                 {{ node.name }}
                             </span>
                         </div>
                         <div
                             v-if="parsedNodes.length > 10"
-                            class="px-3 py-2 text-center text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
+                            class="px-3 py-2 text-center font-mono text-xs text-zinc-500 bg-transparent"
                         >
                             {{ t('manualNodes.moreNodes', { count: parsedNodes.length - 10 }) }}
                         </div>
@@ -545,17 +445,5 @@
     /* 移除 textarea 默认样式 */
     textarea:focus {
         outline: none;
-    }
-
-    /* 自定义滚动条 */
-    .max-h-48::-webkit-scrollbar {
-        width: 4px;
-    }
-    .max-h-48::-webkit-scrollbar-thumb {
-        background: color-mix(in srgb, var(--color-indigo-500) 30%, transparent);
-        border-radius: 2px;
-    }
-    .max-h-48::-webkit-scrollbar-thumb:hover {
-        background: color-mix(in srgb, var(--color-indigo-500) 50%, transparent);
     }
 </style>

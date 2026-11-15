@@ -5,7 +5,7 @@ import NodeActions from '../../src/components/nodes/ManualNodePanel/NodeActions.
 import { createI18n } from '../../src/i18n/index.js';
 
 describe('manual nodes labels', () => {
-    const mountNodeActions = () =>
+    const mountNodeActions = (props = {}) =>
         mount(NodeActions, {
             props: {
                 manualNodesCount: 89,
@@ -16,6 +16,7 @@ describe('manual nodes labels', () => {
                 viewMode: 'card',
                 isSorting: false,
                 isSelectionMode: false,
+                ...props,
             },
             global: {
                 plugins: [createI18n({ initialLocale: 'zh-CN' })],
@@ -35,11 +36,16 @@ describe('manual nodes labels', () => {
         expect(navItem?.name).toBe(panelTitle);
     });
 
-    it('keeps the mobile toolbar inside the viewport instead of widening the navigation layout', () => {
-        const wrapper = mountNodeActions();
+    it('keeps the mobile toolbar inside the viewport and renders the full-width search bar', () => {
+        const wrapper = mountNodeActions({
+            manualNodesCount: 24,
+            filteredNodesCount: 0,
+            searchTerm: '测试',
+        });
         const groupScroller = wrapper.get('[data-testid="manual-node-mobile-groups"]');
         const toolbarActions = wrapper.get('[data-testid="manual-node-toolbar-actions"]');
         const search = wrapper.get('[data-testid="manual-node-search"]');
+        const searchInput = search.get('input[type="text"]');
 
         expect(groupScroller.classes()).toEqual(
             expect.arrayContaining(['w-full', 'min-w-0', 'overflow-x-auto', 'md:hidden'])
@@ -47,8 +53,9 @@ describe('manual nodes labels', () => {
         expect(toolbarActions.classes()).toEqual(
             expect.arrayContaining(['w-full', 'min-w-0', 'flex-wrap', 'sm:flex-nowrap'])
         );
-        expect(search.classes()).toEqual(
-            expect.arrayContaining(['min-w-0', 'basis-full', 'sm:basis-auto'])
-        );
+        expect(toolbarActions.find('[data-testid="manual-node-search"]').exists()).toBe(false);
+        expect(search.classes()).toEqual(expect.arrayContaining(['relative', 'mt-4']));
+        expect(searchInput.attributes('type')).toBe('text');
+        expect(search.text()).toContain('0/24');
     });
 });
