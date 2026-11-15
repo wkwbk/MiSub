@@ -76,6 +76,7 @@ export const ComponentMap = {
         SettingsModal: () => import('./modals/SettingsModal.vue'),
         ProfileModal: () => import('./modals/ProfileModal.vue'),
         BulkImportModal: () => import('./modals/BulkImportModal.vue'),
+        SubscriptionBulkImportModal: () => import('./modals/SubscriptionBulkImportModal.vue'),
         SubscriptionImportModal: () => import('./modals/SubscriptionImportModal.vue'),
         NodePreviewModal: () => import('./modals/NodePreview/NodePreviewModal.vue'),
         NodePreviewContainer: () => import('./modals/NodePreview/NodePreviewContainer.vue'),

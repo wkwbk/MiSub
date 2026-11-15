@@ -5,11 +5,10 @@
     import { useDataStore } from '../stores/useDataStore.js';
     import { useSubscriptions } from '../composables/useSubscriptions.js';
     import { useAirportGroupActions } from '../composables/useAirportGroupActions.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
     import { useProfiles } from '../composables/useProfiles.js';
     import { useSortingMode } from '../composables/useSortingMode.js';
-    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js'; // Added
-    import { useBulkImportLogic } from '../composables/useBulkImportLogic.js'; // Added
+    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js';
+    import { useSubscriptionBulkImport } from '../composables/useSubscriptionBulkImport.js';
     import SubscriptionPanel from '../components/subscriptions/SubscriptionPanel.vue';
     import Modal from '../components/forms/Modal.vue';
     import SubscriptionEditModal from '../components/modals/SubscriptionEditModal.vue';
@@ -51,8 +50,6 @@
         reorderSubscriptions,
     } = useSubscriptions(markDirty);
 
-    const { addNodesFromBulk } = useManualNodes(markDirty);
-
     const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
 
     // Composables
@@ -65,10 +62,11 @@
         handleSave: handleSaveSubscription,
     } = useSubscriptionForms({ addSubscription, updateSubscription });
 
-    const { showModal: showBulkImportModal, handleBulkImport } = useBulkImportLogic({
-        addSubscriptionsFromBulk,
-        addNodesFromBulk,
-    });
+    const { showModal: showBulkImportModal, handleSubscriptionBulkImport } =
+        useSubscriptionBulkImport({
+            addSubscriptionsFromBulk,
+            updateSubscription,
+        });
 
     const openBulkImportModal = () => {
         showBulkImportModal.value = true;
@@ -134,9 +132,9 @@
         }
     };
 
-    // Bulk Import Logic
-    const BulkImportModal = defineAsyncComponent(
-        () => import('../components/modals/BulkImportModal.vue')
+    // Subscription Bulk Import Logic
+    const SubscriptionBulkImportModal = defineAsyncComponent(
+        () => import('../components/modals/SubscriptionBulkImportModal.vue')
     );
 
     // QRCode
@@ -262,12 +260,11 @@
             >
         </Modal>
 
-        <BulkImportModal
+        <SubscriptionBulkImportModal
             v-if="showBulkImportModal"
             :show="showBulkImportModal"
             @update:show="showBulkImportModal = $event"
-            @import="(txt, tag) => handleBulkImport(txt, tag)"
-            @files-imported="(nodes, group) => addNodesFromBulk(nodes, group)"
+            @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
         />
 
         <NodePreviewModal

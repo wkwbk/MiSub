@@ -7,14 +7,31 @@
     });
     import Input from '../../ui/Input.vue';
     import Switch from '../../ui/Switch.vue';
-    import { ref, watch } from 'vue';
+    import GroupSelector from '../../ui/GroupSelector.vue';
+    import { computed, ref, watch } from 'vue';
     import { Loader2, Zap } from 'lucide-vue-next';
     import { fetchNodeCount } from '../../../lib/api.js';
+    import { useDataStore } from '../../../stores/useDataStore.js';
+    import { extractAirportGroupNames } from '../../../composables/useSubscriptionBulkImport.js';
     import { useToastStore } from '../../../stores/toast.js';
     import { useI18n } from '../../../i18n/index.js';
 
     const { showToast } = useToastStore();
+    const dataStore = useDataStore();
     const { t } = useI18n();
+
+    const airportGroupNames = computed(() =>
+        extractAirportGroupNames(dataStore.subscriptions || [])
+    );
+
+    const selectedAirportGroup = computed({
+        get: () => props.editingSubscription?.airportIdentity?.name || '',
+        set: (val) => {
+            if (!props.editingSubscription) return;
+            const trimmed = String(val || '').trim();
+            props.editingSubscription.airportIdentity = trimmed ? { name: trimmed } : null;
+        },
+    });
 
     // 使用独立的本地状态，防止用户清空输入框时开关自动跳回关闭状态
     const useFetchProxy = ref(false);
@@ -86,6 +103,18 @@
             :label="t('subscriptions.urlLabel')"
             placeholder="https://..."
             class="font-mono"
+        />
+    </div>
+
+    <!-- 机场分组 (可选) -->
+    <div>
+        <label class="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1.5">
+            {{ t('subscriptionBulkImport.groupLabel') }}
+        </label>
+        <GroupSelector
+            v-model="selectedAirportGroup"
+            :groups="airportGroupNames"
+            :placeholder="t('subscriptionBulkImport.groupPlaceholder')"
         />
     </div>
 

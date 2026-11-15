@@ -11,6 +11,7 @@
     import { useSubscriptionForms } from '../../../composables/useSubscriptionForms.js';
     import { useNodeForms } from '../../../composables/useNodeForms.js';
     import { useBulkImportLogic } from '../../../composables/useBulkImportLogic.js';
+    import { useSubscriptionBulkImport } from '../../../composables/useSubscriptionBulkImport.js';
     import { useBackupLogic } from '../../../composables/useBackupLogic.js';
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
@@ -31,6 +32,9 @@
 
     const SettingsModal = defineAsyncComponent(() => import('../../modals/SettingsModal.vue'));
     const BulkImportModal = defineAsyncComponent(() => import('../../modals/BulkImportModal.vue'));
+    const SubscriptionBulkImportModal = defineAsyncComponent(
+        () => import('../../modals/SubscriptionBulkImportModal.vue')
+    );
     const ProfileModal = defineAsyncComponent(() => import('../../modals/ProfileModal.vue'));
     const SubscriptionImportModal = defineAsyncComponent(
         () => import('../../modals/SubscriptionImportModal.vue')
@@ -230,6 +234,12 @@
         addSubscriptionsFromBulk,
         addNodesFromBulk,
     });
+
+    const { showModal: showSubBulkImportModal, handleSubscriptionBulkImport } =
+        useSubscriptionBulkImport({
+            addSubscriptionsFromBulk,
+            updateSubscription,
+        });
 
     // 使用备份 composable
     const { exportBackup, importBackup } = useBackupLogic();
@@ -539,7 +549,7 @@
                     @preview="handlePreviewSubscription"
                     @reorder="reorderSubscriptions"
                     @qrcode="(id) => handleQRCode(id, 'subscription')"
-                    @import="showBulkImportModal = true"
+                    @import="showSubBulkImportModal = true"
                 />
 
                 <!-- Manual Node Panel -->
@@ -628,6 +638,10 @@
     <BulkImportModal
         v-model:show="showBulkImportModal"
         @import="(txt, tag) => handleBulkImport(txt, tag)"
+    />
+    <SubscriptionBulkImportModal
+        v-model:show="showSubBulkImportModal"
+        @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
     />
     <LogModal v-model:show="showLogModal" />
     <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup"

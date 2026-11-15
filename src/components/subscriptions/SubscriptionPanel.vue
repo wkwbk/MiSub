@@ -302,9 +302,16 @@
         }));
     });
 
-    /** 只有多条目站点才值得折叠；单条目站点直接平铺，避免多余的展开操作。 */
+    const isExplicitAirportGroup = (group) =>
+        (group?.items || []).some((item) =>
+            Boolean(String(item?.airportIdentity?.groupId || '').trim())
+        );
+
+    /** 多条目站点，或用户显式创建的机场分组（即使只有 1 条订阅），都以分组卡片展示。 */
+    const isGroupedCard = (group) => group.items.length > 1 || isExplicitAirportGroup(group);
+
     const collapsibleGroups = computed(() =>
-        groupedSubscriptions.value.filter((g) => g.items.length > 1)
+        groupedSubscriptions.value.filter(isGroupedCard)
     );
 
     const pageSubscriptionIds = computed(
@@ -319,7 +326,7 @@
     );
 
     const ungroupedAllSubscriptions = computed(() =>
-        groupedSubscriptions.value.filter((g) => g.items.length === 1).flatMap((g) => g.items)
+        groupedSubscriptions.value.filter((g) => !isGroupedCard(g)).flatMap((g) => g.items)
     );
 
     const draggableGroups = computed({
@@ -352,10 +359,10 @@
         ]);
     };
 
-    /** 单条目站点仅在当前页平铺展示。 */
+    /** 未显式分组的单条目站点仅在当前页平铺展示。 */
     const ungroupedSubscriptions = computed(() =>
         groupedSubscriptions.value
-            .filter((g) => g.items.length === 1 && pageSubscriptionIds.value.has(g.items[0].id))
+            .filter((g) => !isGroupedCard(g) && pageSubscriptionIds.value.has(g.items[0].id))
             .flatMap((g) => g.items)
     );
 
