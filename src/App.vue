@@ -2,7 +2,9 @@
     import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
     import { Globe } from '@lucide/vue';
     import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
+    import RouteProgressBar from '@/components/ui/RouteProgressBar.vue';
     import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+    import { useRouteLoading } from '@/composables/useRouteLoading.js';
     import { useRoute, useRouter } from 'vue-router';
     import { useThemeStore } from '@/stores/theme';
     import { useSessionStore } from '@/stores/session';
@@ -37,6 +39,7 @@
 
     const route = useRoute();
     const router = useRouter();
+    const { isNavigating, progress, isFadingOut, showSlowIndicator } = useRouteLoading(router);
     const { t, locale } = useI18n();
     const themeStore = useThemeStore();
     const { theme } = storeToRefs(themeStore);
@@ -271,6 +274,13 @@
         :class="theme"
         class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-200 bg-zinc-50 dark:bg-[#131515]"
     >
+        <RouteProgressBar
+            :is-navigating="isNavigating"
+            :progress="progress"
+            :is-fading-out="isFadingOut"
+            :show-slow-indicator="showSlowIndicator"
+        />
+
         <!-- Navigation -->
         <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />
         <Header
@@ -390,12 +400,15 @@
                     @discard="handleDiscard"
                 />
 
-                <router-view v-if="layoutMode === 'modern'" v-slot="{ Component }">
-                    <transition name="fade" mode="out-in">
-                        <RouteErrorBoundary :reset-key="route.fullPath">
-                            <component :is="Component" />
-                        </RouteErrorBoundary>
-                    </transition>
+                <router-view
+                    v-if="layoutMode === 'modern'"
+                    v-slot="{ Component, route: currentRoute }"
+                >
+                    <RouteErrorBoundary :reset-key="currentRoute.fullPath">
+                        <transition name="route-fade" mode="out-in">
+                            <component :is="Component" v-if="Component" :key="currentRoute.path" />
+                        </transition>
+                    </RouteErrorBoundary>
                 </router-view>
 
                 <Dashboard v-else />
@@ -403,12 +416,12 @@
 
             <!-- PUBLIC ROUTE VIEW (Not logged in, but isPublic) -->
             <template v-else-if="isPublicRoute">
-                <router-view v-slot="{ Component }">
-                    <transition name="fade" mode="out-in">
-                        <RouteErrorBoundary :reset-key="route.fullPath">
-                            <component :is="Component" />
-                        </RouteErrorBoundary>
-                    </transition>
+                <router-view v-slot="{ Component, route: currentRoute }">
+                    <RouteErrorBoundary :reset-key="currentRoute.fullPath">
+                        <transition name="route-fade" mode="out-in">
+                            <component :is="Component" v-if="Component" :key="currentRoute.path" />
+                        </transition>
+                    </RouteErrorBoundary>
                 </router-view>
             </template>
 
@@ -451,12 +464,34 @@
 
     .fade-enter-active,
     .fade-leave-active {
-        transition: opacity 0.2s ease;
+        transition: opacity 0.15s ease;
     }
 
     .fade-enter-from,
     .fade-leave-to {
         opacity: 0;
+    }
+
+    .route-fade-enter-active {
+        transition:
+            opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .route-fade-leave-active {
+        transition:
+            opacity 0.14s ease-in,
+            transform 0.14s ease-in;
+    }
+
+    .route-fade-enter-from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    .route-fade-leave-to {
+        opacity: 0;
+        transform: translateY(-4px);
     }
 
     .slide-fade-enter-active,
