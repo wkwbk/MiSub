@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, computed } from 'vue';
+    import { computed, ref } from 'vue';
     import Modal from '@/components/forms/Modal.vue';
     import { migrateLegacyD1 } from '@/lib/api.js';
     import { useToastStore } from '@/stores/toast.js';

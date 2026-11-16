@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import LogModal from '@/components/modals/LogModal.vue';
 import QuickImportModal from '@/components/modals/QuickImportModal.vue';
 import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';

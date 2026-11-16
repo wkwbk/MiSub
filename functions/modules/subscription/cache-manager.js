@@ -1,8 +1,8 @@
 import {
-    getCache,
-    triggerBackgroundRefresh,
     createCacheHeaders,
+    getCache,
     isLikelyPartialAggregateNodeList,
+    triggerBackgroundRefresh,
 } from '../../services/node-cache-service.js';
 
 const refreshDebounce = new Map();

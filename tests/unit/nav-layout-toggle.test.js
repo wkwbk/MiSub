@@ -74,4 +74,3 @@ describe('NavActionGroup 切换布局按钮', () => {
         wrapper.unmount();
     });
 });
-

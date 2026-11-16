@@ -4,7 +4,7 @@
  * subscription/admin/cron requests happen, then executes heavy work in waitUntil.
  */
 
-import { StorageFactory, SettingsCache } from '../storage-adapter.js';
+import { SettingsCache, StorageFactory } from '../storage-adapter.js';
 import { KV_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './webdav-backup-handler.js';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-    DNS_PROXY_GROUP,
     buildSingboxDnsConfig,
+    DNS_PROXY_GROUP,
     resolveDnsPolicy,
     resolveSafeDnsConfig,
 } from '../../functions/modules/subscription/safe-dns.js';

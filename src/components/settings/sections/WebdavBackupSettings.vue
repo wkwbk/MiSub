@@ -191,15 +191,14 @@
 
 <template>
     <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-        <SectionHeader
-            :title="t('settings.webdavTitle')"
-            :description="t('settings.webdavDesc')"
-        >
+        <SectionHeader :title="t('settings.webdavTitle')" :description="t('settings.webdavDesc')">
             <template #icon>
                 <CloudDownload class="h-4 w-4" />
             </template>
             <template #actions>
-                <label class="flex items-center gap-2.5 text-xs font-medium text-zinc-200 cursor-pointer shrink-0">
+                <label
+                    class="flex items-center gap-2.5 text-xs font-medium text-zinc-200 cursor-pointer shrink-0"
+                >
                     <input
                         type="checkbox"
                         v-model="settings.webdavBackup.enabled"
@@ -260,7 +259,9 @@
                             class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
                         />
                         <span
-                            ><strong class="font-medium">{{ t('settings.webdavScopeDataOnly') }}</strong
+                            ><strong class="font-medium">{{
+                                t('settings.webdavScopeDataOnly')
+                            }}</strong
                             ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
                                 t('settings.webdavScopeDataOnlyDesc')
                             }}</span></span
@@ -274,7 +275,9 @@
                             class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
                         />
                         <span
-                            ><strong class="font-medium">{{ t('settings.webdavScopeDataAndSettings') }}</strong
+                            ><strong class="font-medium">{{
+                                t('settings.webdavScopeDataAndSettings')
+                            }}</strong
                             ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
                                 t('settings.webdavScopeDataAndSettingsDesc')
                             }}</span></span
@@ -286,9 +289,7 @@
                     <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">
                         {{ t('settings.webdavRequestAutoBackup') }}
                     </p>
-                    <label
-                        class="flex items-center gap-2.5 text-sm text-zinc-200 cursor-pointer"
-                    >
+                    <label class="flex items-center gap-2.5 text-sm text-zinc-200 cursor-pointer">
                         <input
                             type="checkbox"
                             v-model="settings.webdavBackup.autoBackup"
@@ -316,9 +317,13 @@
                 <span>{{ t('settings.webdavSecurityHint') }}</span>
             </p>
 
-            <div class="pt-6 border-t border-zinc-800/60 flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs">
+            <div
+                class="pt-6 border-t border-zinc-800/60 flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs"
+            >
                 <div class="space-y-1.5 font-mono">
-                    <p class="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                    <p
+                        class="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2"
+                    >
                         {{ t('settings.webdavRecentStatus') }}
                     </p>
                     <p class="text-zinc-400">
@@ -396,10 +401,7 @@
                 </div>
             </div>
 
-            <div
-                v-if="remoteFiles.length"
-                class="pt-6 border-t border-zinc-800/60"
-            >
+            <div v-if="remoteFiles.length" class="pt-6 border-t border-zinc-800/60">
                 <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
                     {{ t('settings.webdavRemoteFiles') }}
                 </p>

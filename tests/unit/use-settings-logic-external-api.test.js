@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 
 const { fetchSettings, saveSettings, resetSettings, showToast } = vi.hoisted(() => ({
     fetchSettings: vi.fn(),
@@ -23,8 +24,6 @@ vi.mock('@/composables/useBackupLogic.js', () => ({
         importBackup: vi.fn(),
     }),
 }));
-
-import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 
 describe('useSettingsLogic externalApi normalization', () => {
     beforeEach(() => {

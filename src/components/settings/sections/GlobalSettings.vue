@@ -101,7 +101,10 @@
                     <Select
                         v-model="settings.defaultPrefixSettings.enableManualNodes"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -114,7 +117,10 @@
                     <Select
                         v-model="settings.defaultPrefixSettings.enableSubscriptions"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -126,7 +132,10 @@
                     <Select
                         v-model="settings.enableFlagEmoji"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -154,10 +163,7 @@
                 </template>
             </SectionHeader>
 
-            <p
-                v-if="!settings.regionOverrides.length"
-                class="text-xs text-zinc-500"
-            >
+            <p v-if="!settings.regionOverrides.length" class="text-xs text-zinc-500">
                 {{ t('settings.regionOverridesEmpty') }}
             </p>
 

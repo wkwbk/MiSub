@@ -3,16 +3,15 @@
  * 将节点 URL 列表转换为基础可用的 sing-box JSON 配置。
  */
 
-import { urlToClashProxy, urlsToClashProxies } from '../../utils/url-to-clash.js';
+import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
-import { groupNodeLinesByRegion } from './region-groups.js';
 import {
-    POLICY_GROUPS,
+    DEFAULT_RELAY_GROUP,
+    DEFAULT_SELECT_GROUP,
     getBuiltinRules,
     getRemoteProviderDefinitions,
     getSingboxDnsRuleSet,
-    DEFAULT_SELECT_GROUP,
-    DEFAULT_RELAY_GROUP,
+    POLICY_GROUPS,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';

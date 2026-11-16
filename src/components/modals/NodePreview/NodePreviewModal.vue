@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
+    import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
     import { X } from '@lucide/vue';
     import { api, APIError } from '@/lib/http.js';
     import { useToastStore } from '@/stores/toast.js';
@@ -638,10 +638,7 @@
             />
 
             <!-- 节点列表 -->
-            <div
-                class="flex-1 overflow-hidden bg-transparent"
-                style="min-height: 0"
-            >
+            <div class="flex-1 overflow-hidden bg-transparent" style="min-height: 0">
                 <div class="h-full overflow-y-auto">
                     <!-- 加载状态 -->
                     <div v-if="loading" class="flex h-64 items-center justify-center">

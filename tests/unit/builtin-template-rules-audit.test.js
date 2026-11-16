@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
 import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
 import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';

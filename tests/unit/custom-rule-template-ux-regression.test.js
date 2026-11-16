@@ -85,7 +85,9 @@ describe('Custom rule template UX regressions', () => {
 
         const selectComp = wrapper.findComponent({ name: 'Select' });
         const flattenValues = (opts) =>
-            opts.flatMap((item) => (Array.isArray(item.options) ? flattenValues(item.options) : [item.value]));
+            opts.flatMap((item) =>
+                Array.isArray(item.options) ? flattenValues(item.options) : [item.value]
+            );
         const optionValues = flattenValues(selectComp.props('options'));
         expect(optionValues).toContain('custom:local-a');
         expect(optionValues).not.toContain('custom');
@@ -104,12 +106,16 @@ describe('Custom rule template UX regressions', () => {
         expect(wrapper.text()).toContain('模板变量说明');
         expect(wrapper.text()).toContain('适用于统一模板渲染。');
         expect(wrapper.text()).not.toContain('<%file_name%>');
-        expect(wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').exists()).toBe(true);
+        expect(wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').exists()).toBe(
+            true
+        );
 
         await wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').trigger('click');
 
         const helper = wrapper.text();
-        expect(wrapper.find('button[aria-expanded="true"]:not([role="combobox"])').exists()).toBe(true);
+        expect(wrapper.find('button[aria-expanded="true"]:not([role="combobox"])').exists()).toBe(
+            true
+        );
         expect(helper).toContain('<%file_name%>');
         expect(helper).toContain('<%fileName%>');
         expect(helper).toContain('<%target_format%>');

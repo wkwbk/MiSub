@@ -1,12 +1,12 @@
 <script setup>
     import { useI18n } from '@/i18n/index.js';
-
-    const { t } = useI18n();
-    import { ref, watch, nextTick } from 'vue';
+    import { nextTick, ref, watch } from 'vue';
     import { Download } from '@lucide/vue';
     import QRCode from 'qrcode';
     import Modal from '@/components/forms/Modal.vue';
     import { useToastStore } from '@/stores/toast.js';
+
+    const { t } = useI18n();
 
     const { showToast } = useToastStore();
 

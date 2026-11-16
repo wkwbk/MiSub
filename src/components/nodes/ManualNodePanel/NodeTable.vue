@@ -232,10 +232,7 @@
             @update:items-per-page="emit('update:itemsPerPage', $event)"
         />
     </div>
-    <div
-        v-else
-        class="rounded-md border border-zinc-800 bg-[#171717] py-2"
-    >
+    <div v-else class="rounded-md border border-zinc-800 bg-[#171717] py-2">
         <EmptyState
             :title="t('manualNodes.empty')"
             :description="t('manualNodes.emptyDesc')"

@@ -411,8 +411,6 @@ export function clashFix(content) {
     return content;
 }
 
-import { SYSTEM_CONSTANTS } from './config.js';
-
 /**
  * 根据客户端类型确定合适的用户代理
  * @param {string} originalUserAgent - 原始用户代理字符串

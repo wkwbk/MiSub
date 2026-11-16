@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref } from 'vue';
-    import { Zap, Boxes, Server, ClipboardList } from '@lucide/vue';
+    import { Boxes, ClipboardList, Server, Zap } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -92,10 +92,7 @@
             ]"
             style="--delay: 0ms"
             @click="
-                navigate(
-                    '/dashboard/groups',
-                    hasTrafficWarning ? { status: 'low-traffic' } : {}
-                )
+                navigate('/dashboard/groups', hasTrafficWarning ? { status: 'low-traffic' } : {})
             "
         >
             <div class="flex items-center justify-between mb-3">

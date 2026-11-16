@@ -1,6 +1,6 @@
 <script setup>
     import { storeToRefs } from 'pinia';
-    import { Sun, Moon } from '@lucide/vue';
+    import { Moon, Sun } from '@lucide/vue';
     import { useThemeStore } from '@/stores/theme.js';
     import { useI18n } from '@/i18n/index.js';
 

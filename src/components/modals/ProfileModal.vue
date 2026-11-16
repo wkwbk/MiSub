@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, watch, computed } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import { Folder } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';

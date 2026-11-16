@@ -39,4 +39,3 @@ export function collectSubscriptionGroups(subscriptions = []) {
     }
     return groups;
 }
-

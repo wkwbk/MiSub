@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
 
 const SS2022_V2RAY_PLUGIN_NODE =
@@ -78,7 +78,9 @@ describe('Built-in Sing-box generator', () => {
         const parsed = JSON.parse(result);
         const httpsNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('HttpsNode'));
         const socksNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('TlsSocks'));
-        const tlsHttpNode = parsed.outbounds.find((outbound) => outbound.tag.endsWith('TlsHttpNode'));
+        const tlsHttpNode = parsed.outbounds.find((outbound) =>
+            outbound.tag.endsWith('TlsHttpNode')
+        );
 
         expect(httpsNode?.tls?.enabled).toBe(true);
         expect(socksNode?.tls?.enabled).toBe(true);

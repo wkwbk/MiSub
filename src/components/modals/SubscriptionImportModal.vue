@@ -1,7 +1,5 @@
 <script setup>
     import { useI18n } from '@/i18n/index.js';
-
-    const { t } = useI18n();
     import { ref, watch } from 'vue';
     import { useToastStore } from '@/stores/toast.js';
     import Modal from '@/components/forms/Modal.vue';
@@ -15,6 +13,8 @@
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
     import { readFilesAsText } from '@/utils/importFile.js';
     import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+
+    const { t } = useI18n();
 
     const isDev = import.meta.env.DEV;
 
@@ -286,7 +286,9 @@
         <template #body>
             <div class="space-y-4">
                 <!-- 来源切换 -->
-                <div class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]">
+                <div
+                    class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]"
+                >
                     <button
                         type="button"
                         class="py-1.5 text-xs font-medium transition-colors"
@@ -315,9 +317,7 @@
 
                 <!-- Group Selector Added -->
                 <div class="relative">
-                    <label
-                        class="text-xs font-semibold text-zinc-400 mb-1.5 block"
-                    >
+                    <label class="text-xs font-semibold text-zinc-400 mb-1.5 block">
                         {{ t('importNodes.targetGroup') }}
                     </label>
                     <GroupSelector

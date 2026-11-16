@@ -129,11 +129,7 @@
 </script>
 
 <template>
-    <SettingsLayout
-        :class="layoutClass"
-        :hide-footer="hideFooter"
-        :in-modal="inModal"
-    >
+    <SettingsLayout :class="layoutClass" :hide-footer="hideFooter" :in-modal="inModal">
         <template #sidebar>
             <SettingsSidebar v-model:activeTab="activeTabModel" />
         </template>
@@ -209,10 +205,7 @@
                         : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
                 "
             >
-                <Loader2
-                    v-if="isSaving"
-                    class="animate-spin h-4 w-4 text-zinc-500"
-                />
+                <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-zinc-500" />
                 <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
             </button>
         </template>

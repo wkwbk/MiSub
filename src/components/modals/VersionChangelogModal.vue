@@ -1,11 +1,11 @@
 <script setup>
     import { useI18n } from '@/i18n/index.js';
-
-    const { t } = useI18n();
     import { computed } from 'vue';
     import { ExternalLink } from '@lucide/vue';
     import { useVersionStore } from '@/stores/version';
     import Modal from '@/components/forms/Modal.vue';
+
+    const { t } = useI18n();
 
     const versionStore = useVersionStore();
 

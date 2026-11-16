@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted, computed } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     import {
         ChevronDown,
         ChevronUp,
@@ -312,74 +312,74 @@
                     :key="client.id"
                     class="relative bg-transparent border border-zinc-800/80 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
                 >
-                <div class="flex items-start gap-3 min-w-0">
-                    <div
-                        class="h-11 w-11 rounded-md flex items-center justify-center text-xl shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
-                    >
-                        <img
-                            v-if="
-                                client.icon &&
-                                (client.icon.includes('/') || client.icon.startsWith('data:'))
-                            "
-                            :src="client.icon"
-                            :alt="client.name"
-                            class="w-full h-full object-cover rounded-md p-1"
-                        />
-                        <span v-else>{{ client.icon }}</span>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <h4 class="text-sm font-semibold text-zinc-100 truncate pr-1">
-                            {{ client.name }}
-                        </h4>
-                        <p class="text-xs text-zinc-500 truncate">{{ client.description }}</p>
-                        <div class="flex flex-wrap gap-1 mt-2">
-                            <span
-                                v-for="p in client.platforms"
-                                :key="p"
-                                class="px-1.5 py-0.5 text-[10px] rounded-md"
-                                :class="getPlatformClass(p)"
-                            >
-                                {{ platformOptions.find((opt) => opt.value === p)?.label || p }}
-                            </span>
+                    <div class="flex items-start gap-3 min-w-0">
+                        <div
+                            class="h-11 w-11 rounded-md flex items-center justify-center text-xl shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
+                        >
+                            <img
+                                v-if="
+                                    client.icon &&
+                                    (client.icon.includes('/') || client.icon.startsWith('data:'))
+                                "
+                                :src="client.icon"
+                                :alt="client.name"
+                                class="w-full h-full object-cover rounded-md p-1"
+                            />
+                            <span v-else>{{ client.icon }}</span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="text-sm font-semibold text-zinc-100 truncate pr-1">
+                                {{ client.name }}
+                            </h4>
+                            <p class="text-xs text-zinc-500 truncate">{{ client.description }}</p>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                                <span
+                                    v-for="p in client.platforms"
+                                    :key="p"
+                                    class="px-1.5 py-0.5 text-[10px] rounded-md"
+                                    :class="getPlatformClass(p)"
+                                >
+                                    {{ platformOptions.find((opt) => opt.value === p)?.label || p }}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div
-                    class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-zinc-800 pt-3"
-                >
-                    <button
-                        @click.stop="moveClient(index, -1)"
-                        :disabled="ordering || index === 0"
-                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                    <div
+                        class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-zinc-800 pt-3"
                     >
-                        <ChevronUp class="w-3.5 h-3.5" />
-                        <span>{{ t('actions.moveUp') }}</span>
-                    </button>
-                    <button
-                        @click.stop="moveClient(index, 1)"
-                        :disabled="ordering || index === clients.length - 1"
-                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
-                    >
-                        <ChevronDown class="w-3.5 h-3.5" />
-                        <span>{{ t('actions.moveDown') }}</span>
-                    </button>
-                    <button
-                        @click.stop="handleEdit(client)"
-                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
-                    >
-                        <SquarePen class="w-3.5 h-3.5" />
-                        <span>{{ t('actions.edit') }}</span>
-                    </button>
-                    <button
-                        @click.stop="handleDelete(client.id)"
-                        class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
-                    >
-                        <Trash2 class="w-3.5 h-3.5" />
-                        <span>{{ t('actions.delete') }}</span>
-                    </button>
+                        <button
+                            @click.stop="moveClient(index, -1)"
+                            :disabled="ordering || index === 0"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                        >
+                            <ChevronUp class="w-3.5 h-3.5" />
+                            <span>{{ t('actions.moveUp') }}</span>
+                        </button>
+                        <button
+                            @click.stop="moveClient(index, 1)"
+                            :disabled="ordering || index === clients.length - 1"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                        >
+                            <ChevronDown class="w-3.5 h-3.5" />
+                            <span>{{ t('actions.moveDown') }}</span>
+                        </button>
+                        <button
+                            @click.stop="handleEdit(client)"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
+                        >
+                            <SquarePen class="w-3.5 h-3.5" />
+                            <span>{{ t('actions.edit') }}</span>
+                        </button>
+                        <button
+                            @click.stop="handleDelete(client.id)"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
+                        >
+                            <Trash2 class="w-3.5 h-3.5" />
+                            <span>{{ t('actions.delete') }}</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
             </div>
         </section>
 

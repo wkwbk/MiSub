@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Check, Zap, Copy, Pencil, Trash2 } from '@lucide/vue';
+    import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
@@ -122,11 +122,7 @@
                                 : 'border-zinc-700 bg-transparent'
                         "
                     >
-                        <Check
-                            v-if="isSelected"
-                            class="h-3 w-3 text-zinc-900"
-                            stroke-width="3"
-                        />
+                        <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
                     </div>
                 </div>
 
@@ -134,7 +130,10 @@
                 <div
                     class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                 >
-                    <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="protocolStyle.dot"></span>
+                    <span
+                        class="h-1.5 w-1.5 rounded-full shrink-0"
+                        :class="protocolStyle.dot"
+                    ></span>
                     {{ protocolStyle.text }}
                 </div>
 
@@ -165,7 +164,8 @@
                     :class="{
                         'bg-emerald-500': pingResult.status === 'ok' && pingResult.latency < 300,
                         'bg-amber-500': pingResult.status === 'ok' && pingResult.latency >= 300,
-                        'bg-red-500': pingResult.status === 'error' || pingResult.status === 'timeout',
+                        'bg-red-500':
+                            pingResult.status === 'error' || pingResult.status === 'timeout',
                         'bg-sky-500 animate-pulse': pingResult.status === 'loading',
                     }"
                 ></span>
@@ -186,7 +186,9 @@
         </div>
 
         <!-- Bottom Row: Endpoint (Host:Port) + Quick Actions -->
-        <div class="mt-auto flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2.5">
+        <div
+            class="mt-auto flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2.5"
+        >
             <!-- Left: Endpoint -->
             <div class="min-w-0 flex-1">
                 <span

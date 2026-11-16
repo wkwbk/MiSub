@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    parseSnellUrl,
-    validateSnellNode,
     extractValidNodes,
     parseNodeList,
+    parseSnellUrl,
+    validateSnellNode,
 } from '../../functions/modules/utils/node-parser.js';
 import { parseSurgeConfig } from '@/utils/protocolConverter.js';
 

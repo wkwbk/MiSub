@@ -17,7 +17,7 @@
  * 注意 2 必须先 stripComments —— 「KV 绑定」在 storage-adapter.js 的注释里也出现过，
  * 不剥注释的话断言会被注释喂饱，服务端改了真文案测试照样绿。
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ErrorHandler } from '@/utils/errorHandler.js';

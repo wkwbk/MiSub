@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import QuickImportModal from '@/components/modals/QuickImportModal.vue';
 import { createI18n } from '@/i18n/index.js';

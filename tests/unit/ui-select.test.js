@@ -147,4 +147,3 @@ describe('Select UI component', () => {
         expect(document.body.querySelector('[role="listbox"]')).not.toBeNull();
     });
 });
-

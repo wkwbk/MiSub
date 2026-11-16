@@ -1,6 +1,6 @@
 <script setup>
-    import { ref, computed, onBeforeUnmount, nextTick, watch } from 'vue';
-    import { Folder, ChevronDown, Check } from '@lucide/vue';
+    import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+    import { Check, ChevronDown, Folder } from '@lucide/vue';
     import { t } from '@/i18n/index.js';
     import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 
@@ -163,7 +163,11 @@
             return;
         }
         if (event.key === 'Enter') {
-            if (isOpen.value && highlightedIndex.value >= 0 && filteredGroups.value[highlightedIndex.value]) {
+            if (
+                isOpen.value &&
+                highlightedIndex.value >= 0 &&
+                filteredGroups.value[highlightedIndex.value]
+            ) {
                 event.preventDefault();
                 selectGroup(filteredGroups.value[highlightedIndex.value]);
             } else {
@@ -174,7 +178,10 @@
 
     const handleDocumentPointerDown = (event) => {
         if (!isOpen.value) return;
-        if (!containerRef.value?.contains(event.target) && !popoverRef.value?.contains(event.target)) {
+        if (
+            !containerRef.value?.contains(event.target) &&
+            !popoverRef.value?.contains(event.target)
+        ) {
             close();
         }
     };

@@ -1,12 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 
 const { post } = vi.hoisted(() => ({ post: vi.fn() }));
 
 vi.mock('@/lib/http.js', () => ({ api: { post } }));
-
-import { useDataStore } from '@/stores/useDataStore.js';
-import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 
 const V2RAYN_LINK =
     'v2rayn://hysteria2/eyJDb25maWdUeXBlIjo3LCJSZW1hcmtzIjoiaHkyIiwiQWRkcmVzcyI6IjEuMi4zLjQiLCJQb3J0Ijo4ODgzLCJQYXNzd29yZCI6InB3ZCJ9';
@@ -75,5 +74,4 @@ describe('批量导入：v2rayn:// 需要走后端解析', () => {
         expect(post).toHaveBeenCalledTimes(1);
         expect(addedNodes[0].url).toBe(CONVERTED_URI);
     });
-
 });

@@ -1,7 +1,7 @@
 /** * Dashboard 主容器组件 * @author MiSub Team */
 
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue';
+    import { onMounted, onUnmounted, ref } from 'vue';
     import { saveMisubs } from '@/lib/api.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useUIStore } from '@/stores/ui.js';

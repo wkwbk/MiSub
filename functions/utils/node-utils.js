@@ -4,7 +4,7 @@
  */
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
-import { extractNodeRegion, getRegionEmoji } from '../modules/utils/geo-utils.js';
+import { extractNodeRegion } from '../modules/utils/geo-utils.js';
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
 
 /**

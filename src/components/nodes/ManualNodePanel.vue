@@ -1,12 +1,12 @@
 <script setup>
-    import { ref, computed, nextTick } from 'vue';
+    import { computed, nextTick, ref } from 'vue';
     import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
     import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
     import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
     import {
-        normalizeManualNodeGroupName,
         DEFAULT_GROUP_KEY,
+        normalizeManualNodeGroupName,
     } from '@/composables/manual-nodes/groups.js';
 
     const props = defineProps({

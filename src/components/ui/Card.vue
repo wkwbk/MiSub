@@ -1,15 +1,15 @@
 <script setup>
     import { computed, ref } from 'vue';
     import {
-        Lock,
         ExternalLink,
         Eye,
-        QrCode,
-        Pencil,
-        Trash2,
         Link2,
-        RefreshCw,
+        Lock,
         MessageSquare,
+        Pencil,
+        QrCode,
+        RefreshCw,
+        Trash2,
     } from '@lucide/vue';
     import { formatBytes } from '@/lib/utils.js';
     import { inferAirportRootDomain } from '@/utils/airport-domain.js';
@@ -280,68 +280,61 @@
                 {{ misub.name || t('subscriptions.unnamed') }}
             </h3>
 
-        <div
-            v-if="
-                rootDomain ||
-                (effectiveDetectedName && effectiveDetectedName !== misub.name)
-            "
-            class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400"
-        >
-            <!-- 机场主域名：可点击访问官网 -->
-            <a
-                v-if="rootDomain"
-                :href="`https://${rootDomain}`"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="inline-flex min-w-0 items-center gap-1 font-mono text-zinc-400 hover:text-zinc-200"
-                :title="t('subscriptions.visitSite', { domain: rootDomain })"
-                @click.stop
+            <div
+                v-if="rootDomain || (effectiveDetectedName && effectiveDetectedName !== misub.name)"
+                class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400"
             >
-                <ExternalLink class="h-3 w-3 shrink-0" />
-                <span class="truncate">{{ rootDomain }}</span>
-            </a>
-            <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
-            <template
-                v-if="effectiveDetectedName && effectiveDetectedName !== misub.name"
-            >
-                <span v-if="rootDomain" class="text-zinc-600" aria-hidden="true">·</span>
-                <div
-                    class="inline-flex min-w-0 items-center gap-1 text-zinc-400"
-                    :title="t('subscriptions.detectedNameHint')"
+                <!-- 机场主域名：可点击访问官网 -->
+                <a
+                    v-if="rootDomain"
+                    :href="`https://${rootDomain}`"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-w-0 items-center gap-1 font-mono text-zinc-400 hover:text-zinc-200"
+                    :title="t('subscriptions.visitSite', { domain: rootDomain })"
+                    @click.stop
                 >
-                    <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
-                    <span class="truncate">{{ effectiveDetectedName }}</span>
+                    <ExternalLink class="h-3 w-3 shrink-0" />
+                    <span class="truncate">{{ rootDomain }}</span>
+                </a>
+                <!-- 机场识别结果：优先响应头自报名称，其次官网标题。仅作提示，不覆盖用户命名。 -->
+                <template v-if="effectiveDetectedName && effectiveDetectedName !== misub.name">
+                    <span v-if="rootDomain" class="text-zinc-600" aria-hidden="true">·</span>
+                    <div
+                        class="inline-flex min-w-0 items-center gap-1 text-zinc-400"
+                        :title="t('subscriptions.detectedNameHint')"
+                    >
+                        <Lock class="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span class="truncate">{{ effectiveDetectedName }}</span>
+                        <button
+                            type="button"
+                            class="shrink-0 font-medium text-zinc-200 hover:text-white underline underline-offset-2"
+                            :title="t('subscriptions.applyDetectedName')"
+                            @click.stop="emit('applyDetectedName', effectiveDetectedName)"
+                        >
+                            {{ t('subscriptions.applyDetectedNameShort') }}
+                        </button>
+                    </div>
+                </template>
+                <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
+                <template v-else-if="rootDomain && !localDetectedName">
+                    <span class="text-zinc-600" aria-hidden="true">·</span>
                     <button
                         type="button"
-                        class="shrink-0 font-medium text-zinc-200 hover:text-white underline underline-offset-2"
-                        :title="t('subscriptions.applyDetectedName')"
-                        @click.stop="emit('applyDetectedName', effectiveDetectedName)"
+                        class="shrink-0 text-zinc-500 hover:text-zinc-200 transition-colors"
+                        :disabled="detecting"
+                        :title="t('subscriptions.detectNameHint')"
+                        @click.stop="handleDetect"
                     >
-                        {{ t('subscriptions.applyDetectedNameShort') }}
+                        {{
+                            detecting ? t('subscriptions.detecting') : t('subscriptions.detectName')
+                        }}
                     </button>
-                </div>
-            </template>
-            <!-- 未识别到名称时：提供手动触发识别（抓官网标题），按需请求 -->
-            <template v-else-if="rootDomain && !localDetectedName">
-                <span class="text-zinc-600" aria-hidden="true">·</span>
-                <button
-                    type="button"
-                    class="shrink-0 text-zinc-500 hover:text-zinc-200 transition-colors"
-                    :disabled="detecting"
-                    :title="t('subscriptions.detectNameHint')"
-                    @click.stop="handleDetect"
-                >
-                    {{
-                        detecting
-                            ? t('subscriptions.detecting')
-                            : t('subscriptions.detectName')
-                    }}
-                </button>
-            </template>
-        </div>
+                </template>
+            </div>
 
-        <!-- URL Display -->
-        <div class="relative mt-3 mb-3">
+            <!-- URL Display -->
+            <div class="relative mt-3 mb-3">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Link2 class="h-3.5 w-3.5 text-zinc-500" />
                 </div>
@@ -354,9 +347,7 @@
                 />
             </div>
 
-            <div
-                class="grid gap-3 rounded-md border border-zinc-800 bg-transparent p-3"
-            >
+            <div class="grid gap-3 rounded-md border border-zinc-800 bg-transparent p-3">
                 <div v-if="trafficInfo" class="space-y-2">
                     <div class="flex items-end justify-between text-xs">
                         <span class="text-zinc-400"
@@ -365,13 +356,9 @@
                                 trafficInfo.used
                             }}</span></span
                         >
-                        <span class="font-mono text-zinc-400">{{
-                            trafficInfo.total
-                        }}</span>
+                        <span class="font-mono text-zinc-400">{{ trafficInfo.total }}</span>
                     </div>
-                    <div
-                        class="h-1 w-full overflow-hidden rounded-none bg-zinc-800"
-                    >
+                    <div class="h-1 w-full overflow-hidden rounded-none bg-zinc-800">
                         <div
                             class="h-full bg-zinc-100 transition-all duration-500"
                             :style="{ width: trafficInfo.percentage + '%' }"
@@ -382,9 +369,7 @@
                     {{ t('subscriptions.noTrafficData') }}
                 </div>
                 <div class="flex items-center justify-between text-xs">
-                    <span class="text-zinc-400">{{
-                        t('subscriptions.nodeCountLabel')
-                    }}</span>
+                    <span class="text-zinc-400">{{ t('subscriptions.nodeCountLabel') }}</span>
                     <span class="font-mono font-semibold text-zinc-200">
                         {{
                             misub.isUpdating
@@ -396,9 +381,7 @@
             </div>
 
             <!-- Footer Actions -->
-            <div
-                class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3"
-            >
+            <div class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
                 <Switch
                     v-model="misub.enabled"
                     :label="misub.enabled ? t('common.enabled') : t('common.disabled')"

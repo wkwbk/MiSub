@@ -1,4 +1,4 @@
-import { StorageFactory, STORAGE_TYPES } from '../storage-adapter.js';
+import { STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
 
 const DEFAULT_EXTERNAL_NODES_TTL_SECONDS = 120;
 const DEFAULT_MAX_INLINE_URL_LENGTH = 6000;

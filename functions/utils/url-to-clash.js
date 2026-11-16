@@ -4,7 +4,7 @@
 
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
 import { isLocalProxyEndpoint } from './node-utils.js';
-import { parseXhttpExtra, applyDownloadInheritanceGuard } from './xhttp-extra.js';
+import { applyDownloadInheritanceGuard, parseXhttpExtra } from './xhttp-extra.js';
 
 const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
 
@@ -1493,7 +1493,9 @@ export function urlToClashProxy(url) {
             const beforeHash = hashIndex < 0 ? body : body.slice(0, hashIndex);
             const queryIndex = beforeHash.indexOf('?');
             const authority = queryIndex < 0 ? beforeHash : beforeHash.slice(0, queryIndex);
-            const query = new URLSearchParams(queryIndex < 0 ? '' : beforeHash.slice(queryIndex + 1));
+            const query = new URLSearchParams(
+                queryIndex < 0 ? '' : beforeHash.slice(queryIndex + 1)
+            );
             let server;
             let port;
             if (authority.startsWith('[')) {
@@ -1505,12 +1507,21 @@ export function urlToClashProxy(url) {
                 server = authority.slice(0, split);
                 port = Number(authority.slice(split + 1));
             }
-            const proxy = { name: extractName(url) || `Mieru-${server}`, type: 'mieru', server, port };
-            for (const key of ['username', 'password', 'transport', 'handshake-mode', 'profile']) if (query.has(key)) proxy[key] = query.get(key);
-            for (const key of ['udp', 'multiplexing']) if (query.has(key)) proxy[key] = query.get(key) === 'true';
+            const proxy = {
+                name: extractName(url) || `Mieru-${server}`,
+                type: 'mieru',
+                server,
+                port,
+            };
+            for (const key of ['username', 'password', 'transport', 'handshake-mode', 'profile'])
+                if (query.has(key)) proxy[key] = query.get(key);
+            for (const key of ['udp', 'multiplexing'])
+                if (query.has(key)) proxy[key] = query.get(key) === 'true';
             if (query.has('mtu')) proxy.mtu = Number(query.get('mtu'));
             return proxy;
-        } catch { return null; }
+        } catch {
+            return null;
+        }
     }
 
     const lowerUrl = url.toLowerCase();

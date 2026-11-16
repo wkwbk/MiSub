@@ -69,7 +69,9 @@
 
                         <!-- 消息内容 -->
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium text-zinc-200 leading-relaxed break-words">
+                            <p
+                                class="text-xs font-medium text-zinc-200 leading-relaxed break-words"
+                            >
                                 {{ toast.message }}
                             </p>
                         </div>

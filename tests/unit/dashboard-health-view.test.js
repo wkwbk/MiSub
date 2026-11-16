@@ -3,6 +3,12 @@ import { createPinia, setActivePinia } from 'pinia';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { computed } from 'vue';
+import DashboardView from '@/views/DashboardView.vue';
+import { createI18n } from '@/i18n/index.js';
+import { messages } from '@/i18n/messages.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useSettingsStore } from '@/stores/settings.js';
+import { useToastStore } from '@/stores/toast.js';
 
 const pushMock = vi.fn();
 
@@ -48,12 +54,6 @@ vi.mock('@/composables/useManualNodes.js', () => ({
         addNodesFromBulk: vi.fn(),
     }),
 }));
-import DashboardView from '@/views/DashboardView.vue';
-import { createI18n } from '@/i18n/index.js';
-import { messages } from '@/i18n/messages.js';
-import { useDataStore } from '@/stores/useDataStore.js';
-import { useSettingsStore } from '@/stores/settings.js';
-import { useToastStore } from '@/stores/toast.js';
 
 function mountDashboard(locale = 'zh-CN') {
     return mount(DashboardView, {

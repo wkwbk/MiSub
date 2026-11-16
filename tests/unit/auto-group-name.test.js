@@ -1,9 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-    buildAutoGroupName,
-    groupNameFromFile,
-    groupNameFromTime,
-} from '@/utils/auto-group-name.js';
+import { describe, expect, it } from 'vitest';
+import { buildAutoGroupName, groupNameFromFile, groupNameFromTime, } from '@/utils/auto-group-name.js';
 
 /**
  * 自动分组命名测试。

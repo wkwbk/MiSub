@@ -1,6 +1,6 @@
 <script setup>
     import { nextTick, onMounted, ref } from 'vue';
-    import { Globe, Lock, AlertCircle, EyeOff, Eye, ArrowLeft } from '@lucide/vue';
+    import { AlertCircle, ArrowLeft, Eye, EyeOff, Globe, Lock } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import Button from '@/components/ui/Button.vue';
 
@@ -54,9 +54,7 @@
         >
             <div class="flex flex-col items-center relative z-10">
                 <div class="w-16 h-16 mb-6 relative group cursor-default">
-                    <div
-                        class="w-full h-full flex items-center justify-center relative z-10"
-                    >
+                    <div class="w-full h-full flex items-center justify-center relative z-10">
                         <img
                             v-if="!logoFailed"
                             width="64"
@@ -76,9 +74,7 @@
                 </div>
 
                 <div class="text-center mb-8">
-                    <h1
-                        class="text-xl font-semibold text-zinc-100 mb-1.5 tracking-tight"
-                    >
+                    <h1 class="text-xl font-semibold text-zinc-100 mb-1.5 tracking-tight">
                         {{ t('login.welcomeBack') }}
                     </h1>
                     <p class="text-xs text-zinc-400">

@@ -4,11 +4,11 @@
     import { storeToRefs } from 'pinia';
     import {
         Compass,
-        MessageSquare,
-        Settings,
         LayoutGrid,
         LayoutPanelTop,
         LogOut,
+        MessageSquare,
+        Settings,
     } from '@lucide/vue';
     import ThemeToggle from '@/components/features/ThemeToggle.vue';
     import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';

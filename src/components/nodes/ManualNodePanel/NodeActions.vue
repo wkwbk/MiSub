@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Search, LayoutGrid, List, X } from '@lucide/vue';
+    import { LayoutGrid, List, Search, X } from '@lucide/vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import { useI18n } from '@/i18n/index.js';
     import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
@@ -65,9 +65,7 @@
 </script>
 
 <template>
-    <div
-        class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
-    >
+    <div class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none">
         <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="min-w-0 flex-1">
                 <div class="flex min-w-0 flex-wrap items-center gap-3">

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import GuestbookModal from '@/components/modals/GuestbookModal.vue';
 import { setLocale } from '@/i18n/index.js';

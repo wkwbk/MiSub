@@ -3,36 +3,35 @@
  * 处理各种API请求
  */
 
-import { StorageFactory, SettingsCache, STORAGE_TYPES } from '../storage-adapter.js';
+import { SettingsCache, STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
 import {
-    getCookieSecret,
-    getAdminPassword,
-    setAdminPassword,
-    isUsingDefaultPassword,
-    createJsonResponse,
     createErrorResponse,
-    migrateProfileIds,
+    createJsonResponse,
+    isUsingDefaultPassword,
     JSON_BODY_LIMITS,
+    migrateProfileIds,
     readJsonWithLimit,
+    setAdminPassword,
 } from './utils.js';
-import {
-    authMiddleware,
-    handleLogin,
-    handleLogout,
-    createUnauthorizedResponse,
-} from './auth-middleware.js';
-import { sendTgNotification, checkAndNotify } from './notifications.js';
+import { checkAndNotify, sendTgNotification } from './notifications.js';
 import { clearAllNodeCaches } from '../services/node-cache-service.js';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import {
-    KV_KEY_SUBS,
+    DEFAULT_SETTINGS as defaultSettings,
     KV_KEY_PROFILES,
     KV_KEY_SETTINGS,
-    DEFAULT_SETTINGS as defaultSettings,
+    KV_KEY_SUBS,
 } from './config.js';
 import { listRuleTemplates } from './rule-template-handler.js';
+/**
+ * 处理订阅和配置保存API
+ * @param {Object} request - HTTP请求对象
+ * @param {Object} env - Cloudflare环境对象
+ * @returns {Promise<Response>} HTTP响应
+ */
+import { applyPatch } from './patch-utils.js';
 
 const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
@@ -243,14 +242,6 @@ export async function handleDataRequest(env, context = null) {
         return createErrorResponse(e, 500);
     }
 }
-
-/**
- * 处理订阅和配置保存API
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-import { applyPatch } from './patch-utils.js';
 
 // ... (existing imports)
 

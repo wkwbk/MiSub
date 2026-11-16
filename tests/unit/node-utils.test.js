@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { addFlagEmoji, prependNodeName } from '../../functions/utils/node-utils.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';

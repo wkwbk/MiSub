@@ -3,7 +3,15 @@
  * 测试各种协议的转换功能
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+// 导入被测试模块
+import {
+    convertClashProxyToUrl,
+    parseClientConfig,
+    parseLoonConfig,
+    parseQuantumultXConfig,
+    parseSurgeConfig,
+} from '@/utils/protocolConverter.js';
 
 // 创建mock crypto.randomUUID (在Node环境下可能不存在)
 vi.stubGlobal('crypto', {
@@ -13,15 +21,6 @@ vi.stubGlobal('crypto', {
 // Mock btoa/atob for Node environment
 vi.stubGlobal('btoa', (str) => Buffer.from(str).toString('base64'));
 vi.stubGlobal('atob', (str) => Buffer.from(str, 'base64').toString());
-
-// 导入被测试模块
-import {
-    convertClashProxyToUrl,
-    parseClientConfig,
-    parseLoonConfig,
-    parseSurgeConfig,
-    parseQuantumultXConfig,
-} from '@/utils/protocolConverter.js';
 
 describe('protocolConverter', () => {
     describe('convertClashProxyToUrl', () => {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-    resolveSubscriptionStatusFilter,
-    matchesSubscriptionStatus,
-    getSubscriptionTrafficState,
-    resolveSettingsFocusTab,
-    resolveSettingsFocusAnchor,
-    resolveProfileFocus,
     countSubscriptionsByStatus,
+    getSubscriptionTrafficState,
+    matchesSubscriptionStatus,
+    resolveProfileFocus,
+    resolveSettingsFocusAnchor,
+    resolveSettingsFocusTab,
+    resolveSubscriptionStatusFilter,
 } from '@/utils/dashboard-deeplink.js';
 
 const now = 1_800_000_000_000;

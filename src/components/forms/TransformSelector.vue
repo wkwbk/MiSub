@@ -332,8 +332,9 @@
         >
             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
             <div>
-                <span>{{ t('transformSelector.missingTemplatePrefix') }}</span
-                ><code class="font-mono text-zinc-100">{{ missingCustomTemplateValue }}</code
+                <span>{{ t('transformSelector.missingTemplatePrefix') }}</span><code
+                    class="font-mono text-zinc-100"
+                    >{{ missingCustomTemplateValue }}</code
                 ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
             </div>
         </div>
@@ -352,9 +353,7 @@
                     <span class="font-medium text-zinc-200">{{
                         t('transformSelector.templateVariablesTitle')
                     }}</span>
-                    <span class="ml-2 text-[11px] text-zinc-500">{{
-                        helperText
-                    }}</span>
+                    <span class="ml-2 text-[11px] text-zinc-500">{{ helperText }}</span>
                 </span>
                 <ChevronDown
                     class="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 transition-transform"
@@ -374,9 +373,7 @@
                     <p class="font-medium text-zinc-200">{{ group.title }}</p>
                     <div class="mt-2 space-y-2">
                         <div v-for="item in group.items" :key="item.key">
-                            <code class="font-mono text-[11px] text-zinc-200">{{
-                                item.key
-                            }}</code>
+                            <code class="font-mono text-[11px] text-zinc-200">{{ item.key }}</code>
                             <p class="mt-0.5 text-[11px] text-zinc-500">
                                 {{ t('transformSelector.exampleLabel') }}: {{ item.example }}
                             </p>

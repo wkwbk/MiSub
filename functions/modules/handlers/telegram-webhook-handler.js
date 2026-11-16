@@ -25,7 +25,7 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { clearAllNodeCaches } from '../../services/node-cache-service.js';
 import { createJsonResponse, escapeHtml, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
-import { KV_KEY_SUBS, KV_KEY_PROFILES, KV_KEY_SETTINGS } from '../config.js';
+import { KV_KEY_SETTINGS, KV_KEY_SUBS } from '../config.js';
 import { extractValidNodes } from '../utils/node-parser.js';
 
 // ==================== 存储与配置 ====================

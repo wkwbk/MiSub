@@ -1,11 +1,10 @@
 <script setup>
-    import { ref, defineAsyncComponent } from 'vue';
+    import { defineAsyncComponent, ref } from 'vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useSortingMode } from '@/composables/useSortingMode.js';
     import { useNodeForms } from '@/composables/useNodeForms.js'; // Added
     import { useToastStore } from '@/stores/toast.js';
-    import { extractNodeName } from '@/lib/utils.js';
     import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
     import Modal from '@/components/forms/Modal.vue';
     import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';

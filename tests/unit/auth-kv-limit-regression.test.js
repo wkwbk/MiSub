@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { getCookieSecret, getAuthDebugInfo } from '../../functions/modules/utils.js';
+import { describe, expect, it, vi } from 'vitest';
+import { getAuthDebugInfo, getCookieSecret } from '../../functions/modules/utils.js';
 import { handleLogin } from '../../functions/modules/auth-middleware.js';
 
 function createLimitExceededKv() {

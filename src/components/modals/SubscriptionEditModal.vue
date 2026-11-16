@@ -7,6 +7,7 @@
     import EditForm from '@/components/modals/SubscriptionEditModal/EditForm.vue';
     import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
     import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
+
     const props = defineProps({
         show: Boolean,
         isNew: Boolean,

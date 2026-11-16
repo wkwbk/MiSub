@@ -1,12 +1,12 @@
 <script setup>
     import {
-        ref,
         computed,
+        defineAsyncComponent,
+        nextTick,
         onMounted,
         onUnmounted,
-        defineAsyncComponent,
+        ref,
         watch,
-        nextTick,
     } from 'vue';
     import { formatBytes } from '@/lib/utils.js';
     import { useToastStore } from '@/stores/toast.js';
@@ -24,9 +24,6 @@
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
     import { useStickyColumns } from '@/composables/useStickyColumn.js';
-
-    const isDev = import.meta.env.DEV;
-
     // --- Component Imports ---
     import RightPanel from '@/components/profiles/RightPanel.vue';
     import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
@@ -37,9 +34,17 @@
     import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
     import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
     import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
+    import DashboardHeader from '@/components/features/Dashboard/DashboardHeader.vue';
+    import SavePrompt from '@/components/ui/SavePrompt.vue';
 
-    const SettingsModal = defineAsyncComponent(() => import('@/components/modals/SettingsModal.vue'));
-    const BulkImportModal = defineAsyncComponent(() => import('@/components/modals/BulkImportModal.vue'));
+    const isDev = import.meta.env.DEV;
+
+    const SettingsModal = defineAsyncComponent(
+        () => import('@/components/modals/SettingsModal.vue')
+    );
+    const BulkImportModal = defineAsyncComponent(
+        () => import('@/components/modals/BulkImportModal.vue')
+    );
     const SubscriptionBulkImportModal = defineAsyncComponent(
         () => import('@/components/modals/SubscriptionBulkImportModal.vue')
     );
@@ -52,12 +57,16 @@
         () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
 
-    const BatchGroupModal = defineAsyncComponent(() => import('@/components/modals/BatchGroupModal.vue'));
+    const BatchGroupModal = defineAsyncComponent(
+        () => import('@/components/modals/BatchGroupModal.vue')
+    );
     const GroupManagementModal = defineAsyncComponent(
         () => import('@/components/modals/GroupManagementModal.vue')
     );
     const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
-    const CopyLinkModal = defineAsyncComponent(() => import('@/components/modals/CopyLinkModal.vue'));
+    const CopyLinkModal = defineAsyncComponent(
+        () => import('@/components/modals/CopyLinkModal.vue')
+    );
 
     // --- 基礎 Props 和狀態 ---
     const props = defineProps({ data: Object });
@@ -517,9 +526,6 @@
     // 备份函数由 useBackupLogic 提供
     // 格式化函数由 utils.js 提供
     const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemainingTraffic.value));
-
-    import DashboardHeader from '@/components/features/Dashboard/DashboardHeader.vue';
-    import SavePrompt from '@/components/ui/SavePrompt.vue';
 </script>
 
 <template>
@@ -542,10 +548,7 @@
         />
 
         <!-- Main Grid -->
-        <div
-            ref="mainGridRef"
-            class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3"
-        >
+        <div ref="mainGridRef" class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3">
             <div ref="leftColRef" class="space-y-4 xl:col-span-2">
                 <!-- Subscription Panel -->
                 <SubscriptionPanel

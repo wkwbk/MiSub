@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { inferAirportRootDomain } from '../../functions/services/subscription-service.js';
 import { inferAirportRootDomain as inferFrontend } from '@/utils/airport-domain.js';
 

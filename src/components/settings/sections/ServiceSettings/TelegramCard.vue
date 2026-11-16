@@ -153,7 +153,9 @@
             <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Bot Token</label>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5"
+                            >Bot Token</label
+                        >
                         <input
                             v-model="settings.BotToken"
                             type="text"
@@ -165,7 +167,9 @@
                         </p>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300 mb-1.5">Chat ID</label>
+                        <label class="block text-xs font-medium text-zinc-300 mb-1.5"
+                            >Chat ID</label
+                        >
                         <input
                             v-model="settings.ChatID"
                             type="text"
@@ -187,7 +191,9 @@
                     >
                         <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-zinc-600" />
                         <span>{{
-                            isTesting ? t('settings.telegramTesting') : t('settings.telegramSendTest')
+                            isTesting
+                                ? t('settings.telegramTesting')
+                                : t('settings.telegramSendTest')
                         }}</span>
                     </button>
 
@@ -290,11 +296,11 @@
                     </p>
                 </div>
 
-                <div class="flex items-center justify-between gap-6 py-4 border-y border-zinc-800/60">
+                <div
+                    class="flex items-center justify-between gap-6 py-4 border-y border-zinc-800/60"
+                >
                     <div class="flex items-start gap-2.5">
-                        <span
-                            class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"
-                        ></span>
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                         <div class="space-y-1">
                             <label class="block text-sm font-medium text-zinc-100">{{
                                 t('settings.telegramPublicAccess')
@@ -362,10 +368,7 @@
                     </p>
                 </div>
 
-                <p
-                    v-else
-                    class="flex items-center gap-2 text-xs text-zinc-500"
-                >
+                <p v-else class="flex items-center gap-2 text-xs text-zinc-500">
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                     <span>{{ t('settings.telegramSetWebhookEmpty') }}</span>
                 </p>
@@ -398,11 +401,10 @@
                     </button>
                 </div>
 
-                <div
-                    v-if="showSetupGuide"
-                    class="pl-4 border-l-2 border-zinc-800 py-1"
-                >
-                    <ol class="list-decimal list-inside space-y-1.5 text-xs text-zinc-400 leading-relaxed">
+                <div v-if="showSetupGuide" class="pl-4 border-l-2 border-zinc-800 py-1">
+                    <ol
+                        class="list-decimal list-inside space-y-1.5 text-xs text-zinc-400 leading-relaxed"
+                    >
                         <li>{{ t('settings.telegramSetupStep1') }}</li>
                         <li>{{ t('settings.telegramSetupStep2') }}</li>
                         <li>{{ t('settings.telegramSetupStep3') }}</li>
@@ -410,10 +412,7 @@
                     </ol>
                 </div>
 
-                <div
-                    v-if="showUsageGuide"
-                    class="pl-4 border-l-2 border-zinc-800 py-1"
-                >
+                <div v-if="showUsageGuide" class="pl-4 border-l-2 border-zinc-800 py-1">
                     <div class="space-y-1.5 text-xs text-zinc-400 leading-relaxed">
                         <p>{{ t('settings.telegramUsageCommands') }}</p>
                         <p>{{ t('settings.telegramUsageImport') }}</p>

@@ -1,5 +1,5 @@
 <script setup>
-    import { defineAsyncComponent, computed, watchEffect, h } from 'vue';
+    import { computed, defineAsyncComponent, h, watchEffect } from 'vue';
     import { useSessionStore } from '@/stores/session';
     import { storeToRefs } from 'pinia';
     import { useRoute, useRouter } from 'vue-router';

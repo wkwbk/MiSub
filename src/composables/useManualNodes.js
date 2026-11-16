@@ -1,18 +1,18 @@
 // FILE: src/composables/useManualNodes.js
-import { ref, computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast.js'; // Restored
-import { extractNodeName, extractHostAndPort } from '@/lib/utils.js';
+import { extractHostAndPort, extractNodeName } from '@/lib/utils.js';
 import { pingNode } from '@/utils/ping.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 import { buildDedupPlan as buildDedupPlanCore } from '@/composables/manual-nodes/dedup.js';
 import { buildAutoSortedSubscriptions } from '@/composables/manual-nodes/sorting.js';
 import {
-    collectManualNodeGroups,
     buildGroupedManualNodes,
+    collectManualNodeGroups,
     normalizeManualNodeGroupName,
 } from '@/composables/manual-nodes/groups.js';
 import { t } from '@/i18n/index.js';

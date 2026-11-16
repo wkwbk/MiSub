@@ -2,16 +2,16 @@
  * Node cache service tests
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-    getCache,
-    setCache,
     clearAllNodeCaches,
     createCacheHeaders,
-    triggerBackgroundRefresh,
+    getCache,
     getCacheConfig,
-    isSuspiciousNodeCountDrop,
     isLikelyPartialAggregateNodeList,
+    isSuspiciousNodeCountDrop,
+    setCache,
+    triggerBackgroundRefresh,
 } from '../../functions/services/node-cache-service.js';
 
 function createStorage(initialData = {}) {

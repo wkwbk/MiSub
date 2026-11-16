@@ -1,9 +1,9 @@
 // FILE: src/composables/useSubscriptions.js
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
 import { useToastStore } from '@/stores/toast.js';
-import { fetchNodeCount, batchUpdateNodes } from '@/lib/api.js';
+import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
 import { handleError } from '@/utils/errorHandler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
@@ -426,8 +426,7 @@ export function useSubscriptions(markDirty) {
                         sub.lastError = null;
                         successCount++;
                     } else {
-                        sub.lastError =
-                            updateResult?.error || t('subscriptions.unknownError');
+                        sub.lastError = updateResult?.error || t('subscriptions.unknownError');
                         if (sub.enableNodeCache !== true) {
                             sub.nodeCount = 0;
                             sub.userInfo = null;

@@ -7,11 +7,11 @@ import { generateCombinedNodeList } from './subscription-service.js';
 import { transformBuiltinSubscription } from '../modules/subscription/transformer-factory.js';
 import {
     renderClashFromIniTemplate,
-    renderSingboxFromIniTemplate,
-    renderSurgeFromIniTemplate,
+    renderEgernFromIniTemplate,
     renderLoonFromIniTemplate,
     renderQuanxFromIniTemplate,
-    renderEgernFromIniTemplate,
+    renderSingboxFromIniTemplate,
+    renderSurgeFromIniTemplate,
 } from '../modules/subscription/template-pipeline.js';
 import { getBuiltinTemplate } from '../modules/subscription/builtin-template-registry.js';
 import { fetchTransformTemplate } from '../modules/subscription/transform-template-cache.js';

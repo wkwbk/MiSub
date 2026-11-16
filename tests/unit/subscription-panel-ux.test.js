@@ -1,4 +1,4 @@
-import { DOMWrapper, mount } from '@vue/test-utils';
+import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';

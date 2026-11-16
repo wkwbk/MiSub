@@ -349,10 +349,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
                     :disabled="isUpdatingPassword || !passwordForm.newPassword"
                     class="px-4 py-1.5 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Loader2
-                        v-if="isUpdatingPassword"
-                        class="animate-spin h-4 w-4 text-zinc-600"
-                    />
+                    <Loader2 v-if="isUpdatingPassword" class="animate-spin h-4 w-4 text-zinc-600" />
                     <span>{{
                         isUpdatingPassword
                             ? t('systemSettings.updating')

@@ -20,7 +20,7 @@
  * 两条都带「扫描文件数 > 100 / key 数 > 20」护栏，防止目录改名后静默空转；
  * 另各有一条自检用例，确保断言不是因为谓词恒假而「通过」。
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { messages } from '@/i18n/messages.js';

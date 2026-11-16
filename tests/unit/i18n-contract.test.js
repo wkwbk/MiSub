@@ -1,14 +1,14 @@
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
 import {
-    DEFAULT_LOCALE,
-    SUPPORTED_LOCALES,
     createI18n,
+    DEFAULT_LOCALE,
     detectInitialLocale,
     hasStoredLocale,
     i18n,
     setLocale,
+    SUPPORTED_LOCALES,
     t,
 } from '@/i18n/index.js';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher.vue';

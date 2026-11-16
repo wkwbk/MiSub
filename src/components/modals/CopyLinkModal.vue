@@ -1,11 +1,11 @@
 <script setup>
     import { useI18n } from '@/i18n/index.js';
-
-    const { t } = useI18n();
     import { computed, markRaw } from 'vue';
     import { Box, Code2, Link2, Monitor, Send, Zap } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import { useToastStore } from '@/stores/toast';
+
+    const { t } = useI18n();
 
     const props = defineProps({
         show: Boolean,

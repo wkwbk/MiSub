@@ -9,12 +9,11 @@ import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
 import {
-    POLICY_GROUPS,
-    RULE_SETS,
+    DEFAULT_RELAY_GROUP,
+    DEFAULT_SELECT_GROUP,
     getBuiltinRules,
     getRemoteProviderDefinitions,
-    DEFAULT_SELECT_GROUP,
-    DEFAULT_RELAY_GROUP,
+    POLICY_GROUPS,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
 import * as yaml from 'js-yaml';

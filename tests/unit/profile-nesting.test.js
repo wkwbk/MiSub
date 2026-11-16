@@ -1,7 +1,6 @@
-import { computed, defineComponent } from 'vue';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { defineComponent } from 'vue';
+import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { createPinia, setActivePinia } from 'pinia';
 import { wouldCreateCycle } from '@/utils/profile-graph.js';
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';

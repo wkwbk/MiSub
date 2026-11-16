@@ -1,5 +1,4 @@
 <script setup>
-    import { computed } from 'vue';
     import { ChevronDown, X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 

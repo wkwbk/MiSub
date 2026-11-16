@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
 import ClientSettings from '@/components/settings/sections/ClientSettings.vue';

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import PublicProfilesView from '@/views/PublicProfilesView.vue';
+import { api } from '@/lib/http.js';
 
 vi.mock('@/lib/http.js', () => ({
     api: {
@@ -26,8 +27,6 @@ vi.mock('@/components/modals/GuestbookModal.vue', () => ({
 vi.mock('@/components/modals/QuickImportModal.vue', () => ({
     default: { template: '<div />' },
 }));
-
-import { api } from '@/lib/http.js';
 
 describe('PublicProfilesView hero loading state', () => {
     let wrapper;

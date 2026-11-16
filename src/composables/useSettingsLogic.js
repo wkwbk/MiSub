@@ -1,9 +1,9 @@
-import { ref, computed, onUnmounted, getCurrentInstance } from 'vue';
+import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
-import { fetchSettings, saveSettings, resetSettings } from '@/lib/api.js';
+import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
-import { t, setLocale } from '@/i18n/index.js';
+import { setLocale, t } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 
 function normalizeExternalApiConfig(value) {

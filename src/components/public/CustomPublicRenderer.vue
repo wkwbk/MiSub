@@ -1,7 +1,7 @@
 <script setup>
     import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
-    import { Sun, Moon } from '@lucide/vue';
+    import { Moon, Sun } from '@lucide/vue';
     import DOMPurify from 'dompurify';
     import { useThemeStore } from '@/stores/theme.js';
     import { parseCustomPageSource } from '@/utils/custom-page-source.js';
@@ -306,14 +306,8 @@
                                 : t('common.switchToDark')
                         "
                     >
-                        <Sun
-                            v-if="themeStore.theme === 'dark'"
-                            class="w-4 h-4 text-zinc-200"
-                        />
-                        <Moon
-                            v-else
-                            class="w-4 h-4 text-zinc-700"
-                        />
+                        <Sun v-if="themeStore.theme === 'dark'" class="w-4 h-4 text-zinc-200" />
+                        <Moon v-else class="w-4 h-4 text-zinc-700" />
                     </button>
                 </Teleport>
             </template>

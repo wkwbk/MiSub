@@ -1,7 +1,6 @@
 <script setup>
-    import { ref, defineAsyncComponent, computed, onMounted, watch } from 'vue';
+    import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
-    import { extractNodeName } from '@/lib/utils.js';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSubscriptions } from '@/composables/useSubscriptions.js';
     import { useProfiles } from '@/composables/useProfiles.js';
@@ -13,13 +12,14 @@
     import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
+    import {
+        matchesSubscriptionStatus,
+        resolveSubscriptionStatusFilter,
+    } from '@/utils/dashboard-deeplink.js';
+
     const GroupManagementModal = defineAsyncComponent(
         () => import('@/components/modals/GroupManagementModal.vue')
     );
-    import {
-        resolveSubscriptionStatusFilter,
-        matchesSubscriptionStatus,
-    } from '@/utils/dashboard-deeplink.js';
 
     const dataStore = useDataStore();
     const { showToast } = useToastStore();

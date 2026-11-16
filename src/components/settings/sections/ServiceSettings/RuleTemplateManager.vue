@@ -160,10 +160,7 @@ overwrite_original_rules=true`;
             </template>
         </SectionHeader>
 
-        <div
-            v-if="!hasTemplates"
-            class="text-xs text-zinc-500"
-        >
+        <div v-if="!hasTemplates" class="text-xs text-zinc-500">
             <p class="font-medium text-zinc-300">
                 {{ t('settings.ruleTemplatesEmpty') }}
             </p>
@@ -189,7 +186,9 @@ overwrite_original_rules=true`;
                     <div class="truncate text-xs font-semibold">
                         {{ template.name || t('settings.ruleTemplateUnnamed') }}
                     </div>
-                    <div class="mt-1 truncate font-mono text-[10px] text-zinc-500">custom:{{ template.id }}</div>
+                    <div class="mt-1 truncate font-mono text-[10px] text-zinc-500">
+                        custom:{{ template.id }}
+                    </div>
                 </button>
             </div>
 
@@ -246,9 +245,7 @@ overwrite_original_rules=true`;
                 </label>
 
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <label
-                        class="flex items-center gap-2 text-xs font-medium text-zinc-300"
-                    >
+                    <label class="flex items-center gap-2 text-xs font-medium text-zinc-300">
                         <input
                             v-model="selectedTemplate.enabled"
                             type="checkbox"

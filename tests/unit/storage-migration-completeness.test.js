@@ -1,9 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import {
-    DataMigrator,
-    D1_MIGRATION_KEYS,
-    D1_MIGRATION_KEY_PREFIXES,
-} from '../../functions/storage-adapter.js';
+import { describe, expect, it } from 'vitest';
+import { D1_MIGRATION_KEY_PREFIXES, D1_MIGRATION_KEYS, DataMigrator, } from '../../functions/storage-adapter.js';
 
 /** 内存版 KV 命名空间，满足 isKVNamespace 的鸭子类型 */
 function makeKV(initial = {}) {

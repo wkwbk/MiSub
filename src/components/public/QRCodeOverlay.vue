@@ -1,5 +1,5 @@
 <script setup>
-    import { X, Download } from '@lucide/vue';
+    import { Download, X } from '@lucide/vue';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
     import { useI18n } from '@/i18n/index.js';
 

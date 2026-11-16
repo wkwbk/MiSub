@@ -36,10 +36,7 @@
                 ]"
             />
         </div>
-        <p
-            v-if="editingSubscription.customUserAgent"
-            class="text-xs font-mono text-zinc-500 mt-1"
-        >
+        <p v-if="editingSubscription.customUserAgent" class="text-xs font-mono text-zinc-500 mt-1">
             {{ t('subscriptions.currentUa', { ua: editingSubscription.customUserAgent }) }}
         </p>
     </div>

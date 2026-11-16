@@ -40,7 +40,9 @@
             :key="stat.name"
             class="bg-transparent p-5 rounded-none shadow-none transition-colors"
         >
-            <p class="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+            <p
+                class="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-2"
+            >
                 <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="stat.dotClass"></span>
                 {{ stat.name }}
             </p>

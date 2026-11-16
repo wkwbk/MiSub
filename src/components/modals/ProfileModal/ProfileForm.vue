@@ -4,7 +4,6 @@
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
-    import Switch from '@/components/ui/Switch.vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
     import { useI18n } from '@/i18n/index.js';

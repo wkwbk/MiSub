@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+    createAirportGroupId,
     getAirportIdentityKey,
     getAirportIdentityName,
-    setAirportIdentity,
     resetAirportIdentity,
-    createAirportGroupId,
+    setAirportIdentity,
 } from '@/utils/airport-identity.js';
 
 describe('subscription airport identity', () => {

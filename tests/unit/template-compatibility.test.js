@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    TEMPLATE_COMPATIBILITY,
     getTemplateCompatibility,
     normalizeTemplateTarget,
     shouldApplyExternalTemplateForTarget,
+    TEMPLATE_COMPATIBILITY,
 } from '../../functions/modules/subscription/template-compatibility.js';
 
 describe('Template compatibility', () => {

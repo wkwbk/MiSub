@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 // 被测函数在 handler 内部未导出，此处按实现语义复刻一份，
 // 与源码保持一致（如源码变更需同步）——用于锁定「一条消息多个订阅链接」的行为。

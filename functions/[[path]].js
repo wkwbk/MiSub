@@ -30,8 +30,8 @@ import { handleDisguiseRequest } from './modules/handlers/disguise-handler.js';
 import { createDisguiseResponse } from './modules/disguise-page.js';
 
 // 静态导入核心依赖以优化冷加载
-import { StorageFactory, SettingsCache } from './storage-adapter.js';
-import { KV_KEY_SETTINGS, DEFAULT_SETTINGS as defaultSettings } from './modules/config.js';
+import { SettingsCache } from './storage-adapter.js';
+import { DEFAULT_SETTINGS as defaultSettings } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
 import { authMiddleware, renewAuthSession } from './modules/auth-middleware.js';
 

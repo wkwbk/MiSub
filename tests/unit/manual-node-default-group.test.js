@@ -12,8 +12,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-    DEFAULT_GROUP_KEY,
     buildGroupedManualNodes,
+    DEFAULT_GROUP_KEY,
     normalizeManualNodeGroupName,
 } from '@/composables/manual-nodes/groups.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
@@ -62,7 +62,11 @@ describe('未分组过滤与语言无关', () => {
     });
 
     it('HTTP(S) proxy URI with credentials is listed as a manual node, not a subscription URL', () => {
-        const node = { id: 'http-proxy', name: 'HTTP proxy', url: 'http://alice:secret@proxy.example.com:8080#node' };
+        const node = {
+            id: 'http-proxy',
+            name: 'HTTP proxy',
+            url: 'http://alice:secret@proxy.example.com:8080#node',
+        };
         expect(isManualNodeEntry(node)).toBe(true);
         expect(filterManualNodes([node], '', '')).toEqual([node]);
     });

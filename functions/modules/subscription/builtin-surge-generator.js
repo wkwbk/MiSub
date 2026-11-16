@@ -7,15 +7,13 @@
  * 注意：Surge 不支持 VLESS 协议，VLESS 节点会被跳过
  */
 
-import { urlToClashProxy, urlsToClashProxies } from '../../utils/url-to-clash.js';
+import { urlsToClashProxies } from '../../utils/url-to-clash.js';
 import { getUniqueName } from './name-utils.js';
 import {
-    POLICY_GROUPS,
-    getBuiltinRules,
-    getRemoteProviderDefinitions,
-    DEFAULT_SELECT_GROUP,
     DEFAULT_RELAY_GROUP,
-    pruneProxyGroups,
+    DEFAULT_SELECT_GROUP,
+    getBuiltinRules,
+    POLICY_GROUPS,
 } from './builtin-rules-provider.js';
 
 /**

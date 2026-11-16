@@ -1,8 +1,8 @@
 /** * 共享拖拽列表组件 * @author MiSub Team */
 
 <script setup>
-    import { ref, computed } from 'vue';
-    import { Loader2, ArrowUpDown, GripVertical, Trash2 } from '@lucide/vue';
+    import { computed, ref } from 'vue';
+    import { ArrowUpDown, GripVertical, Loader2, Trash2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
@@ -269,9 +269,7 @@
             <!-- 加载状态 -->
             <div v-if="loading" class="drag-drop-loading">
                 <div class="flex items-center justify-center py-8">
-                    <Loader2
-                        class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mr-2"
-                    />
+                    <Loader2 class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mr-2" />
                     <span class="text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</span>
                 </div>
             </div>

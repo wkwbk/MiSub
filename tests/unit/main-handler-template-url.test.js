@@ -1,19 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
     buildExternalSubconverterUrl,
     buildManagedConfigUrl,
     extractProxySectionFromBuiltin,
-    formatNotificationExpireTime,
     formatNotificationExpireStatus,
+    formatNotificationExpireTime,
     resolveExternalTemplateConfigUrl,
     resolveTemplateSource,
     resolveTemplateUrl,
     shouldRenderClashYamlProfileTemplateLocally,
 } from '../../functions/modules/subscription/main-handler.js';
 import {
-    TEMPLATE_COMPATIBILITY,
     normalizeTemplateTarget,
     shouldApplyExternalTemplateForTarget,
+    TEMPLATE_COMPATIBILITY,
 } from '../../functions/modules/subscription/template-compatibility.js';
 
 describe('Main handler template url', () => {

@@ -4,7 +4,6 @@ import { nextTick } from 'vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useProfiles } from '@/composables/useProfiles.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
-import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 
 describe('subscription list search', () => {
     beforeEach(() => {

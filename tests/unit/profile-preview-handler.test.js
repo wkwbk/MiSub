@@ -85,29 +85,58 @@ describe('handleProfileMode preview transforms', () => {
 
     it('keeps an HTTP proxy subscription node separate from an HTTPS source URL', async () => {
         const targetSubscriptions = [
-            { id: 'subscription-http', enabled: true, url: 'https://sub.example.com/link', name: 'HTTPS source' },
-            { id: 'node-http', enabled: true, url: 'http://alice:***@192.0.2.10:8080/#office-http', name: 'Office HTTP' },
+            {
+                id: 'subscription-http',
+                enabled: true,
+                url: 'https://sub.example.com/link',
+                name: 'HTTPS source',
+            },
+            {
+                id: 'node-http',
+                enabled: true,
+                url: 'http://alice:***@192.0.2.10:8080/#office-http',
+                name: 'Office HTTP',
+            },
         ];
         createAdapter.mockReturnValue({
             getProfileById: vi.fn().mockResolvedValue({
-                id: 'profile-http', enabled: true, subscriptions: ['subscription-http', 'node-http'], manualNodes: [], operators: [],
+                id: 'profile-http',
+                enabled: true,
+                subscriptions: ['subscription-http', 'node-http'],
+                manualNodes: [],
+                operators: [],
             }),
             getSubscriptionsByIds: vi.fn().mockResolvedValue(targetSubscriptions),
             get: vi.fn().mockResolvedValue({ defaultOperators: [] }),
         });
 
-        const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.js');
+        const { handleProfileMode } =
+            await import('../../functions/modules/subscription/profile-handler.js');
         const result = await handleProfileMode(
-            new Request('https://example.com/api/subscription_nodes'), {}, 'profile-http', 'MiSub-Test/1.0', false, false
+            new Request('https://example.com/api/subscription_nodes'),
+            {},
+            'profile-http',
+            'MiSub-Test/1.0',
+            false,
+            false
         );
 
         expect(result.success).toBe(true);
         expect(result.nodes.map((node) => node.name)).toContain('Office HTTP');
         expect(fetchSubscriptionNodes).toHaveBeenCalledTimes(1);
         expect(fetchSubscriptionNodes).toHaveBeenCalledWith(
-            'https://sub.example.com/link', 'HTTPS source', expect.any(String), undefined,
-            false, undefined, undefined, false, false, false,
-            expect.anything(), expect.objectContaining({ id: 'subscription-http' })
+            'https://sub.example.com/link',
+            'HTTPS source',
+            expect.any(String),
+            undefined,
+            false,
+            undefined,
+            undefined,
+            false,
+            false,
+            false,
+            expect.anything(),
+            expect.objectContaining({ id: 'subscription-http' })
         );
     });
 

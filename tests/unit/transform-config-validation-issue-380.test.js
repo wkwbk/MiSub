@@ -1,4 +1,4 @@
-import { beforeEach, describe, it, expect } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { validateProfile } from '@/utils/validation-utils.js';
 import { messages } from '@/i18n/messages.js';
 import { setLocale } from '@/i18n/index.js';

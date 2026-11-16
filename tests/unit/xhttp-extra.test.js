@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseXhttpExtra, serializeXhttpExtra } from '../../functions/utils/xhttp-extra.js';
 import { urlToClashProxy } from '../../functions/utils/url-to-clash.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';

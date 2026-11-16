@@ -1,5 +1,5 @@
 <script setup>
-    import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
+    import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
     import { Globe } from '@lucide/vue';
     import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
     import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
@@ -351,7 +351,9 @@
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
-                            <p class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
+                            <p
+                                class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono"
+                            >
                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                 {{
                                     t('notices.updateAvailable', {

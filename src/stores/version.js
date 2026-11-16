@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { fetchGithubLatestRelease } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';

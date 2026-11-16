@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    collectManualNodeGroups,
     buildGroupedManualNodes,
+    collectManualNodeGroups,
     normalizeManualNodeGroupName,
 } from '@/composables/manual-nodes/groups.js';
 

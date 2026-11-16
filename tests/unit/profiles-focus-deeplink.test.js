@@ -2,6 +2,9 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { reactive } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import MySubscriptionsView from '@/views/MySubscriptionsView.vue';
+import { createI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 
 vi.mock('@/components/modals/LogModal.vue', () => ({ default: { template: '<div />' } }));
 vi.mock('@/components/modals/ProfileModal.vue', () => ({
@@ -34,10 +37,6 @@ vi.mock('vue-router', async () => {
         useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
     };
 });
-
-import MySubscriptionsView from '@/views/MySubscriptionsView.vue';
-import { createI18n } from '@/i18n/index.js';
-import { useDataStore } from '@/stores/useDataStore.js';
 
 const scrollSpy = vi.fn();
 const mountedWrappers = [];

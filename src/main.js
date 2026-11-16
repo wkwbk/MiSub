@@ -3,7 +3,7 @@ import { createPinia } from 'pinia';
 import '@/assets/main.css';
 import App from '@/App.vue';
 import router from '@/router';
-import { handleError, setToastHandler, configureErrorMonitoring } from '@/utils/errorHandler.js';
+import { configureErrorMonitoring, handleError, setToastHandler } from '@/utils/errorHandler.js';
 import { isAppScriptError, isForeignRejection } from '@/utils/error-source.js';
 import { i18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';

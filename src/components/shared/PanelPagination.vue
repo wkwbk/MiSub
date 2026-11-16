@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from '@lucide/vue';
+    import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from '@lucide/vue';
     import Select from '@/components/ui/Select.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -185,10 +185,9 @@
         >
             &laquo; {{ t('common.prevPage') }}
         </button>
-        <span
-            class="text-zinc-400 bg-transparent border border-zinc-800 px-3 py-1 rounded-md"
-            >{{ t('common.pageOf', { current: currentPage, total: totalPages }) }}</span
-        >
+        <span class="text-zinc-400 bg-transparent border border-zinc-800 px-3 py-1 rounded-md">{{
+            t('common.pageOf', { current: currentPage, total: totalPages })
+        }}</span>
         <button
             @click="emitPageChange(currentPage + 1)"
             :disabled="currentPage === totalPages"

@@ -145,7 +145,9 @@
 
             <div v-if="customPage.enabled" class="space-y-6">
                 <div class="divide-y divide-zinc-800/60">
-                    <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div
+                        class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
                         <div class="space-y-1">
                             <p class="text-sm font-medium text-zinc-100">
                                 {{ t('settings.customPageRenderMode') }}
@@ -287,10 +289,9 @@
                     </div>
 
                     <div>
-                        <label
-                            class="block text-xs font-semibold text-zinc-300 mb-2.5"
-                            >{{ t('settings.customPageCss') }}</label
-                        >
+                        <label class="block text-xs font-semibold text-zinc-300 mb-2.5">{{
+                            t('settings.customPageCss')
+                        }}</label>
                         <textarea
                             v-model="props.settings.customPage.css"
                             rows="6"
@@ -305,9 +306,7 @@
                 </div>
 
                 <div class="pt-2">
-                    <h3
-                        class="text-xs font-semibold text-zinc-300 mb-3 flex items-center gap-2"
-                    >
+                    <h3 class="text-xs font-semibold text-zinc-300 mb-3 flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
                         {{ t('settings.customPageTemplatesTitle') }}
                     </h3>
@@ -324,7 +323,9 @@
                     </div>
                 </div>
 
-                <div class="pl-4 border-l-2 border-zinc-800 text-xs text-zinc-400 leading-relaxed space-y-2">
+                <div
+                    class="pl-4 border-l-2 border-zinc-800 text-xs text-zinc-400 leading-relaxed space-y-2"
+                >
                     <p class="font-semibold text-zinc-200 flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                         {{ t('settings.customPagePlaceholdersTitle') }}
@@ -335,11 +336,15 @@
                                 {{ t('settings.customPageComponentPlaceholders') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;profiles&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;profiles&#125;}</strong
+                                >:
                                 {{ t('settings.customPageProfilesHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;announcements&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;announcements&#125;}</strong
+                                >:
                                 {{ t('settings.customPageAnnouncementsHint') }}
                             </li>
                             <li>
@@ -347,7 +352,9 @@
                                 {{ t('settings.customPageHeroHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;guestbook&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;guestbook&#125;}</strong
+                                >:
                                 {{ t('settings.customPageGuestbookHint') }}
                             </li>
                         </ul>
@@ -356,23 +363,32 @@
                                 {{ t('settings.customPageDataPlaceholders') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;version&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;version&#125;}</strong
+                                >:
                                 {{ t('settings.customPageVersionHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;node_count&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;node_count&#125;}</strong
+                                >:
                                 {{ t('settings.customPageNodeCountHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;profile_count&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;profile_count&#125;}</strong
+                                >:
                                 {{ t('settings.customPageProfileCountHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;title&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300">{&#123;title&#125;}</strong
+                                >:
                                 {{ t('settings.customPageTitleHint') }}
                             </li>
                             <li>
-                                <strong class="font-mono text-zinc-300">{&#123;description&#125;}</strong>:
+                                <strong class="font-mono text-zinc-300"
+                                    >{&#123;description&#125;}</strong
+                                >:
                                 {{ t('settings.customPageDescriptionHint') }}
                             </li>
                         </ul>

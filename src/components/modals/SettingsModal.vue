@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, computed } from 'vue';
+    import { computed, ref } from 'vue';
     import { useI18n } from '@/i18n/index.js';
     import Modal from '@/components/forms/Modal.vue';
     import SettingsPanel from '@/components/modals/SettingsPanel.vue';
@@ -40,9 +40,7 @@
         size="6xl"
     >
         <template #title>
-            <div
-                class="bg-transparent px-1 py-0.5"
-            >
+            <div class="bg-transparent px-1 py-0.5">
                 <h3 class="text-base font-semibold text-zinc-100">
                     {{ t('settings.title') }}
                 </h3>

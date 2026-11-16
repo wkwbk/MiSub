@@ -4,7 +4,6 @@
  */
 
 import * as NodeUtils from './node-transformer.js';
-import { extractNodeRegion, getRegionEmoji } from '../modules/utils/geo-utils.js';
 import { matchesDslCondition, renderDslTemplate } from './expression-dsl.js';
 
 /**

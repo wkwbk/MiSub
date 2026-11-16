@@ -1,5 +1,5 @@
 import { convertVmessToUrl } from '@/utils/protocols/converters/vmess.js';
-import { convertShadowsocksToUrl, convertShadowsocksRToUrl } from '@/utils/protocols/converters/shadowsocks.js';
+import { convertShadowsocksRToUrl, convertShadowsocksToUrl, } from '@/utils/protocols/converters/shadowsocks.js';
 import { convertTrojanToUrl } from '@/utils/protocols/converters/trojan.js';
 import { convertVlessToUrl } from '@/utils/protocols/converters/vless.js';
 import { convertHysteriaToUrl } from '@/utils/protocols/converters/hysteria.js';

@@ -1,15 +1,12 @@
 <script setup>
-    import { computed, ref, watch } from 'vue';
+    import { computed, ref } from 'vue';
     import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import Input from '@/components/ui/Input.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSubscriptions } from '@/composables/useSubscriptions.js';
-    import {
-        useBulkImportLogic,
-        needsServerParsing,
-    } from '@/composables/useBulkImportLogic.js';
+    import { needsServerParsing, useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
     import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useI18n } from '@/i18n/index.js';
     import { parseSurgeConfig } from '@/utils/protocolConverter.js';

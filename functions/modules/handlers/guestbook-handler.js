@@ -5,13 +5,13 @@
 
 import { StorageFactory } from '../../storage-adapter.js';
 import {
-    createJsonResponse,
     createErrorResponse,
+    createJsonResponse,
     JSON_BODY_LIMITS,
     readJsonWithLimit,
 } from '../utils.js';
 import { sendTgNotification } from '../notifications.js';
-import { KV_KEY_GUESTBOOK, KV_KEY_SETTINGS, DEFAULT_SETTINGS } from '../config.js';
+import { DEFAULT_SETTINGS, KV_KEY_GUESTBOOK, KV_KEY_SETTINGS } from '../config.js';
 
 const GUESTBOOK_INDEX_KEY = `${KV_KEY_GUESTBOOK}_index`;
 const GUESTBOOK_ITEM_PREFIX = `${KV_KEY_GUESTBOOK}:item:`;

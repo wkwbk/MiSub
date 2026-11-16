@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { computed, onMounted, ref } from 'vue';
     import MigrationModal from '@/components/modals/MigrationModal.vue';
     import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
     import SettingsContent from '@/components/settings/SettingsContent.vue';

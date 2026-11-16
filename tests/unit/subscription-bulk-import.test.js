@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useToastStore } from '@/stores/toast.js';
 import {
-    useSubscriptionBulkImport,
     extractAirportGroupNames,
     isValidSubscriptionUrl,
+    useSubscriptionBulkImport,
 } from '@/composables/useSubscriptionBulkImport.js';
 
 describe('机场订阅专用批量导入', () => {
@@ -49,14 +49,15 @@ describe('机场订阅专用批量导入', () => {
     it('extractAirportGroupNames 能提取现有订阅的分组标签（含兼容旧版 airportIdentity.name）', () => {
         dataStore.subscriptions.push(
             { id: 'sub-2', url: 'https://a2.com/sub', group: '机场A' },
-            { id: 'sub-3', url: 'https://b.com/sub', airportIdentity: { groupId: 'group-b-id', name: '机场B' } },
+            {
+                id: 'sub-3',
+                url: 'https://b.com/sub',
+                airportIdentity: { groupId: 'group-b-id', name: '机场B' },
+            },
             { id: 'sub-4', url: 'https://sub.gsafevpn.com/link', detectedName: 'GSafe机场' },
             { id: 'node-1', url: 'vless://uuid@host:443#node', group: '节点组' }
         );
-        expect(extractAirportGroupNames(dataStore.subscriptions)).toEqual([
-            '机场A',
-            '机场B',
-        ]);
+        expect(extractAirportGroupNames(dataStore.subscriptions)).toEqual(['机场A', '机场B']);
     });
 
     it('只导入 http/https 订阅链接，忽略节点分享链接，且不填写分组时 group 为空字符串', () => {
@@ -71,7 +72,9 @@ describe('机场订阅专用批量导入', () => {
         const urls = dataStore.subscriptions.map((s) => s.url);
         expect(urls).toContain('https://new-sub.com/api/v1/client/subscribe?token=abc#MySub');
         expect(urls).toContain('http://another-sub.com/link');
-        expect(urls).not.toContain('vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443#OKRA');
+        expect(urls).not.toContain(
+            'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443#OKRA'
+        );
 
         const added = dataStore.subscriptions.find((s) => s.url === 'http://another-sub.com/link');
         expect(added.group).toBe('');
@@ -105,4 +108,3 @@ describe('机场订阅专用批量导入', () => {
         expect(toastStore.toasts.at(-1)?.type).toBe('info');
     });
 });
-

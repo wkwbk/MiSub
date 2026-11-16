@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, computed, watch } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import { Check, Folder, GripVertical, Pencil, Trash2, X } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import draggable from 'vuedraggable';

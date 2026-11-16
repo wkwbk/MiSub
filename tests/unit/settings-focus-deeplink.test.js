@@ -2,6 +2,8 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { reactive } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import SettingsView from '@/views/SettingsView.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const route = reactive({ query: {}, path: '/dashboard/settings' });
 
@@ -33,9 +35,6 @@ vi.mock('@/composables/useSettingsLogic.js', () => ({
         importBackup: vi.fn(),
     }),
 }));
-
-import SettingsView from '@/views/SettingsView.vue';
-import { createI18n } from '@/i18n/index.js';
 
 const scrollSpy = vi.fn();
 

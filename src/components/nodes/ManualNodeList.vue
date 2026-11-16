@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Check, Zap, Copy, Pencil, Trash2 } from '@lucide/vue';
+    import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
@@ -111,11 +111,7 @@
                                 : 'border-zinc-700 bg-transparent'
                         "
                     >
-                        <Check
-                            v-if="isSelected"
-                            class="h-3 w-3 text-zinc-900"
-                            stroke-width="3"
-                        />
+                        <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
                     </div>
                 </div>
 
@@ -133,7 +129,10 @@
                             <div
                                 class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                             >
-                                <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
+                                <span
+                                    class="h-1.5 w-1.5 rounded-full"
+                                    :class="protocolStyle.dot"
+                                ></span>
                                 {{ protocolStyle.text }}
                             </div>
                             <div
@@ -210,8 +209,7 @@
                             ></span>
                             <span v-if="pingResult.status === 'loading'">{{
                                 t('manualNodes.pinging')
-                            }}</span
-                            ><span v-else-if="pingResult.status === 'ok'"
+                            }}</span><span v-else-if="pingResult.status === 'ok'"
                                 >{{ pingResult.latency }}ms</span
                             ><span v-else>{{ t('manualNodes.unreachable') }}</span>
                         </div>
@@ -242,11 +240,7 @@
                             : 'border-zinc-700 bg-transparent'
                     "
                 >
-                    <Check
-                        v-if="isSelected"
-                        class="h-3 w-3 text-zinc-900"
-                        stroke-width="3"
-                    />
+                    <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
                 </div>
             </div>
 
@@ -274,10 +268,7 @@
             </div>
 
             <div class="min-w-0 flex items-center gap-2 pr-4">
-                <p
-                    class="truncate text-sm font-medium text-zinc-100"
-                    :title="node.name"
-                >
+                <p class="truncate text-sm font-medium text-zinc-100" :title="node.name">
                     {{ node.name || t('manualNodes.unnamed') }}
                 </p>
                 <div
@@ -289,8 +280,7 @@
                         :class="{
                             'bg-emerald-500':
                                 pingResult.status === 'ok' && pingResult.latency < 300,
-                            'bg-amber-500':
-                                pingResult.status === 'ok' && pingResult.latency >= 300,
+                            'bg-amber-500': pingResult.status === 'ok' && pingResult.latency >= 300,
                             'bg-red-500':
                                 pingResult.status === 'error' || pingResult.status === 'timeout',
                             'bg-sky-500 animate-pulse': pingResult.status === 'loading',
@@ -298,17 +288,14 @@
                     ></span>
                     <span v-if="pingResult.status === 'loading'">{{
                         t('manualNodes.pinging')
-                    }}</span
-                    ><span v-else-if="pingResult.status === 'ok'">{{ pingResult.latency }}ms</span
+                    }}</span><span v-else-if="pingResult.status === 'ok'"
+                        >{{ pingResult.latency }}ms</span
                     ><span v-else>{{ t('manualNodes.unreachable') }}</span>
                 </div>
             </div>
 
             <div class="min-w-0">
-                <p
-                    class="font-mono text-xs text-zinc-400 truncate"
-                    :title="hostAndPort.host"
-                >
+                <p class="font-mono text-xs text-zinc-400 truncate" :title="hostAndPort.host">
                     {{ hostAndPort.host || 'N/A' }}
                 </p>
             </div>

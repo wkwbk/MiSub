@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, defineAsyncComponent, onMounted, watch, nextTick } from 'vue';
+    import { defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useProfiles } from '@/composables/useProfiles.js';
@@ -80,9 +80,7 @@
         }
     };
 
-    const ProfileModal = defineAsyncComponent(
-        () => import('@/components/modals/ProfileModal.vue')
-    );
+    const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
     const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
     const CopyLinkModal = defineAsyncComponent(
         () => import('@/components/modals/CopyLinkModal.vue')

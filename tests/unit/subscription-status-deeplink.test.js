@@ -2,6 +2,9 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { reactive } from 'vue';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import SubscriptionGroupsView from '@/views/SubscriptionGroupsView.vue';
+import { createI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 
 // Reactive so the view's `watch(() => route.query.status)` actually fires.
 const route = reactive({ query: {}, path: '/dashboard/subscriptions' });
@@ -15,10 +18,6 @@ vi.mock('vue-router', async () => {
         useRouter: () => ({ replace: replaceMock, push: vi.fn() }),
     };
 });
-
-import SubscriptionGroupsView from '@/views/SubscriptionGroupsView.vue';
-import { createI18n } from '@/i18n/index.js';
-import { useDataStore } from '@/stores/useDataStore.js';
 
 const expired = Math.floor(Date.now() / 1000) - 60;
 
@@ -91,7 +90,9 @@ describe('SubscriptionGroupsView 深链状态筛选 (?status=)', () => {
 
         expect(wrapper.vm.activeStatusFilter).toBe('error');
         expect(wrapper.vm.visibleSubscriptions.map((s) => s.id)).toEqual(['failed']);
-        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(
+            true
+        );
         expect(wrapper.text()).toContain('仅显示最近更新失败的订阅');
     });
 
@@ -151,7 +152,9 @@ describe('SubscriptionGroupsView 深链状态筛选 (?status=)', () => {
         const wrapper = mountView('en-US');
         await wrapper.vm.$nextTick();
 
-        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="subscription-status-filter-banner"]').exists()).toBe(
+            true
+        );
         expect(wrapper.text()).toContain('Showing sources that failed to update');
         expect(wrapper.text()).not.toContain('subscriptions.');
     });

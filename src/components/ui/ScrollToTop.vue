@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue';
+    import { onMounted, onUnmounted, ref } from 'vue';
     import { ChevronUp } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 

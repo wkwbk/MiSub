@@ -1,11 +1,11 @@
 <script setup>
     import {
-        ref,
-        onMounted,
-        onUnmounted,
+        computed,
         defineAsyncComponent,
         nextTick,
-        computed,
+        onMounted,
+        onUnmounted,
+        ref,
         watch,
     } from 'vue';
     import { useToastStore } from '@/stores/toast.js';
@@ -340,9 +340,7 @@
 </script>
 
 <template>
-    <div
-        class="bg-transparent transition-colors duration-200 relative"
-    >
+    <div class="bg-transparent transition-colors duration-200 relative">
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
                 <div class="space-y-6 animate-pulse">
@@ -461,9 +459,7 @@
         <!-- 默认布局模式 -->
         <template v-else>
             <!-- Hero Section (Left Aligned & Open) -->
-            <div
-                class="relative pt-10 pb-8 lg:pt-14 lg:pb-10 z-10 overflow-visible"
-            >
+            <div class="relative pt-10 pb-8 lg:pt-14 lg:pb-10 z-10 overflow-visible">
                 <div
                     class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
                 >
@@ -592,7 +588,9 @@
                 </div>
 
                 <!-- Clients Section (Visually Separated) -->
-                <div class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent">
+                <div
+                    class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
+                >
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="text-center mb-12 relative">
                             <div class="relative inline-flex flex-col items-center">

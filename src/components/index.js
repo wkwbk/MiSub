@@ -76,10 +76,12 @@ export const ComponentMap = {
         SettingsModal: () => import('@/components/modals/SettingsModal.vue'),
         ProfileModal: () => import('@/components/modals/ProfileModal.vue'),
         BulkImportModal: () => import('@/components/modals/BulkImportModal.vue'),
-        SubscriptionBulkImportModal: () => import('@/components/modals/SubscriptionBulkImportModal.vue'),
+        SubscriptionBulkImportModal: () =>
+            import('@/components/modals/SubscriptionBulkImportModal.vue'),
         SubscriptionImportModal: () => import('@/components/modals/SubscriptionImportModal.vue'),
         NodePreviewModal: () => import('@/components/modals/NodePreview/NodePreviewModal.vue'),
-        NodePreviewContainer: () => import('@/components/modals/NodePreview/NodePreviewContainer.vue'),
+        NodePreviewContainer: () =>
+            import('@/components/modals/NodePreview/NodePreviewContainer.vue'),
         NodePreviewHeader: () => import('@/components/modals/NodePreview/NodePreviewHeader.vue'),
         NodeFilterControls: () => import('./modals/NodePreview/NodeFilterControls.vue'),
         NodeListView: () => import('./modals/NodePreview/NodeListView.vue'),

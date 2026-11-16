@@ -3,10 +3,7 @@ import { useToastStore } from '@/stores/toast.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { extractNodeName } from '@/lib/utils.js';
 import { generateSubscriptionId } from '@/utils/id.js';
-import {
-    collectSubscriptionGroups,
-    normalizeSubscriptionGroupName,
-} from '@/utils/subscription-groups.js';
+import { collectSubscriptionGroups, normalizeSubscriptionGroupName, } from '@/utils/subscription-groups.js';
 import { t } from '@/i18n/index.js';
 
 /**
@@ -96,7 +93,9 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk } = {}) {
             showToast(t('subscriptionBulkImport.allDuplicates', { count: duplicateCount }), 'info');
         } else if (invalidCount > 0) {
             showToast(
-                t('subscriptionBulkImport.noValidSubscriptionsWithInvalid', { count: invalidCount }),
+                t('subscriptionBulkImport.noValidSubscriptionsWithInvalid', {
+                    count: invalidCount,
+                }),
                 'warning'
             );
         } else {
@@ -111,4 +110,3 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk } = {}) {
         handleSubscriptionBulkImport,
     };
 }
-

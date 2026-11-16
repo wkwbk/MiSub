@@ -61,10 +61,9 @@
     <div class="space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
-                <label
-                    class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400"
-                    >{{ t('operators.dedupMode') }}</label
-                >
+                <label class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400">{{
+                    t('operators.dedupMode')
+                }}</label>
                 <Select
                     :model-value="params.mode"
                     @update:model-value="updateValue({ mode: $event })"
@@ -78,9 +77,7 @@
                 </p>
             </div>
 
-            <div
-                class="space-y-2 rounded-md border border-zinc-800 bg-transparent p-3"
-            >
+            <div class="space-y-2 rounded-md border border-zinc-800 bg-transparent p-3">
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p class="text-sm font-medium text-zinc-100">
@@ -106,13 +103,10 @@
         </div>
 
         <div class="space-y-2">
-            <label
-                class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400"
-                >{{ t('operators.preferredProtocols') }}</label
-            >
-            <div
-                class="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-transparent p-3"
-            >
+            <label class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400">{{
+                t('operators.preferredProtocols')
+            }}</label>
+            <div class="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-transparent p-3">
                 <button
                     v-for="protocol in protocolOptions"
                     :key="protocol"

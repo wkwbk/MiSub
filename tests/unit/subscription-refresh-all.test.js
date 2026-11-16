@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ref } from 'vue';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
 import { createI18n, t } from '@/i18n/index.js';
+import { useSubscriptions } from '@/composables/useSubscriptions.js';
+import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
 
 const mocks = vi.hoisted(() => ({
     subscriptions: null,
@@ -37,9 +39,6 @@ vi.mock('@/lib/api.js', () => ({
 vi.mock('@/utils/errorHandler.js', () => ({
     handleError: mocks.handleError,
 }));
-
-import { useSubscriptions } from '@/composables/useSubscriptions.js';
-import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
 
 function mountPanel(props = {}) {
     return mount(SubscriptionPanel, {
@@ -207,10 +206,7 @@ describe('Subscription Refresh All', () => {
             expect.stringContaining('未知错误'),
             expect.anything()
         );
-        expect(mocks.showToast).toHaveBeenCalledWith(
-            t('subscriptions.refreshFallback'),
-            'warning'
-        );
+        expect(mocks.showToast).toHaveBeenCalledWith(t('subscriptions.refreshFallback'), 'warning');
         expect(mocks.showToast).toHaveBeenCalledWith(
             t('subscriptions.refreshDone', { success: 2, total: 2, failed: 0 }),
             'success'
@@ -223,7 +219,8 @@ describe('Subscription Refresh All', () => {
             new Response('ss://YWVzLTEyOC1nY206cGFzcw==@1.2.3.4:443#Node1', {
                 status: 200,
                 headers: {
-                    'subscription-userinfo': 'upload=100; download=200; total=1000; expire=1900000000',
+                    'subscription-userinfo':
+                        'upload=100; download=200; total=1000; expire=1900000000',
                 },
             })
         );

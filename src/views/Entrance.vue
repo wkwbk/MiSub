@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted, defineAsyncComponent, watch, markRaw } from 'vue';
+    import { defineAsyncComponent, markRaw, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
     import { useSessionStore } from '@/stores/session';
     import { storeToRefs } from 'pinia';

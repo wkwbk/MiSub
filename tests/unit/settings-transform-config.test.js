@@ -1,5 +1,5 @@
-import { beforeEach, describe, it, expect } from 'vitest';
-import { DEFAULT_SETTINGS, DEFAULT_PROFILE_FORM } from '@/constants/default-settings.js';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { DEFAULT_PROFILE_FORM, DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { validateProfile } from '@/utils/validation-utils.js';
 import { messages } from '@/i18n/messages.js';
 import { setLocale } from '@/i18n/index.js';

@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import router from '@/router';
-import { fetchInitialData, login as apiLogin, fetchPublicConfig } from '@/lib/api';
+import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api';
 import { api } from '@/lib/http.js';
 import { handleError } from '@/utils/errorHandler.js';
 import { useDataStore } from '@/stores/useDataStore';

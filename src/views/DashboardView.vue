@@ -1,5 +1,5 @@
 <script setup>
-    import { computed, ref, defineAsyncComponent, onMounted } from 'vue';
+    import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
     import { FileText } from '@lucide/vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
@@ -181,9 +181,7 @@
     const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } =
         useProfiles(markDirty);
 
-    const ProfileModal = defineAsyncComponent(
-        () => import('@/components/modals/ProfileModal.vue')
-    );
+    const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
 
     // --- Log Modal Logic ---
     const showLogModal = ref(false);
@@ -295,7 +293,9 @@
                 >
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100">
+                            <h1
+                                class="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100"
+                            >
                                 {{ t('dashboard.title') }}
                             </h1>
                             <span

@@ -1,17 +1,17 @@
 <script setup>
-    import { ref, computed } from 'vue';
+    import { computed, ref } from 'vue';
     import {
-        Filter,
-        PenLine,
-        Code2,
         ArrowUpDown,
-        Copy,
-        Zap,
-        Plus,
-        ChevronUp,
         ChevronDown,
+        ChevronUp,
+        Code2,
+        Copy,
+        Filter,
         PauseCircle,
+        PenLine,
+        Plus,
         X,
+        Zap,
     } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import FilterEditor from '@/components/features/Operators/components/FilterEditor.vue';

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.js';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
 import {
-    resolveSafeDnsConfig,
     DNS_PROXY_GROUP,
+    resolveSafeDnsConfig,
 } from '../../functions/modules/subscription/safe-dns.js';
 import * as yaml from 'js-yaml';
 

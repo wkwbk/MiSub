@@ -11,12 +11,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-    LEGACY_DISMISSED_HEALTH_ITEMS_KEY,
-    MAX_DISMISSED_HEALTH_ITEMS,
     addDismissedHealthItem,
     clearLegacyDismissedHealthItemIds,
     filterDismissedHealthItems,
     isHealthItemDismissed,
+    LEGACY_DISMISSED_HEALTH_ITEMS_KEY,
+    MAX_DISMISSED_HEALTH_ITEMS,
     normalizeDismissedHealthItemIds,
     readLegacyDismissedHealthItemIds,
 } from '@/utils/health-item-dismissal.js';

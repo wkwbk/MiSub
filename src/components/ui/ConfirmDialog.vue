@@ -2,11 +2,7 @@
     import { onMounted, onUnmounted } from 'vue';
     import Modal from '@/components/forms/Modal.vue';
     import { useI18n } from '@/i18n/index.js';
-    import {
-        setConfirmHost,
-        settleConfirm,
-        useConfirmState,
-    } from '@/composables/useConfirm.js';
+    import { setConfirmHost, settleConfirm, useConfirmState } from '@/composables/useConfirm.js';
 
     const { t } = useI18n();
     const pending = useConfirmState();
