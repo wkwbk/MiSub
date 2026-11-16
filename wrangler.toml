@@ -2,8 +2,6 @@ name = "misub"
 main = "worker.js"
 compatibility_date = "2024-04-01"
 compatibility_flags = ["nodejs_compat"]
-# 保留在 Cloudflare 控制台手动配置的普通环境变量，防止启用 [vars] 后部署时被覆盖清空
-keep_vars = true
 
 # 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
 [build]
@@ -48,8 +46,3 @@ id = "1f480b4e7f3d4166b258c3fe1e77d5db"
 [[previews.d1_databases]]
 binding = "MISUB_DB"
 database_id = "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
-
-[vars]
-CORS_ORIGINS = "https://libk.top"
-MISUB_PUBLIC_URL = "https://libk.top"
-
