@@ -1,11 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+    applyManualNodeName,
+    buildRuleSet,
+    filterNodeObjects,
     fixNodeUrlEncoding,
     fixSSEncoding,
-    buildRuleSet,
     parseFilterRuleText,
-    filterNodeObjects,
-    applyManualNodeName,
 } from '../../functions/modules/utils/node-cleaner.js';
 
 describe('Node Cleaner Utils', () => {

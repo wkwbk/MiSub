@@ -1,25 +1,25 @@
 <script setup>
-    import { ref, defineAsyncComponent, computed, onMounted, watch } from 'vue';
+    import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
-    import { extractNodeName } from '../lib/utils.js';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useSubscriptions } from '../composables/useSubscriptions.js';
-    import { useProfiles } from '../composables/useProfiles.js';
-    import { useSortingMode } from '../composables/useSortingMode.js';
-    import { useSubscriptionForms } from '../composables/useSubscriptionForms.js';
-    import { useSubscriptionBulkImport } from '../composables/useSubscriptionBulkImport.js';
-    import SubscriptionPanel from '../components/subscriptions/SubscriptionPanel.vue';
-    import Modal from '../components/forms/Modal.vue';
-    import SubscriptionEditModal from '../components/modals/SubscriptionEditModal.vue';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
-    const GroupManagementModal = defineAsyncComponent(
-        () => import('../components/modals/GroupManagementModal.vue')
-    );
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useSubscriptions } from '@/composables/useSubscriptions.js';
+    import { useProfiles } from '@/composables/useProfiles.js';
+    import { useSortingMode } from '@/composables/useSortingMode.js';
+    import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
+    import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImport.js';
+    import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+    import Modal from '@/components/forms/Modal.vue';
+    import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
     import {
-        resolveSubscriptionStatusFilter,
         matchesSubscriptionStatus,
-    } from '../utils/dashboard-deeplink.js';
+        resolveSubscriptionStatusFilter,
+    } from '@/utils/dashboard-deeplink.js';
+
+    const GroupManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/GroupManagementModal.vue')
+    );
 
     const dataStore = useDataStore();
     const { showToast } = useToastStore();
@@ -91,7 +91,7 @@
 
     // Preview
     const NodePreviewModal = defineAsyncComponent(
-        () => import('../components/modals/NodePreview/NodePreviewModal.vue')
+        () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
     const showNodePreviewModal = ref(false);
     const previewSubscriptionId = ref(null);
@@ -135,11 +135,11 @@
 
     // Subscription Bulk Import Logic
     const SubscriptionBulkImportModal = defineAsyncComponent(
-        () => import('../components/modals/SubscriptionBulkImportModal.vue')
+        () => import('@/components/modals/SubscriptionBulkImportModal.vue')
     );
 
     // QRCode
-    const QRCodeModal = defineAsyncComponent(() => import('../components/modals/QRCodeModal.vue'));
+    const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');

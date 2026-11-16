@@ -3,72 +3,71 @@
  * 处理所有API请求的路由分发
  */
 
-import { StorageFactory, DataMigrator } from '../storage-adapter.js';
+import { DataMigrator, StorageFactory } from '../storage-adapter.js';
 import { KV_KEY_SUBS } from './config.js';
 import {
-    createJsonResponse,
     createErrorResponse,
+    createJsonResponse,
     getAuthDebugInfo,
     JSON_BODY_LIMITS,
     readJsonWithLimit,
 } from './utils.js';
 import {
     authMiddleware,
-    handleLogin,
-    handleLogout,
     getAuthSessionDiagnostic,
     getLoginPasswordDiagnostic,
+    handleLogin,
+    handleLogout,
 } from './auth-middleware.js';
 import {
     handleDataRequest,
     handleMisubsSave,
-    handleSettingsGet,
-    handleSettingsSave,
-    handleSettingsReset,
-    handlePublicProfilesRequest,
     handlePublicConfig,
+    handlePublicProfilesRequest,
+    handleSettingsGet,
+    handleSettingsReset,
+    handleSettingsSave,
     handleUpdatePassword,
 } from './api-handler.js';
 import { handleRuleTemplatesRequest } from './rule-template-handler.js';
-import { handleCronTrigger } from './notifications.js';
 import {
-    handleSubscriptionNodesRequest,
     handlePublicPreviewRequest,
+    handleSubscriptionNodesRequest,
 } from './subscription-handler.js';
 import {
-    handleWebdavBackupStatus,
-    handleWebdavBackupTest,
-    handleManualWebdavBackup,
-    handleWebdavBackupList,
-    handleWebdavRestore,
     handleBackupExport,
     handleBackupRestore,
+    handleManualWebdavBackup,
+    handleWebdavBackupList,
+    handleWebdavBackupStatus,
+    handleWebdavBackupTest,
+    handleWebdavRestore,
 } from './webdav-backup-handler.js';
 import {
     handleDebugSubscriptionRequest,
-    handleSystemInfoRequest,
-    handleStorageTestRequest,
     handleExportDataRequest,
     handlePreviewContentRequest,
+    handleStorageTestRequest,
+    handleSystemInfoRequest,
     handleTestNotificationRequest,
 } from './handlers/debug-handler.js';
 import {
-    handleNodeCountRequest as handleLegacyNodeCountRequest,
     handleBatchUpdateNodesRequest,
     handleCleanNodesRequest,
     handleHealthCheckRequest,
+    handleNodeCountRequest as handleLegacyNodeCountRequest,
 } from './handlers/node-handler.js';
 import { handleClientRequest } from './handlers/client-handler.js';
 import { handleErrorReportRequest } from './handlers/error-report-handler.js';
 import {
     handleGuestbookGet,
-    handleGuestbookPost,
-    handleGuestbookManageGet,
     handleGuestbookManageAction,
+    handleGuestbookManageGet,
+    handleGuestbookPost,
 } from './handlers/guestbook-handler.js';
 import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js'; // [NEW] Import handler
 import { handleParseSubscription } from './parse-subscription-handler.js';
-import { safeFetchPublicUrl, validatePublicFetchUrl, redactUrl } from './security-utils.js';
+import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { handleExternalNodesCallbackRequest } from '../services/external-nodes-callback-service.js';

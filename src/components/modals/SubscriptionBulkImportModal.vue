@@ -1,10 +1,10 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FilePlus2, Layers } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import GroupSelector from '../ui/GroupSelector.vue';
-    import { useDataStore } from '../../stores/useDataStore.js';
-    import { extractAirportGroupNames } from '../../composables/useSubscriptionBulkImport.js';
+    import { FilePlus2, Layers } from '@lucide/vue';
+    import Modal from '@/components/forms/Modal.vue';
+    import GroupSelector from '@/components/ui/GroupSelector.vue';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -133,4 +133,3 @@
         </template>
     </Modal>
 </template>
-

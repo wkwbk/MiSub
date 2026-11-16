@@ -1,5 +1,5 @@
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
     const props = defineProps({
@@ -43,10 +43,7 @@
         </div>
 
         <!-- 错误信息 -->
-        <div
-            v-if="errorMessage"
-            class="flex items-center space-x-2 text-xs text-red-500"
-        >
+        <div v-if="errorMessage" class="flex items-center space-x-2 text-xs text-red-500">
             <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
             <span>{{ errorMessage }}</span>
         </div>

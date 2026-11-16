@@ -4,18 +4,18 @@
     import { storeToRefs } from 'pinia';
     import {
         Compass,
-        MessageSquare,
-        Settings,
         LayoutGrid,
         LayoutPanelTop,
         LogOut,
-    } from 'lucide-vue-next';
-    import ThemeToggle from '../features/ThemeToggle.vue';
-    import LoginEntryButton from './LoginEntryButton.vue';
-    import ExternalRepoButton from './ExternalRepoButton.vue';
-    import LanguageSwitcher from './LanguageSwitcher.vue';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useI18n } from '../../i18n/index.js';
+        MessageSquare,
+        Settings,
+    } from '@lucide/vue';
+    import ThemeToggle from '@/components/features/ThemeToggle.vue';
+    import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
+    import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
+    import LanguageSwitcher from '@/components/layout/LanguageSwitcher.vue';
+    import { useUIStore } from '@/stores/ui.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         isLoggedIn: {

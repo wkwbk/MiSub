@@ -5,20 +5,20 @@
             required: true,
         },
     });
-    import Input from '../../ui/Input.vue';
-    import Switch from '../../ui/Switch.vue';
-    import GroupSelector from '../../ui/GroupSelector.vue';
+    import Input from '@/components/ui/Input.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import GroupSelector from '@/components/ui/GroupSelector.vue';
     import { computed, ref, watch } from 'vue';
-    import { Loader2, Zap } from 'lucide-vue-next';
-    import { fetchNodeCount } from '../../../lib/api.js';
-    import { useDataStore } from '../../../stores/useDataStore.js';
-    import { extractAirportGroupNames } from '../../../composables/useSubscriptionBulkImport.js';
+    import { Loader2, Zap } from '@lucide/vue';
+    import { fetchNodeCount } from '@/lib/api.js';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';
     import {
         getSubscriptionGroup,
         normalizeSubscriptionGroupName,
-    } from '../../../utils/subscription-groups.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useI18n } from '../../../i18n/index.js';
+    } from '@/utils/subscription-groups.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { showToast } = useToastStore();
     const dataStore = useDataStore();

@@ -1,8 +1,8 @@
 <script setup>
-    import { ref, computed } from 'vue';
-    import { Clock, Copy } from 'lucide-vue-next';
-    import SectionHeader from '../../SectionHeader.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { computed, ref } from 'vue';
+    import { Clock, Copy } from '@lucide/vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -44,10 +44,7 @@
 <template>
     <!-- {{ t('settings.cronTitle') }} -->
     <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-        <SectionHeader
-            :title="t('settings.cronTitle')"
-            :description="t('settings.cronDesc')"
-        >
+        <SectionHeader :title="t('settings.cronTitle')" :description="t('settings.cronDesc')">
             <template #icon>
                 <Clock class="h-4 w-4" />
             </template>
@@ -106,7 +103,9 @@
 
                 <div class="pl-4 border-l-2 border-zinc-800 space-y-2.5 max-w-xl">
                     <div class="flex items-start gap-2">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"></span>
+                        <span
+                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"
+                        ></span>
                         <div class="space-y-0.5">
                             <p class="text-xs font-medium text-zinc-200">
                                 {{ t('settings.cronRecommendedSecurity') }}
@@ -125,10 +124,7 @@
                     />
                 </div>
             </div>
-            <p
-                v-else
-                class="flex items-center gap-2 text-xs text-zinc-500"
-            >
+            <p v-else class="flex items-center gap-2 text-xs text-zinc-500">
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                 <span>{{ t('settings.cronEmptyHint') }}</span>
             </p>

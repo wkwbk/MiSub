@@ -1,13 +1,13 @@
 import { flushPromises, mount } from '@vue/test-utils';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nextTick } from 'vue';
-import TransformCard from '../../src/components/settings/sections/ServiceSettings/TransformCard.vue';
+import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
 
-vi.mock('../../src/lib/api.js', () => ({
+vi.mock('@/lib/api.js', () => ({
     testSubconverterBackend: vi.fn(),
 }));
 
-const { testSubconverterBackend } = await import('../../src/lib/api.js');
+const { testSubconverterBackend } = await import('@/lib/api.js');
 
 function createSettings(overrides = {}) {
     return {

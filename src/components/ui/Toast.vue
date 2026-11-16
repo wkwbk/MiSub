@@ -1,7 +1,7 @@
 <script setup>
-    import { X } from 'lucide-vue-next';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { X } from '@lucide/vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const toastStore = useToastStore();
     const { t } = useI18n();
@@ -69,7 +69,9 @@
 
                         <!-- 消息内容 -->
                         <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium text-zinc-200 leading-relaxed break-words">
+                            <p
+                                class="text-xs font-medium text-zinc-200 leading-relaxed break-words"
+                            >
                                 {{ toast.message }}
                             </p>
                         </div>

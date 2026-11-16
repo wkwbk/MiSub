@@ -14,7 +14,7 @@
  *   HomeView 渲染 { template: '<div></div>' } 触发编译。
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mount } from '@vue/test-utils';
@@ -77,7 +77,7 @@ describe('严格 CSP 下的首页渲染（runtime template regression）', () =>
         const pinia = createPinia();
         setActivePinia(pinia);
 
-        const { useSessionStore } = await import('../../src/stores/session.js');
+        const { useSessionStore } = await import('@/stores/session.js');
         const session = useSessionStore();
         session.sessionState = 'loggedIn';
 
@@ -91,7 +91,7 @@ describe('严格 CSP 下的首页渲染（runtime template regression）', () =>
         await router.push('/');
         await router.isReady();
 
-        const HomeView = (await import('../../src/views/HomeView.vue')).default;
+        const HomeView = (await import('@/views/HomeView.vue')).default;
         const wrapper = mount(HomeView, { global: { plugins: [pinia, router] } });
 
         await new Promise((resolve) => setTimeout(resolve, 0));

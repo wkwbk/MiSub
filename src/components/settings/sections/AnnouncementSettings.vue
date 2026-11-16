@@ -1,11 +1,11 @@
 <script setup>
     import { computed, watch } from 'vue';
-    import { Megaphone } from 'lucide-vue-next';
+    import { Megaphone } from '@lucide/vue';
     import DOMPurify from 'dompurify';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -75,10 +75,7 @@
         </SectionHeader>
 
         <!-- 内容编辑 -->
-        <div
-            v-if="announcement.enabled"
-            class="space-y-6 animate-fade-in-down"
-        >
+        <div v-if="announcement.enabled" class="space-y-6 animate-fade-in-down">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 标题 -->
                 <div>

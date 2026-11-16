@@ -1,4 +1,4 @@
-import { t } from '../i18n/index.js';
+import { t } from '@/i18n/index.js';
 //
 // src/lib/utils.js
 //
@@ -388,4 +388,4 @@ export function getClientInfo(userAgent) {
     };
 }
 
-export { formatBytes } from '../shared/utils.js';
+export { formatBytes } from '@/shared/utils.js';

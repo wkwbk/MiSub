@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 
 const { fetchSettings, saveSettings, resetSettings, showToast } = vi.hoisted(() => ({
     fetchSettings: vi.fn(),
@@ -7,24 +8,22 @@ const { fetchSettings, saveSettings, resetSettings, showToast } = vi.hoisted(() 
     showToast: vi.fn(),
 }));
 
-vi.mock('../../src/lib/api.js', () => ({
+vi.mock('@/lib/api.js', () => ({
     fetchSettings,
     saveSettings,
     resetSettings,
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({ showToast }),
 }));
 
-vi.mock('../../src/composables/useBackupLogic.js', () => ({
+vi.mock('@/composables/useBackupLogic.js', () => ({
     useBackupLogic: () => ({
         exportBackup: vi.fn(),
         importBackup: vi.fn(),
     }),
 }));
-
-import { useSettingsLogic } from '../../src/composables/useSettingsLogic.js';
 
 describe('useSettingsLogic externalApi normalization', () => {
     beforeEach(() => {

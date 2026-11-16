@@ -1,4 +1,4 @@
-import { inferAirportRootDomain } from './airport-domain.js';
+import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 
 /** Stable grouping key shared by list sorting and visual grouping. */
 export function getAirportIdentityKey(subscription) {

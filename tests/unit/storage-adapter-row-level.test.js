@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { StorageFactory, DataMigrator } from '../../functions/storage-adapter.js';
+import { describe, expect, it } from 'vitest';
+import { DataMigrator, StorageFactory } from '../../functions/storage-adapter.js';
 
 function createKVMock(initialData = {}) {
     const store = new Map(Object.entries(initialData));

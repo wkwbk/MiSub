@@ -3,7 +3,7 @@
  * @author MiSub Team
  */
 
-import { DEFAULT_SUBCONVERTER_BACKEND } from './subconverter-backends.js';
+import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
 
 export const DEFAULT_SETTINGS = {
     FileName: 'MiSub',

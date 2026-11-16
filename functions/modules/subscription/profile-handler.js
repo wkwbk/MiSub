@@ -4,7 +4,7 @@ import { parseNodeInfo } from '../utils/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '../utils/node-parser.js';
 import { applyNodeTransformPipeline } from '../../utils/node-transformer.js';
 import { runOperatorChain } from '../../utils/operator-runner.js';
-import { KV_KEY_SUBS, KV_KEY_PROFILES, KV_KEY_SETTINGS, DEFAULT_SETTINGS } from '../config.js';
+import { DEFAULT_SETTINGS, KV_KEY_PROFILES, KV_KEY_SETTINGS, KV_KEY_SUBS } from '../config.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 import { applyManualNodeName } from '../utils/node-cleaner.js';
 
@@ -268,11 +268,7 @@ export async function handleProfileMode(
     }
 
     // 合并所有结果
-    const allResults = [
-        ...subscriptionResults,
-        ...manualNodeResults,
-        ...nestedSubProfileResults,
-    ];
+    const allResults = [...subscriptionResults, ...manualNodeResults, ...nestedSubProfileResults];
 
     // 统计所有节点
     const allNodes = [];

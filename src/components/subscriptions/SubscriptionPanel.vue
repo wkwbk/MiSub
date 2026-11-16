@@ -1,19 +1,19 @@
 <script setup>
-    import { computed, ref, nextTick, watch, onBeforeUnmount } from 'vue';
-    import { Search, X } from 'lucide-vue-next';
+    import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+    import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
-    import Card from '../ui/Card.vue';
+    import Card from '@/components/ui/Card.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useUIStore } from '@/stores/ui';
     import { useI18n } from '@/i18n/index.js';
-    import { hasDragOrderChanged } from '../../composables/useSortingMode.js';
+    import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
     import {
-        DEFAULT_GROUP_KEY,
         collectSubscriptionGroups,
+        DEFAULT_GROUP_KEY,
         getSubscriptionGroup,
-    } from '../../utils/subscription-groups.js';
+    } from '@/utils/subscription-groups.js';
 
     const { layoutMode } = useUIStore();
     const { t } = useI18n();
@@ -170,7 +170,12 @@
     };
 
     watch(
-        [() => props.searchQuery, () => props.statusFilter, currentGroupFilter, normalizedBatchSize],
+        [
+            () => props.searchQuery,
+            () => props.statusFilter,
+            currentGroupFilter,
+            normalizedBatchSize,
+        ],
         () => {
             visibleLimit.value = normalizedBatchSize.value;
         }
@@ -221,9 +226,7 @@
 
 <template>
     <div>
-        <div
-            class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none"
-        >
+        <div class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none">
             <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
                     <div class="flex min-w-0 flex-wrap items-center gap-3 shrink-0">
@@ -415,7 +418,9 @@
             >
                 <div class="flex items-center gap-2">
                     <span class="font-medium">{{ statusFilterLabel }}</span>
-                    <span class="font-mono text-zinc-400">{{ visibleCount }}/{{ subscriptions.length }}</span>
+                    <span class="font-mono text-zinc-400"
+                        >{{ visibleCount }}/{{ subscriptions.length }}</span
+                    >
                 </div>
                 <button
                     type="button"
@@ -443,9 +448,7 @@
                 @end="handleDragEnd"
             >
                 <template #item="{ element: subscription }">
-                    <div
-                        class="cursor-move rounded-md border-2 border-dashed border-sky-500/40"
-                    >
+                    <div class="cursor-move rounded-md border-2 border-dashed border-sky-500/40">
                         <Card
                             class="pointer-events-none select-none"
                             :misub="subscription"

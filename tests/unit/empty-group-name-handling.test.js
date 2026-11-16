@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    collectManualNodeGroups,
     buildGroupedManualNodes,
+    collectManualNodeGroups,
     normalizeManualNodeGroupName,
-} from '../../src/composables/manual-nodes/groups.js';
+} from '@/composables/manual-nodes/groups.js';
 
 describe('空分组名处理一致性', () => {
     it('normalizeManualNodeGroupName 应将空值、空字符串、空格规范化为空字符串', () => {

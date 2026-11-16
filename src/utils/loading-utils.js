@@ -4,7 +4,7 @@
  */
 
 import { ref } from 'vue';
-import { TIMING } from '../constants/timing.js';
+import { TIMING } from '@/constants/timing.js';
 
 /**
  * 创建可复用的加载状态

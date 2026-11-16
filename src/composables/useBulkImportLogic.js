@@ -1,13 +1,13 @@
 import { ref } from 'vue';
-import { useToastStore } from '../stores/toast.js';
-import { useDataStore } from '../stores/useDataStore.js';
-import { extractNodeName } from '../lib/utils.js';
-import { generateNodeId, generateSubscriptionId } from '../utils/id.js';
+import { useToastStore } from '@/stores/toast.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { extractNodeName } from '@/lib/utils.js';
+import { generateNodeId, generateSubscriptionId } from '@/utils/id.js';
 import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@/constants/nodeProtocols.js';
-import { normalizeManualNodeGroupName } from './manual-nodes/groups.js';
-import { parseSurgeConfig } from '../utils/protocolConverter.js';
-import { api } from '../lib/http.js';
-import { t } from '../i18n/index.js';
+import { normalizeManualNodeGroupName } from '@/composables/manual-nodes/groups.js';
+import { parseSurgeConfig } from '@/utils/protocolConverter.js';
+import { api } from '@/lib/http.js';
+import { t } from '@/i18n/index.js';
 
 const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS;
 const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);
@@ -37,9 +37,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     const convertViaServer = async (importText) => {
         try {
             const parsed = await api.post('/api/parse_subscription', { content: importText });
-            const converted = (parsed?.data?.nodes || [])
-                .map((node) => node?.url)
-                .filter(Boolean);
+            const converted = (parsed?.data?.nodes || []).map((node) => node?.url).filter(Boolean);
             if (!parsed?.success || converted.length === 0) return importText;
 
             // 订阅链接（http/https）后端不处理，原样保留

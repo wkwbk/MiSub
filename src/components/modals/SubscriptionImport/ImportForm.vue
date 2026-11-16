@@ -1,8 +1,8 @@
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { computed } from 'vue';
 
     const { t } = useI18n();
-    import { computed } from 'vue';
 
     const props = defineProps({
         subscriptionUrl: {

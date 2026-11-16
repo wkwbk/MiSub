@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    TRANSFORM_ASSETS,
-    getTransformAssetByUrl,
-    getLocalizedTransformAssets,
     getLocalizedTransformAssetByUrl,
+    getLocalizedTransformAssets,
+    getTransformAssetByUrl,
     localizeTransformAsset,
-} from '../../src/constants/transform-assets.js';
+    TRANSFORM_ASSETS,
+} from '@/constants/transform-assets.js';
 import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { t } from '../../src/i18n/index.js';
+import { t } from '@/i18n/index.js';
 
 describe('Transform assets', () => {
     it('should provide metadata for preset configs', () => {

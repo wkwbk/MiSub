@@ -1,12 +1,12 @@
 <script setup>
-    import { ref, computed, onMounted, watch } from 'vue';
-    import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from 'lucide-vue-next';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { api } from '../../../lib/http.js';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { computed, onMounted, ref, watch } from 'vue';
+    import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from '@lucide/vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import { api } from '@/lib/http.js';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         settings: {
@@ -182,10 +182,7 @@
         </SectionHeader>
 
         <!-- {{ t('settings.guestbookTitle') }}区域 -->
-        <div
-            v-if="guestbookConfig.enabled"
-            class="pt-6 border-t border-zinc-800/60"
-        >
+        <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-zinc-800/60">
             <!-- Toolbar -->
             <div
                 class="pb-4 border-b border-zinc-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"

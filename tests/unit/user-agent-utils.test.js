@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    isBrowserAgent,
     determineTargetFormat,
+    isBrowserAgent,
     isMetaCore,
 } from '../../functions/modules/subscription/user-agent-utils.js';
 

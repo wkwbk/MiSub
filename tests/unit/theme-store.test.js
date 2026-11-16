@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useThemeStore } from '../../src/stores/theme.js';
+import { useThemeStore } from '@/stores/theme.js';
 
 describe('useThemeStore', () => {
     let originalStartViewTransition;
@@ -83,7 +83,9 @@ describe('useThemeStore', () => {
 
         expect(document.startViewTransition).toHaveBeenCalledTimes(1);
         expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
-        expect(document.documentElement.classList.contains('theme-view-transition-sweep')).toBe(true);
+        expect(document.documentElement.classList.contains('theme-view-transition-sweep')).toBe(
+            true
+        );
 
         resolveReady();
         await Promise.resolve();
@@ -108,7 +110,9 @@ describe('useThemeStore', () => {
         await Promise.resolve();
 
         expect(document.documentElement.classList.contains('theme-switching')).toBe(false);
-        expect(document.documentElement.classList.contains('theme-view-transition-sweep')).toBe(false);
+        expect(document.documentElement.classList.contains('theme-view-transition-sweep')).toBe(
+            false
+        );
     });
 
     it('does not let an aborted earlier transition clear classes for a newer transition', async () => {

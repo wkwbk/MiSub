@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-    rememberDomainName,
-    lookupDomainName,
     clearDomainNameMemory,
     DOMAIN_NAME_MEMORY_KEY,
-} from '../../src/utils/domain-name-memory.js';
+    lookupDomainName,
+    rememberDomainName,
+} from '@/utils/domain-name-memory.js';
 
 /**
  * 机场命名记忆测试。

@@ -1,4 +1,4 @@
-import { COMMON_NODE_PROTOCOLS } from '../../constants/nodeProtocols.js';
+import { COMMON_NODE_PROTOCOLS } from '@/constants/nodeProtocols.js';
 
 /**
  * 验证生成的URL是否有效

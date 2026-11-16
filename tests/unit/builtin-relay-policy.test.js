@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
 import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.js';
 import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.js';

@@ -1,10 +1,10 @@
-export { convertClashProxyToUrl } from './clash.js';
-export { validateGeneratedUrl } from './validator.js';
-export { batchConvertClashProxies } from './batch.js';
+export { convertClashProxyToUrl } from '@/utils/protocols/clash.js';
+export { validateGeneratedUrl } from '@/utils/protocols/validator.js';
+export { batchConvertClashProxies } from '@/utils/protocols/batch.js';
 
-import { parseLoonConfig } from './loon-parser.js';
-import { parseSurgeConfig } from './surge-parser.js';
-import { parseQuantumultXConfig } from './quantumultx-parser.js';
+import { parseLoonConfig } from '@/utils/protocols/loon-parser.js';
+import { parseSurgeConfig } from '@/utils/protocols/surge-parser.js';
+import { parseQuantumultXConfig } from '@/utils/protocols/quantumultx-parser.js';
 
 export { parseLoonConfig, parseSurgeConfig, parseQuantumultXConfig };
 

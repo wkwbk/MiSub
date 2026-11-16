@@ -1,6 +1,6 @@
 <script setup>
     import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-    import { Check, ChevronDown } from 'lucide-vue-next';
+    import { Check, ChevronDown } from '@lucide/vue';
     import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 
     const props = defineProps({
@@ -132,7 +132,10 @@
             const values = Array.isArray(props.modelValue) ? props.modelValue : [];
             if (values.length === 0) return props.placeholder;
             return values
-                .map((val) => flatOptions.value.find((opt) => opt.value === val)?.label ?? String(val))
+                .map(
+                    (val) =>
+                        flatOptions.value.find((opt) => opt.value === val)?.label ?? String(val)
+                )
                 .filter(Boolean)
                 .join(', ');
         }
@@ -277,7 +280,10 @@
 
     const handleDocumentPointerDown = (event) => {
         if (!isOpen.value) return;
-        if (!triggerRef.value?.contains(event.target) && !popoverRef.value?.contains(event.target)) {
+        if (
+            !triggerRef.value?.contains(event.target) &&
+            !popoverRef.value?.contains(event.target)
+        ) {
             close();
         }
     };

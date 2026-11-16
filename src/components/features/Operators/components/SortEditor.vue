@@ -1,8 +1,8 @@
 <script setup>
     import { computed } from 'vue';
-    import { ChevronDown, ChevronUp, X } from 'lucide-vue-next';
-    import Select from '../../../ui/Select.vue';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { ChevronDown, ChevronUp, X } from '@lucide/vue';
+    import Select from '@/components/ui/Select.vue';
+    import { useI18n } from '@/i18n/index.js';
     import draggable from 'vuedraggable';
     import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.js';
 

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+    createAirportGroupId,
     getAirportIdentityKey,
     getAirportIdentityName,
-    setAirportIdentity,
     resetAirportIdentity,
-    createAirportGroupId,
-} from '../../src/utils/airport-identity.js';
+    setAirportIdentity,
+} from '@/utils/airport-identity.js';
 
 describe('subscription airport identity', () => {
     it('uses explicit stable group identity before inferred domain identity', () => {

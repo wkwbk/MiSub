@@ -1,7 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import { Languages } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
+    import { Languages } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { locale, setLocale, t } = useI18n();
 

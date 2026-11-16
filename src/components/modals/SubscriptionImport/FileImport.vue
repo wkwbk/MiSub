@@ -1,14 +1,14 @@
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
-
-    const { t } = useI18n();
+    import { useI18n } from '@/i18n/index.js';
     /**
      * 文件上传导入：拖拽 / 点击选择本地文件，读取文本后走后端 /api/parse_subscription。
      * 纯 UI 组件，解析与入库由父组件处理。
      */
-    import { ref, computed } from 'vue';
-    import { CloudUpload, Loader2 } from 'lucide-vue-next';
-    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '../../../utils/importFile.js';
+    import { computed, ref } from 'vue';
+    import { CloudUpload, Loader2 } from '@lucide/vue';
+    import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
+
+    const { t } = useI18n();
 
     const props = defineProps({
         isProcessing: {
@@ -109,24 +109,29 @@
             </h4>
             <ul class="text-xs text-zinc-400 space-y-1">
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtPlainText') }}</strong
-                    >：{{ t('fileImport.fmtPlainTextDesc') }}
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtPlainText') }}</strong>：{{
+                        t('fileImport.fmtPlainTextDesc')
+                    }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtBase64') }}</strong
-                    >：{{ t('fileImport.fmtBase64Desc') }}
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtBase64') }}</strong>：{{
+                        t('fileImport.fmtBase64Desc')
+                    }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtClash') }}</strong
-                    >：{{ t('fileImport.fmtClashDesc') }}
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtClash') }}</strong>：{{
+                        t('fileImport.fmtClashDesc')
+                    }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtSurge') }}</strong
-                    >：{{ t('fileImport.fmtSurgeDesc') }}
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtSurge') }}</strong>：{{
+                        t('fileImport.fmtSurgeDesc')
+                    }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtJson') }}</strong
-                    >：{{ t('fileImport.fmtJsonDesc') }}
+                    • <strong class="text-zinc-200">{{ t('fileImport.fmtJson') }}</strong>：{{
+                        t('fileImport.fmtJsonDesc')
+                    }}
                 </li>
             </ul>
         </div>

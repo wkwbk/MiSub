@@ -1,17 +1,17 @@
 <script setup>
-    import { computed, ref, defineAsyncComponent, onMounted } from 'vue';
-    import { FileText } from 'lucide-vue-next';
-    import { useDataStore } from '../stores/useDataStore.js';
-    import { useBulkImportLogic } from '../composables/useBulkImportLogic.js';
+    import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+    import { FileText } from '@lucide/vue';
+    import { useDataStore } from '@/stores/useDataStore.js';
+    import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
     import { storeToRefs } from 'pinia';
-    import SkeletonLoader from '../components/ui/SkeletonLoader.vue';
-    import RightPanel from '../components/profiles/RightPanel.vue';
-    import { useSubscriptions } from '../composables/useSubscriptions.js';
+    import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
+    import RightPanel from '@/components/profiles/RightPanel.vue';
+    import { useSubscriptions } from '@/composables/useSubscriptions.js';
     import { useRouter } from 'vue-router';
-    import { useProfiles } from '../composables/useProfiles.js';
-    import { useManualNodes } from '../composables/useManualNodes.js';
-    import { formatBytes } from '../lib/utils.js';
-    import StatCards from '../components/features/Dashboard/StatCards.vue';
+    import { useProfiles } from '@/composables/useProfiles.js';
+    import { useManualNodes } from '@/composables/useManualNodes.js';
+    import { formatBytes } from '@/lib/utils.js';
+    import StatCards from '@/components/features/Dashboard/StatCards.vue';
     import {
         addDismissedHealthItem,
         clearLegacyDismissedHealthItemIds,
@@ -19,14 +19,14 @@
         isHealthItemDismissed,
         normalizeDismissedHealthItemIds,
         readLegacyDismissedHealthItemIds,
-    } from '../utils/health-item-dismissal.js';
+    } from '@/utils/health-item-dismissal.js';
     import {
         getDashboardHealthItems,
         resolveHealthItemCopy,
         shouldShowFullGuide,
-    } from '../utils/dashboard-health.js';
-    import { useToastStore } from '../stores/toast.js';
-    import { useI18n } from '../i18n/index.js';
+    } from '@/utils/dashboard-health.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
     const { showToast } = useToastStore();
@@ -174,20 +174,18 @@
     };
 
     const BulkImportModal = defineAsyncComponent(
-        () => import('../components/modals/BulkImportModal.vue')
+        () => import('@/components/modals/BulkImportModal.vue')
     );
 
     // --- Profile Modal Logic ---
     const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } =
         useProfiles(markDirty);
 
-    const ProfileModal = defineAsyncComponent(
-        () => import('../components/modals/ProfileModal.vue')
-    );
+    const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
 
     // --- Log Modal Logic ---
     const showLogModal = ref(false);
-    const LogModal = defineAsyncComponent(() => import('../components/modals/LogModal.vue'));
+    const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
 
     // Kept below the `showLogModal` declaration on purpose: this handler closes
     // over it, so co-locating them keeps the dependency obvious and immune to a
@@ -268,7 +266,7 @@
     });
 
     // --- QRCode Modal Logic ---
-    const QRCodeModal = defineAsyncComponent(() => import('../components/modals/QRCodeModal.vue'));
+    const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
@@ -295,7 +293,9 @@
                 >
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100">
+                            <h1
+                                class="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100"
+                            >
                                 {{ t('dashboard.title') }}
                             </h1>
                             <span

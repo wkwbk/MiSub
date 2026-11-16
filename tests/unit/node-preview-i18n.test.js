@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import NodePreviewModal from '../../src/components/modals/NodePreview/NodePreviewModal.vue';
-import { createI18n } from '../../src/i18n/index.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import NodePreviewModal from '@/components/modals/NodePreview/NodePreviewModal.vue';
+import { createI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 
 const toastMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     APIError: class APIError extends Error {},
     api: {
         post: vi.fn(async () => ({
@@ -31,7 +31,7 @@ vi.mock('../../src/lib/http.js', () => ({
     },
 }));
 
-vi.mock('../../src/stores/toast.js', () => ({
+vi.mock('@/stores/toast.js', () => ({
     useToastStore: () => ({
         showToast: toastMock,
     }),
@@ -74,8 +74,8 @@ describe('NodePreviewModal English translations', () => {
         expect(wrapper.text()).toContain('CMSS');
         expect(wrapper.text()).toContain('Profile node overview');
         expect(wrapper.text()).toContain('Pick nodes');
-        expect(wrapper.text()).toContain('Nodes Total');
-        expect(wrapper.text()).toContain('Protocols');
+        expect(wrapper.text()).toContain('Nodes total');
+        expect(wrapper.text()).toContain('Protocol types');
         expect(wrapper.text()).toContain('Regions');
         expect(wrapper.text()).toContain('Total Pages');
         expectNoChineseOrKeys(wrapper.text());

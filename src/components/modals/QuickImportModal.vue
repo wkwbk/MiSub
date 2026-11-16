@@ -1,7 +1,7 @@
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
-    import { X } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
+    import { computed, onMounted, ref } from 'vue';
+    import { X } from '@lucide/vue';
+    import Modal from '@/components/forms/Modal.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
@@ -175,8 +175,7 @@
                     {{ t('quickImport.detectedPrefix') }}
                     <strong class="font-mono text-zinc-900 dark:text-zinc-100">{{
                         getPlatformLabel(detectedPlatform)
-                    }}</strong
-                    >{{ t('quickImport.detectedSuffix') }}
+                    }}</strong>{{ t('quickImport.detectedSuffix') }}
                 </span>
             </div>
         </template>

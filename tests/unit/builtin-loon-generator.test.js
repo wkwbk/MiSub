@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.js';
 
 describe('Loon 内置生成器', () => {

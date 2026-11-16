@@ -3,7 +3,7 @@
  * @author MiSub Team
  */
 
-export * from './error-utils.js';
-export * from './loading-utils.js';
-export * from './format-utils.js';
-export * from './validation-utils.js';
+export * from '@/utils/error-utils.js';
+export * from '@/utils/loading-utils.js';
+export * from '@/utils/format-utils.js';
+export * from '@/utils/validation-utils.js';

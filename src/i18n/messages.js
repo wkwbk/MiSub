@@ -221,8 +221,7 @@ export const messages = {
             searchPlaceholder: '搜索节点...',
             searchResult: '搜索: "{keyword}" ({filtered}/{total})',
             noSearchResult: '没有找到匹配的手动节点',
-            sortingHint:
-                '当前处于排序模式，拖拽节点即可调整顺序，节点内操作已临时锁定。',
+            sortingHint: '当前处于排序模式，拖拽节点即可调整顺序，节点内操作已临时锁定。',
             empty: '没有手动节点',
             emptyDesc: '添加分享链接或单个节点。',
             selectedCount: '已选 {count}',
@@ -378,8 +377,7 @@ export const messages = {
             listSearchPlaceholder: '搜索名称、备注或链接',
             noSearchResults: '没有找到匹配的机场订阅',
             loadMoreRemaining: '加载更多（剩余 {count} 项）',
-            sortingHint:
-                '当前处于排序模式，拖拽卡片即可调整顺序，卡片内操作已临时锁定。',
+            sortingHint: '当前处于排序模式，拖拽卡片即可调整顺序，卡片内操作已临时锁定。',
             clearStatusFilter: '清除筛选',
             filterStatusDisabled: '仅显示已停用的订阅',
             filterStatusError: '仅显示最近更新失败的订阅',
@@ -513,7 +511,8 @@ export const messages = {
             helper: '仅支持 http:// 或 https:// 订阅链接（一行一个）。节点分享链接或文件请前往首页或手工节点导入。',
             ignoredInvalid: '忽略 {count} 条非订阅链接',
             allDuplicates: '检测到 {count} 条订阅链接，但均已存在（已跳过）',
-            noValidSubscriptionsWithInvalid: '未检测到有效的 http:// 或 https:// 订阅链接（已忽略 {count} 条非订阅内容）',
+            noValidSubscriptionsWithInvalid:
+                '未检测到有效的 http:// 或 https:// 订阅链接（已忽略 {count} 条非订阅内容）',
             noValidSubscriptions: '未检测到有效的订阅链接',
         },
         backup: {
@@ -2414,13 +2413,15 @@ export const messages = {
         },
         subscriptionBulkImport: {
             title: 'Bulk import subscriptions',
-            description: 'One airport subscription URL per line (http:// or https://), optionally assign an airport group.',
+            description:
+                'One airport subscription URL per line (http:// or https://), optionally assign an airport group.',
             groupLabel: 'Airport group (optional)',
             groupPlaceholder: 'Leave empty to auto-group by domain, or select/enter a group...',
             helper: 'Only http:// or https:// subscription URLs are supported (one per line). For node links or files, use Dashboard or Manual Nodes.',
             ignoredInvalid: 'ignored {count} non-subscription lines',
             allDuplicates: 'Found {count} subscription URLs, but all already exist (skipped)',
-            noValidSubscriptionsWithInvalid: 'No valid http:// or https:// subscription URLs found (ignored {count} non-subscription lines)',
+            noValidSubscriptionsWithInvalid:
+                'No valid http:// or https:// subscription URLs found (ignored {count} non-subscription lines)',
             noValidSubscriptions: 'No valid subscription URLs found',
         },
         backup: {

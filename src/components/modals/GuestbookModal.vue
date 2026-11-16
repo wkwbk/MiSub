@@ -1,10 +1,10 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { Check, RefreshCw } from 'lucide-vue-next';
-    import { api } from '../../lib/http.js';
-    import Modal from '../forms/Modal.vue';
-    import Select from '../ui/Select.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { Check, RefreshCw } from '@lucide/vue';
+    import { api } from '@/lib/http.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import Select from '@/components/ui/Select.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

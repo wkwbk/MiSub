@@ -9,7 +9,7 @@
  * 读写与失败判定统一走 `local-preference.js`。
  */
 
-import { readPreference, removePreference, writePreference } from './local-preference.js';
+import { readPreference, removePreference, writePreference } from '@/utils/local-preference.js';
 
 const STORAGE_KEY = 'misub:domainNameMemory';
 const MAX_ENTRIES = 500;

@@ -4,13 +4,11 @@
         <div
             class="relative z-10 border border-zinc-800 bg-[#171717] rounded-md p-10 max-w-lg w-[90%] text-center shadow-none"
         >
-            <div
-                class="font-mono font-bold text-7xl text-zinc-100 mb-4"
-            >
-                404
-            </div>
+            <div class="font-mono font-bold text-7xl text-zinc-100 mb-4">404</div>
 
-            <h1 class="text-xl font-semibold mb-3 tracking-tight text-zinc-100">{{ t('notFound.title') }}</h1>
+            <h1 class="text-xl font-semibold mb-3 tracking-tight text-zinc-100">
+                {{ t('notFound.title') }}
+            </h1>
             <p class="text-sm text-zinc-400 mb-8 leading-relaxed">
                 {{ t('notFound.description') }}<br />
                 {{ t('notFound.loginHint') }}
@@ -29,9 +27,9 @@
 
 <script setup>
     import { computed } from 'vue';
-    import { ArrowLeft } from 'lucide-vue-next';
-    import { useSessionStore } from '../stores/session.js';
-    import { useI18n } from '../i18n/index.js';
+    import { ArrowLeft } from '@lucide/vue';
+    import { useSessionStore } from '@/stores/session.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
     const sessionStore = useSessionStore();

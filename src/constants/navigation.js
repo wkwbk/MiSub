@@ -1,5 +1,5 @@
 import { markRaw } from 'vue';
-import { LayoutDashboard, Boxes, Server, CloudDownload, Settings } from 'lucide-vue-next';
+import { Boxes, CloudDownload, LayoutDashboard, Server, Settings } from '@lucide/vue';
 
 export const MAIN_NAV_ITEMS = [
     {

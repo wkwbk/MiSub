@@ -1,12 +1,12 @@
 <script setup>
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { nextTick, ref, watch } from 'vue';
+    import { Download } from '@lucide/vue';
+    import QRCode from 'qrcode';
+    import Modal from '@/components/forms/Modal.vue';
+    import { useToastStore } from '@/stores/toast.js';
 
     const { t } = useI18n();
-    import { ref, watch, nextTick } from 'vue';
-    import { Download } from 'lucide-vue-next';
-    import QRCode from 'qrcode';
-    import Modal from '../forms/Modal.vue';
-    import { useToastStore } from '../../stores/toast.js';
 
     const { showToast } = useToastStore();
 

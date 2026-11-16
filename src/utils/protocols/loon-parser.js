@@ -1,5 +1,5 @@
-import { generateNodeId } from '../id.js';
-import { base64Encode } from './common/base64.js';
+import { generateNodeId } from '@/utils/id.js';
+import { base64Encode } from '@/utils/protocols/common/base64.js';
 
 export function parseLoonConfig(content) {
     const nodes = [];

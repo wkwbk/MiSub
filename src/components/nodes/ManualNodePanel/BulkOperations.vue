@@ -1,5 +1,5 @@
 <script setup>
-    import { Trash2 } from 'lucide-vue-next';
+    import { Trash2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -42,15 +42,12 @@
                 >
                     {{ isAllSelected ? t('actions.deselectAll') : t('actions.selectAllPage') }}
                 </button>
-                <span
-                    class="text-xs font-mono font-medium text-zinc-400 whitespace-nowrap"
-                    >{{ t('manualNodes.selectedCount', { count: selectedCount }) }}</span
-                >
+                <span class="text-xs font-mono font-medium text-zinc-400 whitespace-nowrap">{{
+                    t('manualNodes.selectedCount', { count: selectedCount })
+                }}</span>
             </div>
 
-            <div
-                class="h-px w-full sm:w-px sm:h-4 bg-zinc-800 flex-shrink-0 hidden sm:block"
-            ></div>
+            <div class="h-px w-full sm:w-px sm:h-4 bg-zinc-800 flex-shrink-0 hidden sm:block"></div>
 
             <div class="grid grid-cols-2 sm:flex sm:items-center w-full sm:w-auto gap-3 sm:gap-2">
                 <div

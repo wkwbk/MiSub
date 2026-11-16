@@ -1,7 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-    pinRemoteRuleUrl,
     PINNED_RULE_REVISIONS,
+    pinRemoteRuleUrl,
 } from '../../functions/modules/subscription/builtin-rules-provider.js';
 
 /**

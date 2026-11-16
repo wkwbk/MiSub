@@ -1,10 +1,10 @@
 <script setup>
-    import { ref, computed, onUnmounted } from 'vue';
-    import { Check, Copy, QrCode } from 'lucide-vue-next';
-    import Select from '../ui/Select.vue';
-    import { useToastStore } from '../../stores/toast.js';
-    import { useUIStore } from '../../stores/ui.js';
-    import { useI18n } from '../../i18n/index.js';
+    import { computed, onUnmounted, ref } from 'vue';
+    import { Check, Copy, QrCode } from '@lucide/vue';
+    import Select from '@/components/ui/Select.vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useUIStore } from '@/stores/ui.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         config: Object,
@@ -168,9 +168,10 @@
             </div>
 
             <div class="mb-4 list-item-animation" style="--delay-index: 2">
-                <label class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5">{{
-                    t('dashboard.linkCard.selectContent')
-                }}</label>
+                <label
+                    class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5"
+                    >{{ t('dashboard.linkCard.selectContent') }}</label
+                >
                 <Select
                     v-model="selectedId"
                     trigger-class="font-mono"
@@ -185,9 +186,10 @@
             </div>
 
             <div class="mb-4 list-item-animation" style="--delay-index: 3">
-                <label class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">{{
-                    t('dashboard.linkCard.selectFormat')
-                }}</label>
+                <label
+                    class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2"
+                    >{{ t('dashboard.linkCard.selectFormat') }}</label
+                >
                 <div class="grid gap-2" :class="compact ? 'grid-cols-2' : 'grid-cols-3'">
                     <button
                         v-for="(format, index) in formats"
@@ -247,16 +249,8 @@
                         :aria-label="t('dashboard.linkCard.copyLink')"
                     >
                         <Transition name="fade" mode="out-in">
-                            <Check
-                                v-if="copied"
-                                class="h-4 w-4 text-zinc-100"
-                                stroke-width="2.5"
-                            />
-                            <Copy
-                                v-else
-                                class="h-4 w-4"
-                                stroke-width="1.5"
-                            />
+                            <Check v-if="copied" class="h-4 w-4 text-zinc-100" stroke-width="2.5" />
+                            <Copy v-else class="h-4 w-4" stroke-width="1.5" />
                         </Transition>
                     </button>
                 </div>

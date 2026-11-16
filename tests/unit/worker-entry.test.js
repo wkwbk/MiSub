@@ -95,4 +95,3 @@ describe('Cloudflare Worker entry (worker.js)', () => {
         expect(infoSpy).toHaveBeenCalled();
     });
 });
-

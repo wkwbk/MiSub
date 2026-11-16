@@ -3,9 +3,9 @@
  * @author MiSub Team
  */
 
-import { t } from '../i18n/index.js';
-import { isChunkLoadError } from './chunk-reload.js';
-import { isNetworkErrorMessage } from './network-error.js';
+import { t } from '@/i18n/index.js';
+import { isChunkLoadError } from '@/utils/chunk-reload.js';
+import { isNetworkErrorMessage } from '@/utils/network-error.js';
 
 let toastHandler = null;
 let monitoringEndpoint = null;

@@ -4,11 +4,10 @@
  */
 
 import {
-    parseNodeInfo,
     extractNodeRegion,
     getRegionEmoji,
+    parseNodeInfo,
     REGION_KEYWORDS,
-    REGION_EMOJI,
 } from '../modules/utils/geo-utils.js';
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';

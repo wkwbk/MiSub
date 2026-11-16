@@ -1,6 +1,6 @@
 import { computed, inject, readonly, ref } from 'vue';
-import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
-import { messages } from './messages.js';
+import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+import { messages } from '@/i18n/messages.js';
 
 export const DEFAULT_LOCALE = 'zh-CN';
 export const LOCALE_STORAGE_KEY = 'misub:locale';

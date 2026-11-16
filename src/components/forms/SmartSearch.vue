@@ -1,7 +1,7 @@
 <script setup>
-    import { ref, computed, watch } from 'vue';
-    import { Search, X } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
+    import { computed, ref, watch } from 'vue';
+    import { Search, X } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -139,7 +139,9 @@
                 @click="clearSearch"
                 class="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
-                <X class="h-5 w-5 text-gray-500 dark:text-gray-400 hover:text-gray-600 smooth-all" />
+                <X
+                    class="h-5 w-5 text-gray-500 dark:text-gray-400 hover:text-gray-600 smooth-all"
+                />
             </button>
         </div>
 

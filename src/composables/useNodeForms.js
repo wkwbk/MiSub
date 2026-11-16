@@ -1,8 +1,8 @@
 import { ref } from 'vue';
-import { useToastStore } from '../stores/toast.js';
-import { extractNodeName } from '../lib/utils.js';
-import { generateNodeId } from '../utils/id.js';
-import { t } from '../i18n/index.js';
+import { useToastStore } from '@/stores/toast.js';
+import { extractNodeName } from '@/lib/utils.js';
+import { generateNodeId } from '@/utils/id.js';
+import { t } from '@/i18n/index.js';
 
 const isDev = import.meta.env.DEV;
 

@@ -7,7 +7,7 @@ import {
     removePreference,
     writePreference,
     writeRawPreference,
-} from '../../src/utils/local-preference.js';
+} from '@/utils/local-preference.js';
 
 const KEY = 'misub:testPreference';
 const normalizeStrings = (value) =>

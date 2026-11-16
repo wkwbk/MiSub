@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import CopyLinkModal from '../../src/components/modals/CopyLinkModal.vue';
+import CopyLinkModal from '@/components/modals/CopyLinkModal.vue';
 
 const modalStub = {
     props: ['show'],

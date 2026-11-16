@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { useVersionStore } from '../../stores/version';
+    import { useVersionStore } from '@/stores/version';
     import packageJson from '../../../package.json';
 
     defineProps({

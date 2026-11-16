@@ -1,5 +1,5 @@
 <script setup>
-    import SkeletonCard from '../ui/SkeletonCard.vue';
+    import SkeletonCard from '@/components/ui/SkeletonCard.vue';
 </script>
 
 <template>

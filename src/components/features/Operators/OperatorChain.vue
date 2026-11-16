@@ -1,24 +1,24 @@
 <script setup>
-    import { ref, computed } from 'vue';
+    import { computed, ref } from 'vue';
     import {
-        Filter,
-        PenLine,
-        Code2,
         ArrowUpDown,
-        Copy,
-        Zap,
-        Plus,
-        ChevronUp,
         ChevronDown,
+        ChevronUp,
+        Code2,
+        Copy,
+        Filter,
         PauseCircle,
+        PenLine,
+        Plus,
         X,
-    } from 'lucide-vue-next';
-    import { useI18n } from '../../../i18n/index.js';
-    import FilterEditor from './components/FilterEditor.vue';
-    import RenameEditor from './components/RenameEditor.vue';
-    import SortEditor from './components/SortEditor.vue';
-    import DedupEditor from './components/DedupEditor.vue';
-    import Input from '../../ui/Input.vue';
+        Zap,
+    } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
+    import FilterEditor from '@/components/features/Operators/components/FilterEditor.vue';
+    import RenameEditor from '@/components/features/Operators/components/RenameEditor.vue';
+    import SortEditor from '@/components/features/Operators/components/SortEditor.vue';
+    import DedupEditor from '@/components/features/Operators/components/DedupEditor.vue';
+    import Input from '@/components/ui/Input.vue';
 
     const props = defineProps({
         modelValue: {

@@ -1,7 +1,7 @@
 <script setup>
     import { markRaw } from 'vue';
-    import { Settings, Home, FileText, Globe, Zap, Monitor, Server } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
+    import { FileText, Globe, Home, Monitor, Server, Settings, Zap } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -24,7 +24,11 @@
             tabs: [
                 { id: 'basic', labelKey: 'settings.tabs.basic', icon: markRaw(Settings) },
                 { id: 'home', labelKey: 'settings.tabs.home', icon: markRaw(Home) },
-                { id: 'custom-page', labelKey: 'settings.tabs.customPage', icon: markRaw(FileText) },
+                {
+                    id: 'custom-page',
+                    labelKey: 'settings.tabs.customPage',
+                    icon: markRaw(FileText),
+                },
             ],
         },
         {
@@ -51,9 +55,7 @@
             <p
                 class="hidden md:block px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
                 :class="
-                    groupIndex > 0
-                        ? 'md:mt-4 md:pt-3 md:border-t md:border-zinc-800'
-                        : 'md:pt-2'
+                    groupIndex > 0 ? 'md:mt-4 md:pt-3 md:border-t md:border-zinc-800' : 'md:pt-2'
                 "
             >
                 {{ t(group.labelKey) }}

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchTransformTemplate } from '../../functions/modules/subscription/transform-template-cache.js';
 
 function createStorage(cached = null) {

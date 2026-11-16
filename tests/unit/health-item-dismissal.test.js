@@ -11,15 +11,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
-    LEGACY_DISMISSED_HEALTH_ITEMS_KEY,
-    MAX_DISMISSED_HEALTH_ITEMS,
     addDismissedHealthItem,
     clearLegacyDismissedHealthItemIds,
     filterDismissedHealthItems,
     isHealthItemDismissed,
+    LEGACY_DISMISSED_HEALTH_ITEMS_KEY,
+    MAX_DISMISSED_HEALTH_ITEMS,
     normalizeDismissedHealthItemIds,
     readLegacyDismissedHealthItemIds,
-} from '../../src/utils/health-item-dismissal.js';
+} from '@/utils/health-item-dismissal.js';
 
 describe('health-item-dismissal（纯函数）', () => {
     it('未忽略任何项时为空', () => {

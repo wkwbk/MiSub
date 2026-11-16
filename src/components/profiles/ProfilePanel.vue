@@ -1,13 +1,13 @@
 <script setup>
     import { computed } from 'vue';
-    import { Search, X } from 'lucide-vue-next';
+    import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
-    import ProfileCard from './ProfileCard.vue';
+    import ProfileCard from '@/components/profiles/ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -95,7 +95,9 @@
                 class="min-w-0 rounded-md border border-zinc-800 bg-[#171717] shadow-none"
                 :class="[compact ? 'p-3' : 'p-4']"
             >
-                <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div
+                    class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+                >
                     <div class="min-w-0">
                         <div class="flex items-center gap-3 shrink-0">
                             <h2 class="text-lg font-semibold text-zinc-100">
@@ -110,7 +112,9 @@
                             {{ t('profiles.subtitle') }}
                         </p>
                     </div>
-                    <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0">
+                    <div
+                        class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0"
+                    >
                         <button
                             @click="handleAdd"
                             class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
@@ -132,7 +136,9 @@
                                             : t('actions.manualSort')
                                     }}
                                 </button>
-                                <div class="my-1 border-t border-zinc-200 dark:border-white/10"></div>
+                                <div
+                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                ></div>
                                 <button
                                     @click="
                                         handleDeleteAll();
@@ -269,10 +275,7 @@
                 @change-page="handleChangePage"
             />
         </div>
-        <div
-            v-else
-            class="rounded-md border border-zinc-800 bg-[#171717] py-2"
-        >
+        <div v-else class="rounded-md border border-zinc-800 bg-[#171717] py-2">
             <EmptyState
                 :title="t('profiles.empty')"
                 :description="t('profiles.emptyDesc')"

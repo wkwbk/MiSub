@@ -1,12 +1,12 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import router from '../router';
-import { fetchInitialData, login as apiLogin, fetchPublicConfig } from '../lib/api';
-import { api } from '../lib/http.js';
-import { handleError } from '../utils/errorHandler.js';
-import { useDataStore } from './useDataStore';
-import { t } from '../i18n/index.js';
-import { resolveSafeLoginRedirect } from '../utils/login-path.js';
+import router from '@/router';
+import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api';
+import { api } from '@/lib/http.js';
+import { handleError } from '@/utils/errorHandler.js';
+import { useDataStore } from '@/stores/useDataStore';
+import { t } from '@/i18n/index.js';
+import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 export const useSessionStore = defineStore('session', () => {
     const sessionState = ref('loading'); // loading, loggedIn, loggedOut

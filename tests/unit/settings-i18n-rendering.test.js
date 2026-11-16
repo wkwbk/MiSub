@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mount, flushPromises } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import BasicSettings from '../../src/components/settings/sections/BasicSettings.vue';
-import ClientSettings from '../../src/components/settings/sections/ClientSettings.vue';
-import TransformCard from '../../src/components/settings/sections/ServiceSettings/TransformCard.vue';
-import RuleTemplateManager from '../../src/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
-import TelegramCard from '../../src/components/settings/sections/ServiceSettings/TelegramCard.vue';
-import SystemSettings from '../../src/components/settings/sections/SystemSettings.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
+import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
+import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
+import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
+import TelegramCard from '@/components/settings/sections/ServiceSettings/TelegramCard.vue';
+import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
+import { createI18n } from '@/i18n/index.js';
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: {
         get: vi.fn(async (url) => {
             if (url === '/api/clients') {
@@ -35,7 +35,7 @@ vi.mock('../../src/lib/http.js', () => ({
     },
 }));
 
-vi.mock('../../src/stores/toast', () => ({
+vi.mock('@/stores/toast', () => ({
     useToastStore: () => ({ showToast: vi.fn() }),
 }));
 

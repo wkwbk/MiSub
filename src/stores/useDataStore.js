@@ -1,13 +1,13 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { useToastStore } from './toast';
-import { useSettingsStore } from './settings';
-import { useEditorStore } from './editor';
-import { createStorageCache } from '../utils/cache-helper.js';
-import { DEFAULT_SETTINGS } from '../constants/default-settings.js';
-import { TIMING } from '../constants/timing.js';
-import { api } from '../lib/http.js';
-import { t } from '../i18n/index.js';
+import { useToastStore } from '@/stores/toast';
+import { useSettingsStore } from '@/stores/settings';
+import { useEditorStore } from '@/stores/editor';
+import { createStorageCache } from '@/utils/cache-helper.js';
+import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
+import { TIMING } from '@/constants/timing.js';
+import { api } from '@/lib/http.js';
+import { t } from '@/i18n/index.js';
 
 const isDev = import.meta.env.DEV;
 

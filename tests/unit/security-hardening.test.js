@@ -10,9 +10,9 @@ import {
     handlePreviewContentRequest,
 } from '../../functions/modules/handlers/debug-handler.js';
 import {
-    handleLogin,
     createSignedToken,
     getAuthSessionDiagnostic,
+    handleLogin,
     renewAuthSession,
 } from '../../functions/modules/auth-middleware.js';
 import { SESSION_DURATION, SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.js';

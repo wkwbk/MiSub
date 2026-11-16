@@ -1,13 +1,13 @@
 <script setup>
     import { computed } from 'vue';
     import draggable from 'vuedraggable';
-    import ManualNodeCard from '../ManualNodeCard.vue';
-    import ManualNodeList from '../ManualNodeList.vue';
+    import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
+    import ManualNodeList from '@/components/nodes/ManualNodeList.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '@/i18n/index.js';
-    import { hasDragOrderChanged } from '../../../composables/useSortingMode.js';
+    import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
 
     const { t } = useI18n();
 
@@ -232,10 +232,7 @@
             @update:items-per-page="emit('update:itemsPerPage', $event)"
         />
     </div>
-    <div
-        v-else
-        class="rounded-md border border-zinc-800 bg-[#171717] py-2"
-    >
+    <div v-else class="rounded-md border border-zinc-800 bg-[#171717] py-2">
         <EmptyState
             :title="t('manualNodes.empty')"
             :description="t('manualNodes.emptyDesc')"

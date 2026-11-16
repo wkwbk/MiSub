@@ -1,20 +1,20 @@
 <script setup>
-    import { useI18n } from '../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { ref, watch } from 'vue';
+    import { useToastStore } from '@/stores/toast.js';
+    import Modal from '@/components/forms/Modal.vue';
+    import { handleError } from '@/utils/errorHandler.js';
+    import { generateNodeId } from '@/utils/id.js';
+    import { api, APIError } from '@/lib/http.js';
+    import FormatDetector from '@/components/modals/SubscriptionImport/FormatDetector.vue';
+    import ImportForm from '@/components/modals/SubscriptionImport/ImportForm.vue';
+    import FileImport from '@/components/modals/SubscriptionImport/FileImport.vue';
+    import ParseResult from '@/components/modals/SubscriptionImport/ParseResult.vue';
+    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import { readFilesAsText } from '@/utils/importFile.js';
+    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
 
     const { t } = useI18n();
-    import { ref, watch } from 'vue';
-    import { useToastStore } from '../../stores/toast.js';
-    import Modal from '../forms/Modal.vue';
-    import { handleError } from '../../utils/errorHandler.js';
-    import { generateNodeId } from '../../utils/id.js';
-    import { api, APIError } from '../../lib/http.js';
-    import FormatDetector from './SubscriptionImport/FormatDetector.vue';
-    import ImportForm from './SubscriptionImport/ImportForm.vue';
-    import FileImport from './SubscriptionImport/FileImport.vue';
-    import ParseResult from './SubscriptionImport/ParseResult.vue';
-    import GroupSelector from '../ui/GroupSelector.vue'; // Added
-    import { readFilesAsText } from '../../utils/importFile.js';
-    import { buildAutoGroupName } from '../../utils/auto-group-name.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -286,7 +286,9 @@
         <template #body>
             <div class="space-y-4">
                 <!-- 来源切换 -->
-                <div class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]">
+                <div
+                    class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]"
+                >
                     <button
                         type="button"
                         class="py-1.5 text-xs font-medium transition-colors"
@@ -315,9 +317,7 @@
 
                 <!-- Group Selector Added -->
                 <div class="relative">
-                    <label
-                        class="text-xs font-semibold text-zinc-400 mb-1.5 block"
-                    >
+                    <label class="text-xs font-semibold text-zinc-400 mb-1.5 block">
                         {{ t('importNodes.targetGroup') }}
                     </label>
                     <GroupSelector

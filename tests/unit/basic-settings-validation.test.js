@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import BasicSettings from '../../src/components/settings/sections/BasicSettings.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const showToast = vi.fn();
 
-vi.mock('../../src/stores/toast', () => ({
+vi.mock('@/stores/toast', () => ({
     useToastStore: () => ({ showToast }),
 }));
 

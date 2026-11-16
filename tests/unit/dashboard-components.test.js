@@ -1,9 +1,9 @@
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
-import StatCards from '../../src/components/features/Dashboard/StatCards.vue';
-import RightPanel from '../../src/components/profiles/RightPanel.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import StatCards from '@/components/features/Dashboard/StatCards.vue';
+import RightPanel from '@/components/profiles/RightPanel.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const routerLinkStub = {
     props: ['to'],

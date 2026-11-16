@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import TransformSelector from '../../src/components/forms/TransformSelector.vue';
-import RuleTemplateManager from '../../src/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { setLocale } from '../../src/i18n/index.js';
+import TransformSelector from '@/components/forms/TransformSelector.vue';
+import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { setLocale } from '@/i18n/index.js';
 
 // happy-dom 的 navigator.language 是 en-US，i18n 单例会据此选英文；
 // 下面断言的是中文文案，所以先把语言钉死，否则断言随运行环境漂移。
@@ -19,14 +19,14 @@ vi.mock('../../src/services/api.js', () => ({
     },
 }));
 
-vi.mock('../../src/stores/settings.js', () => ({
+vi.mock('@/stores/settings.js', () => ({
     useSettingsStore: () => ({
         config: {},
         setConfig: vi.fn(),
     }),
 }));
 
-vi.mock('../../src/stores/editor.js', () => ({
+vi.mock('@/stores/editor.js', () => ({
     useEditorStore: () => ({
         setLoading: vi.fn(),
     }),
@@ -85,7 +85,9 @@ describe('Custom rule template UX regressions', () => {
 
         const selectComp = wrapper.findComponent({ name: 'Select' });
         const flattenValues = (opts) =>
-            opts.flatMap((item) => (Array.isArray(item.options) ? flattenValues(item.options) : [item.value]));
+            opts.flatMap((item) =>
+                Array.isArray(item.options) ? flattenValues(item.options) : [item.value]
+            );
         const optionValues = flattenValues(selectComp.props('options'));
         expect(optionValues).toContain('custom:local-a');
         expect(optionValues).not.toContain('custom');
@@ -104,12 +106,16 @@ describe('Custom rule template UX regressions', () => {
         expect(wrapper.text()).toContain('模板变量说明');
         expect(wrapper.text()).toContain('适用于统一模板渲染。');
         expect(wrapper.text()).not.toContain('<%file_name%>');
-        expect(wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').exists()).toBe(true);
+        expect(wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').exists()).toBe(
+            true
+        );
 
         await wrapper.find('button[aria-expanded="false"]:not([role="combobox"])').trigger('click');
 
         const helper = wrapper.text();
-        expect(wrapper.find('button[aria-expanded="true"]:not([role="combobox"])').exists()).toBe(true);
+        expect(wrapper.find('button[aria-expanded="true"]:not([role="combobox"])').exists()).toBe(
+            true
+        );
         expect(helper).toContain('<%file_name%>');
         expect(helper).toContain('<%fileName%>');
         expect(helper).toContain('<%target_format%>');

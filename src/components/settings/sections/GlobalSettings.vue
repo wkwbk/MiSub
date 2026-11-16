@@ -1,11 +1,11 @@
 <script setup>
     import { watch } from 'vue';
-    import { Info, List, Map, SlidersHorizontal } from 'lucide-vue-next';
-    import OperatorChain from '../../features/Operators/OperatorChain.vue';
-    import Input from '../../ui/Input.vue';
-    import Select from '../../ui/Select.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { Info, List, Map, SlidersHorizontal } from '@lucide/vue';
+    import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+    import Input from '@/components/ui/Input.vue';
+    import Select from '@/components/ui/Select.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -101,7 +101,10 @@
                     <Select
                         v-model="settings.defaultPrefixSettings.enableManualNodes"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -114,7 +117,10 @@
                     <Select
                         v-model="settings.defaultPrefixSettings.enableSubscriptions"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -126,7 +132,10 @@
                     <Select
                         v-model="settings.enableFlagEmoji"
                         :options="
-                            prefixToggleOptions.map((o) => ({ value: o.value, label: t(o.labelKey) }))
+                            prefixToggleOptions.map((o) => ({
+                                value: o.value,
+                                label: t(o.labelKey),
+                            }))
                         "
                     />
                 </div>
@@ -154,10 +163,7 @@
                 </template>
             </SectionHeader>
 
-            <p
-                v-if="!settings.regionOverrides.length"
-                class="text-xs text-zinc-500"
-            >
+            <p v-if="!settings.regionOverrides.length" class="text-xs text-zinc-500">
                 {{ t('settings.regionOverridesEmpty') }}
             </p>
 

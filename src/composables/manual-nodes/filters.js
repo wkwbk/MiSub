@@ -1,5 +1,5 @@
 import { NODE_PROTOCOL_REGEX } from '@/constants/nodeProtocols.js';
-import { DEFAULT_GROUP_KEY } from './groups.js';
+import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
 
 export const countryCodeMap = {
     hk: ['🇭🇰', '香港', 'HK'],

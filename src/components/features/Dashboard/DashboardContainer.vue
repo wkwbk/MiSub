@@ -1,18 +1,18 @@
 /** * Dashboard 主容器组件 * @author MiSub Team */
 
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue';
-    import { saveMisubs } from '../../../lib/api.js';
-    import { useToastStore } from '../../../stores/toast.js';
-    import { useUIStore } from '../../../stores/ui.js';
-    import { TIMING } from '../../../constants/timing.js';
+    import { onMounted, onUnmounted, ref } from 'vue';
+    import { saveMisubs } from '@/lib/api.js';
+    import { useToastStore } from '@/stores/toast.js';
+    import { useUIStore } from '@/stores/ui.js';
+    import { TIMING } from '@/constants/timing.js';
     import { useI18n } from '@/i18n/index.js';
 
     // 子组件
     import SubscriptionManager from './SubscriptionManager.vue';
     import NodeManager from './NodeManager.vue';
     import ProfileManager from './ProfileManager.vue';
-    import SaveIndicator from './SaveIndicator.vue';
+    import SaveIndicator from '@/components/features/Dashboard/SaveIndicator.vue';
     import BulkImportModal from './BulkImportModal.vue';
     import ProfileModal from './ProfileModal.vue';
     import SubscriptionImportModal from './SubscriptionImportModal.vue';

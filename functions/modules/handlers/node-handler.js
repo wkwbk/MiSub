@@ -6,8 +6,8 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { DEFAULT_SETTINGS, KV_KEY_SETTINGS } from '../config.js';
 import {
-    createJsonResponse,
     createErrorResponse,
+    createJsonResponse,
     JSON_BODY_LIMITS,
     readJsonWithLimit,
 } from '../utils.js';
@@ -295,7 +295,9 @@ export async function handleNodeCountRequest(request, env) {
                     // [回退2] 如果响应头中也没有流量信息，尝试从 body 伪节点中解析
                     // 这在使用 FetchProxy（如 Vercel）时非常重要，因为代理会丢弃上游响应头
                     if (!result.userInfo) {
-                        const bodyInfo = extractUserInfoFromBody(decodeBase64SubscriptionText(text));
+                        const bodyInfo = extractUserInfoFromBody(
+                            decodeBase64SubscriptionText(text)
+                        );
                         if (bodyInfo) {
                             console.info(
                                 '[NodeHandler] Successfully extracted traffic info from body fake nodes (Fallback 2).'
@@ -545,9 +547,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
         // 过滤出要更新的订阅
         const targetSubscriptions = subscriptionIds
             .map((id) => subscriptionMap.get(id))
-            .filter(
-                (sub) => sub && sub.enabled && sub.url && sub.url.startsWith('http')
-            );
+            .filter((sub) => sub && sub.enabled && sub.url && sub.url.startsWith('http'));
 
         if (targetSubscriptions.length === 0) {
             return createJsonResponse(
@@ -593,10 +593,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                 );
 
                 const timeoutPromise = new Promise((_, reject) => {
-                    timeoutId = setTimeout(
-                        () => reject(new Error('请求超时')),
-                        SINGLE_SUB_TIMEOUT
-                    );
+                    timeoutId = setTimeout(() => reject(new Error('请求超时')), SINGLE_SUB_TIMEOUT);
                 });
 
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
@@ -629,8 +626,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
                     console.error('Batch update decode error:', e);
                     try {
                         const processedText = decodeBase64SubscriptionText(text);
-                        nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || [])
-                            .length;
+                        nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
                     } catch {
                         // 如果都失败，使用原始文本进行统计
                         nodeCount = (text.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;

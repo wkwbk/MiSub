@@ -1,4 +1,4 @@
-import { LogService, anonymizeLogToken } from '../../services/log-service.js';
+import { anonymizeLogToken, LogService } from '../../services/log-service.js';
 
 export function shouldSkipLogging(userAgentHeader) {
     return userAgentHeader.includes('MiSub-Backend') || userAgentHeader.includes('TelegramBot');

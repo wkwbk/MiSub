@@ -1,5 +1,5 @@
 <script setup>
-    import { ref, watch, nextTick, onUnmounted, computed } from 'vue';
+    import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
     import { useI18n } from '@/i18n/index.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 
@@ -170,7 +170,10 @@
                         }"
                         @click.stop
                     >
-                        <div :id="titleId" class="p-6 pb-4 shrink-0 border-b border-zinc-800 rounded-t-md">
+                        <div
+                            :id="titleId"
+                            class="p-6 pb-4 shrink-0 border-b border-zinc-800 rounded-t-md"
+                        >
                             <slot name="title">
                                 <h3 class="text-base font-semibold text-zinc-100">
                                     {{ t('common.confirmAction') }}

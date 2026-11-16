@@ -1,13 +1,11 @@
 /** * 节点预览主容器组件 * @author MiSub Team */
 
 <script setup>
-    import { useI18n } from '../../../i18n/index.js';
-
-    const { t } = useI18n();
-    import { ref, computed, onMounted } from 'vue';
+    import { useI18n } from '@/i18n/index.js';
+    import { onMounted } from 'vue';
 
     // 子组件
-    import NodePreviewHeader from './NodePreviewHeader.vue';
+    import NodePreviewHeader from '@/components/modals/NodePreview/NodePreviewHeader.vue';
     import NodeFilterControls from './NodeFilterControls.vue';
     import NodeListView from './NodeListView.vue';
     import NodeCardView from './NodeCardView.vue';
@@ -18,6 +16,8 @@
     // Composables
     import { useNodePreview } from '@/composables/useNodePreview.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+
+    const { t } = useI18n();
 
     const props = defineProps({
         show: Boolean,

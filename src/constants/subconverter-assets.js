@@ -1,1 +1,1 @@
-export { TRANSFORM_ASSETS as SUBCONVERTER_ASSETS } from './transform-assets.js';
+export { TRANSFORM_ASSETS as SUBCONVERTER_ASSETS } from '@/constants/transform-assets.js';

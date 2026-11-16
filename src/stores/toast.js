@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { TIMING } from '../constants/timing.js';
+import { TIMING } from '@/constants/timing.js';
 
 const DURATION_BY_TYPE = {
     success: TIMING.TOAST_DURATION_SUCCESS,

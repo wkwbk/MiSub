@@ -1,9 +1,9 @@
 /** * 共享数据表格组件 * @author MiSub Team */
 
 <script setup>
-    import { ref, computed, watch } from 'vue';
-    import { ChevronsUpDown, Loader2 } from 'lucide-vue-next';
-    import { t } from '../../i18n/index.js';
+    import { computed, ref, watch } from 'vue';
+    import { ChevronsUpDown, Loader2 } from '@lucide/vue';
+    import { t } from '@/i18n/index.js';
 
     const props = defineProps({
         data: {

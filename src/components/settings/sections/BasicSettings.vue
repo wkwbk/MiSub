@@ -1,6 +1,13 @@
 <script setup>
-    import { Globe, Info, Languages, SlidersHorizontal } from 'lucide-vue-next';
-    import SectionHeader from '../SectionHeader.vue';
+    import { Globe, Info, Languages, SlidersHorizontal } from '@lucide/vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import Input from '@/components/ui/Input.vue';
+    import Select from '@/components/ui/Select.vue';
+    import Switch from '@/components/ui/Switch.vue';
+    import { computed, ref, watch } from 'vue';
+    import { useToastStore } from '@/stores/toast';
+    import { useI18n } from '@/i18n/index.js';
+
     const props = defineProps({
         settings: {
             type: Object,
@@ -16,13 +23,6 @@
             default: '',
         },
     });
-
-    import Input from '../../ui/Input.vue';
-    import Select from '../../ui/Select.vue';
-    import Switch from '../../ui/Switch.vue';
-    import { watch, computed, ref } from 'vue';
-    import { useToastStore } from '../../../stores/toast';
-    import { useI18n } from '../../../i18n/index.js';
 
     const { showToast } = useToastStore();
     const { t } = useI18n();
@@ -417,7 +417,9 @@
                 </div>
 
                 <!-- 合并到期时间策略 -->
-                <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div
+                    class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
                     <div class="space-y-1">
                         <p class="text-sm font-medium text-zinc-100">
                             {{ t('settings.mergeExpireStrategyTitle') }}

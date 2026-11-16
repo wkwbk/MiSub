@@ -1,5 +1,5 @@
 <script setup>
-    import { Loader2 } from 'lucide-vue-next';
+    import { Loader2 } from '@lucide/vue';
 
     defineProps({
         type: {

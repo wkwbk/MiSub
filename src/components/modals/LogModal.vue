@@ -1,12 +1,12 @@
 <script setup>
-    import { ref, computed, onMounted, watch } from 'vue'; // Added watch
-    import { ChevronDown, ClipboardList, Loader2 } from 'lucide-vue-next';
-    import Modal from '../forms/Modal.vue';
-    import { useToastStore } from '../../stores/toast';
-    import { getClientInfo } from '../../lib/utils';
-    import { api } from '../../lib/http.js';
-    import { useI18n } from '../../i18n/index.js';
-    import { confirmAction } from '../../composables/useConfirm.js';
+    import { computed, ref, watch } from 'vue'; // Added watch
+    import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
+    import Modal from '@/components/forms/Modal.vue';
+    import { useToastStore } from '@/stores/toast';
+    import { getClientInfo } from '@/lib/utils';
+    import { api } from '@/lib/http.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { confirmAction } from '@/composables/useConfirm.js';
 
     const props = defineProps({
         show: Boolean,
@@ -327,22 +327,22 @@
         }
     }
 
-    /* Override Modal Button styles via deep selector or global styles if needed, 
-   but since we can't easily change the footer buttons in the shared Modal without props, 
-   we'll just let the "Confirm" button exist (maybe as a secondary "Refresh" if we link it? 
-   No, it closes the modal in the shared component). 
-   Let's just leave it and maybe use CSS to hide the footer if super picky, 
-   but "Cancel" / "Confirm" is okay for a modal even if viewing logs. 
+    /* Override Modal Button styles via deep selector or global styles if needed,
+   but since we can't easily change the footer buttons in the shared Modal without props,
+   we'll just let the "Confirm" button exist (maybe as a secondary "Refresh" if we link it?
+   No, it closes the modal in the shared component).
+   Let's just leave it and maybe use CSS to hide the footer if super picky,
+   but "Cancel" / "Confirm" is okay for a modal even if viewing logs.
    Actually, "Confirm" is confusing for a read-only modal.
    We can hide the footer using deep CSS selector since Modal.vue doesn't have a footer slot.
 */
     :deep(.modal-footer) {
         display: none;
     }
-    /* The Modal.vue classes: 
+    /* The Modal.vue classes:
    .p-6.pt-4.flex.justify-end.space-x-3.shrink-0.border-t.border-gray-200
    It doesn't have a specific class name. We might target it by structure or just accept it.
-   Wait, if I can't pass a slot for footer, I'm stuck with "Cancel" and "Confirm". 
+   Wait, if I can't pass a slot for footer, I'm stuck with "Cancel" and "Confirm".
    Let's see if I can modify Modal.vue to optionally hide footer or use a slot.
    But I should avoid modifying shared components if possible.
    However, for this strict requirement avoiding new deps, a small tweak to shared Modal is better than broken build.

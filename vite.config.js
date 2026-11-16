@@ -28,10 +28,11 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 // 手动代码分割（保守策略，避免循环依赖导致空白页）
-                manualChunks: {
-                    vue: ['vue'],
-                    router: ['vue-router'],
-                    pinia: ['pinia'],
+                manualChunks(id) {
+                    const normalized = id.replace(/\\/g, '/');
+                    if (normalized.includes('/node_modules/vue/')) return 'vue';
+                    if (normalized.includes('/node_modules/vue-router/')) return 'router';
+                    if (normalized.includes('/node_modules/pinia/')) return 'pinia';
                 },
                 // 优化文件名
                 chunkFileNames: 'assets/js/[name]-[hash].js',

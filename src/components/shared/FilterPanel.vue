@@ -1,10 +1,10 @@
 /** * 共享过滤面板组件 * @author MiSub Team */
 
 <script setup>
-    import { ref, computed, watch } from 'vue';
-    import { ChevronDown } from 'lucide-vue-next';
-    import Select from '../ui/Select.vue';
-    import { useI18n } from '../../i18n/index.js';
+    import { computed, ref, watch } from 'vue';
+    import { ChevronDown } from '@lucide/vue';
+    import Select from '@/components/ui/Select.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         filters: {
@@ -363,7 +363,9 @@
                         <Select
                             v-else-if="filter.type === 'multiselect'"
                             multiple
-                            :model-value="Array.isArray(filterValue(filter)) ? filterValue(filter) : []"
+                            :model-value="
+                                Array.isArray(filterValue(filter)) ? filterValue(filter) : []
+                            "
                             :disabled="loading || filter.disabled"
                             :placeholder="filter.placeholder || t('common.choose')"
                             :options="filter.options || []"

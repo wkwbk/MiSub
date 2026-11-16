@@ -27,4 +27,3 @@ export function useSortingMode(dataStore) {
 export function hasDragOrderChanged(evt) {
     return !(evt && typeof evt.oldIndex === 'number' && evt.oldIndex === evt.newIndex);
 }
-

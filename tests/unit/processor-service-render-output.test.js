@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import {
-    ProcessorService,
     isClashYamlProfileTemplate,
     isIniTemplateSource,
+    ProcessorService,
 } from '../../functions/services/processor-service.js';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';

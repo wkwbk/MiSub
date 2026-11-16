@@ -6,4 +6,4 @@ export {
     validateGeneratedUrl,
     parseSurgeConfig,
     parseQuantumultXConfig,
-} from './protocols/index.js';
+} from '@/utils/protocols/index.js';

@@ -9,15 +9,14 @@ import { getUniqueName } from './name-utils.js';
 import { isMetaCore } from './user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
 import {
-    POLICY_GROUPS,
-    RULE_SETS,
+    DEFAULT_RELAY_GROUP,
+    DEFAULT_SELECT_GROUP,
     getBuiltinRules,
     getRemoteProviderDefinitions,
-    DEFAULT_SELECT_GROUP,
-    DEFAULT_RELAY_GROUP,
+    POLICY_GROUPS,
     pruneProxyGroups,
 } from './builtin-rules-provider.js';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 
 /**
  * 清理字符串中的控制字符（保留换行和制表符）

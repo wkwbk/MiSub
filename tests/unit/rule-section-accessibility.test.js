@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import RuleSection from '../../src/components/modals/SubscriptionEditModal/RuleSection.vue';
+import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
 
 const props = {
     editingSubscription: { exclude: '' },

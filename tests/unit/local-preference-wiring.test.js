@@ -12,7 +12,7 @@
  *
  * 这三件事都在下面的豁免名单里统一处理，所以这里静态扫描全部源码，禁止绕过。
  */
-import { readFileSync, readdirSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 

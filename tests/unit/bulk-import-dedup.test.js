@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useDataStore } from '../../src/stores/useDataStore.js';
-import { useToastStore } from '../../src/stores/toast.js';
-import { useBulkImportLogic } from '../../src/composables/useBulkImportLogic.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useToastStore } from '@/stores/toast.js';
+import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 
 describe('批量导入去重', () => {
     let dataStore;

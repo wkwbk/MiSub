@@ -1,15 +1,8 @@
 <script setup>
     import { computed } from 'vue';
-    import {
-        Eye,
-        QrCode,
-        Pencil,
-        Trash2,
-        FileText,
-        Copy,
-    } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
-    import Switch from '../ui/Switch.vue';
+    import { Copy, Eye, FileText, Pencil, QrCode, Trash2 } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
+    import Switch from '@/components/ui/Switch.vue';
 
     const { t } = useI18n();
 
@@ -137,9 +130,7 @@
             </span>
             <span class="text-zinc-600" aria-hidden="true">·</span>
             <span>
-                {{
-                    t('profiles.downloadCount', { count: profile.downloadCount || 0 })
-                }}
+                {{ t('profiles.downloadCount', { count: profile.downloadCount || 0 }) }}
             </span>
             <span
                 v-if="subProfileCount > 0"
@@ -149,9 +140,7 @@
             </span>
         </p>
 
-        <div
-            class="mt-3 grid gap-2.5 rounded-md border border-zinc-800 bg-transparent p-3 text-xs"
-        >
+        <div class="mt-3 grid gap-2.5 rounded-md border border-zinc-800 bg-transparent p-3 text-xs">
             <div class="flex items-center justify-between gap-3 text-zinc-300">
                 <span>{{ t('profiles.enabledStatus') }}</span>
                 <Switch

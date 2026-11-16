@@ -1,7 +1,7 @@
 <script setup>
-    import { ref, computed, watch } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import DOMPurify from 'dompurify';
-    import { X } from 'lucide-vue-next';
+    import { X } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import { useToastStore } from '@/stores/toast.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
@@ -114,9 +114,7 @@
                             class="h-1.5 w-1.5 rounded-full shrink-0"
                             :class="typeConfig.dot"
                         ></span>
-                        <h3
-                            class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate"
-                        >
+                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
                             {{ announcement.title || t('common.announcementFallbackTitle') }}
                         </h3>
                     </div>

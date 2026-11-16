@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
-import CustomPageSettings from '../../src/components/settings/sections/CustomPageSettings.vue';
+import CustomPageSettings from '@/components/settings/sections/CustomPageSettings.vue';
 
-vi.mock('../../src/components/ui/Switch.vue', () => ({
+vi.mock('@/components/ui/Switch.vue', () => ({
     default: {
         props: ['modelValue'],
         emits: ['update:modelValue'],

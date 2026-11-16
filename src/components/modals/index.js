@@ -4,17 +4,17 @@
  */
 
 // 导入主模态框组件
-export { default as Login } from './Login.vue';
-export { default as SettingsModal } from './SettingsModal.vue';
-export { default as ProfileModal } from './ProfileModal.vue';
-export { default as BulkImportModal } from './BulkImportModal.vue';
-export { default as SubscriptionBulkImportModal } from './SubscriptionBulkImportModal.vue';
-export { default as SubscriptionImportModal } from './SubscriptionImportModal.vue';
+export { default as Login } from '@/components/modals/Login.vue';
+export { default as SettingsModal } from '@/components/modals/SettingsModal.vue';
+export { default as ProfileModal } from '@/components/modals/ProfileModal.vue';
+export { default as BulkImportModal } from '@/components/modals/BulkImportModal.vue';
+export { default as SubscriptionBulkImportModal } from '@/components/modals/SubscriptionBulkImportModal.vue';
+export { default as SubscriptionImportModal } from '@/components/modals/SubscriptionImportModal.vue';
 
 // 导入NodePreview相关组件
-export { default as NodePreviewModal } from './NodePreview/NodePreviewModal.vue';
-export { default as NodePreviewContainer } from './NodePreview/NodePreviewContainer.vue';
-export { default as NodePreviewHeader } from './NodePreview/NodePreviewHeader.vue';
+export { default as NodePreviewModal } from '@/components/modals/NodePreview/NodePreviewModal.vue';
+export { default as NodePreviewContainer } from '@/components/modals/NodePreview/NodePreviewContainer.vue';
+export { default as NodePreviewHeader } from '@/components/modals/NodePreview/NodePreviewHeader.vue';
 export { default as NodeFilterControls } from './NodePreview/NodeFilterControls.vue';
 export { default as NodeListView } from './NodePreview/NodeListView.vue';
 export { default as NodeCardView } from './NodePreview/NodeCardView.vue';

@@ -2,7 +2,7 @@
  * 错误处理工具函数
  * @author MiSub Team
  */
-import { t } from '../i18n/index.js';
+import { t } from '@/i18n/index.js';
 
 const isDev = import.meta.env.DEV;
 

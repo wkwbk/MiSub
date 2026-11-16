@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({
     post: vi.fn(),
 }));
 
-vi.mock('../../src/lib/http.js', () => ({
+vi.mock('@/lib/http.js', () => ({
     api: {
         get: mocks.get,
         post: mocks.post,
@@ -33,11 +33,11 @@ describe('API request timeout cleanup', () => {
     });
 
     it.each([
-        ['fetchInitialData', 'get', () => import('../../src/lib/api.js')],
-        ['fetchPublicConfig', 'get', () => import('../../src/lib/api.js')],
-        ['fetchNodeCount', 'post', () => import('../../src/lib/api.js')],
-        ['batchUpdateNodes', 'post', () => import('../../src/lib/api.js')],
-        ['testSubconverterBackend', 'post', () => import('../../src/lib/api.js')],
+        ['fetchInitialData', 'get', () => import('@/lib/api.js')],
+        ['fetchPublicConfig', 'get', () => import('@/lib/api.js')],
+        ['fetchNodeCount', 'post', () => import('@/lib/api.js')],
+        ['batchUpdateNodes', 'post', () => import('@/lib/api.js')],
+        ['testSubconverterBackend', 'post', () => import('@/lib/api.js')],
     ])('%s clears its timeout when the request rejects', async (name, method, loadApi) => {
         mocks[method].mockRejectedValue(new Error('network down'));
         const apiModule = await loadApi();

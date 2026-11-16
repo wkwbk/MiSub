@@ -1,8 +1,8 @@
 <script setup>
-    import { useI18n } from '../../../../i18n/index.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { computed } from 'vue';
 
     const { t } = useI18n();
-    import { computed } from 'vue';
 
     const props = defineProps({
         currentPage: {
@@ -101,7 +101,8 @@
                         @click="page !== '...' && goToPage(page)"
                         :class="{
                             'rounded-md border px-2.5 py-1.5 text-xs font-mono font-medium transition-colors': true,
-                            'bg-zinc-900 border-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900': page === currentPage,
+                            'bg-zinc-900 border-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:border-zinc-100 dark:text-zinc-900':
+                                page === currentPage,
                             'border-zinc-300 dark:border-zinc-800 bg-transparent text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900':
                                 page !== currentPage && page !== '...',
                             'opacity-50 cursor-not-allowed border-transparent': page === '...',
@@ -141,7 +142,9 @@
                 >
                     {{ t('common.prevPage') }}
                 </button>
-                <span class="px-3 py-1 text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400">
+                <span
+                    class="px-3 py-1 text-xs font-mono font-medium text-zinc-600 dark:text-zinc-400"
+                >
                     {{ currentPage }}
                 </span>
                 <button

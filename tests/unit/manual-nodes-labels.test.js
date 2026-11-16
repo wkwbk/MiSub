@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { MAIN_NAV_ITEMS } from '../../src/constants/navigation.js';
-import NodeActions from '../../src/components/nodes/ManualNodePanel/NodeActions.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import { MAIN_NAV_ITEMS } from '@/constants/navigation.js';
+import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
+import { createI18n } from '@/i18n/index.js';
 
 describe('manual nodes labels', () => {
     const mountNodeActions = (props = {}) =>

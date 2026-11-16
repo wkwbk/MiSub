@@ -1,11 +1,11 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FileText, Link2 } from 'lucide-vue-next';
+    import { FileText, Link2 } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
-    import SectionHeader from '../../SectionHeader.vue';
-    import RuleTemplateManager from './RuleTemplateManager.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
     import {
         DEFAULT_SUBCONVERTER_BACKEND,
         SUBCONVERTER_BACKENDS,
@@ -318,7 +318,9 @@
                             @select-asset="selectedAsset = $event"
                             type="config"
                             :force-custom="settings.transformConfigMode === 'custom'"
-                            :custom-templates-only="settings.transformConfigMode === 'custom_template'"
+                            :custom-templates-only="
+                                settings.transformConfigMode === 'custom_template'
+                            "
                             :placeholder="t('settings.transformPresetPlaceholder')"
                             :custom-placeholder="t('settings.transformRemotePlaceholder')"
                             :allowEmpty="settings.transformConfigMode === 'builtin'"
@@ -343,7 +345,9 @@
                     class="pt-6 border-t border-zinc-800/60 space-y-4 transition-all duration-300"
                 >
                     <div class="flex items-center justify-between">
-                        <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                        <h4
+                            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300"
+                        >
                             <span
                                 v-if="isBuiltinEngine"
                                 class="h-1.5 w-1.5 rounded-full bg-emerald-500"
@@ -354,10 +358,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
-                        <div
-                            :class="{ 'opacity-60': !isBuiltinMode }"
-                            class="transition-opacity"
-                        >
+                        <div :class="{ 'opacity-60': !isBuiltinMode }" class="transition-opacity">
                             <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
                                 t('settings.transformRuleLevel')
                             }}</label>
@@ -374,14 +375,18 @@
                             />
                         </div>
 
-                        <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                        <div
+                            class="flex items-center justify-between py-2 border-b border-zinc-800/60"
+                        >
                             <span class="text-xs font-medium text-zinc-300">{{
                                 t('settings.transformBuiltinSkipCert')
                             }}</span>
                             <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
                         </div>
 
-                        <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                        <div
+                            class="flex items-center justify-between py-2 border-b border-zinc-800/60"
+                        >
                             <span class="text-xs font-medium text-zinc-300">{{
                                 t('settings.transformBuiltinUdp')
                             }}</span>
@@ -393,11 +398,7 @@
         </section>
 
         <section
-            :class="
-                isExternalEngine
-                    ? ''
-                    : 'opacity-40 grayscale pointer-events-none select-none'
-            "
+            :class="isExternalEngine ? '' : 'opacity-40 grayscale pointer-events-none select-none'"
             class="rounded-lg border border-zinc-800 bg-[#171717] p-6 transition-all duration-300"
         >
             <div class="mb-6 flex items-center justify-between">
@@ -483,7 +484,9 @@
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-zinc-800/60 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div
+                    class="pt-4 border-t border-zinc-800/60 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3"
+                >
                     <div
                         v-for="flag in flagOptions"
                         :key="flag.key"

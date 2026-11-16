@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { nextTick } from 'vue';
-import Select from '../../src/components/ui/Select.vue';
+import Select from '@/components/ui/Select.vue';
 
 describe('Select UI component', () => {
     let wrapper = null;
@@ -147,4 +147,3 @@ describe('Select UI component', () => {
         expect(document.body.querySelector('[role="listbox"]')).not.toBeNull();
     });
 });
-

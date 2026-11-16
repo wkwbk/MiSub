@@ -1,14 +1,14 @@
 <script setup>
-    import { ref, onMounted, onActivated, onUnmounted, watch, nextTick } from 'vue';
+    import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
-    import { useI18n } from '../i18n/index.js';
-    import MigrationModal from '../components/modals/MigrationModal.vue';
-    import { useSettingsLogic } from '../composables/useSettingsLogic.js';
-    import SettingsContent from '../components/settings/SettingsContent.vue';
+    import { useI18n } from '@/i18n/index.js';
+    import MigrationModal from '@/components/modals/MigrationModal.vue';
+    import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
+    import SettingsContent from '@/components/settings/SettingsContent.vue';
     import {
-        resolveSettingsFocusTab,
         resolveSettingsFocusAnchor,
-    } from '../utils/dashboard-deeplink.js';
+        resolveSettingsFocusTab,
+    } from '@/utils/dashboard-deeplink.js';
 
     // 使用 composable 获取所有设置相关的状态和函数
     const { t } = useI18n();

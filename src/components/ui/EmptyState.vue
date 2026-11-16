@@ -1,6 +1,6 @@
 <script setup>
     import { computed } from 'vue';
-    import { Search, Folder, Zap, Inbox, RefreshCw } from 'lucide-vue-next';
+    import { Folder, Inbox, RefreshCw, Search, Zap } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({

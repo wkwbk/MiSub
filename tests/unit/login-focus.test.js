@@ -1,7 +1,7 @@
-import { afterEach, describe, it, expect, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import Login from '../../src/components/modals/Login.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import Login from '@/components/modals/Login.vue';
+import { createI18n } from '@/i18n/index.js';
 
 describe('Login password input autofocus', () => {
     let wrapper;
@@ -52,4 +52,3 @@ describe('Login password input autofocus', () => {
         expect(document.activeElement).toBe(input.element);
     });
 });
-

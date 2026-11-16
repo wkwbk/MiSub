@@ -1,7 +1,7 @@
 <script setup>
-    import { ref, computed } from 'vue';
-    import { ChevronDown } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
+    import { computed, ref } from 'vue';
+    import { ChevronDown } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 
@@ -50,12 +50,14 @@
             },
             2: {
                 title: 'text-sm font-semibold text-zinc-800 dark:text-zinc-200',
-                container: 'bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                container:
+                    'bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-4',
             },
             3: {
                 title: 'text-xs font-medium text-zinc-700 dark:text-zinc-300',
-                container: 'bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                container:
+                    'bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
                 padding: 'p-3',
             },
         };
@@ -64,13 +66,7 @@
 </script>
 
 <template>
-    <div
-        :class="[
-            levelClasses.container,
-            levelClasses.padding,
-            'transition-colors',
-        ]"
-    >
+    <div :class="[levelClasses.container, levelClasses.padding, 'transition-colors']">
         <!-- 标题和摘要 -->
         <div
             class="flex items-center justify-between cursor-pointer"

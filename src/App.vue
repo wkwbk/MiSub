@@ -1,38 +1,38 @@
 <script setup>
-    import { defineAsyncComponent, onMounted, onUnmounted, watch, computed, ref } from 'vue';
-    import { Globe } from 'lucide-vue-next';
-    import RouteErrorBoundary from './components/ui/RouteErrorBoundary.vue';
-    import ConfirmDialog from './components/ui/ConfirmDialog.vue';
+    import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
+    import { Globe } from '@lucide/vue';
+    import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
+    import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
     import { useRoute, useRouter } from 'vue-router';
-    import { useThemeStore } from './stores/theme';
-    import { useSessionStore } from './stores/session';
-    import { useToastStore } from './stores/toast';
-    import { useDataStore } from './stores/useDataStore';
-    import { useUIStore } from './stores/ui';
-    import { useVersionStore } from './stores/version';
+    import { useThemeStore } from '@/stores/theme';
+    import { useSessionStore } from '@/stores/session';
+    import { useToastStore } from '@/stores/toast';
+    import { useDataStore } from '@/stores/useDataStore';
+    import { useUIStore } from '@/stores/ui';
+    import { useVersionStore } from '@/stores/version';
     import { storeToRefs } from 'pinia';
-    import NavBar from './components/layout/NavBar.vue';
-    import { detectLegacyD1 } from './lib/api.js';
-    import { useI18n } from './i18n/index.js';
-    import { configureAuthGuard, translateRouteTitle } from './router/index.js';
-    import { readSessionPreference } from './utils/session-preference.js';
+    import NavBar from '@/components/layout/NavBar.vue';
+    import { detectLegacyD1 } from '@/lib/api.js';
+    import { useI18n } from '@/i18n/index.js';
+    import { configureAuthGuard, translateRouteTitle } from '@/router/index.js';
+    import { readSessionPreference } from '@/utils/session-preference.js';
 
     // Lazy components
-    const Login = defineAsyncComponent(() => import('./components/modals/Login.vue'));
-    const NotFound = defineAsyncComponent(() => import('./views/NotFound.vue'));
-    const Toast = defineAsyncComponent(() => import('./components/ui/Toast.vue'));
-    const Footer = defineAsyncComponent(() => import('./components/layout/Footer.vue'));
+    const Login = defineAsyncComponent(() => import('@/components/modals/Login.vue'));
+    const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
+    const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
+    const Footer = defineAsyncComponent(() => import('@/components/layout/Footer.vue'));
     const Dashboard = defineAsyncComponent(
-        () => import('./components/features/Dashboard/Dashboard.vue')
+        () => import('@/components/features/Dashboard/Dashboard.vue')
     );
-    const Header = defineAsyncComponent(() => import('./components/layout/Header.vue'));
-    const SavePrompt = defineAsyncComponent(() => import('./components/ui/SavePrompt.vue'));
-    const ScrollToTop = defineAsyncComponent(() => import('./components/ui/ScrollToTop.vue'));
+    const Header = defineAsyncComponent(() => import('@/components/layout/Header.vue'));
+    const SavePrompt = defineAsyncComponent(() => import('@/components/ui/SavePrompt.vue'));
+    const ScrollToTop = defineAsyncComponent(() => import('@/components/ui/ScrollToTop.vue'));
     const LegacyD1MigrationModal = defineAsyncComponent(
-        () => import('./components/modals/LegacyD1MigrationModal.vue')
+        () => import('@/components/modals/LegacyD1MigrationModal.vue')
     );
     const VersionChangelogModal = defineAsyncComponent(
-        () => import('./components/modals/VersionChangelogModal.vue')
+        () => import('@/components/modals/VersionChangelogModal.vue')
     );
 
     const route = useRoute();
@@ -351,7 +351,9 @@
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
-                            <p class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono">
+                            <p
+                                class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono"
+                            >
                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                 {{
                                     t('notices.updateAvailable', {

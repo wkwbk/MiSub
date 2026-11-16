@@ -145,9 +145,7 @@
                 :class="[
                     currentSize.input,
                     hasIcon || hasPrefix ? 'pl-9' : '',
-                    error
-                        ? 'border-red-500 focus:border-red-500'
-                        : '',
+                    error ? 'border-red-500 focus:border-red-500' : '',
                 ]"
             />
         </div>

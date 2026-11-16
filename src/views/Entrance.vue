@@ -7,16 +7,16 @@
 </template>
 
 <script setup>
-    import { ref, computed, onMounted, defineAsyncComponent, watch, markRaw } from 'vue';
+    import { defineAsyncComponent, markRaw, onMounted, ref, watch } from 'vue';
     import { useRoute, useRouter } from 'vue-router';
-    import { useSessionStore } from '../stores/session';
+    import { useSessionStore } from '@/stores/session';
     import { storeToRefs } from 'pinia';
-    import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '../utils/login-path.js';
-    import { readSessionPreference, writeSessionPreference } from '../utils/session-preference.js';
+    import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '@/utils/login-path.js';
+    import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 
     // Lazy load components
-    const Login = defineAsyncComponent(() => import('../components/modals/Login.vue'));
-    const NotFound = defineAsyncComponent(() => import('./NotFound.vue'));
+    const Login = defineAsyncComponent(() => import('@/components/modals/Login.vue'));
+    const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 
     const route = useRoute();
     const router = useRouter();

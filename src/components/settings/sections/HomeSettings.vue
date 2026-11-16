@@ -1,10 +1,10 @@
 <script setup>
-    import { Home } from 'lucide-vue-next';
-    import Input from '../../ui/Input.vue';
-    import SectionHeader from '../SectionHeader.vue';
-    import AnnouncementSettings from './AnnouncementSettings.vue';
-    import GuestbookManagement from './GuestbookManagement.vue';
-    import { useI18n } from '../../../i18n/index.js';
+    import { Home } from '@lucide/vue';
+    import Input from '@/components/ui/Input.vue';
+    import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import AnnouncementSettings from '@/components/settings/sections/AnnouncementSettings.vue';
+    import GuestbookManagement from '@/components/settings/sections/GuestbookManagement.vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

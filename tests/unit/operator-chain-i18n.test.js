@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import OperatorChain from '../../src/components/features/Operators/OperatorChain.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const englishGlobal = () => ({
     plugins: [createI18n({ initialLocale: 'en-US' })],

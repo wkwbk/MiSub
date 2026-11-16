@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { applyFilterRules } from '../../functions/services/subscription-service.js';
-import RuleSection from '../../src/components/modals/SubscriptionEditModal/RuleSection.vue';
-import SubscriptionEditModal from '../../src/components/modals/SubscriptionEditModal.vue';
+import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
+import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
 import { createPinia, setActivePinia } from 'pinia';
 
 describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {

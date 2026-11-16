@@ -8,12 +8,12 @@ import { parseNodeInfo } from '../modules/utils/geo-utils.js';
 import { getProcessedUserAgent } from '../utils/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {
-    prependNodeName,
     addFlagEmoji,
-    removeFlagEmoji,
     fixNodeUrlEncoding,
-    sanitizeNodeForYaml,
     isLocalProxyEndpoint,
+    prependNodeName,
+    removeFlagEmoji,
+    sanitizeNodeForYaml,
 } from '../utils/node-utils.js';
 import { runOperatorChain } from '../utils/operator-runner.js';
 import { createTimeoutFetch } from '../modules/utils.js';

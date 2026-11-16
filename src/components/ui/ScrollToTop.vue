@@ -1,7 +1,7 @@
 <script setup>
-    import { ref, onMounted, onUnmounted } from 'vue';
-    import { ChevronUp } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
+    import { onMounted, onUnmounted, ref } from 'vue';
+    import { ChevronUp } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
 

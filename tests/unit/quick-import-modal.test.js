@@ -1,7 +1,7 @@
-import { beforeEach, describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import QuickImportModal from '../../src/components/modals/QuickImportModal.vue';
-import { createI18n } from '../../src/i18n/index.js';
+import QuickImportModal from '@/components/modals/QuickImportModal.vue';
+import { createI18n } from '@/i18n/index.js';
 
 const globalOptions = () => ({
     plugins: [createI18n({ initialLocale: 'en-US' })],

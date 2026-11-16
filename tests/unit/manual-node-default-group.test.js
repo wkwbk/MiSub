@@ -12,13 +12,13 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-    DEFAULT_GROUP_KEY,
     buildGroupedManualNodes,
+    DEFAULT_GROUP_KEY,
     normalizeManualNodeGroupName,
-} from '../../src/composables/manual-nodes/groups.js';
-import { filterManualNodes, isManualNodeEntry } from '../../src/composables/manual-nodes/filters.js';
-import { messages } from '../../src/i18n/messages.js';
-import { setLocale } from '../../src/i18n/index.js';
+} from '@/composables/manual-nodes/groups.js';
+import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
+import { messages } from '@/i18n/messages.js';
+import { setLocale } from '@/i18n/index.js';
 
 const NODES = [
     { id: 'a', name: 'ungrouped-1', url: 'ss://x' },
@@ -62,7 +62,11 @@ describe('未分组过滤与语言无关', () => {
     });
 
     it('HTTP(S) proxy URI with credentials is listed as a manual node, not a subscription URL', () => {
-        const node = { id: 'http-proxy', name: 'HTTP proxy', url: 'http://alice:secret@proxy.example.com:8080#node' };
+        const node = {
+            id: 'http-proxy',
+            name: 'HTTP proxy',
+            url: 'http://alice:secret@proxy.example.com:8080#node',
+        };
         expect(isManualNodeEntry(node)).toBe(true);
         expect(filterManualNodes([node], '', '')).toEqual([node]);
     });

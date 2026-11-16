@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import { isChunkLoadError, shouldReloadForChunkError } from '../utils/chunk-reload.js';
-import { t } from '../i18n/index.js';
+import { isChunkLoadError, shouldReloadForChunkError } from '@/utils/chunk-reload.js';
+import { t } from '@/i18n/index.js';
 
 /**
  * 解析路由页标题。
@@ -17,13 +17,13 @@ export function translateRouteTitle(route, t) {
 }
 
 // Lazy load views for better performance
-const DashboardView = () => import('../views/DashboardView.vue');
-const SubscriptionGroupsView = () => import('../views/SubscriptionGroupsView.vue');
-const ManualNodesView = () => import('../views/ManualNodesView.vue');
-const MySubscriptionsView = () => import('../views/MySubscriptionsView.vue');
-const SettingsView = () => import('../views/SettingsView.vue');
+const DashboardView = () => import('@/views/DashboardView.vue');
+const SubscriptionGroupsView = () => import('@/views/SubscriptionGroupsView.vue');
+const ManualNodesView = () => import('@/views/ManualNodesView.vue');
+const MySubscriptionsView = () => import('@/views/MySubscriptionsView.vue');
+const SettingsView = () => import('@/views/SettingsView.vue');
 
-const HomeView = () => import('../views/HomeView.vue'); // [NEW] Wrapper View
+const HomeView = () => import('@/views/HomeView.vue'); // [NEW] Wrapper View
 
 let authContextResolver = () => ({ state: 'loading', loginPath: '/login' });
 
@@ -80,7 +80,7 @@ const routes = [
     {
         path: '/login',
         name: 'Login',
-        component: () => import('../components/modals/Login.vue'),
+        component: () => import('@/components/modals/Login.vue'),
         meta: { titleKey: 'pageTitles.login', isPublic: false } 
     }, 
     */
@@ -88,7 +88,7 @@ const routes = [
         // Catch-all route for Custom Login Path or 404
         path: '/:pathMatch(.*)*',
         name: 'Entrance',
-        component: () => import('../views/Entrance.vue'),
+        component: () => import('@/views/Entrance.vue'),
         meta: { title: 'MiSub', isPublic: true }, // Public, so Entrance.vue can decide what to render
     },
 ];

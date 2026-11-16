@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
-import GroupSelector from '../../src/components/ui/GroupSelector.vue';
+import GroupSelector from '@/components/ui/GroupSelector.vue';
 
 describe('GroupSelector', () => {
     it('点击下拉箭头时展示全部已有分组，而不是只展示当前分组', async () => {

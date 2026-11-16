@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import SubscriptionPanel from '../../src/components/subscriptions/SubscriptionPanel.vue';
-import { useSubscriptions } from '../../src/composables/useSubscriptions.js';
-import { useDataStore } from '../../src/stores/useDataStore.js';
+import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+import { useSubscriptions } from '@/composables/useSubscriptions.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 import {
     collectSubscriptionGroups,
     getSubscriptionGroup,
     normalizeSubscriptionGroupName,
-} from '../../src/utils/subscription-groups.js';
+} from '@/utils/subscription-groups.js';
 
 const makeSub = (id, name, url, extra = {}) => ({ id, name, url, enabled: true, ...extra });
 

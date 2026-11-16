@@ -16,7 +16,7 @@
  * 首次打开时并入设置，避免升级后已忽略的项全部复活。
  */
 
-import { readPreference, removePreference } from './local-preference.js';
+import { readPreference, removePreference } from '@/utils/local-preference.js';
 
 /** 历史上存放忽略列表的 localStorage key（仅用于一次性迁移） */
 export const LEGACY_DISMISSED_HEALTH_ITEMS_KEY = 'misub:dismissedHealthItems';

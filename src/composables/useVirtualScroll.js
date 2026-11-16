@@ -1,4 +1,4 @@
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 export function useVirtualScroll({ items, itemHeight = 52, containerHeight = 400, overscan = 5 }) {
     const scrollTop = ref(0);

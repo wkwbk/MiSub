@@ -1,7 +1,6 @@
 <script setup>
-    import { computed } from 'vue';
-    import { ChevronDown, X } from 'lucide-vue-next';
-    import { useI18n } from '../../../../i18n/index.js';
+    import { ChevronDown, X } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
 
     const props = defineProps({
         modelValue: {

@@ -1,17 +1,17 @@
 <script setup>
     import { computed } from 'vue';
-    import { Loader2 } from 'lucide-vue-next';
-    import { useI18n } from '../../i18n/index.js';
-    import SettingsLayout from '../layout/SettingsLayout.vue';
-    import SettingsSidebar from './SettingsSidebar.vue';
-    import BasicSettings from './sections/BasicSettings.vue';
-    import HomeSettings from './sections/HomeSettings.vue';
-    import GlobalSettings from './sections/GlobalSettings.vue';
-    import ServiceSettings from './sections/ServiceSettings.vue';
-    import ClientSettings from './sections/ClientSettings.vue';
-    import CustomPageSettings from './sections/CustomPageSettings.vue';
-    import WebdavBackupSettings from './sections/WebdavBackupSettings.vue';
-    import SystemSettings from './sections/SystemSettings.vue';
+    import { Loader2 } from '@lucide/vue';
+    import { useI18n } from '@/i18n/index.js';
+    import SettingsLayout from '@/components/layout/SettingsLayout.vue';
+    import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
+    import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
+    import HomeSettings from '@/components/settings/sections/HomeSettings.vue';
+    import GlobalSettings from '@/components/settings/sections/GlobalSettings.vue';
+    import ServiceSettings from '@/components/settings/sections/ServiceSettings.vue';
+    import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
+    import CustomPageSettings from '@/components/settings/sections/CustomPageSettings.vue';
+    import WebdavBackupSettings from '@/components/settings/sections/WebdavBackupSettings.vue';
+    import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
 
     /**
      * 设置界面的共享内容区。
@@ -129,11 +129,7 @@
 </script>
 
 <template>
-    <SettingsLayout
-        :class="layoutClass"
-        :hide-footer="hideFooter"
-        :in-modal="inModal"
-    >
+    <SettingsLayout :class="layoutClass" :hide-footer="hideFooter" :in-modal="inModal">
         <template #sidebar>
             <SettingsSidebar v-model:activeTab="activeTabModel" />
         </template>
@@ -209,10 +205,7 @@
                         : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
                 "
             >
-                <Loader2
-                    v-if="isSaving"
-                    class="animate-spin h-4 w-4 text-zinc-500"
-                />
+                <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-zinc-500" />
                 <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
             </button>
         </template>

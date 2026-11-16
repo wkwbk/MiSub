@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
-import CustomPublicRenderer from '../../src/components/public/CustomPublicRenderer.vue';
+import CustomPublicRenderer from '@/components/public/CustomPublicRenderer.vue';
 
 vi.mock('vue-router', () => ({
     useRoute: () => ({ path: '/public' }),

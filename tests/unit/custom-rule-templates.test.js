@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import {
+    handleRuleTemplatesRequest,
     normalizeCustomRuleTemplates,
     resolveRuleTemplateSource,
-    handleRuleTemplatesRequest,
 } from '../../functions/modules/rule-template-handler.js';
 import { ProcessorService } from '../../functions/services/processor-service.js';
 

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { nextTick, ref } from 'vue';
-import { readRawPreference, writeRawPreference } from '../utils/local-preference.js';
+import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
 export const useThemeStore = defineStore('theme', () => {
     const theme = ref('light');

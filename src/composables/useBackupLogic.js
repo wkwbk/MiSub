@@ -1,7 +1,7 @@
-import { useToastStore } from '../stores/toast.js';
-import { api } from '../lib/http.js';
-import { t } from '../i18n/index.js';
-import { confirmAction } from './useConfirm.js';
+import { useToastStore } from '@/stores/toast.js';
+import { api } from '@/lib/http.js';
+import { t } from '@/i18n/index.js';
+import { confirmAction } from '@/composables/useConfirm.js';
 
 /**
  * 备份和恢复逻辑 composable
