@@ -99,6 +99,7 @@
     --z-toast: 900;
     --z-modal: 1000000;
     --z-modal-popover: 1100000;
+    --z-confirm: 1200000;
 }
 
 @layer base {

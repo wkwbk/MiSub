@@ -39,6 +39,10 @@
             type: String,
             default: '',
         },
+        zIndex: {
+            type: [String, Number],
+            default: 'var(--z-modal)',
+        },
     });
 
     const emit = defineEmits(['update:show', 'confirm']);
@@ -144,7 +148,7 @@
             <div
                 v-if="show"
                 class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-                :style="{ zIndex: 'var(--z-modal)' }"
+                :style="{ zIndex }"
                 @pointerdown.capture="handleBackdropPointerDown"
                 @click="handleBackdropClick"
                 role="dialog"
