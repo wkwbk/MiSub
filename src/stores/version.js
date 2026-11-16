@@ -14,12 +14,11 @@ export const useVersionStore = defineStore('version', () => {
     const showUpdateNotice = ref(false);
     const upstreamRepo = 'wkwbk/MiSub';
 
-    // 本地更新日志 (v2.8.0)
-    const localChangelog = `✨ **全新极简网格 UI 重构、分组交互升级与安全增强**
-- **Exposed Hairline Grid 视觉重构**：统一深浅色主题配色与高对比度悬停反馈，引入 \`lucide-vue-next\` 图标库与自定义 \`Select\` 组件，优化顶部导航栏与双栏吸顶滚动体验。
-- **订阅与分组体验升级**：支持机场订阅专用批量导入与单条选组、标签筛选分组、按分组单元无限加载，以及组内与组间两级拖拽排序。
-- **订阅组与弹窗优化**：支持订阅组拖拽排序、加宽订阅组弹窗、对齐资源列表并补充订阅分组筛选，优化节点预览与批量去重交互。
-- **认证与安全加固**：防止已初始化实例回退默认管理员密码，稳定 Cookie Secret 回退逻辑，优化登录页自动聚焦与重定向体验。`;
+    // 本地更新日志 (v2.8.1)
+    const localChangelog = `🔧 **工程化升级、依赖迁移与代码规范统一**
+- **路径与工具链升级**：全仓前端/测试相对引用统一重构为 \`@/\` 别名并补充 \`jsconfig.json\`；包管理器迁移至 \`pnpm\`，升级 \`vite@8\`、\`vitest@5\`、\`vue-router@5\`、\`pinia@4\`、\`js-yaml@5\` 等核心依赖并完成适配。
+- **图标库迁移与代码清理**：将图标库从已弃用的 \`lucide-vue-next\` 全面迁移至 \`@lucide/vue\`，清理全仓未使用的冗余导入并统一 Prettier 代码格式。
+- **部署与测试稳定性修复**：精简 \`wrangler.toml\` 冗余配置并补全预览环境 KV/D1 绑定，修复部分历史回归测试断言，全量单元测试与生产构建均已通过。`;
 
     // --- Getters ---
     const hasUpdate = computed(() => {
