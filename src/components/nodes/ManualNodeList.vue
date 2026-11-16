@@ -91,12 +91,16 @@
 
 <template>
     <div
-        class="group flex w-full items-center gap-4 rounded-md border border-zinc-800 bg-[#171717] p-3.5 shadow-none transition-colors duration-200"
-        :class="{
-            'opacity-50': !node.enabled && !isSelectionMode,
-            'border-zinc-200 bg-zinc-900/50': isSelectionMode && isSelected,
-            'cursor-pointer': isSelectionMode,
-        }"
+        class="group flex w-full items-center gap-4 rounded-md border p-3.5 shadow-none transition-colors duration-200"
+        :class="[
+            isSelectionMode && isSelected
+                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
+                : 'border-zinc-800 bg-[#171717]',
+            {
+                'opacity-50': !node.enabled && !isSelectionMode,
+                'cursor-pointer': isSelectionMode,
+            },
+        ]"
         @click="isSelectionMode ? emit('toggle-select') : null"
     >
         <!-- Mobile Layout -->
@@ -107,11 +111,11 @@
                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             isSelected
-                                ? 'bg-zinc-100 border-zinc-100'
-                                : 'border-zinc-700 bg-transparent'
+                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                         "
                     >
-                        <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
+                        <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
                     </div>
                 </div>
 
@@ -236,11 +240,11 @@
                     class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                     :class="
                         isSelected
-                            ? 'bg-zinc-100 border-zinc-100'
-                            : 'border-zinc-700 bg-transparent'
+                            ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                            : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                     "
                 >
-                    <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
+                    <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
                 </div>
             </div>
 
