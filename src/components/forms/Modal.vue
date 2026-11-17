@@ -2,6 +2,7 @@
     import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
     import { useI18n } from '@/i18n/index.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useScrollLock } from '@/composables/useScrollLock.js';
 
     const props = defineProps({
         show: Boolean,
@@ -140,6 +141,7 @@
     const { handleBackdropPointerDown, handleBackdropClick } = useBackdropDismiss(() =>
         emit('update:show', false)
     );
+    useScrollLock(() => props.show);
 </script>
 
 <template>

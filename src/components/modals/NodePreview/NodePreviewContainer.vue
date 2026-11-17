@@ -16,6 +16,7 @@
     // Composables
     import { useNodePreview } from '@/composables/useNodePreview.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useScrollLock } from '@/composables/useScrollLock.js';
 
     const { t } = useI18n();
 
@@ -66,6 +67,7 @@
     };
 
     const { handleBackdropPointerDown, handleBackdropClick } = useBackdropDismiss(handleClose);
+    useScrollLock(() => props.show);
 
     // 自动加载数据
     onMounted(() => {
@@ -79,7 +81,7 @@
     <!-- 主模态框 -->
     <div
         v-if="show"
-        class="fixed inset-0 overflow-y-auto"
+        class="fixed inset-0 overflow-y-auto overscroll-contain"
         :style="{ zIndex: 'var(--z-modal)' }"
         :class="{ 'bg-black bg-opacity-50': show }"
         role="dialog"
