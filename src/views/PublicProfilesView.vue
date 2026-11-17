@@ -464,7 +464,7 @@
                     class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
                 >
                     <!-- Left Content: Text (Wider column for no-wrap) -->
-                    <div class="text-left relative z-20 lg:col-span-12 xl:col-span-12">
+                    <div class="text-left relative z-10 lg:col-span-12 xl:col-span-12">
                         <!-- Badge -->
                         <div
                             class="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-zinc-800 bg-transparent mb-6 shadow-none"
@@ -512,7 +512,7 @@
             </div>
 
             <!-- Content Section -->
-            <div class="relative z-20 pt-4">
+            <div class="relative z-10 pt-4">
                 <!-- Subscription Section -->
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Announcement Section -->

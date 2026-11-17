@@ -94,7 +94,7 @@
     --glow-danger: rgba(244, 63, 94, 0.15);
 
     /* Keep overlays above fixed app chrome while preserving room for menus/toasts. */
-    --z-nav: 20;
+    --z-nav: 50;
     --z-popover: 100;
     --z-toast: 900;
     --z-modal: 1000000;
