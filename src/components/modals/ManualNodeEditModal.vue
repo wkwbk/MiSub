@@ -4,6 +4,7 @@
     import Modal from '@/components/forms/Modal.vue';
     import Input from '@/components/ui/Input.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSubscriptions } from '@/composables/useSubscriptions.js';
     import { needsServerParsing, useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
@@ -76,7 +77,6 @@
 
     // 浮动标签状态
     const nameFocused = ref(false);
-    const urlFocused = ref(false);
 
     // 协议检测
     const getProtocol = (url) => {
@@ -349,42 +349,28 @@
                         </div>
                     </div>
 
-                    <div
-                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
-                        :class="[
-                            urlFocused
-                                ? 'border-zinc-600'
-                                : 'border-zinc-800 hover:border-zinc-700',
-                        ]"
+                    <LineNumberTextarea
+                        id="node-url"
+                        v-model="editingNode.url"
+                        :rows="8"
+                        :placeholder="t('manualNodes.urlPlaceholder')"
+                        textarea-class="pr-20"
+                        @input="$emit('input-url', $event)"
                     >
-                        <!-- 协议检测徽章 - 显示在右上角 -->
-                        <div
-                            v-if="singleProtocol && !isMultiLine"
-                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
-                        >
-                            <span class="font-mono text-xs font-semibold text-zinc-200 uppercase">
-                                {{ singleProtocol.name }}
-                            </span>
-                        </div>
-
-                        <div class="flex h-full">
+                        <template #overlay>
+                            <!-- 协议检测徽章 - 显示在右上角 -->
                             <div
-                                class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
+                                v-if="singleProtocol && !isMultiLine"
+                                class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
                             >
-                                <Link2 class="h-4 w-4 mt-0.5" />
+                                <span
+                                    class="font-mono text-xs font-semibold text-zinc-200 uppercase"
+                                >
+                                    {{ singleProtocol.name }}
+                                </span>
                             </div>
-                            <textarea
-                                id="node-url"
-                                v-model="editingNode.url"
-                                rows="8"
-                                @focus="urlFocused = true"
-                                @blur="urlFocused = false"
-                                @input="$emit('input-url', $event)"
-                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono resize-none py-3 pl-3 pr-20 min-h-[160px]"
-                                :placeholder="t('manualNodes.urlPlaceholder')"
-                            ></textarea>
-                        </div>
-                    </div>
+                        </template>
+                    </LineNumberTextarea>
                 </div>
 
                 <!-- 批量导入预览 -->

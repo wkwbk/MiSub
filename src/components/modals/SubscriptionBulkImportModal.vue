@@ -1,8 +1,9 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FilePlus2, Layers } from '@lucide/vue';
+    import { Layers } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import GroupSelector from '@/components/ui/GroupSelector.vue';
+    import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';
     import { useI18n } from '@/i18n/index.js';
@@ -18,7 +19,6 @@
 
     const importText = ref('');
     const selectedGroup = ref('');
-    const urlFocused = ref(false);
 
     const airportGroupNames = computed(() =>
         extractAirportGroupNames(dataStore.subscriptions || [])
@@ -101,30 +101,11 @@
 
                 <!-- Subscription URLs Textarea -->
                 <div class="relative group space-y-1.5">
-                    <div
-                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
-                        :class="[
-                            urlFocused
-                                ? 'border-zinc-600'
-                                : 'border-zinc-800 hover:border-zinc-700',
-                        ]"
-                    >
-                        <div class="flex h-full">
-                            <div
-                                class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
-                            >
-                                <FilePlus2 class="h-4 w-4 mt-0.5" />
-                            </div>
-                            <textarea
-                                v-model="importText"
-                                rows="8"
-                                @focus="urlFocused = true"
-                                @blur="urlFocused = false"
-                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono resize-none py-3 px-3 min-h-[160px] outline-none"
-                                placeholder="https://example.com/api/v1/client/subscribe?token=...&#10;http://sub.example.com/link/..."
-                            ></textarea>
-                        </div>
-                    </div>
+                    <LineNumberTextarea
+                        v-model="importText"
+                        :rows="8"
+                        placeholder="https://example.com/api/v1/client/subscribe?token=...&#10;http://sub.example.com/link/..."
+                    />
                     <p class="text-xs text-zinc-500">
                         {{ t('subscriptionBulkImport.helper') }}
                     </p>
