@@ -529,7 +529,7 @@
 <template>
     <Modal :show="show" size="6xl" @update:show="(value) => !value && closeModal()">
         <template #title>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 space-y-0.5">
                     <div class="flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
@@ -543,11 +543,11 @@
                         {{ subtitle }}
                     </p>
                 </div>
-                <div class="flex items-center gap-2 self-end sm:self-auto">
+                <div class="flex items-center gap-2 shrink-0">
                     <button
                         v-if="profileId"
                         @click="pickingMode = !pickingMode"
-                        class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shadow-none"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shadow-none whitespace-nowrap"
                         :class="
                             pickingMode
                                 ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
@@ -560,7 +560,7 @@
                     </button>
                     <button
                         @click="closeModal"
-                        class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
                         :aria-label="t('common.close')"
                     >
                         <X class="w-4 h-4" />
@@ -573,9 +573,9 @@
             <!-- 统计信息 (Exposed Hairline Grid Style) -->
             <div
                 v-if="!loading && !error && Object.keys(protocolStats).length > 0"
-                class="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800 bg-transparent mb-4"
+                class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden mb-4"
             >
-                <div class="p-4">
+                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         {{ t('nodePreview.nodesTotal') }}
                     </div>
@@ -585,7 +585,7 @@
                         {{ allNodes.length }}
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         {{ t('nodePreview.protocolTypes') }}
                     </div>
@@ -595,7 +595,7 @@
                         {{ Object.keys(protocolStats).length }}
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         {{ t('nodePreview.regionsCount') }}
                     </div>
@@ -605,7 +605,7 @@
                         {{ Object.keys(regionStats).length }}
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
                     <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                         {{ t('nodePreview.totalPages') }}
                     </div>

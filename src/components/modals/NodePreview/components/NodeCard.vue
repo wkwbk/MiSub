@@ -48,12 +48,15 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="flex items-center justify-between rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
-                :class="{
-                    'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]':
-                        selectionMode && selectedUrls.has(node.url),
-                    'cursor-pointer': selectionMode,
-                }"
+                class="flex items-center justify-between rounded-md border p-3.5 transition-colors duration-150"
+                :class="
+                    selectionMode && selectedUrls.has(node.url)
+                        ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-100 dark:bg-[#202020] cursor-pointer'
+                        : [
+                              'border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/90 dark:bg-[#131515] hover:bg-zinc-100/80 dark:hover:bg-[#1a1c1c] hover:border-zinc-300 dark:hover:border-zinc-700',
+                              selectionMode ? 'cursor-pointer' : '',
+                          ]
+                "
             >
                 <!-- 左侧：图标与信息 -->
                 <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -83,7 +86,7 @@
                         </h4>
                         <div class="flex items-center gap-2">
                             <span
-                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm uppercase border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm uppercase border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                             >
                                 {{ parseNodeInfo(node).protocol }}
                             </span>
@@ -100,9 +103,9 @@
                 <button
                     v-if="!selectionMode"
                     @click.stop="emit('copy', node, node.url)"
-                    class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                    class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                     :class="{
-                        'text-emerald-500': copiedNodeId === node.url,
+                        'text-emerald-500 border-emerald-500/40': copiedNodeId === node.url,
                     }"
                     :aria-label="t('actions.copyNode')"
                 >
@@ -118,13 +121,15 @@
                 v-for="(node, index) in nodes"
                 :key="`${node.url}_${index}`"
                 @click="handleCardClick(node)"
-                class="relative bg-white dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800 p-4 group transition-all duration-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
-                :class="[
-                    selectionMode ? 'cursor-pointer' : '',
+                class="relative rounded-md border p-4 group transition-colors duration-150 shadow-none"
+                :class="
                     selectionMode && selectedUrls.has(node.url)
-                        ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
-                        : '',
-                ]"
+                        ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-100 dark:bg-[#202020] cursor-pointer'
+                        : [
+                              'bg-zinc-50/80 dark:bg-[#131515] border-zinc-200/90 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700',
+                              selectionMode ? 'cursor-pointer' : '',
+                          ]
+                "
             >
                 <!-- Selection Badge -->
                 <div v-if="selectionMode" class="absolute top-4 right-4">
@@ -155,12 +160,12 @@
                             </h4>
                             <div class="flex flex-wrap gap-1.5 mt-2">
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                                 >
                                     {{ parseNodeInfo(node).protocol }}
                                 </span>
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                                 >
                                     {{ parseNodeInfo(node).region || 'UNKNOWN' }}
                                 </span>
@@ -169,7 +174,7 @@
                     </div>
 
                     <!-- 服务器信息 -->
-                    <div class="mt-auto pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                    <div class="mt-auto pt-3 border-t border-zinc-200/80 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
                             <div class="min-w-0">
                                 <div
@@ -188,9 +193,9 @@
                             <button
                                 v-if="!selectionMode"
                                 @click.stop="emit('copy', node, node.url)"
-                                class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                                class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                                 :class="{
-                                    'text-emerald-500': copiedNodeId === node.url,
+                                    'text-emerald-500 border-emerald-500/40': copiedNodeId === node.url,
                                 }"
                                 :aria-label="t('actions.copyNode')"
                             >
