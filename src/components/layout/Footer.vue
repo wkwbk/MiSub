@@ -8,6 +8,10 @@
             type: Boolean,
             default: false,
         },
+        hasMobileNav: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const versionStore = useVersionStore();
@@ -16,7 +20,10 @@
 </script>
 
 <template>
-    <footer class="w-full text-center p-8 border-t border-zinc-800 bg-[#131515] mt-8">
+    <footer
+        class="w-full text-center p-8 border-t border-zinc-800 bg-[#131515] mt-8"
+        :class="{ 'footer-with-mobile-nav': hasMobileNav }"
+    >
         <div
             class="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-zinc-500"
         >
@@ -43,3 +50,11 @@
         </div>
     </footer>
 </template>
+
+<style scoped>
+    @media (max-width: 767.98px) {
+        .footer-with-mobile-nav {
+            padding-bottom: calc(6rem + max(env(safe-area-inset-bottom, 0px), 12px));
+        }
+    }
+</style>

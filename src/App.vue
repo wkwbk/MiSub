@@ -298,7 +298,9 @@
                           'grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
                           shouldCenterMain
                               ? 'py-6 flex items-center justify-center'
-                              : 'py-6 pb-24 md:pb-6',
+                              : shouldShowFooter
+                                ? 'py-6'
+                                : 'py-6 pb-24 md:pb-6',
                       ],
                 {
                     'ios-header-padding': showLegacyHeader,
@@ -447,7 +449,11 @@
             @confirm="handleVersionModalConfirm"
             @suppress="handleVersionModalSuppress"
         />
-        <Footer v-if="shouldShowFooter" :hide-branding="shouldHidePublicBranding" />
+        <Footer
+            v-if="shouldShowFooter"
+            :hide-branding="shouldHidePublicBranding"
+            :has-mobile-nav="showModernNavBar"
+        />
         <ScrollToTop v-if="isLoggedIn || isPublicRoute" />
     </div>
 </template>
