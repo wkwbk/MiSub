@@ -46,12 +46,15 @@
     const allowedContentTags = ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'li'];
     const allowedContentAttrs = ['href', 'target', 'rel'];
 
-    const sanitizedContent = computed(() =>
-        DOMPurify.sanitize(announcement.value.content || '', {
+    const sanitizedContent = computed(() => {
+        const rawContent = announcement.value.content?.trim()
+            ? announcement.value.content
+            : t('common.announcementFallbackContent');
+        return DOMPurify.sanitize(rawContent, {
             ALLOWED_TAGS: allowedContentTags,
             ALLOWED_ATTR: allowedContentAttrs,
-        })
-    );
+        });
+    });
 
     const handleContentUpdate = () => {
         announcement.value.updatedAt = new Date().toISOString();
@@ -162,12 +165,12 @@
                                 'bg-red-500': announcement.type === 'error',
                             }"
                         ></span>
-                        <div class="flex-1">
-                            <h3
-                                class="text-sm font-semibold text-zinc-100"
-                                v-if="announcement.title"
-                            >
-                                {{ announcement.title }}
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-sm font-semibold text-zinc-100 truncate">
+                                {{
+                                    announcement.title?.trim() ||
+                                    t('common.announcementFallbackTitle')
+                                }}
                             </h3>
                             <div
                                 class="text-xs text-zinc-300 mt-1 prose prose-sm prose-invert max-w-none"

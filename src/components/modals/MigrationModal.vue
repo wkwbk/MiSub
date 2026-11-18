@@ -151,6 +151,7 @@ CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
         :show="show"
         @update:show="handleClose"
         @confirm="handleConfirm"
+        :close-on-confirm="false"
         size="2xl"
         :confirm-disabled="isMigrating"
         :confirm-text="confirmText"

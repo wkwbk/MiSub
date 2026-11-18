@@ -104,7 +104,7 @@
                 <div class="pl-4 border-l-2 border-zinc-800 space-y-2.5 max-w-xl">
                     <div class="flex items-start gap-2">
                         <span
-                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"
+                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-[5px]"
                         ></span>
                         <div class="space-y-0.5">
                             <p class="text-xs font-medium text-zinc-200">

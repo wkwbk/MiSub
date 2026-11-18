@@ -92,6 +92,7 @@
         :show="show"
         @update:show="handleClose"
         @confirm="handleConfirm"
+        :close-on-confirm="false"
         size="2xl"
         :confirm-disabled="isMigrating"
         :confirm-text="confirmText"
@@ -111,7 +112,7 @@
                     <div
                         class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent p-4 text-xs text-zinc-700 dark:text-zinc-300 flex items-start gap-2.5"
                     >
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-[5px]"></span>
                         <span>{{ t('d1Migration.legacyIntro') }}</span>
                     </div>
                     <ul class="space-y-2 text-xs text-zinc-600 dark:text-zinc-400">

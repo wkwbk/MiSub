@@ -243,7 +243,7 @@
                 class="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-4 py-3 text-xs text-zinc-500"
             >
                 <div class="flex items-start gap-2.5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-[5px]"></span>
                     <div>
                         <p class="font-medium text-zinc-800 dark:text-zinc-200">
                             {{ t('quickImport.tipsTitle') }}

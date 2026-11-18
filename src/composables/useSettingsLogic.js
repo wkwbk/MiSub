@@ -188,7 +188,6 @@ export function useSettingsLogic() {
      * 处理 D1 迁移成功
      */
     const handleMigrationSuccess = () => {
-        showMigrationModal.value = false;
         settings.value.storageType = 'd1';
         showToast(t('settings.migrationSuccess'), 'success');
     };

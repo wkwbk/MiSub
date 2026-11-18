@@ -1108,7 +1108,7 @@ export const messages = {
             regionOverridePatternPlaceholder: '例如：新加坡 原生|SG.*Premium',
             regionOverrideRegion: '目标地区',
             regionOverrideRegionPlaceholder: '例如：美国',
-            regionOverrideFlags: '标志',
+            regionOverrideFlags: '正则标志',
             homeHeroTitle: '公开页 Hero 设置',
             homeHeroDesc: '统一公开页主标题和简介文案，保持首页展示信息简洁清晰。',
             homeHeroTitle1: '主标题 (第一行)',
@@ -1156,7 +1156,7 @@ export const messages = {
             cronRecommendedSecurity: '推荐安全方式',
             cronBearerHint:
                 '如果你的 Cron 服务支持自定义请求头，建议使用 Authorization Bearer，避免密钥出现在 URL 和访问日志中。',
-            cronEmptyHint: '💡 填写 Cron Secret 后，将自动生成访问链接',
+            cronEmptyHint: '填写 Cron Secret 后，将自动生成访问链接',
             cronGuideExternal:
                 '由于 Cloudflare Pages 免费版不支持 Cron Trigger，请使用外部监控服务（如 UptimeRobot, Cron-Job.org）定时访问上方生成的兼容链接。',
             cronGuideBearer: '如果服务支持自定义请求头，也可以使用推荐的 Bearer 方式触发 /cron。',
@@ -1625,9 +1625,9 @@ export const messages = {
             legacyTitle: '检测到旧 D1 数据结构',
             legacyIntro:
                 '当前检测到旧版 D1 主行数据结构。为了避免读取遗漏并提升后续性能，建议立即升级为新的行级存储结构。',
-            legacyHasSubscriptions: '• 检测到旧版订阅主行数据',
-            legacyHasProfiles: '• 检测到旧版订阅组主行数据',
-            legacyNoDataChange: '• 升级后不会改变你现有的数据内容，只会调整存储结构',
+            legacyHasSubscriptions: '检测到旧版订阅主行数据',
+            legacyHasProfiles: '检测到旧版订阅组主行数据',
+            legacyNoDataChange: '升级后不会改变你现有的数据内容，只会调整存储结构',
             legacyDoneHint: '升级完成，建议刷新后台以重新加载最新数据。',
             migrating: '迁移中...',
             done: '完成',
@@ -3015,7 +3015,7 @@ export const messages = {
             regionOverridePatternPlaceholder: 'e.g. Singapore Native|SG.*Premium',
             regionOverrideRegion: 'Target region',
             regionOverrideRegionPlaceholder: 'e.g. United States',
-            regionOverrideFlags: 'Flags',
+            regionOverrideFlags: 'Regex flags',
             homeHeroTitle: 'Public page hero settings',
             homeHeroDesc:
                 'Manage the public page title and description so the homepage stays clear and concise.',
@@ -3067,7 +3067,7 @@ export const messages = {
             cronRecommendedSecurity: 'Recommended secure method',
             cronBearerHint:
                 'If your Cron service supports custom headers, use Authorization Bearer to keep the secret out of URLs and access logs.',
-            cronEmptyHint: '💡 Enter Cron Secret to generate an access link',
+            cronEmptyHint: 'Enter Cron Secret to generate an access link',
             cronGuideExternal:
                 'Cloudflare Pages Free does not support Cron Triggers. Use an external monitor such as UptimeRobot or Cron-Job.org to access the compatible link above on a schedule.',
             cronGuideBearer:
@@ -3575,10 +3575,10 @@ export const messages = {
             legacyTitle: 'Legacy D1 data structure detected',
             legacyIntro:
                 'A legacy single-row D1 structure was detected. To avoid missing reads and improve performance, we recommend upgrading to the new row-level storage structure now.',
-            legacyHasSubscriptions: '• Legacy subscription main-row data detected',
-            legacyHasProfiles: '• Legacy subscription-group main-row data detected',
+            legacyHasSubscriptions: 'Legacy subscription main-row data detected',
+            legacyHasProfiles: 'Legacy subscription-group main-row data detected',
             legacyNoDataChange:
-                '• Your existing data will not be changed — only the storage structure is adjusted',
+                'Your existing data will not be changed — only the storage structure is adjusted',
             legacyDoneHint: 'Upgrade complete. Refresh the dashboard to reload the latest data.',
             migrating: 'Migrating...',
             done: 'Done',
