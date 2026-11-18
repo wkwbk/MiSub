@@ -147,18 +147,14 @@ async function performTrafficCheck(env) {
 /**
  * 清理订阅缓存
  */
-async function clearSubscriptionCache(env) {
-    // 清理 KV 缓存
-    if (env.KV_STORAGE) {
-        console.log('[Cron] Cache cleared');
-    }
+async function clearSubscriptionCache() {
+    // No-op
 }
 
 /**
  * 获取所有订阅
  */
 async function getAllSubscriptions(env) {
-    // 从存储获取订阅列表
     if (env.DB) {
         try {
             const { results } = await env.DB.prepare(
@@ -167,15 +163,6 @@ async function getAllSubscriptions(env) {
             return results;
         } catch (error) {
             console.error('[Cron] Failed to fetch from D1:', error);
-        }
-    }
-
-    if (env.KV_STORAGE) {
-        try {
-            const data = await env.KV_STORAGE.get('subscriptions');
-            return data ? JSON.parse(data) : [];
-        } catch (error) {
-            console.error('[Cron] Failed to fetch from KV:', error);
         }
     }
 

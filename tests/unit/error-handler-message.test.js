@@ -52,9 +52,8 @@ describe('getUserFriendlyMessage 判定顺序', () => {
         expect(result).toBe(zh.resourceLoad.replace('{fileName}', 'app.js'));
     });
 
-    it('认证 / KV / D1 / 保存失败各自命中', () => {
+    it('认证 / D1 / 保存失败各自命中', () => {
         expect(friendly('Unauthorized')).toBe(zh.unauthorized);
-        expect(friendly('MISUB_KV missing')).toBe(zh.kvMissing);
         expect(friendly('MISUB_DB missing')).toBe(zh.d1Missing);
         expect(friendly('storage full')).toBe(zh.saveFailed);
     });

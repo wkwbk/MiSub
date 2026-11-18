@@ -250,50 +250,6 @@ export async function batchUpdateNodes(subscriptionIds, subscriptions = null) {
     }
 }
 
-/**
- * 数据迁移：从 KV 迁移到 D1 数据库
- * @returns {Promise<Object>} - 迁移结果
- */
-export async function migrateToD1() {
-    try {
-        return await api.post('/api/migrate_to_d1');
-    } catch (error) {
-        if (error instanceof APIError) {
-            return {
-                success: false,
-                error: error.message,
-                errorType: 'server',
-                details: error.data?.details || error.data?.errors,
-            };
-        }
-        return handleApiError(error, 'migrateToD1');
-    }
-}
-
-export async function detectLegacyD1() {
-    try {
-        return await api.get('/api/detect_legacy_d1');
-    } catch (error) {
-        return handleApiError(error, 'detectLegacyD1');
-    }
-}
-
-export async function migrateLegacyD1() {
-    try {
-        return await api.post('/api/migrate_legacy_d1');
-    } catch (error) {
-        if (error instanceof APIError) {
-            return {
-                success: false,
-                error: error.message,
-                errorType: 'server',
-                details: error.data?.details || error.data?.errors,
-            };
-        }
-        return handleApiError(error, 'migrateLegacyD1');
-    }
-}
-
 export async function fetchGithubLatestRelease(repo) {
     try {
         return await api.get(`/api/github/release?repo=${encodeURIComponent(repo)}`);

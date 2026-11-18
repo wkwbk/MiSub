@@ -2,7 +2,6 @@
     import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from 'vue';
     import { useRoute } from 'vue-router';
     import { useI18n } from '@/i18n/index.js';
-    import MigrationModal from '@/components/modals/MigrationModal.vue';
     import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
     import SettingsContent from '@/components/settings/SettingsContent.vue';
     import {
@@ -18,13 +17,10 @@
         disguiseConfig,
         isLoading,
         isSaving,
-        showMigrationModal,
         restartCountdown,
         hasWhitespace,
-        isStorageTypeValid,
         loadSettings,
         handleSave,
-        handleMigrationSuccess,
         handleReset,
         exportBackup,
         importBackup,
@@ -63,10 +59,6 @@
             target?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
         });
     }
-
-    const handleOpenMigrationModal = () => {
-        showMigrationModal.value = true;
-    };
 
     onMounted(() => {
         loadSettings();
@@ -110,7 +102,6 @@
             :is-saving="isSaving"
             :restart-countdown="restartCountdown"
             :has-whitespace="hasWhitespace"
-            :is-storage-type-valid="isStorageTypeValid"
             :highlighted-focus-id="highlightedFocusId"
             :export-backup="exportBackup"
             :import-backup="importBackup"
@@ -118,9 +109,6 @@
             layout-class="h-full"
             @save="handleSave"
             @reload-now="() => window.location.reload()"
-            @migrate="handleOpenMigrationModal"
         />
-
-        <MigrationModal v-model:show="showMigrationModal" @success="handleMigrationSuccess" />
     </div>
 </template>

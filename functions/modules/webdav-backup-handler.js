@@ -193,41 +193,39 @@ async function syncCollection(storageAdapter, type, items) {
     const isProfiles = type === 'profiles';
     const key = isProfiles ? KV_KEY_PROFILES : KV_KEY_SUBS;
 
-    if (storageAdapter.type !== STORAGE_TYPES.KV) {
-        const getAll = isProfiles
-            ? storageAdapter.getAllProfiles?.bind(storageAdapter)
-            : storageAdapter.getAllSubscriptions?.bind(storageAdapter);
-        const putItem = isProfiles
-            ? storageAdapter.putProfile?.bind(storageAdapter)
-            : storageAdapter.putSubscription?.bind(storageAdapter);
-        const deleteItem = isProfiles
-            ? storageAdapter.deleteProfileById?.bind(storageAdapter)
-            : storageAdapter.deleteSubscriptionById?.bind(storageAdapter);
+    const getAll = isProfiles
+        ? storageAdapter.getAllProfiles?.bind(storageAdapter)
+        : storageAdapter.getAllSubscriptions?.bind(storageAdapter);
+    const putItem = isProfiles
+        ? storageAdapter.putProfile?.bind(storageAdapter)
+        : storageAdapter.putSubscription?.bind(storageAdapter);
+    const deleteItem = isProfiles
+        ? storageAdapter.deleteProfileById?.bind(storageAdapter)
+        : storageAdapter.deleteSubscriptionById?.bind(storageAdapter);
 
-        if (getAll && putItem && deleteItem) {
-            const currentItems = await getAll();
-            const finalMap = new Map(
-                finalItems.filter((item) => item?.id).map((item) => [item.id, item])
-            );
-            const currentMap = new Map(
-                (Array.isArray(currentItems) ? currentItems : [])
-                    .filter((item) => item?.id)
-                    .map((item) => [item.id, item])
-            );
+    if (getAll && putItem && deleteItem) {
+        const currentItems = await getAll();
+        const finalMap = new Map(
+            finalItems.filter((item) => item?.id).map((item) => [item.id, item])
+        );
+        const currentMap = new Map(
+            (Array.isArray(currentItems) ? currentItems : [])
+                .filter((item) => item?.id)
+                .map((item) => [item.id, item])
+        );
 
-            for (const item of finalMap.values()) {
-                const existing = currentMap.get(item.id);
-                if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
-                    await putItem(item);
-                }
+        for (const item of finalMap.values()) {
+            const existing = currentMap.get(item.id);
+            if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
+                await putItem(item);
             }
-            for (const id of currentMap.keys()) {
-                if (!finalMap.has(id)) {
-                    await deleteItem(id);
-                }
-            }
-            return;
         }
+        for (const id of currentMap.keys()) {
+            if (!finalMap.has(id)) {
+                await deleteItem(id);
+            }
+        }
+        return;
     }
 
     await storageAdapter.put(key, finalItems);

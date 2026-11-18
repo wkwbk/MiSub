@@ -1,27 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DataMigrator, StorageFactory } from '../../functions/storage-adapter.js';
-
-function createKVMock(initialData = {}) {
-    const store = new Map(Object.entries(initialData));
-    return {
-        async get(key) {
-            return store.has(key) ? store.get(key) : null;
-        },
-        async put(key, value) {
-            store.set(key, value);
-        },
-        async delete(key) {
-            store.delete(key);
-        },
-        async list({ prefix }) {
-            return {
-                keys: Array.from(store.keys())
-                    .filter((key) => key.startsWith(prefix || ''))
-                    .map((name) => ({ name })),
-            };
-        },
-    };
-}
+import { StorageFactory } from '../../functions/storage-adapter.js';
 
 function createD1Mock({
     subscriptions = [],
@@ -106,54 +84,6 @@ function createD1Mock({
 }
 
 describe('Storage adapter row-level APIs', () => {
-    it('supports row-level subscription/profile lookup on KV adapter', async () => {
-        const kv = createKVMock({
-            misub_subscriptions_v1: JSON.stringify([
-                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com' },
-                { id: 'sub-2', name: 'Sub Two', url: 'https://b.example.com' },
-            ]),
-            misub_profiles_v1: JSON.stringify([
-                { id: 'profile-1', customId: 'custom-1', name: 'Profile One' },
-            ]),
-        });
-
-        const adapter = StorageFactory.createAdapter({ MISUB_KV: kv }, 'kv');
-
-        expect(await adapter.getSubscriptionById('sub-2')).toMatchObject({
-            id: 'sub-2',
-            name: 'Sub Two',
-        });
-        expect(await adapter.getProfileById('custom-1')).toMatchObject({
-            id: 'profile-1',
-            name: 'Profile One',
-        });
-        expect(await adapter.getAllSubscriptions()).toHaveLength(2);
-        expect(await adapter.getAllProfiles()).toHaveLength(1);
-        expect(await adapter.getSubscriptionsByIds(['sub-1', 'sub-2'])).toHaveLength(2);
-
-        await adapter.putSubscription({
-            id: 'sub-3',
-            name: 'Sub Three',
-            url: 'https://c.example.com',
-        });
-        expect(await adapter.getSubscriptionById('sub-3')).toMatchObject({
-            id: 'sub-3',
-            name: 'Sub Three',
-        });
-
-        await adapter.putProfile({ id: 'profile-2', customId: 'custom-2', name: 'Profile Two' });
-        expect(await adapter.getProfileById('profile-2')).toMatchObject({
-            id: 'profile-2',
-            name: 'Profile Two',
-        });
-
-        expect(await adapter.deleteSubscriptionById('sub-1')).toBe(true);
-        expect(await adapter.getSubscriptionById('sub-1')).toBeNull();
-
-        expect(await adapter.deleteProfileById('profile-1')).toBe(true);
-        expect(await adapter.getProfileById('profile-1')).toBeNull();
-    });
-
     it('supports row-level subscription/profile lookup and update on D1 adapter', async () => {
         const d1 = createD1Mock({
             subscriptions: [
@@ -163,13 +93,17 @@ describe('Storage adapter row-level APIs', () => {
             profiles: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
         });
 
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
 
         expect(await adapter.getSubscriptionById('sub-1')).toMatchObject({
             id: 'sub-1',
             nodeCount: 1,
         });
         expect(await adapter.getProfileById('profile-1')).toMatchObject({
+            id: 'profile-1',
+            name: 'Profile One',
+        });
+        expect(await adapter.getProfileById('custom-1')).toMatchObject({
             id: 'profile-1',
             name: 'Profile One',
         });
@@ -216,8 +150,8 @@ describe('Storage adapter row-level APIs', () => {
             profiles: [{ id: 'profile-1', name: 'Profile One' }],
             queryCounts,
         });
-        const firstAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-        const secondAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
+        const firstAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
+        const secondAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
 
         const [firstSubs, secondSubs] = await Promise.all([
             firstAdapter.getAllSubscriptions(),
@@ -240,103 +174,20 @@ describe('Storage adapter row-level APIs', () => {
         expect(queryCounts.profiles).toBe(2);
     });
 
-    it('reads legacy D1 main-row blob data alongside row-level records', async () => {
+    it('syncs full collection put/get calls into row-level D1 records without main rows', async () => {
         const d1 = createD1Mock({
-            subscriptions: [
-                { id: 'main', items: true },
-                { id: 'sub-new', name: 'Sub New', url: 'https://new.example.com' },
-            ],
-            profiles: [
-                { id: 'main', items: true },
-                { id: 'profile-new', name: 'Profile New' },
-            ],
+            subscriptions: [{ id: 'old-sub', name: 'Old Sub' }],
         });
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
 
-        // Overwrite main rows with legacy blob arrays.
-        d1.prepare(
-            'INSERT OR REPLACE INTO subscriptions (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-        )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'sub-legacy', name: 'Legacy Sub', url: 'https://legacy.example.com' },
-                ])
-            )
-            .run();
-        d1.prepare(
-            'INSERT OR REPLACE INTO profiles (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-        )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'profile-legacy', customId: 'legacy-custom', name: 'Legacy Profile' },
-                ])
-            )
-            .run();
-
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-
-        const allSubs = await adapter.getAllSubscriptions();
-        expect(allSubs.map((item) => item.id).sort()).toEqual(['sub-legacy', 'sub-new']);
-
-        const allProfiles = await adapter.getAllProfiles();
-        expect(allProfiles.map((item) => item.id).sort()).toEqual([
-            'profile-legacy',
-            'profile-new',
+        await adapter.put('misub_subscriptions_v1', [{ id: 'new-sub', name: 'New Sub' }]);
+        expect(await adapter.getSubscriptionById('old-sub')).toBeNull();
+        expect(await adapter.getSubscriptionById('new-sub')).toMatchObject({
+            id: 'new-sub',
+            name: 'New Sub',
+        });
+        expect(await adapter.get('misub_subscriptions_v1')).toEqual([
+            { id: 'new-sub', name: 'New Sub' },
         ]);
-
-        expect(await adapter.getSubscriptionById('sub-legacy')).toMatchObject({
-            id: 'sub-legacy',
-            name: 'Legacy Sub',
-        });
-        expect(await adapter.getProfileById('legacy-custom')).toMatchObject({
-            id: 'profile-legacy',
-            name: 'Legacy Profile',
-        });
-
-        const related = await adapter.getSubscriptionsByIds(['sub-legacy', 'sub-new']);
-        expect(related.map((item) => item.id).sort()).toEqual(['sub-legacy', 'sub-new']);
-    });
-
-    it('migrates legacy D1 main rows into row-level records', async () => {
-        const d1 = createD1Mock();
-
-        await d1
-            .prepare(
-                'INSERT OR REPLACE INTO subscriptions (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-            )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'sub-legacy', name: 'Legacy Sub', url: 'https://legacy.example.com' },
-                ])
-            )
-            .run();
-        await d1
-            .prepare(
-                'INSERT OR REPLACE INTO profiles (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-            )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'profile-legacy', customId: 'legacy-custom', name: 'Legacy Profile' },
-                ])
-            )
-            .run();
-
-        const result = await DataMigrator.migrateLegacyD1MainRows({ MISUB_DB: d1 });
-        expect(result.errors).toEqual([]);
-        expect(result.subscriptions).toBe(1);
-        expect(result.profiles).toBe(1);
-
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-        expect(await adapter.getSubscriptionById('sub-legacy')).toMatchObject({
-            id: 'sub-legacy',
-            name: 'Legacy Sub',
-        });
-        expect(await adapter.getProfileById('profile-legacy')).toMatchObject({
-            id: 'profile-legacy',
-            name: 'Legacy Profile',
-        });
     });
 });

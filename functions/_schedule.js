@@ -93,20 +93,8 @@ export async function performSubscriptionSync(env, config = {}) {
  * 获取需要同步的订阅列表
  */
 async function getSubscriptionsToSync(env) {
-    // 这里应该从你的存储（KV/D1）中获取订阅列表
-    // 示例实现
     const subscriptions = [];
 
-    // 从 KV 存储获取
-    if (env.KV_STORAGE) {
-        const data = await env.KV_STORAGE.get('subscriptions');
-        if (data) {
-            const parsed = JSON.parse(data);
-            subscriptions.push(...parsed);
-        }
-    }
-
-    // 从 D1 数据库获取
     if (env.DB) {
         const { results } = await env.DB.prepare(
             'SELECT * FROM subscriptions WHERE auto_sync = 1'
@@ -176,20 +164,6 @@ async function parseSubscriptionContent(content) {
  * 更新订阅数据到存储
  */
 async function updateSubscriptionData(subscription, nodes, env) {
-    // 更新 KV 存储
-    if (env.KV_STORAGE) {
-        const key = `subscription_${subscription.id}`;
-        await env.KV_STORAGE.put(
-            key,
-            JSON.stringify({
-                ...subscription,
-                nodes,
-                lastSync: new Date().toISOString(),
-                nodeCount: nodes.length,
-            })
-        );
-    }
-
     // 更新 D1 数据库
     if (env.DB) {
         await env.DB.prepare(

@@ -48,7 +48,6 @@
         'auth_debug',
         'auth_check',
         'data',
-        'kv_test',
         'clients',
         'system',
         'github',

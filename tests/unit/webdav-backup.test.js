@@ -1,34 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-function createMemoryKV(initial = {}) {
-    const store = new Map(
-        Object.entries(initial).map(([key, value]) => [
-            key,
-            typeof value === 'string' ? value : JSON.stringify(value),
-        ])
-    );
-    return {
-        async get(key) {
-            return store.has(key) ? store.get(key) : null;
-        },
-        async put(key, value) {
-            store.set(key, value);
-        },
-        async delete(key) {
-            store.delete(key);
-        },
-        async list({ prefix = '' } = {}) {
-            return {
-                keys: Array.from(store.keys())
-                    .filter((name) => name.startsWith(prefix))
-                    .map((name) => ({ name })),
-            };
-        },
-        dump() {
-            return Object.fromEntries(store);
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 const sampleSubscriptions = [
     {
@@ -64,9 +35,9 @@ const sampleTemplates = [
 
 function createEnv(settings = {}) {
     return {
-        MISUB_KV: createMemoryKV({
+        MISUB_DB: createMemoryD1({
             worker_settings_v1: {
-                storageType: 'kv',
+                storageType: 'd1',
                 mytoken: 'auto',
                 webdavBackup: {
                     enabled: true,
@@ -161,7 +132,7 @@ describe('WebDAV backup payload and restore', () => {
         };
 
         const result = await restoreBackupPayload(env, restorePayload, { createSnapshot: false });
-        const kv = env.MISUB_KV.dump();
+        const kv = env.MISUB_DB.dump();
 
         expect(result.success).toBe(true);
         expect(JSON.parse(kv.misub_subscriptions_v1)).toEqual(restorePayload.data.subscriptions);
@@ -175,7 +146,7 @@ describe('WebDAV backup payload and restore', () => {
         const { restoreBackupPayload } =
             await import('../../functions/modules/webdav-backup-handler.js');
         const env = createEnv({ FileName: 'Before' });
-        const currentWebdav = JSON.parse(env.MISUB_KV.dump().worker_settings_v1).webdavBackup;
+        const currentWebdav = JSON.parse(env.MISUB_DB.dump().worker_settings_v1).webdavBackup;
 
         await restoreBackupPayload(
             env,
@@ -199,7 +170,7 @@ describe('WebDAV backup payload and restore', () => {
             { createSnapshot: false }
         );
 
-        const settings = JSON.parse(env.MISUB_KV.dump().worker_settings_v1);
+        const settings = JSON.parse(env.MISUB_DB.dump().worker_settings_v1);
         expect(settings.FileName).toBe('Restored');
         expect(settings.webdavBackup).toEqual(currentWebdav);
         expect(settings.adminPassword).toBeUndefined();

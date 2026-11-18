@@ -54,10 +54,6 @@
             type: Boolean,
             default: false,
         },
-        isStorageTypeValid: {
-            type: Boolean,
-            default: true,
-        },
         /** 独立页面用 ?focus= 深链定位字段时高亮；弹窗不使用 */
         highlightedFocusId: {
             type: String,
@@ -94,7 +90,7 @@
         },
     });
 
-    const emit = defineEmits(['update:activeTab', 'save', 'migrate', 'reload-now']);
+    const emit = defineEmits(['update:activeTab', 'save', 'reload-now']);
 
     const activeTabModel = computed({
         get: () => props.activeTab,
@@ -120,9 +116,7 @@
         }
     });
 
-    const saveDisabled = computed(
-        () => props.isSaving || props.hasWhitespace || !props.isStorageTypeValid
-    );
+    const saveDisabled = computed(() => props.isSaving || props.hasWhitespace);
 </script>
 
 <template>
@@ -185,7 +179,6 @@
                     :exportBackup="exportBackup"
                     :importBackup="importBackup"
                     :handleReset="handleReset"
-                    @migrate="emit('migrate')"
                 />
             </div>
         </div>

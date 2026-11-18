@@ -14,7 +14,6 @@
     import { useVersionStore } from '@/stores/version';
     import { storeToRefs } from 'pinia';
     import NavBar from '@/components/layout/NavBar.vue';
-    import { detectLegacyD1 } from '@/lib/api.js';
     import { useI18n } from '@/i18n/index.js';
     import { configureAuthGuard, translateRouteTitle } from '@/router/index.js';
     import { readSessionPreference } from '@/utils/session-preference.js';
@@ -30,9 +29,6 @@
     const Header = defineAsyncComponent(() => import('@/components/layout/Header.vue'));
     const SavePrompt = defineAsyncComponent(() => import('@/components/ui/SavePrompt.vue'));
     const ScrollToTop = defineAsyncComponent(() => import('@/components/ui/ScrollToTop.vue'));
-    const LegacyD1MigrationModal = defineAsyncComponent(
-        () => import('@/components/modals/LegacyD1MigrationModal.vue')
-    );
     const VersionChangelogModal = defineAsyncComponent(
         () => import('@/components/modals/VersionChangelogModal.vue')
     );
@@ -133,10 +129,6 @@
         () => layoutMode.value === 'modern' && (isDirty.value || saveState.value === 'success')
     );
 
-    const showLegacyD1MigrationModal = ref(false);
-    const legacyD1Details = ref({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
-    const pendingVersionModal = ref(false);
-
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)
     const loginComponent = computed(() => {
         const rawPath = sessionStore.publicConfig?.customLoginPath;
@@ -193,17 +185,7 @@
                 await dataStore.fetchData();
 
                 try {
-                    const result = await detectLegacyD1();
-                    if (result?.success && result.data?.hasLegacyData) {
-                        legacyD1Details.value = result.data;
-                        showLegacyD1MigrationModal.value = true;
-                    }
-                } catch {
-                    // Non-blocking legacy check.
-                }
-
-                try {
-                    await versionStore.checkVersion(showLegacyD1MigrationModal.value);
+                    await versionStore.checkVersion(false);
                 } catch {
                     // Non-blocking version check.
                 }
@@ -211,21 +193,6 @@
         },
         { immediate: true }
     );
-
-    const handleLegacyD1MigrationSuccess = async () => {
-        showLegacyD1MigrationModal.value = false;
-        await dataStore.fetchData(true);
-        if (pendingVersionModal.value) {
-            versionStore.openModal();
-        }
-    };
-
-    const handleLegacyD1MigrationClose = (value) => {
-        showLegacyD1MigrationModal.value = value;
-        if (!value && pendingVersionModal.value) {
-            versionStore.openModal();
-        }
-    };
 
     const handleVersionModalConfirm = () => {
         versionStore.closeModal();
@@ -435,12 +402,6 @@
 
         <Toast />
         <ConfirmDialog />
-        <LegacyD1MigrationModal
-            :show="showLegacyD1MigrationModal"
-            :details="legacyD1Details"
-            @update:show="handleLegacyD1MigrationClose"
-            @success="handleLegacyD1MigrationSuccess"
-        />
         <VersionChangelogModal
             :show="showVersionChangelogModal"
             :release="versionReleaseInfo || {}"

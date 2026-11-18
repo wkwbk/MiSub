@@ -1,5 +1,5 @@
 import { createErrorResponse, createJsonResponse } from '../utils.js';
-import { STORAGE_TYPES, StorageFactory } from '../../storage-adapter.js';
+import { StorageFactory } from '../../storage-adapter.js';
 
 /**
  * Handle proxied GitHub release requests with caching
@@ -17,7 +17,7 @@ export async function handleGithubReleaseRequest(request, env) {
     const CACHE_TTL_MS = 24 * 3600 * 1000; // 24 hours
 
     try {
-        const storage = StorageFactory.createAdapter(env, STORAGE_TYPES.KV);
+        const storage = StorageFactory.createAdapter(env);
 
         // Try to get from cache
         const cachedWrapper = await storage.get(CACHE_KEY);

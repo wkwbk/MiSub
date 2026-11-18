@@ -838,28 +838,43 @@ function checkUserPermission(userId, config) {
  * 检查频率限制
  */
 async function checkRateLimit(userId, env, config) {
+    const now = Date.now();
     const minuteKey = `tg_push_rate:${userId}:min`;
     const dayKey = `tg_push_rate:${userId}:day`;
 
-    const kv = env?.MISUB_KV || null;
-    if (!kv) return { allowed: true }; // 无 KV 时不限流
+    if (!env?.MISUB_DB) return { allowed: true };
+    const storage = StorageFactory.createAdapter(env);
+    if (!storage || storage.type === 'noop') return { allowed: true };
 
-    const minuteCount = parseInt((await kv.get(minuteKey)) || '0');
-    const dayCount = parseInt((await kv.get(dayKey)) || '0');
+    const readCounter = async (key) => {
+        const entry = await storage.get(key);
+        if (!entry || typeof entry !== 'object') return { count: 0, expiresAt: 0 };
+        if (Number(entry.expiresAt || 0) <= now) return { count: 0, expiresAt: 0 };
+        return { count: Number(entry.count || 0), expiresAt: Number(entry.expiresAt) };
+    };
 
-    if (minuteCount >= config.rate_limit.max_per_minute) {
+    const minuteEntry = await readCounter(minuteKey);
+    const dayEntry = await readCounter(dayKey);
+
+    if (minuteEntry.count >= config.rate_limit.max_per_minute) {
         return {
             allowed: false,
             reason: `操作过快，请1分钟后再试（${config.rate_limit.max_per_minute}/分钟）`,
         };
     }
 
-    if (dayCount >= config.rate_limit.max_per_day) {
+    if (dayEntry.count >= config.rate_limit.max_per_day) {
         return { allowed: false, reason: `今日配额已用完（${config.rate_limit.max_per_day}/天）` };
     }
 
-    await kv.put(minuteKey, (minuteCount + 1).toString(), { expirationTtl: 60 });
-    await kv.put(dayKey, (dayCount + 1).toString(), { expirationTtl: 86400 });
+    await storage.put(minuteKey, {
+        count: minuteEntry.count + 1,
+        expiresAt: minuteEntry.expiresAt > now ? minuteEntry.expiresAt : now + 60_000,
+    });
+    await storage.put(dayKey, {
+        count: dayEntry.count + 1,
+        expiresAt: dayEntry.expiresAt > now ? dayEntry.expiresAt : now + 86_400_000,
+    });
 
     return { allowed: true };
 }
