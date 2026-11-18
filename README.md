@@ -125,6 +125,7 @@ If schema initialization fails in the CLI, run the latest `schema.sql` manually 
 - `CRON_SECRET`: secret used by external cron triggers.
 - `MISUB_PUBLIC_URL`: public site URL used to generate subscription conversion callback URLs.
 - `MISUB_CALLBACK_URL`: callback base URL for subscription conversion. It takes precedence over `MISUB_PUBLIC_URL`.
+- `GITHUB_TOKEN`: optional read-only GitHub token (configure as a Secret) to avoid GitHub REST API rate limits when checking releases and client versions.
 
 Never commit real tokens, cookies, UUID/private keys, webhook secrets, bot tokens, subscription URLs, or airport domains.
 

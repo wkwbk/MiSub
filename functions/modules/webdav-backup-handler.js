@@ -67,6 +67,8 @@ function sanitizeRuntimeSecrets(settings = {}) {
     delete sanitized.password;
     delete sanitized.cookieSecret;
     delete sanitized.COOKIE_SECRET;
+    delete sanitized.githubToken;
+    delete sanitized.GITHUB_TOKEN;
     delete sanitized.sessionSecret;
     delete sanitized.lastBackupAt;
     delete sanitized.lastBackupStatus;
