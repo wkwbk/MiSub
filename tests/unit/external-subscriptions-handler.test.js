@@ -1,29 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
-
-function createKv(initial = {}) {
-    const values = new Map(
-        Object.entries(initial).map(([key, value]) => [
-            key,
-            typeof value === 'string' ? value : JSON.stringify(value),
-        ])
-    );
-    return {
-        async get(key) {
-            return values.get(key) ?? null;
-        },
-        async put(key, value) {
-            values.set(key, value);
-        },
-        async delete(key) {
-            values.delete(key);
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createEnv({ settings = {}, subscriptions = [], profiles = [] } = {}) {
     return {
-        MISUB_KV: createKv({
+        MISUB_DB: createMemoryD1({
             worker_settings_v1: {
                 externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
                 ...settings,
@@ -56,25 +37,26 @@ describe('external subscriptions handler', () => {
                     name: 'Airport A',
                     url: 'https://example.com/sub-a',
                     enabled: true,
-                    group: 'A',
+                    tags: ['A'],
                 },
                 {
                     id: 'node-1',
                     name: 'HK 01',
                     url: 'vless://uuid@example.com:443#HK01',
                     enabled: true,
-                    group: 'HK',
+                    tags: ['HK'],
                 },
             ],
         });
 
-        const response = await handleApiRequest(createRequest('/subscriptions'), env);
+        const response = await handleApiRequest(createRequest('/subscriptions?tag=A'), env);
         const body = await response.json();
 
         expect(response.status).toBe(200);
         expect(body.data).toHaveLength(1);
-        expect(body.data[0]).toMatchObject({ id: 'sub-1', type: 'subscription' });
+        expect(body.data[0]).toMatchObject({ id: 'sub-1', type: 'subscription', tags: ['A'] });
         expect(body.data[0]).not.toHaveProperty('protocol');
+        expect(body.data[0]).not.toHaveProperty('group');
     });
 
     it('creates a remote subscription and rejects node protocols on subscription endpoints', async () => {

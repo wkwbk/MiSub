@@ -10,9 +10,11 @@
     import ImportForm from '@/components/modals/SubscriptionImport/ImportForm.vue';
     import FileImport from '@/components/modals/SubscriptionImport/FileImport.vue';
     import ParseResult from '@/components/modals/SubscriptionImport/ParseResult.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import TagInput from '@/components/ui/TagInput.vue';
     import { readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
+    import { normalizeTagList } from '@/utils/tags.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const { t } = useI18n();
 
@@ -21,8 +23,7 @@
     const props = defineProps({
         show: Boolean,
         addNodesFromBulk: Function,
-        groups: {
-            // Added
+        tags: {
             type: Array,
             default: () => [],
         },
@@ -36,7 +37,7 @@
     const errorMessage = ref('');
     const successMessage = ref('');
     const parseStatus = ref('');
-    const groupName = ref(''); // Added
+    const selectedTags = ref([]);
 
     const toastStore = useToastStore();
 
@@ -44,9 +45,8 @@
         () => props.show,
         (newVal) => {
             if (!newVal) {
-                // 重置所有状态
                 subscriptionUrl.value = '';
-                groupName.value = ''; // Added
+                selectedTags.value = [];
                 errorMessage.value = '';
                 successMessage.value = '';
                 parseStatus.value = '';
@@ -56,15 +56,12 @@
         }
     );
 
-    /**
-     * 把后端返回的节点写入手动节点列表（URL 导入与文件导入共用）。
-     * @returns {boolean} 是否至少写入了一个节点
-     */
-    const commitParsedNodes = (backendNodes, targetGroupName, sourceLabel) => {
+    const commitParsedNodes = (backendNodes, targetTags, sourceLabel) => {
+        const normalizedTags = normalizeTagList(targetTags);
         const nodes = (backendNodes || []).map((node) => ({
             id: generateNodeId(),
             name: node.name || 'Unknown',
-            url: node.url,
+            url: cleanNodeUrl(node.url),
             enabled: true,
             protocol: node.protocol || 'unknown',
             source: 'import',
@@ -72,17 +69,18 @@
 
         if (nodes.length === 0) return false;
 
-        // 去重处理
         const uniqueNodes = nodes.filter(
             (node, index, self) => index === self.findIndex((n) => n.url === node.url)
         );
         const duplicateCount = nodes.length - uniqueNodes.length;
 
-        props.addNodesFromBulk(uniqueNodes, targetGroupName);
+        props.addNodesFromBulk(uniqueNodes, normalizedTags);
 
         const successMsg =
             t('importNodes.addedNodes', { count: uniqueNodes.length }) +
-            (targetGroupName ? t('importNodes.addedToGroup', { group: targetGroupName }) : '') +
+            (normalizedTags.length > 0
+                ? t('importNodes.addedWithTags', { tags: normalizedTags.join(', ') })
+                : '') +
             (duplicateCount > 0 ? t('importNodes.dedupedSuffix', { count: duplicateCount }) : '');
 
         successMessage.value = successMsg;
@@ -99,15 +97,12 @@
         return true;
     };
 
-    /**
-     * 上传本地文件导入：读取文件文本 → 后端解析 → 入库。
-     */
     const importFiles = async (fileList) => {
-        // 用户未填分组时，用文件名自动生成，免去手填
-        if (!groupName.value.trim() && fileList?.length) {
-            groupName.value = buildAutoGroupName({ fileName: fileList[0].name });
+        if (normalizeTagList(selectedTags.value).length === 0 && fileList?.length) {
+            const autoTag = buildAutoTagName({ fileName: fileList[0].name });
+            selectedTags.value = autoTag ? [autoTag] : [];
         }
-        const targetGroupName = groupName.value;
+        const targetTags = [...selectedTags.value];
         errorMessage.value = '';
         successMessage.value = '';
         isLoading.value = true;
@@ -136,7 +131,7 @@
             }
 
             parseStatus.value = '';
-            commitParsedNodes(backendNodes, targetGroupName, 'File upload');
+            commitParsedNodes(backendNodes, targetTags, 'File upload');
         } catch (error) {
             console.error('文件导入失败:', error);
             handleError(error, 'File Import Error', { parseStatus: parseStatus.value });
@@ -167,7 +162,7 @@
      * 导入订阅
      */
     const importSubscription = async () => {
-        const targetGroupName = groupName.value; // Capture immediately to avoid reset by watcher when modal closes
+        const targetTags = [...selectedTags.value];
 
         // 验证URL
         if (!isValidUrl(subscriptionUrl.value)) {
@@ -237,7 +232,7 @@
             const backendNodes = parseResult.data.nodes || [];
 
             if (backendNodes.length > 0) {
-                commitParsedNodes(backendNodes, targetGroupName, 'URL import');
+                commitParsedNodes(backendNodes, targetTags, 'URL import');
             } else {
                 parseStatus.value = '';
                 throw new Error(t('importNodes.noValidNodesFromSubscription'));
@@ -315,15 +310,15 @@
                     </button>
                 </div>
 
-                <!-- Group Selector Added -->
+                <!-- Tag Input -->
                 <div class="relative">
                     <label class="text-xs font-semibold text-zinc-400 mb-1.5 block">
-                        {{ t('importNodes.targetGroup') }}
+                        {{ t('importNodes.targetTags') }}
                     </label>
-                    <GroupSelector
-                        v-model="groupName"
-                        :groups="groups"
-                        :placeholder="t('importNodes.targetGroupPlaceholder')"
+                    <TagInput
+                        v-model="selectedTags"
+                        :suggestions="tags"
+                        :placeholder="t('importNodes.targetTagsPlaceholder')"
                         class="w-full"
                     />
                 </div>

@@ -1,21 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { SettingsCache } from '../../functions/storage-adapter.js';
-
-function createKv(initial = {}) {
-    const values = new Map(Object.entries(initial));
-    return {
-        async get(key) {
-            return values.get(key) ?? null;
-        },
-        async put(key, value) {
-            values.set(key, value);
-        },
-        async delete(key) {
-            values.delete(key);
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 describe('API route access boundaries', () => {
     beforeEach(() => {
@@ -23,7 +9,7 @@ describe('API route access boundaries', () => {
     });
 
     it('keeps documented public read endpoints reachable without an admin session', async () => {
-        const env = { MISUB_KV: createKv() };
+        const env = { MISUB_DB: createMemoryD1() };
 
         const publicConfig = await handleApiRequest(
             new Request('https://example.com/api/public_config'),
@@ -45,7 +31,7 @@ describe('API route access boundaries', () => {
 
     it('does not expose the custom login path through public configuration', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
             }),
         };
@@ -63,7 +49,7 @@ describe('API route access boundaries', () => {
 
     it('marks the current configured login path without returning the path', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
             }),
         };
@@ -84,7 +70,7 @@ describe('API route access boundaries', () => {
 
     it('exposes the configured default locale on the public profiles endpoint', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 worker_settings_v1: JSON.stringify({ defaultLocale: 'en-US' }),
             }),
         };
@@ -100,7 +86,7 @@ describe('API route access boundaries', () => {
     });
 
     it('falls back to the default locale when the setting is absent', async () => {
-        const env = { MISUB_KV: createKv() };
+        const env = { MISUB_DB: createMemoryD1() };
 
         const response = await handleApiRequest(
             new Request('https://example.com/api/public/profiles'),
@@ -113,7 +99,7 @@ describe('API route access boundaries', () => {
 
     it('returns unauthenticated metadata for /api/data without exposing management data', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 misub_subscriptions_v1: JSON.stringify([
                     { id: 'secret-sub', name: 'Private Sub', url: 'https://airport.example/sub' },
                 ]),
@@ -137,7 +123,7 @@ describe('API route access boundaries', () => {
 
     it('requires an admin session for management routes before dispatching handlers', async () => {
         const env = {
-            MISUB_KV: createKv(),
+            MISUB_DB: createMemoryD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
         };

@@ -81,6 +81,29 @@ export function getSubscriptionTrafficState(sub, now = Date.now()) {
 }
 
 /**
+ * Known settings tab ids in navigation order.
+ */
+export const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'service', 'system'];
+
+/**
+ * Session-scoped storage key for remembering the active settings tab across
+ * refreshes, auto-reloads after saving, and modal re-opens.
+ */
+export const SETTINGS_ACTIVE_TAB_STORAGE_KEY = 'misub:settings-active-tab';
+
+/**
+ * Normalise a `?tab=` query param or stored preference into a known settings
+ * tab id. Returns `null` when absent or unknown.
+ */
+export function resolveSettingsTab(tab) {
+    if (typeof tab !== 'string') return null;
+    const raw = tab.trim().toLowerCase();
+    if (!raw) return null;
+    const normalized = raw === 'custompage' ? 'custom-page' : raw;
+    return SETTINGS_TAB_IDS.includes(normalized) ? normalized : null;
+}
+
+/**
  * Settings tab ids keyed by the `?focus=` value emitted from the dashboard.
  * Lookups are case-insensitive, so keys are stored lowercased.
  */

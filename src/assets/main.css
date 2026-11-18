@@ -94,11 +94,12 @@
     --glow-danger: rgba(244, 63, 94, 0.15);
 
     /* Keep overlays above fixed app chrome while preserving room for menus/toasts. */
-    --z-nav: 20;
+    --z-nav: 50;
     --z-popover: 100;
     --z-toast: 900;
     --z-modal: 1000000;
     --z-modal-popover: 1100000;
+    --z-confirm: 1200000;
 }
 
 @layer base {
@@ -130,7 +131,6 @@
     body {
         background: var(--bg-page-light);
         color: var(--text-primary-light);
-        background-attachment: fixed;
         transition:
             background-color 0.2s ease,
             color 0.2s ease;

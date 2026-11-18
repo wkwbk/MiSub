@@ -2,6 +2,7 @@
     import { computed } from 'vue';
     import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
+    import { getItemTags } from '@/utils/tags.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
 
@@ -20,9 +21,13 @@
         isPinging: Boolean,
     });
 
-    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-group', 'ping']);
+    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-tag', 'ping']);
     const { showToast } = useToastStore();
     const { t } = useI18n();
+
+    const nodeTags = computed(() => getItemTags(props.node));
+    const visibleTags = computed(() => nodeTags.value.slice(0, 2));
+    const overflowCount = computed(() => Math.max(0, nodeTags.value.length - 2));
 
     const getProtocol = (url) => {
         try {
@@ -91,12 +96,16 @@
 
 <template>
     <div
-        class="group flex w-full items-center gap-4 rounded-md border border-zinc-800 bg-[#171717] p-3.5 shadow-none transition-colors duration-200"
-        :class="{
-            'opacity-50': !node.enabled && !isSelectionMode,
-            'border-zinc-200 bg-zinc-900/50': isSelectionMode && isSelected,
-            'cursor-pointer': isSelectionMode,
-        }"
+        class="group flex w-full items-center gap-4 rounded-md border p-3.5 shadow-none transition-colors duration-200"
+        :class="[
+            isSelectionMode && isSelected
+                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
+                : 'border-zinc-800 bg-[#171717]',
+            {
+                'opacity-50': !node.enabled && !isSelectionMode,
+                'cursor-pointer': isSelectionMode,
+            },
+        ]"
         @click="isSelectionMode ? emit('toggle-select') : null"
     >
         <!-- Mobile Layout -->
@@ -107,11 +116,11 @@
                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             isSelected
-                                ? 'bg-zinc-100 border-zinc-100'
-                                : 'border-zinc-700 bg-transparent'
+                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                         "
                     >
-                        <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
+                        <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
                     </div>
                 </div>
 
@@ -125,7 +134,7 @@
 
                 <div class="flex-1 min-w-0">
                     <div class="flex items-start justify-between gap-2">
-                        <div class="flex items-center gap-2 flex-wrap min-w-0">
+                        <div class="flex items-center gap-1.5 flex-wrap min-w-0">
                             <div
                                 class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                             >
@@ -136,12 +145,20 @@
                                 {{ protocolStyle.text }}
                             </div>
                             <div
-                                v-if="node.group"
+                                v-for="tag in visibleTags"
+                                :key="tag"
                                 class="max-w-[100px] cursor-pointer truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200"
-                                @click.stop="$emit('filter-group', node.group)"
+                                @click.stop="emit('filter-tag', tag)"
                             >
-                                {{ node.group }}
+                                {{ tag }}
                             </div>
+                            <span
+                                v-if="overflowCount > 0"
+                                class="rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                                :title="nodeTags.join(', ')"
+                            >
+                                +{{ overflowCount }}
+                            </span>
                         </div>
 
                         <!-- Header Actions for Mobile -->
@@ -236,11 +253,11 @@
                     class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                     :class="
                         isSelected
-                            ? 'bg-zinc-100 border-zinc-100'
-                            : 'border-zinc-700 bg-transparent'
+                            ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                            : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                     "
                 >
-                    <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
+                    <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
                 </div>
             </div>
 
@@ -252,11 +269,23 @@
                 </span>
             </div>
 
-            <div
-                v-if="node.group"
-                class="max-w-[140px] truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400"
-            >
-                {{ node.group }}
+            <div v-if="visibleTags.length > 0" class="flex items-center gap-1 max-w-[180px]">
+                <div
+                    v-for="tag in visibleTags"
+                    :key="tag"
+                    class="max-w-[90px] truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 cursor-pointer hover:bg-zinc-900 hover:text-zinc-200 transition-colors"
+                    :title="tag"
+                    @click.stop="emit('filter-tag', tag)"
+                >
+                    {{ tag }}
+                </div>
+                <span
+                    v-if="overflowCount > 0"
+                    class="rounded-md border border-zinc-800 bg-transparent px-1 py-0.5 text-[10px] font-mono text-zinc-500"
+                    :title="nodeTags.join(', ')"
+                >
+                    +{{ overflowCount }}
+                </span>
             </div>
             <div v-else class="text-[10px] font-mono text-zinc-500">-</div>
 

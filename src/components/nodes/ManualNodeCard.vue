@@ -2,6 +2,7 @@
     import { computed } from 'vue';
     import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
+    import { getItemTags } from '@/utils/tags.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
 
@@ -16,9 +17,13 @@
         isPinging: Boolean,
     });
 
-    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-group', 'ping']);
+    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-tag', 'ping']);
     const { showToast } = useToastStore();
     const { t } = useI18n();
+
+    const nodeTags = computed(() => getItemTags(props.node));
+    const visibleTags = computed(() => nodeTags.value.slice(0, 2));
+    const overflowCount = computed(() => Math.max(0, nodeTags.value.length - 2));
 
     const getProtocol = (url) => {
         try {
@@ -100,15 +105,19 @@
 
 <template>
     <div
-        class="group relative flex flex-col justify-between rounded-md border border-zinc-800 bg-[#171717] p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
-        :class="{
-            'opacity-50': !node.enabled && !isSelectionMode,
-            'border-zinc-200 bg-zinc-900/50': isSelectionMode && isSelected,
-            'cursor-pointer': isSelectionMode,
-        }"
+        class="group relative flex flex-col justify-between rounded-md border p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
+        :class="[
+            isSelectionMode && isSelected
+                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
+                : 'border-zinc-800 bg-[#171717]',
+            {
+                'opacity-50': !node.enabled && !isSelectionMode,
+                'cursor-pointer': isSelectionMode,
+            },
+        ]"
         @click="isSelectionMode ? emit('toggle-select') : null"
     >
-        <!-- Top Row: Badges (Protocol & Group) + Ping Result Badge -->
+        <!-- Top Row: Badges (Protocol & Tags) + Ping Result Badge -->
         <div class="flex items-center justify-between gap-2">
             <!-- Left Badges -->
             <div class="flex items-center gap-1.5 min-w-0 overflow-hidden">
@@ -118,11 +127,11 @@
                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             isSelected
-                                ? 'bg-zinc-100 border-zinc-100'
-                                : 'border-zinc-700 bg-transparent'
+                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
                         "
                     >
-                        <Check v-if="isSelected" class="h-3 w-3 text-zinc-900" stroke-width="3" />
+                        <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
                     </div>
                 </div>
 
@@ -137,15 +146,24 @@
                     {{ protocolStyle.text }}
                 </div>
 
-                <!-- Group Badge -->
+                <!-- Tag Badges -->
                 <div
-                    v-if="node.group"
-                    class="max-w-[120px] sm:max-w-[140px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
-                    :title="node.group"
-                    @click.stop="$emit('filter-group', node.group)"
+                    v-for="tag in visibleTags"
+                    :key="tag"
+                    data-testid="manual-node-tag-badge"
+                    class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                    :title="tag"
+                    @click.stop="emit('filter-tag', tag)"
                 >
-                    {{ node.group }}
+                    {{ tag }}
                 </div>
+                <span
+                    v-if="overflowCount > 0"
+                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                    :title="nodeTags.join(', ')"
+                >
+                    +{{ overflowCount }}
+                </span>
             </div>
 
             <!-- Right: Ping Result Badge -->
@@ -175,7 +193,7 @@
             </div>
         </div>
 
-        <!-- Middle Row: Node Name (full width, prominent) -->
+        <!-- Middle Row: Node Name -->
         <div class="my-2 min-w-0">
             <h4
                 class="truncate text-sm font-medium text-zinc-100 transition-colors group-hover:text-white"
@@ -189,7 +207,6 @@
         <div
             class="mt-auto flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2.5"
         >
-            <!-- Left: Endpoint -->
             <div class="min-w-0 flex-1">
                 <span
                     v-if="hostAndPort.host"
@@ -201,7 +218,6 @@
                 <span v-else class="text-xs font-mono text-zinc-600">-</span>
             </div>
 
-            <!-- Right: Actions -->
             <div
                 v-if="!isSelectionMode"
                 class="flex shrink-0 items-center gap-0.5 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100"

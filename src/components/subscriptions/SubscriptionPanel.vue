@@ -3,25 +3,27 @@
     import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import Card from '@/components/ui/Card.vue';
+    import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
+    import TagFilterBar from '@/components/shared/TagFilterBar.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
-    import { useUIStore } from '@/stores/ui';
     import { useI18n } from '@/i18n/index.js';
     import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
     import {
-        collectSubscriptionGroups,
-        DEFAULT_GROUP_KEY,
-        getSubscriptionGroup,
-    } from '@/utils/subscription-groups.js';
+        collectTags,
+        getItemTags,
+        matchesTagFilter,
+        normalizeActiveTagFilters,
+        toggleTagFilterValue,
+    } from '@/utils/tags.js';
 
-    const { layoutMode } = useUIStore();
     const { t } = useI18n();
 
     const props = defineProps({
         subscriptions: { type: Array, default: () => [] },
-        groups: { type: Array, default: undefined },
-        activeGroupFilter: { type: String, default: undefined },
+        tags: { type: Array, default: undefined },
+        activeTagFilters: { type: Array, default: undefined },
         batchSize: { type: Number, default: 12 },
         isSorting: Boolean,
         searchable: { type: Boolean, default: false },
@@ -50,40 +52,73 @@
         'updateSearch',
         'applyDetectedName',
         'clearStatusFilter',
-        'set-group-filter',
-        'manage-groups',
+        'set-tag-filters',
+        'manage-tags',
+        'open-batch-tag-modal',
+        'batch-delete-subscriptions',
     ]);
+
+    const isSelectionMode = ref(false);
+    const selectedSubscriptionIds = ref(new Set());
+
+    const toggleSelectionMode = () => {
+        isSelectionMode.value = !isSelectionMode.value;
+        selectedSubscriptionIds.value.clear();
+    };
+
+    const toggleSubscriptionSelection = (subId) => {
+        if (selectedSubscriptionIds.value.has(subId)) {
+            selectedSubscriptionIds.value.delete(subId);
+        } else {
+            selectedSubscriptionIds.value.add(subId);
+        }
+    };
+
+    const selectedCount = computed(() => selectedSubscriptionIds.value.size);
+
+    const handleBatchTag = () => {
+        if (selectedSubscriptionIds.value.size === 0) return;
+        emit('open-batch-tag-modal', Array.from(selectedSubscriptionIds.value));
+    };
+
+    const handleBatchDelete = () => {
+        if (selectedSubscriptionIds.value.size === 0) return;
+        emit('batch-delete-subscriptions', Array.from(selectedSubscriptionIds.value));
+        selectedSubscriptionIds.value.clear();
+        isSelectionMode.value = false;
+    };
 
     const searchModel = computed({
         get: () => props.searchQuery,
         set: (value) => emit('updateSearch', value),
     });
 
-    const localGroupFilter = ref(null);
-    const currentGroupFilter = computed(() =>
-        props.activeGroupFilter !== undefined ? props.activeGroupFilter : localGroupFilter.value
+    const localTagFilters = ref([]);
+    const currentTagFilters = computed(() =>
+        props.activeTagFilters !== undefined
+            ? normalizeActiveTagFilters(props.activeTagFilters)
+            : localTagFilters.value
     );
 
-    const setGroupFilter = (group) => {
-        const next = group || null;
-        localGroupFilter.value = next;
-        emit('set-group-filter', next);
+    const setTagFilters = (filters) => {
+        const next = normalizeActiveTagFilters(filters);
+        localTagFilters.value = next;
+        emit('set-tag-filters', next);
     };
 
-    const availableGroups = computed(() =>
-        Array.isArray(props.groups) ? props.groups : collectSubscriptionGroups(props.subscriptions)
+    const toggleTag = (tag) => {
+        const next = toggleTagFilterValue(currentTagFilters.value, tag);
+        setTagFilters(next);
+    };
+
+    const availableTags = computed(() =>
+        Array.isArray(props.tags) ? props.tags : collectTags(props.subscriptions)
     );
 
     const matchedSubscriptions = computed(() => {
-        let list = props.subscriptions || [];
-
-        if (currentGroupFilter.value) {
-            if (currentGroupFilter.value === DEFAULT_GROUP_KEY) {
-                list = list.filter((sub) => getSubscriptionGroup(sub) === '');
-            } else {
-                list = list.filter((sub) => getSubscriptionGroup(sub) === currentGroupFilter.value);
-            }
-        }
+        let list = (props.subscriptions || []).filter((sub) =>
+            matchesTagFilter(sub, currentTagFilters.value)
+        );
 
         const query = String(props.searchQuery || '')
             .trim()
@@ -96,10 +131,11 @@
                 sub.description,
                 sub.remark,
                 sub.note,
+                sub.notes,
                 sub.website,
                 sub.url,
                 sub.customId,
-                getSubscriptionGroup(sub),
+                ...getItemTags(sub),
             ].some((value) =>
                 String(value || '')
                     .toLowerCase()
@@ -109,7 +145,7 @@
     });
 
     const visibleCount = computed(() => {
-        if (props.filteredCount !== undefined && !currentGroupFilter.value) {
+        if (props.filteredCount !== undefined && currentTagFilters.value.length === 0) {
             return props.filteredCount;
         }
         return matchedSubscriptions.value.length;
@@ -159,6 +195,25 @@
         matchedSubscriptions.value.slice(0, visibleLimit.value)
     );
 
+    const isAllSelected = computed(() => {
+        if (visibleSubscriptions.value.length === 0) return false;
+        return visibleSubscriptions.value.every((sub) =>
+            selectedSubscriptionIds.value.has(sub.id)
+        );
+    });
+
+    const toggleSelectAll = () => {
+        if (isAllSelected.value) {
+            visibleSubscriptions.value.forEach((sub) =>
+                selectedSubscriptionIds.value.delete(sub.id)
+            );
+        } else {
+            visibleSubscriptions.value.forEach((sub) =>
+                selectedSubscriptionIds.value.add(sub.id)
+            );
+        }
+    };
+
     const remainingCount = computed(() =>
         Math.max(0, matchedSubscriptions.value.length - visibleSubscriptions.value.length)
     );
@@ -173,7 +228,7 @@
         [
             () => props.searchQuery,
             () => props.statusFilter,
-            currentGroupFilter,
+            currentTagFilters,
             normalizedBatchSize,
         ],
         () => {
@@ -288,6 +343,23 @@
                     <MoreActionsMenu menu-width-class="w-36">
                         <template #menu="{ close }">
                             <button
+                                type="button"
+                                data-testid="subscription-bulk-actions-toggle"
+                                @click="
+                                    toggleSelectionMode();
+                                    close?.();
+                                "
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
+                                :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                            >
+                                {{
+                                    isSelectionMode
+                                        ? t('actions.exitBatch')
+                                        : t('actions.bulkActions')
+                                }}
+                            </button>
+                            <div class="my-1 border-t border-zinc-800"></div>
+                            <button
                                 :disabled="isRefreshing"
                                 @click="
                                     handleRefreshAll();
@@ -307,16 +379,16 @@
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
                             <button
-                                v-if="availableGroups.length > 0"
+                                v-if="availableTags.length > 0"
                                 type="button"
-                                data-testid="manage-subscription-groups"
+                                data-testid="manage-subscription-tags"
                                 @click="
-                                    emit('manage-groups');
+                                    emit('manage-tags');
                                     close?.();
                                 "
                                 class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                             >
-                                {{ t('actions.manageGroups') }}
+                                {{ t('actions.manageTags') }}
                             </button>
                             <div class="my-1 border-t border-zinc-800"></div>
                             <button
@@ -364,53 +436,17 @@
                     </button>
                 </div>
             </div>
-            <!-- Group Filter Tabs -->
-            <div
-                v-if="availableGroups.length > 0 || currentGroupFilter"
-                data-testid="subscription-group-tabs"
-                class="mt-3 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar"
-            >
-                <button
-                    type="button"
-                    data-testid="subscription-group-tab-all"
-                    @click="setGroupFilter(null)"
-                    class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
-                    :class="
-                        !currentGroupFilter
-                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                    "
-                >
-                    {{ t('manualNodes.allGroups') }}
-                </button>
-                <button
-                    type="button"
-                    data-testid="subscription-group-tab-default"
-                    @click="setGroupFilter(DEFAULT_GROUP_KEY)"
-                    class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
-                    :class="
-                        currentGroupFilter === DEFAULT_GROUP_KEY
-                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                    "
-                >
-                    {{ t('manualNodes.ungrouped') }}
-                </button>
-                <button
-                    v-for="group in availableGroups"
-                    :key="group"
-                    type="button"
-                    @click="setGroupFilter(currentGroupFilter === group ? null : group)"
-                    class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
-                    :class="
-                        currentGroupFilter === group
-                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                    "
-                >
-                    {{ group }}
-                </button>
+
+            <!-- Tag Filter Bar (Multi-select Intersection) -->
+            <div v-if="availableTags.length > 0 || currentTagFilters.length > 0" class="mt-3">
+                <TagFilterBar
+                    :tags="availableTags"
+                    :active-filters="currentTagFilters"
+                    test-id-prefix="subscription-tag"
+                    @update:active-filters="setTagFilters"
+                />
             </div>
+
             <div
                 v-if="statusFilter"
                 data-testid="subscription-status-filter-banner"
@@ -432,6 +468,20 @@
                 </button>
             </div>
         </div>
+        <BulkOperations
+            :is-selection-mode="isSelectionMode"
+            :is-all-selected="isAllSelected"
+            :selected-count="selectedCount"
+            @toggle-select-all="toggleSelectAll"
+            @batch-tag="handleBatchTag"
+            @batch-delete="handleBatchDelete"
+            @exit="
+                () => {
+                    selectedSubscriptionIds.clear();
+                    isSelectionMode = false;
+                }
+            "
+        />
         <div v-if="matchedSubscriptions.length > 0 && isSorting">
             <SortingBanner
                 :hint="t('subscriptions.sortingHint')"
@@ -458,6 +508,7 @@
                             @edit="handleEdit(subscription.id)"
                             @preview="handlePreview(subscription.id)"
                             @qrcode="handleQRCode(subscription.id)"
+                            @filter-tag="toggleTag"
                             @applyDetectedName="
                                 (name) => handleApplyDetectedName(subscription, name)
                             "
@@ -466,7 +517,11 @@
                 </template>
             </draggable>
         </div>
-        <div v-else-if="matchedSubscriptions.length > 0" class="space-y-4">
+        <div
+            v-else-if="matchedSubscriptions.length > 0"
+            class="space-y-4"
+            :class="{ 'pb-48': isSelectionMode }"
+        >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                     v-for="(subscription, index) in visibleSubscriptions"
@@ -476,34 +531,53 @@
                 >
                     <Card
                         :misub="subscription"
+                        :is-selection-mode="isSelectionMode"
+                        :is-selected="selectedSubscriptionIds.has(subscription.id)"
+                        @toggle-select="toggleSubscriptionSelection(subscription.id)"
                         @delete="handleDelete(subscription.id)"
                         @change="handleSortEnd"
                         @update="handleUpdate(subscription.id)"
                         @edit="handleEdit(subscription.id)"
                         @preview="handlePreview(subscription.id)"
                         @qrcode="handleQRCode(subscription.id)"
+                        @filter-tag="toggleTag"
                         @applyDetectedName="(name) => handleApplyDetectedName(subscription, name)"
                     />
                 </div>
             </div>
         </div>
         <div
-            v-else-if="searchable && (searchQuery || currentGroupFilter) && visibleCount === 0"
+            v-else-if="
+                subscriptions.length > 0 &&
+                (searchQuery || currentTagFilters.length > 0) &&
+                visibleCount === 0
+            "
             data-testid="subscription-no-search-results"
             class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
         >
             <p class="text-sm font-medium text-zinc-200">
                 {{ t('subscriptions.noSearchResults') }}
             </p>
-            <button
-                v-if="searchQuery"
-                data-testid="clear-subscription-search"
-                type="button"
-                class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
-                @click="searchModel = ''"
-            >
-                {{ t('actions.clearSearch') }}
-            </button>
+            <div class="mt-3 flex items-center justify-center gap-2">
+                <button
+                    v-if="searchQuery"
+                    data-testid="clear-subscription-search"
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    @click="searchModel = ''"
+                >
+                    {{ t('actions.clearSearch') }}
+                </button>
+                <button
+                    v-if="currentTagFilters.length > 0"
+                    data-testid="clear-subscription-tag-filter"
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    @click="setTagFilters([])"
+                >
+                    {{ t('tags.clearFilter') }}
+                </button>
+            </div>
         </div>
         <div
             v-else-if="subscriptions.length === 0"

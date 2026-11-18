@@ -4,6 +4,7 @@
  */
 
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
+import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@/constants/default-public-links.js';
 
 export const DEFAULT_SETTINGS = {
     FileName: 'MiSub',
@@ -24,16 +25,18 @@ export const DEFAULT_SETTINGS = {
     enableTrafficNode: false,
     enableFlagEmoji: true,
     enablePublicPage: true,
-    storageType: 'kv',
+    storageType: 'd1',
     autoUpdateInterval: 0, // 分钟，0表示禁用自动更新
     defaultPrefixSettings: {
         enableManualNodes: true,
         enableSubscriptions: true,
         manualNodePrefix: '\u624b\u52a8\u8282\u70b9',
         subscriptionPrefix: '',
-        prependGroupName: false,
+        prependTagName: false,
     },
-    manualNodeGroupOrder: [], // 用户自定义的分组顺序
+    manualNodeTagOrder: [], // 手动节点标签自定义顺序
+    subscriptionTagOrder: [], // 订阅源标签自定义顺序
+    profileTagOrder: [], // 分享组合标签自定义顺序
     // 首页「待处理事项」里被用户主动忽略的条目 id。
     // 存在设置里是为了跨设备同步（原先只存 localStorage，换设备就丢）。
     // 条目的 id 都是固定字符串（见 src/utils/dashboard-health.js），跨设备可比对。
@@ -113,6 +116,8 @@ export const DEFAULT_SETTINGS = {
         enabled: false,
         allowAnonymous: true,
     },
+    // 公开页导航链接设置（测速、IP检测、服务器厂商等）
+    publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
     webdavBackup: {
         enabled: false,
         endpoint: '',
@@ -197,7 +202,7 @@ export const DEFAULT_PROFILE_FORM = {
         enableSubscriptions: true,
         manualNodePrefix: '\u624b\u52a8\u8282\u70b9',
         subscriptionPrefix: '',
-        prependGroupName: null,
+        prependTagName: null,
     },
     subconverter: {
         engineMode: '',

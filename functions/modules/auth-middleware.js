@@ -14,7 +14,6 @@ import {
     readJsonWithLimit,
     RequestBodyTooLargeError,
 } from './utils.js';
-import { StorageFactory } from '../storage-adapter.js';
 
 function normalizeSecret(value) {
     return String(value ?? '')
@@ -34,7 +33,6 @@ function buildRequestMeta(request, env) {
         origin: request?.headers?.get('Origin'),
         referer: request?.headers?.get('Referer'),
         cfRay: request?.headers?.get('CF-Ray'),
-        hasKv: !!StorageFactory.resolveKV(env),
         hasD1: !!env?.MISUB_DB,
     };
 }

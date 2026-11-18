@@ -2,8 +2,8 @@
     import { computed } from 'vue';
     import { GripHorizontal, Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
+    import TagFilterBar from '@/components/shared/TagFilterBar.vue';
     import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
 
     const { t } = useI18n();
 
@@ -20,11 +20,11 @@
             type: String,
             default: '',
         },
-        activeGroupFilter: {
-            type: String,
-            default: null,
+        activeTagFilters: {
+            type: Array,
+            default: () => [],
         },
-        groups: {
+        tags: {
             type: Array,
             default: () => [],
         },
@@ -36,7 +36,7 @@
 
     const emit = defineEmits([
         'update:searchTerm',
-        'update:groupFilter',
+        'update:tagFilters',
         'update:selectedIds',
         'toggle-selection',
         'select-all',
@@ -48,22 +48,12 @@
         set: (val) => emit('update:searchTerm', val),
     });
 
-    const handleGroupWheel = (e) => {
-        const el = e.currentTarget;
-        if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
-            e.preventDefault();
-            el.scrollLeft += e.deltaY;
-        }
-    };
-
-    // 根据 selectedIds 顺序获取已选节点对象列表
     const orderedSelectedNodes = computed({
         get() {
             const nodeMap = new Map(props.nodes.map((n) => [n.id, n]));
             return props.selectedIds.map((id) => nodeMap.get(id)).filter(Boolean);
         },
         set(newList) {
-            // 拖拽排序后更新 ID 顺序
             emit(
                 'update:selectedIds',
                 newList.map((n) => n.id)
@@ -80,12 +70,14 @@
             </h4>
             <div class="space-x-2 shrink-0 whitespace-nowrap">
                 <button
+                    type="button"
                     @click="emit('select-all')"
                     class="text-xs text-zinc-300 hover:text-white hover:underline"
                 >
                     {{ t('profileModal.selectAll') }}
                 </button>
                 <button
+                    type="button"
                     @click="emit('deselect-all')"
                     class="text-xs text-zinc-400 hover:text-white hover:underline"
                 >
@@ -93,46 +85,15 @@
                 </button>
             </div>
         </div>
-        <!-- Group Filter -->
-        <div
-            class="flex items-center gap-1.5 h-8 overflow-x-auto no-scrollbar"
-            @wheel="handleGroupWheel"
-        >
-            <button
-                @click="emit('update:groupFilter', null)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                :class="
-                    !activeGroupFilter
-                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ t('manualNodes.allGroups') }}
-            </button>
-            <button
-                @click="emit('update:groupFilter', DEFAULT_GROUP_KEY)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                :class="
-                    activeGroupFilter === DEFAULT_GROUP_KEY
-                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ t('manualNodes.ungrouped') }}
-            </button>
-            <button
-                v-for="group in groups"
-                :key="group"
-                @click="emit('update:groupFilter', activeGroupFilter === group ? null : group)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                :class="
-                    activeGroupFilter === group
-                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                        : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ group }}
-            </button>
+        <!-- Tag Filter Bar -->
+        <div class="flex items-center h-8">
+            <TagFilterBar
+                :tags="tags"
+                :active-filters="activeTagFilters"
+                always-show
+                test-id-prefix="node-selector-tag"
+                @update:active-filters="emit('update:tagFilters', $event)"
+            />
         </div>
 
         <div class="relative">
@@ -166,7 +127,6 @@
             </div>
         </div>
 
-        <!-- 已选节点拖拽排序区域 -->
         <div v-if="orderedSelectedNodes.length > 0" class="mt-3">
             <div class="flex justify-between items-center mb-1.5">
                 <h5 class="text-xs font-medium text-zinc-400">
@@ -196,6 +156,7 @@
                             {{ element.name || t('manualNodes.unnamed') }}
                         </span>
                         <button
+                            type="button"
                             @click="emit('toggle-selection', element.id)"
                             class="text-zinc-500 hover:text-red-400 transition-colors"
                             :title="t('profileModal.remove')"

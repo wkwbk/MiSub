@@ -88,9 +88,9 @@
                             v-for="(node, index) in nodes"
                             :key="`${node.url}_${index}`"
                             @click="handleRowClick(node)"
-                            class="group border-b last:border-b-0 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800/70 transition-colors"
+                            class="group border-b last:border-b-0 border-zinc-200/80 dark:border-zinc-800 odd:bg-white even:bg-zinc-50/50 dark:odd:bg-[#131515] dark:even:bg-[#161818] hover:bg-zinc-100/80 dark:hover:bg-zinc-800/70 transition-colors"
                             :class="{
-                                'bg-zinc-50 dark:bg-[#202020]':
+                                '!bg-zinc-100 dark:!bg-[#202020]':
                                     selectionMode && selectedUrls.has(node.url),
                                 'cursor-pointer': selectionMode,
                             }"

@@ -138,36 +138,44 @@ describe('SubscriptionPanel UX', () => {
         expect(search.attributes('aria-label')).toBe('搜索机场订阅名称、备注或链接...');
     });
 
-    it('renders group filter tabs and emits manage-groups from more menu', async () => {
+    it('renders tag filter tabs and emits manage-tags from more menu', async () => {
         const subscriptions = [
-            { id: 's1', name: 'Alpha', url: 'https://alpha.test/a', group: '主力机场' },
-            { id: 's2', name: 'Beta', url: 'https://beta.test/b', group: '' },
+            { id: 's1', name: 'Alpha', url: 'https://alpha.test/a', tags: ['主力机场'] },
+            { id: 's2', name: 'Beta', url: 'https://beta.test/b', tags: [] },
         ];
         const wrapper = mountPanel({ subscriptions });
-        const tabs = wrapper.get('[data-testid="subscription-group-tabs"]');
+        const tabs = wrapper.get('[data-testid="subscription-tag-tabs"]');
         expect(tabs.text()).toContain('全部');
-        expect(tabs.text()).toContain('未分组');
+        expect(tabs.text()).toContain('无标签');
         expect(tabs.text()).toContain('主力机场');
 
-        await wrapper.get('[data-testid="manage-subscription-groups"]').trigger('click');
-        expect(wrapper.emitted('manage-groups')).toHaveLength(1);
+        await wrapper.get('[data-testid="manage-subscription-tags"]').trigger('click');
+        expect(wrapper.emitted('manage-tags')).toHaveLength(1);
     });
 
-    it('filters subscriptions by selected group tab', async () => {
+    it('filters subscriptions by multi-select tag intersection and untagged tab', async () => {
         const subscriptions = [
-            { id: 's1', name: 'A', url: 'https://same.test/a', group: '机场A' },
-            { id: 's2', name: 'B', url: 'https://same.test/b', group: '机场A' },
+            { id: 's1', name: 'A', url: 'https://same.test/a', tags: ['机场A', '流媒体'] },
+            { id: 's2', name: 'B', url: 'https://same.test/b', tags: ['机场A'] },
             { id: 's3', name: 'C', url: 'https://other.test/c' },
         ];
         const wrapper = mountPanel({ subscriptions });
-        const groupButton = wrapper
-            .findAll('[data-testid="subscription-group-tabs"] button')
+        const tagAButton = wrapper
+            .findAll('[data-testid="subscription-tag-tabs"] button')
             .find((btn) => btn.text() === '机场A');
-        await groupButton.trigger('click');
+        await tagAButton.trigger('click');
         expect(wrapper.findAll('.card-stub')).toHaveLength(2);
         expect(wrapper.text()).not.toContain('C');
 
-        await wrapper.get('[data-testid="subscription-group-tab-default"]').trigger('click');
+        const mediaButton = wrapper
+            .findAll('[data-testid="subscription-tag-tabs"] button')
+            .find((btn) => btn.text() === '流媒体');
+        await mediaButton.trigger('click');
+        expect(wrapper.findAll('.card-stub')).toHaveLength(1);
+        expect(wrapper.text()).toContain('A');
+        expect(wrapper.text()).not.toContain('B');
+
+        await wrapper.get('[data-testid="subscription-tag-tab-untagged"]').trigger('click');
         expect(wrapper.findAll('.card-stub')).toHaveLength(1);
         expect(wrapper.text()).toContain('C');
     });

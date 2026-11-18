@@ -137,7 +137,7 @@
 
     const availableKeys = [
         { value: 'name', labelKey: 'operators.sortKeyName' },
-        { value: 'group', labelKey: 'operators.sortKeyGroup' },
+        { value: 'tag', labelKey: 'operators.sortKeyTag' },
         { value: 'region', labelKey: 'operators.sortKeyRegion' },
         { value: 'protocol', labelKey: 'operators.sortKeyProtocol' },
         { value: 'server', labelKey: 'operators.sortKeyServer' },

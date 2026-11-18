@@ -3,7 +3,9 @@
     import Input from '@/components/ui/Input.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import AnnouncementSettings from '@/components/settings/sections/AnnouncementSettings.vue';
+    import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
     import GuestbookManagement from '@/components/settings/sections/GuestbookManagement.vue';
+    import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -17,7 +19,7 @@
 </script>
 
 <template>
-    <div v-if="settings" class="space-y-6">
+    <div v-if="settings" class="space-y-4">
         <!-- {{ t('settings.homeHeroTitle') }} -->
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
@@ -52,6 +54,12 @@
                 </div>
             </div>
         </section>
+
+        <!-- Client Management -->
+        <ClientSettings />
+
+        <!-- Public Links Management -->
+        <PublicLinksSettings :settings="settings" />
 
         <!-- Announcement Settings -->
         <AnnouncementSettings :settings="settings" />

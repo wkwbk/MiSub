@@ -1,6 +1,6 @@
 <script setup>
-    import { computed } from 'vue';
-    import { Loader2 } from '@lucide/vue';
+    import { computed, onMounted, onUnmounted, ref } from 'vue';
+    import { ChevronUp, Loader2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import SettingsLayout from '@/components/layout/SettingsLayout.vue';
     import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
@@ -8,7 +8,6 @@
     import HomeSettings from '@/components/settings/sections/HomeSettings.vue';
     import GlobalSettings from '@/components/settings/sections/GlobalSettings.vue';
     import ServiceSettings from '@/components/settings/sections/ServiceSettings.vue';
-    import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
     import CustomPageSettings from '@/components/settings/sections/CustomPageSettings.vue';
     import WebdavBackupSettings from '@/components/settings/sections/WebdavBackupSettings.vue';
     import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
@@ -55,19 +54,10 @@
             type: Boolean,
             default: false,
         },
-        isStorageTypeValid: {
-            type: Boolean,
-            default: true,
-        },
         /** 独立页面用 ?focus= 深链定位字段时高亮；弹窗不使用 */
         highlightedFocusId: {
             type: String,
             default: '',
-        },
-        /** 弹窗内空间有限、没有页面级标题，头部信息卡需要常显；独立页面在移动端隐藏它 */
-        alwaysShowHeader: {
-            type: Boolean,
-            default: false,
         },
         hideFooter: {
             type: Boolean,
@@ -95,7 +85,7 @@
         },
     });
 
-    const emit = defineEmits(['update:activeTab', 'save', 'migrate', 'reload-now']);
+    const emit = defineEmits(['update:activeTab', 'save', 'reload-now']);
 
     const activeTabModel = computed({
         get: () => props.activeTab,
@@ -112,8 +102,6 @@
                 return t('settings.tabs.global');
             case 'service':
                 return t('settings.tabs.service');
-            case 'client':
-                return t('settings.tabs.client');
             case 'custom-page':
                 return t('settings.tabs.customPage');
             case 'system':
@@ -123,38 +111,71 @@
         }
     });
 
-    const saveDisabled = computed(
-        () => props.isSaving || props.hasWhitespace || !props.isStorageTypeValid
-    );
+    const saveDisabled = computed(() => props.isSaving || props.hasWhitespace);
+
+    // 独立设置页将「回到顶部」收纳进底部操作栏，彻底避免与保存按钮或表单开关重叠
+    const showScrollTop = ref(false);
+    const SCROLL_TOP_THRESHOLD = 300;
+    let scrollRafId = null;
+
+    function updateScrollTopVisibility() {
+        if (typeof window === 'undefined') return;
+        showScrollTop.value = window.scrollY > SCROLL_TOP_THRESHOLD;
+    }
+
+    function handleWindowScroll() {
+        if (scrollRafId !== null || typeof window === 'undefined') return;
+        scrollRafId = window.requestAnimationFrame(() => {
+            scrollRafId = null;
+            updateScrollTopVisibility();
+        });
+    }
+
+    function scrollToTop() {
+        if (typeof window === 'undefined') return;
+        window.scrollTo?.({ top: 0, behavior: 'smooth' });
+    }
+
+    onMounted(() => {
+        if (props.inModal || props.hideFooter || typeof window === 'undefined') return;
+        updateScrollTopVisibility();
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    });
+
+    onUnmounted(() => {
+        if (typeof window !== 'undefined') {
+            if (scrollRafId !== null) {
+                window.cancelAnimationFrame(scrollRafId);
+                scrollRafId = null;
+            }
+            window.removeEventListener('scroll', handleWindowScroll);
+        }
+    });
 </script>
 
 <template>
     <SettingsLayout :class="layoutClass" :hide-footer="hideFooter" :in-modal="inModal">
         <template #sidebar>
-            <SettingsSidebar v-model:activeTab="activeTabModel" />
+            <SettingsSidebar v-model:activeTab="activeTabModel" :in-modal="inModal" />
         </template>
 
-        <div v-if="isLoading" class="text-center p-12">
+        <div
+            v-if="isLoading"
+            class="text-center p-12 rounded-lg border border-zinc-800 bg-[#171717]"
+        >
             <Loader2 class="animate-spin h-6 w-6 text-zinc-400 mx-auto mb-3" />
             <p class="text-xs text-zinc-500">{{ t('settings.loading') }}</p>
         </div>
 
-        <div v-else class="space-y-6 max-w-5xl w-full mx-auto">
-            <div
-                class="flex-wrap items-baseline justify-between gap-2 pb-5 border-b border-zinc-800/80"
-                :class="alwaysShowHeader ? 'flex' : 'hidden md:flex'"
-            >
-                <h2 class="text-base font-semibold text-zinc-100">
-                    {{ currentTabLabel }}
-                </h2>
-                <p class="text-xs text-zinc-500">
-                    {{ t('settings.saveHint') }}
-                </p>
-            </div>
-
+        <div
+            v-else
+            role="tabpanel"
+            :aria-label="currentTabLabel"
+            class="flex flex-col gap-4 w-full"
+        >
             <div
                 v-if="restartCountdown !== null"
-                class="flex items-center justify-between gap-3 rounded-md bg-amber-500/10 px-4 py-3 text-xs text-amber-200"
+                class="flex items-center justify-between gap-3 rounded-md bg-amber-500/10 px-4 py-3 text-xs text-amber-200 border border-amber-500/20"
                 role="status"
                 aria-live="polite"
             >
@@ -180,34 +201,47 @@
             <HomeSettings v-show="activeTab === 'home'" :settings="settings" />
             <GlobalSettings v-show="activeTab === 'global'" :settings="settings" />
             <ServiceSettings v-show="activeTab === 'service'" :settings="settings" />
-            <ClientSettings v-show="activeTab === 'client'" />
             <CustomPageSettings v-show="activeTab === 'custom-page'" :settings="settings" />
-            <div v-show="activeTab === 'system'" class="space-y-6">
+            <div v-show="activeTab === 'system'" class="space-y-4">
                 <WebdavBackupSettings :settings="settings" />
                 <SystemSettings
                     :settings="settings"
                     :exportBackup="exportBackup"
                     :importBackup="importBackup"
                     :handleReset="handleReset"
-                    @migrate="emit('migrate')"
                 />
             </div>
         </div>
 
         <template #footer>
-            <button
-                @click="emit('save')"
-                :disabled="saveDisabled"
-                class="px-5 py-2 rounded-md text-xs font-semibold shadow-none transition-colors flex items-center gap-2 border"
-                :class="
-                    isSaving
-                        ? 'bg-zinc-800 border-zinc-800 text-zinc-500 cursor-not-allowed'
-                        : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
-                "
-            >
-                <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-zinc-500" />
-                <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
-            </button>
+            <div class="pointer-events-auto flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
+                <button
+                    type="button"
+                    @click="emit('save')"
+                    :disabled="saveDisabled"
+                    :title="hasWhitespace ? t('settings.noWhitespace') : t('settings.saveChanges')"
+                    class="flex-1 sm:flex-none h-[38px] px-5 rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-2 border shadow-[0_4px_16px_rgba(0,0,0,0.16)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.55)]"
+                    :class="
+                        saveDisabled
+                            ? 'bg-zinc-800 border-zinc-800 text-zinc-500 cursor-not-allowed'
+                            : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
+                    "
+                >
+                    <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-zinc-500" />
+                    <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
+                </button>
+                <button
+                    v-if="showScrollTop && !inModal"
+                    type="button"
+                    data-testid="settings-footer-scroll-top"
+                    :aria-label="t('common.scrollToTop')"
+                    :title="t('common.scrollToTop')"
+                    class="p-2.5 shrink-0 rounded-md bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white border border-zinc-800 dark:border-zinc-200 transition-colors inline-flex items-center justify-center shadow-none"
+                    @click="scrollToTop"
+                >
+                    <ChevronUp class="h-4 w-4" />
+                </button>
+            </div>
         </template>
     </SettingsLayout>
 </template>

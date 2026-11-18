@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
-    import { Copy, Eye, FileText, Pencil, QrCode, Trash2 } from '@lucide/vue';
+    import { Check, Copy, Eye, FileText, Pencil, QrCode, Trash2 } from '@lucide/vue';
+    import { getItemTags } from '@/utils/tags.js';
     import { useI18n } from '@/i18n/index.js';
     import Switch from '@/components/ui/Switch.vue';
 
@@ -19,6 +20,14 @@
             type: Boolean,
             default: false,
         },
+        isSelectionMode: {
+            type: Boolean,
+            default: false,
+        },
+        isSelected: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const emit = defineEmits([
@@ -29,7 +38,13 @@
         'preview',
         'view-logs',
         'qrcode',
+        'filter-tag',
+        'toggle-select',
     ]);
+
+    const profileTags = computed(() => getItemTags(props.profile));
+    const visibleTags = computed(() => profileTags.value.slice(0, 2));
+    const overflowCount = computed(() => Math.max(0, profileTags.value.length - 2));
 
     const subscriptionCount = computed(() =>
         Array.isArray(props.profile?.subscriptions) ? props.profile.subscriptions.length : 0
@@ -46,26 +61,76 @@
 
 <template>
     <div
-        class="group flex flex-col rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
-        :class="{ 'opacity-60': !isEnabled }"
+        class="group flex flex-col rounded-md border p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
+        :class="[
+            isSelectionMode && isSelected
+                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
+                : 'border-zinc-800 bg-[#171717]',
+            {
+                'opacity-60': !isEnabled && !isSelectionMode,
+                'cursor-pointer': isSelectionMode,
+            },
+        ]"
+        @click="isSelectionMode ? emit('toggle-select') : null"
     >
         <div class="flex items-center justify-between" :class="compact ? 'gap-2' : 'gap-3'">
-            <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                <!-- Selection Checkbox -->
+                <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
+                    <div
+                        class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
+                        :class="
+                            isSelected
+                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
+                        "
+                    >
+                        <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
+                    </div>
+                </div>
+
                 <span
-                    class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                 >
                     {{ t('profiles.badge') }}
                 </span>
+
+                <!-- Tags -->
+                <div
+                    v-if="profileTags.length > 0"
+                    data-testid="profile-card-tags"
+                    class="flex flex-wrap items-center gap-1.5"
+                >
+                    <button
+                        v-for="tag in visibleTags"
+                        :key="tag"
+                        type="button"
+                        data-testid="profile-tag-badge"
+                        class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                        :title="tag"
+                        @click.stop="emit('filter-tag', tag)"
+                    >
+                        {{ tag }}
+                    </button>
+                    <span
+                        v-if="overflowCount > 0"
+                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                        :title="profileTags.join(', ')"
+                    >
+                        +{{ overflowCount }}
+                    </span>
+                </div>
+
                 <span
                     v-if="!isEnabled"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-400"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-400"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span>
                     {{ t('profiles.disabled') }}
                 </span>
                 <span
                     v-else-if="isPublic"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ t('profiles.public') }}
@@ -73,6 +138,7 @@
             </div>
 
             <div
+                v-if="!isSelectionMode"
                 class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
             >
                 <button
@@ -140,7 +206,10 @@
             </span>
         </p>
 
-        <div class="mt-3 grid gap-2.5 rounded-md border border-zinc-800 bg-transparent p-3 text-xs">
+        <div
+            class="mt-3 grid gap-2.5 rounded-md border border-zinc-800 bg-transparent p-3 text-xs"
+            :class="{ 'pointer-events-none': isSelectionMode }"
+        >
             <div class="flex items-center justify-between gap-3 text-zinc-300">
                 <span>{{ t('profiles.enabledStatus') }}</span>
                 <Switch
@@ -161,7 +230,7 @@
 
         <div
             class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-3"
-            :class="compact ? 'items-stretch' : ''"
+            :class="[compact ? 'items-stretch' : '', { 'pointer-events-none': isSelectionMode }]"
         >
             <div class="flex items-center gap-2 sm:gap-4" :class="compact ? 'flex-1' : ''">
                 <button

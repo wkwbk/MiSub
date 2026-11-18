@@ -1,8 +1,9 @@
 <script setup>
     import { ref, watch } from 'vue';
-    import { FilePlus2, Layers } from '@lucide/vue';
+    import { Layers } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import TagInput from '@/components/ui/TagInput.vue';
+    import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import FileImport from '@/components/modals/SubscriptionImport/FileImport.vue';
     import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useDataStore } from '@/stores/useDataStore.js';
@@ -11,10 +12,12 @@
     import { api } from '@/lib/http.js';
     import { generateNodeId } from '@/utils/id.js';
     import { readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
+    import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const { t } = useI18n();
-    const { manualNodeGroups } = useManualNodes(useDataStore().markDirty);
+    const { manualNodeTags } = useManualNodes(useDataStore().markDirty);
     const toastStore = useToastStore();
 
     const props = defineProps({
@@ -25,8 +28,7 @@
 
     const activeTab = ref('text'); // 'text' | 'file'
     const importText = ref('');
-    const selectedGroup = ref('');
-    const urlFocused = ref(false);
+    const selectedTags = ref([]);
 
     const isProcessing = ref(false);
     const parseStatus = ref('');
@@ -38,7 +40,7 @@
         (visible) => {
             if (!visible) {
                 importText.value = '';
-                selectedGroup.value = '';
+                selectedTags.value = [];
                 activeTab.value = 'text';
                 isProcessing.value = false;
                 parseStatus.value = '';
@@ -50,20 +52,20 @@
 
     const handleConfirm = () => {
         if (activeTab.value !== 'text') return;
-        // 未填分组时自动生成（用时间戳），免去手填
-        const group = selectedGroup.value.trim() || buildAutoGroupName();
-        selectedGroup.value = group;
-        emit('import', importText.value, group); // group passed as second arg
+        let tags = normalizeTagList(selectedTags.value);
+        if (tags.length === 0) {
+            const autoTag = buildAutoTagName();
+            tags = autoTag ? [autoTag] : [];
+        }
+        selectedTags.value = tags;
+        emit('import', importText.value, tags);
         importText.value = '';
-        selectedGroup.value = '';
+        selectedTags.value = [];
         setTimeout(() => {
             emit('update:show', false);
         }, 1000);
     };
 
-    /**
-     * 文件导入：读取文件 → 后端解析 → 交回父级批量写入。
-     */
     const handleFiles = async (fileList) => {
         isProcessing.value = true;
         errorMessage.value = '';
@@ -71,6 +73,13 @@
         parseStatus.value = t('importNodes.readingFile');
 
         try {
+            let targetTags = normalizeTagList(selectedTags.value);
+            if (targetTags.length === 0 && fileList?.length) {
+                const autoTag = buildAutoTagName({ fileName: fileList[0].name });
+                targetTags = autoTag ? [autoTag] : [];
+                selectedTags.value = targetTags;
+            }
+
             const { text, fileCount } = await readFilesAsText(fileList);
             if (!text.trim()) {
                 throw new Error(t('importNodes.emptyFile'));
@@ -83,15 +92,19 @@
                 throw new Error(parseResult.error || t('importNodes.parseFileFailed'));
             }
 
-            const nodes = (parseResult.data?.nodes || []).map((node) => ({
-                id: generateNodeId(),
-                name: node.name || 'Unknown',
-                url: node.url,
-                enabled: true,
-                protocol: node.protocol || 'unknown',
-                source: 'import',
-                group: selectedGroup.value || null,
-            }));
+            const nodes = (parseResult.data?.nodes || []).map((node) =>
+                applyItemTags(
+                    {
+                        id: generateNodeId(),
+                        name: node.name || 'Unknown',
+                        url: cleanNodeUrl(node.url),
+                        enabled: true,
+                        protocol: node.protocol || 'unknown',
+                        source: 'import',
+                    },
+                    targetTags
+                )
+            );
 
             if (nodes.length === 0) {
                 parseStatus.value = '';
@@ -104,12 +117,12 @@
             const duplicateCount = nodes.length - uniqueNodes.length;
 
             parseStatus.value = '';
-            emit('files-imported', uniqueNodes, selectedGroup.value);
+            emit('files-imported', uniqueNodes, targetTags);
 
             const msg =
                 t('importNodes.addedNodes', { count: uniqueNodes.length }) +
-                (selectedGroup.value
-                    ? t('importNodes.addedToGroup', { group: selectedGroup.value })
+                (targetTags.length > 0
+                    ? t('importNodes.addedWithTags', { tags: targetTags.join(', ') })
                     : '') +
                 (duplicateCount > 0
                     ? t('importNodes.dedupedSuffix', { count: duplicateCount })
@@ -173,7 +186,6 @@
 
         <template #body>
             <div class="space-y-5">
-                <!-- 来源切换 -->
                 <div
                     class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]"
                 >
@@ -203,45 +215,25 @@
                     </button>
                 </div>
 
-                <!-- Group Selector -->
                 <div class="relative">
                     <div class="flex flex-col gap-1.5">
-                        <label for="import-group" class="text-xs font-semibold text-zinc-400 mb-1">
-                            {{ t('bulkImport.groupLabel') }}
+                        <label class="text-xs font-semibold text-zinc-400 mb-1">
+                            {{ t('bulkImport.tagsLabel') }}
                         </label>
-                        <GroupSelector
-                            v-model="selectedGroup"
-                            :groups="manualNodeGroups"
-                            :placeholder="t('manualNodes.groupPlaceholder')"
+                        <TagInput
+                            v-model="selectedTags"
+                            :suggestions="manualNodeTags"
+                            :placeholder="t('manualNodes.tagsPlaceholder')"
                         />
                     </div>
                 </div>
 
                 <div v-if="activeTab === 'text'" class="relative group space-y-1.5">
-                    <div
-                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
-                        :class="[
-                            urlFocused
-                                ? 'border-zinc-600'
-                                : 'border-zinc-800 hover:border-zinc-700',
-                        ]"
-                    >
-                        <div class="flex h-full">
-                            <div
-                                class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
-                            >
-                                <FilePlus2 class="h-4 w-4 mt-0.5" />
-                            </div>
-                            <textarea
-                                v-model="importText"
-                                rows="8"
-                                @focus="urlFocused = true"
-                                @blur="urlFocused = false"
-                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono resize-none py-3 px-3 min-h-[160px] outline-none"
-                                placeholder="http://...&#10;https://...&#10;vmess://...&#10;vless://...&#10;trojan://..."
-                            ></textarea>
-                        </div>
-                    </div>
+                    <LineNumberTextarea
+                        v-model="importText"
+                        :rows="8"
+                        placeholder="http://...&#10;https://...&#10;vmess://...&#10;vless://...&#10;trojan://..."
+                    />
                     <p class="text-xs text-zinc-500">
                         {{ t('bulkImport.helper') }}
                     </p>

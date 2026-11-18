@@ -5,15 +5,11 @@ const getAllProfiles = vi.fn();
 const get = vi.fn();
 const createAdapter = vi.fn();
 const getStorageType = vi.fn();
-const hasDualStorage = vi.fn();
-const resolveKV = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
     StorageFactory: {
         createAdapter: (...args) => createAdapter(...args),
         getStorageType: (...args) => getStorageType(...args),
-        hasDualStorage: (...args) => hasDualStorage(...args),
-        resolveKV: (...args) => resolveKV(...args),
     },
 }));
 
@@ -44,12 +40,8 @@ describe('handleSystemInfoRequest', () => {
         get.mockReset();
         createAdapter.mockReset();
         getStorageType.mockReset();
-        hasDualStorage.mockReset();
-        resolveKV.mockReset();
 
         getStorageType.mockResolvedValue('d1');
-        hasDualStorage.mockReturnValue(true);
-        resolveKV.mockReturnValue({});
         createAdapter.mockReturnValue({
             getAllSubscriptions,
             getAllProfiles,

@@ -47,43 +47,28 @@ function sanitizeLogEntry(logEntry = {}) {
 
 async function resolvePrimaryLogStorage(env) {
     const storageType = await StorageFactory.getStorageType(env);
-    const storage = StorageFactory.createAdapter(env, storageType);
-    if (
-        !storage ||
-        typeof storage.get !== 'function' ||
-        typeof storage.put !== 'function' ||
-        typeof storage.delete !== 'function'
-    ) {
+    const storage = StorageFactory.createAdapter(env);
+    if (!storage || storage.type === 'noop') {
+        return null;
+    }
+    const hasRowLogMethods =
+        typeof storage.insertAccessLogs === 'function' &&
+        typeof storage.getAccessLogs === 'function' &&
+        typeof storage.clearAccessLogs === 'function';
+    const hasGenericMethods =
+        typeof storage.get === 'function' &&
+        typeof storage.put === 'function' &&
+        typeof storage.delete === 'function';
+
+    if (!hasRowLogMethods && !hasGenericMethods) {
         return null;
     }
 
     return {
         storageType: storage.type || storageType,
         storage,
+        hasRowLogMethods,
     };
-}
-
-function resolveLegacyLogStorage(env, primaryStorageType) {
-    if (primaryStorageType !== STORAGE_TYPES.D1) {
-        return null;
-    }
-
-    const kv = StorageFactory.resolveKV(env);
-    if (!kv) {
-        return null;
-    }
-
-    const storage = StorageFactory.createAdapter(env, STORAGE_TYPES.KV);
-    if (
-        !storage ||
-        typeof storage.get !== 'function' ||
-        typeof storage.put !== 'function' ||
-        typeof storage.delete !== 'function'
-    ) {
-        return null;
-    }
-
-    return storage;
 }
 
 function getLogBucketKey(timestamp) {
@@ -227,7 +212,15 @@ export const LogService = {
                 return;
             }
 
-            const { storage } = primaryStorage;
+            const { storage, hasRowLogMethods } = primaryStorage;
+            if (hasRowLogMethods) {
+                await storage.insertAccessLogs(batchToFlush, {
+                    maxAgeMs: MAX_LOG_AGE_MS,
+                    maxEntries: MAX_LOG_ENTRIES,
+                });
+                return;
+            }
+
             const now = Date.now();
             const bucketKey = getLogBucketKey(now);
             let logs = await storage.get(bucketKey);
@@ -286,11 +279,16 @@ export const LogService = {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return [];
 
-            const logs = await readLogsFromStorage(primaryStorage.storage);
-            const legacyStorage = resolveLegacyLogStorage(env, primaryStorage.storageType);
-            const legacyLogs = legacyStorage ? await readLogsFromStorage(legacyStorage) : [];
+            if (primaryStorage.hasRowLogMethods) {
+                return await primaryStorage.storage.getAccessLogs({
+                    limit: MAX_LOG_ENTRIES,
+                    minTimestamp: Date.now() - MAX_LOG_AGE_MS,
+                });
+            }
 
-            return [...logs, ...legacyLogs]
+            const logs = await readLogsFromStorage(primaryStorage.storage);
+
+            return logs
                 .sort((a, b) => b.timestamp - a.timestamp)
                 .slice(0, MAX_LOG_ENTRIES);
         } catch (error) {
@@ -308,22 +306,17 @@ export const LogService = {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return false;
 
-            const storages = [primaryStorage.storage];
-            const legacyStorage = resolveLegacyLogStorage(env, primaryStorage.storageType);
-            if (legacyStorage && legacyStorage !== primaryStorage.storage) {
-                storages.push(legacyStorage);
+            if (primaryStorage.hasRowLogMethods) {
+                return await primaryStorage.storage.clearAccessLogs();
             }
 
-            await Promise.all(
-                storages.map(async (storage) => {
-                    const bucketIndex = await getLogBucketIndex(storage);
-                    await Promise.all([
-                        storage.delete(LOG_KV_KEY),
-                        storage.delete(LOG_INDEX_KV_KEY),
-                        ...bucketIndex.map((key) => storage.delete(key)),
-                    ]);
-                })
-            );
+            const storage = primaryStorage.storage;
+            const bucketIndex = await getLogBucketIndex(storage);
+            await Promise.all([
+                storage.delete(LOG_KV_KEY),
+                storage.delete(LOG_INDEX_KV_KEY),
+                ...bucketIndex.map((key) => storage.delete(key)),
+            ]);
             return true;
         } catch (error) {
             console.error('[LogService] Failed to clear logs:', error);

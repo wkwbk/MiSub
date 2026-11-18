@@ -19,6 +19,7 @@
     <Modal
         :show="Boolean(pending)"
         size="sm"
+        z-index="var(--z-confirm)"
         :confirm-text="pending ? pending.confirmText : ''"
         :cancel-text="pending ? pending.cancelText : ''"
         :confirm-variant="pending ? pending.variant : 'primary'"

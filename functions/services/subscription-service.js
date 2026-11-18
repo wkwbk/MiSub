@@ -626,8 +626,8 @@ export async function generateCombinedNodeList(
     // 判断是否启用手动节点前缀
     const shouldPrependManualNodes = profilePrefixSettings?.enableManualNodes ?? true;
 
-    // 判断是否在节点名称前添加分组名称
-    const prependGroupName = profilePrefixSettings?.prependGroupName ?? false;
+    // 判断是否在节点名称前添加首个标签前缀
+    const prependTagName = profilePrefixSettings?.prependTagName ?? false;
 
     // [修复] 多级 Emoji 开关控制逻辑
     const nodeTransformConfig = profilePrefixSettings?.nodeTransform;
@@ -712,9 +712,12 @@ export async function generateCombinedNodeList(
             if (customNodeName && !sub?.isFromSubProfile)
                 processedUrl = applyManualNodeName(processedUrl, customNodeName);
 
-            const nodeGroup = typeof sub.group === 'string' ? sub.group.trim() : '';
-            if (prependGroupName && nodeGroup && !skipPrefixDueToRenaming)
-                processedUrl = prependNodeName(processedUrl, nodeGroup);
+            const primaryTag =
+                Array.isArray(sub.tags) && sub.tags.length > 0
+                    ? String(sub.tags[0] || '').trim()
+                    : '';
+            if (prependTagName && primaryTag && !skipPrefixDueToRenaming)
+                processedUrl = prependNodeName(processedUrl, primaryTag);
 
             const shouldAddPrefix =
                 shouldPrependManualNodes && !skipPrefixDueToRenaming && !sub?.isFromSubProfile;

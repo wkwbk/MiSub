@@ -66,7 +66,7 @@
                     type="text"
                     v-model="settings.cronSecret"
                     :placeholder="t('settings.cronSecretPlaceholder')"
-                    class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                    class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100 transition-colors"
                 />
                 <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                     {{ t('settings.cronSecretHint') }}
@@ -104,7 +104,7 @@
                 <div class="pl-4 border-l-2 border-zinc-800 space-y-2.5 max-w-xl">
                     <div class="flex items-start gap-2">
                         <span
-                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5"
+                            class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-[5px]"
                         ></span>
                         <div class="space-y-0.5">
                             <p class="text-xs font-medium text-zinc-200">

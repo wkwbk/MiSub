@@ -3,6 +3,8 @@
  * 包含各种通用的辅助函数
  */
 
+import { ensureD1Schema } from '../storage-adapter.js';
+
 /**
  * 计算数据的简单哈希值，用于检测变更
  * @param {any} data - 要计算哈希的数据
@@ -31,14 +33,9 @@ export function hasDataChanged(oldData, newData) {
     return calculateDataHash(oldData) !== calculateDataHash(newData);
 }
 
-/**
- * 获取 KV namespace。
- * 仅从 Cloudflare Pages 的 env 绑定读取。
- * @param {Object} env
- * @returns {Object|null}
- */
-function getKV(env) {
-    return env?.MISUB_KV || null;
+function getD1(env) {
+    const db = env?.MISUB_DB;
+    return db && typeof db.prepare === 'function' ? db : null;
 }
 
 /**
@@ -56,90 +53,89 @@ function getRuntimeEnvValue(env, key) {
     return undefined;
 }
 
-function isStorageUnavailableError(error) {
+function isNoSuchTableError(error) {
+    return String(error?.message || error || '').toLowerCase().includes('no such table');
+}
+
+function isD1StorageUnavailableError(error) {
     const message = String(error?.message || error || '').toLowerCase();
     return (
-        message.includes('kv storage is paused') ||
+        message.includes('d1') ||
+        message.includes('database is locked') ||
         message.includes('storage is paused') ||
-        message.includes('namespace is paused') ||
-        message.includes('kv put() limit exceeded') ||
-        message.includes('put() limit exceeded for the day')
+        message.includes('limit exceeded')
     );
 }
 
-async function safeKvGet(kv, key) {
-    if (!kv) return null;
+function unwrapStoredText(raw) {
+    if (raw === null || raw === undefined) return null;
+    const text = String(raw);
+    if (text.startsWith('"') && text.endsWith('"')) {
+        try {
+            return String(JSON.parse(text));
+        } catch {
+            return text;
+        }
+    }
+    return text;
+}
+
+async function readD1SettingStrict(db, key) {
+    if (!db) return null;
     try {
-        return await kv.get(key);
+        const stmt = db.prepare('SELECT value as data FROM settings WHERE key = ?');
+        const bound = typeof stmt.bind === 'function' ? stmt.bind(key) : stmt;
+        const row = await bound.first();
+        if (!row) return null;
+        return unwrapStoredText(row.data ?? row.value);
     } catch (error) {
-        if (isStorageUnavailableError(error)) {
-            console.warn(`[Auth Storage] KV get skipped for ${key}: ${error.message}`);
+        if (isNoSuchTableError(error)) {
             return null;
         }
         throw error;
     }
 }
 
-/**
- * Read the admin password from KV without converting a storage outage to a missing key.
- * @param {Object} env
- * @returns {Promise<string|null>}
- */
-async function getAdminPasswordFromKv(env) {
-    const kv = getKV(env);
-    if (!kv) return null;
+async function safeD1Get(db, key) {
     try {
-        return await kv.get('SYSTEM_ADMIN_PASSWORD');
+        return await readD1SettingStrict(db, key);
     } catch (error) {
-        if (isStorageUnavailableError(error)) {
-            console.warn(
-                `[Auth Storage] KV get failed for SYSTEM_ADMIN_PASSWORD: ${error.message}`
-            );
+        if (isD1StorageUnavailableError(error)) {
+            console.warn(`[Auth Storage] D1 get skipped for ${key}: ${error.message}`);
+            return null;
         }
         throw error;
     }
 }
 
-async function safeKvPut(kv, key, value) {
-    if (!kv) return false;
+async function putD1SettingStrict(db, key, value) {
+    const writeOnce = async () => {
+        await db
+            .prepare(
+                `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+            )
+            .bind(key, String(value))
+            .run();
+    };
     try {
-        await kv.put(key, value);
-        return true;
+        await writeOnce();
     } catch (error) {
-        if (isStorageUnavailableError(error)) {
-            console.warn(`[Auth Storage] KV put skipped for ${key}: ${error.message}`);
-            return false;
+        if (isNoSuchTableError(error)) {
+            await ensureD1Schema(db);
+            await writeOnce();
+            return;
         }
         throw error;
     }
 }
 
-/**
- * 条件性写入KV存储，只在数据真正变更时写入
- * @param {Object} env - Cloudflare环境对象
- * @param {string} key - KV键名
- * @param {any} newData - 新数据
- * @param {any} oldData - 旧数据（可选）
- * @returns {Promise<boolean>} - 是否执行了写入操作
- */
-export async function conditionalKVPut(env, key, newData, oldData = null) {
-    const kv = getKV(env);
-    // 如果没有提供旧数据，先从KV读取
-    if (oldData === null) {
-        try {
-            oldData = await kv.get(key).then((r) => (r ? JSON.parse(r) : null));
-        } catch (error) {
-            // 读取失败时，为安全起见执行写入
-            await kv.put(key, JSON.stringify(newData));
-            return true;
-        }
-    }
-
-    // 检测数据是否变更
-    if (hasDataChanged(oldData, newData)) {
-        await kv.put(key, JSON.stringify(newData));
+async function safeD1Put(db, key, value) {
+    if (!db) return false;
+    try {
+        await putD1SettingStrict(db, key, value);
         return true;
-    } else {
+    } catch (error) {
+        console.warn(`[Auth Storage] D1 put skipped for ${key}: ${error.message}`);
         return false;
     }
 }
@@ -155,43 +151,33 @@ function getFallbackCookieSecret() {
 
 /**
  * 获取或生成 Cookie 加密密钥
- * 优先顺序：KV → 环境变量 COOKIE_SECRET → 当前实例临时密钥（无 KV 或写入失败时）
+ * 优先顺序：D1 → 环境变量 COOKIE_SECRET → 当前实例临时密钥（无 D1 或写入失败时）
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密钥
  */
 export async function getCookieSecret(env) {
-    const kv = getKV(env);
+    const db = getD1(env);
     const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
 
-    if (kv) {
-        // 1. 尝试从 KV 读取
-        const kvSecret = await safeKvGet(kv, 'SYSTEM_COOKIE_SECRET');
-        if (kvSecret) return kvSecret;
+    if (db) {
+        const storedSecret = await safeD1Get(db, 'SYSTEM_COOKIE_SECRET');
+        if (storedSecret) return storedSecret;
 
-        // 2. 有环境变量则优先回退到环境变量，并尽力写回 KV
         if (runtimeCookieSecret) {
-            await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
+            await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
             return runtimeCookieSecret;
         }
 
-        // 3. 生成新密钥并尽力持久化到 KV；若 KV 暂不可用则退化为当前实例临时密钥
         const newSecret = crypto.randomUUID();
-        const saved = await safeKvPut(kv, 'SYSTEM_COOKIE_SECRET', newSecret);
+        const saved = await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', newSecret);
         return saved ? newSecret : getFallbackCookieSecret();
     }
 
-    // 无 KV：直接使用环境变量，无则生成当前实例临时密钥（实例重启后失效）
     if (runtimeCookieSecret) return runtimeCookieSecret;
     return getFallbackCookieSecret();
 }
 
 const SYSTEM_AUTH_INITIALIZED_KEY = 'SYSTEM_AUTH_INITIALIZED';
-const INITIALIZED_KV_KEYS = [
-    SYSTEM_AUTH_INITIALIZED_KEY,
-    'misub_subscriptions_v1',
-    'misub_profiles_v1',
-    'worker_settings_v1',
-];
 
 export class AdminPasswordMissingError extends Error {
     constructor(
@@ -205,35 +191,29 @@ export class AdminPasswordMissingError extends Error {
 }
 
 /**
- * Check whether the instance already has initialized auth state or persisted user data.
+ * Check whether the instance already has initialized auth state or persisted user data in D1.
  * Storage read errors propagate so callers fail closed instead of falling back to defaults.
  * @param {Object} env
  * @returns {Promise<boolean>}
  */
 export async function hasInitializedInstanceState(env) {
-    const kv = getKV(env);
-    if (kv) {
-        for (const key of INITIALIZED_KV_KEYS) {
-            const value = await kv.get(key);
-            if (value !== null && value !== undefined && String(value) !== '') {
-                return true;
-            }
-        }
+    const db = getD1(env);
+    if (!db) return false;
+
+    const initialized = await readD1SettingStrict(db, SYSTEM_AUTH_INITIALIZED_KEY);
+    if (initialized !== null && initialized !== undefined && String(initialized) !== '') {
+        return true;
     }
 
-    const db = env?.MISUB_DB;
-    if (db && typeof db.prepare === 'function') {
-        for (const table of ['subscriptions', 'profiles', 'settings']) {
-            try {
-                const row = await db.prepare(`SELECT 1 AS ok FROM ${table} LIMIT 1`).first();
-                if (row) return true;
-            } catch (error) {
-                const message = String(error?.message || error || '').toLowerCase();
-                if (message.includes('no such table')) {
-                    continue;
-                }
-                throw error;
+    for (const table of ['subscriptions', 'profiles', 'settings']) {
+        try {
+            const row = await db.prepare(`SELECT 1 AS ok FROM ${table} LIMIT 1`).first();
+            if (row) return true;
+        } catch (error) {
+            if (isNoSuchTableError(error)) {
+                continue;
             }
+            throw error;
         }
     }
 
@@ -246,14 +226,14 @@ export async function hasInitializedInstanceState(env) {
  * @returns {Promise<boolean>}
  */
 export async function markAuthInitialized(env) {
-    const kv = getKV(env);
-    if (!kv) return false;
-    return safeKvPut(kv, SYSTEM_AUTH_INITIALIZED_KEY, '1');
+    const db = getD1(env);
+    if (!db) return false;
+    return safeD1Put(db, SYSTEM_AUTH_INITIALIZED_KEY, '1');
 }
 
 /**
  * 获取管理员密码
- * 优先顺序：环境变量 ADMIN_PASSWORD → KV → 默认值 'admin'（仅限未初始化的全新实例）
+ * 优先顺序：环境变量 ADMIN_PASSWORD → D1 → 默认值 'admin'（仅限未初始化的全新实例）
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密码
  */
@@ -263,10 +243,10 @@ export async function getAdminPassword(env) {
         return runtimeAdminPassword.trim();
     }
 
-    const kv = getKV(env);
-    if (kv) {
-        const kvPassword = await getAdminPasswordFromKv(env);
-        if (kvPassword) return String(kvPassword).trim();
+    const db = getD1(env);
+    if (db) {
+        const d1Password = await readD1SettingStrict(db, 'SYSTEM_ADMIN_PASSWORD');
+        if (d1Password) return String(d1Password).trim();
     }
 
     if (await hasInitializedInstanceState(env)) {
@@ -284,44 +264,43 @@ export async function getAdminPassword(env) {
 export async function getAuthDebugInfo(env) {
     const runtimeAdminPassword = getRuntimeEnvValue(env, 'ADMIN_PASSWORD');
     const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
-    const kv = getKV(env);
+    const db = getD1(env);
 
-    let hasKvAdminPassword = false;
-    let hasKvCookieSecret = false;
+    let hasD1AdminPassword = false;
+    let hasD1CookieSecret = false;
 
-    if (kv) {
-        hasKvAdminPassword = !!(await safeKvGet(kv, 'SYSTEM_ADMIN_PASSWORD'));
-        hasKvCookieSecret = !!(await safeKvGet(kv, 'SYSTEM_COOKIE_SECRET'));
+    if (db) {
+        hasD1AdminPassword = !!(await safeD1Get(db, 'SYSTEM_ADMIN_PASSWORD'));
+        hasD1CookieSecret = !!(await safeD1Get(db, 'SYSTEM_COOKIE_SECRET'));
     }
 
     let adminPasswordSource = 'default';
     if (runtimeAdminPassword) {
         adminPasswordSource = 'env';
-    } else if (hasKvAdminPassword) {
-        adminPasswordSource = 'kv';
+    } else if (hasD1AdminPassword) {
+        adminPasswordSource = 'd1';
     }
 
     let cookieSecretSource = 'generated';
     if (runtimeCookieSecret) {
         cookieSecretSource = 'env';
-    } else if (hasKvCookieSecret) {
-        cookieSecretSource = 'kv';
+    } else if (hasD1CookieSecret) {
+        cookieSecretSource = 'd1';
     }
 
     return {
-        hasKv: !!kv,
-        hasD1: !!env?.MISUB_DB,
+        hasD1: !!db,
         adminPassword: {
             source: adminPasswordSource,
             hasRuntime: !!runtimeAdminPassword,
-            hasKvValue: hasKvAdminPassword,
+            hasD1Value: hasD1AdminPassword,
             isDefaultFallback: adminPasswordSource === 'default',
         },
         cookieSecret: {
             source: cookieSecretSource,
             hasRuntime: !!runtimeCookieSecret,
-            hasKvValue: hasKvCookieSecret,
-            mayRegenerateWithoutKv: !kv && !runtimeCookieSecret,
+            hasD1Value: hasD1CookieSecret,
+            mayRegenerateWithoutD1: !db && !runtimeCookieSecret,
         },
     };
 }
@@ -345,7 +324,7 @@ export async function isUsingDefaultPassword(env) {
 
 /**
  * 设置管理员密码
- * 有 KV 时持久化到 KV；无 KV 时抛出提示
+ * 持久化到 D1；无 D1 时抛出提示
  * @param {Object} env - 运行时环境对象
  * @param {string} newPassword - 新密码
  */
@@ -353,11 +332,11 @@ export async function setAdminPassword(env, newPassword) {
     if (getRuntimeEnvValue(env, 'ADMIN_PASSWORD')) {
         throw new Error('当前部署通过环境变量 ADMIN_PASSWORD 设置密码，请在平台控制台修改该变量');
     }
-    const kv = getKV(env);
-    if (!kv) {
-        throw new Error('当前部署未绑定 KV，请在平台控制台通过环境变量 ADMIN_PASSWORD 修改密码');
+    const db = getD1(env);
+    if (!db) {
+        throw new Error('D1 database not available');
     }
-    await kv.put('SYSTEM_ADMIN_PASSWORD', newPassword);
+    await putD1SettingStrict(db, 'SYSTEM_ADMIN_PASSWORD', newPassword);
     await markAuthInitialized(env);
 }
 

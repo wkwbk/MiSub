@@ -18,12 +18,12 @@ function nowIso() {
     return new Date().toISOString();
 }
 
-function generateId(prefix = 'sub') {
+function generateId() {
     try {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-            return `${prefix}_${crypto.randomUUID()}`;
+            return crypto.randomUUID();
     } catch {}
-    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function nextSortIndex(items) {
@@ -31,7 +31,10 @@ function nextSortIndex(items) {
 }
 
 async function loadRemoteSubscriptions(storageAdapter) {
-    const all = await storageAdapter.getAllSubscriptions();
+    const all =
+        typeof storageAdapter.getRemoteSubscriptions === 'function'
+            ? await storageAdapter.getRemoteSubscriptions()
+            : await storageAdapter.getAllSubscriptions();
     return sortBySortIndex(all.filter(isRemoteSubscription));
 }
 
@@ -248,14 +251,16 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
     if (request.method === 'GET' && !id) {
         const all = await loadRemoteSubscriptions(storageAdapter);
         const enabledFilter = parseBooleanParam(url.searchParams.get('enabled'));
-        const groupFilter = (url.searchParams.get('group') || '').trim();
+        const tagFilter = (url.searchParams.get('tag') || '').trim();
         const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
         const filtered = all.filter((item) => {
             if (enabledFilter !== undefined && (item.enabled !== false) !== enabledFilter)
                 return false;
-            if (groupFilter && String(item.group || '') !== groupFilter) return false;
+            if (tagFilter && !(Array.isArray(item.tags) && item.tags.includes(tagFilter)))
+                return false;
             if (keyword) {
-                const haystack = `${item.name || ''}\n${item.url || ''}`.toLowerCase();
+                const tagsText = Array.isArray(item.tags) ? item.tags.join('\n') : '';
+                const haystack = `${item.name || ''}\n${item.url || ''}\n${tagsText}`.toLowerCase();
                 if (!haystack.includes(keyword)) return false;
             }
             return true;
@@ -296,14 +301,13 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
                 400
             );
 
-        const all = await storageAdapter.getAllSubscriptions();
+        const all = await loadRemoteSubscriptions(storageAdapter);
         const timestamp = nowIso();
         const item = {
-            id: generateId('sub'),
+            id: generateId(),
             name: String(payload.name).trim(),
             url: String(payload.url).trim(),
             enabled: payload.enabled !== false,
-            group: String(payload.group || '').trim(),
             tags: normalizeStringArray(payload.tags),
             userAgent: String(payload.userAgent || '').trim(),
             customUserAgent: String(payload.userAgent || '').trim(),
@@ -329,7 +333,6 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
             ...(payload.name !== undefined ? { name: String(payload.name || '').trim() } : {}),
             ...(payload.url !== undefined ? { url: String(payload.url || '').trim() } : {}),
             ...(payload.enabled !== undefined ? { enabled: payload.enabled !== false } : {}),
-            ...(payload.group !== undefined ? { group: String(payload.group || '').trim() } : {}),
             ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
             ...(payload.userAgent !== undefined
                 ? {

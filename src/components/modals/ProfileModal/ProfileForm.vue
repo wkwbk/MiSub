@@ -1,9 +1,11 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronDown } from '@lucide/vue';
+    import { ChevronDown, SlidersHorizontal } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
+    import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
+    import TagInput from '@/components/ui/TagInput.vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
     import { useI18n } from '@/i18n/index.js';
@@ -27,13 +29,17 @@
             type: Array,
             default: () => [],
         },
-        groupPrefixToggleOptions: {
+        tagPrefixToggleOptions: {
             type: Array,
             default: () => [],
         },
         globalSettings: {
             type: Object,
             default: () => ({}),
+        },
+        profileTags: {
+            type: Array,
+            default: () => [],
         },
     });
 
@@ -65,15 +71,23 @@
     ];
 
     const flagOptions = [
-        { key: 'udp', label: t('profileModal.udpForward'), icon: '⚡️' },
-        { key: 'emoji', label: t('profileModal.emojiSwitch'), icon: '🎨' },
-        { key: 'scv', label: t('profileModal.skipCert'), icon: '🛡️' },
-        { key: 'sort', label: t('profileModal.nodeSort'), icon: '🔢' },
-        { key: 'tfo', label: 'TCP Fast Open', icon: '🚀' },
-        { key: 'list', label: t('profileModal.outputList'), icon: '📋' },
+        { key: 'udp', label: t('profileModal.udpForward') },
+        { key: 'emoji', label: t('profileModal.emojiSwitch') },
+        { key: 'scv', label: t('profileModal.skipCert') },
+        { key: 'sort', label: t('profileModal.nodeSort') },
+        { key: 'tfo', label: 'TCP Fast Open' },
+        { key: 'list', label: t('profileModal.outputList') },
     ];
 
     const selectedTransformAsset = ref(null);
+    const showRuleTemplateModal = ref(false);
+
+    function handleRuleTemplatesSaved(savedTemplateId) {
+        if (props.localProfile.transformConfigMode !== 'custom_template' || !savedTemplateId) return;
+        if (!String(props.localProfile.transformConfig || '').trim()) {
+            props.localProfile.transformConfig = `custom:${savedTemplateId}`;
+        }
+    }
     const emit = defineEmits(['toggle-advanced']);
 
     const isExternalEngine = computed(() => {
@@ -134,6 +148,18 @@
                 {{ t('profiles.customIdHint') }}
             </p>
         </div>
+    </div>
+
+    <!-- Profile Tags -->
+    <div class="mt-4">
+        <label class="block text-xs font-medium text-zinc-300 mb-1.5">
+            {{ t('profiles.tagsLabel') }}
+        </label>
+        <TagInput
+            v-model="localProfile.tags"
+            :suggestions="profileTags"
+            :placeholder="t('profiles.tagsPlaceholder')"
+        />
     </div>
 
     <!-- Public Display & Description -->
@@ -314,9 +340,20 @@
                         "
                         class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
-                            t('profileModal.templateLabel')
-                        }}</label>
+                        <div class="mb-1.5 flex items-center justify-between gap-2">
+                            <label class="block text-xs font-medium text-zinc-400">{{
+                                t('profileModal.templateLabel')
+                            }}</label>
+                            <button
+                                v-if="localProfile.transformConfigMode === 'custom_template'"
+                                type="button"
+                                @click="showRuleTemplateModal = true"
+                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                            >
+                                <SlidersHorizontal class="h-3 w-3" />
+                                <span>{{ t('settings.ruleTemplatesManage') }}</span>
+                            </button>
+                        </div>
                         <TransformSelector
                             v-model="localProfile.transformConfig"
                             @select-asset="selectedTransformAsset = $event"
@@ -337,6 +374,11 @@
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
                             <span>{{ t('profileModal.customTemplateHint') }}</span>
                         </div>
+                        <RuleTemplateModal
+                            v-if="showRuleTemplateModal"
+                            v-model:show="showRuleTemplateModal"
+                            @saved="handleRuleTemplatesSaved"
+                        />
                     </div>
                 </div>
             </div>
@@ -428,15 +470,15 @@
                                 />
                             </div>
 
-                            <!-- 组名前缀开关 -->
+                            <!-- 首个标签前缀开关 -->
                             <div class="space-y-1">
                                 <label class="block text-xs font-medium text-zinc-400">{{
-                                    t('profileModal.groupPrefix')
+                                    t('profileModal.tagPrefix')
                                 }}</label>
                                 <Select
-                                    v-model="localProfile.prefixSettings.prependGroupName"
+                                    v-model="localProfile.prefixSettings.prependTagName"
                                     size="sm"
-                                    :options="groupPrefixToggleOptions"
+                                    :options="tagPrefixToggleOptions"
                                 />
                             </div>
                         </div>

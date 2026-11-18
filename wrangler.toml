@@ -22,26 +22,19 @@ crons = ["0 */6 * * *"]
 # ==============================================================================
 # 存储与环境变量绑定说明：
 # 生产部署可通过 Cloudflare Dashboard (Workers & Pages -> Settings -> Bindings) 绑定，
-# 或取消下方注释并填入实际的 Namespace ID / Database ID。
+# 或填入实际的 D1 Database ID。
 #
 # 敏感密钥建议使用命令行注入，切勿明文提交到代码仓库：
 #   npx wrangler secret put ADMIN_PASSWORD
 #   npx wrangler secret put COOKIE_SECRET
 #   npx wrangler secret put CRON_SECRET
+#   npx wrangler secret put GITHUB_TOKEN
 # ==============================================================================
-
-[[kv_namespaces]]
-binding = "MISUB_KV"
-id = "1f480b4e7f3d4166b258c3fe1e77d5db"
 
 [[d1_databases]]
 binding = "MISUB_DB"
 database_name = "misub"
 database_id = "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
-
-[[previews.kv_namespaces]]
-binding = "MISUB_KV"
-id = "1f480b4e7f3d4166b258c3fe1e77d5db"
 
 [[previews.d1_databases]]
 binding = "MISUB_DB"

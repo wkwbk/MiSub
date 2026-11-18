@@ -3,7 +3,8 @@
     import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import Input from '@/components/ui/Input.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import TagInput from '@/components/ui/TagInput.vue';
+    import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSubscriptions } from '@/composables/useSubscriptions.js';
     import { needsServerParsing, useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
@@ -11,13 +12,15 @@
     import { useI18n } from '@/i18n/index.js';
     import { parseSurgeConfig } from '@/utils/protocolConverter.js';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
+    import { normalizeTagList } from '@/utils/tags.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const props = defineProps({
         show: Boolean,
         isNew: Boolean,
         editingNode: Object,
-        groups: {
+        tags: {
             type: Array,
             default: () => [],
         },
@@ -62,9 +65,10 @@
                     ? t('manualNodes.fileImportPickedMulti', { count: fileCount })
                     : files[0].name;
 
-            // 自动填充分组名（用文件名），用户无需手填；已有分组时不覆盖
-            if (!(props.editingNode.group || '').trim()) {
-                props.editingNode.group = buildAutoGroupName({ fileName: files[0].name });
+            // 自动填充标签（用文件名），用户无需手填；已有标签时不覆盖
+            if (normalizeTagList(props.editingNode.tags).length === 0) {
+                const autoTag = buildAutoTagName({ fileName: files[0].name });
+                props.editingNode.tags = autoTag ? [autoTag] : [];
             }
         } catch (error) {
             console.error('读取文件失败:', error);
@@ -76,7 +80,6 @@
 
     // 浮动标签状态
     const nameFocused = ref(false);
-    const urlFocused = ref(false);
 
     // 协议检测
     const getProtocol = (url) => {
@@ -128,7 +131,7 @@
         if (!props.editingNode?.url) return [];
         const lines = props.editingNode.url
             .split('\n')
-            .map((l) => l.trim())
+            .map((l) => cleanNodeUrl(l.trim()))
             .filter(Boolean);
         return lines.map((line, index) => {
             const protocol = getProtocol(line);
@@ -169,26 +172,30 @@
         const requiresServerParsing = props.isNew && rawUrl && needsServerParsing(rawUrl);
 
         if (props.isNew && (isMultiLine.value || requiresServerParsing)) {
-            // 多行批量导入 / 需后端转换：未填写分组时自动生成一个（用户无需手填）
-            let groupName = (props.editingNode.group || '').trim();
-            if (!groupName) {
-                groupName = buildAutoGroupName();
-                props.editingNode.group = groupName;
+            // 多行批量导入 / 需后端转换：未填写标签时自动生成一个批次标签
+            let targetTags = normalizeTagList(props.editingNode.tags);
+            if (targetTags.length === 0) {
+                const autoTag = buildAutoTagName();
+                targetTags = autoTag ? [autoTag] : [];
+                props.editingNode.tags = targetTags;
             }
-            await handleBulkImport(props.editingNode.url, groupName);
+            await handleBulkImport(props.editingNode.url, targetTags);
             emit('update:show', false);
             return;
         }
 
-        // 单行模式下检测 Surge 配置格式并自动转换
-        if (props.isNew && !isMultiLine.value && props.editingNode?.url) {
-            const surgeNodes = parseSurgeConfig(props.editingNode.url);
-            if (surgeNodes && surgeNodes.length === 1) {
-                props.editingNode.url = surgeNodes[0].url;
-                if (!props.editingNode.name && surgeNodes[0].name) {
-                    props.editingNode.name = surgeNodes[0].name;
+        // 单行模式下检测 Surge 配置格式并自动转换，并对节点链接做导入前清洗
+        if (!isMultiLine.value && props.editingNode?.url) {
+            if (props.isNew) {
+                const surgeNodes = parseSurgeConfig(props.editingNode.url);
+                if (surgeNodes && surgeNodes.length === 1) {
+                    props.editingNode.url = surgeNodes[0].url;
+                    if (!props.editingNode.name && surgeNodes[0].name) {
+                        props.editingNode.name = surgeNodes[0].name;
+                    }
                 }
             }
+            props.editingNode.url = cleanNodeUrl(props.editingNode.url);
         }
 
         emit('confirm');
@@ -292,19 +299,19 @@
                         </div>
                     </div>
 
-                    <!-- 分组选择 -->
+                    <!-- 标签选择 -->
                     <div class="relative">
                         <div class="flex flex-col">
                             <label
-                                for="node-group"
+                                for="node-tags"
                                 class="text-xs font-semibold text-zinc-400 mb-1.5"
                             >
-                                {{ t('manualNodes.groupOptional') }}
+                                {{ t('manualNodes.tagsOptional') }}
                             </label>
-                            <GroupSelector
-                                v-model="editingNode.group"
-                                :groups="groups"
-                                :placeholder="t('manualNodes.groupPlaceholder')"
+                            <TagInput
+                                v-model="editingNode.tags"
+                                :suggestions="tags"
+                                :placeholder="t('manualNodes.tagsPlaceholder')"
                             />
                         </div>
                     </div>
@@ -349,42 +356,28 @@
                         </div>
                     </div>
 
-                    <div
-                        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
-                        :class="[
-                            urlFocused
-                                ? 'border-zinc-600'
-                                : 'border-zinc-800 hover:border-zinc-700',
-                        ]"
+                    <LineNumberTextarea
+                        id="node-url"
+                        v-model="editingNode.url"
+                        :rows="8"
+                        :placeholder="t('manualNodes.urlPlaceholder')"
+                        textarea-class="pr-20"
+                        @input="$emit('input-url', $event)"
                     >
-                        <!-- 协议检测徽章 - 显示在右上角 -->
-                        <div
-                            v-if="singleProtocol && !isMultiLine"
-                            class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
-                        >
-                            <span class="font-mono text-xs font-semibold text-zinc-200 uppercase">
-                                {{ singleProtocol.name }}
-                            </span>
-                        </div>
-
-                        <div class="flex h-full">
+                        <template #overlay>
+                            <!-- 协议检测徽章 - 显示在右上角 -->
                             <div
-                                class="py-3 pl-3 flex items-start text-zinc-500 group-focus-within:text-zinc-300 transition-colors pointer-events-none"
+                                v-if="singleProtocol && !isMultiLine"
+                                class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
                             >
-                                <Link2 class="h-4 w-4 mt-0.5" />
+                                <span
+                                    class="font-mono text-xs font-semibold text-zinc-200 uppercase"
+                                >
+                                    {{ singleProtocol.name }}
+                                </span>
                             </div>
-                            <textarea
-                                id="node-url"
-                                v-model="editingNode.url"
-                                rows="8"
-                                @focus="urlFocused = true"
-                                @blur="urlFocused = false"
-                                @input="$emit('input-url', $event)"
-                                class="flex-1 w-full bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono resize-none py-3 pl-3 pr-20 min-h-[160px]"
-                                :placeholder="t('manualNodes.urlPlaceholder')"
-                            ></textarea>
-                        </div>
-                    </div>
+                        </template>
+                    </LineNumberTextarea>
                 </div>
 
                 <!-- 批量导入预览 -->

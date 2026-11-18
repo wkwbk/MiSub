@@ -2,6 +2,7 @@
     import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
     import { useI18n } from '@/i18n/index.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useScrollLock } from '@/composables/useScrollLock.js';
 
     const props = defineProps({
         show: Boolean,
@@ -38,6 +39,10 @@
         bodyClass: {
             type: String,
             default: '',
+        },
+        zIndex: {
+            type: [String, Number],
+            default: 'var(--z-modal)',
         },
     });
 
@@ -136,6 +141,7 @@
     const { handleBackdropPointerDown, handleBackdropClick } = useBackdropDismiss(() =>
         emit('update:show', false)
     );
+    useScrollLock(() => props.show);
 </script>
 
 <template>
@@ -144,7 +150,7 @@
             <div
                 v-if="show"
                 class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
-                :style="{ zIndex: 'var(--z-modal)' }"
+                :style="{ zIndex }"
                 @pointerdown.capture="handleBackdropPointerDown"
                 @click="handleBackdropClick"
                 role="dialog"

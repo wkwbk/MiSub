@@ -3,6 +3,8 @@
  * Includes constants, KV keys, and default settings for the worker.
  */
 
+import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../src/constants/default-public-links.js';
+
 // KV storage keys
 export const KV_KEY_SUBS = 'misub_subscriptions_v1';
 export const KV_KEY_PROFILES = 'misub_profiles_v1';
@@ -33,7 +35,7 @@ export const DEFAULT_SETTINGS = {
     enableTrafficNode: false,
     enableFlagEmoji: true,
     enablePublicPage: true,
-    storageType: 'kv',
+    storageType: 'd1',
     // 新增：借鉴Sub-Store和miaomiaowu的功能
     enableSubscriptionSync: true, // 启用订阅同步
     subscriptionCacheExpireMinutes: 60, // 订阅缓存过期时间（分钟）
@@ -46,7 +48,7 @@ export const DEFAULT_SETTINGS = {
         enableManualNodes: true,
         enableSubscriptions: true,
         manualNodePrefix: '手动节点',
-        prependGroupName: false,
+        prependTagName: false,
     },
     defaultOperators: [], // 新版操作符链式处理 (New Unified Pipeline)
     regionOverrides: [], // 自定义节点地区覆盖规则：{ pattern, region, flags }
@@ -124,6 +126,8 @@ export const DEFAULT_SETTINGS = {
         enabled: false,
         allowAnonymous: true,
     },
+    // 公开页导航链接设置
+    publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
     // 自定义公开页设置
     customPage: {
         enabled: false, // 是否启用自定义页面

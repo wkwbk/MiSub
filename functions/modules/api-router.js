@@ -3,7 +3,7 @@
  * 处理所有API请求的路由分发
  */
 
-import { DataMigrator, StorageFactory } from '../storage-adapter.js';
+import { StorageFactory } from '../storage-adapter.js';
 import { KV_KEY_SUBS } from './config.js';
 import {
     createErrorResponse,
@@ -73,9 +73,6 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { handleExternalNodesCallbackRequest } from '../services/external-nodes-callback-service.js';
 import { handleExternalApiRequest } from './external-api-router.js';
 
-// 常量定义
-const OLD_KV_KEY = 'misub_data_v1';
-const KV_KEY_PROFILES = 'misub_profiles_v1'; // Ensure this is defined if used
 function isAuthDiagnosticsEnabled(env) {
     return String(env?.ENABLE_AUTH_DIAGNOSTICS || '').toLowerCase() === 'true';
 }
@@ -96,134 +93,6 @@ export async function handleApiRequest(request, env, context = null) {
 
     if (path.startsWith('/ext/v1')) {
         return await handleExternalApiRequest(request, env);
-    }
-
-    // [新增] 数据存储迁移接口 (KV -> D1)
-    if (path === '/migrate_to_d1') {
-        if (request.method !== 'POST') {
-            return createJsonResponse({ error: 'Method Not Allowed' }, 405, { Allow: 'POST' });
-        }
-        if (!(await authMiddleware(request, env))) {
-            return createJsonResponse({ error: 'Unauthorized' }, 401);
-        }
-        try {
-            if (!env.MISUB_DB) {
-                return createJsonResponse(
-                    {
-                        success: false,
-                        message: 'D1 数据库未配置，请检查 wrangler.toml 配置',
-                    },
-                    400
-                );
-            }
-            const migrationResult = await DataMigrator.migrateKVToD1(env);
-            if (migrationResult.errors.length > 0) {
-                return createJsonResponse(
-                    {
-                        success: false,
-                        message: '迁移过程中出现错误',
-                        details: migrationResult.errors,
-                        partialSuccess: migrationResult,
-                    },
-                    500
-                );
-            }
-            const migratedKeys = Object.entries(migrationResult.keys || {})
-                .filter(([, state]) => state === 'migrated')
-                .map(([key]) => key);
-            return createJsonResponse({
-                success: true,
-                message: `数据已成功迁移到 D1 数据库（搬运 ${migratedKeys.length} 个键）`,
-                details: migrationResult,
-                migratedKeys,
-            });
-        } catch (error) {
-            console.error('[API Error /migrate_to_d1]', error);
-            return createErrorResponse(error, 500);
-        }
-    }
-
-    if (path === '/detect_legacy_d1') {
-        if (!(await authMiddleware(request, env))) {
-            return createJsonResponse({ error: 'Unauthorized' }, 401);
-        }
-        try {
-            const result = await DataMigrator.detectLegacyD1MainRows(env);
-            return createJsonResponse({ success: true, data: result });
-        } catch (error) {
-            console.error('[API Error /detect_legacy_d1]', error);
-            return createErrorResponse(error, 500);
-        }
-    }
-
-    if (path === '/migrate_legacy_d1') {
-        if (!(await authMiddleware(request, env))) {
-            return createJsonResponse({ error: 'Unauthorized' }, 401);
-        }
-        try {
-            const migrationResult = await DataMigrator.migrateLegacyD1MainRows(env);
-            if (migrationResult.errors.length > 0) {
-                return createJsonResponse(
-                    {
-                        success: false,
-                        message: '旧 D1 结构迁移过程中出现错误',
-                        details: migrationResult.errors,
-                        partialSuccess: migrationResult,
-                    },
-                    500
-                );
-            }
-            return createJsonResponse({
-                success: true,
-                message: '旧 D1 结构已成功迁移为行级存储',
-                details: migrationResult,
-            });
-        } catch (error) {
-            console.error('[API Error /migrate_legacy_d1]', error);
-            return createErrorResponse(error, 500);
-        }
-    }
-
-    // [新增] 安全的、可重复执行的迁移接口
-    if (path === '/migrate') {
-        if (!(await authMiddleware(request, env))) {
-            return createJsonResponse({ error: 'Unauthorized' }, 401);
-        }
-        try {
-            const kv = StorageFactory.resolveKV(env);
-            if (!kv) {
-                return createJsonResponse({ success: false, message: 'KV 未绑定' }, 400);
-            }
-            const oldData = await kv.get(OLD_KV_KEY).then((r) => (r ? JSON.parse(r) : null));
-            const newDataRaw = await kv.get(KV_KEY_SUBS);
-            const newDataExists = newDataRaw !== null;
-
-            if (newDataExists) {
-                return createJsonResponse(
-                    { success: true, message: '无需迁移，数据已是最新结构。' },
-                    200
-                );
-            }
-            if (!oldData) {
-                return createJsonResponse(
-                    { success: false, message: '未找到需要迁移的旧数据。' },
-                    404
-                );
-            }
-
-            await kv.put(KV_KEY_SUBS, JSON.stringify(oldData));
-            await kv.put(KV_KEY_PROFILES, JSON.stringify([]));
-            await kv.put(
-                OLD_KV_KEY + '_migrated_on_' + new Date().toISOString(),
-                JSON.stringify(oldData)
-            );
-            await kv.delete(OLD_KV_KEY);
-
-            return createJsonResponse({ success: true, message: '数据迁移成功！' }, 200);
-        } catch (e) {
-            console.error('[API Error /migrate]', e);
-            return createErrorResponse(e, 500);
-        }
     }
 
     if (path === '/login') {
@@ -332,82 +201,6 @@ export async function handleApiRequest(request, env, context = null) {
             return createJsonResponse({ error: 'Unauthorized' }, 401);
         }
         return await handleTestNotificationRequest(request, env);
-    }
-
-    // KV 诊断端点：测试 KV 读写是否正常（需登录）
-    if (path === '/kv_test') {
-        try {
-            const kv = StorageFactory.resolveKV(env);
-            if (!kv) {
-                // 列出 env 中所有 key 及其类型，帮助诊断绑定情况
-                const envKeys = env
-                    ? Object.keys(env).map((k) => {
-                          const v = env[k];
-                          const t = typeof v;
-                          const isKVLike = v && t === 'object' && typeof v.get === 'function';
-                          return `${k}(${t}${isKVLike ? ',KV-like' : ''})`;
-                      })
-                    : [];
-                return createJsonResponse({ success: false, error: 'KV 未绑定', envKeys });
-            }
-            const testKey = '__kv_test_' + Date.now();
-            const testValue = 'test_' + Math.random().toString(36).slice(2);
-
-            // 写入
-            let putError = null;
-            try {
-                await kv.put(testKey, testValue);
-            } catch (e) {
-                putError = e.message;
-            }
-
-            // 读回
-            let readBack = null;
-            let getError = null;
-            try {
-                readBack = await kv.get(testKey);
-            } catch (e) {
-                getError = e.message;
-            }
-
-            // 清理
-            try {
-                await kv.delete(testKey);
-            } catch (_) {}
-
-            // 读取实际数据键
-            let subsRaw = null;
-            let subsError = null;
-            try {
-                subsRaw = await kv.get('misub_subscriptions_v1');
-            } catch (e) {
-                subsError = e.message;
-            }
-
-            let settingsRaw = null;
-            try {
-                settingsRaw = await kv.get('worker_settings_v1');
-            } catch (_) {}
-
-            return createJsonResponse({
-                success: true,
-                kvBound: true,
-                writeTest: {
-                    wrote: testValue,
-                    readBack,
-                    match: readBack === testValue,
-                    putError,
-                    getError,
-                },
-                actualData: {
-                    subscriptions: subsRaw ? `存在，长度=${subsRaw.length}` : 'null（空）',
-                    settings: settingsRaw ? `存在，长度=${settingsRaw.length}` : 'null（空）',
-                    subsError,
-                },
-            });
-        } catch (e) {
-            return createJsonResponse({ success: false, error: e.message });
-        }
     }
 
     switch (path) {
@@ -835,12 +628,9 @@ async function handleCronStatusRequest(env) {
         // 获取最近的Cron执行状态（如果有的话）
         let lastExecution = null;
         try {
-            const kv = StorageFactory.resolveKV(env);
-            if (kv) {
-                const statusData = await kv.get('cron_last_execution');
-                if (statusData) {
-                    lastExecution = JSON.parse(statusData);
-                }
+            const storageAdapter = StorageFactory.createAdapter(env);
+            if (storageAdapter.type !== 'noop') {
+                lastExecution = await storageAdapter.get('cron_last_execution');
             }
         } catch (error) {
             console.warn('[Cron Status] Failed to fetch last execution:', error);
@@ -905,8 +695,8 @@ async function handleCronTriggerRequest(env) {
 
         // 保存执行状态
         try {
-            const kv = StorageFactory.resolveKV(env);
-            if (kv) {
+            const storageAdapter = StorageFactory.createAdapter(env);
+            if (storageAdapter.type !== 'noop') {
                 const executionStatus = {
                     type: 'manual_trigger',
                     cronType,
@@ -917,9 +707,7 @@ async function handleCronTriggerRequest(env) {
                         failedSyncs: result.failedSyncs,
                     },
                 };
-                await kv.put('cron_last_execution', JSON.stringify(executionStatus), {
-                    expirationTtl: 86400, // 24小时后过期
-                });
+                await storageAdapter.put('cron_last_execution', executionStatus);
             }
         } catch (error) {
             console.warn('[Cron Trigger] Failed to save execution status:', error);

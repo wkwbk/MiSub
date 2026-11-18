@@ -8,6 +8,7 @@ import { createI18n } from '@/i18n/index.js';
 import { handleProfileMode } from '../../functions/modules/subscription/profile-handler.js';
 import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 describe('Profile Nesting - Cycle Detection (wouldCreateCycle)', () => {
     it('detects direct self-reference as a cycle', () => {
@@ -57,20 +58,13 @@ describe('Profile Nesting - Cycle Detection (wouldCreateCycle)', () => {
 });
 
 describe('Profile Nesting - Backend Node Aggregation and Loop Breaker', () => {
-    const createMockEnv = (profiles, nodes) => {
-        const store = new Map([
-            ['misub_profiles_v1', JSON.stringify(profiles)],
-            ['misub_subscriptions_v1', JSON.stringify(nodes)],
-            ['worker_settings_v1', JSON.stringify({})],
-        ]);
-        return {
-            MISUB_KV: {
-                get: vi.fn(async (key) => store.get(key) || null),
-                put: vi.fn(async (key, val) => store.set(key, val)),
-                delete: vi.fn(async (key) => store.delete(key)),
-            },
-        };
-    };
+    const createMockEnv = (profiles, nodes) => ({
+        MISUB_DB: createMemoryD1({
+            misub_profiles_v1: profiles,
+            misub_subscriptions_v1: nodes,
+            worker_settings_v1: {},
+        }),
+    });
 
     it('recursively gathers nodes from subProfiles with isSubProfile tag', async () => {
         const allProfiles = [
@@ -302,18 +296,12 @@ describe('Profile Nesting - Full Subscription Request via handleMisubRequest', (
             enabled: true,
         };
 
-        const store = new Map([
-            ['misub_profiles_v1', JSON.stringify([topProfile, subProfile1])],
-            ['misub_subscriptions_v1', JSON.stringify([manualNode1])],
-            ['worker_settings_v1', JSON.stringify({ profileToken: 'profiles' })],
-        ]);
-
         const mockEnv = {
-            MISUB_KV: {
-                get: vi.fn(async (key) => store.get(key) || null),
-                put: vi.fn(async (key, val) => store.set(key, val)),
-                delete: vi.fn(async (key) => store.delete(key)),
-            },
+            MISUB_DB: createMemoryD1({
+                misub_profiles_v1: [topProfile, subProfile1],
+                misub_subscriptions_v1: [manualNode1],
+                worker_settings_v1: { profileToken: 'profiles' },
+            }),
         };
 
         const req = new Request('https://example.com/profiles/top-composite', {

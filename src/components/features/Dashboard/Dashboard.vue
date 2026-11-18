@@ -23,6 +23,8 @@
     import { storeToRefs } from 'pinia';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+    import { inferAirportRootDomain } from '@/utils/airport-domain.js';
+    import { rememberDomainName } from '@/utils/domain-name-memory.js';
     import { useStickyColumns } from '@/composables/useStickyColumn.js';
     // --- Component Imports ---
     import RightPanel from '@/components/profiles/RightPanel.vue';
@@ -57,11 +59,11 @@
         () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
 
-    const BatchGroupModal = defineAsyncComponent(
-        () => import('@/components/modals/BatchGroupModal.vue')
+    const BatchTagModal = defineAsyncComponent(
+        () => import('@/components/modals/BatchTagModal.vue')
     );
-    const GroupManagementModal = defineAsyncComponent(
-        () => import('@/components/modals/GroupManagementModal.vue')
+    const TagManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/TagManagementModal.vue')
     );
     const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const CopyLinkModal = defineAsyncComponent(
@@ -138,11 +140,12 @@
 
     const {
         subscriptions,
-        subscriptionGroups,
-        activeGroupFilter: subscriptionGroupFilter,
-        setGroupFilter: setSubscriptionGroupFilter,
-        renameSubscriptionGroup,
-        deleteSubscriptionGroup,
+        subscriptionTags,
+        activeTagFilters: subscriptionTagFilters,
+        setTagFilters: setSubscriptionTagFilters,
+        renameSubscriptionTag,
+        deleteSubscriptionTag,
+        reorderSubscriptionTags,
         searchQuery: subscriptionSearchQuery,
         filteredSubscriptions: filteredSubscriptionList,
         filteredCount: filteredSubscriptionCount,
@@ -154,6 +157,8 @@
         updateSubscription,
         deleteSubscription,
         deleteAllSubscriptions,
+        batchUpdateSubscriptionTags,
+        batchDeleteSubscriptions,
         addSubscriptionsFromBulk,
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
@@ -178,16 +183,17 @@
         autoSortNodes,
         deduplicateNodes,
         reorderManualNodes,
-        activeGroupFilter,
-        setGroupFilter,
-        batchUpdateGroup,
+        activeTagFilters,
+        setTagFilters,
+        toggleTagFilter,
+        batchUpdateTags,
         batchDeleteNodes,
         buildDedupPlan,
         applyDedupPlan,
-        manualNodeGroups,
-        renameGroup,
-        deleteGroup,
-        reorderGroups, // Added group helpers
+        manualNodeTags,
+        renameTag,
+        deleteTag,
+        reorderTags,
         pingResults,
         pingingNodes,
         pingNodeId,
@@ -200,6 +206,12 @@
 
     const {
         profiles,
+        profileTags,
+        activeTagFilters: profileTagFilters,
+        setTagFilters: setProfileTagFilters,
+        renameProfileTag,
+        deleteProfileTag,
+        reorderProfileTags,
         editingProfile,
         isNewProfile,
         showProfileModal,
@@ -211,6 +223,8 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        batchUpdateProfileTags,
+        batchDeleteProfiles,
         reorderProfiles,
         filteredProfiles,
         searchQuery: profileSearchQuery,
@@ -270,11 +284,14 @@
     const logProfileName = ref('');
     const showBatchDeleteModal = ref(false);
     const batchDeleteIds = ref([]);
+    const batchDeleteType = ref('node'); // 'node' | 'subscription' | 'profile'
     const showDedupModal = ref(false);
     const dedupPlan = ref(null);
-    const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref([]); // Added
-    const showGroupManagementModal = ref(false); // 分组管理模态框
+    const showBatchTagModal = ref(false);
+    const batchTagIds = ref([]);
+    const batchTagType = ref('node'); // 'node' | 'subscription' | 'profile'
+    const showNodeTagManagementModal = ref(false);
+    const showProfileTagManagementModal = ref(false);
 
     // 节点预览相关状态
     const showNodePreviewModal = ref(false);
@@ -422,59 +439,118 @@
         showDedupModal.value = true;
     };
 
-    const handleBatchDeleteRequest = (ids) => {
+    const handleBatchDeleteRequest = (ids, type = 'node') => {
         if (ids && ids.length > 0) {
             batchDeleteIds.value = ids;
+            batchDeleteType.value = type;
             showBatchDeleteModal.value = true;
         }
     };
 
     const confirmBatchDelete = () => {
-        batchDeleteNodes(batchDeleteIds.value);
+        if (batchDeleteType.value === 'subscription') {
+            batchDeleteSubscriptions(batchDeleteIds.value);
+        } else if (batchDeleteType.value === 'profile') {
+            batchDeleteProfiles(batchDeleteIds.value);
+        } else {
+            batchDeleteNodes(batchDeleteIds.value);
+        }
         batchDeleteIds.value = [];
         showBatchDeleteModal.value = false;
     };
 
-    const handleOpenBatchGroupModal = (ids) => {
-        batchGroupIds.value = ids;
-        showBatchGroupModal.value = true;
+    const handleOpenBatchTagModal = (ids, type = 'node') => {
+        batchTagIds.value = ids;
+        batchTagType.value = type;
+        showBatchTagModal.value = true;
     };
 
-    const handleBatchGroupConfirm = (groupName) => {
-        batchUpdateGroup(batchGroupIds.value, groupName);
-        batchGroupIds.value = [];
+    const handleBatchTagConfirm = (payload) => {
+        if (batchTagType.value === 'subscription') {
+            batchUpdateSubscriptionTags(batchTagIds.value, payload);
+        } else if (batchTagType.value === 'profile') {
+            batchUpdateProfileTags(batchTagIds.value, payload);
+        } else {
+            batchUpdateTags(batchTagIds.value, payload);
+        }
+        batchTagIds.value = [];
     };
 
-    // 分组管理处理函数
-    const handleOpenGroupManagement = () => {
-        showGroupManagementModal.value = true;
+    const batchTagCandidateTags = computed(() => {
+        if (batchTagType.value === 'subscription') return subscriptionTags.value;
+        if (batchTagType.value === 'profile') return profileTags.value;
+        return manualNodeTags.value;
+    });
+
+    const batchDeleteConfirmTitle = computed(() => {
+        if (batchDeleteType.value === 'subscription') {
+            return t('subscriptions.batchDeleteConfirmTitle');
+        }
+        if (batchDeleteType.value === 'profile') {
+            return t('profiles.batchDeleteConfirmTitle');
+        }
+        return t('manualNodes.batchDeleteConfirmTitle');
+    });
+
+    const batchDeleteConfirmBody = computed(() => {
+        if (batchDeleteType.value === 'subscription') {
+            return t('subscriptions.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+        }
+        if (batchDeleteType.value === 'profile') {
+            return t('profiles.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+        }
+        return t('manualNodes.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+    });
+
+    const handleOpenNodeTagManagement = () => {
+        showNodeTagManagementModal.value = true;
     };
 
-    const handleGroupRename = (oldName, newName) => {
-        renameGroup(oldName, newName);
-        showToast(t('manualNodes.groupRenamed', { oldName, newName }), 'success');
+    const handleNodeTagRename = (oldName, newName) => {
+        renameTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
-        deleteGroup(groupName);
-        showToast(t('manualNodes.groupDeleted', { groupName }), 'success');
+    const handleNodeTagDelete = (tagName) => {
+        deleteTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
     };
 
-    const handleGroupReorder = (newOrder) => {
-        reorderGroups(newOrder);
-        showToast(t('manualNodes.groupOrderUpdated'), 'success');
+    const handleNodeTagReorder = (newOrder) => {
+        reorderTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
     };
 
-    const showSubGroupManagementModal = ref(false);
+    const showSubTagManagementModal = ref(false);
 
-    const handleSubGroupRename = (oldName, newName) => {
-        renameSubscriptionGroup(oldName, newName);
-        showToast(t('manualNodes.groupRenamed'), 'success');
+    const handleSubTagRename = (oldName, newName) => {
+        renameSubscriptionTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
     };
 
-    const handleSubGroupDelete = (groupName) => {
-        deleteSubscriptionGroup(groupName);
-        showToast(t('manualNodes.groupDeleted'), 'success');
+    const handleSubTagDelete = (tagName) => {
+        deleteSubscriptionTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+    };
+
+    const handleSubTagReorder = (newOrder) => {
+        reorderSubscriptionTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
+    };
+
+    const handleProfileTagRename = (oldName, newName) => {
+        renameProfileTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+    };
+
+    const handleProfileTagDelete = (tagName) => {
+        deleteProfileTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+    };
+
+    const handleProfileTagReorder = (newOrder) => {
+        reorderProfileTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
     };
 
     const handleApplyDetectedName = (subscriptionId, name) => {
@@ -559,12 +635,12 @@
                     :refresh-error="subscriptionRefreshError"
                     :last-refresh-at="lastSubscriptionRefreshAt"
                     :subscriptions="subscriptions"
-                    :groups="subscriptionGroups"
-                    :active-group-filter="subscriptionGroupFilter"
+                    :tags="subscriptionTags"
+                    :active-tag-filters="subscriptionTagFilters"
                     :is-sorting="isSortingSubs"
                     @update-search="(query) => (subscriptionSearchQuery = query)"
-                    @set-group-filter="setSubscriptionGroupFilter"
-                    @manage-groups="showSubGroupManagementModal = true"
+                    @set-tag-filters="setSubscriptionTagFilters"
+                    @manage-tags="showSubTagManagementModal = true"
                     @add="handleAddSubscription"
                     @delete="handleDeleteSubscriptionWithCleanup"
                     @update-node-count="handleUpdateNodeCount"
@@ -578,6 +654,8 @@
                     @reorder="reorderSubscriptions"
                     @qrcode="(id) => handleQRCode(id, 'subscription')"
                     @import="showSubBulkImportModal = true"
+                    @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'subscription')"
+                    @batch-delete-subscriptions="(ids) => handleBatchDeleteRequest(ids, 'subscription')"
                 />
 
                 <!-- Manual Node Panel -->
@@ -589,10 +667,10 @@
                     :is-sorting="isSortingNodes"
                     :search-term="searchTerm"
                     :view-mode="manualNodeViewMode"
-                    :active-group-filter="activeGroupFilter"
+                    :active-tag-filters="activeTagFilters"
                     :ping-results="pingResults"
                     :pinging-nodes="pingingNodes"
-                    :groups="manualNodeGroups"
+                    :tags="manualNodeTags"
                     :compact-grid="true"
                     @add="handleAddNode"
                     @delete="handleDeleteNodeWithCleanup"
@@ -607,13 +685,11 @@
                     @import="showSubscriptionImportModal = true"
                     @delete-all="showDeleteNodesModal = true"
                     @reorder="reorderManualNodes"
-                    @set-group-filter="setGroupFilter"
-                    @batch-update-group="(ids, group) => batchUpdateGroup(ids, group)"
+                    @set-tag-filters="setTagFilters"
+                    @toggle-tag-filter="toggleTagFilter"
                     @batch-delete-nodes="handleBatchDeleteRequest"
-                    @rename-group="renameGroup"
-                    @delete-group="deleteGroup"
-                    @open-batch-group-modal="handleOpenBatchGroupModal"
-                    @manage-groups="handleOpenGroupManagement"
+                    @open-batch-tag-modal="handleOpenBatchTagModal"
+                    @manage-tags="handleOpenNodeTagManagement"
                     @ping="pingNodeId"
                     @ping-all="pingAllNodes"
                 />
@@ -636,6 +712,8 @@
                 <ProfilePanel
                     :profiles="profiles"
                     :paginated-profiles="paginatedProfiles"
+                    :tags="profileTags"
+                    :active-tag-filters="profileTagFilters"
                     :current-page="profilesCurrentPage"
                     :total-pages="profilesTotalPages"
                     :search-query="profileSearchQuery"
@@ -644,6 +722,8 @@
                     :compact="true"
                     :is-sorting="isSortingProfiles"
                     @update-search="(query) => (profileSearchQuery = query)"
+                    @set-tag-filters="setProfileTagFilters"
+                    @manage-tags="showProfileTagManagementModal = true"
                     @change-page="changeProfilesPage"
                     @add="handleAddProfile"
                     @edit="handleEditProfile"
@@ -658,6 +738,8 @@
                     @reorder="reorderProfiles"
                     @qrcode="(id) => handleQRCode(id, 'profile')"
                     @toggle-sort="isSortingProfiles = !isSortingProfiles"
+                    @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'profile')"
+                    @batch-delete-profiles="(ids) => handleBatchDeleteRequest(ids, 'profile')"
                 />
             </div>
         </div>
@@ -665,11 +747,11 @@
 
     <BulkImportModal
         v-model:show="showBulkImportModal"
-        @import="(txt, tag) => handleBulkImport(txt, tag)"
+        @import="(txt, tags) => handleBulkImport(txt, tags)"
     />
     <SubscriptionBulkImportModal
         v-model:show="showSubBulkImportModal"
-        @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
+        @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
     />
     <LogModal v-model:show="showLogModal" />
     <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup"
@@ -697,12 +779,12 @@
     <Modal v-model:show="showBatchDeleteModal" @confirm="confirmBatchDelete">
         <template #title>
             <h3 class="text-lg font-bold text-red-500">
-                {{ t('manualNodes.batchDeleteConfirmTitle') }}
+                {{ batchDeleteConfirmTitle }}
             </h3>
         </template>
         <template #body>
             <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ t('manualNodes.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
+                {{ batchDeleteConfirmBody }}
             </p>
         </template>
     </Modal>
@@ -732,7 +814,7 @@
         v-model:show="showNodeModal"
         :is-new="isNewNode"
         :editing-node="editingNode"
-        :groups="manualNodeGroups"
+        :tags="manualNodeTags"
         @confirm="handleSaveNode"
         @input-url="handleNodeUrlInput"
     />
@@ -746,25 +828,34 @@
         "
     />
 
-    <BatchGroupModal
-        v-model:show="showBatchGroupModal"
-        :groups="manualNodeGroups"
-        @confirm="handleBatchGroupConfirm"
+    <BatchTagModal
+        v-model:show="showBatchTagModal"
+        :tags="batchTagCandidateTags"
+        @confirm="handleBatchTagConfirm"
     />
 
-    <GroupManagementModal
-        v-model:show="showGroupManagementModal"
-        :groups="manualNodeGroups"
-        @rename="handleGroupRename"
-        @delete="handleGroupDelete"
-        @reorder="handleGroupReorder"
+    <TagManagementModal
+        v-model:show="showNodeTagManagementModal"
+        :tags="manualNodeTags"
+        @rename="handleNodeTagRename"
+        @delete="handleNodeTagDelete"
+        @reorder="handleNodeTagReorder"
     />
 
-    <GroupManagementModal
-        v-model:show="showSubGroupManagementModal"
-        :groups="subscriptionGroups"
-        @rename="handleSubGroupRename"
-        @delete="handleSubGroupDelete"
+    <TagManagementModal
+        v-model:show="showSubTagManagementModal"
+        :tags="subscriptionTags"
+        @rename="handleSubTagRename"
+        @delete="handleSubTagDelete"
+        @reorder="handleSubTagReorder"
+    />
+
+    <TagManagementModal
+        v-model:show="showProfileTagManagementModal"
+        :tags="profileTags"
+        @rename="handleProfileTagRename"
+        @delete="handleProfileTagDelete"
+        @reorder="handleProfileTagReorder"
     />
 
     <SubscriptionEditModal
@@ -783,6 +874,7 @@
         :show="showSubscriptionImportModal"
         @update:show="showSubscriptionImportModal = $event"
         :add-nodes-from-bulk="addNodesFromBulk"
+        :tags="manualNodeTags"
     />
 
     <!-- Node preview modal -->

@@ -1,342 +1,255 @@
-import { describe, expect, it } from 'vitest';
-import { DataMigrator, StorageFactory } from '../../functions/storage-adapter.js';
+import { describe, expect, it, vi } from 'vitest';
+import { StorageFactory } from '../../functions/storage-adapter.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
+import { handleErrorReportRequest } from '../../functions/modules/handlers/error-report-handler.js';
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
-function createKVMock(initialData = {}) {
-    const store = new Map(Object.entries(initialData));
-    return {
-        async get(key) {
-            return store.has(key) ? store.get(key) : null;
-        },
-        async put(key, value) {
-            store.set(key, value);
-        },
-        async delete(key) {
-            store.delete(key);
-        },
-        async list({ prefix }) {
-            return {
-                keys: Array.from(store.keys())
-                    .filter((key) => key.startsWith(prefix || ''))
-                    .map((name) => ({ name })),
-            };
-        },
-    };
-}
-
-function createD1Mock({
-    subscriptions = [],
-    profiles = [],
-    settings = [],
-    queryCounts = null,
-} = {}) {
-    const subMap = new Map(subscriptions.map((item) => [item.id, JSON.stringify(item)]));
-    const profileMap = new Map(profiles.map((item) => [item.id, JSON.stringify(item)]));
-    const settingsMap = new Map(settings.map((item) => [item.key, JSON.stringify(item.value)]));
-
-    return {
-        prepare(sql) {
-            const runUnboundAll = async () => {
-                if (sql.includes('SELECT data FROM subscriptions')) {
-                    if (queryCounts)
-                        queryCounts.subscriptions = (queryCounts.subscriptions || 0) + 1;
-                    return { results: Array.from(subMap.values()).map((data) => ({ data })) };
-                }
-                if (sql.includes('SELECT data FROM profiles')) {
-                    if (queryCounts) queryCounts.profiles = (queryCounts.profiles || 0) + 1;
-                    return { results: Array.from(profileMap.values()).map((data) => ({ data })) };
-                }
-                return { results: [] };
-            };
-
-            return {
-                all: runUnboundAll,
-                async run() {
-                    return { success: true };
-                },
-                bind(...args) {
-                    return {
-                        async first() {
-                            if (sql.includes('FROM subscriptions WHERE id = ?')) {
-                                const data = subMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            if (sql.includes('FROM profiles WHERE id = ?')) {
-                                const data = profileMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            if (sql.includes('FROM settings WHERE key = ?')) {
-                                const data = settingsMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            return null;
-                        },
-                        async all() {
-                            if (sql.includes('FROM subscriptions WHERE id IN')) {
-                                return {
-                                    results: args
-                                        .filter((id) => subMap.has(id))
-                                        .map((id) => ({ data: subMap.get(id) })),
-                                };
-                            }
-                            return { results: [] };
-                        },
-                        async run() {
-                            if (sql.includes('INSERT OR REPLACE INTO subscriptions')) {
-                                subMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('INSERT OR REPLACE INTO profiles')) {
-                                profileMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('INSERT OR REPLACE INTO settings')) {
-                                settingsMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('DELETE FROM subscriptions WHERE id = ?')) {
-                                subMap.delete(args[0]);
-                            }
-                            if (sql.includes('DELETE FROM profiles WHERE id = ?')) {
-                                profileMap.delete(args[0]);
-                            }
-                            return { success: true };
-                        },
-                    };
-                },
-            };
-        },
-    };
-}
-
-describe('Storage adapter row-level APIs', () => {
-    it('supports row-level subscription/profile lookup on KV adapter', async () => {
-        const kv = createKVMock({
-            misub_subscriptions_v1: JSON.stringify([
-                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com' },
-                { id: 'sub-2', name: 'Sub Two', url: 'https://b.example.com' },
-            ]),
-            misub_profiles_v1: JSON.stringify([
-                { id: 'profile-1', customId: 'custom-1', name: 'Profile One' },
-            ]),
+describe('Storage adapter 8-table D1 architecture & query optimizations', () => {
+    it('routes remote subscriptions to subscriptions table, manual nodes to nodes table, and resolves getProfileSources directly', async () => {
+        const db = createMemoryD1({
+            misub_subscriptions_v1: [
+                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com/sub', nodeCount: 1 },
+                { id: 'node-1', name: 'Node One', url: 'vless://uuid@example.com:443#Node1' },
+            ],
+            misub_profiles_v1: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
         });
 
-        const adapter = StorageFactory.createAdapter({ MISUB_KV: kv }, 'kv');
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        expect(await adapter.getSubscriptionById('sub-2')).toMatchObject({
-            id: 'sub-2',
-            name: 'Sub Two',
-        });
-        expect(await adapter.getProfileById('custom-1')).toMatchObject({
-            id: 'profile-1',
-            name: 'Profile One',
-        });
+        expect(db.tables.subscriptions.has('sub-1')).toBe(true);
+        expect(db.tables.subscriptions.has('node-1')).toBe(false);
+        expect(db.tables.nodes.has('node-1')).toBe(true);
+
+        expect(await adapter.getRemoteSubscriptions()).toHaveLength(1);
+        expect(await adapter.getManualNodes()).toHaveLength(1);
         expect(await adapter.getAllSubscriptions()).toHaveLength(2);
-        expect(await adapter.getAllProfiles()).toHaveLength(1);
-        expect(await adapter.getSubscriptionsByIds(['sub-1', 'sub-2'])).toHaveLength(2);
+
+        expect(await adapter.getProfileById('custom-1')).toMatchObject({ id: 'profile-1' });
+
+        const sources = await adapter.getProfileSources(['sub-1'], ['node-1']);
+        expect(sources.map((item) => item.id).sort()).toEqual(['node-1', 'sub-1']);
 
         await adapter.putSubscription({
-            id: 'sub-3',
-            name: 'Sub Three',
-            url: 'https://c.example.com',
+            id: 'node-2',
+            name: 'Node Two',
+            url: 'ss://method:pass@1.1.1.1:8388#Node2',
         });
-        expect(await adapter.getSubscriptionById('sub-3')).toMatchObject({
-            id: 'sub-3',
-            name: 'Sub Three',
-        });
+        expect(db.tables.nodes.has('node-2')).toBe(true);
+        expect(db.tables.subscriptions.has('node-2')).toBe(false);
 
-        await adapter.putProfile({ id: 'profile-2', customId: 'custom-2', name: 'Profile Two' });
-        expect(await adapter.getProfileById('profile-2')).toMatchObject({
-            id: 'profile-2',
-            name: 'Profile Two',
-        });
-
-        expect(await adapter.deleteSubscriptionById('sub-1')).toBe(true);
-        expect(await adapter.getSubscriptionById('sub-1')).toBeNull();
-
-        expect(await adapter.deleteProfileById('profile-1')).toBe(true);
-        expect(await adapter.getProfileById('profile-1')).toBeNull();
+        expect(await adapter.deleteSubscriptionById('node-1')).toBe(true);
+        expect(await adapter.getSubscriptionById('node-1')).toBeNull();
     });
 
-    it('supports row-level subscription/profile lookup and update on D1 adapter', async () => {
-        const d1 = createD1Mock({
-            subscriptions: [
-                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com', nodeCount: 1 },
-                { id: 'sub-2', name: 'Sub Two', url: 'https://b.example.com', nodeCount: 2 },
-            ],
-            profiles: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
+    it('stores guestbook in dedicated table and atomically increments profile downloadCount via custom_id', async () => {
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP', downloadCount: 3 }],
         });
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-
-        expect(await adapter.getSubscriptionById('sub-1')).toMatchObject({
-            id: 'sub-1',
-            nodeCount: 1,
+        await adapter.putGuestbookMessage({
+            id: 'msg-1',
+            nickname: 'Alice',
+            content: 'Hello',
+            createdAt: '2026-11-18T10:00:00.000Z',
         });
-        expect(await adapter.getProfileById('profile-1')).toMatchObject({
-            id: 'profile-1',
-            name: 'Profile One',
-        });
-        expect(await adapter.getAllSubscriptions()).toHaveLength(2);
-        expect(await adapter.getAllProfiles()).toHaveLength(1);
+        expect(db.tables.guestbook.has('msg-1')).toBe(true);
+        expect(db.tables.settings.size).toBe(0);
+        expect(await adapter.getAllGuestbookMessages()).toHaveLength(1);
 
-        const related = await adapter.getSubscriptionsByIds(['sub-2', 'sub-1']);
-        expect(related.map((item) => item.id).sort()).toEqual(['sub-1', 'sub-2']);
-
-        await adapter.updateSubscriptionById('sub-2', (current) => ({ ...current, nodeCount: 9 }));
-        expect(await adapter.getSubscriptionById('sub-2')).toMatchObject({
-            id: 'sub-2',
-            nodeCount: 9,
-        });
-
-        await adapter.putSubscription({
-            id: 'sub-3',
-            name: 'Sub Three',
-            url: 'https://c.example.com',
-            nodeCount: 0,
-        });
-        expect(await adapter.getSubscriptionById('sub-3')).toMatchObject({
-            id: 'sub-3',
-            name: 'Sub Three',
-        });
-
-        await adapter.putProfile({ id: 'profile-2', customId: 'custom-2', name: 'Profile Two' });
-        expect(await adapter.getProfileById('profile-2')).toMatchObject({
-            id: 'profile-2',
-            name: 'Profile Two',
-        });
-
-        expect(await adapter.deleteSubscriptionById('sub-1')).toBe(true);
-        expect(await adapter.getSubscriptionById('sub-1')).toBeNull();
-
-        expect(await adapter.deleteProfileById('profile-1')).toBe(true);
-        expect(await adapter.getProfileById('profile-1')).toBeNull();
+        const nextCount = await adapter.incrementProfileDownloadCount('vip');
+        expect(nextCount).toBe(4);
+        expect((await adapter.getProfileById('p-1')).downloadCount).toBe(4);
+        expect(db.tables.settings.size).toBe(0);
     });
 
-    it('caches D1 collection reads and invalidates them after writes', async () => {
-        const queryCounts = {};
-        const d1 = createD1Mock({
-            subscriptions: [{ id: 'sub-1', name: 'Sub One' }],
-            profiles: [{ id: 'profile-1', name: 'Profile One' }],
-            queryCounts,
-        });
-        const firstAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-        const secondAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
+    it('stores access_logs and error_reports as dedicated row-level tables and populates cache.expires_at', async () => {
+        const now = Date.now();
+        const db = createMemoryD1();
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        const [firstSubs, secondSubs] = await Promise.all([
-            firstAdapter.getAllSubscriptions(),
-            secondAdapter.getAllSubscriptions(),
-        ]);
-        expect(firstSubs).toHaveLength(1);
-        expect(secondSubs).toHaveLength(1);
-        expect(queryCounts.subscriptions).toBe(1);
+        await adapter.put('worker_settings_v1', { FileName: 'MiSub' });
+        await adapter.put('node_cache_profile_p1', { nodes: 'ss://a', timestamp: now });
+        await adapter.put('node_cache_subscription_s1', { nodes: ['ss://b'], sourceId: 's1' });
+        await adapter.put('cron_last_execution', { timestamp: new Date(now).toISOString() });
 
-        await firstAdapter.getAllProfiles();
-        await secondAdapter.getAllProfiles();
-        expect(queryCounts.profiles).toBe(1);
-
-        await firstAdapter.putSubscription({ id: 'sub-2', name: 'Sub Two' });
-        expect(await secondAdapter.getAllSubscriptions()).toHaveLength(2);
-        expect(queryCounts.subscriptions).toBe(2);
-
-        await firstAdapter.putProfile({ id: 'profile-2', name: 'Profile Two' });
-        expect(await secondAdapter.getAllProfiles()).toHaveLength(2);
-        expect(queryCounts.profiles).toBe(2);
-    });
-
-    it('reads legacy D1 main-row blob data alongside row-level records', async () => {
-        const d1 = createD1Mock({
-            subscriptions: [
-                { id: 'main', items: true },
-                { id: 'sub-new', name: 'Sub New', url: 'https://new.example.com' },
-            ],
-            profiles: [
-                { id: 'main', items: true },
-                { id: 'profile-new', name: 'Profile New' },
-            ],
-        });
-
-        // Overwrite main rows with legacy blob arrays.
-        d1.prepare(
-            'INSERT OR REPLACE INTO subscriptions (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-        )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'sub-legacy', name: 'Legacy Sub', url: 'https://legacy.example.com' },
-                ])
-            )
-            .run();
-        d1.prepare(
-            'INSERT OR REPLACE INTO profiles (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-        )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'profile-legacy', customId: 'legacy-custom', name: 'Legacy Profile' },
-                ])
-            )
-            .run();
-
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-
-        const allSubs = await adapter.getAllSubscriptions();
-        expect(allSubs.map((item) => item.id).sort()).toEqual(['sub-legacy', 'sub-new']);
-
-        const allProfiles = await adapter.getAllProfiles();
-        expect(allProfiles.map((item) => item.id).sort()).toEqual([
-            'profile-legacy',
-            'profile-new',
+        await adapter.insertAccessLogs([
+            { id: 'log-1', timestamp: now - 1000, status: 'success', domain: 'a.example.com' },
+            { id: 'log-2', timestamp: now, status: 'error', domain: 'b.example.com' },
         ]);
 
-        expect(await adapter.getSubscriptionById('sub-legacy')).toMatchObject({
-            id: 'sub-legacy',
-            name: 'Legacy Sub',
-        });
-        expect(await adapter.getProfileById('legacy-custom')).toMatchObject({
-            id: 'profile-legacy',
-            name: 'Legacy Profile',
-        });
+        const errResp = await handleErrorReportRequest(
+            new Request('https://example.com/api/error_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'Boom', context: 'unit-test' }),
+            }),
+            { MISUB_DB: db }
+        );
+        expect(errResp.status).toBe(200);
 
-        const related = await adapter.getSubscriptionsByIds(['sub-legacy', 'sub-new']);
-        expect(related.map((item) => item.id).sort()).toEqual(['sub-legacy', 'sub-new']);
+        expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
+        expect(db.cacheExpiresAt.get('node_cache_profile_p1')).toBeGreaterThan(now);
+        expect(db.cacheExpiresAt.get('node_cache_subscription_s1')).toBeNull();
+        expect(db.tables.access_logs.size).toBe(2);
+        expect(db.tables.error_reports.size).toBe(1);
+
+        const logs = await adapter.getAccessLogs({ limit: 10 });
+        expect(logs.map((l) => l.id)).toEqual(['log-2', 'log-1']);
+
+        const reports = await adapter.getErrorReports(10);
+        expect(reports[0]).toMatchObject({ message: 'Boom', context: 'unit-test' });
     });
 
-    it('migrates legacy D1 main rows into row-level records', async () => {
-        const d1 = createD1Mock();
-
-        await d1
-            .prepare(
-                'INSERT OR REPLACE INTO subscriptions (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-            )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'sub-legacy', name: 'Legacy Sub', url: 'https://legacy.example.com' },
-                ])
-            )
-            .run();
-        await d1
-            .prepare(
-                'INSERT OR REPLACE INTO profiles (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)'
-            )
-            .bind(
-                'main',
-                JSON.stringify([
-                    { id: 'profile-legacy', customId: 'legacy-custom', name: 'Legacy Profile' },
-                ])
-            )
-            .run();
-
-        const result = await DataMigrator.migrateLegacyD1MainRows({ MISUB_DB: d1 });
-        expect(result.errors).toEqual([]);
-        expect(result.subscriptions).toBe(1);
-        expect(result.profiles).toBe(1);
-
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 }, 'd1');
-        expect(await adapter.getSubscriptionById('sub-legacy')).toMatchObject({
-            id: 'sub-legacy',
-            name: 'Legacy Sub',
+    it('cascades cleanup of node caches when deleting profiles or subscriptions', async () => {
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP' }],
+            misub_subscriptions_v1: [
+                { id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' },
+            ],
+            node_cache_profile_vip: { nodes: 'a', timestamp: Date.now() },
+            'node_cache_profile_p-1': { nodes: 'b', timestamp: Date.now() },
+            'node_cache_subscription_sub-1': { nodes: ['ss://1'], sourceId: 'sub-1' },
         });
-        expect(await adapter.getProfileById('profile-legacy')).toMatchObject({
-            id: 'profile-legacy',
-            name: 'Legacy Profile',
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+
+        await adapter.deleteProfileById('p-1');
+        expect(db.tables.cache.has('node_cache_profile_vip')).toBe(false);
+        expect(db.tables.cache.has('node_cache_profile_p-1')).toBe(false);
+
+        await adapter.deleteSubscriptionById('sub-1');
+        expect(db.tables.cache.has('node_cache_subscription_sub-1')).toBe(false);
+    });
+
+    it('cleanupMaintenance migrates manual nodes, guestbook, download counts, and legacy logs into 8-table schema', async () => {
+        const now = 1_800_000_000_000;
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
+            worker_settings_v1: { FileName: 'MiSub' },
         });
+
+        db.tables.subscriptions.set(
+            'legacy-node-1',
+            JSON.stringify({
+                id: 'legacy-node-1',
+                name: 'Legacy Node',
+                url: 'tuic://token@example.com:443#Legacy',
+            })
+        );
+        db.tables.subscriptions.set(
+            'remote-sub-1',
+            JSON.stringify({
+                id: 'remote-sub-1',
+                name: 'Airport',
+                url: 'https://airport.example.com/sub',
+            })
+        );
+
+        db.tables.settings.set('misub_guestbook_v1_index', JSON.stringify(['g-1']));
+        db.tables.settings.set(
+            'misub_guestbook_v1:item:g-1',
+            JSON.stringify({ id: 'g-1', nickname: 'Bob', content: 'Hi' })
+        );
+        db.tables.settings.set('misub_profile_download_count_active-profile', '12');
+        db.tables.settings.set('misub_profile_download_count_deleted-profile', '2');
+        db.tables.settings.set('node_cache_profile_legacy', JSON.stringify({ nodes: 'old' }));
+        db.tables.settings.set(
+            'misub_system_logs:2026-11-15',
+            JSON.stringify([{ id: 'l1', timestamp: now - 5000 }])
+        );
+
+        // 模拟过渡期遗留的旧 logs 键值表
+        db.tables.logs.set(
+            'misub_error_reports',
+            JSON.stringify([{ id: 'err-1', message: 'Legacy crash', receivedAt: now - 3000 }])
+        );
+
+        // 模拟已带 expires_at 的过期缓存行 + 未回填 expires_at 的新鲜缓存行
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+        await adapter.put('tg_push_rate:u1:min', { count: 1, expiresAt: now - 1000 });
+        db.tables.cache.set(
+            'github_release_fresh/repo',
+            JSON.stringify({ data: {}, timestamp: now - 1000 })
+        );
+        db.cacheExpiresAt.set('github_release_fresh/repo', null);
+
+        const stats = await adapter.cleanupMaintenance({ now });
+
+        expect(stats).toEqual({
+            migratedNodes: 1,
+            migratedGuestbook: 1,
+            mergedDownloadCounts: 1,
+            migratedLogs: 1,
+            migratedErrorReports: 1,
+            removedSettingsClutter: 2,
+            removedOrphanCounts: 1,
+            removedExpiredCache: 1,
+        });
+
+        expect(Array.from(db.tables.subscriptions.keys())).toEqual(['remote-sub-1']);
+        expect(Array.from(db.tables.nodes.keys())).toEqual(['legacy-node-1']);
+        expect(Array.from(db.tables.guestbook.keys())).toEqual(['g-1']);
+        expect((await adapter.getProfileById('active-profile')).downloadCount).toBe(12);
+        expect(db.tables.access_logs.has('l1')).toBe(true);
+        expect(db.tables.error_reports.has('err-1')).toBe(true);
+        expect(db.tables.logs.size).toBe(0);
+
+        expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
+        expect(Array.from(db.tables.cache.keys())).toEqual(['github_release_fresh/repo']);
+        expect(db.cacheExpiresAt.get('github_release_fresh/repo')).toBeGreaterThan(now);
+    });
+
+    it('avoids full-table scans on subscription group pull and invalid-token / disguise requests', async () => {
+        const db = createMemoryD1({
+            worker_settings_v1: {
+                mytoken: 'admin-token',
+                profileToken: 'profiles',
+                enableFlagEmoji: false,
+                enableTrafficNode: false,
+                disguise: { enabled: true, pageType: 'default' },
+            },
+            misub_subscriptions_v1: [
+                { id: 'node-target', name: 'TargetNode', url: 'ss://YWVzLTI1Ni1nY206cGFzcw@1.1.1.1:8388#Target', enabled: true },
+                { id: 'node-unused', name: 'UnusedNode', url: 'ss://YWVzLTI1Ni1nY206cGFzcw@2.2.2.2:8388#Unused', enabled: true },
+            ],
+            misub_profiles_v1: [
+                { id: 'prof-1', customId: 'my-vip', name: 'My VIP', enabled: true, subscriptions: [], manualNodes: ['node-target'] },
+                { id: 'prof-2', customId: 'other', name: 'Other', enabled: true, subscriptions: [], manualNodes: ['node-unused'] },
+            ],
+        });
+
+        const prepareSpy = vi.spyOn(db, 'prepare');
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        try {
+            // 1. 浏览器伪装页请求：仅读 settings，绝不扫描 profiles / subscriptions / nodes
+            const disguiseResp = await handleMisubRequest({
+                request: new Request('https://example.com/profiles/my-vip', {
+                    headers: { 'User-Agent': 'Mozilla/5.0 Chrome/120.0.0.0 Safari/537.36' },
+                }),
+                env: { MISUB_DB: db },
+                waitUntil: vi.fn(),
+            });
+            expect(disguiseResp.status).toBe(404);
+            const disguiseSqls = prepareSpy.mock.calls.map((c) => c[0]);
+            expect(disguiseSqls.some((sql) => /FROM (profiles|subscriptions|nodes)/i.test(sql))).toBe(false);
+
+            prepareSpy.mockClear();
+
+            // 2. 单订阅组拉取请求：通过 custom_id 精准单行读取 profile 与关联的 manualNodes，不触发全表 SELECT data FROM profiles/subscriptions/nodes
+            const subResp = await handleMisubRequest({
+                request: new Request('https://example.com/profiles/my-vip?target=nodes', {
+                    headers: { 'User-Agent': 'ClashMeta' },
+                }),
+                env: { MISUB_DB: db },
+                waitUntil: vi.fn(),
+            });
+            expect(subResp.status).toBe(200);
+            const subSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
+            expect(subSqls.some((sql) => /^SELECT data FROM (profiles|subscriptions|nodes)$/i.test(sql))).toBe(false);
+            expect(subSqls.some((sql) => /FROM profiles WHERE id = \? OR custom_id = \?/i.test(sql))).toBe(true);
+        } finally {
+            logSpy.mockRestore();
+        }
     });
 });

@@ -1,6 +1,7 @@
 <script setup>
     import { computed, ref } from 'vue';
     import {
+        Check,
         ExternalLink,
         Eye,
         Link2,
@@ -12,6 +13,7 @@
         Trash2,
     } from '@lucide/vue';
     import { formatBytes } from '@/lib/utils.js';
+    import { getItemTags } from '@/utils/tags.js';
     import { inferAirportRootDomain } from '@/utils/airport-domain.js';
     import { lookupDomainName } from '@/utils/domain-name-memory.js';
     import { api } from '@/lib/http.js';
@@ -24,6 +26,14 @@
             type: Object,
             required: true,
         },
+        isSelectionMode: {
+            type: Boolean,
+            default: false,
+        },
+        isSelected: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const emit = defineEmits([
@@ -34,8 +44,14 @@
         'preview',
         'qrcode',
         'applyDetectedName',
+        'filter-tag',
+        'toggle-select',
     ]);
     const { t } = useI18n();
+
+    const subTags = computed(() => getItemTags(props.misub));
+    const visibleTags = computed(() => subTags.value.slice(0, 2));
+    const overflowCount = computed(() => Math.max(0, subTags.value.length - 2));
 
     const getProtocol = (url) => {
         try {
@@ -208,25 +224,73 @@
 
 <template>
     <div
-        class="group relative flex h-full flex-col overflow-hidden rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
-        :class="{
-            'opacity-60': !misub.enabled,
-        }"
+        class="group relative flex h-full flex-col overflow-hidden rounded-md border p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
+        :class="[
+            isSelectionMode && isSelected
+                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
+                : 'border-zinc-800 bg-[#171717]',
+            {
+                'opacity-60': !misub.enabled && !isSelectionMode,
+                'cursor-pointer': isSelectionMode,
+            },
+        ]"
+        @click="isSelectionMode ? emit('toggle-select') : null"
     >
         <div class="relative z-10 flex flex-col h-full">
             <!-- Header -->
             <div class="flex items-center justify-between gap-2">
-                <div class="flex min-w-0 flex-wrap items-center gap-2">
+                <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                    <!-- Selection Checkbox -->
+                    <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
+                        <div
+                            class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
+                            :class="
+                                isSelected
+                                    ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
+                                    : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
+                            "
+                        >
+                            <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
+                        </div>
+                    </div>
+
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
+                        class="inline-flex items-center gap-1.5 shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
                         :class="protocolStyle.style"
                     >
                         <span class="h-1.5 w-1.5 rounded-full" :class="protocolStyle.dot"></span>
                         {{ protocolStyle.text }}
                     </span>
+
+                    <!-- Tags -->
+                    <div
+                        v-if="subTags.length > 0"
+                        data-testid="subscription-card-tags"
+                        class="flex flex-wrap items-center gap-1.5"
+                    >
+                        <button
+                            v-for="tag in visibleTags"
+                            :key="tag"
+                            type="button"
+                            data-testid="subscription-tag-badge"
+                            class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                            :title="tag"
+                            @click.stop="emit('filter-tag', tag)"
+                        >
+                            {{ tag }}
+                        </button>
+                        <span
+                            v-if="overflowCount > 0"
+                            class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                            :title="subTags.join(', ')"
+                        >
+                            +{{ overflowCount }}
+                        </span>
+                    </div>
+
                     <span
                         v-if="expiryInfo"
-                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
+                        class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono"
                         :class="expiryInfo.style"
                     >
                         <span class="h-1.5 w-1.5 rounded-full" :class="expiryInfo.dot"></span>
@@ -236,6 +300,7 @@
 
                 <!-- Action Buttons (Always visible, subtle at rest) -->
                 <div
+                    v-if="!isSelectionMode"
                     class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
                 >
                     <button
@@ -334,7 +399,7 @@
             </div>
 
             <!-- URL Display -->
-            <div class="relative mt-3 mb-3">
+            <div class="relative mt-3 mb-3" :class="{ 'pointer-events-none': isSelectionMode }">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Link2 class="h-3.5 w-3.5 text-zinc-500" />
                 </div>
@@ -381,7 +446,10 @@
             </div>
 
             <!-- Footer Actions -->
-            <div class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+            <div
+                class="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800 pt-3"
+                :class="{ 'pointer-events-none': isSelectionMode }"
+            >
                 <Switch
                     v-model="misub.enabled"
                     :label="misub.enabled ? t('common.enabled') : t('common.disabled')"

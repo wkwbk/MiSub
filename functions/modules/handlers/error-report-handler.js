@@ -3,6 +3,7 @@
  * 接收前端错误上报并写入 KV
  */
 
+import { StorageFactory } from '../../storage-adapter.js';
 import {
     createErrorResponse,
     createJsonResponse,
@@ -21,8 +22,9 @@ const MAX_PERSISTED_REPORTS_PER_MINUTE = 6;
 let recentReportFingerprints = new Map();
 let persistedReportTimestamps = [];
 
-function getKV(env) {
-    return env?.MISUB_KV || null;
+async function getStorageAdapter(env) {
+    const storageType = await StorageFactory.getStorageType(env);
+    return StorageFactory.createAdapter(env, storageType);
 }
 
 function safeString(value, limit) {
@@ -83,9 +85,9 @@ export async function handleErrorReportRequest(request, env) {
         return createErrorResponse('Method Not Allowed', 405);
     }
 
-    // 无 KV 时静默成功（不阻塞前端）
-    const kv = getKV(env);
-    if (!kv) {
+    // 无可用存储时静默成功（不阻塞前端）
+    const storageAdapter = await getStorageAdapter(env);
+    if (!storageAdapter || storageAdapter.type === 'noop') {
         return createJsonResponse({ success: true });
     }
 
@@ -113,8 +115,12 @@ export async function handleErrorReportRequest(request, env) {
             ),
         };
 
-        const raw = await kv.get(ERROR_REPORT_KV_KEY);
-        let reports = raw ? JSON.parse(raw) : [];
+        if (typeof storageAdapter.insertErrorReport === 'function') {
+            await storageAdapter.insertErrorReport(report, MAX_REPORT_ENTRIES);
+            return createJsonResponse({ success: true });
+        }
+
+        let reports = await storageAdapter.get(ERROR_REPORT_KV_KEY);
         if (!Array.isArray(reports)) reports = [];
 
         reports.unshift(report);
@@ -122,7 +128,7 @@ export async function handleErrorReportRequest(request, env) {
             reports = reports.slice(0, MAX_REPORT_ENTRIES);
         }
 
-        await kv.put(ERROR_REPORT_KV_KEY, JSON.stringify(reports));
+        await storageAdapter.put(ERROR_REPORT_KV_KEY, reports);
 
         return createJsonResponse({ success: true });
     } catch (error) {

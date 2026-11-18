@@ -378,6 +378,23 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
         }
     }
 
+    // 1.2 针对 TUIC / SOCKS / AnyTLS 等协议恢复 @ 前面被错误转义的冒号（如 v2rayN 导出的 %3A）
+    if (/^(tuic|socks5?|anytls|naive\+https?|naive\+quic):\/\//i.test(nodeUrl)) {
+        const protocolEnd = nodeUrl.indexOf('://');
+        const rest = nodeUrl.slice(protocolEnd + 3);
+        const authorityEnd = rest.search(/[/?#]/);
+        const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
+        const atIndex = authority.lastIndexOf('@');
+        if (atIndex !== -1) {
+            const userInfo = authority.slice(0, atIndex);
+            const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
+            if (cleanedUserInfo !== userInfo) {
+                nodeUrl = `${nodeUrl.slice(0, protocolEnd + 3)}${cleanedUserInfo}${rest.slice(atIndex)}`;
+            }
+        }
+        return normalizeFragment(nodeUrl);
+    }
+
     // 2. 其他协议的 Base64 修复逻辑
     if (
         !nodeUrl.startsWith('ss://') &&

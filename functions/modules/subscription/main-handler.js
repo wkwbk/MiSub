@@ -41,12 +41,6 @@ function maskSensitiveLogValue(value) {
     return `${text.slice(0, 4)}…${text.slice(-4)} (${text.length})`;
 }
 
-const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
-
-function getProfileDownloadCountKey(profile) {
-    return `${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`;
-}
-
 function buildTemplateProxyBlock(nodeList) {
     return nodeList
         .split('\n')
@@ -531,21 +525,9 @@ export async function handleMisubRequest(context) {
         await StorageFactory.getStorageType(env)
     );
     context.storage = storageAdapter;
-    const [settingsData, allMisubs, allProfiles] = await Promise.all([
-        storageAdapter.get(KV_KEY_SETTINGS),
-        storageAdapter.getAllSubscriptions(),
-        storageAdapter.getAllProfiles(),
-    ]);
+    const settingsData = await storageAdapter.get(KV_KEY_SETTINGS);
     const settings = settingsData || {};
 
-    // 自动迁移旧版 profile ID（去除 'profile_' 前缀）
-    if (migrateProfileIds(allProfiles)) {
-        storageAdapter
-            .put(KV_KEY_PROFILES, allProfiles)
-            .catch((err) =>
-                console.error('[Migration] Failed to persist migrated profile IDs:', err)
-            );
-    }
     // 关键：我们在这里定义了 `config`，后续都应该使用它
     const config = migrateConfigSettings({ ...defaultSettings, ...settings });
     context.config = config;
@@ -580,7 +562,7 @@ export async function handleMisubRequest(context) {
     }
 
     context.url = url; // [核心修复] 将 url 挂载到 context，确保后续服务能获取到 debug 参数
-    const { token, profileIdentifier } = resolveRequestContext(url, config, allProfiles);
+    const { token, profileIdentifier } = resolveRequestContext(url, config);
 
     console.log(
         `[MiSub Parse] Token: ${maskSensitiveLogValue(token)}, Profile: ${maskSensitiveLogValue(profileIdentifier)}`
@@ -628,9 +610,25 @@ export async function handleMisubRequest(context) {
                 new Response('Not Found', { status: 404 })
             );
         }
-        currentProfile = allProfiles.find(
-            (p) => (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-        );
+        if (typeof storageAdapter.getProfileById === 'function') {
+            currentProfile = await storageAdapter.getProfileById(profileIdentifier);
+        } else {
+            const allProfiles =
+                typeof storageAdapter.getAllProfiles === 'function'
+                    ? await storageAdapter.getAllProfiles()
+                    : (await storageAdapter.get(KV_KEY_PROFILES)) || [];
+            if (migrateProfileIds(allProfiles)) {
+                storageAdapter
+                    .put(KV_KEY_PROFILES, allProfiles)
+                    .catch((err) =>
+                        console.error('[Migration] Failed to persist migrated profile IDs:', err)
+                    );
+            }
+            currentProfile = allProfiles.find(
+                (p) =>
+                    (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
+            );
+        }
         initEngineFlags(currentProfile);
         const profile = currentProfile;
         if (profile && profile.enabled) {
@@ -656,20 +654,30 @@ export async function handleMisubRequest(context) {
             } else {
                 subName = profile.name;
                 targetMisubs = [];
-                const relatedIds = [
-                    ...(Array.isArray(profile.subscriptions)
-                        ? profile.subscriptions.map((item) =>
-                              typeof item === 'object' ? item.id : item
-                          )
-                        : []),
-                    ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
-                ].filter(Boolean);
-                const relatedSubs =
-                    typeof storageAdapter.getSubscriptionsByIds === 'function'
-                        ? await storageAdapter.getSubscriptionsByIds(
-                              Array.from(new Set(relatedIds))
-                          )
-                        : allMisubs;
+                const subSourceIds = Array.isArray(profile.subscriptions)
+                    ? profile.subscriptions
+                          .map((item) => (typeof item === 'object' ? item.id : item))
+                          .filter(Boolean)
+                    : [];
+                const manualNodeIds = Array.isArray(profile.manualNodes)
+                    ? profile.manualNodes.filter(Boolean)
+                    : [];
+                let relatedSubs = [];
+                if (typeof storageAdapter.getProfileSources === 'function') {
+                    relatedSubs = await storageAdapter.getProfileSources(
+                        subSourceIds,
+                        manualNodeIds
+                    );
+                } else if (typeof storageAdapter.getSubscriptionsByIds === 'function') {
+                    relatedSubs = await storageAdapter.getSubscriptionsByIds(
+                        Array.from(new Set([...subSourceIds, ...manualNodeIds]))
+                    );
+                } else {
+                    relatedSubs =
+                        typeof storageAdapter.getAllSubscriptions === 'function'
+                            ? await storageAdapter.getAllSubscriptions()
+                            : (await storageAdapter.get('misub_subscriptions_v1')) || [];
+                }
                 const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
                 // 1. Add subscriptions in order defined by profile
@@ -738,7 +746,7 @@ export async function handleMisubRequest(context) {
                                         id: `nested-${subProfileId}-${node.url}`,
                                         name: node.name,
                                         url: node.url,
-                                        group: subResult.profileName || '组合订阅',
+                                        tags: [subResult.profileName || '组合订阅'],
                                         isFromSubProfile: true,
                                         enabled: true,
                                     });
@@ -762,14 +770,14 @@ export async function handleMisubRequest(context) {
                 config.enableAccessLog
             ) {
                 try {
-                    const downloadCountKey = getProfileDownloadCountKey(profile);
-                    const currentCount = Number(await storageAdapter.get(downloadCountKey)) || 0;
                     context.waitUntil(
-                        storageAdapter
-                            .put(downloadCountKey, currentCount + 1)
-                            .catch((err) =>
-                                console.error('[Download Count] Failed to update:', err)
+                        Promise.resolve(
+                            storageAdapter.incrementProfileDownloadCount?.(
+                                profile.id || profile.customId
                             )
+                        ).catch((err) =>
+                            console.error('[Download Count] Failed to update:', err)
+                        )
                     );
                 } catch (err) {
                     // 计数失败不影响订阅服务
@@ -788,6 +796,10 @@ export async function handleMisubRequest(context) {
                 new Response('Not Found', { status: 404 })
             );
         }
+        const allMisubs =
+            typeof storageAdapter.getAllSubscriptions === 'function'
+                ? await storageAdapter.getAllSubscriptions()
+                : (await storageAdapter.get('misub_subscriptions_v1')) || [];
         targetMisubs = allMisubs.filter((s) => s.enabled);
         initEngineFlags(null);
     }
@@ -921,12 +933,7 @@ export async function handleMisubRequest(context) {
             domain,
         };
 
-        const activeProfile = profileIdentifier
-            ? allProfiles.find(
-                  (p) =>
-                      (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-              )
-            : null;
+        const activeProfile = profileIdentifier ? currentProfile : null;
 
         // 设置优先级：订阅组设置 > 全局设置 > 内置默认值
         // prefixSettings 回退逻辑

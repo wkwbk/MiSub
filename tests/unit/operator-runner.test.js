@@ -157,7 +157,7 @@ describe('operator runner', () => {
         expect(decodeURIComponent(result[0])).toContain('#香港|机场A|线路B');
     });
 
-    it('sorts nodes by custom group metadata', async () => {
+    it('sorts nodes by tag metadata', async () => {
         const urls = [
             'ss://YWVzLTEyOC1nY206cGFzcw@us.example.com:8388#USNode',
             'ss://YWVzLTEyOC1nY206cGFzcw@hk.example.com:8388#HKNode',
@@ -170,15 +170,15 @@ describe('operator runner', () => {
                 {
                     type: 'sort',
                     params: {
-                        keys: [{ key: 'group', order: 'asc' }],
+                        keys: [{ key: 'tag', order: 'asc' }],
                     },
                 },
             ],
             {
                 nodeMetadataByUrl: new Map([
-                    [urls[0], { group: 'B-US' }],
-                    [urls[1], { group: 'A-HK' }],
-                    [urls[2], { group: 'C-JP' }],
+                    [urls[0], { tags: ['B-US'] }],
+                    [urls[1], { tags: ['A-HK'] }],
+                    [urls[2], { tags: ['C-JP'] }],
                 ]),
             }
         );

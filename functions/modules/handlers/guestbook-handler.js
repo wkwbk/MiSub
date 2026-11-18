@@ -11,51 +11,25 @@ import {
     readJsonWithLimit,
 } from '../utils.js';
 import { sendTgNotification } from '../notifications.js';
-import { DEFAULT_SETTINGS, KV_KEY_GUESTBOOK, KV_KEY_SETTINGS } from '../config.js';
-
-const GUESTBOOK_INDEX_KEY = `${KV_KEY_GUESTBOOK}_index`;
-const GUESTBOOK_ITEM_PREFIX = `${KV_KEY_GUESTBOOK}:item:`;
+import { DEFAULT_SETTINGS, KV_KEY_SETTINGS } from '../config.js';
 
 /**
  * 获取存储适配器实例
  */
 async function getStorageAdapter(env) {
-    const storageType = await StorageFactory.getStorageType(env);
-    return StorageFactory.createAdapter(env, storageType);
-}
-
-function getGuestbookItemKey(id) {
-    return `${GUESTBOOK_ITEM_PREFIX}${id}`;
+    return StorageFactory.createAdapter(env);
 }
 
 async function loadGuestbookMessages(storageAdapter) {
-    const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
-    if (Array.isArray(index) && index.length > 0) {
-        const entries = await Promise.all(
-            index.map((id) => storageAdapter.get(getGuestbookItemKey(id)))
-        );
-        return entries.filter(Boolean);
-    }
-
-    const legacy = await storageAdapter.get(KV_KEY_GUESTBOOK);
-    return Array.isArray(legacy) ? legacy : [];
+    return await storageAdapter.getAllGuestbookMessages();
 }
 
 async function persistGuestbookMessage(storageAdapter, message) {
-    const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
-    const ids = Array.isArray(index) ? index : [];
-    if (!ids.includes(message.id)) {
-        ids.push(message.id);
-        await storageAdapter.put(GUESTBOOK_INDEX_KEY, ids);
-    }
-    await storageAdapter.put(getGuestbookItemKey(message.id), message);
+    await storageAdapter.putGuestbookMessage(message);
 }
 
 async function removeGuestbookMessage(storageAdapter, id) {
-    const index = await storageAdapter.get(GUESTBOOK_INDEX_KEY);
-    const ids = Array.isArray(index) ? index.filter((item) => item !== id) : [];
-    await storageAdapter.put(GUESTBOOK_INDEX_KEY, ids);
-    await storageAdapter.delete(getGuestbookItemKey(id));
+    await storageAdapter.deleteGuestbookMessageById(id);
 }
 
 /**

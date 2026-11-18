@@ -48,7 +48,6 @@
         'auth_debug',
         'auth_check',
         'data',
-        'kv_test',
         'clients',
         'system',
         'github',
@@ -202,7 +201,7 @@
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-4">
         <!-- 默认显示语言 -->
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader

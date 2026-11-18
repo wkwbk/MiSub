@@ -2,26 +2,42 @@ import { describe, expect, it, vi } from 'vitest';
 import { getAuthDebugInfo, getCookieSecret } from '../../functions/modules/utils.js';
 import { handleLogin } from '../../functions/modules/auth-middleware.js';
 
-function createLimitExceededKv() {
-    const values = new Map();
+function createWriteFailingD1() {
     return {
-        async get(key) {
-            return values.get(key) ?? null;
-        },
-        async put() {
-            throw new Error('KV put() limit exceeded for the day.');
-        },
-        async delete() {
-            return undefined;
+        prepare() {
+            return {
+                async first() {
+                    return null;
+                },
+                async all() {
+                    return { results: [] };
+                },
+                async run() {
+                    throw new Error('D1 write limit exceeded for the day.');
+                },
+                bind() {
+                    return {
+                        async first() {
+                            return null;
+                        },
+                        async all() {
+                            return { results: [] };
+                        },
+                        async run() {
+                            throw new Error('D1 write limit exceeded for the day.');
+                        },
+                    };
+                },
+            };
         },
     };
 }
 
-describe('auth gracefully handles exhausted KV write quota', () => {
-    it('uses COOKIE_SECRET without failing when KV cannot persist it', async () => {
+describe('auth gracefully handles exhausted D1 write quota', () => {
+    it('uses COOKIE_SECRET without failing when D1 cannot persist it', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const env = {
-            MISUB_KV: createLimitExceededKv(),
+            MISUB_DB: createWriteFailingD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
         };
@@ -29,17 +45,17 @@ describe('auth gracefully handles exhausted KV write quota', () => {
         try {
             await expect(getCookieSecret(env)).resolves.toBe('stable-cookie-secret');
             expect(warnSpy).toHaveBeenCalledWith(
-                '[Auth Storage] KV put skipped for SYSTEM_COOKIE_SECRET: KV put() limit exceeded for the day.'
+                '[Auth Storage] D1 put skipped for SYSTEM_COOKIE_SECRET: D1 write limit exceeded for the day.'
             );
         } finally {
             warnSpy.mockRestore();
         }
     });
 
-    it('still logs in when KV put quota is exceeded but COOKIE_SECRET is configured', async () => {
+    it('still logs in when D1 write quota is exceeded but COOKIE_SECRET is configured', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const env = {
-            MISUB_KV: createLimitExceededKv(),
+            MISUB_DB: createWriteFailingD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
         };
@@ -56,31 +72,31 @@ describe('auth gracefully handles exhausted KV write quota', () => {
             expect(response.status).toBe(200);
             expect(body).toEqual({ success: true });
             expect(warnSpy).toHaveBeenCalledWith(
-                '[Auth Storage] KV put skipped for SYSTEM_COOKIE_SECRET: KV put() limit exceeded for the day.'
+                '[Auth Storage] D1 put skipped for SYSTEM_COOKIE_SECRET: D1 write limit exceeded for the day.'
             );
         } finally {
             warnSpy.mockRestore();
         }
     });
 
-    it('auth_debug reports env COOKIE_SECRET without failing when KV put quota is exceeded', async () => {
+    it('auth_debug reports env COOKIE_SECRET without failing when D1 is read-only', async () => {
         const env = {
-            MISUB_KV: createLimitExceededKv(),
+            MISUB_DB: createWriteFailingD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
         };
 
         await expect(getAuthDebugInfo(env)).resolves.toMatchObject({
-            hasKv: true,
+            hasD1: true,
             cookieSecret: {
                 source: 'env',
                 hasRuntime: true,
-                hasKvValue: false,
+                hasD1Value: false,
             },
         });
     });
 
-    it('reuses the same in-memory fallback secret when KV and COOKIE_SECRET are both unavailable', async () => {
+    it('reuses the same in-memory fallback secret when D1 and COOKIE_SECRET are both unavailable', async () => {
         const first = await getCookieSecret({});
         const second = await getCookieSecret({});
 
@@ -88,10 +104,10 @@ describe('auth gracefully handles exhausted KV write quota', () => {
         expect(second).toBe(first);
     });
 
-    it('reuses the same in-memory fallback secret when KV put fails and COOKIE_SECRET is unset', async () => {
+    it('reuses the same in-memory fallback secret when D1 put fails and COOKIE_SECRET is unset', async () => {
         const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const env = {
-            MISUB_KV: createLimitExceededKv(),
+            MISUB_DB: createWriteFailingD1(),
         };
 
         try {

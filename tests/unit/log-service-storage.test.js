@@ -2,16 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createAdapter = vi.fn();
 const getStorageType = vi.fn();
-const resolveKV = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
     StorageFactory: {
         createAdapter: (...args) => createAdapter(...args),
         getStorageType: (...args) => getStorageType(...args),
-        resolveKV: (...args) => resolveKV(...args),
     },
     STORAGE_TYPES: {
-        KV: 'kv',
         D1: 'd1',
     },
 }));
@@ -44,26 +41,22 @@ describe('LogService storage selection', () => {
 
         createAdapter.mockReset();
         getStorageType.mockReset();
-        resolveKV.mockReset();
 
         getStorageType.mockResolvedValue('d1');
-        resolveKV.mockReturnValue({});
     });
 
     afterEach(() => {
         vi.useRealTimers();
     });
 
-    it('writes access logs into D1-backed storage when storageType is d1', async () => {
+    it('writes access logs into D1-backed storage', async () => {
         const d1Storage = createMemoryStorage('d1');
-        const kvStorage = createMemoryStorage('kv');
-
-        createAdapter.mockImplementation((env, type) => (type === 'd1' ? d1Storage : kvStorage));
+        createAdapter.mockReturnValue(d1Storage);
 
         const { LogService } = await import('../../functions/services/log-service.js');
 
         const addLogPromise = LogService.addLog(
-            { MISUB_DB: {}, MISUB_KV: {} },
+            { MISUB_DB: {} },
             {
                 status: 'success',
                 type: 'profile',
@@ -78,9 +71,8 @@ describe('LogService storage selection', () => {
         await addLogPromise;
 
         expect(Array.from(d1Storage.store.keys())).toContain('misub_system_logs:index');
-        expect(Array.from(kvStorage.store.keys())).not.toContain('misub_system_logs:index');
 
-        const logs = await LogService.getLogs({ MISUB_DB: {}, MISUB_KV: {} });
+        const logs = await LogService.getLogs({ MISUB_DB: {} });
         expect(logs).toHaveLength(1);
         expect(logs[0]).toMatchObject({
             token: expect.stringMatching(/^profile:[a-f0-9]{12}$/),
@@ -90,28 +82,21 @@ describe('LogService storage selection', () => {
         expect(JSON.stringify(logs)).not.toContain('profile-token');
     });
 
-    it('clears both D1 logs and legacy KV log buckets in d1 mode', async () => {
+    it('clears D1 log buckets cleanly', async () => {
         const d1Storage = createMemoryStorage('d1');
-        const kvStorage = createMemoryStorage('kv');
 
         d1Storage.store.set('misub_system_logs:index', ['misub_system_logs:2026-04-15']);
         d1Storage.store.set('misub_system_logs:2026-04-15', [
             { id: 'd1-log', timestamp: Date.now() },
         ]);
 
-        kvStorage.store.set('misub_system_logs:index', ['misub_system_logs:2026-04-14']);
-        kvStorage.store.set('misub_system_logs:2026-04-14', [
-            { id: 'kv-log', timestamp: Date.now() },
-        ]);
-
-        createAdapter.mockImplementation((env, type) => (type === 'd1' ? d1Storage : kvStorage));
+        createAdapter.mockReturnValue(d1Storage);
 
         const { LogService } = await import('../../functions/services/log-service.js');
 
-        const result = await LogService.clearLogs({ MISUB_DB: {}, MISUB_KV: {} });
+        const result = await LogService.clearLogs({ MISUB_DB: {} });
 
         expect(result).toBe(true);
         expect(d1Storage.store.size).toBe(0);
-        expect(kvStorage.store.size).toBe(0);
     });
 });

@@ -99,18 +99,10 @@ function getMemoryCache() {
     return globalThis[MEMORY_CACHE_SYMBOL];
 }
 
-function resolveExternalNodesKv(env = {}) {
-    try {
-        return StorageFactory.resolveKV(env);
-    } catch {
-        return null;
-    }
-}
-
 function resolveExternalNodesD1Adapter(env = {}) {
     if (!env?.MISUB_DB) return null;
     try {
-        return StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
+        return StorageFactory.createAdapter(env);
     } catch (error) {
         console.warn('[ExternalNodesCallback] D1 storage unavailable:', error?.message || error);
         return null;
@@ -172,16 +164,6 @@ export async function putExternalNodes({
     const normalizedNodes = String(nodesText || '');
     const nodeHash = await hashExternalNodes(normalizedNodes);
     const cacheKey = buildExternalNodesCacheKey(profileId, nodeHash);
-    const kv = resolveExternalNodesKv(env);
-
-    if (kv?.get && kv?.put) {
-        const existing = await kv.get(cacheKey);
-        if (existing !== null && existing !== undefined) {
-            return { cacheKey, nodeHash, reused: true, storage: 'kv' };
-        }
-        await kv.put(cacheKey, normalizedNodes, { expirationTtl: ttlSeconds });
-        return { cacheKey, nodeHash, reused: false, storage: 'kv' };
-    }
 
     const d1Adapter = resolveExternalNodesD1Adapter(env);
     if (d1Adapter?.get && d1Adapter?.put) {
@@ -211,10 +193,6 @@ export async function putExternalNodes({
 
 export async function getExternalNodes({ env = {}, profileId = 'default', nodeHash } = {}) {
     const cacheKey = buildExternalNodesCacheKey(profileId, nodeHash);
-    const kv = resolveExternalNodesKv(env);
-    if (kv?.get) {
-        return normalizeDurableStoredNodes(await kv.get(cacheKey));
-    }
 
     const d1Adapter = resolveExternalNodesD1Adapter(env);
     if (d1Adapter?.get) {

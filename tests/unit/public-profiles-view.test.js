@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import PublicProfilesView from '@/views/PublicProfilesView.vue';
+import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
+import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
+import { reactive } from 'vue';
 import { api } from '@/lib/http.js';
 
 vi.mock('@/lib/http.js', () => ({
     api: {
         get: vi.fn(),
+        post: vi.fn(),
     },
 }));
 
@@ -364,4 +368,192 @@ describe('PublicProfilesView hero loading state', () => {
             expect(wrapper.text()).toContain('No public profiles available');
         }
     );
+
+    it('renders public navigation links (speedtest, IP tools, server providers) and filters by category', async () => {
+        localStorage.clear();
+        api.get.mockImplementation((url) =>
+            url === '/api/public/profiles'
+                ? Promise.resolve({
+                      success: true,
+                      data: [{ id: '1', name: 'Demo', enabled: true }],
+                      config: { defaultLocale: 'zh-CN' },
+                  })
+                : Promise.resolve({ success: true, data: [] })
+        );
+
+        wrapper = mount(PublicProfilesView, {
+            global: {
+                stubs: {
+                    ProfileGrid: true,
+                    BaseIcon: true,
+                    AnnouncementCard: true,
+                    GuestbookModal: true,
+                    QuickImportModal: true,
+                    NodePreviewModal: true,
+                },
+            },
+        });
+
+        await flushPromises();
+        await vi.dynamicImportSettled();
+
+        expect(wrapper.text()).toContain('常用网站与网络工具');
+        expect(wrapper.text()).toContain('Speedtest');
+        expect(wrapper.text()).toContain('PING0');
+        expect(wrapper.text()).toContain('DMIT');
+
+        const providerTab = wrapper
+            .findAll('button')
+            .find((btn) => btn.text() === '服务器厂商');
+        expect(providerTab).toBeTruthy();
+        await providerTab.trigger('click');
+
+        expect(wrapper.text()).toContain('DMIT');
+        expect(wrapper.text()).toContain('RackNerd');
+        expect(wrapper.text()).not.toContain('PING0');
+    });
+
+    it('allows adding a custom website link in PublicLinksSettings', async () => {
+        api.post.mockResolvedValue({ success: true });
+        const settings = reactive({
+            publicLinks: {
+                enabled: true,
+                items: [
+                    {
+                        id: 'fast-com',
+                        name: 'FAST',
+                        category: 'speedtest',
+                        description: 'Netflix speed test',
+                        url: 'https://fast.com/',
+                        icon: '🚀',
+                        enabled: true,
+                    },
+                ],
+            },
+        });
+
+        wrapper = mount(PublicLinksSettings, {
+            props: { settings },
+            global: {
+                stubs: {
+                    Modal: {
+                        props: ['show', 'title'],
+                        template: '<div v-if="show"><slot name="body" /><slot name="footer" /></div>',
+                    },
+                },
+            },
+        });
+
+        const addButton = wrapper
+            .findAll('button')
+            .find((btn) => btn.text().includes('新增网站') || btn.text().includes('Add website'));
+        await addButton.trigger('click');
+
+        const inputs = wrapper.findAll('input[type="text"]');
+        // [0] is icon URL/Emoji, [1] is name, [2] is website URL
+        await inputs[1].setValue('Whoer');
+        await inputs[2].setValue('whoer.net');
+
+        const saveButton = wrapper
+            .findAll('button')
+            .find((btn) => btn.text() === '保存' || btn.text() === 'Save');
+        await saveButton.trigger('click');
+        await flushPromises();
+
+        expect(settings.publicLinks.items).toHaveLength(2);
+        expect(settings.publicLinks.items[1]).toMatchObject({
+            name: 'Whoer',
+            url: 'https://whoer.net',
+        });
+        expect(api.post).toHaveBeenCalledWith(
+            '/api/settings',
+            { publicLinks: settings.publicLinks },
+            { headers: { 'X-MiSub-Save-Scope': 'preferences' } }
+        );
+    });
+
+    it('filters clients by platform on both PublicProfilesView and ClientSettings', async () => {
+        localStorage.clear();
+        const mockClients = [
+            {
+                id: 'v2rayn',
+                name: 'v2rayN',
+                icon: '💻',
+                description: 'Windows client',
+                platforms: ['windows'],
+                url: 'https://example.com/v2rayn',
+            },
+            {
+                id: 'shadowrocket',
+                name: 'Shadowrocket',
+                icon: '🚀',
+                description: 'iOS client',
+                platforms: ['ios'],
+                url: 'https://example.com/shadowrocket',
+            },
+        ];
+
+        api.get.mockImplementation((url) => {
+            if (url === '/api/public/profiles') {
+                return Promise.resolve({
+                    success: true,
+                    data: [{ id: '1', name: 'Demo', enabled: true }],
+                    config: { defaultLocale: 'zh-CN' },
+                });
+            }
+            if (url === '/api/clients') {
+                return Promise.resolve({
+                    success: true,
+                    data: mockClients,
+                });
+            }
+            return Promise.resolve({ success: true, data: [] });
+        });
+
+        wrapper = mount(PublicProfilesView, {
+            global: {
+                stubs: {
+                    ProfileGrid: true,
+                    BaseIcon: true,
+                    AnnouncementCard: true,
+                    GuestbookModal: true,
+                    QuickImportModal: true,
+                    NodePreviewModal: true,
+                },
+            },
+        });
+
+        await flushPromises();
+        await vi.dynamicImportSettled();
+
+        expect(wrapper.text()).toContain('v2rayN');
+        expect(wrapper.text()).toContain('Shadowrocket');
+
+        const iosTab = wrapper.findAll('button').find((btn) => btn.text() === 'iOS');
+        expect(iosTab).toBeTruthy();
+        await iosTab.trigger('click');
+
+        expect(wrapper.text()).toContain('Shadowrocket');
+        expect(wrapper.text()).not.toContain('v2rayN');
+
+        wrapper.unmount();
+
+        wrapper = mount(ClientSettings, {
+            global: {
+                stubs: {
+                    Modal: true,
+                },
+            },
+        });
+        await flushPromises();
+
+        expect(wrapper.text()).toContain('v2rayN');
+        expect(wrapper.text()).toContain('Shadowrocket');
+
+        const settingsIosTab = wrapper.findAll('button').find((btn) => btn.text() === 'iOS');
+        await settingsIosTab.trigger('click');
+
+        expect(wrapper.text()).toContain('Shadowrocket');
+        expect(wrapper.text()).not.toContain('v2rayN');
+    });
 });

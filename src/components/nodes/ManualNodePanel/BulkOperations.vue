@@ -3,7 +3,7 @@
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
-    const props = defineProps({
+    defineProps({
         isSelectionMode: {
             type: Boolean,
             default: false,
@@ -16,17 +16,9 @@
             type: Number,
             default: 0,
         },
-        groups: {
-            type: Array,
-            default: () => [],
-        },
     });
 
-    const emit = defineEmits(['toggle-select-all', 'batch-group', 'batch-delete', 'exit']);
-
-    const handleMoveToGroup = () => {
-        emit('batch-group');
-    };
+    const emit = defineEmits(['toggle-select-all', 'batch-tag', 'batch-delete', 'exit']);
 </script>
 
 <template>
@@ -58,10 +50,10 @@
                     }}</span>
                     <div class="flex items-center gap-3 sm:gap-2 w-full sm:w-auto">
                         <button
-                            @click="handleMoveToGroup"
-                            class="flex-1 sm:flex-none text-xs font-semibold px-3 py-1.5 bg-zinc-100 text-zinc-900 rounded-md border border-zinc-100 hover:bg-white transition-colors whitespace-nowrap"
+                            @click="emit('batch-tag')"
+                            class="flex-1 sm:flex-none text-xs font-semibold px-3 py-1.5 bg-zinc-100 text-zinc-900 rounded-md border border-zinc-100 hover:bg-white transition-colors whitespace-nowrap cursor-pointer"
                         >
-                            {{ t('manualNodes.moveToGroup') }}
+                            {{ t('manualNodes.batchTag') }}
                         </button>
                     </div>
                 </div>
@@ -71,14 +63,14 @@
                 >
                     <button
                         @click="emit('batch-delete')"
-                        class="flex-1 sm:flex-none justify-center text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap flex items-center gap-1 px-3 py-1.5 border border-zinc-800 hover:border-red-900/60 hover:bg-red-950/40 bg-transparent rounded-md transition-colors"
+                        class="flex-1 sm:flex-none justify-center text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap flex items-center gap-1 px-3 py-1.5 border border-zinc-800 hover:border-red-900/60 hover:bg-red-950/40 bg-transparent rounded-md transition-colors cursor-pointer"
                     >
                         <Trash2 class="h-3.5 w-3.5" />
                         {{ t('actions.delete') }}
                     </button>
                     <button
                         @click="emit('exit')"
-                        class="flex-1 sm:flex-none justify-center text-xs text-zinc-400 hover:text-zinc-100 whitespace-nowrap px-3 py-1.5 border border-zinc-800 bg-transparent hover:bg-zinc-900 rounded-md transition-colors"
+                        class="flex-1 sm:flex-none justify-center text-xs text-zinc-400 hover:text-zinc-100 whitespace-nowrap px-3 py-1.5 border border-zinc-800 bg-transparent hover:bg-zinc-900 rounded-md transition-colors cursor-pointer"
                     >
                         {{ t('actions.exit') }}
                     </button>

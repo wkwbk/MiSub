@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { addFlagEmoji, prependNodeName } from '../../functions/utils/node-utils.js';
+import {
+    addFlagEmoji,
+    fixNodeUrlEncoding,
+    prependNodeName,
+} from '../../functions/utils/node-utils.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
+import { cleanNodeUrl, cleanNodeUrlsText } from '../../src/lib/utils.js';
 
 function buildSsrUrl(name = '台湾 1') {
     return convertClashProxyToUrl({
@@ -158,6 +163,31 @@ describe('node-utils', () => {
             path: '/argo',
             host: 'example.org',
             mode: 'packet-up',
+        });
+    });
+
+    it('cleanNodeUrl 应恢复 @ 前面被 URL 编码的冒号（如 v2rayN 导出的 TUIC v5 链接）且保留后缀参数', () => {
+        const raw =
+            'tuic://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257%3Aecb7b51b-3e4f-448b-89a4-6fd2ceef8257@no.okra.ijg.cc:51888?alpn=h3&congestion_control=bbr#OKRA%7CTU5';
+        const expected =
+            'tuic://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257:ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@no.okra.ijg.cc:51888?alpn=h3&congestion_control=bbr#OKRA%7CTU5';
+
+        expect(cleanNodeUrl(raw)).toBe(expected);
+        expect(fixNodeUrlEncoding(raw)).toBe(expected);
+        expect(cleanNodeUrlsText(`  ${raw}  \nhttps://sub.example.com/api?token=a%3Ab`)).toBe(
+            `${expected}\nhttps://sub.example.com/api?token=a%3Ab`
+        );
+
+        const proxies = urlsToClashProxies([raw]);
+        expect(proxies).toHaveLength(1);
+        expect(proxies[0]).toMatchObject({
+            type: 'tuic',
+            server: 'no.okra.ijg.cc',
+            port: 51888,
+            uuid: 'ecb7b51b-3e4f-448b-89a4-6fd2ceef8257',
+            password: 'ecb7b51b-3e4f-448b-89a4-6fd2ceef8257',
+            alpn: ['h3'],
+            'congestion-controller': 'bbr',
         });
     });
 });

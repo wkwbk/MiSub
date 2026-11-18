@@ -76,7 +76,7 @@
 <template>
     <!-- 响应式网格布局 -->
     <div
-        class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent p-3.5 shadow-none sm:p-4"
+        class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-[#131515]/70 p-3.5 shadow-none sm:p-4"
     >
         <div class="flex flex-col gap-3 lg:grid lg:grid-cols-4 lg:items-end sm:gap-4">
             <!-- 搜索 (移动端置顶) -->

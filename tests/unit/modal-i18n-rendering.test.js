@@ -89,8 +89,8 @@ describe('modal English translations', () => {
             props: {
                 show: true,
                 isNew: true,
-                editingNode: { name: '', group: '', url: '' },
-                groups: [],
+                editingNode: { name: '', tags: [], url: '' },
+                tags: [],
             },
             global: {
                 plugins: [createI18n({ initialLocale: 'en-US' }), pinia],
@@ -103,7 +103,7 @@ describe('modal English translations', () => {
         expect(wrapper.text()).toContain('Add manual node');
         expect(wrapper.text()).toContain('Edit a single node');
         expect(wrapper.text()).toContain('Node name (optional)');
-        expect(wrapper.text()).toContain('Group (optional)');
+        expect(wrapper.text()).toContain('Tags (optional)');
         expect(wrapper.find('textarea').attributes('placeholder')).toContain('Enter one link');
         expectEnglishOnly(wrapper.text());
     });

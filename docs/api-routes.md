@@ -104,8 +104,8 @@
 - `GET /api/github/release?repo=owner/repo`
     - Handler：`handleGithubReleaseRequest()`，`functions/modules/handlers/github-proxy-handler.js`
     - 认证：公开。
-    - 读取：GitHub 最新 release API；读 KV 缓存。
-    - 写入：`github_release_${repo}` KV 缓存。
+    - 读取：GitHub 最新 release API（支持可选 `GITHUB_TOKEN` 环境变量，匿名限流时回退 `github.com/.../releases/latest` 重定向解析）；读 D1 `cache` 表。
+    - 写入：`github_release_${repo}` D1 `cache` 表缓存。
     - 限制：`repo` 只允许 `owner/repo` 形态；响应只保留 tag/url/time/name/body。
 
 - `GET /api/auth_debug`

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
     buildExternalNodesCacheKey,
     buildExternalNodesCallbackUrl,
@@ -9,36 +9,7 @@ import {
     shouldUseExternalNodesCallback,
     verifyExternalNodesToken,
 } from '../../functions/services/external-nodes-callback-service.js';
-
-function createMemoryD1() {
-    const settings = new Map();
-    return {
-        prepare(sql) {
-            return {
-                bind(...args) {
-                    return {
-                        async first() {
-                            if (/FROM settings WHERE key = \?/i.test(sql)) {
-                                const value = settings.get(args[0]);
-                                return value === undefined ? null : { data: value };
-                            }
-                            return null;
-                        },
-                        async run() {
-                            if (/INSERT OR REPLACE INTO settings/i.test(sql)) {
-                                settings.set(args[0], args[1]);
-                            }
-                            if (/DELETE FROM settings WHERE key = \?/i.test(sql)) {
-                                settings.delete(args[0]);
-                            }
-                            return { success: true };
-                        },
-                    };
-                },
-            };
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function clearExternalNodesMemoryCache() {
     delete globalThis.__misubExternalNodesCallbackCache;
@@ -54,38 +25,31 @@ describe('external nodes callback service', () => {
         expect(shouldUseExternalNodesCallback({ inlineUrlLength: 10, nodeCount: 1 })).toBe(false);
     });
 
-    it('stores external nodes under a profile and content hash with short ttl', async () => {
-        const kv = {
-            get: vi.fn(async () => null),
-            put: vi.fn(async () => undefined),
-            delete: vi.fn(async () => undefined),
-        };
-        const env = { MISUB_KV: kv };
+    it('stores external nodes in D1 under a profile and content hash with ttl', async () => {
+        const db = createMemoryD1();
+        const env = { MISUB_DB: db };
         const nodesText = 'ss://node-a#A\nss://node-b#B\n';
 
         const result = await putExternalNodes({ env, profileId: 'profile-a', nodesText });
 
         expect(result.nodeHash).toMatch(/^[a-f0-9]{64}$/);
         expect(result.cacheKey).toBe(buildExternalNodesCacheKey('profile-a', result.nodeHash));
-        expect(kv.get).toHaveBeenCalledWith(result.cacheKey);
-        expect(kv.put).toHaveBeenCalledWith(result.cacheKey, nodesText, { expirationTtl: 120 });
+        expect(result.storage).toBe('d1');
+        expect(db.tables.cache.has(result.cacheKey)).toBe(true);
+        expect(db.tables.settings.has(result.cacheKey)).toBe(false);
     });
 
-    it('reuses existing temporary KV object instead of writing again', async () => {
-        const kv = {
-            get: vi.fn(async () => 'ss://cached#A\n'),
-            put: vi.fn(async () => undefined),
-            delete: vi.fn(async () => undefined),
-        };
+    it('reuses existing unexpired D1 entry instead of writing again', async () => {
+        const db = createMemoryD1();
+        const env = { MISUB_DB: db };
+        const nodesText = 'ss://cached#A\n';
 
-        const result = await putExternalNodes({
-            env: { MISUB_KV: kv },
-            profileId: 'profile-a',
-            nodesText: 'ss://cached#A\n',
-        });
+        const first = await putExternalNodes({ env, profileId: 'profile-a', nodesText });
+        const second = await putExternalNodes({ env, profileId: 'profile-a', nodesText });
 
-        expect(result.reused).toBe(true);
-        expect(kv.put).not.toHaveBeenCalled();
+        expect(first.reused).toBe(false);
+        expect(second.reused).toBe(true);
+        expect(second.storage).toBe('d1');
     });
 
     it('signs, verifies, and rejects tampered or expired callback tokens', async () => {
@@ -128,25 +92,22 @@ describe('external nodes callback service', () => {
 
     it('serves cached callback nodes as plain text and returns 410 when cache is missing', async () => {
         const secret = 'unit-test-secret';
-        const nodeHash = 'c'.repeat(64);
+        const nodesText = 'ss://node-a#A\n';
+        const env = { MISUB_DB: createMemoryD1(), CALLBACK_TOKEN_SECRET: secret };
+        const putResult = await putExternalNodes({ env, profileId: 'profile-a', nodesText });
         const token = await createExternalNodesToken({
             profileId: 'profile-a',
-            nodeHash,
+            nodeHash: putResult.nodeHash,
             secret,
             expiresInSeconds: 120,
         });
-        const cacheKey = buildExternalNodesCacheKey('profile-a', nodeHash);
-        const kv = {
-            get: vi.fn(async (key) => (key === cacheKey ? 'ss://node-a#A\n' : null)),
-            put: vi.fn(async () => undefined),
-            delete: vi.fn(async () => undefined),
-        };
 
+        clearExternalNodesMemoryCache();
         const response = await handleExternalNodesCallbackRequest(
             new Request(
                 `https://misub.example/api/external-nodes-callback?token=${encodeURIComponent(token)}`
             ),
-            { MISUB_KV: kv, CALLBACK_TOKEN_SECRET: secret }
+            env
         );
 
         expect(response.status).toBe(200);
@@ -159,11 +120,7 @@ describe('external nodes callback service', () => {
                 `https://misub.example/api/external-nodes-callback?token=${encodeURIComponent(token)}`
             ),
             {
-                MISUB_KV: {
-                    get: vi.fn(async () => null),
-                    put: vi.fn(async () => undefined),
-                    delete: vi.fn(async () => undefined),
-                },
+                MISUB_DB: createMemoryD1(),
                 CALLBACK_TOKEN_SECRET: secret,
             }
         );
@@ -172,75 +129,11 @@ describe('external nodes callback service', () => {
 
     it('can serve cached callback nodes as base64 for subconverter remote URL fetches', async () => {
         const secret = 'unit-test-secret';
-        const nodeHash = 'd'.repeat(64);
+        const nodesText = 'ss://node-a#A\nss://node-b#B\n';
+        const env = { MISUB_DB: createMemoryD1(), CALLBACK_TOKEN_SECRET: secret };
+        const putResult = await putExternalNodes({ env, profileId: 'profile-a', nodesText });
         const token = await createExternalNodesToken({
             profileId: 'profile-a',
-            nodeHash,
-            secret,
-            expiresInSeconds: 120,
-        });
-        const cacheKey = buildExternalNodesCacheKey('profile-a', nodeHash);
-        const kv = {
-            get: vi.fn(async (key) => (key === cacheKey ? 'ss://node-a#A\nss://node-b#B\n' : null)),
-            put: vi.fn(async () => undefined),
-            delete: vi.fn(async () => undefined),
-        };
-
-        const response = await handleExternalNodesCallbackRequest(
-            new Request(
-                'https://misub.example/api/external-nodes-callback?token=' +
-                    token +
-                    '&encoding=base64'
-            ),
-            { MISUB_KV: kv, CALLBACK_TOKEN_SECRET: secret }
-        );
-
-        expect(response.status).toBe(200);
-        expect(response.headers.get('X-MiSub-Callback-Encoding')).toBe('base64');
-        expect(await response.text()).toBe(btoa('ss://node-a#A\nss://node-b#B\n'));
-    });
-
-    it('uses auto-detected KV bindings for callback nodes across requests', async () => {
-        const nodesText = 'ss://auto-kv-node#A\n';
-        const kvData = new Map();
-        const customKv = {
-            get: vi.fn(async (key) => kvData.get(key) ?? null),
-            put: vi.fn(async (key, value) => kvData.set(key, value)),
-            delete: vi.fn(async (key) => kvData.delete(key)),
-        };
-
-        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-        try {
-            const putResult = await putExternalNodes({
-                env: { CUSTOM_KV: customKv },
-                profileId: 'profile-auto-kv',
-                nodesText,
-            });
-            clearExternalNodesMemoryCache();
-            const cached = await getExternalNodes({
-                env: { CUSTOM_KV: customKv },
-                profileId: 'profile-auto-kv',
-                nodeHash: putResult.nodeHash,
-            });
-
-            expect(putResult.storage).toBe('kv');
-            expect(customKv.put).toHaveBeenCalledWith(putResult.cacheKey, nodesText, {
-                expirationTtl: 120,
-            });
-            expect(cached).toBe(nodesText);
-            expect(logSpy).toHaveBeenCalledWith('[Storage] Auto-detected KV in env: CUSTOM_KV');
-        } finally {
-            logSpy.mockRestore();
-        }
-    });
-
-    it('uses D1 as durable callback node storage when KV is unavailable', async () => {
-        const secret = 'unit-test-secret';
-        const nodesText = 'ss://d1-node#A\nss://d1-node#B\n';
-        const env = { MISUB_DB: createMemoryD1(), CALLBACK_TOKEN_SECRET: secret };
-        const putResult = await putExternalNodes({ env, profileId: 'profile-d1', nodesText });
-        const token = await createExternalNodesToken({
-            profileId: 'profile-d1',
             nodeHash: putResult.nodeHash,
             secret,
             expiresInSeconds: 120,
@@ -248,16 +141,21 @@ describe('external nodes callback service', () => {
 
         clearExternalNodesMemoryCache();
         const response = await handleExternalNodesCallbackRequest(
-            new Request(`https://misub.example/api/external-nodes-callback?token=${token}`),
+            new Request(
+                'https://misub.example/api/external-nodes-callback?token=' +
+                    token +
+                    '&encoding=base64'
+            ),
             env
         );
 
-        expect(putResult.storage).toBe('d1');
         expect(response.status).toBe(200);
-        expect(await response.text()).toBe(nodesText);
+        expect(response.headers.get('X-MiSub-Callback-Encoding')).toBe('base64');
+        expect(await response.text()).toBe(btoa(nodesText));
     });
 
     it('falls back to process memory cache when durable storage is unavailable', async () => {
+        clearExternalNodesMemoryCache();
         const nodesText = 'ss://memory-node#A\n';
         const putResult = await putExternalNodes({
             env: {},
@@ -270,6 +168,7 @@ describe('external nodes callback service', () => {
             nodeHash: putResult.nodeHash,
         });
 
+        expect(putResult.storage).toBe('memory');
         expect(cached).toBe(nodesText);
     });
 });

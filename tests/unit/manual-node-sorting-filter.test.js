@@ -5,9 +5,9 @@ import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
 import { createI18n } from '@/i18n/index.js';
 
 const nodes = [
-    { id: 'a1', name: 'A 1', url: 'ss://a1', group: 'A', enabled: true },
-    { id: 'b1', name: 'B 1', url: 'ss://b1', group: 'B', enabled: true },
-    { id: 'a2', name: 'A 2', url: 'ss://a2', group: 'A', enabled: true },
+    { id: 'a1', name: 'A 1', url: 'ss://a1', tags: ['A', 'X'], enabled: true },
+    { id: 'b1', name: 'B 1', url: 'ss://b1', tags: ['B'], enabled: true },
+    { id: 'a2', name: 'A 2', url: 'ss://a2', tags: ['A'], enabled: true },
 ];
 
 const NodeTableProbe = defineComponent({
@@ -41,18 +41,18 @@ const NodeTableProbe = defineComponent({
 });
 
 describe('manual node sorting filters', () => {
-    it('uses the active group subset as draggable nodes while sorting', () => {
+    it('uses the active multi-tag intersection subset as draggable nodes while sorting', async () => {
         const wrapper = mount(ManualNodePanel, {
             props: {
                 manualNodes: nodes,
-                paginatedManualNodes: nodes.filter((node) => node.group === 'A'),
+                paginatedManualNodes: nodes.filter((node) => node.tags.includes('A')),
                 currentPage: 1,
                 totalPages: 1,
                 isSorting: true,
                 searchTerm: '',
                 viewMode: 'card',
-                groups: ['A', 'B'],
-                activeGroupFilter: 'A',
+                tags: ['A', 'B', 'X'],
+                activeTagFilters: ['A'],
                 itemsPerPage: 24,
             },
             global: {
@@ -66,5 +66,8 @@ describe('manual node sorting filters', () => {
         });
 
         expect(wrapper.get('[data-testid="sortable-ids"]').text()).toBe('a1,a2');
+
+        await wrapper.setProps({ activeTagFilters: ['A', 'X'] });
+        expect(wrapper.get('[data-testid="sortable-ids"]').text()).toBe('a1');
     });
 });

@@ -4,6 +4,7 @@
     import { ExternalLink } from '@lucide/vue';
     import { useVersionStore } from '@/stores/version';
     import Modal from '@/components/forms/Modal.vue';
+    import { renderChangelogMarkdown } from '@/utils/changelog-markdown.js';
 
     const { t } = useI18n();
 
@@ -29,6 +30,14 @@
             props.currentVersion === props.release.tag_name ||
             props.currentVersion === props.release.tag_name.replace(/^v/, '')
         );
+    });
+
+    const renderedChangelogHtml = computed(() => {
+        const content =
+            isLatest.value && versionStore.localChangelog
+                ? versionStore.localChangelog
+                : props.release?.body || '';
+        return renderChangelogMarkdown(content);
     });
 </script>
 
@@ -99,14 +108,9 @@
                 </div>
 
                 <div
-                    class="max-h-[420px] overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#131515] p-4 text-xs font-mono leading-6 text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap"
+                    class="max-h-[420px] overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#131515] p-4 text-xs leading-6 text-zinc-700 dark:text-zinc-300"
                 >
-                    <template v-if="isLatest && versionStore.localChangelog">
-                        {{ versionStore.localChangelog }}
-                    </template>
-                    <template v-else-if="release.body">
-                        {{ release.body }}
-                    </template>
+                    <div v-if="renderedChangelogHtml" v-html="renderedChangelogHtml"></div>
                     <template v-else>{{ t('changelog.noDetails') }}</template>
                 </div>
 

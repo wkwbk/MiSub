@@ -4,6 +4,57 @@ import { t } from '@/i18n/index.js';
 //
 const isDev = import.meta.env.DEV;
 
+/**
+ * 导入节点前对单条节点链接做清洗：
+ * - 去除首尾空白
+ * - 恢复 @ 前面（userinfo 段）被错误 URL 编码的冒号（%3A / %3a -> :）
+ *   例如 v2rayN 导出的 TUIC v5 链接会把 `uuid:password` 转成 `uuid%3Apassword`，
+ *   导致订阅转换器把整串当成账号、密码为空。
+ *
+ * @param {string} url - 原始节点链接
+ * @returns {string} - 清洗后的链接
+ */
+export function cleanNodeUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+
+    const protocolEnd = trimmed.indexOf('://');
+    if (protocolEnd === -1) return trimmed;
+
+    const protocol = trimmed.slice(0, protocolEnd).toLowerCase();
+    // vmess / ssr 为纯 Base64 载荷，不包含 userinfo@host 结构
+    if (protocol === 'vmess' || protocol === 'ssr') return trimmed;
+
+    const rest = trimmed.slice(protocolEnd + 3);
+    const authorityEnd = rest.search(/[/?#]/);
+    const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
+    const atIndex = authority.lastIndexOf('@');
+    if (atIndex === -1) return trimmed;
+
+    const userInfo = authority.slice(0, atIndex);
+    const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
+    if (cleanedUserInfo === userInfo) return trimmed;
+
+    return `${trimmed.slice(0, protocolEnd + 3)}${cleanedUserInfo}${rest.slice(atIndex)}`;
+}
+
+/**
+ * 对多行导入文本中的每行链接进行清洗
+ * @param {string} text - 多行节点文本
+ * @returns {string} - 清洗后的多行文本
+ */
+export function cleanNodeUrlsText(text) {
+    if (!text || typeof text !== 'string') return '';
+    return text
+        .split(/\r?\n/)
+        .map((line) => {
+            const trimmed = line.trim();
+            return trimmed ? cleanNodeUrl(trimmed) : '';
+        })
+        .join('\n');
+}
+
 export function extractNodeName(url) {
     if (!url) return '';
     url = url.trim();

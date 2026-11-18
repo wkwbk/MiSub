@@ -13,6 +13,7 @@ export { default as Toast } from '@/components/ui/Toast.vue';
 export { default as SkeletonLoader } from '@/components/ui/SkeletonLoader.vue';
 export { default as SkeletonCard } from '@/components/ui/SkeletonCard.vue';
 export { default as Input } from '@/components/ui/Input.vue';
+export { default as LineNumberTextarea } from '@/components/ui/LineNumberTextarea.vue';
 export { default as Select } from '@/components/ui/Select.vue';
 export { default as Switch } from '@/components/ui/Switch.vue';
 

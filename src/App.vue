@@ -2,7 +2,9 @@
     import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
     import { Globe } from '@lucide/vue';
     import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
+    import RouteProgressBar from '@/components/ui/RouteProgressBar.vue';
     import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
+    import { useRouteLoading } from '@/composables/useRouteLoading.js';
     import { useRoute, useRouter } from 'vue-router';
     import { useThemeStore } from '@/stores/theme';
     import { useSessionStore } from '@/stores/session';
@@ -12,7 +14,6 @@
     import { useVersionStore } from '@/stores/version';
     import { storeToRefs } from 'pinia';
     import NavBar from '@/components/layout/NavBar.vue';
-    import { detectLegacyD1 } from '@/lib/api.js';
     import { useI18n } from '@/i18n/index.js';
     import { configureAuthGuard, translateRouteTitle } from '@/router/index.js';
     import { readSessionPreference } from '@/utils/session-preference.js';
@@ -28,15 +29,13 @@
     const Header = defineAsyncComponent(() => import('@/components/layout/Header.vue'));
     const SavePrompt = defineAsyncComponent(() => import('@/components/ui/SavePrompt.vue'));
     const ScrollToTop = defineAsyncComponent(() => import('@/components/ui/ScrollToTop.vue'));
-    const LegacyD1MigrationModal = defineAsyncComponent(
-        () => import('@/components/modals/LegacyD1MigrationModal.vue')
-    );
     const VersionChangelogModal = defineAsyncComponent(
         () => import('@/components/modals/VersionChangelogModal.vue')
     );
 
     const route = useRoute();
     const router = useRouter();
+    const { isNavigating, progress, isFadingOut, showSlowIndicator } = useRouteLoading(router);
     const { t, locale } = useI18n();
     const themeStore = useThemeStore();
     const { theme } = storeToRefs(themeStore);
@@ -130,9 +129,10 @@
         () => layoutMode.value === 'modern' && (isDirty.value || saveState.value === 'success')
     );
 
-    const showLegacyD1MigrationModal = ref(false);
-    const legacyD1Details = ref({ hasLegacySubscriptions: false, hasLegacyProfiles: false });
-    const pendingVersionModal = ref(false);
+    // 设置页自带吸底操作栏（内含回到顶部按钮），隐藏全局悬浮 ScrollToTop 以避免重叠
+    const isModernSettingsPage = computed(
+        () => isLoggedIn.value && layoutMode.value === 'modern' && route.name === 'Settings'
+    );
 
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)
     const loginComponent = computed(() => {
@@ -190,17 +190,7 @@
                 await dataStore.fetchData();
 
                 try {
-                    const result = await detectLegacyD1();
-                    if (result?.success && result.data?.hasLegacyData) {
-                        legacyD1Details.value = result.data;
-                        showLegacyD1MigrationModal.value = true;
-                    }
-                } catch {
-                    // Non-blocking legacy check.
-                }
-
-                try {
-                    await versionStore.checkVersion(showLegacyD1MigrationModal.value);
+                    await versionStore.checkVersion(false);
                 } catch {
                     // Non-blocking version check.
                 }
@@ -208,21 +198,6 @@
         },
         { immediate: true }
     );
-
-    const handleLegacyD1MigrationSuccess = async () => {
-        showLegacyD1MigrationModal.value = false;
-        await dataStore.fetchData(true);
-        if (pendingVersionModal.value) {
-            versionStore.openModal();
-        }
-    };
-
-    const handleLegacyD1MigrationClose = (value) => {
-        showLegacyD1MigrationModal.value = value;
-        if (!value && pendingVersionModal.value) {
-            versionStore.openModal();
-        }
-    };
 
     const handleVersionModalConfirm = () => {
         versionStore.closeModal();
@@ -271,6 +246,13 @@
         :class="theme"
         class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-200 bg-zinc-50 dark:bg-[#131515]"
     >
+        <RouteProgressBar
+            :is-navigating="isNavigating"
+            :progress="progress"
+            :is-fading-out="isFadingOut"
+            :show-slow-indicator="showSlowIndicator"
+        />
+
         <!-- Navigation -->
         <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />
         <Header
@@ -288,7 +270,14 @@
                           'grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
                           shouldCenterMain
                               ? 'py-6 flex items-center justify-center'
-                              : 'py-6 pb-24 md:pb-6',
+                              : [
+                                    isModernSettingsPage && !isDefaultPassword && !showUpdateNotice
+                                        ? 'pt-0 md:pt-6'
+                                        : 'pt-6',
+                                    showModernNavBar
+                                        ? 'pb-[calc(6rem+max(env(safe-area-inset-bottom,0px),12px))] md:pb-6'
+                                        : 'pb-6',
+                                ],
                       ],
                 {
                     'ios-header-padding': showLegacyHeader,
@@ -390,12 +379,15 @@
                     @discard="handleDiscard"
                 />
 
-                <router-view v-if="layoutMode === 'modern'" v-slot="{ Component }">
-                    <transition name="fade" mode="out-in">
-                        <RouteErrorBoundary :reset-key="route.fullPath">
-                            <component :is="Component" />
-                        </RouteErrorBoundary>
-                    </transition>
+                <router-view
+                    v-if="layoutMode === 'modern'"
+                    v-slot="{ Component, route: currentRoute }"
+                >
+                    <RouteErrorBoundary :reset-key="currentRoute.fullPath">
+                        <transition name="route-fade" mode="out-in">
+                            <component :is="Component" v-if="Component" :key="currentRoute.path" />
+                        </transition>
+                    </RouteErrorBoundary>
                 </router-view>
 
                 <Dashboard v-else />
@@ -403,12 +395,12 @@
 
             <!-- PUBLIC ROUTE VIEW (Not logged in, but isPublic) -->
             <template v-else-if="isPublicRoute">
-                <router-view v-slot="{ Component }">
-                    <transition name="fade" mode="out-in">
-                        <RouteErrorBoundary :reset-key="route.fullPath">
-                            <component :is="Component" />
-                        </RouteErrorBoundary>
-                    </transition>
+                <router-view v-slot="{ Component, route: currentRoute }">
+                    <RouteErrorBoundary :reset-key="currentRoute.fullPath">
+                        <transition name="route-fade" mode="out-in">
+                            <component :is="Component" v-if="Component" :key="currentRoute.path" />
+                        </transition>
+                    </RouteErrorBoundary>
                 </router-view>
             </template>
 
@@ -420,12 +412,6 @@
 
         <Toast />
         <ConfirmDialog />
-        <LegacyD1MigrationModal
-            :show="showLegacyD1MigrationModal"
-            :details="legacyD1Details"
-            @update:show="handleLegacyD1MigrationClose"
-            @success="handleLegacyD1MigrationSuccess"
-        />
         <VersionChangelogModal
             :show="showVersionChangelogModal"
             :release="versionReleaseInfo || {}"
@@ -434,8 +420,12 @@
             @confirm="handleVersionModalConfirm"
             @suppress="handleVersionModalSuppress"
         />
-        <Footer v-if="shouldShowFooter" :hide-branding="shouldHidePublicBranding" />
-        <ScrollToTop v-if="isLoggedIn || isPublicRoute" />
+        <Footer
+            v-if="shouldShowFooter"
+            :hide-branding="shouldHidePublicBranding"
+            :has-mobile-nav="showModernNavBar"
+        />
+        <ScrollToTop v-if="(isLoggedIn || isPublicRoute) && !isModernSettingsPage" />
     </div>
 </template>
 
@@ -451,12 +441,34 @@
 
     .fade-enter-active,
     .fade-leave-active {
-        transition: opacity 0.2s ease;
+        transition: opacity 0.15s ease;
     }
 
     .fade-enter-from,
     .fade-leave-to {
         opacity: 0;
+    }
+
+    .route-fade-enter-active {
+        transition:
+            opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+            transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .route-fade-leave-active {
+        transition:
+            opacity 0.14s ease-in,
+            transform 0.14s ease-in;
+    }
+
+    .route-fade-enter-from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    .route-fade-leave-to {
+        opacity: 0;
+        transform: translateY(-4px);
     }
 
     .slide-fade-enter-active,

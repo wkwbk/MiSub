@@ -20,21 +20,7 @@ import { handleMisubRequest } from '../../functions/modules/subscription/main-ha
 import { logAccessSuccess } from '../../functions/modules/subscription/access-logger.js';
 import { LogService } from '../../functions/services/log-service.js';
 import { onRequest } from '../../functions/[[path]].js';
-
-function createKv(initial = {}) {
-    const values = new Map(Object.entries(initial));
-    return {
-        async get(key) {
-            return values.get(key) ?? null;
-        },
-        async put(key, value) {
-            values.set(key, value);
-        },
-        async delete(key) {
-            values.delete(key);
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createD1(settings = null) {
     return {
@@ -84,7 +70,7 @@ describe('security hardening', () => {
     });
 
     it('rejects oversized login JSON bodies before parsing', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const response = await handleLogin(
             new Request('https://example.com/api/login', {
                 method: 'POST',
@@ -122,7 +108,7 @@ describe('security hardening', () => {
     });
 
     it('warns after logging in with the default admin password but still allows login', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const response = await handleLogin(
             new Request('https://example.com/api/login', {
                 method: 'POST',
@@ -142,7 +128,7 @@ describe('security hardening', () => {
     });
 
     it('keeps browser login sessions valid for thirty days', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const issuedAt = Date.now() - (29 * 24 * 60 * 60 * 1000 + 23 * 60 * 60 * 1000);
         const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
         const diagnostic = await getAuthSessionDiagnostic(
@@ -160,7 +146,7 @@ describe('security hardening', () => {
     });
 
     it('marks browser login sessions expired after thirty days', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const issuedAt = Date.now() - (30 * 24 * 60 * 60 * 1000 + 1000);
         const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
         const diagnostic = await getAuthSessionDiagnostic(
@@ -177,7 +163,7 @@ describe('security hardening', () => {
     });
 
     it('marks sessions for renewal after seven days without renewing earlier sessions', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const recentToken = await createSignedToken(
             env.COOKIE_SECRET,
             String(Date.now() - SESSION_RENEW_THRESHOLD + 1000)
@@ -211,7 +197,7 @@ describe('security hardening', () => {
     });
 
     it('renews mature sessions with a fresh thirty-day cookie', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const issuedAt = Date.now() - SESSION_RENEW_THRESHOLD - 1000;
         const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
         const request = {
@@ -236,7 +222,7 @@ describe('security hardening', () => {
     });
 
     it('does not renew sessions before the threshold or after expiry', async () => {
-        const env = { MISUB_KV: createKv(), COOKIE_SECRET: 'stable-cookie-secret' };
+        const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
         const recentToken = await createSignedToken(env.COOKIE_SECRET, String(Date.now() - 1000));
         const expiredToken = await createSignedToken(
             env.COOKIE_SECRET,
@@ -272,7 +258,7 @@ describe('security hardening', () => {
 
     it('does not expose public auth debug endpoints in production', async () => {
         const env = {
-            MISUB_KV: createKv(),
+            MISUB_DB: createMemoryD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
         };
@@ -296,7 +282,7 @@ describe('security hardening', () => {
 
     it('allows auth debug endpoints only when explicitly enabled for diagnostics', async () => {
         const env = {
-            MISUB_KV: createKv(),
+            MISUB_DB: createMemoryD1(),
             COOKIE_SECRET: 'stable-cookie-secret',
             ADMIN_PASSWORD: 'secret-password',
             ENABLE_AUTH_DIAGNOSTICS: 'true',
@@ -343,9 +329,6 @@ describe('security hardening', () => {
             expect(queryResponse.status).not.toBe(401);
             expect(bearerResponse.status).not.toBe(401);
             expect(wrongQueryResponse.status).toBe(401);
-            expect(warnSpy).toHaveBeenCalledWith(
-                '[Storage] No KV binding found, using noop adapter'
-            );
             expect(infoSpy).toHaveBeenCalledWith(
                 '[Cron] Starting parallel update for 0 subscriptions'
             );
@@ -429,7 +412,7 @@ describe('security hardening', () => {
     it('masks subscription token in parse logs', async () => {
         const infoSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 misub_settings_v1: JSON.stringify({
                     mytoken: 'super-secret-token',
                     subConverter: 'backend',
@@ -492,7 +475,7 @@ describe('security hardening', () => {
 
     it('redacts raw log tokens before persistence so stored logs and fingerprints do not contain secrets', async () => {
         const rawToken = 'access-log-token-secret';
-        const env = { MISUB_KV: createKv() };
+        const env = { MISUB_DB: createMemoryD1() };
 
         await LogService.addLog(env, {
             profileName: 'Main subscription',
@@ -626,7 +609,7 @@ describe('security hardening', () => {
 
     it('redacts sensitive fields from exported settings and subscriptions', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 misub_settings_v1: JSON.stringify({
                     mytoken: 'export-token-secret',
                     cronSecret: 'cron-secret-value',
@@ -669,7 +652,7 @@ describe('security hardening', () => {
 
     it('redacts debug subscription result URLs and full raw result', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 misub_subscriptions_v1: JSON.stringify([]),
                 misub_profiles_v1: JSON.stringify([]),
             }),
@@ -700,7 +683,7 @@ describe('security hardening', () => {
 
     it('serves /logo.png to unauthenticated requests even when disguise is enabled', async () => {
         const env = {
-            MISUB_KV: createKv({
+            MISUB_DB: createMemoryD1({
                 misub_settings_v1: JSON.stringify({
                     disguise: { enabled: true, pageType: 'default' },
                 }),

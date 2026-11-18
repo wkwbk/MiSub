@@ -1,29 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
-
-function createKv(initial = {}) {
-    const values = new Map(
-        Object.entries(initial).map(([key, value]) => [
-            key,
-            typeof value === 'string' ? value : JSON.stringify(value),
-        ])
-    );
-    return {
-        async get(key) {
-            return values.get(key) ?? null;
-        },
-        async put(key, value) {
-            values.set(key, value);
-        },
-        async delete(key) {
-            values.delete(key);
-        },
-    };
-}
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createEnv(settings = {}) {
     return {
-        MISUB_KV: createKv({
+        MISUB_DB: createMemoryD1({
             worker_settings_v1: settings,
         }),
         COOKIE_SECRET: 'stable-cookie-secret',

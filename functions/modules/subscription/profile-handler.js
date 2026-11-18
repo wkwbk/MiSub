@@ -139,16 +139,24 @@ export async function handleProfileMode(
         return createJsonResponse({ error: '订阅组不存在或已禁用' }, 404);
     }
 
-    const relatedIds = [
-        ...(Array.isArray(profile.subscriptions)
-            ? profile.subscriptions.map((item) => (typeof item === 'object' ? item.id : item))
-            : []),
-        ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
-    ].filter(Boolean);
-    const relatedSubs =
-        typeof storageAdapter.getSubscriptionsByIds === 'function'
-            ? await storageAdapter.getSubscriptionsByIds(Array.from(new Set(relatedIds)))
-            : (await storageAdapter.get(KV_KEY_SUBS)) || [];
+    const subSourceIds = Array.isArray(profile.subscriptions)
+        ? profile.subscriptions
+              .map((item) => (typeof item === 'object' ? item.id : item))
+              .filter(Boolean)
+        : [];
+    const manualNodeIds = Array.isArray(profile.manualNodes)
+        ? profile.manualNodes.filter(Boolean)
+        : [];
+    let relatedSubs = [];
+    if (typeof storageAdapter.getProfileSources === 'function') {
+        relatedSubs = await storageAdapter.getProfileSources(subSourceIds, manualNodeIds);
+    } else if (typeof storageAdapter.getSubscriptionsByIds === 'function') {
+        relatedSubs = await storageAdapter.getSubscriptionsByIds(
+            Array.from(new Set([...subSourceIds, ...manualNodeIds]))
+        );
+    } else {
+        relatedSubs = (await storageAdapter.get(KV_KEY_SUBS)) || [];
+    }
     const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
     const targetMisubs = [];
@@ -187,10 +195,14 @@ export async function handleProfileMode(
         const customName = typeof node.name === 'string' ? node.name.trim() : '';
         const effectiveUrl = customName ? applyManualNodeName(node.url, customName) : node.url;
 
+        const nodeTags = Array.isArray(node.tags)
+            ? node.tags.map((item) => String(item || '').trim()).filter(Boolean)
+            : [];
+
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
             subscriptionName: node.name || '手工节点',
-            group: node.group || '',
+            tags: nodeTags,
             url: effectiveUrl,
             success: true,
             nodes: [
@@ -198,7 +210,7 @@ export async function handleProfileMode(
                     ...nodeInfo,
                     url: effectiveUrl,
                     subscriptionName: node.name || '手工节点',
-                    group: node.group || '',
+                    tags: nodeTags,
                 },
             ],
             error: null,
@@ -253,7 +265,7 @@ export async function handleProfileMode(
                 if (subResult.success && Array.isArray(subResult.nodes)) {
                     nestedSubProfileResults.push({
                         subscriptionName: subResult.profileName || '组合订阅',
-                        group: subResult.profileName || '组合订阅',
+                        tags: [subResult.profileName || '组合订阅'],
                         url: `profile://${subProfileId}`,
                         success: true,
                         nodes: subResult.nodes,
@@ -294,7 +306,7 @@ export async function handleProfileMode(
     if (applyTransform) {
         const nodeUrls = allNodes.map((node) => node.url);
         const nodeMetadataByUrl = new Map(
-            allNodes.map((node) => [node.url, { group: node.group || '' }])
+            allNodes.map((node) => [node.url, { tags: Array.isArray(node.tags) ? node.tags : [] }])
         );
 
         let activeOperators = ensureArray(profile?.operators);

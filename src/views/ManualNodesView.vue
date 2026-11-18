@@ -3,19 +3,19 @@
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useSortingMode } from '@/composables/useSortingMode.js';
-    import { useNodeForms } from '@/composables/useNodeForms.js'; // Added
+    import { useNodeForms } from '@/composables/useNodeForms.js';
     import { useToastStore } from '@/stores/toast.js';
     import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
     import Modal from '@/components/forms/Modal.vue';
     import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
     import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
     import SubscriptionImportModal from '@/components/modals/SubscriptionImportModal.vue';
-    import BatchGroupModal from '@/components/modals/BatchGroupModal.vue'; // Added
+    import BatchTagModal from '@/components/modals/BatchTagModal.vue';
     import { useI18n } from '@/i18n/index.js';
     import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
-    const GroupManagementModal = defineAsyncComponent(
-        () => import('@/components/modals/GroupManagementModal.vue')
+    const TagManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/TagManagementModal.vue')
     );
 
     const dataStore = useDataStore();
@@ -23,7 +23,6 @@
     const { markDirty } = dataStore;
     const { t } = useI18n();
 
-    // Component Logic Reuse
     const isSortingNodes = useSortingMode(dataStore);
     const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
     const showDeleteNodesModal = ref(false);
@@ -32,9 +31,9 @@
     const showSubscriptionImportModal = ref(false);
     const showDedupModal = ref(false);
     const dedupPlan = ref(null);
-    const showBatchGroupModal = ref(false); // Added
-    const batchGroupIds = ref([]); // Added
-    const showGroupManagementModal = ref(false); // 分组管理模态框
+    const showBatchTagModal = ref(false);
+    const batchTagIds = ref([]);
+    const showTagManagementModal = ref(false);
 
     const {
         manualNodes,
@@ -49,17 +48,17 @@
         deleteAllNodes,
         addNodesFromBulk,
         autoSortNodes,
-        deduplicateNodes,
         buildDedupPlan,
         applyDedupPlan,
         reorderManualNodes,
-        manualNodeGroups,
-        renameGroup,
-        deleteGroup,
-        reorderGroups,
-        activeGroupFilter,
-        setGroupFilter,
-        batchUpdateGroup,
+        manualNodeTags,
+        renameTag,
+        deleteTag,
+        reorderTags,
+        activeTagFilters,
+        setTagFilters,
+        toggleTagFilter,
+        batchUpdateTags,
         batchDeleteNodes,
         manualNodesPerPage,
         pingResults,
@@ -83,7 +82,6 @@
         handleSave: handleSaveNode,
     } = useNodeForms({ addNode, updateNode });
 
-    // Actions
     const setViewMode = (mode) => {
         manualNodeViewMode.value = mode;
         writeRawPreference('manualNodeViewMode', mode);
@@ -91,12 +89,10 @@
 
     const handleDeleteNodeWithCleanup = (nodeId) => {
         deleteNode(nodeId);
-        // cleanupNodes 已在 deleteNode 内部通过 removeManualNodeFromProfiles 实现
     };
 
     const handleDeleteAllNodesWithCleanup = () => {
         deleteAllNodes();
-        // cleanupAllNodes 已在 deleteAllNodes 内部通过 removeManualNodeFromProfiles 实现
         showDeleteNodesModal.value = false;
     };
 
@@ -123,24 +119,14 @@
         showDedupModal.value = true;
     };
 
-    // Old Handlers Removed
-
-    const handleOpenBatchGroupModal = (ids) => {
-        batchGroupIds.value = ids;
-        showBatchGroupModal.value = true;
+    const handleOpenBatchTagModal = (ids) => {
+        batchTagIds.value = ids;
+        showBatchTagModal.value = true;
     };
 
-    const handleBatchGroupConfirm = (groupName) => {
-        batchUpdateGroup(batchGroupIds.value, groupName);
-        batchGroupIds.value = [];
-        // Ideally we should also clear selection in ManualNodePanel, but we don't have direct access.
-        // We can emit an event or use a ref, but ManualNodePanel handles selection internally.
-        // Actually, ManualNodePanel.vue creates its own `selectedNodeIds`.
-        // If we want to clear selection, we need to force re-render or expose a method.
-        // But for now, let's just do the update. User can clear selection manually.
-        // OR we can improve ManualNodePanel to clear selection when `batch-update-group` is done?
-        // But here we are calling `batchUpdateGroup` composable directly.
-        // Let's modify ManualNodePanel later if needed.
+    const handleBatchTagConfirm = (payload) => {
+        batchUpdateTags(batchTagIds.value, payload);
+        batchTagIds.value = [];
     };
 
     const handleBatchDeleteRequest = (ids) => {
@@ -156,24 +142,23 @@
         showBatchDeleteModal.value = false;
     };
 
-    // 分组管理处理函数
-    const handleOpenGroupManagement = () => {
-        showGroupManagementModal.value = true;
+    const handleOpenTagManagement = () => {
+        showTagManagementModal.value = true;
     };
 
-    const handleGroupRename = (oldName, newName) => {
-        renameGroup(oldName, newName);
-        showToast(t('manualNodes.groupRenamed', { oldName, newName }), 'success');
+    const handleTagRename = (oldName, newName) => {
+        renameTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
-        deleteGroup(groupName);
-        showToast(t('manualNodes.groupDeleted', { groupName }), 'success');
+    const handleTagDelete = (tagName) => {
+        deleteTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
     };
 
-    const handleGroupReorder = (newOrder) => {
-        reorderGroups(newOrder);
-        showToast(t('manualNodes.groupOrderUpdated'), 'success');
+    const handleTagReorder = (newOrder) => {
+        reorderTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
     };
 </script>
 
@@ -187,8 +172,8 @@
             :is-sorting="isSortingNodes"
             :search-term="searchTerm"
             :view-mode="manualNodeViewMode"
-            :groups="manualNodeGroups"
-            :active-group-filter="activeGroupFilter"
+            :tags="manualNodeTags"
+            :active-tag-filters="activeTagFilters"
             :items-per-page="manualNodesPerPage"
             @update:items-per-page="(val) => (manualNodesPerPage = val)"
             @add="handleAddNode"
@@ -204,12 +189,11 @@
             @import="showSubscriptionImportModal = true"
             @delete-all="showDeleteNodesModal = true"
             @reorder="reorderManualNodes"
-            @rename-group="renameGroup"
-            @set-group-filter="setGroupFilter"
-            @batch-update-group="(ids, group) => batchUpdateGroup(ids, group)"
+            @set-tag-filters="setTagFilters"
+            @toggle-tag-filter="toggleTagFilter"
             @batch-delete-nodes="handleBatchDeleteRequest"
-            @open-batch-group-modal="handleOpenBatchGroupModal"
-            @manage-groups="handleOpenGroupManagement"
+            @open-batch-tag-modal="handleOpenBatchTagModal"
+            @manage-tags="handleOpenTagManagement"
             :ping-results="pingResults"
             :pinging-nodes="pingingNodes"
             @ping="pingNodeId"
@@ -221,7 +205,7 @@
             v-model:show="showNodeModal"
             :is-new="isNewNode"
             :editing-node="editingNode"
-            :groups="manualNodeGroups"
+            :tags="manualNodeTags"
             @confirm="handleSaveNode"
             @input-url="handleNodeUrlInput"
         />
@@ -235,18 +219,18 @@
             "
         />
 
-        <BatchGroupModal
-            v-model:show="showBatchGroupModal"
-            :groups="manualNodeGroups"
-            @confirm="handleBatchGroupConfirm"
+        <BatchTagModal
+            v-model:show="showBatchTagModal"
+            :tags="manualNodeTags"
+            @confirm="handleBatchTagConfirm"
         />
 
-        <GroupManagementModal
-            v-model:show="showGroupManagementModal"
-            :groups="manualNodeGroups"
-            @rename="handleGroupRename"
-            @delete="handleGroupDelete"
-            @reorder="handleGroupReorder"
+        <TagManagementModal
+            v-model:show="showTagManagementModal"
+            :tags="manualNodeTags"
+            @rename="handleTagRename"
+            @delete="handleTagDelete"
+            @reorder="handleTagReorder"
         />
 
         <Modal v-model:show="showDeleteNodesModal" @confirm="handleDeleteAllNodesWithCleanup">
@@ -279,7 +263,7 @@
             :show="showSubscriptionImportModal"
             @update:show="showSubscriptionImportModal = $event"
             :add-nodes-from-bulk="addNodesFromBulk"
-            :groups="manualNodeGroups"
+            :tags="manualNodeTags"
         />
     </div>
 </template>

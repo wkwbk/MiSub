@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 全局错误处理工具类
  * @author MiSub Team
  */
@@ -208,16 +208,6 @@ class ErrorHandler {
         }
         if (message.includes('Unauthorized') || message.includes('401')) {
             return t('errors.unauthorized');
-        }
-        // ⚠️ 下面两条匹配的是**服务端返回的消息文本**（functions/ 里产生的中文），
-        // 不是界面文案，所以不能用 t() 改写，也不能本地化。
-        // 这是一条隐式跨端契约，用正则容忍语序/虚词差异，别退化成 includes 精确子串：
-        //   - 服务端既会说「请先恢复 KV 绑定」，也会说「KV 未绑定」，
-        //     多一个「未」字就让 includes('KV 绑定') 整个失效；
-        //   - 服务端 D1 适配器抛的是英文 'D1 database not available'。
-        // tests/unit/error-handler-server-contract.test.js 会扫描 functions/ 钉住这条契约。
-        if (/MISUB_KV|KV\s*(?:未)?绑定/.test(message)) {
-            return t('errors.kvMissing');
         }
         if (/MISUB_DB|D1\s*(?:未)?绑定|D1 database not available/i.test(message)) {
             return t('errors.d1Missing');

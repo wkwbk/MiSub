@@ -1,6 +1,7 @@
 <script setup>
     import { Download, X } from '@lucide/vue';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useScrollLock } from '@/composables/useScrollLock.js';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -21,6 +22,7 @@
     const { handleBackdropPointerDown, handleBackdropClick } = useBackdropDismiss(() =>
         emit('close')
     );
+    useScrollLock(() => props.isExpanded);
 </script>
 
 <template>

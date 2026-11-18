@@ -266,7 +266,7 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
                 cursor = result.list_complete ? null : result.cursor;
                 listComplete = result.list_complete !== false;
             } else if (typeof storageAdapter.list === 'function') {
-                // 使用适配器的 list 方法（KVStorageAdapter 或 D1StorageAdapter）
+                // 使用适配器的 list 方法（D1StorageAdapter）
                 // 注意：适配器的 list 方法接受 prefix 字符串参数
                 const result = await storageAdapter.list(CACHE_CONFIG.KEY_PREFIX);
                 keys = Array.isArray(result) ? result : result.keys || [];

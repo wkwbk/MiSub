@@ -1,36 +1,45 @@
 <script setup>
-    import { computed, onMounted, ref } from 'vue';
-    import MigrationModal from '@/components/modals/MigrationModal.vue';
+    import { computed, onMounted, ref, watch } from 'vue';
     import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
     import SettingsContent from '@/components/settings/SettingsContent.vue';
+    import {
+        SETTINGS_ACTIVE_TAB_STORAGE_KEY,
+        resolveSettingsTab,
+    } from '@/utils/dashboard-deeplink.js';
+    import {
+        readSessionPreference,
+        writeSessionPreference,
+    } from '@/utils/session-preference.js';
 
     const {
         settings,
         disguiseConfig,
         isLoading,
         isSaving,
-        showMigrationModal,
         restartCountdown,
         hasWhitespace,
-        isStorageTypeValid,
         loadSettings,
         handleSave,
-        handleMigrationSuccess,
         handleReset,
         exportBackup,
         importBackup,
     } = useSettingsLogic();
 
-    const activeTab = ref('basic');
+    const activeTab = ref(
+        resolveSettingsTab(readSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY)) || 'basic'
+    );
+
+    watch(activeTab, (tabId) => {
+        const resolved = resolveSettingsTab(tabId) || 'basic';
+        writeSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY, resolved);
+    });
 
     // 组件挂载时加载设置
     onMounted(() => {
         loadSettings();
     });
 
-    const saveDisabled = computed(
-        () => isSaving.value || hasWhitespace.value || !isStorageTypeValid.value
-    );
+    const saveDisabled = computed(() => isSaving.value || hasWhitespace.value);
 
     const handleSaveAndReturnStatus = async () => {
         return handleSave();
@@ -54,20 +63,14 @@
             :is-saving="isSaving"
             :restart-countdown="restartCountdown"
             :has-whitespace="hasWhitespace"
-            :is-storage-type-valid="isStorageTypeValid"
             :export-backup="exportBackup"
             :import-backup="importBackup"
             :handle-reset="handleReset"
-            always-show-header
             hide-footer
             in-modal
-            layout-class="!shadow-none !border-0 !rounded-none !bg-transparent"
             @save="handleSave"
             @reload-now="() => window.location.reload()"
-            @migrate="showMigrationModal = true"
         />
-
-        <MigrationModal v-model:show="showMigrationModal" @success="handleMigrationSuccess" />
     </div>
 </template>
 

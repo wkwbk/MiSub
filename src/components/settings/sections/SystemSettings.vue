@@ -3,8 +3,6 @@
     import {
         AlertTriangle,
         Archive,
-        ClipboardCopy,
-        Database,
         KeyRound,
         Loader2,
         Lock,
@@ -118,120 +116,10 @@
             isUpdatingPassword.value = false;
         }
     };
-
-    const SCHEMA_SQL = `CREATE TABLE IF NOT EXISTS subscriptions (
-    id TEXT PRIMARY KEY,
-    data TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS profiles (
-    id TEXT PRIMARY KEY,
-    data TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);
-CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON profiles(updated_at);
-CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`;
-
-    const copySchema = async () => {
-        try {
-            await navigator.clipboard.writeText(SCHEMA_SQL);
-            showToast(t('systemSettings.schemaCopied'), 'success');
-        } catch (err) {
-            showToast(t('systemSettings.copyFailedManual'), 'error');
-        }
-    };
-
-    const emit = defineEmits(['migrate']);
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- 数据存储类型 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-            <SectionHeader
-                :title="t('systemSettings.storageTypeTitle')"
-                :description="t('systemSettings.storageTypeDesc')"
-            >
-                <template #icon>
-                    <Database class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-
-            <div class="space-y-4">
-                <div class="flex flex-wrap gap-6">
-                    <label class="flex items-center cursor-pointer">
-                        <input
-                            type="radio"
-                            value="kv"
-                            v-model="settings.storageType"
-                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
-                            :aria-label="t('systemSettings.kvStorage')"
-                        />
-                        <span class="ml-2.5 text-sm text-zinc-300">{{
-                            t('systemSettings.kvStorage')
-                        }}</span>
-                    </label>
-                    <label class="flex items-center cursor-pointer">
-                        <input
-                            type="radio"
-                            value="d1"
-                            v-model="settings.storageType"
-                            class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
-                            :aria-label="t('systemSettings.d1DatabaseRecommended')"
-                        />
-                        <span class="ml-2.5 text-sm text-zinc-300">{{
-                            t('systemSettings.d1DatabaseRecommended')
-                        }}</span>
-                    </label>
-                </div>
-
-                <div
-                    v-if="settings.storageType === 'kv'"
-                    class="pl-4 border-l-2 border-zinc-800 space-y-2.5"
-                >
-                    <h4 class="text-xs font-semibold text-zinc-200 flex items-center gap-2">
-                        <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-                        {{ t('systemSettings.migrateToD1') }}
-                    </h4>
-                    <p class="text-xs text-zinc-400 leading-relaxed">
-                        {{ t('systemSettings.d1MigrationDesc') }}
-                    </p>
-                    <ol class="list-decimal list-inside text-xs text-zinc-400 space-y-1.5">
-                        <li><span v-html="t('systemSettings.d1StepCreate')"></span></li>
-                        <li><span v-html="t('systemSettings.d1StepSchema')"></span></li>
-                        <li>{{ t('systemSettings.d1StepMigrate') }}</li>
-                    </ol>
-                    <div class="flex flex-col sm:flex-row gap-2.5 pt-1">
-                        <button
-                            @click="emit('migrate')"
-                            class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors bg-zinc-100 hover:bg-white border border-zinc-100 flex items-center justify-center min-w-[120px] shadow-none"
-                        >
-                            {{ t('systemSettings.startMigration') }}
-                        </button>
-                        <button
-                            @click="copySchema"
-                            class="px-4 py-1.5 text-xs font-medium text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100 transition-colors flex items-center justify-center gap-2 shadow-none"
-                        >
-                            <ClipboardCopy class="w-3.5 h-3.5" />
-                            {{ t('systemSettings.copySchemaSql') }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+    <div class="space-y-4">
         <!-- 外部管理 API -->
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader

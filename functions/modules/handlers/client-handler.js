@@ -1,3 +1,4 @@
+import { StorageFactory } from '../../storage-adapter.js';
 import {
     createErrorResponse,
     createJsonResponse,
@@ -8,8 +9,9 @@ import {
 const KV_KEY_CLIENTS = 'misub_clients_v1';
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
-function getKV(env) {
-    return env?.MISUB_KV || null;
+async function getStorageAdapter(env) {
+    const storageType = await StorageFactory.getStorageType(env);
+    return StorageFactory.createAdapter(env, storageType);
 }
 
 function isStorageUnavailableError(error) {
@@ -20,51 +22,6 @@ function isStorageUnavailableError(error) {
         message.includes('namespace is paused')
     );
 }
-
-const LEGACY_CLIENT_ICONS = {
-    'clash-verge-rev': '⚡️',
-    'clash-party': '🎉',
-    v2rayn: '💻',
-    v2rayng: '📱',
-    shadowrocket: '🚀',
-    hiddify: '🛡️',
-    nekobox: '🐱',
-    stash: '📦',
-    loon: '🎈',
-    egern: '🪺',
-    surge: '⚡️',
-    flclash: '🦋',
-    clashmi: 'Ⓜ️',
-    flyclash: '✈️',
-    karing: '🦌',
-    quantumultx: '❌',
-    clashbox: '📦',
-};
-
-const LEGACY_ICON_ALIASES = {
-    '/icons/clients/clash-verge-rev.svg': '/icons/clients/clash-verge-rev.png',
-    '/icons/clients/clash-party.svg': '/icons/clients/clash-party.png',
-    '/icons/clients/v2rayn.ico': '/icons/clients/v2rayn.png',
-    '/icons/clients/v2rayn.svg': '/icons/clients/v2rayn.png',
-    '/icons/clients/v2rayng.svg': '/icons/clients/v2rayng.png',
-    '/icons/clients/shadowrocket.jpg': '/icons/clients/shadowrocket.png',
-    '/icons/clients/shadowrocket.svg': '/icons/clients/shadowrocket.png',
-    '/icons/clients/hiddify.svg': '/icons/clients/hiddify.png',
-    '/icons/clients/nekobox.svg': '/icons/clients/nekobox.png',
-    '/icons/clients/stash.svg': '/icons/clients/stash.jpg',
-    '/icons/clients/loon.svg': '/icons/clients/loon.jpg',
-    '/icons/clients/egern.png': '/icons/clients/egern.jpg',
-    '/icons/clients/egern.svg': '/icons/clients/egern.jpg',
-    '/icons/clients/surge.jpg': '/icons/clients/surge.png',
-    '/icons/clients/surge.svg': '/icons/clients/surge.png',
-    '/icons/clients/flclash.svg': '/icons/clients/flclash.png',
-    '/icons/clients/clashmi.svg': '/icons/clients/clashmi.png',
-    '/icons/clients/flyclash.svg': '/icons/clients/flyclash.png',
-    '/icons/clients/karing.svg': '/icons/clients/karing.png',
-    '/icons/clients/quantumultx.jpg': '/icons/clients/quantumultx.png',
-    '/icons/clients/quantumultx.svg': '/icons/clients/quantumultx.png',
-    '/icons/clients/clashbox.svg': '/icons/clients/clashbox.png',
-};
 
 const DEFAULT_CLIENTS = [
     {
@@ -239,32 +196,6 @@ const DEFAULT_CLIENTS = [
     },
 ];
 
-const DEFAULT_ICON_BY_ID = DEFAULT_CLIENTS.reduce((map, client) => {
-    map[client.id] = client.icon;
-    return map;
-}, {});
-
-function migrateClientIcons(clients) {
-    let updated = false;
-    const nextClients = clients.map((client) => {
-        const legacyIcon = LEGACY_CLIENT_ICONS[client.id];
-        const defaultIcon = DEFAULT_ICON_BY_ID[client.id];
-        if (!defaultIcon) return client;
-        const aliasIcon = LEGACY_ICON_ALIASES[client.icon];
-        if (client.icon === legacyIcon) {
-            updated = true;
-            return { ...client, icon: defaultIcon };
-        }
-        if (aliasIcon) {
-            updated = true;
-            return { ...client, icon: aliasIcon };
-        }
-        return client;
-    });
-
-    return { updated, clients: nextClients };
-}
-
 /**
  * Robust UUID generator
  * Falls back to Math.random if crypto.randomUUID is not available
@@ -281,11 +212,12 @@ function generateUUID() {
 export async function handleClientRequest(request, env) {
     const url = new URL(request.url);
     const path = url.pathname;
-    const kv = getKV(env);
+    const storageAdapter = await getStorageAdapter(env);
+    const isStorageUnavailable = !storageAdapter || storageAdapter.type === 'noop';
 
     try {
         if (request.method === 'GET') {
-            if (!kv) {
+            if (isStorageUnavailable) {
                 return createJsonResponse({
                     success: true,
                     data: DEFAULT_CLIENTS,
@@ -293,25 +225,7 @@ export async function handleClientRequest(request, env) {
                 });
             }
             try {
-                const raw = await kv.get(KV_KEY_CLIENTS);
-                const data = raw ? JSON.parse(raw) : null;
-                if (Array.isArray(data) && data.length > 0) {
-                    const migration = migrateClientIcons(data);
-                    if (migration.updated) {
-                        try {
-                            await kv.put(KV_KEY_CLIENTS, JSON.stringify(migration.clients));
-                        } catch (writeError) {
-                            if (!isStorageUnavailableError(writeError)) {
-                                throw writeError;
-                            }
-                        }
-                        return createJsonResponse({
-                            success: true,
-                            data: migration.clients,
-                            storageUnavailable: false,
-                        });
-                    }
-                }
+                const data = await storageAdapter.get(KV_KEY_CLIENTS);
                 return createJsonResponse({
                     success: true,
                     data: data || DEFAULT_CLIENTS,
@@ -323,20 +237,20 @@ export async function handleClientRequest(request, env) {
                         success: true,
                         data: DEFAULT_CLIENTS,
                         storageUnavailable: true,
-                        message: 'KV 存储已暂停，客户端列表已回退为内置默认值。',
+                        message: '存储已暂停，客户端列表已回退为内置默认值。',
                     });
                 }
                 throw readError;
             }
         }
 
-        if (!kv) {
-            return createErrorResponse('KV 未绑定，写操作不可用', 503);
+        if (isStorageUnavailable) {
+            return createErrorResponse('存储未绑定，写操作不可用', 503);
         }
 
         if (request.method === 'POST') {
             if (path.endsWith('/init')) {
-                await kv.put(KV_KEY_CLIENTS, JSON.stringify(DEFAULT_CLIENTS));
+                await storageAdapter.put(KV_KEY_CLIENTS, DEFAULT_CLIENTS);
                 return createJsonResponse({
                     success: true,
                     message: 'Clients initialized',
@@ -354,8 +268,7 @@ export async function handleClientRequest(request, env) {
                 );
             }
 
-            let clients =
-                (await kv.get(KV_KEY_CLIENTS).then((r) => (r ? JSON.parse(r) : null))) || [];
+            let clients = (await storageAdapter.get(KV_KEY_CLIENTS)) || [];
 
             if (Array.isArray(body)) {
                 clients = body;
@@ -377,7 +290,7 @@ export async function handleClientRequest(request, env) {
                 }
             }
 
-            await kv.put(KV_KEY_CLIENTS, JSON.stringify(clients));
+            await storageAdapter.put(KV_KEY_CLIENTS, clients);
             return createJsonResponse({ success: true, data: clients });
         }
 
@@ -387,8 +300,7 @@ export async function handleClientRequest(request, env) {
                 return createErrorResponse('Client ID is required', 400);
             }
 
-            let clients =
-                (await kv.get(KV_KEY_CLIENTS).then((r) => (r ? JSON.parse(r) : null))) || [];
+            let clients = (await storageAdapter.get(KV_KEY_CLIENTS)) || [];
             const originalLength = clients.length;
             clients = clients.filter((c) => c.id !== id);
 
@@ -396,7 +308,7 @@ export async function handleClientRequest(request, env) {
                 return createErrorResponse('Client not found', 404);
             }
 
-            await kv.put(KV_KEY_CLIENTS, JSON.stringify(clients));
+            await storageAdapter.put(KV_KEY_CLIENTS, clients);
             return createJsonResponse({ success: true, data: clients });
         }
 

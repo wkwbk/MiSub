@@ -9,7 +9,6 @@ import {
     createJsonResponse,
     isUsingDefaultPassword,
     JSON_BODY_LIMITS,
-    migrateProfileIds,
     readJsonWithLimit,
     setAdminPassword,
 } from './utils.js';
@@ -24,6 +23,7 @@ import {
     KV_KEY_SETTINGS,
     KV_KEY_SUBS,
 } from './config.js';
+import { normalizePublicLinksConfig } from '../../src/constants/default-public-links.js';
 import { listRuleTemplates } from './rule-template-handler.js';
 /**
  * 处理订阅和配置保存API
@@ -32,8 +32,6 @@ import { listRuleTemplates } from './rule-template-handler.js';
  * @returns {Promise<Response>} HTTP响应
  */
 import { applyPatch } from './patch-utils.js';
-
-const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
 
 function normalizeLoginPath(customLoginPath) {
     if (typeof customLoginPath !== 'string') return '/login';
@@ -46,35 +44,21 @@ function normalizeProfile(profile = {}) {
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
     normalized.manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
     normalized.subProfiles = Array.isArray(profile.subProfiles) ? profile.subProfiles : [];
+    if (Array.isArray(profile.tags)) {
+        normalized.tags = profile.tags.map((tag) => String(tag || '').trim()).filter(Boolean);
+    }
     normalized.enabled = profile.enabled !== false;
     normalized.isPublic = profile.isPublic === true;
     normalized.downloadCount = Number(profile.downloadCount) || 0;
     return normalized;
 }
 
-async function attachProfileDownloadCounts(storageAdapter, profiles) {
-    if (!Array.isArray(profiles) || profiles.length === 0) return profiles;
-
-    const counts = await Promise.all(
-        profiles.map((profile) =>
-            storageAdapter.get(`${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`)
-        )
-    );
-
-    return profiles.map((profile, index) =>
-        normalizeProfile({
-            ...profile,
-            downloadCount: Number(counts[index]) || Number(profile.downloadCount) || 0,
-        })
-    );
-}
-
 function isStorageUnavailableError(error) {
     const message = String(error?.message || error || '').toLowerCase();
     return (
-        message.includes('kv storage is paused') ||
+        message.includes('d1 database not available') ||
         message.includes('storage is paused') ||
-        message.includes('namespace is paused')
+        message.includes('database is locked')
     );
 }
 
@@ -84,8 +68,7 @@ function isStorageUnavailableError(error) {
  * @returns {Promise<Object>} 存储适配器实例
  */
 async function getStorageAdapter(env) {
-    const storageType = await StorageFactory.getStorageType(env);
-    return StorageFactory.createAdapter(env, storageType);
+    return StorageFactory.createAdapter(env);
 }
 
 function isSimpleArrayDiff(diff) {
@@ -108,16 +91,28 @@ async function applyRowLevelDiff(storageAdapter, type, diff) {
         return false;
     }
 
-    // KV 模式下不支持行级 Diff，必须使用全量覆盖以保证原子性
-    if (storageAdapter.type === STORAGE_TYPES.KV) {
-        return false;
-    }
-
     const { added = [], updated = [], removed = [] } = diff;
+
+    let resolvedUpdates = updated;
+    if (isProfile && updated.length > 0 && typeof storageAdapter.getAllProfiles === 'function') {
+        const currentItems = await storageAdapter.getAllProfiles();
+        const currentMap = new Map(currentItems.map((item) => [item.id, item]));
+        resolvedUpdates = updated.map((item) => {
+            const existing = currentMap.get(item.id);
+            if (!existing) return item;
+            return {
+                ...item,
+                downloadCount: Math.max(
+                    Number(existing.downloadCount) || 0,
+                    Number(item.downloadCount) || 0
+                ),
+            };
+        });
+    }
 
     await Promise.all([
         ...added.map((item) => putItem(item)),
-        ...updated.map((item) => putItem(item)),
+        ...resolvedUpdates.map((item) => putItem(item)),
         ...removed.map((id) => deleteItem(id)),
     ]);
 
@@ -140,11 +135,6 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
         return false;
     }
 
-    // KV 模式下不支持行级同步，必须使用全量覆盖以保证原子性
-    if (storageAdapter.type === STORAGE_TYPES.KV) {
-        return false;
-    }
-
     const currentItems = await getAll();
     const currentMap = new Map(currentItems.map((item) => [item.id, item]));
     const finalMap = new Map(finalItems.map((item) => [item.id, item]));
@@ -154,8 +144,18 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
 
     for (const item of finalItems) {
         const existing = currentMap.get(item.id);
-        if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
-            puts.push(putItem(item));
+        const nextItem =
+            isProfile && existing
+                ? {
+                      ...item,
+                      downloadCount: Math.max(
+                          Number(existing.downloadCount) || 0,
+                          Number(item.downloadCount) || 0
+                      ),
+                  }
+                : item;
+        if (!existing || JSON.stringify(existing) !== JSON.stringify(nextItem)) {
+            puts.push(putItem(nextItem));
         }
     }
 
@@ -175,24 +175,16 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
  * @returns {Promise<Response>} HTTP响应
  */
 export async function handleDataRequest(env, context = null) {
-    let storageType = 'unknown';
+    const storageType = STORAGE_TYPES.D1;
     try {
-        storageType = await StorageFactory.getStorageType(env);
-        if (storageType === 'd1' && !env.MISUB_DB) {
-            console.error('[API Error /data] D1 binding missing while storageType=d1');
+        if (!env?.MISUB_DB) {
+            console.error('[API Error /data] D1 binding missing (MISUB_DB)');
         }
-        if (storageType === 'kv' && !StorageFactory.resolveKV(env)) {
-            console.error('[API Error /data] KV binding missing while storageType=kv');
-        }
-        const storageAdapter = StorageFactory.createAdapter(env, storageType);
+        const storageAdapter = StorageFactory.createAdapter(env);
         const cachedSettings = await SettingsCache.get(env);
         const [misubs, rawProfiles, settings, ruleTemplates] = await Promise.all([
-            typeof storageAdapter.getAllSubscriptions === 'function'
-                ? storageAdapter.getAllSubscriptions()
-                : storageAdapter.get(KV_KEY_SUBS).then((res) => res || []),
-            typeof storageAdapter.getAllProfiles === 'function'
-                ? storageAdapter.getAllProfiles()
-                : storageAdapter.get(KV_KEY_PROFILES).then((res) => res || []),
+            storageAdapter.getAllSubscriptions(),
+            storageAdapter.getAllProfiles(),
             Promise.resolve(cachedSettings || {}).then((res) => res || {}),
             listRuleTemplates(storageAdapter).catch((error) => {
                 console.warn(
@@ -202,16 +194,7 @@ export async function handleDataRequest(env, context = null) {
                 return [];
             }),
         ]);
-        const profiles = await attachProfileDownloadCounts(storageAdapter, rawProfiles);
-
-        // 自动迁移旧版 profile ID（去除 'profile_' 前缀）
-        if (migrateProfileIds(profiles)) {
-            storageAdapter
-                .put(KV_KEY_PROFILES, profiles)
-                .catch((err) =>
-                    console.error('[Migration] Failed to persist migrated profile IDs:', err)
-                );
-        }
+        const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
         const config = {
             ...defaultSettings,
             ...settings,
@@ -236,7 +219,6 @@ export async function handleDataRequest(env, context = null) {
         console.error('[API Error /data] Failed to read from storage', {
             error: e?.message,
             storageType,
-            hasKv: !!StorageFactory.resolveKV(env),
             hasD1: !!env?.MISUB_DB,
         });
         return createErrorResponse(e, 500);
@@ -273,6 +255,15 @@ export async function handleMisubsSave(request, env) {
 
         const { misubs, profiles, diff } = requestData;
         const storageAdapter = await getStorageAdapter(env);
+        if (!storageAdapter || storageAdapter.type === 'noop') {
+            return createJsonResponse(
+                {
+                    success: false,
+                    message: 'D1 database not available',
+                },
+                503
+            );
+        }
 
         let finalMisubs = misubs;
         let finalProfiles = profiles;
@@ -514,7 +505,7 @@ export async function handleSettingsGet(env) {
         if (isStorageUnavailableError(e)) {
             return createJsonResponse({
                 ...defaultSettings,
-                storageType: 'kv',
+                storageType: 'd1',
                 storageUnavailable: true,
             });
         }
@@ -551,7 +542,6 @@ export async function handleSettingsSave(request, env) {
             'auth_debug',
             'auth_check',
             'data',
-            'kv_test',
             'clients',
             'system',
             'github',
@@ -616,35 +606,16 @@ export async function handleSettingsSave(request, env) {
         const finalSettings = { ...oldSettings, ...newSettings };
 
         // 使用存储适配器保存设置
-        try {
-            await storageAdapter.put(KV_KEY_SETTINGS, finalSettings);
-        } catch (storageError) {
-            if (isStorageUnavailableError(storageError)) {
-                return createJsonResponse(
-                    {
-                        success: false,
-                        message:
-                            'KV 存储已暂停，设置当前无法保存。请先恢复 KV 绑定，或配置 D1 后切换到 D1 存储。',
-                    },
-                    503
-                );
-            }
-            throw storageError;
+        if (!storageAdapter || storageAdapter.type === 'noop') {
+            return createJsonResponse(
+                {
+                    success: false,
+                    message: 'D1 database not available',
+                },
+                503
+            );
         }
-
-        // 双存储同步：尽量保持 KV / D1 一致
-        try {
-            const d1Adapter = StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
-            await d1Adapter.put(KV_KEY_SETTINGS, finalSettings);
-        } catch (syncError) {
-            console.warn('[API] Failed to sync settings to D1:', syncError?.message || syncError);
-        }
-        try {
-            const kvAdapter = StorageFactory.createAdapter(env, STORAGE_TYPES.KV);
-            await kvAdapter.put(KV_KEY_SETTINGS, finalSettings);
-        } catch (syncError) {
-            console.warn('[API] Failed to sync settings to KV:', syncError?.message || syncError);
-        }
+        await storageAdapter.put(KV_KEY_SETTINGS, finalSettings);
         SettingsCache.clear();
 
         // 纯界面偏好的保存（客户端用 X-MiSub-Save-Scope: preferences 声明，
@@ -688,21 +659,7 @@ export async function handleSettingsReset(env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 
-        // 使用存储适配器删除设置（会自动处理 KV 和 D1 映射）
         await storageAdapter.delete(KV_KEY_SETTINGS);
-
-        // 如果存在双存储配置，尝试同时清理另一端
-        try {
-            if (storageAdapter.type === STORAGE_TYPES.D1) {
-                const kvNs = StorageFactory.resolveKV(env);
-                if (kvNs) await kvNs.delete(KV_KEY_SETTINGS);
-            } else if (env.MISUB_DB) {
-                const d1Adapter = StorageFactory.createAdapter(env, STORAGE_TYPES.D1);
-                await d1Adapter.delete(KV_KEY_SETTINGS);
-            }
-        } catch (syncError) {
-            console.warn('[API Reset] Dual storage sync cleanup failed:', syncError.message);
-        }
 
         // 清除内存缓存
         SettingsCache.clear();
@@ -773,6 +730,7 @@ export async function handlePublicProfilesRequest(env) {
                 id: p.id,
                 name: p.name,
                 description: p.description || '',
+                tags: Array.isArray(p.tags) ? p.tags : [],
                 customId: p.customId,
                 updatedAt: p.updatedAt,
                 subscriptionCount: (p.subscriptions || []).length,
@@ -793,6 +751,8 @@ export async function handlePublicProfilesRequest(env) {
             hideFooter: settings.customPage?.hideFooter === true,
         };
 
+        const publicLinks = normalizePublicLinksConfig(settings.publicLinks);
+
         return createJsonResponse({
             success: true,
             data: publicProfiles,
@@ -802,6 +762,7 @@ export async function handlePublicProfilesRequest(env) {
                 hero,
                 guestbook,
                 customPage,
+                publicLinks,
                 defaultLocale,
             },
         });

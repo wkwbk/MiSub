@@ -11,8 +11,8 @@ describe('manual nodes labels', () => {
                 manualNodesCount: 89,
                 filteredNodesCount: 89,
                 searchTerm: '',
-                activeGroupFilter: null,
-                manualNodeGroups: [],
+                activeTagFilters: [],
+                manualNodeTags: [],
                 viewMode: 'card',
                 isSorting: false,
                 isSelectionMode: false,
@@ -41,13 +41,14 @@ describe('manual nodes labels', () => {
             manualNodesCount: 24,
             filteredNodesCount: 0,
             searchTerm: '测试',
+            manualNodeTags: ['香港', '日本'],
         });
-        const groupScroller = wrapper.get('[data-testid="manual-node-mobile-groups"]');
+        const tagScroller = wrapper.get('[data-testid="manual-node-mobile-tags"]');
         const toolbarActions = wrapper.get('[data-testid="manual-node-toolbar-actions"]');
         const search = wrapper.get('[data-testid="manual-node-search"]');
         const searchInput = search.get('input[type="text"]');
 
-        expect(groupScroller.classes()).toEqual(
+        expect(tagScroller.classes()).toEqual(
             expect.arrayContaining(['w-full', 'min-w-0', 'overflow-x-auto', 'md:hidden'])
         );
         expect(toolbarActions.classes()).toEqual(
@@ -57,5 +58,16 @@ describe('manual nodes labels', () => {
         expect(search.classes()).toEqual(expect.arrayContaining(['relative', 'mt-4']));
         expect(searchInput.attributes('type')).toBe('text');
         expect(search.text()).toContain('0/24');
+    });
+
+    it('hides tag filter bars when there are no tags and no active filters', () => {
+        const wrapper = mountNodeActions({
+            manualNodeTags: [],
+            activeTagFilters: [],
+        });
+
+        expect(wrapper.find('[data-testid="manual-node-mobile-tags"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="manual-node-tag-tabs"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="manage-manual-node-tags"]').exists()).toBe(false);
     });
 });

@@ -1,8 +1,9 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronDown, List } from '@lucide/vue';
+    import { Braces, List } from '@lucide/vue';
     import { storeToRefs } from 'pinia';
     import Select from '@/components/ui/Select.vue';
+    import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
     import { getLocalizedTransformAssets } from '@/constants/transform-assets';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
@@ -30,72 +31,6 @@
     const resolvedCustomPlaceholder = computed(
         () => props.customPlaceholder || t('transformSelector.customPlaceholder')
     );
-
-    // 模板变量说明是「显示文案」，必须放在 computed 里求值：
-    // ① 顶层常量只在组件创建时算一次，切换语言不会更新；
-    // ② computed 里调用 t() 会经 locale.value 建立响应式依赖，切语言即时生效。
-    const templateVariableGroups = computed(() => [
-        {
-            title: t('transformSelector.varGroupBasic'),
-            items: [
-                { key: '<%proxies%>', example: t('transformSelector.varProxies') },
-                { key: '<%rules%>', example: t('transformSelector.varRules') },
-                { key: '<%file_name%>', example: t('transformSelector.varFileName') },
-                { key: '<%target_format%>', example: t('transformSelector.varTargetFormat') },
-                { key: '<%node_count%>', example: t('transformSelector.varNodeCount') },
-            ],
-        },
-        {
-            title: t('transformSelector.varGroupStrategy'),
-            items: [
-                {
-                    key: '<%primary_strategy_chain%>',
-                    example: t('transformSelector.varPrimaryStrategyChain'),
-                },
-                {
-                    key: '<%region_strategy_chain%>',
-                    example: t('transformSelector.varRegionStrategyChain'),
-                },
-                {
-                    key: '<%protocol_strategy_chain%>',
-                    example: t('transformSelector.varProtocolStrategyChain'),
-                },
-                {
-                    key: '<%all_strategy_groups%>',
-                    example: t('transformSelector.varAllStrategyGroups'),
-                },
-            ],
-        },
-        {
-            title: t('transformSelector.varGroupDetail'),
-            items: [
-                {
-                    key: '<%region_group_names%>',
-                    example: t('transformSelector.varRegionGroupNames'),
-                },
-                {
-                    key: '<%region_group_counts%>',
-                    example: t('transformSelector.varRegionGroupCounts'),
-                },
-                {
-                    key: '<%region_group_list%>',
-                    example: t('transformSelector.varRegionGroupList'),
-                },
-                {
-                    key: '<%protocol_group_names%>',
-                    example: t('transformSelector.varProtocolGroupNames'),
-                },
-                {
-                    key: '<%protocol_group_counts%>',
-                    example: t('transformSelector.varProtocolGroupCounts'),
-                },
-                {
-                    key: '<%protocol_group_list%>',
-                    example: t('transformSelector.varProtocolGroupList'),
-                },
-            ],
-        },
-    ]);
 
     const customTemplateAssets = computed(() => {
         if (props.excludeBuiltinAssets) return [];
@@ -280,14 +215,6 @@
 
 <template>
     <div>
-        <div
-            v-if="type === 'config' && excludeBuiltinAssets"
-            class="mb-3 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-300"
-        >
-            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
-            <span>{{ t('transformSelector.thirdPartyNotice') }}</span>
-        </div>
-
         <div v-if="!isCustom">
             <Select
                 :model-value="selectedUrl"
@@ -304,17 +231,19 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                        class="block h-9 w-full rounded-md border border-zinc-800 bg-[#131515] px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>
                 <button
+                    v-if="!forceCustom"
+                    type="button"
                     @click="switchToSelect"
-                    class="flex-shrink-0 rounded-md border border-zinc-800 bg-transparent p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     :title="t('operators.backToList')"
                     :aria-label="t('operators.backToList')"
                 >
-                    <List class="h-5 w-5" />
+                    <List class="h-4 w-4" />
                 </button>
             </div>
             <p
@@ -341,46 +270,22 @@
 
         <div
             v-if="type === 'config'"
-            class="mt-3 rounded-md border border-zinc-800 bg-transparent text-xs"
+            class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs"
         >
+            <span class="leading-relaxed text-zinc-500">{{ helperText }}</span>
             <button
+                v-if="!excludeBuiltinAssets"
                 type="button"
-                class="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-zinc-900/60"
+                data-testid="open-template-variables"
                 :aria-expanded="showTemplateVariables"
-                @click="showTemplateVariables = !showTemplateVariables"
+                @click="showTemplateVariables = true"
+                class="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
             >
-                <span>
-                    <span class="font-medium text-zinc-200">{{
-                        t('transformSelector.templateVariablesTitle')
-                    }}</span>
-                    <span class="ml-2 text-[11px] text-zinc-500">{{ helperText }}</span>
-                </span>
-                <ChevronDown
-                    class="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 transition-transform"
-                    :class="showTemplateVariables ? 'rotate-180' : ''"
-                    aria-hidden="true"
-                />
+                <Braces class="h-3.5 w-3.5" />
+                <span>{{ t('transformSelector.templateVariablesTitle') }}</span>
             </button>
-            <div
-                v-if="showTemplateVariables"
-                class="grid gap-3 border-t border-zinc-800 p-3 md:grid-cols-2"
-            >
-                <div
-                    v-for="group in templateVariableGroups"
-                    :key="group.title"
-                    class="rounded-md border border-zinc-800 bg-transparent p-3"
-                >
-                    <p class="font-medium text-zinc-200">{{ group.title }}</p>
-                    <div class="mt-2 space-y-2">
-                        <div v-for="item in group.items" :key="item.key">
-                            <code class="font-mono text-[11px] text-zinc-200">{{ item.key }}</code>
-                            <p class="mt-0.5 text-[11px] text-zinc-500">
-                                {{ t('transformSelector.exampleLabel') }}: {{ item.example }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
+
+        <TemplateVariablesModal v-model:show="showTemplateVariables" />
     </div>
 </template>

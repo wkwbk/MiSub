@@ -1,6 +1,7 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
+import { normalizePublicLinksConfig } from '@/constants/default-public-links.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
@@ -28,6 +29,7 @@ function normalizeExternalApiConfig(value) {
 function normalizeSettingsObject(source = {}) {
     const merged = { ...DEFAULT_SETTINGS, ...source };
     merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
+    merged.publicLinks = normalizePublicLinksConfig(source.publicLinks ?? merged.publicLinks);
     return merged;
 }
 
@@ -45,7 +47,6 @@ export function useSettingsLogic() {
     const settings = ref(normalizeSettingsObject(DEFAULT_SETTINGS));
     const isLoading = ref(false);
     const isSaving = ref(false);
-    const showMigrationModal = ref(false);
     const restartCountdown = ref(null);
     let reloadTimer = null;
 
@@ -83,8 +84,6 @@ export function useSettingsLogic() {
         return false;
     });
 
-    const isStorageTypeValid = computed(() => ['kv', 'd1'].includes(settings.value.storageType));
-
     // ========== 核心函数 ==========
 
     /**
@@ -106,9 +105,7 @@ export function useSettingsLogic() {
                     };
                 }
 
-                if (!settings.value.storageType) {
-                    settings.value.storageType = 'kv';
-                }
+                settings.value.storageType = 'd1';
 
                 // 应用默认显示语言设置
                 if (settings.value.defaultLocale) {
@@ -134,14 +131,10 @@ export function useSettingsLogic() {
             showToast(t('settings.noWhitespace'), 'error');
             return false;
         }
-        if (!isStorageTypeValid.value) {
-            showToast(t('settings.invalidStorageType'), 'error');
-            return false;
-        }
 
         isSaving.value = true;
         try {
-            if (!settings.value.storageType) settings.value.storageType = 'kv';
+            settings.value.storageType = 'd1';
             settings.value.externalApi = normalizeExternalApiConfig(settings.value.externalApi);
 
             const settingsToSave = {
@@ -180,15 +173,6 @@ export function useSettingsLogic() {
         } finally {
             isSaving.value = false;
         }
-    };
-
-    /**
-     * 处理 D1 迁移成功
-     */
-    const handleMigrationSuccess = () => {
-        showMigrationModal.value = false;
-        settings.value.storageType = 'd1';
-        showToast(t('settings.migrationSuccess'), 'success');
     };
 
     /**
@@ -232,13 +216,10 @@ export function useSettingsLogic() {
         disguiseConfig,
         isLoading,
         isSaving,
-        showMigrationModal,
         restartCountdown,
         hasWhitespace,
-        isStorageTypeValid,
         loadSettings,
         handleSave,
-        handleMigrationSuccess,
         handleReset,
         exportBackup,
         importBackup,

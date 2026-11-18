@@ -6,20 +6,14 @@
     import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
     import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
     import NodeSelector from '@/components/modals/ProfileModal/NodeSelector.vue';
-    import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSettingsStore } from '@/stores/settings.js';
     import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
-    import {
-        collectSubscriptionGroups,
-        getSubscriptionGroup,
-    } from '@/utils/subscription-groups.js';
+    import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
 
     const { t } = useI18n();
     const dataStore = useDataStore();
     const settingsStore = useSettingsStore();
-    const { manualNodeGroups } = useManualNodes(dataStore.markDirty);
 
     const props = defineProps({
         show: Boolean,
@@ -36,8 +30,9 @@
     const subProfileSearchTerm = ref('');
     const nodeSearchTerm = ref('');
     const activeResourceTab = ref('manualNodes');
-    const activeSubscriptionGroupFilter = ref(null);
-    const activeManualNodeGroupFilter = ref(null);
+    const activeSubscriptionTagFilters = ref([]);
+    const activeManualNodeTagFilters = ref([]);
+    const activeSubProfileTagFilters = ref([]);
     const showAdvanced = ref(false);
     const uiText = computed(() => ({
         prefixTitle: t('profileModal.nodeNameVisibility'),
@@ -53,13 +48,12 @@
         { label: t('profiles.optionDisabled'), value: false },
     ];
 
-    const groupPrefixToggleOptions = [
+    const tagPrefixToggleOptions = [
         { label: t('profiles.globalDefault'), value: null },
         { label: t('profiles.optionEnabled'), value: true },
         { label: t('profiles.optionDisabled'), value: false },
     ];
 
-    // 国家/地区代码到旗帜和中文名称的映射
     const countryCodeMap = {
         hk: ['🇭🇰', '香港'],
         tw: ['🇨🇳', '台湾', '臺灣'],
@@ -117,28 +111,31 @@
         nz: ['🇳🇿', '新西兰', '紐西蘭'],
     };
 
+    const allProfileTags = computed(() =>
+        collectTags(dataStore.profiles || [], settingsStore.config.profileTagOrder || [])
+    );
+
+    const manualNodeTags = computed(() =>
+        collectTags(props.allManualNodes || [], settingsStore.config.manualNodeTagOrder || [])
+    );
+
     const selectableSubscriptions = computed(() => {
         return (props.allSubscriptions || []).filter(
             (sub) => sub.enabled && sub.url && /^https?:\/\//.test(sub.url)
         );
     });
 
-    const subscriptionGroups = computed(() => {
-        return collectSubscriptionGroups(selectableSubscriptions.value);
+    const subscriptionTags = computed(() => {
+        return collectTags(
+            selectableSubscriptions.value,
+            settingsStore.config.subscriptionTagOrder || []
+        );
     });
 
     const filteredSubscriptions = computed(() => {
-        let validSubs = selectableSubscriptions.value;
-
-        if (activeSubscriptionGroupFilter.value) {
-            if (activeSubscriptionGroupFilter.value === DEFAULT_GROUP_KEY) {
-                validSubs = validSubs.filter((sub) => !getSubscriptionGroup(sub));
-            } else {
-                validSubs = validSubs.filter(
-                    (sub) => getSubscriptionGroup(sub) === activeSubscriptionGroupFilter.value
-                );
-            }
-        }
+        let validSubs = selectableSubscriptions.value.filter((sub) =>
+            matchesTagFilter(sub, activeSubscriptionTagFilters.value)
+        );
 
         if (!subscriptionSearchTerm.value) {
             return validSubs;
@@ -148,10 +145,10 @@
 
         return validSubs.filter((sub) => {
             const subNameLower = sub.name ? sub.name.toLowerCase() : '';
+            if (subNameLower.includes(lowerCaseSearchTerm)) return true;
 
-            if (subNameLower.includes(lowerCaseSearchTerm)) {
-                return true;
-            }
+            const tags = getItemTags(sub);
+            if (tags.some((tag) => tag.toLowerCase().includes(lowerCaseSearchTerm))) return true;
 
             for (const altTerm of alternativeTerms) {
                 if (subNameLower.includes(altTerm.toLowerCase())) {
@@ -173,8 +170,14 @@
         });
     });
 
+    const subProfileTags = computed(() =>
+        collectTags(selectableSubProfiles.value, settingsStore.config.profileTagOrder || [])
+    );
+
     const filteredSubProfiles = computed(() => {
-        const list = selectableSubProfiles.value;
+        const list = selectableSubProfiles.value.filter((p) =>
+            matchesTagFilter(p, activeSubProfileTagFilters.value)
+        );
         if (!subProfileSearchTerm.value) {
             return list;
         }
@@ -194,6 +197,9 @@
                 return true;
             }
 
+            const tags = getItemTags(p);
+            if (tags.some((tag) => tag.toLowerCase().includes(lowerCaseSearchTerm))) return true;
+
             for (const altTerm of alternativeTerms) {
                 if (pNameLower.includes(altTerm.toLowerCase())) {
                     return true;
@@ -204,15 +210,9 @@
     });
 
     const filteredManualNodes = computed(() => {
-        let nodes = props.allManualNodes;
-
-        if (activeManualNodeGroupFilter.value) {
-            if (activeManualNodeGroupFilter.value === DEFAULT_GROUP_KEY) {
-                nodes = nodes.filter((n) => !n.group);
-            } else {
-                nodes = nodes.filter((n) => n.group === activeManualNodeGroupFilter.value);
-            }
-        }
+        const nodes = (props.allManualNodes || []).filter((node) =>
+            matchesTagFilter(node, activeManualNodeTagFilters.value)
+        );
 
         if (!nodeSearchTerm.value) {
             return nodes;
@@ -222,10 +222,10 @@
 
         return nodes.filter((node) => {
             const nodeNameLower = node.name ? node.name.toLowerCase() : '';
+            if (nodeNameLower.includes(lowerCaseSearchTerm)) return true;
 
-            if (nodeNameLower.includes(lowerCaseSearchTerm)) {
-                return true;
-            }
+            const tags = getItemTags(node);
+            if (tags.some((tag) => tag.toLowerCase().includes(lowerCaseSearchTerm))) return true;
 
             for (const altTerm of alternativeTerms) {
                 if (nodeNameLower.includes(altTerm.toLowerCase())) {
@@ -241,7 +241,7 @@
         (newProfile) => {
             if (newProfile) {
                 const profileCopy = JSON.parse(JSON.stringify(newProfile));
-                // Format date for input[type=date]
+                profileCopy.tags = getItemTags(profileCopy);
                 if (profileCopy.expiresAt) {
                     try {
                         profileCopy.expiresAt = new Date(profileCopy.expiresAt)
@@ -261,8 +261,8 @@
                     profileCopy.prefixSettings.enableSubscriptions ?? null;
                 profileCopy.prefixSettings.manualNodePrefix =
                     profileCopy.prefixSettings.manualNodePrefix ?? '';
-                profileCopy.prefixSettings.prependGroupName =
-                    profileCopy.prefixSettings.prependGroupName ?? null;
+                profileCopy.prefixSettings.prependTagName =
+                    profileCopy.prefixSettings.prependTagName ?? null;
 
                 if (
                     Object.prototype.hasOwnProperty.call(
@@ -273,9 +273,8 @@
                     delete profileCopy.prefixSettings.enableNodeEmoji;
                 }
 
-                // 确保 subconverter 对象存在
                 if (!profileCopy.subconverter || typeof profileCopy.subconverter !== 'object') {
-                    profileSub: profileCopy.subconverter = {
+                    profileCopy.subconverter = {
                         engineMode: '',
                         backend: '',
                         options: {
@@ -288,7 +287,6 @@
                         },
                     };
                 } else {
-                    // 补充缺失的 options 字段，支持 null (即跟随全局)
                     profileCopy.subconverter.options = profileCopy.subconverter.options || {};
                     const fields = ['udp', 'emoji', 'scv', 'sort', 'tfo', 'list'];
                     fields.forEach((f) => {
@@ -298,12 +296,10 @@
                     });
                 }
 
-                // 确保 operators 数组存在
                 profileCopy.operators = Array.isArray(profileCopy.operators)
                     ? profileCopy.operators
                     : [];
 
-                // 确保 subProfiles 数组存在
                 profileCopy.subProfiles = Array.isArray(profileCopy.subProfiles)
                     ? profileCopy.subProfiles
                     : [];
@@ -316,6 +312,7 @@
                     subscriptions: [],
                     subProfiles: [],
                     manualNodes: [],
+                    tags: [],
                     customId: '',
                     expiresAt: '',
                     isPublic: true,
@@ -324,7 +321,7 @@
                         enableManualNodes: null,
                         enableSubscriptions: null,
                         manualNodePrefix: '',
-                        prependGroupName: null,
+                        prependTagName: null,
                     },
                     operators: [],
                 };
@@ -335,19 +332,17 @@
 
     const handleConfirm = () => {
         const profileToSave = JSON.parse(JSON.stringify(localProfile.value));
+        profileToSave.tags = normalizeTagList(profileToSave.tags);
         if (profileToSave.expiresAt) {
             try {
-                // Set time to the end of the selected day in local time, then convert to ISO string
                 const date = new Date(profileToSave.expiresAt);
                 date.setHours(23, 59, 59, 999);
                 profileToSave.expiresAt = date.toISOString();
             } catch (e) {
                 console.error('Error processing expiresAt date:', e);
-                // Decide how to handle error: save as is, or clear it
                 profileToSave.expiresAt = '';
             }
         }
-        // 顺序已由用户通过拖拽确定，无需额外排序
         emit('save', profileToSave);
     };
 
@@ -374,7 +369,6 @@
         );
     };
 
-    // 处理拖拽排序后的 ID 顺序更新
     const updateSelectedIds = (listName, newIds) => {
         localProfile.value[listName] = newIds;
     };
@@ -407,8 +401,9 @@
                     :show-advanced="showAdvanced"
                     :ui-text="uiText"
                     :prefix-toggle-options="prefixToggleOptions"
-                    :group-prefix-toggle-options="groupPrefixToggleOptions"
+                    :tag-prefix-toggle-options="tagPrefixToggleOptions"
                     :global-settings="dataStore.settings"
+                    :profile-tags="allProfileTags"
                     @toggle-advanced="showAdvanced = !showAdvanced"
                 />
 
@@ -535,11 +530,11 @@
                             :nodes="allManualNodes"
                             :filtered-nodes="filteredManualNodes"
                             :search-term="nodeSearchTerm"
-                            :active-group-filter="activeManualNodeGroupFilter"
-                            :groups="manualNodeGroups"
+                            :active-tag-filters="activeManualNodeTagFilters"
+                            :tags="manualNodeTags"
                             :selected-ids="localProfile.manualNodes || []"
                             @update:search-term="nodeSearchTerm = $event"
-                            @update:group-filter="activeManualNodeGroupFilter = $event"
+                            @update:tag-filters="activeManualNodeTagFilters = $event"
                             @update:selected-ids="updateSelectedIds('manualNodes', $event)"
                             @toggle-selection="toggleSelection('manualNodes', $event)"
                             @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
@@ -556,11 +551,11 @@
                             :subscriptions="selectableSubscriptions"
                             :filtered-subscriptions="filteredSubscriptions"
                             :search-term="subscriptionSearchTerm"
-                            :active-group-filter="activeSubscriptionGroupFilter"
-                            :groups="subscriptionGroups"
+                            :active-tag-filters="activeSubscriptionTagFilters"
+                            :tags="subscriptionTags"
                             :selected-ids="localProfile.subscriptions || []"
                             @update:search-term="subscriptionSearchTerm = $event"
-                            @update:group-filter="activeSubscriptionGroupFilter = $event"
+                            @update:tag-filters="activeSubscriptionTagFilters = $event"
                             @update:selected-ids="updateSelectedIds('subscriptions', $event)"
                             @toggle-selection="toggleSelection('subscriptions', $event)"
                             @select-all="handleSelectAll('subscriptions', filteredSubscriptions)"
@@ -577,11 +572,13 @@
                             :profiles="selectableSubProfiles"
                             :filtered-profiles="filteredSubProfiles"
                             :search-term="subProfileSearchTerm"
+                            :active-tag-filters="activeSubProfileTagFilters"
+                            :tags="subProfileTags"
                             :selected-ids="localProfile.subProfiles || []"
                             :target-profile-id="localProfile.id || props.profile?.id || ''"
                             :all-profiles="dataStore.profiles || []"
-                            :align-spacer="activeResourceTab === 'all'"
                             @update:search-term="subProfileSearchTerm = $event"
+                            @update:tag-filters="activeSubProfileTagFilters = $event"
                             @update:selected-ids="updateSelectedIds('subProfiles', $event)"
                             @toggle-selection="toggleSelection('subProfiles', $event)"
                             @select-all="handleSelectAll('subProfiles', $event)"

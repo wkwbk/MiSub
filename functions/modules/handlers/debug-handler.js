@@ -140,12 +140,9 @@ export async function handleSystemInfoRequest(request, env) {
             environment: {
                 storageType,
                 availableFeatures: {
-                    kv: storageType === 'kv',
                     d1: storageType === 'd1',
-                    dual: StorageFactory.hasDualStorage(env),
                 },
                 bindings: {
-                    hasKv: !!StorageFactory.resolveKV(env),
                     hasD1: !!env.MISUB_DB,
                     hasAdminPassword: !!env.ADMIN_PASSWORD,
                     hasCookieSecret: !!env.COOKIE_SECRET,

@@ -49,7 +49,6 @@ export function toExternalSubscription(item) {
         name: item.name || '',
         url: item.url || '',
         enabled: item.enabled !== false,
-        group: item.group || '',
         tags: Array.isArray(item.tags) ? item.tags : [],
         userAgent: item.userAgent || item.customUserAgent || '',
         proxy: item.proxy || item.fetchProxy || '',
@@ -71,7 +70,6 @@ export function toExternalManualNode(item) {
         url: item.url || '',
         protocol: detectNodeProtocol(item.url),
         enabled: item.enabled !== false,
-        group: item.group || '',
         tags: Array.isArray(item.tags) ? item.tags : [],
         remarks: item.remarks || '',
         sortIndex: Number(item.sortIndex) || 0,
@@ -85,6 +83,7 @@ export function toExternalProfile(profile) {
         id: profile.id,
         name: profile.name || '',
         description: profile.description || '',
+        tags: Array.isArray(profile.tags) ? profile.tags : [],
         enabled: profile.enabled !== false,
         isPublic: profile.isPublic === true,
         customId: profile.customId || '',
@@ -107,6 +106,7 @@ export function toInternalProfilePatch(payload = {}) {
     const internal = {};
     if ('name' in payload) internal.name = payload.name;
     if ('description' in payload) internal.description = payload.description;
+    if ('tags' in payload) internal.tags = payload.tags;
     if ('enabled' in payload) internal.enabled = payload.enabled;
     if ('isPublic' in payload) internal.isPublic = payload.isPublic;
     if ('customId' in payload) internal.customId = payload.customId;

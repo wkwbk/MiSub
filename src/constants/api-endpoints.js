@@ -20,10 +20,6 @@ export const API_ENDPOINTS = {
     BATCH_UPDATE: '/api/batch_update_nodes',
     DEBUG_SUB: '/api/debug_subscription',
 
-    // 迁移相关
-    MIGRATE: '/api/migrate',
-    MIGRATE_TO_D1: '/api/migrate_to_d1',
-
     // 订阅访问
     SUB_BASE: '/sub',
     SUB_PROFILE: '/sub/:token/:profileId',

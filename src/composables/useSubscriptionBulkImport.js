@@ -3,15 +3,15 @@ import { useToastStore } from '@/stores/toast.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { extractNodeName } from '@/lib/utils.js';
 import { generateSubscriptionId } from '@/utils/id.js';
-import { collectSubscriptionGroups, normalizeSubscriptionGroupName, } from '@/utils/subscription-groups.js';
+import { applyItemTags, collectTags } from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 
 /**
- * 从现有机场订阅中提取当前所有分组名称。
+ * 从现有机场订阅中提取当前所有标签名称。
  */
-export function extractAirportGroupNames(subscriptions = []) {
+export function extractSubscriptionTagNames(subscriptions = []) {
     const httpSubs = (subscriptions || []).filter((sub) => isValidSubscriptionUrl(sub?.url));
-    return collectSubscriptionGroups(httpSubs);
+    return collectTags(httpSubs);
 }
 
 /**
@@ -29,21 +29,20 @@ export function isValidSubscriptionUrl(line) {
 
 /**
  * 机场订阅专用批量导入逻辑：
- * 仅处理 http:// / https:// 订阅链接，支持统一设置分组标签。
+ * 仅处理 http:// / https:// 订阅链接，支持统一设置多标签。
  */
 export function useSubscriptionBulkImport({ addSubscriptionsFromBulk } = {}) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
     const showModal = ref(false);
 
-    const handleSubscriptionBulkImport = (importText, groupName = '') => {
+    const handleSubscriptionBulkImport = (importText, tagsInput = []) => {
         if (!importText || !String(importText).trim()) return;
 
         const existingUrls = new Set(
             (dataStore.subscriptions || []).map((s) => s.url).filter(Boolean)
         );
         const seenInBatch = new Set();
-        const normalizedGroup = normalizeSubscriptionGroupName(groupName);
 
         const lines = String(importText)
             .split('\n')
@@ -65,17 +64,21 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk } = {}) {
             }
             seenInBatch.add(line);
 
-            validSubs.push({
-                id: generateSubscriptionId(),
-                name: extractNodeName(line) || t('bulkImport.unnamed'),
-                url: line,
-                enabled: true,
-                status: 'unchecked',
-                exclude: '',
-                customUserAgent: '',
-                notes: '',
-                group: normalizedGroup,
-            });
+            validSubs.push(
+                applyItemTags(
+                    {
+                        id: generateSubscriptionId(),
+                        name: extractNodeName(line) || t('bulkImport.unnamed'),
+                        url: line,
+                        enabled: true,
+                        status: 'unchecked',
+                        exclude: '',
+                        customUserAgent: '',
+                        notes: '',
+                    },
+                    tagsInput
+                )
+            );
         }
 
         if (validSubs.length > 0) {

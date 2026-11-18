@@ -2,6 +2,7 @@
     import { computed } from 'vue';
     import { GripHorizontal, Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
+    import TagFilterBar from '@/components/shared/TagFilterBar.vue';
     import { useI18n } from '@/i18n/index.js';
     import { wouldCreateCycle } from '@/utils/profile-graph.js';
 
@@ -20,6 +21,14 @@
             type: String,
             default: '',
         },
+        activeTagFilters: {
+            type: Array,
+            default: () => [],
+        },
+        tags: {
+            type: Array,
+            default: () => [],
+        },
         selectedIds: {
             type: Array,
             default: () => [],
@@ -32,14 +41,11 @@
             type: Array,
             default: () => [],
         },
-        alignSpacer: {
-            type: Boolean,
-            default: false,
-        },
     });
 
     const emit = defineEmits([
         'update:searchTerm',
+        'update:tagFilters',
         'update:selectedIds',
         'toggle-selection',
         'select-all',
@@ -51,12 +57,10 @@
         set: (val) => emit('update:searchTerm', val),
     });
 
-    // 检查某个候选 profile 是否会导致循环依赖
     const isCycleCandidate = (profileId) => {
         return wouldCreateCycle(props.targetProfileId, profileId, props.allProfiles);
     };
 
-    // 根据 selectedIds 顺序获取已选子订阅对象列表
     const orderedSelectedProfiles = computed({
         get() {
             const profileMap = new Map();
@@ -101,8 +105,16 @@
                 </button>
             </div>
         </div>
-        <!-- 占位区域，与左侧分组筛选高度一致 -->
-        <div v-if="alignSpacer" class="h-8 hidden lg:block" aria-hidden="true"></div>
+        <!-- Tag Filter Bar -->
+        <div class="flex items-center h-8">
+            <TagFilterBar
+                :tags="tags"
+                :active-filters="activeTagFilters"
+                always-show
+                test-id-prefix="subprofile-selector-tag"
+                @update:active-filters="emit('update:tagFilters', $event)"
+            />
+        </div>
         <div class="relative">
             <input
                 type="text"
@@ -157,7 +169,6 @@
             </div>
         </div>
 
-        <!-- 已选子订阅拖拽排序区 -->
         <div v-if="orderedSelectedProfiles.length > 0" class="mt-3">
             <div class="flex justify-between items-center mb-1.5">
                 <h5 class="text-xs font-medium text-zinc-400">

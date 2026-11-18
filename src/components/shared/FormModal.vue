@@ -5,6 +5,7 @@
     import { Loader2, X } from '@lucide/vue';
     import { t } from '@/i18n/index.js';
     import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
+    import { useScrollLock } from '@/composables/useScrollLock.js';
 
     const props = defineProps({
         show: {
@@ -140,6 +141,7 @@
         handleClose,
         () => props.maskClosable && !props.disabled && !props.loading
     );
+    useScrollLock(() => props.show);
 
     // 处理确认
     const handleConfirm = () => {
@@ -191,7 +193,7 @@
         <div
             v-if="show"
             ref="modalRef"
-            class="fixed inset-0 overflow-y-auto"
+            class="fixed inset-0 overflow-y-auto overscroll-contain"
             :style="{ zIndex }"
             role="dialog"
             aria-modal="true"

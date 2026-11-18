@@ -10,6 +10,7 @@
     import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
     import Modal from '@/components/forms/Modal.vue';
     import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
+    import BatchTagModal from '@/components/modals/BatchTagModal.vue';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
     import {
@@ -17,8 +18,8 @@
         resolveSubscriptionStatusFilter,
     } from '@/utils/dashboard-deeplink.js';
 
-    const GroupManagementModal = defineAsyncComponent(
-        () => import('@/components/modals/GroupManagementModal.vue')
+    const TagManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/TagManagementModal.vue')
     );
 
     const dataStore = useDataStore();
@@ -28,25 +29,30 @@
     const route = useRoute();
     const router = useRouter();
 
-    // State
-    // State
     const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
-    const showGroupManagementModal = ref(false);
+    const showBatchDeleteModal = ref(false);
+    const batchDeleteIds = ref([]);
+    const showBatchTagModal = ref(false);
+    const batchTagIds = ref([]);
+    const showTagManagementModal = ref(false);
 
     const {
         subscriptions,
-        subscriptionGroups,
-        activeGroupFilter,
-        setGroupFilter,
-        renameSubscriptionGroup,
-        deleteSubscriptionGroup,
+        subscriptionTags,
+        activeTagFilters,
+        setTagFilters,
+        renameSubscriptionTag,
+        deleteSubscriptionTag,
+        reorderSubscriptionTags,
         filteredSubscriptions,
         searchQuery: subscriptionSearchQuery,
         addSubscription,
         updateSubscription,
         deleteSubscription,
         deleteAllSubscriptions,
+        batchUpdateSubscriptionTags,
+        batchDeleteSubscriptions,
         addSubscriptionsFromBulk,
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
@@ -58,7 +64,6 @@
 
     const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
 
-    // Composables
     const {
         showModal: showSubModal,
         isNew: isNewSubscription,
@@ -89,7 +94,29 @@
         showDeleteSubsModal.value = false;
     };
 
-    // Preview
+    const handleOpenBatchTagModal = (ids) => {
+        batchTagIds.value = ids;
+        showBatchTagModal.value = true;
+    };
+
+    const handleBatchTagConfirm = (payload) => {
+        batchUpdateSubscriptionTags(batchTagIds.value, payload);
+        batchTagIds.value = [];
+    };
+
+    const handleBatchDeleteRequest = (ids) => {
+        if (ids && ids.length > 0) {
+            batchDeleteIds.value = ids;
+            showBatchDeleteModal.value = true;
+        }
+    };
+
+    const confirmBatchDelete = () => {
+        batchDeleteSubscriptions(batchDeleteIds.value);
+        batchDeleteIds.value = [];
+        showBatchDeleteModal.value = false;
+    };
+
     const NodePreviewModal = defineAsyncComponent(
         () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
@@ -98,22 +125,24 @@
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
 
-    // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleGroupRename = (oldName, newName) => {
-        renameSubscriptionGroup(oldName, newName);
-        showToast(t('manualNodes.groupRenamed'), 'success');
+    const handleTagRename = (oldName, newName) => {
+        renameSubscriptionTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
-        deleteSubscriptionGroup(groupName);
-        showToast(t('manualNodes.groupDeleted'), 'success');
+    const handleTagDelete = (tagName) => {
+        deleteSubscriptionTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
     };
 
-    // 应用识别到的机场名（来自订阅响应头 / 官网标题）
+    const handleTagReorder = (newOrder) => {
+        reorderSubscriptionTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
+    };
+
     const handleApplyDetectedName = (subscriptionId, name) => {
         const target = String(name || '').trim();
         if (!target) return;
-        // useSubscriptions 的 updateSubscription 接收「完整订阅对象」而非 (id, patch)
         const targetSub = subscriptions.value.find((s) => s.id === subscriptionId);
         if (!targetSub) return;
         updateSubscription({
@@ -133,12 +162,10 @@
         }
     };
 
-    // Subscription Bulk Import Logic
     const SubscriptionBulkImportModal = defineAsyncComponent(
         () => import('@/components/modals/SubscriptionBulkImportModal.vue')
     );
 
-    // QRCode
     const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
@@ -153,9 +180,6 @@
         }
     };
 
-    // --- Dashboard deep-link status filter (?status=error / expired / ...) ---
-    // The dashboard health cards link here with a status. Previously the query
-    // was dropped, so the user landed on an unfiltered list.
     const activeStatusFilter = ref('');
     const STATUS_FILTER_LABEL_KEYS = {
         disabled: 'subscriptions.filterStatusDisabled',
@@ -170,7 +194,6 @@
         return key ? t(key) : '';
     });
 
-    // Subscriptions matching the active status filter, before search/pagination.
     const statusFilteredSubscriptions = computed(() => {
         if (!activeStatusFilter.value) return subscriptions.value;
         return subscriptions.value.filter((sub) =>
@@ -194,8 +217,6 @@
     onMounted(applyStatusFromQuery);
     watch(() => route.query.status, applyStatusFromQuery);
 
-    // `subscriptions` is the prop the panel renders; when a status filter is
-    // active we narrow it so the list, the count and pagination all agree.
     const visibleSubscriptions = computed(() =>
         activeStatusFilter.value ? statusFilteredSubscriptions.value : subscriptions.value
     );
@@ -205,8 +226,8 @@
     <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
-            :groups="subscriptionGroups"
-            :active-group-filter="activeGroupFilter"
+            :tags="subscriptionTags"
+            :active-tag-filters="activeTagFilters"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
@@ -217,8 +238,8 @@
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
-            @set-group-filter="setGroupFilter"
-            @manage-groups="showGroupManagementModal = true"
+            @set-tag-filters="setTagFilters"
+            @manage-tags="showTagManagementModal = true"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
             @update-node-count="handleUpdateNodeCount"
@@ -233,16 +254,37 @@
             @qrcode="handleQRCode"
             @update-search="subscriptionSearchQuery = $event"
             @applyDetectedName="handleApplyDetectedName"
+            @open-batch-tag-modal="handleOpenBatchTagModal"
+            @batch-delete-subscriptions="handleBatchDeleteRequest"
         />
 
-        <GroupManagementModal
-            v-model:show="showGroupManagementModal"
-            :groups="subscriptionGroups"
-            @rename="handleGroupRename"
-            @delete="handleGroupDelete"
+        <BatchTagModal
+            v-model:show="showBatchTagModal"
+            :tags="subscriptionTags"
+            @confirm="handleBatchTagConfirm"
         />
 
-        <!-- Dialogs -->
+        <Modal v-model:show="showBatchDeleteModal" @confirm="confirmBatchDelete">
+            <template #title>
+                <h3 class="text-lg font-bold text-red-500">
+                    {{ t('subscriptions.batchDeleteConfirmTitle') }}
+                </h3>
+            </template>
+            <template #body>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ t('subscriptions.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
+                </p>
+            </template>
+        </Modal>
+
+        <TagManagementModal
+            v-model:show="showTagManagementModal"
+            :tags="subscriptionTags"
+            @rename="handleTagRename"
+            @delete="handleTagDelete"
+            @reorder="handleTagReorder"
+        />
+
         <SubscriptionEditModal
             v-model:show="showSubModal"
             :is-new="isNewSubscription"
@@ -270,7 +312,7 @@
             v-if="showBulkImportModal"
             :show="showBulkImportModal"
             @update:show="showBulkImportModal = $event"
-            @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
+            @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
         />
 
         <NodePreviewModal

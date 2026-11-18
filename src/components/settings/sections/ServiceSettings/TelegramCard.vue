@@ -139,7 +139,7 @@
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-4">
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.telegramNotifyBotTitle')"
@@ -160,7 +160,7 @@
                             v-model="settings.BotToken"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100 transition-colors"
                         />
                         <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                             {{ t('settings.telegramBotTokenHint') }}
@@ -174,7 +174,7 @@
                             v-model="settings.ChatID"
                             type="text"
                             placeholder="123456789"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100 transition-colors"
+                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100 transition-colors"
                         />
                         <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                             {{ t('settings.telegramChatIdHint') }}
@@ -245,7 +245,7 @@
                             v-model="telegramPushConfig.bot_token"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
                         />
                         <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                             {{ t('settings.telegramPushTokenHint') }}
@@ -260,7 +260,7 @@
                             v-model="telegramPushConfig.webhook_secret"
                             type="text"
                             placeholder="random_secret-token"
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
                             :aria-label="t('settings.telegramWebhookSecret')"
                         />
                         <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
@@ -283,7 +283,7 @@
                         v-model="allowedUsersStr"
                         rows="2"
                         placeholder="123456789, 987654321"
-                        class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm font-mono text-zinc-100"
+                        class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
                     />
                     <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.telegramAllowedUsersHint') }}
