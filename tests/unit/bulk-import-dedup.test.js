@@ -93,7 +93,7 @@ ss://new@server5.com:10000`;
         const imported = dataStore.subscriptions.find((item) => item.name === 'plain-http');
         expect(imported).toBeDefined();
         expect(dataStore.subscriptions).toHaveLength(3);
-        expect(imported.url).toBe('http://alice:p%40ss%3Aword@proxy.example.com:8080#plain-http');
+        expect(imported.url).toBe('http://alice:p%40ss:word@proxy.example.com:8080#plain-http');
     });
 
     it('应支持导入带 xhttp/ech 参数的 vless:// 节点，并在全部重复时提示已存在而非未检测到有效链接', async () => {

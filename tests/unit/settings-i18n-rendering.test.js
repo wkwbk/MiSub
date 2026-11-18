@@ -49,7 +49,7 @@ const ModalStub = {
     props: ['show', 'title', 'confirmText', 'cancelText'],
     emits: ['update:show', 'confirm'],
     template:
-        '<section v-if="show"><h2>{{ title }}</h2><slot name="body" /><slot name="footer" /></section>',
+        '<section v-if="show"><h2><slot name="title">{{ title }}</slot></h2><slot name="body" /><slot name="footer" /></section>',
 };
 
 const englishMountOptions = () => ({

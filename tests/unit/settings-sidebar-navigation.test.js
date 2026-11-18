@@ -5,10 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsView from '@/views/SettingsView.vue';
 import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
 import { createI18n } from '@/i18n/index.js';
-import {
-    SETTINGS_ACTIVE_TAB_STORAGE_KEY,
-    resolveSettingsTab,
-} from '@/utils/dashboard-deeplink.js';
+import { SETTINGS_ACTIVE_TAB_STORAGE_KEY, resolveSettingsTab } from '@/utils/dashboard-deeplink.js';
 
 const route = reactive({ query: {}, path: '/dashboard/settings' });
 const replaceSpy = vi.fn((target) => {
@@ -228,13 +225,18 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
 
         it('integrates scroll-to-top inside the sticky settings footer when scrolled down', async () => {
             const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
-            Object.defineProperty(window, 'scrollY', { value: 0, writable: true, configurable: true });
+            Object.defineProperty(window, 'scrollY', {
+                value: 0,
+                writable: true,
+                configurable: true,
+            });
 
             const wrapper = mountSettingsView();
             expect(wrapper.find('[data-testid="settings-footer-scroll-top"]').exists()).toBe(false);
 
             window.scrollY = 420;
             window.dispatchEvent(new Event('scroll'));
+            await new Promise((resolve) => window.requestAnimationFrame(resolve));
             await wrapper.vm.$nextTick();
 
             const scrollTopBtn = wrapper.find('[data-testid="settings-footer-scroll-top"]');

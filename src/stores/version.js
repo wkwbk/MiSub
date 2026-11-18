@@ -14,11 +14,12 @@ export const useVersionStore = defineStore('version', () => {
     const showUpdateNotice = ref(false);
     const upstreamRepo = 'wkwbk/MiSub';
 
-    // 本地更新日志 (v2.8.1)
-    const localChangelog = `🔧 **工程化升级、依赖迁移与代码规范统一**
-- **路径与工具链升级**：全仓前端/测试相对引用统一重构为 \`@/\` 别名并补充 \`jsconfig.json\`；包管理器迁移至 \`pnpm\`，升级 \`vite@8\`、\`vitest@5\`、\`vue-router@5\`、\`pinia@4\`、\`js-yaml@5\` 等核心依赖并完成适配。
-- **图标库迁移与代码清理**：将图标库从已弃用的 \`lucide-vue-next\` 全面迁移至 \`@lucide/vue\`，清理全仓未使用的冗余导入并统一 Prettier 代码格式。
-- **部署与测试稳定性修复**：精简 \`wrangler.toml\` 冗余配置并补全预览环境 KV/D1 绑定，修复部分历史回归测试断言，全量单元测试与生产构建均已通过。`;
+    // 本地更新日志 (v2.8.2)
+    const localChangelog = `🚀 **纯 D1 行级存储重构、多标签体系升级与设置页体验优化**
+- **纯 D1 行级存储重构**：标准化为纯 D1 行级存储，拆分 \`nodes\`、\`guestbook\`、\`cache\`、\`access_logs\` 与 \`error_reports\` 独立数据表并采用纯 UUID，移除历史 KV 与迁移逻辑，优化索引与懒加载性能。
+- **多标签管理与公开导航**：将原分组体系统一升级为多标签管理，覆盖机场订阅、手动节点与订阅组，新增公开链接导航、导入文本行号显示，并恢复节点 URL 中 \`@\` 前冒号编码。
+- **设置页与 UI/移动端优化**：重构设置侧边栏导航、标签页持久化与规则模板弹窗，拆分转换引擎参数卡片，优化移动端底部导航布局、弹窗背景滚动锁定与路由加载指示。
+- **GitHub 代理增强**：支持 \`GITHUB_TOKEN\` 配置，并在触发速率限制时自动重定向回退。`;
 
     // --- Getters ---
     const hasUpdate = computed(() => {
