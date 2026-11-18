@@ -48,7 +48,7 @@
         { label: t('profiles.optionDisabled'), value: false },
     ];
 
-    const groupPrefixToggleOptions = [
+    const tagPrefixToggleOptions = [
         { label: t('profiles.globalDefault'), value: null },
         { label: t('profiles.optionEnabled'), value: true },
         { label: t('profiles.optionDisabled'), value: false },
@@ -115,12 +115,9 @@
         collectTags(dataStore.profiles || [], settingsStore.config.profileTagOrder || [])
     );
 
-    const manualNodeTags = computed(() => {
-        const order = settingsStore.config.manualNodeTagOrder?.length
-            ? settingsStore.config.manualNodeTagOrder
-            : settingsStore.config.manualNodeGroupOrder || [];
-        return collectTags(props.allManualNodes || [], order);
-    });
+    const manualNodeTags = computed(() =>
+        collectTags(props.allManualNodes || [], settingsStore.config.manualNodeTagOrder || [])
+    );
 
     const selectableSubscriptions = computed(() => {
         return (props.allSubscriptions || []).filter(
@@ -264,8 +261,8 @@
                     profileCopy.prefixSettings.enableSubscriptions ?? null;
                 profileCopy.prefixSettings.manualNodePrefix =
                     profileCopy.prefixSettings.manualNodePrefix ?? '';
-                profileCopy.prefixSettings.prependGroupName =
-                    profileCopy.prefixSettings.prependGroupName ?? null;
+                profileCopy.prefixSettings.prependTagName =
+                    profileCopy.prefixSettings.prependTagName ?? null;
 
                 if (
                     Object.prototype.hasOwnProperty.call(
@@ -324,7 +321,7 @@
                         enableManualNodes: null,
                         enableSubscriptions: null,
                         manualNodePrefix: '',
-                        prependGroupName: null,
+                        prependTagName: null,
                     },
                     operators: [],
                 };
@@ -404,7 +401,7 @@
                     :show-advanced="showAdvanced"
                     :ui-text="uiText"
                     :prefix-toggle-options="prefixToggleOptions"
-                    :group-prefix-toggle-options="groupPrefixToggleOptions"
+                    :tag-prefix-toggle-options="tagPrefixToggleOptions"
                     :global-settings="dataStore.settings"
                     :profile-tags="allProfileTags"
                     @toggle-advanced="showAdvanced = !showAdvanced"

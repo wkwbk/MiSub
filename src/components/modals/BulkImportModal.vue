@@ -12,7 +12,7 @@
     import { api } from '@/lib/http.js';
     import { generateNodeId } from '@/utils/id.js';
     import { readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
     import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
     import { cleanNodeUrl } from '@/lib/utils.js';
 
@@ -54,7 +54,7 @@
         if (activeTab.value !== 'text') return;
         let tags = normalizeTagList(selectedTags.value);
         if (tags.length === 0) {
-            const autoTag = buildAutoGroupName();
+            const autoTag = buildAutoTagName();
             tags = autoTag ? [autoTag] : [];
         }
         selectedTags.value = tags;
@@ -75,7 +75,7 @@
         try {
             let targetTags = normalizeTagList(selectedTags.value);
             if (targetTags.length === 0 && fileList?.length) {
-                const autoTag = buildAutoGroupName({ fileName: fileList[0].name });
+                const autoTag = buildAutoTagName({ fileName: fileList[0].name });
                 targetTags = autoTag ? [autoTag] : [];
                 selectedTags.value = targetTags;
             }

@@ -83,13 +83,13 @@
 
                 <!-- Mobile Tag Filter -->
                 <div
+                    v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
                     data-testid="manual-node-mobile-tags"
                     class="mt-2 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 no-scrollbar md:hidden"
                 >
                     <TagFilterBar
                         :tags="manualNodeTags"
                         :active-filters="activeTagFilters"
-                        always-show
                         test-id-prefix="manual-node-mobile-tag"
                         @update:active-filters="emit('set-tag-filters', $event)"
                     />
@@ -165,6 +165,7 @@
                             {{ t('actions.importSubscription') }}
                         </button>
                         <button
+                            v-if="manualNodeTags.length > 0"
                             data-testid="manage-manual-node-tags"
                             @click="
                                 emit('manage-tags');
@@ -257,11 +258,13 @@
         </div>
 
         <!-- Desktop Tag Filter Chips -->
-        <div class="hidden md:flex items-center gap-1.5 mt-3">
+        <div
+            v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
+            class="hidden md:flex items-center gap-1.5 mt-3"
+        >
             <TagFilterBar
                 :tags="manualNodeTags"
                 :active-filters="activeTagFilters"
-                always-show
                 test-id-prefix="manual-node-tag"
                 @update:active-filters="emit('set-tag-filters', $event)"
             />

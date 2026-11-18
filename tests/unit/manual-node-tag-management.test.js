@@ -17,13 +17,13 @@ describe('手动节点标签管理与批量操作', () => {
             { id: 'n1', url: 'ss://test1', name: 'Node1', tags: ['USA', '家宽'], enabled: true },
             { id: 'n2', url: 'ss://test2', name: 'Node2', tags: ['USA'], enabled: true },
             { id: 'n3', url: 'ss://test3', name: 'Node3', tags: ['Japan'], enabled: true },
-            { id: 'n4', url: 'ss://test4', name: 'Node4', group: 'HK', enabled: true },
+            { id: 'n4', url: 'ss://test4', name: 'Node4', tags: ['HK'], enabled: true },
         ];
 
         manualNodes = useManualNodes(markDirty);
     });
 
-    it('标签顺序默认按首次出现顺序推导，并兼容旧版 group 字段', () => {
+    it('标签顺序默认按首次出现顺序推导', () => {
         expect(manualNodes.manualNodeTags.value).toEqual(['USA', '家宽', 'Japan', 'HK']);
     });
 
@@ -53,14 +53,11 @@ describe('手动节点标签管理与批量操作', () => {
 
         expect(manualNodes.manualNodeTags.value).toEqual(['HK', '家宽', 'Japan']);
         expect(dataStore.subscriptions[0].tags).toEqual(['家宽']);
-        expect(dataStore.subscriptions[0].group).toBe('家宽');
         expect(dataStore.subscriptions[1].tags).toEqual([]);
-        expect(dataStore.subscriptions[1].group).toBe('');
     });
 
-    it('重命名标签时自动去重并同步更新首个标签前缀字段', () => {
+    it('重命名标签时自动合并去重', () => {
         manualNodes.renameTag('USA', '家宽');
-        // n1 原本有 ['USA', '家宽']，重命名后自动合并去重为 ['家宽']
         expect(dataStore.subscriptions[0].tags).toEqual(['家宽']);
         expect(dataStore.subscriptions[1].tags).toEqual(['家宽']);
     });
@@ -72,15 +69,12 @@ describe('手动节点标签管理与批量操作', () => {
 
         manualNodes.batchUpdateTags(['n2'], { mode: 'replace', tags: ['主力', '低倍率'] });
         expect(dataStore.subscriptions[1].tags).toEqual(['主力', '低倍率']);
-        expect(dataStore.subscriptions[1].group).toBe('主力');
 
         manualNodes.batchUpdateTags(['n2'], { mode: 'remove', tags: ['主力'] });
         expect(dataStore.subscriptions[1].tags).toEqual(['低倍率']);
-        expect(dataStore.subscriptions[1].group).toBe('低倍率');
 
         manualNodes.batchUpdateTags(['n2'], { mode: 'clear', tags: [] });
         expect(dataStore.subscriptions[1].tags).toEqual([]);
-        expect(dataStore.subscriptions[1].group).toBe('');
     });
 
     it('对子集排序时只替换可见节点顺序并保留隐藏节点和订阅', () => {

@@ -11,7 +11,7 @@ describe('manual node tag normalization', () => {
     it('收集节点标签时按 trim 后的名称去重，并保留首次出现顺序', () => {
         const tags = collectTags([
             { id: 'n1', tags: ['S5', ' 家宽 '] },
-            { id: 'n2', group: ' S5 ' },
+            { id: 'n2', tags: [' S5 '] },
             { id: 'n3', tags: ['FreezeHost'] },
             { id: 'n4', tags: [] },
         ]);

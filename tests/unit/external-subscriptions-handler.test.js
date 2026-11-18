@@ -56,25 +56,26 @@ describe('external subscriptions handler', () => {
                     name: 'Airport A',
                     url: 'https://example.com/sub-a',
                     enabled: true,
-                    group: 'A',
+                    tags: ['A'],
                 },
                 {
                     id: 'node-1',
                     name: 'HK 01',
                     url: 'vless://uuid@example.com:443#HK01',
                     enabled: true,
-                    group: 'HK',
+                    tags: ['HK'],
                 },
             ],
         });
 
-        const response = await handleApiRequest(createRequest('/subscriptions'), env);
+        const response = await handleApiRequest(createRequest('/subscriptions?tag=A'), env);
         const body = await response.json();
 
         expect(response.status).toBe(200);
         expect(body.data).toHaveLength(1);
-        expect(body.data[0]).toMatchObject({ id: 'sub-1', type: 'subscription' });
+        expect(body.data[0]).toMatchObject({ id: 'sub-1', type: 'subscription', tags: ['A'] });
         expect(body.data[0]).not.toHaveProperty('protocol');
+        expect(body.data[0]).not.toHaveProperty('group');
     });
 
     it('creates a remote subscription and rejects node protocols on subscription endpoints', async () => {

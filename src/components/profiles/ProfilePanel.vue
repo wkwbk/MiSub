@@ -3,6 +3,7 @@
     import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import ProfileCard from '@/components/profiles/ProfileCard.vue';
+    import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
@@ -65,7 +66,39 @@
         'updateSearch',
         'set-tag-filters',
         'manage-tags',
+        'open-batch-tag-modal',
+        'batch-delete-profiles',
     ]);
+
+    const isSelectionMode = ref(false);
+    const selectedProfileIds = ref(new Set());
+
+    const toggleSelectionMode = () => {
+        isSelectionMode.value = !isSelectionMode.value;
+        selectedProfileIds.value.clear();
+    };
+
+    const toggleProfileSelection = (profileId) => {
+        if (selectedProfileIds.value.has(profileId)) {
+            selectedProfileIds.value.delete(profileId);
+        } else {
+            selectedProfileIds.value.add(profileId);
+        }
+    };
+
+    const selectedCount = computed(() => selectedProfileIds.value.size);
+
+    const handleBatchTag = () => {
+        if (selectedProfileIds.value.size === 0) return;
+        emit('open-batch-tag-modal', Array.from(selectedProfileIds.value));
+    };
+
+    const handleBatchDelete = () => {
+        if (selectedProfileIds.value.size === 0) return;
+        emit('batch-delete-profiles', Array.from(selectedProfileIds.value));
+        selectedProfileIds.value.clear();
+        isSelectionMode.value = false;
+    };
 
     const searchModel = computed({
         get: () => props.searchQuery,
@@ -109,6 +142,25 @@
         }
         return props.profiles || [];
     });
+
+    const isAllSelected = computed(() => {
+        if (displayProfiles.value.length === 0) return false;
+        return displayProfiles.value.every((profile) =>
+            selectedProfileIds.value.has(profile.id)
+        );
+    });
+
+    const toggleSelectAll = () => {
+        if (isAllSelected.value) {
+            displayProfiles.value.forEach((profile) =>
+                selectedProfileIds.value.delete(profile.id)
+            );
+        } else {
+            displayProfiles.value.forEach((profile) =>
+                selectedProfileIds.value.add(profile.id)
+            );
+        }
+    };
 
     const handleEdit = (profileId) => emit('edit', profileId);
     const handleDelete = (profileId) => emit('delete', profileId);
@@ -162,6 +214,25 @@
                         </button>
                         <MoreActionsMenu :teleport-to-body="true" menu-width-class="w-36">
                             <template #menu="{ close }">
+                                <button
+                                    type="button"
+                                    data-testid="profile-bulk-actions-toggle"
+                                    @click="
+                                        toggleSelectionMode();
+                                        close();
+                                    "
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
+                                    :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                                >
+                                    {{
+                                        isSelectionMode
+                                            ? t('actions.exitBatch')
+                                            : t('actions.bulkActions')
+                                    }}
+                                </button>
+                                <div
+                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                ></div>
                                 <button
                                     @click="
                                         handleToggleSort();
@@ -246,7 +317,21 @@
                 </div>
             </div>
         </div>
-        <div v-if="profiles.length > 0">
+        <BulkOperations
+            :is-selection-mode="isSelectionMode"
+            :is-all-selected="isAllSelected"
+            :selected-count="selectedCount"
+            @toggle-select-all="toggleSelectAll"
+            @batch-tag="handleBatchTag"
+            @batch-delete="handleBatchDelete"
+            @exit="
+                () => {
+                    selectedProfileIds.clear();
+                    isSelectionMode = false;
+                }
+            "
+        />
+        <div v-if="profiles.length > 0" :class="{ 'pb-48': isSelectionMode }">
             <SortingBanner
                 v-if="isSorting"
                 :hint="t('profiles.sortingHint')"
@@ -296,6 +381,9 @@
                         :profile="profile"
                         :is-sorting="isSorting"
                         :compact="compact"
+                        :is-selection-mode="isSelectionMode"
+                        :is-selected="selectedProfileIds.has(profile.id)"
+                        @toggle-select="toggleProfileSelection(profile.id)"
                         @edit="handleEdit(profile.id)"
                         @delete="handleDelete(profile.id)"
                         @change="handleToggle($event)"

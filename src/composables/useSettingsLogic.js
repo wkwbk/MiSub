@@ -1,6 +1,7 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
+import { normalizePublicLinksConfig } from '@/constants/default-public-links.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
@@ -28,6 +29,7 @@ function normalizeExternalApiConfig(value) {
 function normalizeSettingsObject(source = {}) {
     const merged = { ...DEFAULT_SETTINGS, ...source };
     merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
+    merged.publicLinks = normalizePublicLinksConfig(source.publicLinks ?? merged.publicLinks);
     return merged;
 }
 

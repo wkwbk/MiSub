@@ -65,8 +65,8 @@ describe('LineNumberTextarea', () => {
             props: {
                 show: true,
                 isNew: true,
-                editingNode: { name: '', group: '', url: 'vmess://a\nvless://b' },
-                groups: [],
+                editingNode: { name: '', tags: [], url: 'vmess://a\nvless://b' },
+                tags: [],
             },
             global,
         });

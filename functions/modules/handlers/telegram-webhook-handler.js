@@ -350,23 +350,40 @@ async function handleFileInput(chatId, message, userId, config, env, requestCach
 }
 
 /**
- * 生成 TG 导入的分组名。
+ * 提取条目的标签数组。
+ */
+function getTelegramItemTags(item) {
+    if (!item || !Array.isArray(item.tags)) return [];
+    const seen = new Set();
+    const result = [];
+    for (const raw of item.tags) {
+        const tag = String(raw || '').trim();
+        if (tag && !seen.has(tag)) {
+            seen.add(tag);
+            result.push(tag);
+        }
+    }
+    return result;
+}
+
+/**
+ * 生成 TG 导入的标签名。
  *
- * 让同一批（同一条消息 / 同一个文件）导入的节点归入同一分组，
- * 便于在网页端按组批量管理和加入订阅组。
+ * 让同一批（同一条消息 / 同一个文件）导入的节点拥有同一标签，
+ * 便于在网页端按标签批量管理和筛选。
  *
  * @param {Object} options
  * @param {string} [options.source] 来源标识：file / text
  * @param {string} [options.fileName] 文件名（file 来源时使用）
  * @param {Date}   [options.now] 时间（便于测试注入）
- * @returns {string} 形如「TG-文件 nodes 2026-09-15」或「TG-导入 2026-09-15 18:30」
+ * @returns {string} 形如「TG-nodes-2026-09-15」或「TG-导入-2026-09-15 18:30」
  */
-function buildImportGroupName({ source = 'text', fileName = '', now = new Date() } = {}) {
+function buildImportTagName({ source = 'text', fileName = '', now = new Date() } = {}) {
     const pad = (n) => String(n).padStart(2, '0');
     const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
     if (source === 'file' && fileName) {
-        // 去掉扩展名，作为分组标识
+        // 去掉扩展名，作为标签标识
         const base = String(fileName)
             .replace(/\.[a-z0-9]+$/i, '')
             .trim();
@@ -378,12 +395,9 @@ function buildImportGroupName({ source = 'text', fileName = '', now = new Date()
 }
 
 /**
- * 节点分组选择面板：列出所有分组及数量，点击进入该分组列表。
- *
- * 与网站「手动节点 → 分组筛选」对应。用户节点较多时（如 200+），
- * 先选分组再看列表比直接翻页友好得多。
+ * 标签选择面板：列出所有标签及数量，点击进入该标签列表。
  */
-async function handleGroupSelect(
+async function handleTagSelect(
     chatId,
     userId,
     env,
@@ -391,49 +405,51 @@ async function handleGroupSelect(
     type = 'node',
     requestCache = null
 ) {
-    const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
     const nodes =
         type === 'sub'
             ? allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''))
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
-    // 统计分组
-    const groupCounts = new Map();
-    let ungrouped = 0;
+    // 统计标签
+    const tagCounts = new Map();
+    let untagged = 0;
     nodes.forEach((n) => {
-        const g = (n.group || '').trim();
-        if (g) groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
-        else ungrouped++;
+        const tags = getTelegramItemTags(n);
+        if (tags.length > 0) {
+            tags.forEach((t) => tagCounts.set(t, (tagCounts.get(t) || 0) + 1));
+        } else {
+            untagged++;
+        }
     });
 
-    const title = type === 'sub' ? '\uD83D\uDCE1 选择订阅分组' : '\uD83D\uDE80 选择节点分组';
+    const title = type === 'sub' ? '\uD83D\uDCE1 选择订阅标签' : '\uD83D\uDE80 选择节点标签';
     let text = `<b>${title}</b>\n\n共 ${nodes.length} 项`;
-    if (groupCounts.size > 0) {
-        text += `，${groupCounts.size} 个分组`;
+    if (tagCounts.size > 0) {
+        text += `，${tagCounts.size} 个标签`;
     }
 
-    // 构建分组按钮（每行 2 个）
+    // 构建标签按钮（每行 2 个）
     const buttons = [];
-    const entries = Array.from(groupCounts.entries()).sort((a, b) => b[1] - a[1]);
+    const entries = Array.from(tagCounts.entries()).sort((a, b) => b[1] - a[1]);
     for (let i = 0; i < entries.length; i += 2) {
         const row = [];
         for (let j = i; j < Math.min(i + 2, entries.length); j++) {
             const [name, count] = entries[j];
-            // callback_data 有 64 字节限制，长组名需要截断
+            // callback_data 有 64 字节限制，长标签名需要截断
             const short = name.length > 20 ? `${name.slice(0, 18)}…` : name;
             row.push({
                 text: `${short} (${count})`,
-                callback_data: `grp_${type}_${encodeURIComponent(name).slice(0, 40)}`,
+                callback_data: `tag_${type}_${encodeURIComponent(name).slice(0, 40)}`,
             });
         }
         buttons.push(row);
     }
 
-    // 全部 / 未分组
-    const tail = [{ text: `全部 (${nodes.length})`, callback_data: `grp_${type}___all__` }];
-    if (ungrouped > 0) {
-        tail.push({ text: `未分组 (${ungrouped})`, callback_data: `grp_${type}___none__` });
+    // 全部 / 无标签
+    const tail = [{ text: `全部 (${nodes.length})`, callback_data: `tag_${type}___all__` }];
+    if (untagged > 0) {
+        tail.push({ text: `无标签 (${untagged})`, callback_data: `tag_${type}___none__` });
     }
     buttons.push(tail);
 
@@ -452,11 +468,9 @@ async function handleGroupSelect(
 }
 
 /**
- * 分组管理面板：列出所有分组，支持重命名、删除、批量改组。
- *
- * 对应网站的「批量分组」功能。
+ * 标签管理面板：列出所有标签，支持重命名、移除标签、删除含该标签的条目。
  */
-async function handleGroupManage(
+async function handleTagManage(
     chatId,
     userId,
     env,
@@ -464,36 +478,38 @@ async function handleGroupManage(
     type = 'node',
     requestCache = null
 ) {
-    const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
     const nodes =
         type === 'sub'
             ? allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''))
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
-    const groupCounts = new Map();
-    let ungrouped = 0;
+    const tagCounts = new Map();
+    let untagged = 0;
     nodes.forEach((n) => {
-        const g = (n.group || '').trim();
-        if (g) groupCounts.set(g, (groupCounts.get(g) || 0) + 1);
-        else ungrouped++;
+        const tags = getTelegramItemTags(n);
+        if (tags.length > 0) {
+            tags.forEach((t) => tagCounts.set(t, (tagCounts.get(t) || 0) + 1));
+        } else {
+            untagged++;
+        }
     });
 
     let text =
-        '\uD83D\uDCC1 <b>分组管理</b>\n\n' +
-        `共 ${nodes.length} 项，${groupCounts.size} 个分组` +
-        (ungrouped > 0 ? `，${ungrouped} 项未分组` : '') +
-        '\n\n点击分组可重命名或删除：';
+        '🏷️ <b>标签管理</b>\n\n' +
+        `共 ${nodes.length} 项，${tagCounts.size} 个标签` +
+        (untagged > 0 ? `，${untagged} 项无标签` : '') +
+        '\n\n点击标签可执行重命名或删除：';
 
     const buttons = [];
-    Array.from(groupCounts.entries())
+    Array.from(tagCounts.entries())
         .sort((a, b) => b[1] - a[1])
         .forEach(([name, count]) => {
             const short = name.length > 16 ? `${name.slice(0, 14)}…` : name;
             buttons.push([
                 {
-                    text: `📁 ${short} (${count})`,
-                    callback_data: `gmgr_${type}_${encodeURIComponent(name).slice(0, 40)}`,
+                    text: `🏷️ ${short} (${count})`,
+                    callback_data: `tmgr_${type}_${encodeURIComponent(name).slice(0, 40)}`,
                 },
             ]);
         });
@@ -513,42 +529,41 @@ async function handleGroupManage(
 }
 
 /**
- * 单个分组的操作面板（重命名 / 删除 / 查看）。
+ * 单个标签的操作面板（重命名 / 移除标签 / 删除条目 / 查看）。
  */
-async function handleGroupActions(
+async function handleTagActions(
     chatId,
     userId,
     env,
     messageId,
     type,
-    groupName,
+    tagName,
     requestCache = null
 ) {
-    const cache = requestCache || createRequestCache();
     const allNodes = await getUserNodes(userId, env);
     const nodes =
         type === 'sub'
             ? allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''))
             : allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
-    const count = nodes.filter((n) => (n.group || '').trim() === groupName).length;
+    const count = nodes.filter((n) => getTelegramItemTags(n).includes(tagName)).length;
 
     const text =
-        `\uD83D\uDCC1 <b>${escapeHtml(groupName)}</b>\n\n` +
-        `包含 ${count} 项\n\n` +
+        `🏷️ <b>${escapeHtml(tagName)}</b>\n\n` +
+        `关联 ${count} 项\n\n` +
         '选择要执行的操作：';
 
-    const encoded = encodeURIComponent(groupName).slice(0, 40);
+    const encoded = encodeURIComponent(tagName).slice(0, 40);
     const keyboard = {
         inline_keyboard: [
             [
-                { text: '✏️ 重命名', callback_data: `gmrn_${type}_${encoded}` },
-                { text: '📋 查看列表', callback_data: `grp_${type}_${encoded}` },
+                { text: '✏️ 重命名', callback_data: `tmrn_${type}_${encoded}` },
+                { text: '📋 查看列表', callback_data: `tag_${type}_${encoded}` },
             ],
             [
-                { text: '🗑 删除分组', callback_data: `gmrm_${type}_${encoded}` },
-                { text: '🚫 清空该组', callback_data: `gmcl_${type}_${encoded}` },
+                { text: '🗑 删除关联项', callback_data: `tmrm_${type}_${encoded}` },
+                { text: '🚫 移除该标签', callback_data: `tmcl_${type}_${encoded}` },
             ],
-            [{ text: '🔙 返回', callback_data: `gmls_${type}` }],
+            [{ text: '🔙 返回', callback_data: `tmls_${type}` }],
         ],
     };
 
@@ -563,15 +578,15 @@ async function handleGroupActions(
 }
 
 /**
- * 执行分组操作。
+ * 执行标签操作。
  * @param {string} op rename | clear | delete
  */
-async function applyGroupOperation(
+async function applyTagOperation(
     chatId,
     userId,
     env,
     type,
-    groupName,
+    tagName,
     op = 'rename',
     newName = null,
     requestCache = null
@@ -582,23 +597,29 @@ async function applyGroupOperation(
 
     let changed = 0;
     allSubscriptions.forEach((sub) => {
-        if ((sub.group || '').trim() !== groupName) return;
-        // 订阅源与节点都按 type 筛选
+        const currentTags = getTelegramItemTags(sub);
+        if (!currentTags.includes(tagName)) return;
         const isSub = /^https?:\/\//i.test(sub.url || '');
         if (type === 'sub' ? !isSub : isSub) return;
 
-        if (op === 'rename') sub.group = newName;
-        else if (op === 'clear') sub.group = ''; // 清空该组 = 成员变为未分组
+        if (op === 'rename') {
+            const trimmedNew = String(newName || '').trim();
+            if (!trimmedNew) return;
+            sub.tags = [
+                ...new Set(currentTags.map((t) => (t === tagName ? trimmedNew : t))),
+            ];
+        } else if (op === 'clear') {
+            sub.tags = currentTags.filter((t) => t !== tagName);
+        }
         changed++;
     });
 
     if (op === 'delete') {
-        // 删除分组：把成员移除（这里语义同「删除该组内所有项」）
         const remaining = allSubscriptions.filter((sub) => {
             const isSub = /^https?:\/\//i.test(sub.url || '');
             const sameType = type === 'sub' ? isSub : !isSub;
-            const sameGroup = (sub.group || '').trim() === groupName;
-            if (sameType && sameGroup) {
+            const hasTag = getTelegramItemTags(sub).includes(tagName);
+            if (sameType && hasTag) {
                 changed++;
                 return false;
             }
@@ -928,8 +949,8 @@ async function handleHelpCommand(chatId, env) {
         '/rename [序号] [名] - 重命名\n' +
         '/delete [序号] - 删除\n\n' +
         '<b>🔧 工具</b>\n' +
-        '/groups [node|sub] - 分组管理\n' +
-        '/grename [旧组] [新组] - 重命名分组\n' +
+        '/tags [node|sub] - 标签管理\n' +
+        '/trename [旧标] [新标] - 重命名标签\n' +
         '/bind - 绑定订阅组\n' +
         '/sort [类型] - 排序\n' +
         '/dup - 去重\n' +
@@ -952,7 +973,7 @@ async function handleMenuCommand(chatId, env, messageId = null, requestCache = n
                 { text: '\uD83D\uDCCA 统计', callback_data: 'cmd_stats' }, // 📊
             ],
             [
-                { text: '\uD83D\uDCC1 分组管理', callback_data: 'gmls_node' }, // 📁
+                { text: '🏷️ 标签管理', callback_data: 'tmls_node' },
                 { text: '\uD83D\uDD17 绑定', callback_data: 'cmd_bind' }, // 🔗
                 { text: '\uD83D\uDD0D 搜索', callback_data: 'prompt_search' }, // 🔍
             ],
@@ -991,7 +1012,7 @@ async function handleListCommand(
     type = 'all',
     messageId = null,
     requestCache = null,
-    groupFilter = null
+    tagFilter = null
 ) {
     try {
         const cache = requestCache || createRequestCache();
@@ -1011,13 +1032,13 @@ async function handleListCommand(
             title = '\uD83D\uDCE1 机场列表'; // 📡
         }
 
-        // 按分组过滤（null = 不过滤，'__none__' = 仅未分组）
-        if (groupFilter === '__none__') {
-            userNodes = userNodes.filter((n) => !(n.group || '').trim());
-            title += ' · 未分组';
-        } else if (groupFilter) {
-            userNodes = userNodes.filter((n) => (n.group || '').trim() === groupFilter);
-            title += ` · ${groupFilter}`;
+        // 按标签过滤（null = 不过滤，'__none__' = 仅无标签）
+        if (tagFilter === '__none__') {
+            userNodes = userNodes.filter((n) => getTelegramItemTags(n).length === 0);
+            title += ' · 无标签';
+        } else if (tagFilter) {
+            userNodes = userNodes.filter((n) => getTelegramItemTags(n).includes(tagFilter));
+            title += ` · ${tagFilter}`;
         }
 
         // 获取当前绑定的订阅组
@@ -1126,7 +1147,7 @@ async function handleListCommand(
         }
 
         const backButtonRow = [
-            { text: '🔙 返回分组', callback_data: `cmd_list_${type === 'sub' ? 'sub' : 'node'}` },
+            { text: '🔙 返回标签', callback_data: `cmd_list_${type === 'sub' ? 'sub' : 'node'}` },
             { text: '🏠 菜单', callback_data: 'cmd_menu' },
         ];
 
@@ -2287,8 +2308,8 @@ async function handleUnbindCommand(chatId, userId, env, requestCache = null) {
  * 处理节点输入（核心逻辑）
  */
 async function handleNodeInput(chatId, text, userId, env, requestCache = null, options = {}) {
-    // 同一批导入的节点共用一个分组名（文件导入用文件名，文本导入用时间）
-    const importGroupName = options.groupName || buildImportGroupName(options);
+    // 同一批导入的节点共用一个批次标签（文件导入用文件名，文本导入用时间）
+    const importTagName = options.tagName || buildImportTagName(options);
     try {
         const cache = requestCache || createRequestCache();
         const config = await getTelegramPushConfig(env, cache);
@@ -2361,8 +2382,8 @@ async function handleNodeInput(chatId, text, userId, env, requestCache = null, o
                 url: url,
                 enabled: true,
                 source: 'telegram',
-                // 同一批导入的节点归入同一分组，便于在网页端按组管理/加入订阅组
-                group: importGroupName,
+                // 同一批导入的节点赋予同一标签，便于在网页端按标签筛选和管理
+                tags: importTagName ? [importTagName] : [],
                 telegram_user_id: userId,
                 created_at: new Date().toISOString(),
             };
@@ -2604,10 +2625,10 @@ async function handleCommand(chatId, text, userId, env, request, requestCache = 
             await handleDupCommand(chatId, userId, args, env);
             break;
 
-        case '/groups':
-        case '/group':
-            // /groups [node|sub] 打开分组管理面板
-            await handleGroupManage(
+        case '/tags':
+        case '/tag':
+            // /tags [node|sub] 打开标签管理面板
+            await handleTagManage(
                 chatId,
                 userId,
                 env,
@@ -2617,19 +2638,19 @@ async function handleCommand(chatId, text, userId, env, request, requestCache = 
             );
             break;
 
-        case '/grename': {
-            // /grename <旧组名> <新组名>
+        case '/trename': {
+            // /trename <旧标签名> <新标签名>
             const oldName = args[0];
             const newName = args.slice(1).join(' ').trim();
             if (!oldName || !newName) {
                 await sendTelegramMessage(
                     chatId,
-                    '✏️ <b>重命名分组</b>\n\n用法：/grename 旧组名 新组名\n\n例：/grename 导入 01 香港节点',
+                    '✏️ <b>重命名标签</b>\n\n用法：/trename 旧标签名 新标签名\n\n例：/trename 导入 香港节点',
                     env
                 );
                 break;
             }
-            const n = await applyGroupOperation(
+            const n = await applyTagOperation(
                 chatId,
                 userId,
                 env,
@@ -2642,8 +2663,8 @@ async function handleCommand(chatId, text, userId, env, request, requestCache = 
             await sendTelegramMessage(
                 chatId,
                 n > 0
-                    ? `✅ 已将 <b>${escapeHtml(oldName)}</b> 重命名为 <b>${escapeHtml(newName)}</b>（${n} 项）`
-                    : `⚠️ 未找到分组 <b>${escapeHtml(oldName)}</b>`,
+                    ? `✅ 已将标签 <b>${escapeHtml(oldName)}</b> 重命名为 <b>${escapeHtml(newName)}</b>（${n} 项）`
+                    : `⚠️ 未找到标签 <b>${escapeHtml(oldName)}</b>`,
                 env
             );
             break;
@@ -2680,8 +2701,8 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
     const data = callbackQuery.data;
 
     try {
-        // 分组管理：gmgr_<type>_<name> 打开某组操作面板
-        if (data.startsWith('gmgr_')) {
+        // 标签管理：tmgr_<type>_<name> 打开某标签操作面板
+        if (data.startsWith('tmgr_')) {
             const rest = data.slice(5);
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
@@ -2692,20 +2713,20 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                 /* 保持原样 */
             }
             await answerCallbackQuery(callbackQuery.id, '', env);
-            await handleGroupActions(chatId, userId, env, messageId, type, name, requestCache);
+            await handleTagActions(chatId, userId, env, messageId, type, name, requestCache);
             return createJsonResponse({ ok: true });
         }
 
-        // 返回分组管理列表：gmls_<type>
-        if (data.startsWith('gmls_')) {
+        // 返回标签管理列表：tmls_<type>
+        if (data.startsWith('tmls_')) {
             const type = data.slice(5);
             await answerCallbackQuery(callbackQuery.id, '', env);
-            await handleGroupManage(chatId, userId, env, messageId, type, requestCache);
+            await handleTagManage(chatId, userId, env, messageId, type, requestCache);
             return createJsonResponse({ ok: true });
         }
 
-        // 重命名分组：gmrn_<type>_<name> -> 提示用命令完成
-        if (data.startsWith('gmrn_')) {
+        // 重命名标签：tmrn_<type>_<name> -> 提示用命令完成
+        if (data.startsWith('tmrn_')) {
             const rest = data.slice(5);
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
@@ -2719,10 +2740,10 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
             await editTelegramMessage(
                 chatId,
                 messageId,
-                `✏️ <b>重命名分组</b>\n\n` +
+                `✏️ <b>重命名标签</b>\n\n` +
                     `当前名称：<code>${escapeHtml(name)}</code>\n\n` +
                     `请发送命令完成重命名：\n` +
-                    `<code>/grename ${escapeHtml(name)} 新名称</code>`,
+                    `<code>/trename ${escapeHtml(name)} 新名称</code>`,
                 env,
                 {
                     reply_markup: {
@@ -2730,7 +2751,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                             [
                                 {
                                     text: '🔙 返回',
-                                    callback_data: `gmgr_${type}_${encodeURIComponent(name).slice(0, 40)}`,
+                                    callback_data: `tmgr_${type}_${encodeURIComponent(name).slice(0, 40)}`,
                                 },
                             ],
                         ],
@@ -2741,8 +2762,8 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
             return createJsonResponse({ ok: true });
         }
 
-        // 清空分组：gmcl_<type>_<name>
-        if (data.startsWith('gmcl_')) {
+        // 移除该标签：tmcl_<type>_<name>
+        if (data.startsWith('tmcl_')) {
             const rest = data.slice(5);
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
@@ -2752,7 +2773,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
             } catch {
                 /* 保持原样 */
             }
-            const n = await applyGroupOperation(
+            const n = await applyTagOperation(
                 chatId,
                 userId,
                 env,
@@ -2762,13 +2783,13 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                 null,
                 requestCache
             );
-            await answerCallbackQuery(callbackQuery.id, `已清空 ${n} 项的分组`, env);
-            await handleGroupManage(chatId, userId, env, messageId, type, requestCache);
+            await answerCallbackQuery(callbackQuery.id, `已移除 ${n} 项的标签`, env);
+            await handleTagManage(chatId, userId, env, messageId, type, requestCache);
             return createJsonResponse({ ok: true });
         }
 
-        // 删除分组：gmrm_<type>_<name>
-        if (data.startsWith('gmrm_')) {
+        // 删除含该标签的条目：tmrm_<type>_<name>
+        if (data.startsWith('tmrm_')) {
             const rest = data.slice(5);
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
@@ -2778,7 +2799,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
             } catch {
                 /* 保持原样 */
             }
-            const n = await applyGroupOperation(
+            const n = await applyTagOperation(
                 chatId,
                 userId,
                 env,
@@ -2788,25 +2809,25 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                 null,
                 requestCache
             );
-            await answerCallbackQuery(callbackQuery.id, `已删除分组及 ${n} 项`, env);
-            await handleGroupManage(chatId, userId, env, messageId, type, requestCache);
+            await answerCallbackQuery(callbackQuery.id, `已删除 ${n} 项关联条目`, env);
+            await handleTagManage(chatId, userId, env, messageId, type, requestCache);
             return createJsonResponse({ ok: true });
         }
 
-        // 分组选择：grp_<type>_<encodedGroupName>
-        if (data.startsWith('grp_')) {
+        // 标签选择：tag_<type>_<encodedTagName>
+        if (data.startsWith('tag_')) {
             const rest = data.slice(4);
             const sep = rest.indexOf('_');
             const type = rest.slice(0, sep);
             const raw = rest.slice(sep + 1);
-            let groupFilter = null;
-            if (raw === '__all__') groupFilter = null;
-            else if (raw === '__none__') groupFilter = '__none__';
+            let tagFilter = null;
+            if (raw === '__all__') tagFilter = null;
+            else if (raw === '__none__') tagFilter = '__none__';
             else {
                 try {
-                    groupFilter = decodeURIComponent(raw);
+                    tagFilter = decodeURIComponent(raw);
                 } catch {
-                    groupFilter = raw;
+                    tagFilter = raw;
                 }
             }
 
@@ -2819,7 +2840,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                 type,
                 messageId,
                 requestCache,
-                groupFilter
+                tagFilter
             );
             return createJsonResponse({ ok: true });
         }
@@ -2852,12 +2873,12 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
 
             case 'cmd_list_node':
                 await answerCallbackQuery(callbackQuery.id, '', env);
-                await handleGroupSelect(chatId, userId, env, messageId, 'node', requestCache);
+                await handleTagSelect(chatId, userId, env, messageId, 'node', requestCache);
                 break;
 
             case 'cmd_list_sub':
                 await answerCallbackQuery(callbackQuery.id, '', env);
-                await handleGroupSelect(chatId, userId, env, messageId, 'sub', requestCache);
+                await handleTagSelect(chatId, userId, env, messageId, 'sub', requestCache);
                 break;
 
             case 'cmd_stats':

@@ -755,8 +755,16 @@ export function makeComparator(sortCfg) {
                 if (r !== 0) return r * order;
                 continue;
             }
-            if (key === 'group') {
-                const r = cmpStr(ra.group || '', rb.group || '');
+            if (key === 'tag') {
+                const tagA =
+                    Array.isArray(ra.tags) && ra.tags.length > 0
+                        ? String(ra.tags[0] || '')
+                        : String(ra.tag || '');
+                const tagB =
+                    Array.isArray(rb.tags) && rb.tags.length > 0
+                        ? String(rb.tags[0] || '')
+                        : String(rb.tag || '');
+                const r = cmpStr(tagA, tagB);
                 if (r !== 0) return r * order;
                 continue;
             }

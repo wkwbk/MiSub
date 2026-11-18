@@ -101,16 +101,18 @@ export async function handleExternalManualNodesRequest(request, env, selector = 
     if (request.method === 'GET' && !id) {
         const all = await loadManualNodes(storageAdapter);
         const enabledFilter = parseBooleanParam(url.searchParams.get('enabled'));
-        const groupFilter = (url.searchParams.get('group') || '').trim();
+        const tagFilter = (url.searchParams.get('tag') || '').trim();
         const protocolFilter = (url.searchParams.get('protocol') || '').trim().toLowerCase();
         const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
         const filtered = all.filter((item) => {
             if (enabledFilter !== undefined && (item.enabled !== false) !== enabledFilter)
                 return false;
-            if (groupFilter && String(item.group || '') !== groupFilter) return false;
+            if (tagFilter && !(Array.isArray(item.tags) && item.tags.includes(tagFilter)))
+                return false;
             if (protocolFilter && detectNodeProtocol(item.url) !== protocolFilter) return false;
             if (keyword) {
-                const haystack = `${item.name || ''}\n${item.url || ''}`.toLowerCase();
+                const tagsText = Array.isArray(item.tags) ? item.tags.join('\n') : '';
+                const haystack = `${item.name || ''}\n${item.url || ''}\n${tagsText}`.toLowerCase();
                 if (!haystack.includes(keyword)) return false;
             }
             return true;
@@ -158,7 +160,6 @@ export async function handleExternalManualNodesRequest(request, env, selector = 
             name: String(payload.name).trim(),
             url: String(payload.url).trim(),
             enabled: payload.enabled !== false,
-            group: String(payload.group || '').trim(),
             tags: normalizeStringArray(payload.tags),
             remarks: String(payload.remarks || '').trim(),
             sortIndex: Number.isFinite(Number(payload.sortIndex))
@@ -181,7 +182,6 @@ export async function handleExternalManualNodesRequest(request, env, selector = 
             ...(payload.name !== undefined ? { name: String(payload.name || '').trim() } : {}),
             ...(payload.url !== undefined ? { url: String(payload.url || '').trim() } : {}),
             ...(payload.enabled !== undefined ? { enabled: payload.enabled !== false } : {}),
-            ...(payload.group !== undefined ? { group: String(payload.group || '').trim() } : {}),
             ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
             ...(payload.remarks !== undefined
                 ? { remarks: String(payload.remarks || '').trim() }

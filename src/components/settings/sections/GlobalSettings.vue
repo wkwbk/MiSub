@@ -25,7 +25,7 @@
         enableManualNodes: true,
         enableSubscriptions: true,
         manualNodePrefix: 'Manual Node',
-        prependGroupName: false,
+        prependTagName: false,
     });
 
     function ensureDefaults() {

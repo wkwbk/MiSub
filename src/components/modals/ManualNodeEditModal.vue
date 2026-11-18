@@ -12,7 +12,7 @@
     import { useI18n } from '@/i18n/index.js';
     import { parseSurgeConfig } from '@/utils/protocolConverter.js';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
     import { normalizeTagList } from '@/utils/tags.js';
     import { cleanNodeUrl } from '@/lib/utils.js';
 
@@ -67,7 +67,7 @@
 
             // 自动填充标签（用文件名），用户无需手填；已有标签时不覆盖
             if (normalizeTagList(props.editingNode.tags).length === 0) {
-                const autoTag = buildAutoGroupName({ fileName: files[0].name });
+                const autoTag = buildAutoTagName({ fileName: files[0].name });
                 props.editingNode.tags = autoTag ? [autoTag] : [];
             }
         } catch (error) {
@@ -175,7 +175,7 @@
             // 多行批量导入 / 需后端转换：未填写标签时自动生成一个批次标签
             let targetTags = normalizeTagList(props.editingNode.tags);
             if (targetTags.length === 0) {
-                const autoTag = buildAutoGroupName();
+                const autoTag = buildAutoTagName();
                 targetTags = autoTag ? [autoTag] : [];
                 props.editingNode.tags = targetTags;
             }

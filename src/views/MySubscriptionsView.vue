@@ -6,6 +6,7 @@
     import { useSortingMode } from '@/composables/useSortingMode.js';
     import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
     import Modal from '@/components/forms/Modal.vue';
+    import BatchTagModal from '@/components/modals/BatchTagModal.vue';
     import { storeToRefs } from 'pinia';
     import { useManualNodes } from '@/composables/useManualNodes.js';
     import { useToastStore } from '@/stores/toast.js';
@@ -26,6 +27,10 @@
 
     const profilesSectionRef = ref(null);
     const showTagManagementModal = ref(false);
+    const showBatchTagModal = ref(false);
+    const batchTagIds = ref([]);
+    const showBatchDeleteModal = ref(false);
+    const batchDeleteIds = ref([]);
 
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
@@ -55,6 +60,8 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        batchUpdateProfileTags,
+        batchDeleteProfiles,
         reorderProfiles,
         filteredProfiles,
         searchQuery: profileSearchQuery,
@@ -84,6 +91,29 @@
     const handleTagReorder = (newOrder) => {
         reorderProfileTags(newOrder);
         showToast(t('tags.tagOrderUpdated'), 'success');
+    };
+
+    const handleOpenBatchTagModal = (ids) => {
+        batchTagIds.value = ids;
+        showBatchTagModal.value = true;
+    };
+
+    const handleBatchTagConfirm = (payload) => {
+        batchUpdateProfileTags(batchTagIds.value, payload);
+        batchTagIds.value = [];
+    };
+
+    const handleBatchDeleteRequest = (ids) => {
+        if (ids && ids.length > 0) {
+            batchDeleteIds.value = ids;
+            showBatchDeleteModal.value = true;
+        }
+    };
+
+    const confirmBatchDelete = () => {
+        batchDeleteProfiles(batchDeleteIds.value);
+        batchDeleteIds.value = [];
+        showBatchDeleteModal.value = false;
     };
 
     const NodePreviewModal = defineAsyncComponent(
@@ -182,8 +212,29 @@
                 @update-search="profileSearchQuery = $event"
                 @set-tag-filters="setTagFilters"
                 @manage-tags="showTagManagementModal = true"
+                @open-batch-tag-modal="handleOpenBatchTagModal"
+                @batch-delete-profiles="handleBatchDeleteRequest"
             />
         </div>
+
+        <BatchTagModal
+            v-model:show="showBatchTagModal"
+            :tags="profileTags"
+            @confirm="handleBatchTagConfirm"
+        />
+
+        <Modal v-model:show="showBatchDeleteModal" @confirm="confirmBatchDelete">
+            <template #title>
+                <h3 class="text-lg font-bold text-red-500">
+                    {{ t('profiles.batchDeleteConfirmTitle') }}
+                </h3>
+            </template>
+            <template #body>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ t('profiles.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
+                </p>
+            </template>
+        </Modal>
 
         <TagManagementModal
             v-model:show="showTagManagementModal"

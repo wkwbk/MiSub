@@ -6,6 +6,7 @@ import { useToastStore } from '@/stores/toast';
 import { generateProfileId } from '@/utils/id.js';
 import {
     collectTags,
+    computeBatchUpdatedTags,
     getItemTags,
     matchesTagFilter,
     normalizeActiveTagFilters,
@@ -256,6 +257,55 @@ export function useProfiles(markDirty) {
         markDirty();
     };
 
+    const batchUpdateProfileTags = (profileIds, payload) => {
+        if (!profileIds || profileIds.length === 0) return;
+
+        let mode = 'replace';
+        let inputTags = payload;
+        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            mode = payload.mode || 'append';
+            inputTags = payload.tags;
+        }
+
+        const idsSet = new Set(profileIds);
+        let updatedCount = 0;
+        profiles.value.forEach((profile, index) => {
+            if (!idsSet.has(profile.id) && !idsSet.has(profile.customId)) return;
+            const { nextTags, changed } = computeBatchUpdatedTags(
+                getItemTags(profile),
+                inputTags,
+                mode
+            );
+            if (changed) {
+                profiles.value[index] = {
+                    ...profile,
+                    tags: nextTags,
+                };
+                updatedCount++;
+            }
+        });
+
+        if (updatedCount > 0) {
+            markDirty();
+            showToast(t('profiles.batchTagsUpdated', { count: updatedCount }), 'success');
+        }
+    };
+
+    const batchDeleteProfiles = (profileIds) => {
+        if (!profileIds || profileIds.length === 0) return;
+
+        profileIds.forEach((id) => {
+            dataStore.removeProfile(id);
+        });
+
+        if (paginatedProfiles.value.length === 0 && profilesCurrentPage.value > 1) {
+            profilesCurrentPage.value--;
+        }
+
+        markDirty();
+        showToast(t('profiles.deletedCount', { count: profileIds.length }), 'success');
+    };
+
     const handleDeleteAllProfiles = () => {
         profiles.value = [];
         markDirty();
@@ -396,6 +446,8 @@ export function useProfiles(markDirty) {
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        batchUpdateProfileTags,
+        batchDeleteProfiles,
         reorderProfiles,
         copyProfileLink,
         copyClashLink,

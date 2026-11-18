@@ -8,23 +8,21 @@ import {
 } from '@/utils/tags.js';
 
 describe('空标签名与无标签处理一致性', () => {
-    it('normalizeTagName 应将空值、空字符串、空格及默认占位词规范化为空字符串', () => {
+    it('normalizeTagName 应将空值、空字符串、纯空格及无标签哨兵规范化为空字符串', () => {
         expect(normalizeTagName('')).toBe('');
         expect(normalizeTagName('   ')).toBe('');
         expect(normalizeTagName(null)).toBe('');
         expect(normalizeTagName(undefined)).toBe('');
-        expect(normalizeTagName('默认')).toBe('');
-        expect(normalizeTagName('Default')).toBe('');
         expect(normalizeTagName(UNTAGGED_KEY)).toBe('');
     });
 
-    it('collectTags 应跳过无标签的节点，并兼容旧版非空 group', () => {
+    it('collectTags 应跳过无标签或空标签项', () => {
         const nodes = [
             { id: 'n1', url: 'ss://test1', tags: ['USA', '家宽'] },
             { id: 'n2', url: 'ss://test2', tags: [] },
-            { id: 'n3', url: 'ss://test3', group: '   ' },
-            { id: 'n4', url: 'ss://test4', group: null },
-            { id: 'n5', url: 'ss://test5', group: 'Japan' },
+            { id: 'n3', url: 'ss://test3', tags: ['   ', null] },
+            { id: 'n4', url: 'ss://test4' },
+            { id: 'n5', url: 'ss://test5', tags: ['Japan'] },
         ];
 
         const tags = collectTags(nodes);
@@ -37,7 +35,7 @@ describe('空标签名与无标签处理一致性', () => {
             { id: 'n1', url: 'ss://test1', tags: ['HK', '家宽', '解锁'] },
             { id: 'n2', url: 'ss://test2', tags: ['HK'] },
             { id: 'n3', url: 'ss://test3', tags: [] },
-            { id: 'n4', url: 'ss://test4', group: '   ' },
+            { id: 'n4', url: 'ss://test4', tags: ['   '] },
         ];
 
         const untagged = nodes.filter((n) => matchesTagFilter(n, [UNTAGGED_KEY]));

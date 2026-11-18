@@ -3,6 +3,7 @@
     import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import Card from '@/components/ui/Card.vue';
+    import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
     import TagFilterBar from '@/components/shared/TagFilterBar.vue';
@@ -53,7 +54,39 @@
         'clearStatusFilter',
         'set-tag-filters',
         'manage-tags',
+        'open-batch-tag-modal',
+        'batch-delete-subscriptions',
     ]);
+
+    const isSelectionMode = ref(false);
+    const selectedSubscriptionIds = ref(new Set());
+
+    const toggleSelectionMode = () => {
+        isSelectionMode.value = !isSelectionMode.value;
+        selectedSubscriptionIds.value.clear();
+    };
+
+    const toggleSubscriptionSelection = (subId) => {
+        if (selectedSubscriptionIds.value.has(subId)) {
+            selectedSubscriptionIds.value.delete(subId);
+        } else {
+            selectedSubscriptionIds.value.add(subId);
+        }
+    };
+
+    const selectedCount = computed(() => selectedSubscriptionIds.value.size);
+
+    const handleBatchTag = () => {
+        if (selectedSubscriptionIds.value.size === 0) return;
+        emit('open-batch-tag-modal', Array.from(selectedSubscriptionIds.value));
+    };
+
+    const handleBatchDelete = () => {
+        if (selectedSubscriptionIds.value.size === 0) return;
+        emit('batch-delete-subscriptions', Array.from(selectedSubscriptionIds.value));
+        selectedSubscriptionIds.value.clear();
+        isSelectionMode.value = false;
+    };
 
     const searchModel = computed({
         get: () => props.searchQuery,
@@ -161,6 +194,25 @@
     const visibleSubscriptions = computed(() =>
         matchedSubscriptions.value.slice(0, visibleLimit.value)
     );
+
+    const isAllSelected = computed(() => {
+        if (visibleSubscriptions.value.length === 0) return false;
+        return visibleSubscriptions.value.every((sub) =>
+            selectedSubscriptionIds.value.has(sub.id)
+        );
+    });
+
+    const toggleSelectAll = () => {
+        if (isAllSelected.value) {
+            visibleSubscriptions.value.forEach((sub) =>
+                selectedSubscriptionIds.value.delete(sub.id)
+            );
+        } else {
+            visibleSubscriptions.value.forEach((sub) =>
+                selectedSubscriptionIds.value.add(sub.id)
+            );
+        }
+    };
 
     const remainingCount = computed(() =>
         Math.max(0, matchedSubscriptions.value.length - visibleSubscriptions.value.length)
@@ -291,6 +343,23 @@
                     <MoreActionsMenu menu-width-class="w-36">
                         <template #menu="{ close }">
                             <button
+                                type="button"
+                                data-testid="subscription-bulk-actions-toggle"
+                                @click="
+                                    toggleSelectionMode();
+                                    close?.();
+                                "
+                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
+                                :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                            >
+                                {{
+                                    isSelectionMode
+                                        ? t('actions.exitBatch')
+                                        : t('actions.bulkActions')
+                                }}
+                            </button>
+                            <div class="my-1 border-t border-zinc-800"></div>
+                            <button
                                 :disabled="isRefreshing"
                                 @click="
                                     handleRefreshAll();
@@ -399,6 +468,20 @@
                 </button>
             </div>
         </div>
+        <BulkOperations
+            :is-selection-mode="isSelectionMode"
+            :is-all-selected="isAllSelected"
+            :selected-count="selectedCount"
+            @toggle-select-all="toggleSelectAll"
+            @batch-tag="handleBatchTag"
+            @batch-delete="handleBatchDelete"
+            @exit="
+                () => {
+                    selectedSubscriptionIds.clear();
+                    isSelectionMode = false;
+                }
+            "
+        />
         <div v-if="matchedSubscriptions.length > 0 && isSorting">
             <SortingBanner
                 :hint="t('subscriptions.sortingHint')"
@@ -434,7 +517,11 @@
                 </template>
             </draggable>
         </div>
-        <div v-else-if="matchedSubscriptions.length > 0" class="space-y-4">
+        <div
+            v-else-if="matchedSubscriptions.length > 0"
+            class="space-y-4"
+            :class="{ 'pb-48': isSelectionMode }"
+        >
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                     v-for="(subscription, index) in visibleSubscriptions"
@@ -444,6 +531,9 @@
                 >
                     <Card
                         :misub="subscription"
+                        :is-selection-mode="isSelectionMode"
+                        :is-selected="selectedSubscriptionIds.has(subscription.id)"
+                        @toggle-select="toggleSubscriptionSelection(subscription.id)"
                         @delete="handleDelete(subscription.id)"
                         @change="handleSortEnd"
                         @update="handleUpdate(subscription.id)"

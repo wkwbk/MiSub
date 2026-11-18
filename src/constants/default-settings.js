@@ -4,6 +4,7 @@
  */
 
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
+import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@/constants/default-public-links.js';
 
 export const DEFAULT_SETTINGS = {
     FileName: 'MiSub',
@@ -31,9 +32,8 @@ export const DEFAULT_SETTINGS = {
         enableSubscriptions: true,
         manualNodePrefix: '\u624b\u52a8\u8282\u70b9',
         subscriptionPrefix: '',
-        prependGroupName: false,
+        prependTagName: false,
     },
-    manualNodeGroupOrder: [], // 兼容旧版自定义分组顺序
     manualNodeTagOrder: [], // 手动节点标签自定义顺序
     subscriptionTagOrder: [], // 订阅源标签自定义顺序
     profileTagOrder: [], // 分享组合标签自定义顺序
@@ -116,6 +116,8 @@ export const DEFAULT_SETTINGS = {
         enabled: false,
         allowAnonymous: true,
     },
+    // 公开页导航链接设置（测速、IP检测、服务器厂商等）
+    publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
     webdavBackup: {
         enabled: false,
         endpoint: '',
@@ -200,7 +202,7 @@ export const DEFAULT_PROFILE_FORM = {
         enableSubscriptions: true,
         manualNodePrefix: '\u624b\u52a8\u8282\u70b9',
         subscriptionPrefix: '',
-        prependGroupName: null,
+        prependTagName: null,
     },
     subconverter: {
         engineMode: '',

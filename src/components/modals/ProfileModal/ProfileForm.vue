@@ -28,7 +28,7 @@
             type: Array,
             default: () => [],
         },
-        groupPrefixToggleOptions: {
+        tagPrefixToggleOptions: {
             type: Array,
             default: () => [],
         },
@@ -445,15 +445,15 @@
                                 />
                             </div>
 
-                            <!-- 组名前缀开关 -->
+                            <!-- 首个标签前缀开关 -->
                             <div class="space-y-1">
                                 <label class="block text-xs font-medium text-zinc-400">{{
-                                    t('profileModal.groupPrefix')
+                                    t('profileModal.tagPrefix')
                                 }}</label>
                                 <Select
-                                    v-model="localProfile.prefixSettings.prependGroupName"
+                                    v-model="localProfile.prefixSettings.prependTagName"
                                     size="sm"
-                                    :options="groupPrefixToggleOptions"
+                                    :options="tagPrefixToggleOptions"
                                 />
                             </div>
                         </div>

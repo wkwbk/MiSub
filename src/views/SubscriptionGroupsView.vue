@@ -10,6 +10,7 @@
     import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
     import Modal from '@/components/forms/Modal.vue';
     import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
+    import BatchTagModal from '@/components/modals/BatchTagModal.vue';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
     import {
@@ -30,6 +31,10 @@
 
     const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
+    const showBatchDeleteModal = ref(false);
+    const batchDeleteIds = ref([]);
+    const showBatchTagModal = ref(false);
+    const batchTagIds = ref([]);
     const showTagManagementModal = ref(false);
 
     const {
@@ -46,6 +51,8 @@
         updateSubscription,
         deleteSubscription,
         deleteAllSubscriptions,
+        batchUpdateSubscriptionTags,
+        batchDeleteSubscriptions,
         addSubscriptionsFromBulk,
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
@@ -85,6 +92,29 @@
         deleteAllSubscriptions();
         cleanupAllSubscriptions();
         showDeleteSubsModal.value = false;
+    };
+
+    const handleOpenBatchTagModal = (ids) => {
+        batchTagIds.value = ids;
+        showBatchTagModal.value = true;
+    };
+
+    const handleBatchTagConfirm = (payload) => {
+        batchUpdateSubscriptionTags(batchTagIds.value, payload);
+        batchTagIds.value = [];
+    };
+
+    const handleBatchDeleteRequest = (ids) => {
+        if (ids && ids.length > 0) {
+            batchDeleteIds.value = ids;
+            showBatchDeleteModal.value = true;
+        }
+    };
+
+    const confirmBatchDelete = () => {
+        batchDeleteSubscriptions(batchDeleteIds.value);
+        batchDeleteIds.value = [];
+        showBatchDeleteModal.value = false;
     };
 
     const NodePreviewModal = defineAsyncComponent(
@@ -224,7 +254,28 @@
             @qrcode="handleQRCode"
             @update-search="subscriptionSearchQuery = $event"
             @applyDetectedName="handleApplyDetectedName"
+            @open-batch-tag-modal="handleOpenBatchTagModal"
+            @batch-delete-subscriptions="handleBatchDeleteRequest"
         />
+
+        <BatchTagModal
+            v-model:show="showBatchTagModal"
+            :tags="subscriptionTags"
+            @confirm="handleBatchTagConfirm"
+        />
+
+        <Modal v-model:show="showBatchDeleteModal" @confirm="confirmBatchDelete">
+            <template #title>
+                <h3 class="text-lg font-bold text-red-500">
+                    {{ t('subscriptions.batchDeleteConfirmTitle') }}
+                </h3>
+            </template>
+            <template #body>
+                <p class="text-sm text-gray-600 dark:text-gray-300">
+                    {{ t('subscriptions.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
+                </p>
+            </template>
+        </Modal>
 
         <TagManagementModal
             v-model:show="showTagManagementModal"

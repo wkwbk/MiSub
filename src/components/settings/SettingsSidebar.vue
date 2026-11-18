@@ -1,6 +1,6 @@
 <script setup>
     import { markRaw } from 'vue';
-    import { FileText, Globe, Home, Monitor, Server, Settings, Zap } from '@lucide/vue';
+    import { FileText, Globe, Home, Server, Settings, Zap } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -37,7 +37,6 @@
             tabs: [
                 { id: 'global', labelKey: 'settings.tabs.global', icon: markRaw(Globe) },
                 { id: 'service', labelKey: 'settings.tabs.service', icon: markRaw(Zap) },
-                { id: 'client', labelKey: 'settings.tabs.client', icon: markRaw(Monitor) },
             ],
         },
         {

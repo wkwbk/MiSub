@@ -27,7 +27,6 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             website: '',
             notes: '',
             tags: [],
-            group: '',
         };
         showModal.value = true;
     };
@@ -62,12 +61,10 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             return;
         }
 
-        const rawTags =
-            editingSubscription.value.tags !== undefined
-                ? editingSubscription.value.tags
-                : getItemTags(editingSubscription.value);
-        const payload = applyItemTags({ ...editingSubscription.value }, rawTags);
-        delete payload.airportIdentity;
+        const payload = applyItemTags(
+            { ...editingSubscription.value },
+            editingSubscription.value.tags
+        );
 
         if (isNew.value) {
             addSubscription({ ...payload, id: generateSubscriptionId() });

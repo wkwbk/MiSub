@@ -157,6 +157,8 @@
         updateSubscription,
         deleteSubscription,
         deleteAllSubscriptions,
+        batchUpdateSubscriptionTags,
+        batchDeleteSubscriptions,
         addSubscriptionsFromBulk,
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,
@@ -221,6 +223,8 @@
         handleSaveProfile,
         handleDeleteProfile,
         handleDeleteAllProfiles,
+        batchUpdateProfileTags,
+        batchDeleteProfiles,
         reorderProfiles,
         filteredProfiles,
         searchQuery: profileSearchQuery,
@@ -280,10 +284,12 @@
     const logProfileName = ref('');
     const showBatchDeleteModal = ref(false);
     const batchDeleteIds = ref([]);
+    const batchDeleteType = ref('node'); // 'node' | 'subscription' | 'profile'
     const showDedupModal = ref(false);
     const dedupPlan = ref(null);
     const showBatchTagModal = ref(false);
     const batchTagIds = ref([]);
+    const batchTagType = ref('node'); // 'node' | 'subscription' | 'profile'
     const showNodeTagManagementModal = ref(false);
     const showProfileTagManagementModal = ref(false);
 
@@ -433,28 +439,68 @@
         showDedupModal.value = true;
     };
 
-    const handleBatchDeleteRequest = (ids) => {
+    const handleBatchDeleteRequest = (ids, type = 'node') => {
         if (ids && ids.length > 0) {
             batchDeleteIds.value = ids;
+            batchDeleteType.value = type;
             showBatchDeleteModal.value = true;
         }
     };
 
     const confirmBatchDelete = () => {
-        batchDeleteNodes(batchDeleteIds.value);
+        if (batchDeleteType.value === 'subscription') {
+            batchDeleteSubscriptions(batchDeleteIds.value);
+        } else if (batchDeleteType.value === 'profile') {
+            batchDeleteProfiles(batchDeleteIds.value);
+        } else {
+            batchDeleteNodes(batchDeleteIds.value);
+        }
         batchDeleteIds.value = [];
         showBatchDeleteModal.value = false;
     };
 
-    const handleOpenBatchTagModal = (ids) => {
+    const handleOpenBatchTagModal = (ids, type = 'node') => {
         batchTagIds.value = ids;
+        batchTagType.value = type;
         showBatchTagModal.value = true;
     };
 
     const handleBatchTagConfirm = (payload) => {
-        batchUpdateTags(batchTagIds.value, payload);
+        if (batchTagType.value === 'subscription') {
+            batchUpdateSubscriptionTags(batchTagIds.value, payload);
+        } else if (batchTagType.value === 'profile') {
+            batchUpdateProfileTags(batchTagIds.value, payload);
+        } else {
+            batchUpdateTags(batchTagIds.value, payload);
+        }
         batchTagIds.value = [];
     };
+
+    const batchTagCandidateTags = computed(() => {
+        if (batchTagType.value === 'subscription') return subscriptionTags.value;
+        if (batchTagType.value === 'profile') return profileTags.value;
+        return manualNodeTags.value;
+    });
+
+    const batchDeleteConfirmTitle = computed(() => {
+        if (batchDeleteType.value === 'subscription') {
+            return t('subscriptions.batchDeleteConfirmTitle');
+        }
+        if (batchDeleteType.value === 'profile') {
+            return t('profiles.batchDeleteConfirmTitle');
+        }
+        return t('manualNodes.batchDeleteConfirmTitle');
+    });
+
+    const batchDeleteConfirmBody = computed(() => {
+        if (batchDeleteType.value === 'subscription') {
+            return t('subscriptions.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+        }
+        if (batchDeleteType.value === 'profile') {
+            return t('profiles.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+        }
+        return t('manualNodes.batchDeleteConfirmBody', { count: batchDeleteIds.value.length });
+    });
 
     const handleOpenNodeTagManagement = () => {
         showNodeTagManagementModal.value = true;
@@ -608,6 +654,8 @@
                     @reorder="reorderSubscriptions"
                     @qrcode="(id) => handleQRCode(id, 'subscription')"
                     @import="showSubBulkImportModal = true"
+                    @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'subscription')"
+                    @batch-delete-subscriptions="(ids) => handleBatchDeleteRequest(ids, 'subscription')"
                 />
 
                 <!-- Manual Node Panel -->
@@ -690,6 +738,8 @@
                     @reorder="reorderProfiles"
                     @qrcode="(id) => handleQRCode(id, 'profile')"
                     @toggle-sort="isSortingProfiles = !isSortingProfiles"
+                    @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'profile')"
+                    @batch-delete-profiles="(ids) => handleBatchDeleteRequest(ids, 'profile')"
                 />
             </div>
         </div>
@@ -729,12 +779,12 @@
     <Modal v-model:show="showBatchDeleteModal" @confirm="confirmBatchDelete">
         <template #title>
             <h3 class="text-lg font-bold text-red-500">
-                {{ t('manualNodes.batchDeleteConfirmTitle') }}
+                {{ batchDeleteConfirmTitle }}
             </h3>
         </template>
         <template #body>
             <p class="text-sm text-gray-600 dark:text-gray-300">
-                {{ t('manualNodes.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
+                {{ batchDeleteConfirmBody }}
             </p>
         </template>
     </Modal>
@@ -780,7 +830,7 @@
 
     <BatchTagModal
         v-model:show="showBatchTagModal"
-        :tags="manualNodeTags"
+        :tags="batchTagCandidateTags"
         @confirm="handleBatchTagConfirm"
     />
 

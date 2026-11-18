@@ -85,7 +85,7 @@ describe('external manual nodes handler', () => {
         const created = await handleApiRequest(
             createRequest('/manual-nodes', {
                 method: 'POST',
-                body: { name: 'HK 01', url: 'vless://uuid@example.com:443#HK01', group: 'HK' },
+                body: { name: 'HK 01', url: 'vless://uuid@example.com:443#HK01', tags: ['HK'] },
             }),
             env
         );
@@ -95,8 +95,9 @@ describe('external manual nodes handler', () => {
         expect(createdBody.data).toMatchObject({
             type: 'manual_node',
             protocol: 'vless',
-            group: 'HK',
+            tags: ['HK'],
         });
+        expect(createdBody.data).not.toHaveProperty('group');
 
         const invalid = await handleApiRequest(
             createRequest('/manual-nodes', {

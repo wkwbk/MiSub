@@ -24,10 +24,7 @@ describe('机场订阅专用批量导入（多标签支持）', () => {
                 url: 'https://airport-a.com/sub?token=existing',
                 name: 'Airport A',
                 enabled: true,
-                airportIdentity: {
-                    groupId: 'group-a-id',
-                    name: '机场A',
-                },
+                tags: ['机场A'],
             },
         ];
 
@@ -46,13 +43,13 @@ describe('机场订阅专用批量导入（多标签支持）', () => {
         expect(isValidSubscriptionUrl('not a url')).toBe(false);
     });
 
-    it('extractSubscriptionTagNames 能提取现有订阅的标签（含兼容旧版 group 和 airportIdentity.name）', () => {
+    it('extractSubscriptionTagNames 能提取现有订阅的去重标签列表并忽略手动节点标签', () => {
         dataStore.subscriptions.push(
             { id: 'sub-2', url: 'https://a2.com/sub', tags: ['机场A', '主力'] },
             {
                 id: 'sub-3',
                 url: 'https://b.com/sub',
-                airportIdentity: { groupId: 'group-b-id', name: '机场B' },
+                tags: ['机场B'],
             },
             { id: 'sub-4', url: 'https://sub.gsafevpn.com/link', detectedName: 'GSafe机场' },
             { id: 'node-1', url: 'vless://uuid@host:443#node', tags: ['节点标签'] }
@@ -82,16 +79,16 @@ describe('机场订阅专用批量导入（多标签支持）', () => {
 
         const added = dataStore.subscriptions.find((s) => s.url === 'http://another-sub.com/link');
         expect(added.tags).toEqual([]);
-        expect(added.group).toBe('');
+        expect(added).not.toHaveProperty('group');
         expect(toastStore.toasts.at(-1)?.type).toBe('success');
         expect(toastStore.toasts.at(-1)?.message).toContain('2');
     });
 
-    it('填写标签时规范化写入 tags 数组并同步首个标签到 group', () => {
+    it('填写标签时规范化写入 tags 数组', () => {
         importer.handleSubscriptionBulkImport('https://sub-a2.com/sub', ['机场A', '流媒体']);
         const tagged = dataStore.subscriptions.find((s) => s.url === 'https://sub-a2.com/sub');
         expect(tagged.tags).toEqual(['机场A', '流媒体']);
-        expect(tagged.group).toBe('机场A');
+        expect(tagged).not.toHaveProperty('group');
 
         importer.handleSubscriptionBulkImport('https://sub-c.com/sub', ['  新机场C  ']);
         const created = dataStore.subscriptions.find((s) => s.url === 'https://sub-c.com/sub');

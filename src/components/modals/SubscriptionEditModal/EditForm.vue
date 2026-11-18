@@ -29,12 +29,7 @@
         get: () => getItemTags(props.editingSubscription),
         set: (val) => {
             if (!props.editingSubscription) return;
-            const normalized = normalizeTagList(val);
-            props.editingSubscription.tags = normalized;
-            props.editingSubscription.group = normalized[0] || '';
-            if ('airportIdentity' in props.editingSubscription) {
-                delete props.editingSubscription.airportIdentity;
-            }
+            props.editingSubscription.tags = normalizeTagList(val);
         },
     });
 

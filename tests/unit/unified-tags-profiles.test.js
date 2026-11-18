@@ -3,7 +3,11 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useProfiles } from '@/composables/useProfiles.js';
+import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
+import ProfileCard from '@/components/profiles/ProfileCard.vue';
+import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+import Card from '@/components/ui/Card.vue';
 import PublicProfileCard from '@/components/public/ProfileCard.vue';
 import HeroProfileCard from '@/components/public/HeroProfileCard.vue';
 import { createI18n } from '@/i18n/index.js';
@@ -133,7 +137,7 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
         );
     });
 
-    it('开启首个标签前缀（prependGroupName）时，手工节点取 tags[0] 作为名称前缀', async () => {
+    it('开启首个标签前缀（prependTagName）时，手工节点取 tags[0] 作为名称前缀', async () => {
         const result = await generateCombinedNodeList(
             {},
             { enableAccessLog: false },
@@ -150,11 +154,124 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
             '',
             {
                 enableManualNodes: false,
-                prependGroupName: true,
+                prependTagName: true,
             },
             false
         );
 
         expect(decodeURIComponent(result)).toContain('家宽 - 香港原生');
+    });
+
+    it('订阅管理与分享管理均支持批量设置标签与批量删除，且卡片标签统一位于左上角标题之前', async () => {
+        const dataStore = useDataStore();
+        dataStore.subscriptions = [
+            { id: 's1', name: '主力机场', url: 'https://a.test/sub', tags: ['主力'], enabled: true },
+            { id: 's2', name: '备用机场', url: 'https://b.test/sub', tags: [], enabled: true },
+        ];
+        dataStore.profiles = [
+            {
+                id: 'p1',
+                name: '主力组合',
+                subscriptions: ['s1', 's2'],
+                manualNodes: [],
+                tags: ['Clash'],
+                enabled: true,
+            },
+            {
+                id: 'p2',
+                name: '备用组合',
+                subscriptions: ['s2'],
+                manualNodes: [],
+                tags: [],
+                enabled: true,
+            },
+        ];
+
+        const { batchUpdateSubscriptionTags, batchDeleteSubscriptions } = useSubscriptions(vi.fn());
+        const { batchUpdateProfileTags, batchDeleteProfiles } = useProfiles(vi.fn());
+
+        batchUpdateSubscriptionTags(['s1', 's2'], { mode: 'append', tags: ['流媒体'] });
+        expect(dataStore.subscriptions[0].tags).toEqual(['主力', '流媒体']);
+        expect(dataStore.subscriptions[1].tags).toEqual(['流媒体']);
+
+        batchUpdateProfileTags(['p1', 'p2'], { mode: 'append', tags: ['家人'] });
+        expect(dataStore.profiles[0].tags).toEqual(['Clash', '家人']);
+        expect(dataStore.profiles[1].tags).toEqual(['家人']);
+
+        // 验证订阅卡片与分享卡片的标签位于卡片标题之前（左上角）
+        const subCardWrapper = mount(Card, {
+            props: { misub: dataStore.subscriptions[0] },
+            global: {
+                plugins: [createI18n({ initialLocale: 'zh-CN' })],
+                stubs: { Switch: true },
+            },
+        });
+        const subTagsEl = subCardWrapper.get('[data-testid="subscription-card-tags"]').element;
+        const subTitleEl = subCardWrapper.get('h3').element;
+        expect(
+            subTagsEl.compareDocumentPosition(subTitleEl) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        const profileCardWrapper = mount(ProfileCard, {
+            props: { profile: dataStore.profiles[0] },
+            global: {
+                plugins: [createI18n({ initialLocale: 'zh-CN' })],
+                stubs: { Switch: true },
+            },
+        });
+        const profileTagsEl = profileCardWrapper.get('[data-testid="profile-card-tags"]').element;
+        const profileTitleEl = profileCardWrapper.get('p').element;
+        expect(
+            profileTagsEl.compareDocumentPosition(profileTitleEl) &
+                Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        // 验证面板批量操作入口
+        const subPanelWrapper = mount(SubscriptionPanel, {
+            props: {
+                subscriptions: dataStore.subscriptions,
+                tags: ['主力', '流媒体'],
+            },
+            global: {
+                plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
+                stubs: {
+                    MoreActionsMenu: {
+                        template: '<div><slot name="menu" :close="() => {}" /></div>',
+                    },
+                    draggable: true,
+                    Switch: true,
+                },
+            },
+        });
+        await subPanelWrapper.get('[data-testid="subscription-bulk-actions-toggle"]').trigger('click');
+        expect(subPanelWrapper.text()).toContain('全选本页');
+
+        const profilePanelWrapper = mount(ProfilePanel, {
+            props: {
+                profiles: dataStore.profiles,
+                paginatedProfiles: dataStore.profiles,
+                tags: ['Clash', '家人'],
+            },
+            global: {
+                plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
+                stubs: {
+                    MoreActionsMenu: {
+                        template: '<div><slot name="menu" :close="() => {}" /></div>',
+                    },
+                    draggable: true,
+                    Switch: true,
+                },
+            },
+        });
+        await profilePanelWrapper.get('[data-testid="profile-bulk-actions-toggle"]').trigger('click');
+        expect(profilePanelWrapper.text()).toContain('全选本页');
+
+        // 批量删除
+        batchDeleteSubscriptions(['s1']);
+        expect(dataStore.subscriptions.map((s) => s.id)).toEqual(['s2']);
+        expect(dataStore.profiles[0].subscriptions).toEqual(['s2']);
+
+        batchDeleteProfiles(['p2']);
+        expect(dataStore.profiles.map((p) => p.id)).toEqual(['p1']);
     });
 });

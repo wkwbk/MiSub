@@ -738,7 +738,7 @@ export async function handleMisubRequest(context) {
                                         id: `nested-${subProfileId}-${node.url}`,
                                         name: node.name,
                                         url: node.url,
-                                        group: subResult.profileName || '组合订阅',
+                                        tags: [subResult.profileName || '组合订阅'],
                                         isFromSubProfile: true,
                                         enabled: true,
                                     });

@@ -8,7 +8,6 @@
     import HomeSettings from '@/components/settings/sections/HomeSettings.vue';
     import GlobalSettings from '@/components/settings/sections/GlobalSettings.vue';
     import ServiceSettings from '@/components/settings/sections/ServiceSettings.vue';
-    import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
     import CustomPageSettings from '@/components/settings/sections/CustomPageSettings.vue';
     import WebdavBackupSettings from '@/components/settings/sections/WebdavBackupSettings.vue';
     import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
@@ -112,8 +111,6 @@
                 return t('settings.tabs.global');
             case 'service':
                 return t('settings.tabs.service');
-            case 'client':
-                return t('settings.tabs.client');
             case 'custom-page':
                 return t('settings.tabs.customPage');
             case 'system':
@@ -180,7 +177,6 @@
             <HomeSettings v-show="activeTab === 'home'" :settings="settings" />
             <GlobalSettings v-show="activeTab === 'global'" :settings="settings" />
             <ServiceSettings v-show="activeTab === 'service'" :settings="settings" />
-            <ClientSettings v-show="activeTab === 'client'" />
             <CustomPageSettings v-show="activeTab === 'custom-page'" :settings="settings" />
             <div v-show="activeTab === 'system'" class="space-y-6">
                 <WebdavBackupSettings :settings="settings" />

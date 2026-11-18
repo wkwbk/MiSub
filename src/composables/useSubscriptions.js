@@ -10,6 +10,7 @@ import { t } from '@/i18n/index.js';
 import {
     applyItemTags,
     collectTags,
+    computeBatchUpdatedTags,
     getItemTags,
     matchesTagFilter,
     normalizeActiveTagFilters,
@@ -297,7 +298,7 @@ export function useSubscriptions(markDirty) {
     }
 
     function addSubscription(sub) {
-        const normalized = applyItemTags(sub, sub.tags !== undefined ? sub.tags : sub.group);
+        const normalized = applyItemTags(sub, sub.tags);
         dataStore.addSubscription(normalized);
         handleUpdateNodeCount(normalized.id);
         markDirty();
@@ -329,6 +330,51 @@ export function useSubscriptions(markDirty) {
         markDirty();
     }
 
+    function batchUpdateSubscriptionTags(subIds, payload) {
+        if (!subIds || subIds.length === 0) return;
+
+        let mode = 'replace';
+        let inputTags = payload;
+        if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+            mode = payload.mode || 'append';
+            inputTags = payload.tags;
+        }
+
+        const idsSet = new Set(subIds);
+        const updates = subscriptions.value
+            .filter((s) => idsSet.has(s.id))
+            .map((s) => {
+                const { nextTags, changed } = computeBatchUpdatedTags(
+                    getItemTags(s),
+                    inputTags,
+                    mode
+                );
+                if (!changed) return null;
+                return { id: s.id, updates: applyItemTags(s, nextTags) };
+            })
+            .filter(Boolean);
+
+        if (updates.length > 0) {
+            updates.forEach(({ id, updates: nextSub }) => {
+                dataStore.updateSubscription(id, nextSub);
+            });
+            markDirty();
+            showToast(t('subscriptions.batchTagsUpdated', { count: updates.length }), 'success');
+        }
+    }
+
+    function batchDeleteSubscriptions(subIds) {
+        if (!subIds || subIds.length === 0) return;
+
+        subIds.forEach((id) => {
+            dataStore.removeSubscription(id);
+        });
+        dataStore.removeSubscriptionFromProfiles(subIds);
+
+        markDirty();
+        showToast(t('subscriptions.deletedCount', { count: subIds.length }), 'success');
+    }
+
     function deleteAllSubscriptions() {
         const idsToRemove = subscriptions.value.map((s) => s.id);
 
@@ -347,7 +393,7 @@ export function useSubscriptions(markDirty) {
     async function addSubscriptionsFromBulk(subs) {
         for (let i = subs.length - 1; i >= 0; i--) {
             const raw = subs[i];
-            const normalized = applyItemTags(raw, raw.tags !== undefined ? raw.tags : raw.group);
+            const normalized = applyItemTags(raw, raw.tags);
             dataStore.addSubscription(normalized);
         }
         markDirty();
@@ -590,6 +636,8 @@ export function useSubscriptions(markDirty) {
         updateSubscription,
         deleteSubscription,
         deleteAllSubscriptions,
+        batchUpdateSubscriptionTags,
+        batchDeleteSubscriptions,
         addSubscriptionsFromBulk,
         handleUpdateNodeCount,
         batchUpdateAllSubscriptions,

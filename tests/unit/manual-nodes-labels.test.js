@@ -41,6 +41,7 @@ describe('manual nodes labels', () => {
             manualNodesCount: 24,
             filteredNodesCount: 0,
             searchTerm: '测试',
+            manualNodeTags: ['香港', '日本'],
         });
         const tagScroller = wrapper.get('[data-testid="manual-node-mobile-tags"]');
         const toolbarActions = wrapper.get('[data-testid="manual-node-toolbar-actions"]');
@@ -57,5 +58,16 @@ describe('manual nodes labels', () => {
         expect(search.classes()).toEqual(expect.arrayContaining(['relative', 'mt-4']));
         expect(searchInput.attributes('type')).toBe('text');
         expect(search.text()).toContain('0/24');
+    });
+
+    it('hides tag filter bars when there are no tags and no active filters', () => {
+        const wrapper = mountNodeActions({
+            manualNodeTags: [],
+            activeTagFilters: [],
+        });
+
+        expect(wrapper.find('[data-testid="manual-node-mobile-tags"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="manual-node-tag-tabs"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="manage-manual-node-tags"]').exists()).toBe(false);
     });
 });

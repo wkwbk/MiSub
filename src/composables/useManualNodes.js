@@ -133,13 +133,12 @@ export function useManualNodes(markDirty) {
 
     function addNode(node) {
         const cleanedUrl = cleanNodeUrl(node.url);
-        const rawTags = node.tags !== undefined ? node.tags : node.group;
         const normalizedNode = applyItemTags(
             {
                 ...node,
                 url: cleanedUrl,
             },
-            rawTags
+            node.tags
         );
         if (!normalizedNode.name) {
             normalizedNode.name = extractNodeName(normalizedNode.url);
@@ -150,13 +149,12 @@ export function useManualNodes(markDirty) {
     }
 
     function updateNode(updatedNode) {
-        const rawTags = updatedNode.tags !== undefined ? updatedNode.tags : updatedNode.group;
         const normalizedNode = applyItemTags(
             {
                 ...updatedNode,
                 url: cleanNodeUrl(updatedNode.url),
             },
-            rawTags
+            updatedNode.tags
         );
         dataStore.updateSubscription(normalizedNode.id, normalizedNode);
         markDirty();
@@ -292,8 +290,7 @@ export function useManualNodes(markDirty) {
 
     const getStoredTagOrder = () => {
         const tagOrder = settingsStore.config.manualNodeTagOrder;
-        if (Array.isArray(tagOrder) && tagOrder.length > 0) return tagOrder;
-        return settingsStore.config.manualNodeGroupOrder || [];
+        return Array.isArray(tagOrder) ? tagOrder : [];
     };
 
     const manualNodeTags = computed(() => {
@@ -327,7 +324,6 @@ export function useManualNodes(markDirty) {
             );
             settingsStore.updateConfig({
                 manualNodeTagOrder: nextOrder,
-                manualNodeGroupOrder: nextOrder,
             });
         }
 
@@ -363,7 +359,6 @@ export function useManualNodes(markDirty) {
         if (nextOrder.length !== customOrder.length) {
             settingsStore.updateConfig({
                 manualNodeTagOrder: nextOrder,
-                manualNodeGroupOrder: nextOrder,
             });
         }
 
@@ -380,7 +375,6 @@ export function useManualNodes(markDirty) {
         const normalizedOrder = normalizeTagList(newOrder);
         settingsStore.updateConfig({
             manualNodeTagOrder: normalizedOrder,
-            manualNodeGroupOrder: normalizedOrder,
         });
         markDirty();
     }

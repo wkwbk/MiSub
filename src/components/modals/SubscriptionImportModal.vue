@@ -12,7 +12,7 @@
     import ParseResult from '@/components/modals/SubscriptionImport/ParseResult.vue';
     import TagInput from '@/components/ui/TagInput.vue';
     import { readFilesAsText } from '@/utils/importFile.js';
-    import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { buildAutoTagName } from '@/utils/auto-tag-name.js';
     import { normalizeTagList } from '@/utils/tags.js';
     import { cleanNodeUrl } from '@/lib/utils.js';
 
@@ -99,7 +99,7 @@
 
     const importFiles = async (fileList) => {
         if (normalizeTagList(selectedTags.value).length === 0 && fileList?.length) {
-            const autoTag = buildAutoGroupName({ fileName: fileList[0].name });
+            const autoTag = buildAutoTagName({ fileName: fileList[0].name });
             selectedTags.value = autoTag ? [autoTag] : [];
         }
         const targetTags = [...selectedTags.value];

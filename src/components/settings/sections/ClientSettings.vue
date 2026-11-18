@@ -48,7 +48,7 @@
     const platformOptions = [
         {
             value: 'windows',
-            label: 'windows',
+            label: 'Windows',
             class: 'border border-zinc-800 bg-transparent text-zinc-300 font-mono',
         },
         {
@@ -58,12 +58,12 @@
         },
         {
             value: 'linux',
-            label: 'linux',
+            label: 'Linux',
             class: 'border border-zinc-800 bg-transparent text-zinc-300 font-mono',
         },
         {
             value: 'android',
-            label: 'android',
+            label: 'Android',
             class: 'border border-zinc-800 bg-transparent text-zinc-300 font-mono',
         },
         {
@@ -73,10 +73,27 @@
         },
         {
             value: 'HarmonyOS',
-            label: 'harmonyOS',
+            label: 'HarmonyOS',
             class: 'border border-zinc-800 bg-transparent text-zinc-300 font-mono',
         },
     ];
+
+    const activePlatform = ref('all');
+
+    const platformTabs = computed(() => [
+        { value: 'all', label: t('publicProfiles.allCategories') },
+        ...platformOptions.map((opt) => ({
+            value: opt.value,
+            label: opt.label,
+        })),
+    ]);
+
+    const filteredClients = computed(() => {
+        if (activePlatform.value === 'all') return clients.value;
+        return clients.value.filter(
+            (c) => Array.isArray(c.platforms) && c.platforms.includes(activePlatform.value)
+        );
+    });
 
     const handleIconFileSelect = (event) => {
         const file = event.target.files?.[0];
@@ -176,7 +193,7 @@
             name: '',
             icon: '',
             description: '',
-            platforms: [],
+            platforms: activePlatform.value === 'all' ? [] : [activePlatform.value],
             url: '',
             repo: '',
         };
@@ -210,14 +227,23 @@
         }
     };
 
-    const moveClient = async (index, direction) => {
-        const targetIndex = index + direction;
-        if (targetIndex < 0 || targetIndex >= clients.value.length) return;
-        const next = [...clients.value];
-        const temp = next[index];
-        next[index] = next[targetIndex];
-        next[targetIndex] = temp;
-        clients.value = next;
+    const moveClient = async (clientId, direction) => {
+        const fullList = [...clients.value];
+        const currentVisList = filteredClients.value;
+        const visIdx = currentVisList.findIndex((item) => item.id === clientId);
+        const targetVisIdx = visIdx + direction;
+        if (visIdx === -1 || targetVisIdx < 0 || targetVisIdx >= currentVisList.length) return;
+
+        const itemA = currentVisList[visIdx];
+        const itemB = currentVisList[targetVisIdx];
+        const fullIdxA = fullList.findIndex((item) => item.id === itemA.id);
+        const fullIdxB = fullList.findIndex((item) => item.id === itemB.id);
+        if (fullIdxA === -1 || fullIdxB === -1) return;
+
+        const temp = fullList[fullIdxA];
+        fullList[fullIdxA] = fullList[fullIdxB];
+        fullList[fullIdxB] = temp;
+        clients.value = fullList;
         await saveClientOrder();
     };
 
@@ -306,78 +332,111 @@
                 {{ t('common.loading') }}
             </div>
 
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div v-else class="space-y-4">
+                <!-- Platform Filter Tabs -->
+                <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-zinc-800/80">
+                    <button
+                        v-for="tab in platformTabs"
+                        :key="tab.value"
+                        type="button"
+                        @click="activePlatform = tab.value"
+                        class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
+                        :class="
+                            activePlatform === tab.value
+                                ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                                : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                        "
+                    >
+                        {{ tab.label }}
+                    </button>
+                </div>
+
                 <div
-                    v-for="(client, index) in clients"
-                    :key="client.id"
-                    class="relative bg-transparent border border-zinc-800/80 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
+                    v-if="filteredClients.length === 0"
+                    class="py-8 text-center text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-md"
                 >
-                    <div class="flex items-start gap-3 min-w-0">
-                        <div
-                            class="h-11 w-11 rounded-md flex items-center justify-center text-xl shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
-                        >
-                            <img
-                                v-if="
-                                    client.icon &&
-                                    (client.icon.includes('/') || client.icon.startsWith('data:'))
-                                "
-                                :src="client.icon"
-                                :alt="client.name"
-                                class="w-full h-full object-cover rounded-md p-1"
-                            />
-                            <span v-else>{{ client.icon }}</span>
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <h4 class="text-sm font-semibold text-zinc-100 truncate pr-1">
-                                {{ client.name }}
-                            </h4>
-                            <p class="text-xs text-zinc-500 truncate">{{ client.description }}</p>
-                            <div class="flex flex-wrap gap-1 mt-2">
-                                <span
-                                    v-for="p in client.platforms"
-                                    :key="p"
-                                    class="px-1.5 py-0.5 text-[10px] rounded-md"
-                                    :class="getPlatformClass(p)"
-                                >
-                                    {{ platformOptions.find((opt) => opt.value === p)?.label || p }}
-                                </span>
+                    {{ t('settings.clientEmptyPlatform') }}
+                </div>
+
+                <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div
+                        v-for="(client, index) in filteredClients"
+                        :key="client.id"
+                        class="relative bg-transparent border border-zinc-800/80 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
+                    >
+                        <div class="flex items-start gap-3 min-w-0">
+                            <div
+                                class="h-11 w-11 rounded-md flex items-center justify-center text-xl shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
+                            >
+                                <img
+                                    v-if="
+                                        client.icon &&
+                                        (client.icon.includes('/') ||
+                                            client.icon.startsWith('data:'))
+                                    "
+                                    :src="client.icon"
+                                    :alt="client.name"
+                                    class="w-full h-full object-cover rounded-md p-1"
+                                />
+                                <span v-else>{{ client.icon }}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="text-sm font-semibold text-zinc-100 truncate pr-1">
+                                    {{ client.name }}
+                                </h4>
+                                <p class="text-xs text-zinc-500 truncate">
+                                    {{ client.description }}
+                                </p>
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    <span
+                                        v-for="p in client.platforms"
+                                        :key="p"
+                                        class="px-1.5 py-0.5 text-[10px] rounded-md"
+                                        :class="getPlatformClass(p)"
+                                    >
+                                        {{
+                                            platformOptions.find((opt) => opt.value === p)?.label ||
+                                            p
+                                        }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div
-                        class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-zinc-800 pt-3"
-                    >
-                        <button
-                            @click.stop="moveClient(index, -1)"
-                            :disabled="ordering || index === 0"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                        <div
+                            class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-zinc-800 pt-3"
                         >
-                            <ChevronUp class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.moveUp') }}</span>
-                        </button>
-                        <button
-                            @click.stop="moveClient(index, 1)"
-                            :disabled="ordering || index === clients.length - 1"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.moveDown') }}</span>
-                        </button>
-                        <button
-                            @click.stop="handleEdit(client)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
-                        >
-                            <SquarePen class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.edit') }}</span>
-                        </button>
-                        <button
-                            @click.stop="handleDelete(client.id)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
-                        >
-                            <Trash2 class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.delete') }}</span>
-                        </button>
+                            <button
+                                @click.stop="moveClient(client.id, -1)"
+                                :disabled="ordering || index === 0"
+                                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                            >
+                                <ChevronUp class="w-3.5 h-3.5" />
+                                <span>{{ t('actions.moveUp') }}</span>
+                            </button>
+                            <button
+                                @click.stop="moveClient(client.id, 1)"
+                                :disabled="ordering || index === filteredClients.length - 1"
+                                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                            >
+                                <ChevronDown class="w-3.5 h-3.5" />
+                                <span>{{ t('actions.moveDown') }}</span>
+                            </button>
+                            <button
+                                @click.stop="handleEdit(client)"
+                                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
+                            >
+                                <SquarePen class="w-3.5 h-3.5" />
+                                <span>{{ t('actions.edit') }}</span>
+                            </button>
+                            <button
+                                @click.stop="handleDelete(client.id)"
+                                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
+                            >
+                                <Trash2 class="w-3.5 h-3.5" />
+                                <span>{{ t('actions.delete') }}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

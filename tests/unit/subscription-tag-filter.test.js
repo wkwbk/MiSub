@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { collectTags, getItemTags, normalizeTagName } from '@/utils/tags.js';
+import { collectTags } from '@/utils/tags.js';
 
 const makeSub = (id, name, url, extra = {}) => ({ id, name, url, enabled: true, ...extra });
 
@@ -63,7 +63,6 @@ describe('机场订阅多选标签交集筛选', () => {
         await mainBtn.trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(2);
 
-        // 继续选中「流媒体」求交集，只剩同时具有「主力 + 流媒体」的订阅
         const mediaBtn = wrapper
             .get('[data-testid="subscription-tag-tabs"]')
             .findAll('button')
@@ -73,12 +72,10 @@ describe('机场订阅多选标签交集筛选', () => {
         expect(wrapper.text()).toContain('主力解锁');
         expect(wrapper.text()).not.toContain('主力日常');
 
-        // 点击「无标签」切换为仅筛无标签项
         await wrapper.get('[data-testid="subscription-tag-tab-untagged"]').trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(1);
         expect(wrapper.text()).toContain('免费无标');
 
-        // 点击「全部」恢复
         await wrapper.get('[data-testid="subscription-tag-tab-all"]').trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(3);
     });
@@ -99,13 +96,11 @@ describe('机场订阅多选标签交集筛选', () => {
         expect(wrapper.find('[data-testid="subscription-load-more-btn"]').exists()).toBe(false);
     });
 
-    it('兼容读取旧版 group / airportIdentity.name，并支持在 useSubscriptions 中重命名和删除标签', () => {
+    it('支持在 useSubscriptions 中重命名和删除标签', () => {
         const dataStore = useDataStore();
         dataStore.subscriptions = [
-            makeSub('a', 's1', 'https://a.test/1', { group: '机场A' }),
-            makeSub('b', 's2', 'https://b.test/2', {
-                airportIdentity: { groupId: 'legacy-1', name: '机场A' },
-            }),
+            makeSub('a', 's1', 'https://a.test/1', { tags: ['机场A'] }),
+            makeSub('b', 's2', 'https://b.test/2', { tags: ['机场A', '流媒体'] }),
             makeSub('c', 's3', 'https://c.test/3', { tags: ['机场B', '备用'] }),
         ];
 
@@ -117,18 +112,15 @@ describe('机场订阅多选标签交集筛选', () => {
             deleteSubscriptionTag,
         } = useSubscriptions(vi.fn());
 
-        expect(subscriptionTags.value).toEqual(['机场A', '机场B', '备用']);
-        expect(normalizeTagName('默认')).toBe('');
-        expect(getItemTags(dataStore.subscriptions[1])).toEqual(['机场A']);
+        expect(subscriptionTags.value).toEqual(['机场A', '流媒体', '机场B', '备用']);
 
         setTagFilters(['机场A']);
         renameSubscriptionTag('机场A', '主力');
         expect(activeTagFilters.value).toEqual(['主力']);
-        expect(collectTags(dataStore.subscriptions)).toEqual(['主力', '机场B', '备用']);
-        expect(dataStore.subscriptions[1].airportIdentity).toBeNull();
+        expect(collectTags(dataStore.subscriptions)).toEqual(['主力', '流媒体', '机场B', '备用']);
 
         deleteSubscriptionTag('主力');
         expect(activeTagFilters.value).toEqual([]);
-        expect(subscriptionTags.value).toEqual(['机场B', '备用']);
+        expect(subscriptionTags.value).toEqual(['流媒体', '机场B', '备用']);
     });
 });

@@ -15,6 +15,11 @@
     import ProfileGrid from '@/components/public/ProfileGrid.vue';
     import { AlertTriangle, ArrowRight } from '@lucide/vue';
     import { parseCustomPageSource } from '@/utils/custom-page-source.js';
+    import {
+        normalizePublicLinksConfig,
+        PUBLIC_LINK_CATEGORIES,
+        resolvePublicLinkIcon,
+    } from '@/constants/default-public-links.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -51,6 +56,40 @@
     );
     const guestbookConfig = computed(() => config.value.guestbook || {});
     const customPageConfig = computed(() => config.value.customPage || {});
+    const publicLinksConfig = computed(() => normalizePublicLinksConfig(config.value.publicLinks));
+    const enabledPublicLinks = computed(() =>
+        publicLinksConfig.value.enabled
+            ? (publicLinksConfig.value.items || []).filter((item) => item.enabled !== false)
+            : []
+    );
+    const activeLinkCategory = ref('all');
+    const availableLinkCategories = computed(() => {
+        const present = new Set(enabledPublicLinks.value.map((item) => item.category || 'other'));
+        const dynamicTabs = PUBLIC_LINK_CATEGORIES.filter((cat) => present.has(cat.value)).map(
+            (cat) => ({
+                value: cat.value,
+                label: t(cat.labelKey),
+            })
+        );
+        return [{ value: 'all', label: t('publicProfiles.allCategories') }, ...dynamicTabs];
+    });
+    const displayedPublicLinks = computed(() => {
+        if (activeLinkCategory.value === 'all') return enabledPublicLinks.value;
+        return enabledPublicLinks.value.filter(
+            (item) => (item.category || 'other') === activeLinkCategory.value
+        );
+    });
+    const getLinkCategoryLabel = (category) => {
+        const found = PUBLIC_LINK_CATEGORIES.find((cat) => cat.value === category);
+        return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+    };
+    const getLinkHostname = (rawUrl) => {
+        try {
+            return new URL(rawUrl).hostname.replace(/^www\./, '');
+        } catch {
+            return rawUrl || '';
+        }
+    };
     const parsedCustomPageSource = computed(() =>
         parseCustomPageSource(
             customPageConfig.value.content || '',
@@ -216,9 +255,37 @@
             linux: 'Linux',
             android: 'Android',
             ios: 'iOS',
+            HarmonyOS: 'HarmonyOS',
         };
         return map[p] || p;
     };
+
+    const CLIENT_PLATFORM_ORDER = ['windows', 'macos', 'linux', 'android', 'ios', 'HarmonyOS'];
+    const activeClientPlatform = ref('all');
+    const availableClientPlatforms = computed(() => {
+        const present = new Set();
+        clients.value.forEach((client) => {
+            (client.platforms || []).forEach((p) => present.add(p));
+        });
+        const dynamicTabs = CLIENT_PLATFORM_ORDER.filter((p) => present.has(p)).map((p) => ({
+            value: p,
+            label: getPlatformLabel(p),
+        }));
+        present.forEach((p) => {
+            if (!CLIENT_PLATFORM_ORDER.includes(p)) {
+                dynamicTabs.push({ value: p, label: getPlatformLabel(p) });
+            }
+        });
+        return [{ value: 'all', label: t('publicProfiles.allCategories') }, ...dynamicTabs];
+    });
+    const displayedClients = computed(() => {
+        if (activeClientPlatform.value === 'all') return clients.value;
+        return clients.value.filter(
+            (client) =>
+                Array.isArray(client.platforms) &&
+                client.platforms.includes(activeClientPlatform.value)
+        );
+    });
 
     const getClientVersionLabel = (client) => {
         if (client.version) return client.version;
@@ -592,7 +659,7 @@
                     class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
                 >
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div class="text-center mb-12 relative">
+                        <div class="text-center mb-8 relative">
                             <div class="relative inline-flex flex-col items-center">
                                 <span
                                     class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
@@ -609,10 +676,31 @@
                             </div>
                         </div>
 
+                        <!-- Platform Filter Tabs -->
+                        <div
+                            v-if="!error && availableClientPlatforms.length > 2"
+                            class="flex flex-wrap items-center justify-center gap-2 mb-8"
+                        >
+                            <button
+                                v-for="tab in availableClientPlatforms"
+                                :key="tab.value"
+                                type="button"
+                                @click="activeClientPlatform = tab.value"
+                                class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
+                                :class="
+                                    activeClientPlatform === tab.value
+                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                                        : 'bg-[#171717] text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                                "
+                            >
+                                {{ tab.label }}
+                            </button>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <div
-                                v-for="client in clients"
-                                :key="client.name"
+                                v-for="client in displayedClients"
+                                :key="client.id || client.name"
                                 class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-zinc-800 transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
@@ -672,6 +760,125 @@
                                         class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link"
                                     >
                                         {{ t('publicProfiles.download') }}
+                                        <ArrowRight
+                                            class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
+                                        />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Public Links Section (Speed Test, IP Tools, Server Providers) -->
+                <div
+                    v-if="!error && enabledPublicLinks.length > 0"
+                    class="mt-16 pt-12 pb-6 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
+                >
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center mb-8 relative">
+                            <div class="relative inline-flex flex-col items-center">
+                                <span
+                                    class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
+                                    >{{ t('publicProfiles.linksEyebrow') }}</span
+                                >
+                                <h2
+                                    class="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight"
+                                >
+                                    {{ t('publicProfiles.linksTitle') }}
+                                </h2>
+                                <p class="mt-2 text-sm text-zinc-400 max-w-2xl mx-auto">
+                                    {{ t('publicProfiles.linksDescription') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Category Tabs -->
+                        <div
+                            v-if="availableLinkCategories.length > 2"
+                            class="flex flex-wrap items-center justify-center gap-2 mb-8"
+                        >
+                            <button
+                                v-for="tab in availableLinkCategories"
+                                :key="tab.value"
+                                type="button"
+                                @click="activeLinkCategory = tab.value"
+                                class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
+                                :class="
+                                    activeLinkCategory === tab.value
+                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                                        : 'bg-[#171717] text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                                "
+                            >
+                                {{ tab.label }}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div
+                                v-for="link in displayedPublicLinks"
+                                :key="link.id || link.name"
+                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-zinc-800 transition-all duration-200"
+                            >
+                                <div class="flex items-start gap-4">
+                                    <div
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-zinc-800 shrink-0 overflow-hidden"
+                                    >
+                                        <img
+                                            v-if="
+                                                resolvePublicLinkIcon(link) &&
+                                                (resolvePublicLinkIcon(link).includes('/') ||
+                                                    resolvePublicLinkIcon(link).startsWith(
+                                                        'data:'
+                                                    ) ||
+                                                    resolvePublicLinkIcon(link).startsWith('http'))
+                                            "
+                                            :src="resolvePublicLinkIcon(link)"
+                                            :alt="link.name"
+                                            class="w-full h-full object-contain rounded-md p-1"
+                                        />
+                                        <span v-else>{{
+                                            link.icon || link.name?.slice(0, 1) || '🌐'
+                                        }}</span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                            <h3
+                                                class="text-sm font-semibold text-zinc-100 truncate"
+                                            >
+                                                {{ link.name }}
+                                            </h3>
+                                            <span
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400 shrink-0"
+                                            >
+                                                {{ getLinkCategoryLabel(link.category) }}
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="text-zinc-400 text-xs line-clamp-2 leading-relaxed h-9"
+                                        >
+                                            {{ link.description }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800"
+                                >
+                                    <span
+                                        class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md truncate max-w-[60%]"
+                                    >
+                                        {{ getLinkHostname(link.url) }}
+                                    </span>
+
+                                    <a
+                                        :href="link.url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link shrink-0"
+                                    >
+                                        {{ t('publicProfiles.visitSite') }}
                                         <ArrowRight
                                             class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
                                         />

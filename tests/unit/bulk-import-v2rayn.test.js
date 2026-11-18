@@ -39,14 +39,14 @@ describe('批量导入：v2rayn:// 需要走后端解析', () => {
             data: { nodes: [{ name: 'hy2', url: CONVERTED_URI, protocol: 'hysteria2' }] },
         });
 
-        await bulkImport.handleBulkImport(V2RAYN_LINK, 'g1');
+        await bulkImport.handleBulkImport(V2RAYN_LINK, ['g1']);
 
         expect(post).toHaveBeenCalledTimes(1);
         expect(post.mock.calls[0][0]).toBe('/api/parse_subscription');
         expect(post.mock.calls[0][1]).toEqual({ content: V2RAYN_LINK });
         expect(addedNodes).toHaveLength(1);
         expect(addedNodes[0].url).toBe(CONVERTED_URI);
-        expect(addedNodes[0].group).toBe('g1');
+        expect(addedNodes[0].tags).toEqual(['g1']);
     });
 
     it('后端转换失败时回退前端解析，不抛错', async () => {

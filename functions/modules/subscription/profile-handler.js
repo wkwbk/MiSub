@@ -187,23 +187,13 @@ export async function handleProfileMode(
         const customName = typeof node.name === 'string' ? node.name.trim() : '';
         const effectiveUrl = customName ? applyManualNodeName(node.url, customName) : node.url;
 
-        const primaryTag =
-            Array.isArray(node.tags) && node.tags.length > 0
-                ? String(node.tags[0] || '').trim()
-                : typeof node.group === 'string'
-                  ? node.group.trim()
-                  : '';
-        const nodeTags =
-            Array.isArray(node.tags) && node.tags.length > 0
-                ? node.tags.map((item) => String(item || '').trim()).filter(Boolean)
-                : primaryTag
-                  ? [primaryTag]
-                  : [];
+        const nodeTags = Array.isArray(node.tags)
+            ? node.tags.map((item) => String(item || '').trim()).filter(Boolean)
+            : [];
 
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
             subscriptionName: node.name || '手工节点',
-            group: primaryTag,
             tags: nodeTags,
             url: effectiveUrl,
             success: true,
@@ -212,7 +202,6 @@ export async function handleProfileMode(
                     ...nodeInfo,
                     url: effectiveUrl,
                     subscriptionName: node.name || '手工节点',
-                    group: primaryTag,
                     tags: nodeTags,
                 },
             ],
@@ -268,7 +257,7 @@ export async function handleProfileMode(
                 if (subResult.success && Array.isArray(subResult.nodes)) {
                     nestedSubProfileResults.push({
                         subscriptionName: subResult.profileName || '组合订阅',
-                        group: subResult.profileName || '组合订阅',
+                        tags: [subResult.profileName || '组合订阅'],
                         url: `profile://${subProfileId}`,
                         success: true,
                         nodes: subResult.nodes,
@@ -309,7 +298,7 @@ export async function handleProfileMode(
     if (applyTransform) {
         const nodeUrls = allNodes.map((node) => node.url);
         const nodeMetadataByUrl = new Map(
-            allNodes.map((node) => [node.url, { group: node.group || '' }])
+            allNodes.map((node) => [node.url, { tags: Array.isArray(node.tags) ? node.tags : [] }])
         );
 
         let activeOperators = ensureArray(profile?.operators);
