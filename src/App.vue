@@ -129,6 +129,11 @@
         () => layoutMode.value === 'modern' && (isDirty.value || saveState.value === 'success')
     );
 
+    // 设置页自带吸底操作栏（内含回到顶部按钮），隐藏全局悬浮 ScrollToTop 以避免重叠
+    const isModernSettingsPage = computed(
+        () => isLoggedIn.value && layoutMode.value === 'modern' && route.name === 'Settings'
+    );
+
     // Determine which login component to show (Custom Path -> NotFound, else -> Login)
     const loginComponent = computed(() => {
         const rawPath = sessionStore.publicConfig?.customLoginPath;
@@ -415,7 +420,7 @@
             :hide-branding="shouldHidePublicBranding"
             :has-mobile-nav="showModernNavBar"
         />
-        <ScrollToTop v-if="isLoggedIn || isPublicRoute" />
+        <ScrollToTop v-if="(isLoggedIn || isPublicRoute) && !isModernSettingsPage" />
     </div>
 </template>
 

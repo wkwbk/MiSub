@@ -131,7 +131,7 @@
 </script>
 
 <template>
-    <div class="space-y-6 animate-fade-in">
+    <div class="space-y-4 animate-fade-in">
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.customPageTitle')"

@@ -1,6 +1,6 @@
 <script setup>
     import { watch } from 'vue';
-    import { Info, List, Map, SlidersHorizontal } from '@lucide/vue';
+    import { List, Map, SlidersHorizontal } from '@lucide/vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
@@ -58,21 +58,7 @@
 </script>
 
 <template>
-    <div class="space-y-6">
-        <!-- Announcement & Info Section -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-            <SectionHeader
-                :title="t('settings.globalInfoTitle')"
-                :description="t('settings.globalInfoBody')"
-                tone="indigo"
-                no-margin
-            >
-                <template #icon>
-                    <Info class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-        </section>
-
+    <div class="space-y-4">
         <!-- Node Prefix Settings -->
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader

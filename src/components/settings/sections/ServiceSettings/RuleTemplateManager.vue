@@ -1,10 +1,11 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { Braces } from '@lucide/vue';
+    import { Braces, Plus } from '@lucide/vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
-    import SectionHeader from '@/components/settings/SectionHeader.vue';
     import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
+
+    const emit = defineEmits(['saved']);
 
     const { t } = useI18n();
     const showTemplateVariables = ref(false);
@@ -81,6 +82,7 @@ overwrite_original_rules=true`;
         };
         localTemplates.value.unshift(template);
         selectedId.value = template.id;
+        return template;
     }
 
     function duplicateTemplate(template) {
@@ -116,60 +118,51 @@ overwrite_original_rules=true`;
             if (!localTemplates.value.some((item) => item.id === selectedId.value)) {
                 selectedId.value = localTemplates.value[0]?.id || '';
             }
+            const active = localTemplates.value.find(
+                (item) => item.id === selectedId.value && item.enabled !== false
+            );
+            emit('saved', active?.id || '');
+            return true;
+        } catch {
+            return false;
         } finally {
             isSaving.value = false;
         }
     }
+
+    defineExpose({
+        refreshTemplates,
+        createTemplate,
+        saveTemplates,
+        isSaving,
+        isLoading,
+        hasTemplates,
+        selectedId,
+        localTemplates,
+    });
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-        <SectionHeader
-            :title="t('settings.ruleTemplatesTitle')"
-            :description="t('settings.ruleTemplatesDesc')"
+    <div class="w-full">
+        <div
+            v-if="!hasTemplates"
+            class="rounded-md border border-dashed border-zinc-800 bg-[#131515]/60 px-6 py-12 text-center"
         >
-            <template #actions>
-                <button
-                    type="button"
-                    @click="refreshTemplates"
-                    :disabled="isLoading"
-                    class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
-                >
-                    {{
-                        isLoading
-                            ? t('settings.ruleTemplatesRefreshing')
-                            : t('settings.ruleTemplatesRefresh')
-                    }}
-                </button>
-                <button
-                    type="button"
-                    @click="createTemplate"
-                    class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-zinc-900 hover:text-zinc-100"
-                >
-                    {{ t('settings.ruleTemplatesNew') }}
-                </button>
-                <button
-                    type="button"
-                    @click="saveTemplates"
-                    :disabled="isSaving"
-                    class="rounded-md bg-zinc-100 px-3 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white disabled:opacity-50"
-                >
-                    {{
-                        isSaving
-                            ? t('settings.ruleTemplatesSaving')
-                            : t('settings.ruleTemplatesSave')
-                    }}
-                </button>
-            </template>
-        </SectionHeader>
-
-        <div v-if="!hasTemplates" class="text-xs text-zinc-500">
-            <p class="font-medium text-zinc-300">
+            <p class="text-xs font-medium text-zinc-300">
                 {{ t('settings.ruleTemplatesEmpty') }}
             </p>
-            <p class="mt-1 text-zinc-500">
+            <p class="mt-1 text-xs text-zinc-500">
                 {{ t('settings.ruleTemplatesEmptyHint') }}
             </p>
+            <button
+                type="button"
+                data-testid="empty-create-rule-template"
+                @click="createTemplate"
+                class="mt-4 inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
+            >
+                <Plus class="h-3.5 w-3.5" />
+                <span>{{ t('settings.ruleTemplatesNew') }}</span>
+            </button>
         </div>
 
         <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
@@ -287,5 +280,5 @@ overwrite_original_rules=true`;
         </div>
 
         <TemplateVariablesModal v-model:show="showTemplateVariables" />
-    </section>
+    </div>
 </template>

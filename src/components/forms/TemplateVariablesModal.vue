@@ -9,6 +9,10 @@
             type: Boolean,
             default: false,
         },
+        zIndex: {
+            type: [String, Number],
+            default: 'var(--z-modal-popover)',
+        },
     });
 
     const emit = defineEmits(['update:show']);
@@ -106,7 +110,7 @@
 </script>
 
 <template>
-    <Modal :show="show" @update:show="emit('update:show', $event)" size="2xl">
+    <Modal :show="show" @update:show="emit('update:show', $event)" size="2xl" :z-index="zIndex">
         <template #title>
             <div class="flex items-center gap-2.5">
                 <div

@@ -1,7 +1,8 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { ChevronDown } from '@lucide/vue';
+    import { ChevronDown, SlidersHorizontal } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
+    import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
     import TagInput from '@/components/ui/TagInput.vue';
@@ -79,6 +80,14 @@
     ];
 
     const selectedTransformAsset = ref(null);
+    const showRuleTemplateModal = ref(false);
+
+    function handleRuleTemplatesSaved(savedTemplateId) {
+        if (props.localProfile.transformConfigMode !== 'custom_template' || !savedTemplateId) return;
+        if (!String(props.localProfile.transformConfig || '').trim()) {
+            props.localProfile.transformConfig = `custom:${savedTemplateId}`;
+        }
+    }
     const emit = defineEmits(['toggle-advanced']);
 
     const isExternalEngine = computed(() => {
@@ -331,9 +340,20 @@
                         "
                         class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
                     >
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
-                            t('profileModal.templateLabel')
-                        }}</label>
+                        <div class="mb-1.5 flex items-center justify-between gap-2">
+                            <label class="block text-xs font-medium text-zinc-400">{{
+                                t('profileModal.templateLabel')
+                            }}</label>
+                            <button
+                                v-if="localProfile.transformConfigMode === 'custom_template'"
+                                type="button"
+                                @click="showRuleTemplateModal = true"
+                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                            >
+                                <SlidersHorizontal class="h-3 w-3" />
+                                <span>{{ t('settings.ruleTemplatesManage') }}</span>
+                            </button>
+                        </div>
                         <TransformSelector
                             v-model="localProfile.transformConfig"
                             @select-asset="selectedTransformAsset = $event"
@@ -354,6 +374,11 @@
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
                             <span>{{ t('profileModal.customTemplateHint') }}</span>
                         </div>
+                        <RuleTemplateModal
+                            v-if="showRuleTemplateModal"
+                            v-model:show="showRuleTemplateModal"
+                            @saved="handleRuleTemplatesSaved"
+                        />
                     </div>
                 </div>
             </div>

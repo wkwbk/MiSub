@@ -4,7 +4,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
 import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
 import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
-import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
+import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
 import TelegramCard from '@/components/settings/sections/ServiceSettings/TelegramCard.vue';
 import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
 import { createI18n } from '@/i18n/index.js';
@@ -148,7 +148,8 @@ describe('settings page English translations', () => {
             },
         });
 
-        expect(transform.text()).toContain('Default conversion engine');
+        expect(transform.text()).toContain('Rules and config scheme');
+        expect(transform.text()).toContain('Built-in renderer');
         expect(transform.text()).toContain('External backend parameters');
         expect(transform.text()).toContain('Test backend availability');
         expectNoChineseOrKeys(transform.text());
@@ -175,9 +176,11 @@ describe('settings page English translations', () => {
         expect(telegram.text()).toContain('setWebhook link');
         expectNoChineseOrKeys(telegram.text());
 
-        const rules = mount(RuleTemplateManager, {
+        const rules = mount(RuleTemplateModal, {
+            props: { show: true },
             global: {
                 plugins: [createI18n({ initialLocale: 'en-US' }), pinia],
+                stubs: { Modal: ModalStub },
             },
         });
         await flushPromises();

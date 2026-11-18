@@ -231,17 +231,19 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                        class="block h-9 w-full rounded-md border border-zinc-800 bg-[#131515] px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>
                 <button
+                    v-if="!forceCustom"
+                    type="button"
                     @click="switchToSelect"
-                    class="flex-shrink-0 rounded-md border border-zinc-800 bg-transparent p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                     :title="t('operators.backToList')"
                     :aria-label="t('operators.backToList')"
                 >
-                    <List class="h-5 w-5" />
+                    <List class="h-4 w-4" />
                 </button>
             </div>
             <p

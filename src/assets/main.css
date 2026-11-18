@@ -131,7 +131,6 @@
     body {
         background: var(--bg-page-light);
         color: var(--text-primary-light);
-        background-attachment: fixed;
         transition:
             background-color 0.2s ease,
             color 0.2s ease;

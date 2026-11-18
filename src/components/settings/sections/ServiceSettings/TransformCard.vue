@@ -1,11 +1,13 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { Cpu, FileText, Info, Link2, RotateCcw, Server, X } from '@lucide/vue';
+    import { Cpu, FileText, Info, RotateCcw, Server, SlidersHorizontal, X } from '@lucide/vue';
+    import { getActivePinia, storeToRefs } from 'pinia';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
-    import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
+    import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
+    import { useDataStore } from '@/stores/useDataStore.js';
     import {
         DEFAULT_SUBCONVERTER_BACKEND,
         SUBCONVERTER_BACKENDS,
@@ -30,6 +32,24 @@
     ]);
 
     const selectedAsset = ref(null);
+    const showRuleTemplateModal = ref(false);
+    const activePinia = getActivePinia();
+    const ruleTemplates = activePinia ? storeToRefs(useDataStore()).ruleTemplates : ref([]);
+    const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
+    const isCustomTemplateMode = computed(
+        () => props.settings.transformConfigMode === 'custom_template'
+    );
+
+    function handleRuleTemplatesSaved(savedTemplateId) {
+        if (!isCustomTemplateMode.value || !savedTemplateId) return;
+        const current = String(props.settings.transformConfig || '').trim();
+        const stillExists = (ruleTemplates.value || []).some(
+            (item) => item && item.enabled !== false && `custom:${item.id}` === current
+        );
+        if (!current || !stillExists) {
+            props.settings.transformConfig = `custom:${savedTemplateId}`;
+        }
+    }
 
     const flagOptions = computed(() => [
         { key: 'udp', label: t('settings.transformUdp') },
@@ -186,19 +206,20 @@
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-4">
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
-                :title="t('settings.transformEngineTitle')"
-                :description="t('settings.transformEngineDesc')"
-                :no-margin="true"
+                :title="t('settings.transformRulesTitle')"
+                :description="t('settings.transformRulesDesc')"
+                tone="purple"
             >
                 <template #icon>
-                    <Link2 class="h-4 w-4" />
+                    <FileText class="h-4 w-4" />
                 </template>
                 <template #actions>
                     <div class="flex rounded-md border border-zinc-800 bg-[#131515] p-0.5 shrink-0">
                         <button
+                            type="button"
                             @click="switchToBuiltinEngine"
                             :class="
                                 isBuiltinEngine
@@ -210,6 +231,7 @@
                             {{ t('settings.transformBuiltinEngine') }}
                         </button>
                         <button
+                            type="button"
                             @click="settings.subconverter.engineMode = 'external'"
                             :class="
                                 isExternalEngine
@@ -227,7 +249,7 @@
             <div
                 v-if="showEngineChangeWarning"
                 data-testid="engine-change-notice"
-                class="mt-4 flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#131515] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+                class="mb-6 flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#131515] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
             >
                 <div class="flex min-w-0 items-center gap-2.5 text-zinc-300">
                     <Info class="h-3.5 w-3.5 shrink-0 text-amber-400" />
@@ -263,26 +285,16 @@
                     </button>
                 </div>
             </div>
-        </section>
-
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
-            <SectionHeader
-                :title="t('settings.transformRulesTitle')"
-                :description="t('settings.transformRulesDesc')"
-                tone="purple"
-            >
-                <template #icon>
-                    <FileText class="h-4 w-4" />
-                </template>
-            </SectionHeader>
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                    <label
-                        class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-                    >
-                        {{ t('settings.transformRuleSource') }}
-                    </label>
+                    <div class="mb-1.5 flex min-h-6 items-center">
+                        <label
+                            class="block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                        >
+                            {{ t('settings.transformRuleSource') }}
+                        </label>
+                    </div>
                     <Select
                         v-model="settings.transformConfigMode"
                         :options="
@@ -301,32 +313,54 @@
                     </p>
                 </div>
 
-                <div
-                    :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
-                    class="transition-all"
-                >
-                    <label
-                        class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                <div>
+                    <div class="mb-1.5 flex min-h-6 items-center justify-between gap-2">
+                        <label
+                            class="block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                            :class="{ 'opacity-50': isBuiltinMode }"
+                        >
+                            {{ t('settings.transformTemplateConfig') }}
+                        </label>
+                        <button
+                            v-if="!isExternalEngine"
+                            type="button"
+                            data-testid="open-rule-templates-modal"
+                            @click="showRuleTemplateModal = true"
+                            class="inline-flex h-6 items-center gap-1 rounded px-1.5 text-xs font-medium transition-colors"
+                            :class="
+                                isCustomTemplateMode
+                                    ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
+                                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
+                            "
+                        >
+                            <SlidersHorizontal class="h-3 w-3" />
+                            <span>{{
+                                isCustomTemplateMode
+                                    ? t('settings.ruleTemplatesManage')
+                                    : ruleTemplateCount > 0
+                                      ? t('settings.ruleTemplatesManageWithCount', {
+                                            count: ruleTemplateCount,
+                                        })
+                                      : t('settings.ruleTemplatesManage')
+                            }}</span>
+                        </button>
+                    </div>
+                    <div
+                        :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
+                        class="transition-all"
                     >
-                        {{ t('settings.transformTemplateConfig') }}
-                    </label>
-                    <TransformSelector
-                        v-model="settings.transformConfig"
-                        @select-asset="selectedAsset = $event"
-                        type="config"
-                        :force-custom="settings.transformConfigMode === 'custom'"
-                        :custom-templates-only="settings.transformConfigMode === 'custom_template'"
-                        :placeholder="t('settings.transformPresetPlaceholder')"
-                        :custom-placeholder="t('settings.transformRemotePlaceholder')"
-                        :allowEmpty="settings.transformConfigMode === 'builtin'"
-                        :exclude-builtin-assets="isExternalEngine"
-                    />
-                    <p
-                        v-if="settings.transformConfigMode === 'custom_template'"
-                        class="mt-2 text-xs leading-relaxed text-zinc-500"
-                    >
-                        {{ t('settings.transformCustomTemplateSelectHint') }}
-                    </p>
+                        <TransformSelector
+                            v-model="settings.transformConfig"
+                            @select-asset="selectedAsset = $event"
+                            type="config"
+                            :force-custom="settings.transformConfigMode === 'custom'"
+                            :custom-templates-only="isCustomTemplateMode"
+                            :placeholder="t('settings.transformPresetPlaceholder')"
+                            :custom-placeholder="t('settings.transformRemotePlaceholder')"
+                            :allowEmpty="settings.transformConfigMode === 'builtin'"
+                            :exclude-builtin-assets="isExternalEngine"
+                        />
+                    </div>
                 </div>
             </div>
         </section>
@@ -503,6 +537,10 @@
             </div>
         </section>
 
-        <RuleTemplateManager />
+        <RuleTemplateModal
+            v-if="showRuleTemplateModal"
+            v-model:show="showRuleTemplateModal"
+            @saved="handleRuleTemplatesSaved"
+        />
     </div>
 </template>

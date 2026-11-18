@@ -19,7 +19,7 @@
 </script>
 
 <template>
-    <div v-if="settings" class="space-y-6">
+    <div v-if="settings" class="space-y-4">
         <!-- {{ t('settings.homeHeroTitle') }} -->
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader

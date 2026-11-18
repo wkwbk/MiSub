@@ -139,7 +139,7 @@
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-4">
         <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
             <SectionHeader
                 :title="t('settings.telegramNotifyBotTitle')"
