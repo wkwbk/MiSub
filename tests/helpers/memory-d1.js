@@ -1,5 +1,7 @@
 /**
- * 内存版 D1 数据库测试桩，兼容七表结构（subscriptions / nodes / profiles / guestbook / settings / cache / logs）与认证 SQL。
+ * 内存版 D1 数据库测试桩，兼容八表结构
+ * （subscriptions / nodes / profiles / guestbook / settings / cache / access_logs / error_reports）
+ * 及历史 logs 表自动迁移销毁与认证 SQL。
  */
 export function createMemoryD1(initial = {}) {
     const tables = {
@@ -9,8 +11,13 @@ export function createMemoryD1(initial = {}) {
         guestbook: new Map(),
         settings: new Map(),
         cache: new Map(),
+        access_logs: new Map(),
+        error_reports: new Map(),
         logs: new Map(),
     };
+    const profileCustomIds = new Map();
+    const cacheExpiresAt = new Map();
+    let legacyLogsDropped = false;
 
     const isManualNode = (item) => {
         const url = typeof item?.url === 'string' ? item.url.trim() : '';
@@ -27,10 +34,11 @@ export function createMemoryD1(initial = {}) {
         k.startsWith('tg_push_rate:') ||
         k.startsWith('misub_test_');
 
-    const isLogKey = (k) =>
+    const isLegacyLogKey = (k) =>
         k === 'misub_error_reports' ||
         k === 'misub_system_logs' ||
         k === 'misub_system_logs_index' ||
+        k === 'misub_system_logs:index' ||
         k.startsWith('misub_system_logs:');
 
     const parseIfJson = (val) => {
@@ -73,7 +81,12 @@ export function createMemoryD1(initial = {}) {
                 arr.forEach((item, idx) => {
                     if (item) {
                         const id = item.id || `profile-${idx + 1}`;
+                        const customId =
+                            typeof item.customId === 'string' && item.customId.trim()
+                                ? item.customId.trim()
+                                : null;
                         tables.profiles.set(id, JSON.stringify({ ...item, id }));
+                        profileCustomIds.set(id, customId);
                     }
                 });
             }
@@ -91,12 +104,23 @@ export function createMemoryD1(initial = {}) {
             tables.settings.set('main', serialize(rawVal));
         } else if (isCacheKey(key)) {
             tables.cache.set(key, serialize(rawVal));
-        } else if (isLogKey(key)) {
+            cacheExpiresAt.set(key, null);
+        } else if (isLegacyLogKey(key)) {
             tables.logs.set(key, serialize(rawVal));
         } else {
             tables.settings.set(key, serialize(rawVal));
         }
     }
+
+    const findProfileIdByIdOrCustomId = (target) => {
+        if (tables.profiles.has(target)) return target;
+        for (const [id, cid] of profileCustomIds.entries()) {
+            if (cid && cid === target && tables.profiles.has(id)) {
+                return id;
+            }
+        }
+        return null;
+    };
 
     const executeStatement = (sql, args = []) => {
         const normalized = sql.replace(/\s+/g, ' ').trim();
@@ -106,6 +130,23 @@ export function createMemoryD1(initial = {}) {
                 if (/SELECT 1 AS ok FROM (\w+) LIMIT 1/i.test(normalized)) {
                     const table = normalized.match(/FROM (\w+)/i)[1];
                     return tables[table] && tables[table].size > 0 ? { ok: 1 } : null;
+                }
+                if (
+                    /UPDATE profiles SET data = json_set\(/i.test(normalized) &&
+                    /RETURNING/i.test(normalized)
+                ) {
+                    const matchedId = findProfileIdByIdOrCustomId(args[0]);
+                    if (!matchedId) return null;
+                    const parsed = JSON.parse(tables.profiles.get(matchedId));
+                    const nextCount = (Number(parsed.downloadCount) || 0) + 1;
+                    parsed.downloadCount = nextCount;
+                    tables.profiles.set(matchedId, JSON.stringify(parsed));
+                    return { downloadCount: nextCount };
+                }
+                if (/FROM profiles WHERE id = \? OR custom_id = \?/i.test(normalized)) {
+                    const matchedId = findProfileIdByIdOrCustomId(args[0]);
+                    if (!matchedId) return null;
+                    return { data: tables.profiles.get(matchedId) };
                 }
                 const idMatch = normalized.match(
                     /FROM (subscriptions|nodes|profiles|guestbook) WHERE id = \?/i
@@ -117,13 +158,57 @@ export function createMemoryD1(initial = {}) {
                 }
                 const kvMatch = normalized.match(/FROM (settings|cache|logs) WHERE key = \?/i);
                 if (kvMatch) {
-                    const tbl = tables[kvMatch[1].toLowerCase()];
+                    const tblName = kvMatch[1].toLowerCase();
+                    if (tblName === 'logs' && legacyLogsDropped) {
+                        throw new Error('D1_ERROR: no such table: logs');
+                    }
+                    const tbl = tables[tblName];
                     const data = tbl.get(args[0]);
                     return data === undefined ? null : { data, value: data };
                 }
                 return null;
             },
             async all() {
+                if (/FROM logs\b/i.test(normalized) && legacyLogsDropped) {
+                    throw new Error('D1_ERROR: no such table: logs');
+                }
+                if (/SELECT id,\s*data FROM profiles WHERE custom_id IS NULL/i.test(normalized)) {
+                    const rows = [];
+                    for (const [id, data] of tables.profiles.entries()) {
+                        if (!profileCustomIds.get(id)) {
+                            rows.push({ id, data });
+                        }
+                    }
+                    return { results: rows };
+                }
+                if (/SELECT data FROM access_logs/i.test(normalized)) {
+                    const minTs = Number(args[0]) || 0;
+                    const limit = Number(args[1]) || 200;
+                    const rows = Array.from(tables.access_logs.values())
+                        .filter((entry) => entry.timestamp >= minTs)
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, limit)
+                        .map((entry) => ({ data: entry.data }));
+                    return { results: rows };
+                }
+                if (/SELECT data FROM error_reports/i.test(normalized)) {
+                    const limit = Number(args[0]) || 100;
+                    const rows = Array.from(tables.error_reports.values())
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .slice(0, limit)
+                        .map((entry) => ({ data: entry.data }));
+                    return { results: rows };
+                }
+                if (/SELECT key FROM cache WHERE expires_at IS NULL/i.test(normalized)) {
+                    const rows = [];
+                    for (const key of tables.cache.keys()) {
+                        const exp = cacheExpiresAt.get(key);
+                        if (exp === null || exp === undefined) {
+                            rows.push({ key });
+                        }
+                    }
+                    return { results: rows };
+                }
                 const idInMatch = normalized.match(
                     /SELECT data FROM (subscriptions|nodes|profiles|guestbook) WHERE id IN/i
                 );
@@ -193,8 +278,98 @@ export function createMemoryD1(initial = {}) {
                 return { results: [] };
             },
             async run() {
-                if (/^\s*CREATE /i.test(normalized)) {
-                    return { success: true };
+                if (/^\s*(CREATE|ALTER)\s+/i.test(normalized)) {
+                    return { success: true, meta: { changes: 0 } };
+                }
+                if (/DROP TABLE IF EXISTS logs/i.test(normalized)) {
+                    tables.logs.clear();
+                    legacyLogsDropped = true;
+                    return { success: true, meta: { changes: 0 } };
+                }
+                if (/UPDATE profiles SET custom_id =/i.test(normalized)) {
+                    for (const [id, data] of tables.profiles.entries()) {
+                        if (!profileCustomIds.get(id)) {
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (typeof parsed?.customId === 'string' && parsed.customId.trim()) {
+                                    profileCustomIds.set(id, parsed.customId.trim());
+                                }
+                            } catch {}
+                        }
+                    }
+                    return { success: true, meta: { changes: 0 } };
+                }
+                if (/INSERT OR REPLACE INTO profiles \(id, custom_id, data/i.test(normalized)) {
+                    tables.profiles.set(args[0], args[2]);
+                    profileCustomIds.set(args[0], args[1] || null);
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (/INSERT OR REPLACE INTO cache \(key, value, expires_at/i.test(normalized)) {
+                    tables.cache.set(args[0], args[1]);
+                    cacheExpiresAt.set(args[0], args[2] ?? null);
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (/UPDATE cache SET expires_at = \? WHERE key = \?/i.test(normalized)) {
+                    if (tables.cache.has(args[1])) {
+                        cacheExpiresAt.set(args[1], args[0]);
+                    }
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (
+                    /DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= \?/i.test(
+                        normalized
+                    )
+                ) {
+                    const now = Number(args[0]) || 0;
+                    let changes = 0;
+                    for (const [key, exp] of Array.from(cacheExpiresAt.entries())) {
+                        if (exp !== null && exp !== undefined && exp <= now) {
+                            tables.cache.delete(key);
+                            cacheExpiresAt.delete(key);
+                            changes += 1;
+                        }
+                    }
+                    return { success: true, meta: { changes } };
+                }
+                const logInsert = normalized.match(
+                    /INSERT OR REPLACE INTO (access_logs|error_reports)/i
+                );
+                if (logInsert) {
+                    const tbl = tables[logInsert[1].toLowerCase()];
+                    tbl.set(args[0], { timestamp: Number(args[1]) || 0, data: args[2] });
+                    return { success: true, meta: { changes: 1 } };
+                }
+                if (/DELETE FROM access_logs WHERE timestamp < \?/i.test(normalized)) {
+                    const cutoff = Number(args[0]) || 0;
+                    let changes = 0;
+                    for (const [id, entry] of Array.from(tables.access_logs.entries())) {
+                        if (entry.timestamp < cutoff) {
+                            tables.access_logs.delete(id);
+                            changes += 1;
+                        }
+                    }
+                    return { success: true, meta: { changes } };
+                }
+                const logTrimMatch = normalized.match(
+                    /DELETE FROM (access_logs|error_reports) WHERE id NOT IN/i
+                );
+                if (logTrimMatch) {
+                    const tbl = tables[logTrimMatch[1].toLowerCase()];
+                    const limit = Number(args[0]) || 200;
+                    const keepIds = new Set(
+                        Array.from(tbl.entries())
+                            .sort((a, b) => b[1].timestamp - a[1].timestamp)
+                            .slice(0, limit)
+                            .map(([id]) => id)
+                    );
+                    let changes = 0;
+                    for (const id of Array.from(tbl.keys())) {
+                        if (!keepIds.has(id)) {
+                            tbl.delete(id);
+                            changes += 1;
+                        }
+                    }
+                    return { success: true, meta: { changes } };
                 }
                 const idInsertIgnore = normalized.match(
                     /INSERT OR IGNORE INTO (subscriptions|nodes|profiles|guestbook)/i
@@ -202,14 +377,14 @@ export function createMemoryD1(initial = {}) {
                 if (idInsertIgnore) {
                     const tbl = tables[idInsertIgnore[1].toLowerCase()];
                     if (!tbl.has(args[0])) tbl.set(args[0], args[1]);
-                    return { success: true };
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const idInsert = normalized.match(
                     /INSERT OR REPLACE INTO (subscriptions|nodes|profiles|guestbook)/i
                 );
                 if (idInsert) {
                     tables[idInsert[1].toLowerCase()].set(args[0], args[1]);
-                    return { success: true };
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const kvInsertIgnore = normalized.match(
                     /INSERT OR IGNORE INTO (settings|cache|logs)/i
@@ -217,43 +392,59 @@ export function createMemoryD1(initial = {}) {
                 if (kvInsertIgnore) {
                     const tbl = tables[kvInsertIgnore[1].toLowerCase()];
                     if (!tbl.has(args[0])) tbl.set(args[0], args[1]);
-                    return { success: true };
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const kvInsert = normalized.match(
                     /INSERT OR REPLACE INTO (settings|cache|logs)/i
                 );
                 if (kvInsert) {
                     tables[kvInsert[1].toLowerCase()].set(args[0], args[1]);
-                    return { success: true };
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const kvDelete = normalized.match(
                     /DELETE FROM (settings|cache|logs) WHERE key = \?/i
                 );
                 if (kvDelete) {
-                    tables[kvDelete[1].toLowerCase()].delete(args[0]);
-                    return { success: true };
+                    const tblName = kvDelete[1].toLowerCase();
+                    tables[tblName].delete(args[0]);
+                    if (tblName === 'cache') cacheExpiresAt.delete(args[0]);
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const idDelete = normalized.match(
                     /DELETE FROM (subscriptions|nodes|profiles|guestbook) WHERE id = \?/i
                 );
                 if (idDelete) {
-                    tables[idDelete[1].toLowerCase()].delete(args[0]);
-                    return { success: true };
+                    const tblName = idDelete[1].toLowerCase();
+                    tables[tblName].delete(args[0]);
+                    if (tblName === 'profiles') profileCustomIds.delete(args[0]);
+                    return { success: true, meta: { changes: 1 } };
                 }
                 const clearMatch = normalized.match(
-                    /^DELETE FROM (subscriptions|nodes|profiles|guestbook|settings|cache|logs)$/i
+                    /^DELETE FROM (subscriptions|nodes|profiles|guestbook|settings|cache|access_logs|error_reports|logs)$/i
                 );
                 if (clearMatch) {
-                    tables[clearMatch[1].toLowerCase()].clear();
-                    return { success: true };
+                    const tblName = clearMatch[1].toLowerCase();
+                    tables[tblName].clear();
+                    if (tblName === 'profiles') profileCustomIds.clear();
+                    if (tblName === 'cache') cacheExpiresAt.clear();
+                    return { success: true, meta: { changes: 1 } };
                 }
-                return { success: true };
+                return { success: true, meta: { changes: 0 } };
             },
         };
     };
 
     return {
         tables,
+        profileCustomIds,
+        cacheExpiresAt,
+        async batch(statements = []) {
+            const results = [];
+            for (const stmt of statements) {
+                results.push(await stmt.run());
+            }
+            return results;
+        },
         prepare(sql) {
             const unbound = executeStatement(sql, []);
             return {
@@ -281,9 +472,6 @@ export function createMemoryD1(initial = {}) {
                 }
             }
             for (const [k, v] of tables.cache.entries()) {
-                out[k] = v;
-            }
-            for (const [k, v] of tables.logs.entries()) {
                 out[k] = v;
             }
             return out;

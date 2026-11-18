@@ -48,19 +48,26 @@ function sanitizeLogEntry(logEntry = {}) {
 async function resolvePrimaryLogStorage(env) {
     const storageType = await StorageFactory.getStorageType(env);
     const storage = StorageFactory.createAdapter(env);
-    if (
-        !storage ||
-        storage.type === 'noop' ||
-        typeof storage.get !== 'function' ||
-        typeof storage.put !== 'function' ||
-        typeof storage.delete !== 'function'
-    ) {
+    if (!storage || storage.type === 'noop') {
+        return null;
+    }
+    const hasRowLogMethods =
+        typeof storage.insertAccessLogs === 'function' &&
+        typeof storage.getAccessLogs === 'function' &&
+        typeof storage.clearAccessLogs === 'function';
+    const hasGenericMethods =
+        typeof storage.get === 'function' &&
+        typeof storage.put === 'function' &&
+        typeof storage.delete === 'function';
+
+    if (!hasRowLogMethods && !hasGenericMethods) {
         return null;
     }
 
     return {
         storageType: storage.type || storageType,
         storage,
+        hasRowLogMethods,
     };
 }
 
@@ -205,7 +212,15 @@ export const LogService = {
                 return;
             }
 
-            const { storage } = primaryStorage;
+            const { storage, hasRowLogMethods } = primaryStorage;
+            if (hasRowLogMethods) {
+                await storage.insertAccessLogs(batchToFlush, {
+                    maxAgeMs: MAX_LOG_AGE_MS,
+                    maxEntries: MAX_LOG_ENTRIES,
+                });
+                return;
+            }
+
             const now = Date.now();
             const bucketKey = getLogBucketKey(now);
             let logs = await storage.get(bucketKey);
@@ -264,6 +279,13 @@ export const LogService = {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return [];
 
+            if (primaryStorage.hasRowLogMethods) {
+                return await primaryStorage.storage.getAccessLogs({
+                    limit: MAX_LOG_ENTRIES,
+                    minTimestamp: Date.now() - MAX_LOG_AGE_MS,
+                });
+            }
+
             const logs = await readLogsFromStorage(primaryStorage.storage);
 
             return logs
@@ -283,6 +305,10 @@ export const LogService = {
         try {
             const primaryStorage = await resolvePrimaryLogStorage(env);
             if (!primaryStorage) return false;
+
+            if (primaryStorage.hasRowLogMethods) {
+                return await primaryStorage.storage.clearAccessLogs();
+            }
 
             const storage = primaryStorage.storage;
             const bucketIndex = await getLogBucketIndex(storage);

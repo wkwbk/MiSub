@@ -139,16 +139,24 @@ export async function handleProfileMode(
         return createJsonResponse({ error: '订阅组不存在或已禁用' }, 404);
     }
 
-    const relatedIds = [
-        ...(Array.isArray(profile.subscriptions)
-            ? profile.subscriptions.map((item) => (typeof item === 'object' ? item.id : item))
-            : []),
-        ...(Array.isArray(profile.manualNodes) ? profile.manualNodes : []),
-    ].filter(Boolean);
-    const relatedSubs =
-        typeof storageAdapter.getSubscriptionsByIds === 'function'
-            ? await storageAdapter.getSubscriptionsByIds(Array.from(new Set(relatedIds)))
-            : (await storageAdapter.get(KV_KEY_SUBS)) || [];
+    const subSourceIds = Array.isArray(profile.subscriptions)
+        ? profile.subscriptions
+              .map((item) => (typeof item === 'object' ? item.id : item))
+              .filter(Boolean)
+        : [];
+    const manualNodeIds = Array.isArray(profile.manualNodes)
+        ? profile.manualNodes.filter(Boolean)
+        : [];
+    let relatedSubs = [];
+    if (typeof storageAdapter.getProfileSources === 'function') {
+        relatedSubs = await storageAdapter.getProfileSources(subSourceIds, manualNodeIds);
+    } else if (typeof storageAdapter.getSubscriptionsByIds === 'function') {
+        relatedSubs = await storageAdapter.getSubscriptionsByIds(
+            Array.from(new Set([...subSourceIds, ...manualNodeIds]))
+        );
+    } else {
+        relatedSubs = (await storageAdapter.get(KV_KEY_SUBS)) || [];
+    }
     const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
     const targetMisubs = [];

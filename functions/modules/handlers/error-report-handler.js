@@ -115,6 +115,11 @@ export async function handleErrorReportRequest(request, env) {
             ),
         };
 
+        if (typeof storageAdapter.insertErrorReport === 'function') {
+            await storageAdapter.insertErrorReport(report, MAX_REPORT_ENTRIES);
+            return createJsonResponse({ success: true });
+        }
+
         let reports = await storageAdapter.get(ERROR_REPORT_KV_KEY);
         if (!Array.isArray(reports)) reports = [];
 

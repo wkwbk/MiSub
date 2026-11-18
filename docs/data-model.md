@@ -33,12 +33,12 @@ MiSub 的核心持久化数据分为四类：
 - 订阅组输出链路：`functions/modules/subscription/profile-handler.js`
 - 自定义规则模板：`functions/modules/rule-template-handler.js`
 
-## 2. D1 七表存储结构
+## 2. D1 八表存储结构与索引设计
 
-MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版迁移逻辑），按数据生命周期与职责划分为 7 张表（完整建表语句见根目录 `schema.sql`，运行期遇新库会自动建表）：
+MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版迁移逻辑），按数据生命周期与读写特征划分为 8 张职责清晰的表（完整建表语句见根目录 `schema.sql`，运行期遇新库或旧列缺失会自动建表与补列）：
 
 - **`subscriptions`**（远程机场订阅）
-    - `id TEXT PRIMARY KEY`（标准 UUID）
+    - `id TEXT PRIMARY KEY`（标准 UUID，无前缀）
     - `data TEXT NOT NULL`：单个 `http(s)` 远程订阅源 JSON
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`nodes`**（手动节点）
@@ -47,6 +47,7 @@ MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版�
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`profiles`**（订阅组）
     - `id TEXT PRIMARY KEY`（标准 UUID）
+    - `custom_id TEXT`（自定义短链索引列，`idx_profiles_custom_id`，支持短链单行精准查询与 `json_set` 原子自增 `downloadCount`）
     - `data TEXT NOT NULL`：单个订阅组 JSON（含内置 `downloadCount` 下载计数）
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`guestbook`**（访客留言）
@@ -59,12 +60,19 @@ MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版�
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`cache`**（临时缓存与运行态）
     - `key TEXT PRIMARY KEY`
-    - `value TEXT NOT NULL`：存放 `node_cache_*`、`github_release_*`、`tmp_external_nodes:*`、`tg_push_rate:*`、`misub_webdav_backup_lock`、`cron_last_execution`、`misub_restore_snapshot_latest`（由后台维护任务自动清理过期项，删除订阅/订阅组时自动联动清理）
+    - `value TEXT NOT NULL`：存放 `node_cache_*`、`github_release_*`、`tmp_external_nodes:*`、`tg_push_rate:*`、`misub_webdav_backup_lock`、`cron_last_execution`、`misub_restore_snapshot_latest`
+    - `expires_at INTEGER`（毫秒级过期时间戳索引列 `idx_cache_expires_at`，支持零大字段读取批量清理过期项；删除订阅/订阅组时自动联动清理对应节点缓存）
     - `created_at DATETIME` / `updated_at DATETIME`
-- **`logs`**（日志与错误上报）
-    - `key TEXT PRIMARY KEY`
-    - `value TEXT NOT NULL`：存放 `misub_system_logs*` 访问日志分桶与 `misub_error_reports` 前端错误上报
-    - `created_at DATETIME` / `updated_at DATETIME`
+- **`access_logs`**（订阅访问日志行级追加表）
+    - `id TEXT PRIMARY KEY`
+    - `timestamp INTEGER NOT NULL`（降序索引 `idx_access_logs_timestamp`）
+    - `data TEXT NOT NULL`：单条脱敏后的访问日志 JSON（纯 `INSERT` 批量写入、`ORDER BY timestamp DESC LIMIT` 单次索引查询）
+    - `created_at DATETIME`
+- **`error_reports`**（前端异常上报行级追加表）
+    - `id TEXT PRIMARY KEY`
+    - `timestamp INTEGER NOT NULL`（降序索引 `idx_error_reports_timestamp`）
+    - `data TEXT NOT NULL`：单条前端错误上报 JSON
+    - `created_at DATETIME`
 
 ## 3. 订阅源与手动节点模型
 

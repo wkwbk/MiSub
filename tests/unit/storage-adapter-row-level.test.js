@@ -1,9 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StorageFactory } from '../../functions/storage-adapter.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
+import { handleErrorReportRequest } from '../../functions/modules/handlers/error-report-handler.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
-describe('Storage adapter multi-table D1 APIs', () => {
-    it('routes remote subscriptions to subscriptions table and manual nodes to nodes table', async () => {
+describe('Storage adapter 8-table D1 architecture & query optimizations', () => {
+    it('routes remote subscriptions to subscriptions table, manual nodes to nodes table, and resolves getProfileSources directly', async () => {
         const db = createMemoryD1({
             misub_subscriptions_v1: [
                 { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com/sub', nodeCount: 1 },
@@ -22,12 +24,10 @@ describe('Storage adapter multi-table D1 APIs', () => {
         expect(await adapter.getManualNodes()).toHaveLength(1);
         expect(await adapter.getAllSubscriptions()).toHaveLength(2);
 
-        expect(await adapter.getSubscriptionById('sub-1')).toMatchObject({ id: 'sub-1' });
-        expect(await adapter.getSubscriptionById('node-1')).toMatchObject({ id: 'node-1' });
         expect(await adapter.getProfileById('custom-1')).toMatchObject({ id: 'profile-1' });
 
-        const related = await adapter.getSubscriptionsByIds(['node-1', 'sub-1']);
-        expect(related.map((item) => item.id).sort()).toEqual(['node-1', 'sub-1']);
+        const sources = await adapter.getProfileSources(['sub-1'], ['node-1']);
+        expect(sources.map((item) => item.id).sort()).toEqual(['node-1', 'sub-1']);
 
         await adapter.putSubscription({
             id: 'node-2',
@@ -41,7 +41,7 @@ describe('Storage adapter multi-table D1 APIs', () => {
         expect(await adapter.getSubscriptionById('node-1')).toBeNull();
     });
 
-    it('stores guestbook messages in dedicated guestbook table and increments profile downloadCount in profiles table', async () => {
+    it('stores guestbook in dedicated table and atomically increments profile downloadCount via custom_id', async () => {
         const db = createMemoryD1({
             misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP', downloadCount: 3 }],
         });
@@ -63,21 +63,42 @@ describe('Storage adapter multi-table D1 APIs', () => {
         expect(db.tables.settings.size).toBe(0);
     });
 
-    it('separates settings, cache, and logs into dedicated D1 tables', async () => {
+    it('stores access_logs and error_reports as dedicated row-level tables and populates cache.expires_at', async () => {
+        const now = Date.now();
         const db = createMemoryD1();
         const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
         await adapter.put('worker_settings_v1', { FileName: 'MiSub' });
-        await adapter.put('node_cache_profile_p1', { nodes: 'ss://a', timestamp: Date.now() });
-        await adapter.put('cron_last_execution', { timestamp: new Date().toISOString() });
-        await adapter.put('misub_restore_snapshot_latest', { version: 1 });
-        await adapter.put('misub_system_logs:2026-11-18', [{ id: 'log-1' }]);
+        await adapter.put('node_cache_profile_p1', { nodes: 'ss://a', timestamp: now });
+        await adapter.put('node_cache_subscription_s1', { nodes: ['ss://b'], sourceId: 's1' });
+        await adapter.put('cron_last_execution', { timestamp: new Date(now).toISOString() });
+
+        await adapter.insertAccessLogs([
+            { id: 'log-1', timestamp: now - 1000, status: 'success', domain: 'a.example.com' },
+            { id: 'log-2', timestamp: now, status: 'error', domain: 'b.example.com' },
+        ]);
+
+        const errResp = await handleErrorReportRequest(
+            new Request('https://example.com/api/error_report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: 'Boom', context: 'unit-test' }),
+            }),
+            { MISUB_DB: db }
+        );
+        expect(errResp.status).toBe(200);
 
         expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
-        expect(db.tables.cache.has('node_cache_profile_p1')).toBe(true);
-        expect(db.tables.cache.has('cron_last_execution')).toBe(true);
-        expect(db.tables.cache.has('misub_restore_snapshot_latest')).toBe(true);
-        expect(db.tables.logs.has('misub_system_logs:2026-11-18')).toBe(true);
+        expect(db.cacheExpiresAt.get('node_cache_profile_p1')).toBeGreaterThan(now);
+        expect(db.cacheExpiresAt.get('node_cache_subscription_s1')).toBeNull();
+        expect(db.tables.access_logs.size).toBe(2);
+        expect(db.tables.error_reports.size).toBe(1);
+
+        const logs = await adapter.getAccessLogs({ limit: 10 });
+        expect(logs.map((l) => l.id)).toEqual(['log-2', 'log-1']);
+
+        const reports = await adapter.getErrorReports(10);
+        expect(reports[0]).toMatchObject({ message: 'Boom', context: 'unit-test' });
     });
 
     it('cascades cleanup of node caches when deleting profiles or subscriptions', async () => {
@@ -100,14 +121,13 @@ describe('Storage adapter multi-table D1 APIs', () => {
         expect(db.tables.cache.has('node_cache_subscription_sub-1')).toBe(false);
     });
 
-    it('cleanupMaintenance migrates manual nodes, guestbook, download counts, and logs into their dedicated tables', async () => {
+    it('cleanupMaintenance migrates manual nodes, guestbook, download counts, and legacy logs into 8-table schema', async () => {
         const now = 1_800_000_000_000;
         const db = createMemoryD1({
             misub_profiles_v1: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
             worker_settings_v1: { FileName: 'MiSub' },
         });
 
-        // 模拟历史混放在 subscriptions 表中的手动节点
         db.tables.subscriptions.set(
             'legacy-node-1',
             JSON.stringify({
@@ -125,7 +145,6 @@ describe('Storage adapter multi-table D1 APIs', () => {
             })
         );
 
-        // 模拟历史混放在 settings 表中的留言、下载计数、日志、旧缓存
         db.tables.settings.set('misub_guestbook_v1_index', JSON.stringify(['g-1']));
         db.tables.settings.set(
             'misub_guestbook_v1:item:g-1',
@@ -134,19 +153,26 @@ describe('Storage adapter multi-table D1 APIs', () => {
         db.tables.settings.set('misub_profile_download_count_active-profile', '12');
         db.tables.settings.set('misub_profile_download_count_deleted-profile', '2');
         db.tables.settings.set('node_cache_profile_legacy', JSON.stringify({ nodes: 'old' }));
-        db.tables.settings.set('misub_system_logs:2026-11-15', JSON.stringify([{ id: 'l1' }]));
-
-        // 模拟 cache 表里的过期条目
-        db.tables.cache.set(
-            'tg_push_rate:u1:min',
-            JSON.stringify({ count: 1, expiresAt: now - 1000 })
+        db.tables.settings.set(
+            'misub_system_logs:2026-11-15',
+            JSON.stringify([{ id: 'l1', timestamp: now - 5000 }])
         );
+
+        // 模拟过渡期遗留的旧 logs 键值表
+        db.tables.logs.set(
+            'misub_error_reports',
+            JSON.stringify([{ id: 'err-1', message: 'Legacy crash', receivedAt: now - 3000 }])
+        );
+
+        // 模拟已带 expires_at 的过期缓存行 + 未回填 expires_at 的新鲜缓存行
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+        await adapter.put('tg_push_rate:u1:min', { count: 1, expiresAt: now - 1000 });
         db.tables.cache.set(
             'github_release_fresh/repo',
             JSON.stringify({ data: {}, timestamp: now - 1000 })
         );
+        db.cacheExpiresAt.set('github_release_fresh/repo', null);
 
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
         const stats = await adapter.cleanupMaintenance({ now });
 
         expect(stats).toEqual({
@@ -154,22 +180,76 @@ describe('Storage adapter multi-table D1 APIs', () => {
             migratedGuestbook: 1,
             mergedDownloadCounts: 1,
             migratedLogs: 1,
+            migratedErrorReports: 1,
             removedSettingsClutter: 2,
             removedOrphanCounts: 1,
             removedExpiredCache: 1,
         });
 
-        // subscriptions 仅剩远程订阅，手动节点已归入 nodes 表
         expect(Array.from(db.tables.subscriptions.keys())).toEqual(['remote-sub-1']);
         expect(Array.from(db.tables.nodes.keys())).toEqual(['legacy-node-1']);
-
-        // 留言已归入 guestbook 表，下载计数已合并进 profiles 表，日志已归入 logs 表
         expect(Array.from(db.tables.guestbook.keys())).toEqual(['g-1']);
         expect((await adapter.getProfileById('active-profile')).downloadCount).toBe(12);
-        expect(db.tables.logs.has('misub_system_logs:2026-11-15')).toBe(true);
+        expect(db.tables.access_logs.has('l1')).toBe(true);
+        expect(db.tables.error_reports.has('err-1')).toBe(true);
+        expect(db.tables.logs.size).toBe(0);
 
-        // settings 表彻底干净，只剩 main
         expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
         expect(Array.from(db.tables.cache.keys())).toEqual(['github_release_fresh/repo']);
+        expect(db.cacheExpiresAt.get('github_release_fresh/repo')).toBeGreaterThan(now);
+    });
+
+    it('avoids full-table scans on subscription group pull and invalid-token / disguise requests', async () => {
+        const db = createMemoryD1({
+            worker_settings_v1: {
+                mytoken: 'admin-token',
+                profileToken: 'profiles',
+                enableFlagEmoji: false,
+                enableTrafficNode: false,
+                disguise: { enabled: true, pageType: 'default' },
+            },
+            misub_subscriptions_v1: [
+                { id: 'node-target', name: 'TargetNode', url: 'ss://YWVzLTI1Ni1nY206cGFzcw@1.1.1.1:8388#Target', enabled: true },
+                { id: 'node-unused', name: 'UnusedNode', url: 'ss://YWVzLTI1Ni1nY206cGFzcw@2.2.2.2:8388#Unused', enabled: true },
+            ],
+            misub_profiles_v1: [
+                { id: 'prof-1', customId: 'my-vip', name: 'My VIP', enabled: true, subscriptions: [], manualNodes: ['node-target'] },
+                { id: 'prof-2', customId: 'other', name: 'Other', enabled: true, subscriptions: [], manualNodes: ['node-unused'] },
+            ],
+        });
+
+        const prepareSpy = vi.spyOn(db, 'prepare');
+        const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+        try {
+            // 1. 浏览器伪装页请求：仅读 settings，绝不扫描 profiles / subscriptions / nodes
+            const disguiseResp = await handleMisubRequest({
+                request: new Request('https://example.com/profiles/my-vip', {
+                    headers: { 'User-Agent': 'Mozilla/5.0 Chrome/120.0.0.0 Safari/537.36' },
+                }),
+                env: { MISUB_DB: db },
+                waitUntil: vi.fn(),
+            });
+            expect(disguiseResp.status).toBe(404);
+            const disguiseSqls = prepareSpy.mock.calls.map((c) => c[0]);
+            expect(disguiseSqls.some((sql) => /FROM (profiles|subscriptions|nodes)/i.test(sql))).toBe(false);
+
+            prepareSpy.mockClear();
+
+            // 2. 单订阅组拉取请求：通过 custom_id 精准单行读取 profile 与关联的 manualNodes，不触发全表 SELECT data FROM profiles/subscriptions/nodes
+            const subResp = await handleMisubRequest({
+                request: new Request('https://example.com/profiles/my-vip?target=nodes', {
+                    headers: { 'User-Agent': 'ClashMeta' },
+                }),
+                env: { MISUB_DB: db },
+                waitUntil: vi.fn(),
+            });
+            expect(subResp.status).toBe(200);
+            const subSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
+            expect(subSqls.some((sql) => /^SELECT data FROM (profiles|subscriptions|nodes)$/i.test(sql))).toBe(false);
+            expect(subSqls.some((sql) => /FROM profiles WHERE id = \? OR custom_id = \?/i.test(sql))).toBe(true);
+        } finally {
+            logSpy.mockRestore();
+        }
     });
 });
