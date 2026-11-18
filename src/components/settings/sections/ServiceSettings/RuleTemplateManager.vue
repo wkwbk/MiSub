@@ -1,10 +1,13 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
+    import { Braces } from '@lucide/vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
 
     const { t } = useI18n();
+    const showTemplateVariables = ref(false);
 
     const dataStore = useDataStore();
 
@@ -231,18 +234,28 @@ overwrite_original_rules=true`;
                     />
                 </label>
 
-                <label class="block">
-                    <span
-                        class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
-                        >{{ t('settings.ruleTemplateContent') }}</span
-                    >
+                <div>
+                    <div class="mb-1 flex items-center justify-between gap-2">
+                        <span
+                            class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                            >{{ t('settings.ruleTemplateContent') }}</span
+                        >
+                        <button
+                            type="button"
+                            @click="showTemplateVariables = true"
+                            class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                        >
+                            <Braces class="h-3.5 w-3.5" />
+                            <span>{{ t('transformSelector.templateVariablesTitle') }}</span>
+                        </button>
+                    </div>
                     <textarea
                         v-model="selectedTemplate.content"
                         rows="12"
                         spellcheck="false"
                         class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-xs leading-relaxed text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
                     ></textarea>
-                </label>
+                </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <label class="flex items-center gap-2 text-xs font-medium text-zinc-300">
@@ -272,5 +285,7 @@ overwrite_original_rules=true`;
                 </div>
             </div>
         </div>
+
+        <TemplateVariablesModal v-model:show="showTemplateVariables" />
     </section>
 </template>

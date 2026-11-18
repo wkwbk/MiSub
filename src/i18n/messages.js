@@ -1229,9 +1229,10 @@ export const messages = {
             transformExternalWarning:
                 '使用第三方订阅转换时，无法兼容 MiSub 内置规则、内置预设和本地 custom: 模板。请使用远程预设模板或自定义 URL。',
             transformEngineChangeNotice:
-                '切换到第三方后端会调整规则来源并关闭内置选项。原设置仍保存在本次页面状态中；切回内置引擎可恢复。',
+                '已切换至第三方后端，不兼容的内置选项已自动调整（切回内置渲染可恢复）。',
             transformRestoreEngineSettings: '恢复内置设置',
             transformBuiltinParams: '内置引擎参数',
+            transformBuiltinParamsDesc: '控制内置渲染核心的分流粒度与节点默认网络参数。',
             transformRuleLevel: '分流详细等级 (仅自动分流生效)',
             transformRuleBase: '精简版 Base',
             transformRuleStd: '标准版 Standard (推荐)',
@@ -1245,6 +1246,7 @@ export const messages = {
             transformCustomTemplateSelectHint:
                 '请在下方“自定义规则模板”中新建并保存模板，然后在此处选择 custom: 开头的模板项。',
             transformExternalParams: '第三方后端参数',
+            transformExternalParamsDesc: '配置远程 Subconverter 转换后端地址及附加参数。',
             transformBackend: '转换后端',
             transformBackendHint:
                 '只需填写域名，例如 subapi.cmliussss.net 或 api.v1.mk；MiSub 会自动补全为 https://域名/sub。',
@@ -1495,8 +1497,7 @@ export const messages = {
             customTemplateDescription: '本地保存的自定义规则模板',
             otherGroup: '其他',
             helperCustomTemplatesOnly: '仅可选择已保存的 custom: 自定义规则模板。',
-            helperExcludeBuiltin:
-                '第三方订阅转换仅支持远程模板 URL，无法兼容 MiSub 内置规则、内置预设和本地 custom: 模板。',
+            helperExcludeBuiltin: '第三方订阅转换仅支持远程模板 URL。',
             helperDefault: '适用于统一模板渲染。',
             thirdPartyNotice:
                 '使用第三方订阅转换时，无法兼容 MiSub 内置规则、内置预设和本地 custom: 模板。请使用远程预设模板或自定义 URL。',
@@ -1508,6 +1509,8 @@ export const messages = {
             missingTemplatePrefix: '当前引用的自定义规则模板不存在或已停用：',
             missingTemplateSuffix: '。请选择一个已保存且启用的 custom: 模板。',
             templateVariablesTitle: '模板变量说明',
+            templateVariablesDesc: '适用于 MiSub 统一模板渲染，点击变量名可复制。',
+            variableCopied: '已复制',
             exampleLabel: '示例',
             varGroupBasic: '基础变量',
             varGroupStrategy: '策略组变量',
@@ -3078,9 +3081,11 @@ export const messages = {
             transformExternalWarning:
                 'External subscription conversion cannot use MiSub built-in rules, built-in presets, or local custom: templates. Use a remote preset template or custom URL.',
             transformEngineChangeNotice:
-                'Switching to an external backend changes the rule source and disables built-in options. Your previous settings stay in this page session and can be restored by switching back.',
+                'Switched to external backend and adjusted incompatible built-in options (switch back to restore).',
             transformRestoreEngineSettings: 'Restore built-in settings',
             transformBuiltinParams: 'Built-in engine parameters',
+            transformBuiltinParamsDesc:
+                'Configure routing granularity and default node flags for the built-in renderer.',
             transformRuleLevel: 'Routing detail level (auto routing only)',
             transformRuleBase: 'Base',
             transformRuleStd: 'Standard (recommended)',
@@ -3094,6 +3099,8 @@ export const messages = {
             transformCustomTemplateSelectHint:
                 'Create and save a template in “Custom rule templates” below, then select a custom: template item here.',
             transformExternalParams: 'External backend parameters',
+            transformExternalParamsDesc:
+                'Configure the remote Subconverter backend endpoint and conversion flags.',
             transformBackend: 'Conversion backend',
             transformBackendHint:
                 'Enter only the domain, such as subapi.cmliussss.net or api.v1.mk. MiSub completes it as https://domain/sub.',
@@ -3356,8 +3363,7 @@ export const messages = {
             customTemplateDescription: 'Locally saved custom rule template',
             otherGroup: 'Other',
             helperCustomTemplatesOnly: 'Only saved custom: rule templates can be selected.',
-            helperExcludeBuiltin:
-                'Third-party subconverter only supports remote template URLs; MiSub built-in rules, built-in presets and local custom: templates are not compatible.',
+            helperExcludeBuiltin: 'Third-party subconverter only supports remote template URLs.',
             helperDefault: 'Used for unified template rendering.',
             thirdPartyNotice:
                 'When using a third-party subconverter, MiSub built-in rules, built-in presets and local custom: templates are not compatible. Please use a remote preset template or a custom URL.',
@@ -3370,6 +3376,9 @@ export const messages = {
                 'The referenced custom rule template does not exist or has been disabled: ',
             missingTemplateSuffix: '. Please select a saved and enabled custom: template.',
             templateVariablesTitle: 'Template variables',
+            templateVariablesDesc:
+                'Available in MiSub unified template rendering. Click a variable to copy.',
+            variableCopied: 'Copied',
             exampleLabel: 'Example',
             varGroupBasic: 'Basic variables',
             varGroupStrategy: 'Strategy group variables',

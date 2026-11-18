@@ -47,6 +47,10 @@ function mountWithStore(component, options = {}) {
         ...options,
         global: {
             plugins: [pinia],
+            stubs: {
+                teleport: true,
+                ...(options.global?.stubs || {}),
+            },
             ...(options.global || {}),
         },
     });
@@ -68,6 +72,7 @@ describe('Custom rule template UX regressions', () => {
         const optionValues = wrapper.findAll('option').map((option) => option.attributes('value'));
         expect(optionValues).not.toContain('custom:local-a');
         expect(wrapper.text()).toContain('第三方订阅转换仅支持远程模板 URL');
+        expect(wrapper.find('[data-testid="open-template-variables"]').exists()).toBe(false);
     });
 
     it('restricts custom_template mode to saved custom: templates instead of remote URL input', () => {

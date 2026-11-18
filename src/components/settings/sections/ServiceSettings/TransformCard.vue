@@ -1,6 +1,6 @@
 <script setup>
     import { computed, ref, watch } from 'vue';
-    import { FileText, Link2 } from '@lucide/vue';
+    import { Cpu, FileText, Info, Link2, RotateCcw, Server, X } from '@lucide/vue';
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
@@ -127,11 +127,11 @@
 
     function switchToBuiltinEngine() {
         props.settings.subconverter.engineMode = 'builtin';
+        showEngineChangeWarning.value = false;
         if (!restoreEngineSnapshot.value) return;
         Object.assign(props.settings, restoreEngineSnapshot.value);
         props.settings.subconverter.engineMode = 'builtin';
         selectedAsset.value = null;
-        showEngineChangeWarning.value = false;
         previousEngineSettings.value = null;
         restoreEngineSnapshot.value = null;
     }
@@ -152,18 +152,21 @@
         (enabled, wasEnabled) => {
             if (enabled === wasEnabled) return;
             if (enabled) {
-                previousEngineSettings.value = {
-                    builtinSkipCertVerify: props.settings.builtinSkipCertVerify,
-                    builtinEnableUdp: props.settings.builtinEnableUdp,
-                    transformConfigMode: props.settings.transformConfigMode,
-                    transformConfig: props.settings.transformConfig,
-                };
-                restoreEngineSnapshot.value = {
-                    builtinSkipCertVerify: props.settings.builtinSkipCertVerify,
-                    builtinEnableUdp: props.settings.builtinEnableUdp,
-                    transformConfigMode: props.settings.transformConfigMode,
-                    transformConfig: props.settings.transformConfig,
-                };
+                if (wasEnabled === false) {
+                    previousEngineSettings.value = {
+                        builtinSkipCertVerify: props.settings.builtinSkipCertVerify,
+                        builtinEnableUdp: props.settings.builtinEnableUdp,
+                        transformConfigMode: props.settings.transformConfigMode,
+                        transformConfig: props.settings.transformConfig,
+                    };
+                    restoreEngineSnapshot.value = {
+                        builtinSkipCertVerify: props.settings.builtinSkipCertVerify,
+                        builtinEnableUdp: props.settings.builtinEnableUdp,
+                        transformConfigMode: props.settings.transformConfigMode,
+                        transformConfig: props.settings.transformConfig,
+                    };
+                    showEngineChangeWarning.value = !engineChangeNoticeDismissed.value;
+                }
                 props.settings.builtinSkipCertVerify = false;
                 props.settings.builtinEnableUdp = false;
                 if (
@@ -176,7 +179,6 @@
                     props.settings.transformConfig = '';
                     selectedAsset.value = null;
                 }
-                showEngineChangeWarning.value = !engineChangeNoticeDismissed.value;
             }
         },
         { immediate: true }
@@ -189,7 +191,7 @@
             <SectionHeader
                 :title="t('settings.transformEngineTitle')"
                 :description="t('settings.transformEngineDesc')"
-                :no-margin="!showEngineChangeWarning"
+                :no-margin="true"
             >
                 <template #icon>
                     <Link2 class="h-4 w-4" />
@@ -225,39 +227,41 @@
             <div
                 v-if="showEngineChangeWarning"
                 data-testid="engine-change-notice"
-                class="flex flex-col gap-3 rounded-md bg-amber-500/10 p-3.5 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
+                class="mt-4 flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#131515] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
             >
-                <div class="flex min-w-0 flex-1 items-start gap-2.5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-[5px]"></span>
-                    <div class="flex flex-col gap-1">
-                        <p class="font-medium">{{ t('settings.transformEngineChangeNotice') }}</p>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
-                            {{ t('settings.transformExternalWarning') }}
-                        </p>
-                    </div>
+                <div class="flex min-w-0 items-center gap-2.5 text-zinc-300">
+                    <Info class="h-3.5 w-3.5 shrink-0 text-amber-400" />
+                    <p class="leading-relaxed">
+                        {{ t('settings.transformEngineChangeNotice') }}
+                    </p>
                 </div>
-                <button
-                    type="button"
-                    data-testid="dismiss-engine-change-notice"
-                    class="shrink-0 self-start rounded-md px-2 py-1 text-xs font-medium text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
-                    :aria-label="t('actions.dismiss')"
-                    @click="
-                        engineChangeNoticeDismissed = true;
-                        showEngineChangeWarning = false;
-                    "
-                >
-                    ×
-                </button>
-                <button
-                    type="button"
-                    class="shrink-0 rounded-md border border-zinc-700 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
-                    @click="
-                        restorePreviousEngineSettings();
-                        engineChangeNoticeDismissed = true;
-                    "
-                >
-                    {{ t('settings.transformRestoreEngineSettings') }}
-                </button>
+                <div class="flex shrink-0 items-center justify-end gap-2">
+                    <button
+                        type="button"
+                        data-testid="restore-engine-settings"
+                        class="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-700/80 bg-zinc-900 px-2.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
+                        @click="
+                            restorePreviousEngineSettings();
+                            engineChangeNoticeDismissed = true;
+                        "
+                    >
+                        <RotateCcw class="h-3 w-3 text-zinc-400" />
+                        <span>{{ t('settings.transformRestoreEngineSettings') }}</span>
+                    </button>
+                    <button
+                        type="button"
+                        data-testid="dismiss-engine-change-notice"
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                        :title="t('actions.dismiss')"
+                        :aria-label="t('actions.dismiss')"
+                        @click="
+                            engineChangeNoticeDismissed = true;
+                            showEngineChangeWarning = false;
+                        "
+                    >
+                        <X class="h-3.5 w-3.5" />
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -272,145 +276,140 @@
                 </template>
             </SectionHeader>
 
-            <div class="space-y-6">
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                        <label
-                            class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-                        >
-                            {{ t('settings.transformRuleSource') }}
-                        </label>
-                        <Select
-                            v-model="settings.transformConfigMode"
-                            :options="
-                                modeOptions.map((option) => ({
-                                    value: option.value,
-                                    label: option.label,
-                                    disabled:
-                                        (option.value === 'builtin' ||
-                                            option.value === 'custom_template') &&
-                                        isExternalEngine,
-                                }))
-                            "
-                        />
-                        <p class="mt-2 text-xs leading-relaxed text-zinc-400">
-                            {{ modeHint }}
-                        </p>
-                        <p
-                            v-if="isExternalEngine"
-                            class="mt-1.5 text-xs leading-relaxed text-amber-400"
-                        >
-                            {{ t('settings.transformExternalWarning') }}
-                        </p>
-                    </div>
-
-                    <div
-                        :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
-                        class="transition-all"
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div>
+                    <label
+                        class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
                     >
-                        <label
-                            class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
-                        >
-                            {{ t('settings.transformTemplateConfig') }}
-                        </label>
-                        <TransformSelector
-                            v-model="settings.transformConfig"
-                            @select-asset="selectedAsset = $event"
-                            type="config"
-                            :force-custom="settings.transformConfigMode === 'custom'"
-                            :custom-templates-only="
-                                settings.transformConfigMode === 'custom_template'
-                            "
-                            :placeholder="t('settings.transformPresetPlaceholder')"
-                            :custom-placeholder="t('settings.transformRemotePlaceholder')"
-                            :allowEmpty="settings.transformConfigMode === 'builtin'"
-                            :exclude-builtin-assets="isExternalEngine"
-                        />
-                        <p
-                            v-if="settings.transformConfigMode === 'custom_template'"
-                            class="mt-2 text-xs leading-relaxed text-zinc-500"
-                        >
-                            {{ t('settings.transformCustomTemplateSelectHint') }}
-                        </p>
-                    </div>
+                        {{ t('settings.transformRuleSource') }}
+                    </label>
+                    <Select
+                        v-model="settings.transformConfigMode"
+                        :options="
+                            modeOptions.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                                disabled:
+                                    (option.value === 'builtin' ||
+                                        option.value === 'custom_template') &&
+                                    isExternalEngine,
+                            }))
+                        "
+                    />
+                    <p class="mt-2 text-xs leading-relaxed text-zinc-400">
+                        {{ modeHint }}
+                    </p>
                 </div>
 
-                <!-- 内置引擎参数 -->
                 <div
-                    :class="
-                        isBuiltinEngine
-                            ? ''
-                            : 'opacity-40 grayscale pointer-events-none select-none'
-                    "
-                    class="pt-6 border-t border-zinc-800/60 space-y-4 transition-all duration-300"
+                    :class="{ 'opacity-50 pointer-events-none': isBuiltinMode }"
+                    class="transition-all"
                 >
-                    <div class="flex items-center justify-between">
-                        <h4
-                            class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-zinc-300"
-                        >
-                            <span
-                                v-if="isBuiltinEngine"
-                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                            ></span>
-                            {{ t('settings.transformBuiltinParams') }}
-                        </h4>
-                        <span class="text-[10px] font-mono text-zinc-500">builtin-core</span>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
-                        <div :class="{ 'opacity-60': !isBuiltinMode }" class="transition-opacity">
-                            <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
-                                t('settings.transformRuleLevel')
-                            }}</label>
-                            <Select
-                                v-model="settings.ruleLevel"
-                                size="sm"
-                                :disabled="!isBuiltinMode || isExternalEngine"
-                                :options="[
-                                    { value: 'base', label: t('settings.transformRuleBase') },
-                                    { value: 'std', label: t('settings.transformRuleStd') },
-                                    { value: 'full', label: t('settings.transformRuleFull') },
-                                    { value: 'relay', label: t('settings.transformRuleRelay') },
-                                ]"
-                            />
-                        </div>
-
-                        <div
-                            class="flex items-center justify-between py-2 border-b border-zinc-800/60"
-                        >
-                            <span class="text-xs font-medium text-zinc-300">{{
-                                t('settings.transformBuiltinSkipCert')
-                            }}</span>
-                            <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
-                        </div>
-
-                        <div
-                            class="flex items-center justify-between py-2 border-b border-zinc-800/60"
-                        >
-                            <span class="text-xs font-medium text-zinc-300">{{
-                                t('settings.transformBuiltinUdp')
-                            }}</span>
-                            <Switch v-model="settings.builtinEnableUdp" size="sm" />
-                        </div>
-                    </div>
+                    <label
+                        class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                    >
+                        {{ t('settings.transformTemplateConfig') }}
+                    </label>
+                    <TransformSelector
+                        v-model="settings.transformConfig"
+                        @select-asset="selectedAsset = $event"
+                        type="config"
+                        :force-custom="settings.transformConfigMode === 'custom'"
+                        :custom-templates-only="settings.transformConfigMode === 'custom_template'"
+                        :placeholder="t('settings.transformPresetPlaceholder')"
+                        :custom-placeholder="t('settings.transformRemotePlaceholder')"
+                        :allowEmpty="settings.transformConfigMode === 'builtin'"
+                        :exclude-builtin-assets="isExternalEngine"
+                    />
+                    <p
+                        v-if="settings.transformConfigMode === 'custom_template'"
+                        class="mt-2 text-xs leading-relaxed text-zinc-500"
+                    >
+                        {{ t('settings.transformCustomTemplateSelectHint') }}
+                    </p>
                 </div>
             </div>
         </section>
 
+        <!-- 内置引擎参数 -->
         <section
-            :class="isExternalEngine ? '' : 'opacity-40 grayscale pointer-events-none select-none'"
-            class="rounded-lg border border-zinc-800 bg-[#171717] p-6 transition-all duration-300"
+            v-if="isBuiltinEngine"
+            data-testid="builtin-engine-params"
+            class="rounded-lg border border-zinc-800 bg-[#171717] p-6"
         >
-            <div class="mb-6 flex items-center justify-between">
-                <h4 class="flex items-center gap-2 text-sm font-semibold text-zinc-100">
+            <SectionHeader
+                :title="t('settings.transformBuiltinParams')"
+                :description="t('settings.transformBuiltinParamsDesc')"
+            >
+                <template #icon>
+                    <Cpu class="h-4 w-4" />
+                </template>
+                <template #actions>
                     <span
-                        v-if="isExternalEngine"
-                        class="h-1.5 w-1.5 rounded-full bg-amber-500"
-                    ></span>
-                    {{ t('settings.transformExternalParams') }}
-                </h4>
-                <span class="text-[10px] font-mono text-zinc-500">subconverter</span>
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#131515] px-2 py-0.5 font-mono text-[10px] text-zinc-400"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        builtin-core
+                    </span>
+                </template>
+            </SectionHeader>
+
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
+                <div :class="{ 'opacity-60': !isBuiltinMode }" class="transition-opacity">
+                    <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
+                        t('settings.transformRuleLevel')
+                    }}</label>
+                    <Select
+                        v-model="settings.ruleLevel"
+                        size="sm"
+                        :disabled="!isBuiltinMode || isExternalEngine"
+                        :options="[
+                            { value: 'base', label: t('settings.transformRuleBase') },
+                            { value: 'std', label: t('settings.transformRuleStd') },
+                            { value: 'full', label: t('settings.transformRuleFull') },
+                            { value: 'relay', label: t('settings.transformRuleRelay') },
+                        ]"
+                    />
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                    <span class="text-xs font-medium text-zinc-300">{{
+                        t('settings.transformBuiltinSkipCert')
+                    }}</span>
+                    <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
+                </div>
+
+                <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
+                    <span class="text-xs font-medium text-zinc-300">{{
+                        t('settings.transformBuiltinUdp')
+                    }}</span>
+                    <Switch v-model="settings.builtinEnableUdp" size="sm" />
+                </div>
             </div>
+        </section>
+
+        <!-- 第三方后端参数 -->
+        <section
+            v-if="isExternalEngine"
+            data-testid="external-backend-card"
+            class="rounded-lg border border-zinc-800 bg-[#171717] p-6"
+        >
+            <SectionHeader
+                :title="t('settings.transformExternalParams')"
+                :description="t('settings.transformExternalParamsDesc')"
+            >
+                <template #icon>
+                    <Server class="h-4 w-4" />
+                </template>
+                <template #actions>
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#131515] px-2 py-0.5 font-mono text-[10px] text-zinc-400"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                        subconverter
+                    </span>
+                </template>
+            </SectionHeader>
 
             <div class="space-y-6">
                 <div>

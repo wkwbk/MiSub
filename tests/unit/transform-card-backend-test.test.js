@@ -53,13 +53,18 @@ describe('TransformCard third-party backend test button', () => {
             },
         });
 
+        expect(wrapper.find('[data-testid="builtin-engine-params"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="external-backend-card"]').exists()).toBe(false);
+
         const engineButtons = wrapper.findAll('button');
         await engineButtons
             .find((button) => button.text().includes('External backend'))
             .trigger('click');
-        await wrapper
-            .get('[data-testid="engine-change-notice"] button:nth-of-type(2)')
-            .trigger('click');
+        expect(wrapper.find('[data-testid="builtin-engine-params"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="external-backend-card"]').exists()).toBe(true);
+        await wrapper.get('[data-testid="restore-engine-settings"]').trigger('click');
+        expect(wrapper.find('[data-testid="builtin-engine-params"]').exists()).toBe(true);
+        expect(wrapper.find('[data-testid="external-backend-card"]').exists()).toBe(false);
         expect(settings.subconverter.engineMode).toBe('builtin');
         expect(settings.transformConfigMode).toBe('builtin');
         expect(settings.transformConfig).toBe('builtin:clash_misub');
