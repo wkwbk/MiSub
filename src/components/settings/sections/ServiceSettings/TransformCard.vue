@@ -32,12 +32,12 @@
     const selectedAsset = ref(null);
 
     const flagOptions = computed(() => [
-        { key: 'udp', label: t('settings.transformUdp'), icon: '⚡️' },
-        { key: 'emoji', label: t('settings.transformEmoji'), icon: '🎨' },
-        { key: 'scv', label: t('settings.transformSkipCert'), icon: '🛡️' },
-        { key: 'sort', label: t('settings.transformSort'), icon: '🔢' },
-        { key: 'tfo', label: 'TCP Fast Open', icon: '🚀' },
-        { key: 'list', label: t('settings.transformList'), icon: '📋' },
+        { key: 'udp', label: t('settings.transformUdp') },
+        { key: 'emoji', label: t('settings.transformEmoji') },
+        { key: 'scv', label: t('settings.transformSkipCert') },
+        { key: 'sort', label: t('settings.transformSort') },
+        { key: 'tfo', label: 'TCP Fast Open' },
+        { key: 'list', label: t('settings.transformList') },
     ]);
 
     if (!props.settings.subconverter) {
@@ -228,7 +228,7 @@
                 class="flex flex-col gap-3 rounded-md bg-amber-500/10 p-3.5 text-xs text-zinc-200 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div class="flex min-w-0 flex-1 items-start gap-2.5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-[5px]"></span>
                     <div class="flex flex-col gap-1">
                         <p class="font-medium">{{ t('settings.transformEngineChangeNotice') }}</p>
                         <p class="text-xs text-zinc-400 leading-relaxed">

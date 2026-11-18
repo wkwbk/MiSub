@@ -70,12 +70,12 @@
     ];
 
     const flagOptions = [
-        { key: 'udp', label: t('profileModal.udpForward'), icon: '⚡️' },
-        { key: 'emoji', label: t('profileModal.emojiSwitch'), icon: '🎨' },
-        { key: 'scv', label: t('profileModal.skipCert'), icon: '🛡️' },
-        { key: 'sort', label: t('profileModal.nodeSort'), icon: '🔢' },
-        { key: 'tfo', label: 'TCP Fast Open', icon: '🚀' },
-        { key: 'list', label: t('profileModal.outputList'), icon: '📋' },
+        { key: 'udp', label: t('profileModal.udpForward') },
+        { key: 'emoji', label: t('profileModal.emojiSwitch') },
+        { key: 'scv', label: t('profileModal.skipCert') },
+        { key: 'sort', label: t('profileModal.nodeSort') },
+        { key: 'tfo', label: 'TCP Fast Open' },
+        { key: 'list', label: t('profileModal.outputList') },
     ];
 
     const selectedTransformAsset = ref(null);
