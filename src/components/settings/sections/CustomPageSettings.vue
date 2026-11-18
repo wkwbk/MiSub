@@ -245,36 +245,38 @@
 
                 <div class="space-y-6">
                     <div>
-                        <div
-                            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2.5"
-                        >
-                            <label class="text-xs font-semibold text-zinc-300">{{
-                                t('settings.customPageHtmlContent')
-                            }}</label>
-                            <div class="flex flex-wrap gap-1.5 justify-start sm:justify-end">
-                                <button
-                                    @click="normalizeFullPageSource"
-                                    class="text-[11px] font-mono px-2 py-1 bg-zinc-100 text-zinc-900 rounded-md border border-zinc-100 hover:bg-white transition-colors font-medium"
-                                >
-                                    {{ t('settings.customPageNormalizeSource') }}
-                                </button>
-                                <button
-                                    v-for="p in [
-                                        'profiles',
-                                        'announcements',
-                                        'hero',
-                                        'guestbook',
-                                        'node_count',
-                                        'profile_count',
-                                        'version',
-                                    ]"
-                                    :key="p"
-                                    @click="insertPlaceholder(p)"
-                                    class="text-[11px] font-mono px-2 py-1 bg-transparent text-zinc-300 rounded-md border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
-                                >
-                                    {&#123;{{ p }}&#125;}
-                                </button>
-                            </div>
+                        <div class="flex items-center justify-between gap-3 mb-2">
+                            <label
+                                class="text-xs font-semibold text-zinc-300 whitespace-nowrap shrink-0"
+                            >
+                                {{ t('settings.customPageHtmlContent') }}
+                            </label>
+                            <button
+                                type="button"
+                                @click="normalizeFullPageSource"
+                                class="shrink-0 whitespace-nowrap text-[11px] font-mono px-2.5 py-1 bg-zinc-100 text-zinc-900 rounded-md border border-zinc-100 hover:bg-white transition-colors font-medium"
+                            >
+                                {{ t('settings.customPageNormalizeSource') }}
+                            </button>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-1.5 mb-2.5">
+                            <button
+                                v-for="p in [
+                                    'profiles',
+                                    'announcements',
+                                    'hero',
+                                    'guestbook',
+                                    'node_count',
+                                    'profile_count',
+                                    'version',
+                                ]"
+                                :key="p"
+                                type="button"
+                                @click="insertPlaceholder(p)"
+                                class="text-[11px] font-mono px-2 py-1 bg-transparent text-zinc-300 rounded-md border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            >
+                                {&#123;{{ p }}&#125;}
+                            </button>
                         </div>
                         <textarea
                             v-model="props.settings.customPage.content"
