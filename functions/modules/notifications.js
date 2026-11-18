@@ -35,6 +35,12 @@ export async function sendEnhancedTgNotification(settings, type, clientIp, addit
 }
 
 async function loadSubscriptionsForCron(storageAdapter) {
+    if (typeof storageAdapter.getRemoteSubscriptions === 'function') {
+        const subscriptions = await storageAdapter.getRemoteSubscriptions();
+        if (Array.isArray(subscriptions)) {
+            return subscriptions;
+        }
+    }
     if (typeof storageAdapter.getAllSubscriptions === 'function') {
         const subscriptions = await storageAdapter.getAllSubscriptions();
         if (Array.isArray(subscriptions)) {
@@ -342,6 +348,11 @@ export async function handleCronTrigger(env) {
 
         await sendCoreTg(settings, updateMessage);
     }
+
+    // 顺带执行存储维护（清理过期缓存与孤儿计数）
+    await storageAdapter.cleanupMaintenance?.().catch((err) => {
+        console.warn('[Cron] Storage maintenance warning:', err?.message || err);
+    });
 
     return new Response(JSON.stringify(summary), {
         status: 200,

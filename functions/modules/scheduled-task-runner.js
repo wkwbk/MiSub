@@ -11,6 +11,8 @@ import { performWebdavBackup } from './webdav-backup-handler.js';
 const LOCK_KEY = 'misub_webdav_backup_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
 const LOCK_TTL_MS = 10 * 60 * 1000;
+const MAINTENANCE_THROTTLE_MS = 6 * 60 * 60 * 1000;
+const lastMaintenanceMap = new WeakMap();
 
 function parseTime(value) {
     const ts = Date.parse(value || '');
@@ -41,6 +43,23 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     if (!env) return { skipped: true, reason: 'missing-env' };
 
     const storageAdapter = await getStorage(env);
+    const now = Date.now();
+
+    if (env?.MISUB_DB && typeof storageAdapter.cleanupMaintenance === 'function') {
+        const lastMaint = lastMaintenanceMap.get(env.MISUB_DB) || 0;
+        if (options.forceCheck || now - lastMaint >= MAINTENANCE_THROTTLE_MS) {
+            lastMaintenanceMap.set(env.MISUB_DB, now);
+            const maintPromise = storageAdapter.cleanupMaintenance({ now }).catch((err) => {
+                console.warn('[ScheduledTasks] Storage maintenance failed:', err?.message || err);
+            });
+            if (typeof context.waitUntil === 'function' && !options.awaitRun) {
+                context.waitUntil(maintPromise);
+            } else {
+                await maintPromise;
+            }
+        }
+    }
+
     const settings =
         (await storageAdapter.get(KV_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
     const config = settings.webdavBackup || {};
@@ -49,7 +68,6 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
         return { skipped: true, reason: 'disabled' };
     }
 
-    const now = Date.now();
     const lastCheckedAt = parseTime(config.lastCheckedAt);
     if (!options.forceCheck && lastCheckedAt && now - lastCheckedAt < CHECK_THROTTLE_MS) {
         return { skipped: true, reason: 'throttled' };

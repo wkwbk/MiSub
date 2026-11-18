@@ -18,12 +18,12 @@ function nowIso() {
     return new Date().toISOString();
 }
 
-function generateId(prefix = 'sub') {
+function generateId() {
     try {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-            return `${prefix}_${crypto.randomUUID()}`;
+            return crypto.randomUUID();
     } catch {}
-    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function nextSortIndex(items) {
@@ -31,7 +31,10 @@ function nextSortIndex(items) {
 }
 
 async function loadRemoteSubscriptions(storageAdapter) {
-    const all = await storageAdapter.getAllSubscriptions();
+    const all =
+        typeof storageAdapter.getRemoteSubscriptions === 'function'
+            ? await storageAdapter.getRemoteSubscriptions()
+            : await storageAdapter.getAllSubscriptions();
     return sortBySortIndex(all.filter(isRemoteSubscription));
 }
 
@@ -298,10 +301,10 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
                 400
             );
 
-        const all = await storageAdapter.getAllSubscriptions();
+        const all = await loadRemoteSubscriptions(storageAdapter);
         const timestamp = nowIso();
         const item = {
-            id: generateId('sub'),
+            id: generateId(),
             name: String(payload.name).trim(),
             url: String(payload.url).trim(),
             enabled: payload.enabled !== false,

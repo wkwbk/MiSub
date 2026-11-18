@@ -41,12 +41,6 @@ function maskSensitiveLogValue(value) {
     return `${text.slice(0, 4)}…${text.slice(-4)} (${text.length})`;
 }
 
-const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
-
-function getProfileDownloadCountKey(profile) {
-    return `${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`;
-}
-
 function buildTemplateProxyBlock(nodeList) {
     return nodeList
         .split('\n')
@@ -762,14 +756,14 @@ export async function handleMisubRequest(context) {
                 config.enableAccessLog
             ) {
                 try {
-                    const downloadCountKey = getProfileDownloadCountKey(profile);
-                    const currentCount = Number(await storageAdapter.get(downloadCountKey)) || 0;
                     context.waitUntil(
-                        storageAdapter
-                            .put(downloadCountKey, currentCount + 1)
-                            .catch((err) =>
-                                console.error('[Download Count] Failed to update:', err)
+                        Promise.resolve(
+                            storageAdapter.incrementProfileDownloadCount?.(
+                                profile.id || profile.customId
                             )
+                        ).catch((err) =>
+                            console.error('[Download Count] Failed to update:', err)
+                        )
                     );
                 } catch (err) {
                     // 计数失败不影响订阅服务

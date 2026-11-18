@@ -1,193 +1,175 @@
 import { describe, expect, it } from 'vitest';
 import { StorageFactory } from '../../functions/storage-adapter.js';
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
-function createD1Mock({
-    subscriptions = [],
-    profiles = [],
-    settings = [],
-    queryCounts = null,
-} = {}) {
-    const subMap = new Map(subscriptions.map((item) => [item.id, JSON.stringify(item)]));
-    const profileMap = new Map(profiles.map((item) => [item.id, JSON.stringify(item)]));
-    const settingsMap = new Map(settings.map((item) => [item.key, JSON.stringify(item.value)]));
-
-    return {
-        prepare(sql) {
-            const runUnboundAll = async () => {
-                if (sql.includes('SELECT data FROM subscriptions')) {
-                    if (queryCounts)
-                        queryCounts.subscriptions = (queryCounts.subscriptions || 0) + 1;
-                    return { results: Array.from(subMap.values()).map((data) => ({ data })) };
-                }
-                if (sql.includes('SELECT data FROM profiles')) {
-                    if (queryCounts) queryCounts.profiles = (queryCounts.profiles || 0) + 1;
-                    return { results: Array.from(profileMap.values()).map((data) => ({ data })) };
-                }
-                return { results: [] };
-            };
-
-            return {
-                all: runUnboundAll,
-                async run() {
-                    return { success: true };
-                },
-                bind(...args) {
-                    return {
-                        async first() {
-                            if (sql.includes('FROM subscriptions WHERE id = ?')) {
-                                const data = subMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            if (sql.includes('FROM profiles WHERE id = ?')) {
-                                const data = profileMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            if (sql.includes('FROM settings WHERE key = ?')) {
-                                const data = settingsMap.get(args[0]);
-                                return data ? { data } : null;
-                            }
-                            return null;
-                        },
-                        async all() {
-                            if (sql.includes('FROM subscriptions WHERE id IN')) {
-                                return {
-                                    results: args
-                                        .filter((id) => subMap.has(id))
-                                        .map((id) => ({ data: subMap.get(id) })),
-                                };
-                            }
-                            return { results: [] };
-                        },
-                        async run() {
-                            if (sql.includes('INSERT OR REPLACE INTO subscriptions')) {
-                                subMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('INSERT OR REPLACE INTO profiles')) {
-                                profileMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('INSERT OR REPLACE INTO settings')) {
-                                settingsMap.set(args[0], args[1]);
-                            }
-                            if (sql.includes('DELETE FROM subscriptions WHERE id = ?')) {
-                                subMap.delete(args[0]);
-                            }
-                            if (sql.includes('DELETE FROM profiles WHERE id = ?')) {
-                                profileMap.delete(args[0]);
-                            }
-                            return { success: true };
-                        },
-                    };
-                },
-            };
-        },
-    };
-}
-
-describe('Storage adapter row-level APIs', () => {
-    it('supports row-level subscription/profile lookup and update on D1 adapter', async () => {
-        const d1 = createD1Mock({
-            subscriptions: [
-                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com', nodeCount: 1 },
-                { id: 'sub-2', name: 'Sub Two', url: 'https://b.example.com', nodeCount: 2 },
+describe('Storage adapter multi-table D1 APIs', () => {
+    it('routes remote subscriptions to subscriptions table and manual nodes to nodes table', async () => {
+        const db = createMemoryD1({
+            misub_subscriptions_v1: [
+                { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com/sub', nodeCount: 1 },
+                { id: 'node-1', name: 'Node One', url: 'vless://uuid@example.com:443#Node1' },
             ],
-            profiles: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
+            misub_profiles_v1: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
         });
 
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        expect(await adapter.getSubscriptionById('sub-1')).toMatchObject({
-            id: 'sub-1',
-            nodeCount: 1,
-        });
-        expect(await adapter.getProfileById('profile-1')).toMatchObject({
-            id: 'profile-1',
-            name: 'Profile One',
-        });
-        expect(await adapter.getProfileById('custom-1')).toMatchObject({
-            id: 'profile-1',
-            name: 'Profile One',
-        });
+        expect(db.tables.subscriptions.has('sub-1')).toBe(true);
+        expect(db.tables.subscriptions.has('node-1')).toBe(false);
+        expect(db.tables.nodes.has('node-1')).toBe(true);
+
+        expect(await adapter.getRemoteSubscriptions()).toHaveLength(1);
+        expect(await adapter.getManualNodes()).toHaveLength(1);
         expect(await adapter.getAllSubscriptions()).toHaveLength(2);
-        expect(await adapter.getAllProfiles()).toHaveLength(1);
 
-        const related = await adapter.getSubscriptionsByIds(['sub-2', 'sub-1']);
-        expect(related.map((item) => item.id).sort()).toEqual(['sub-1', 'sub-2']);
+        expect(await adapter.getSubscriptionById('sub-1')).toMatchObject({ id: 'sub-1' });
+        expect(await adapter.getSubscriptionById('node-1')).toMatchObject({ id: 'node-1' });
+        expect(await adapter.getProfileById('custom-1')).toMatchObject({ id: 'profile-1' });
 
-        await adapter.updateSubscriptionById('sub-2', (current) => ({ ...current, nodeCount: 9 }));
-        expect(await adapter.getSubscriptionById('sub-2')).toMatchObject({
-            id: 'sub-2',
-            nodeCount: 9,
-        });
+        const related = await adapter.getSubscriptionsByIds(['node-1', 'sub-1']);
+        expect(related.map((item) => item.id).sort()).toEqual(['node-1', 'sub-1']);
 
         await adapter.putSubscription({
-            id: 'sub-3',
-            name: 'Sub Three',
-            url: 'https://c.example.com',
-            nodeCount: 0,
+            id: 'node-2',
+            name: 'Node Two',
+            url: 'ss://method:pass@1.1.1.1:8388#Node2',
         });
-        expect(await adapter.getSubscriptionById('sub-3')).toMatchObject({
-            id: 'sub-3',
-            name: 'Sub Three',
-        });
+        expect(db.tables.nodes.has('node-2')).toBe(true);
+        expect(db.tables.subscriptions.has('node-2')).toBe(false);
 
-        await adapter.putProfile({ id: 'profile-2', customId: 'custom-2', name: 'Profile Two' });
-        expect(await adapter.getProfileById('profile-2')).toMatchObject({
-            id: 'profile-2',
-            name: 'Profile Two',
-        });
-
-        expect(await adapter.deleteSubscriptionById('sub-1')).toBe(true);
-        expect(await adapter.getSubscriptionById('sub-1')).toBeNull();
-
-        expect(await adapter.deleteProfileById('profile-1')).toBe(true);
-        expect(await adapter.getProfileById('profile-1')).toBeNull();
+        expect(await adapter.deleteSubscriptionById('node-1')).toBe(true);
+        expect(await adapter.getSubscriptionById('node-1')).toBeNull();
     });
 
-    it('caches D1 collection reads and invalidates them after writes', async () => {
-        const queryCounts = {};
-        const d1 = createD1Mock({
-            subscriptions: [{ id: 'sub-1', name: 'Sub One' }],
-            profiles: [{ id: 'profile-1', name: 'Profile One' }],
-            queryCounts,
+    it('stores guestbook messages in dedicated guestbook table and increments profile downloadCount in profiles table', async () => {
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP', downloadCount: 3 }],
         });
-        const firstAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
-        const secondAdapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        const [firstSubs, secondSubs] = await Promise.all([
-            firstAdapter.getAllSubscriptions(),
-            secondAdapter.getAllSubscriptions(),
-        ]);
-        expect(firstSubs).toHaveLength(1);
-        expect(secondSubs).toHaveLength(1);
-        expect(queryCounts.subscriptions).toBe(1);
+        await adapter.putGuestbookMessage({
+            id: 'msg-1',
+            nickname: 'Alice',
+            content: 'Hello',
+            createdAt: '2026-11-18T10:00:00.000Z',
+        });
+        expect(db.tables.guestbook.has('msg-1')).toBe(true);
+        expect(db.tables.settings.size).toBe(0);
+        expect(await adapter.getAllGuestbookMessages()).toHaveLength(1);
 
-        await firstAdapter.getAllProfiles();
-        await secondAdapter.getAllProfiles();
-        expect(queryCounts.profiles).toBe(1);
-
-        await firstAdapter.putSubscription({ id: 'sub-2', name: 'Sub Two' });
-        expect(await secondAdapter.getAllSubscriptions()).toHaveLength(2);
-        expect(queryCounts.subscriptions).toBe(2);
-
-        await firstAdapter.putProfile({ id: 'profile-2', name: 'Profile Two' });
-        expect(await secondAdapter.getAllProfiles()).toHaveLength(2);
-        expect(queryCounts.profiles).toBe(2);
+        const nextCount = await adapter.incrementProfileDownloadCount('vip');
+        expect(nextCount).toBe(4);
+        expect((await adapter.getProfileById('p-1')).downloadCount).toBe(4);
+        expect(db.tables.settings.size).toBe(0);
     });
 
-    it('syncs full collection put/get calls into row-level D1 records without main rows', async () => {
-        const d1 = createD1Mock({
-            subscriptions: [{ id: 'old-sub', name: 'Old Sub' }],
-        });
-        const adapter = StorageFactory.createAdapter({ MISUB_DB: d1 });
+    it('separates settings, cache, and logs into dedicated D1 tables', async () => {
+        const db = createMemoryD1();
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-        await adapter.put('misub_subscriptions_v1', [{ id: 'new-sub', name: 'New Sub' }]);
-        expect(await adapter.getSubscriptionById('old-sub')).toBeNull();
-        expect(await adapter.getSubscriptionById('new-sub')).toMatchObject({
-            id: 'new-sub',
-            name: 'New Sub',
+        await adapter.put('worker_settings_v1', { FileName: 'MiSub' });
+        await adapter.put('node_cache_profile_p1', { nodes: 'ss://a', timestamp: Date.now() });
+        await adapter.put('cron_last_execution', { timestamp: new Date().toISOString() });
+        await adapter.put('misub_restore_snapshot_latest', { version: 1 });
+        await adapter.put('misub_system_logs:2026-11-18', [{ id: 'log-1' }]);
+
+        expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
+        expect(db.tables.cache.has('node_cache_profile_p1')).toBe(true);
+        expect(db.tables.cache.has('cron_last_execution')).toBe(true);
+        expect(db.tables.cache.has('misub_restore_snapshot_latest')).toBe(true);
+        expect(db.tables.logs.has('misub_system_logs:2026-11-18')).toBe(true);
+    });
+
+    it('cascades cleanup of node caches when deleting profiles or subscriptions', async () => {
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP' }],
+            misub_subscriptions_v1: [
+                { id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' },
+            ],
+            node_cache_profile_vip: { nodes: 'a', timestamp: Date.now() },
+            'node_cache_profile_p-1': { nodes: 'b', timestamp: Date.now() },
+            'node_cache_subscription_sub-1': { nodes: ['ss://1'], sourceId: 'sub-1' },
         });
-        expect(await adapter.get('misub_subscriptions_v1')).toEqual([
-            { id: 'new-sub', name: 'New Sub' },
-        ]);
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+
+        await adapter.deleteProfileById('p-1');
+        expect(db.tables.cache.has('node_cache_profile_vip')).toBe(false);
+        expect(db.tables.cache.has('node_cache_profile_p-1')).toBe(false);
+
+        await adapter.deleteSubscriptionById('sub-1');
+        expect(db.tables.cache.has('node_cache_subscription_sub-1')).toBe(false);
+    });
+
+    it('cleanupMaintenance migrates manual nodes, guestbook, download counts, and logs into their dedicated tables', async () => {
+        const now = 1_800_000_000_000;
+        const db = createMemoryD1({
+            misub_profiles_v1: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
+            worker_settings_v1: { FileName: 'MiSub' },
+        });
+
+        // 模拟历史混放在 subscriptions 表中的手动节点
+        db.tables.subscriptions.set(
+            'legacy-node-1',
+            JSON.stringify({
+                id: 'legacy-node-1',
+                name: 'Legacy Node',
+                url: 'tuic://token@example.com:443#Legacy',
+            })
+        );
+        db.tables.subscriptions.set(
+            'remote-sub-1',
+            JSON.stringify({
+                id: 'remote-sub-1',
+                name: 'Airport',
+                url: 'https://airport.example.com/sub',
+            })
+        );
+
+        // 模拟历史混放在 settings 表中的留言、下载计数、日志、旧缓存
+        db.tables.settings.set('misub_guestbook_v1_index', JSON.stringify(['g-1']));
+        db.tables.settings.set(
+            'misub_guestbook_v1:item:g-1',
+            JSON.stringify({ id: 'g-1', nickname: 'Bob', content: 'Hi' })
+        );
+        db.tables.settings.set('misub_profile_download_count_active-profile', '12');
+        db.tables.settings.set('misub_profile_download_count_deleted-profile', '2');
+        db.tables.settings.set('node_cache_profile_legacy', JSON.stringify({ nodes: 'old' }));
+        db.tables.settings.set('misub_system_logs:2026-11-15', JSON.stringify([{ id: 'l1' }]));
+
+        // 模拟 cache 表里的过期条目
+        db.tables.cache.set(
+            'tg_push_rate:u1:min',
+            JSON.stringify({ count: 1, expiresAt: now - 1000 })
+        );
+        db.tables.cache.set(
+            'github_release_fresh/repo',
+            JSON.stringify({ data: {}, timestamp: now - 1000 })
+        );
+
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+        const stats = await adapter.cleanupMaintenance({ now });
+
+        expect(stats).toEqual({
+            migratedNodes: 1,
+            migratedGuestbook: 1,
+            mergedDownloadCounts: 1,
+            migratedLogs: 1,
+            removedSettingsClutter: 2,
+            removedOrphanCounts: 1,
+            removedExpiredCache: 1,
+        });
+
+        // subscriptions 仅剩远程订阅，手动节点已归入 nodes 表
+        expect(Array.from(db.tables.subscriptions.keys())).toEqual(['remote-sub-1']);
+        expect(Array.from(db.tables.nodes.keys())).toEqual(['legacy-node-1']);
+
+        // 留言已归入 guestbook 表，下载计数已合并进 profiles 表，日志已归入 logs 表
+        expect(Array.from(db.tables.guestbook.keys())).toEqual(['g-1']);
+        expect((await adapter.getProfileById('active-profile')).downloadCount).toBe(12);
+        expect(db.tables.logs.has('misub_system_logs:2026-11-15')).toBe(true);
+
+        // settings 表彻底干净，只剩 main
+        expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
+        expect(Array.from(db.tables.cache.keys())).toEqual(['github_release_fresh/repo']);
     });
 });

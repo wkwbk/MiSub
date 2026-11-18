@@ -33,8 +33,6 @@ import { listRuleTemplates } from './rule-template-handler.js';
  */
 import { applyPatch } from './patch-utils.js';
 
-const PROFILE_DOWNLOAD_COUNT_PREFIX = 'misub_profile_download_count_';
-
 function normalizeLoginPath(customLoginPath) {
     if (typeof customLoginPath !== 'string') return '/login';
     const normalized = customLoginPath.trim().replace(/^\/+/, '');
@@ -53,23 +51,6 @@ function normalizeProfile(profile = {}) {
     normalized.isPublic = profile.isPublic === true;
     normalized.downloadCount = Number(profile.downloadCount) || 0;
     return normalized;
-}
-
-async function attachProfileDownloadCounts(storageAdapter, profiles) {
-    if (!Array.isArray(profiles) || profiles.length === 0) return profiles;
-
-    const counts = await Promise.all(
-        profiles.map((profile) =>
-            storageAdapter.get(`${PROFILE_DOWNLOAD_COUNT_PREFIX}${profile.customId || profile.id}`)
-        )
-    );
-
-    return profiles.map((profile, index) =>
-        normalizeProfile({
-            ...profile,
-            downloadCount: Number(counts[index]) || Number(profile.downloadCount) || 0,
-        })
-    );
 }
 
 function isStorageUnavailableError(error) {
@@ -112,9 +93,26 @@ async function applyRowLevelDiff(storageAdapter, type, diff) {
 
     const { added = [], updated = [], removed = [] } = diff;
 
+    let resolvedUpdates = updated;
+    if (isProfile && updated.length > 0 && typeof storageAdapter.getAllProfiles === 'function') {
+        const currentItems = await storageAdapter.getAllProfiles();
+        const currentMap = new Map(currentItems.map((item) => [item.id, item]));
+        resolvedUpdates = updated.map((item) => {
+            const existing = currentMap.get(item.id);
+            if (!existing) return item;
+            return {
+                ...item,
+                downloadCount: Math.max(
+                    Number(existing.downloadCount) || 0,
+                    Number(item.downloadCount) || 0
+                ),
+            };
+        });
+    }
+
     await Promise.all([
         ...added.map((item) => putItem(item)),
-        ...updated.map((item) => putItem(item)),
+        ...resolvedUpdates.map((item) => putItem(item)),
         ...removed.map((id) => deleteItem(id)),
     ]);
 
@@ -146,8 +144,18 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
 
     for (const item of finalItems) {
         const existing = currentMap.get(item.id);
-        if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
-            puts.push(putItem(item));
+        const nextItem =
+            isProfile && existing
+                ? {
+                      ...item,
+                      downloadCount: Math.max(
+                          Number(existing.downloadCount) || 0,
+                          Number(item.downloadCount) || 0
+                      ),
+                  }
+                : item;
+        if (!existing || JSON.stringify(existing) !== JSON.stringify(nextItem)) {
+            puts.push(putItem(nextItem));
         }
     }
 
@@ -186,7 +194,7 @@ export async function handleDataRequest(env, context = null) {
                 return [];
             }),
         ]);
-        const profiles = await attachProfileDownloadCounts(storageAdapter, rawProfiles);
+        const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
         const config = {
             ...defaultSettings,
             ...settings,

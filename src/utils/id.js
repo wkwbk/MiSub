@@ -15,7 +15,7 @@ export function generateId(prefix = '') {
 }
 
 export function generateNodeId() {
-    return generateId('node');
+    return generateId();
 }
 
 export function generateProfileId() {
@@ -23,5 +23,5 @@ export function generateProfileId() {
 }
 
 export function generateSubscriptionId() {
-    return generateId('sub');
+    return generateId();
 }

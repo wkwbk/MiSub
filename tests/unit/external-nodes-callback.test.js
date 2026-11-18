@@ -35,7 +35,8 @@ describe('external nodes callback service', () => {
         expect(result.nodeHash).toMatch(/^[a-f0-9]{64}$/);
         expect(result.cacheKey).toBe(buildExternalNodesCacheKey('profile-a', result.nodeHash));
         expect(result.storage).toBe('d1');
-        expect(db.tables.settings.has(result.cacheKey)).toBe(true);
+        expect(db.tables.cache.has(result.cacheKey)).toBe(true);
+        expect(db.tables.settings.has(result.cacheKey)).toBe(false);
     });
 
     it('reuses existing unexpired D1 entry instead of writing again', async () => {

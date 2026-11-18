@@ -1,6 +1,6 @@
 # MiSub 数据模型与存储说明
 
-本文记录 MiSub 当前代码中的数据模型、前后端字段约定与 KV/D1 存储映射。目标是描述现状，帮助后续维护时判断字段来源、读写入口和迁移边界；不作为历史变更记录。
+本文记录 MiSub 当前代码中的数据模型、前后端字段约定与 Cloudflare D1 分表存储结构。目标是描述现状，帮助后续维护时判断字段来源与读写入口；不作为历史变更记录。
 
 ## 1. 数据入口总览
 
@@ -33,44 +33,38 @@ MiSub 的核心持久化数据分为四类：
 - 订阅组输出链路：`functions/modules/subscription/profile-handler.js`
 - 自定义规则模板：`functions/modules/rule-template-handler.js`
 
-## 2. 存储键与 D1 表
+## 2. D1 七表存储结构
 
-### KV 模式
+MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版迁移逻辑），按数据生命周期与职责划分为 7 张表（完整建表语句见根目录 `schema.sql`，运行期遇新库会自动建表）：
 
-KV 使用固定 key 存 JSON：
-
-- `misub_subscriptions_v1`：订阅源与手动节点数组。
-- `misub_profiles_v1`：订阅组数组。
-- `worker_settings_v1`：全局设置对象。
-- `misub_rule_templates_v1`：自定义规则模板数组。
-- `misub_profile_download_count_<profileIdOrCustomId>`：订阅组下载计数。
-- `misub_guestbook_v1...`：留言板相关数据，按设置表兼容逻辑处理。
-
-### D1 模式
-
-D1 当前采用“行级 JSON”结构：
-
-- `subscriptions`
-    - `id TEXT PRIMARY KEY`
-    - `data TEXT NOT NULL`：单个订阅源或手动节点 JSON。
-    - `created_at DATETIME`
-    - `updated_at DATETIME`
-- `profiles`
-    - `id TEXT PRIMARY KEY`
-    - `data TEXT NOT NULL`：单个订阅组 JSON。
-    - `created_at DATETIME`
-    - `updated_at DATETIME`
-- `settings`
+- **`subscriptions`**（远程机场订阅）
+    - `id TEXT PRIMARY KEY`（标准 UUID）
+    - `data TEXT NOT NULL`：单个 `http(s)` 远程订阅源 JSON
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`nodes`**（手动节点）
+    - `id TEXT PRIMARY KEY`（标准 UUID，无前缀）
+    - `data TEXT NOT NULL`：单个手动代理节点 JSON（如 `vless://`、`tuic://`、`hysteria2://`、`ss://` 等）
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`profiles`**（订阅组）
+    - `id TEXT PRIMARY KEY`（标准 UUID）
+    - `data TEXT NOT NULL`：单个订阅组 JSON（含内置 `downloadCount` 下载计数）
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`guestbook`**（访客留言）
+    - `id TEXT PRIMARY KEY`（标准 UUID）
+    - `data TEXT NOT NULL`：单条留言 JSON
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`settings`**（纯系统配置）
     - `key TEXT PRIMARY KEY`
-    - `value TEXT NOT NULL`：设置、下载计数、留言板、自定义规则模板等 JSON 或字符串值。
-    - `created_at DATETIME`
-    - `updated_at DATETIME`
-
-兼容点：
-
-- 旧 D1 结构可能把整个订阅数组写在 `subscriptions.id = 'main'`，整个订阅组数组写在 `profiles.id = 'main'`。
-- `DataMigrator.migrateLegacyD1MainRows()` 会把旧的 `main` 数组拆成行级数据，再删除 `main` 行。
-- `_parseKey()` 对 `misub_subscriptions_v1`、`misub_profiles_v1`、`worker_settings_v1` 仍映射到 D1 的 `main` 兼容行；但常规读写优先使用 `getAllSubscriptions()`、`putSubscription()`、`getAllProfiles()`、`putProfile()` 等行级方法。
+    - `value TEXT NOT NULL`：仅存放 `main`（全局系统设置）、`SYSTEM_ADMIN_PASSWORD` / `SYSTEM_COOKIE_SECRET` / `SYSTEM_AUTH_INITIALIZED`（认证配置）、`misub_clients_v1`（客户端配置）、`misub_rule_templates_v1` / `misub_dns_templates_v1`（自定义模板）
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`cache`**（临时缓存与运行态）
+    - `key TEXT PRIMARY KEY`
+    - `value TEXT NOT NULL`：存放 `node_cache_*`、`github_release_*`、`tmp_external_nodes:*`、`tg_push_rate:*`、`misub_webdav_backup_lock`、`cron_last_execution`、`misub_restore_snapshot_latest`（由后台维护任务自动清理过期项，删除订阅/订阅组时自动联动清理）
+    - `created_at DATETIME` / `updated_at DATETIME`
+- **`logs`**（日志与错误上报）
+    - `key TEXT PRIMARY KEY`
+    - `value TEXT NOT NULL`：存放 `misub_system_logs*` 访问日志分桶与 `misub_error_reports` 前端错误上报
+    - `created_at DATETIME` / `updated_at DATETIME`
 
 ## 3. 订阅源与手动节点模型
 
@@ -111,11 +105,10 @@ D1 当前采用“行级 JSON”结构：
 
 读写行为：
 
-- `GET /api/data` 返回 `misubs`。
+- `GET /api/data` 返回合并后的 `misubs`（由 `subscriptions` 表与 `nodes` 表合并排序得到）。
 - 前端 `hydrateFromData()` 将 `data.misubs` 写入 `subscriptions`，并给每项补 `isUpdating: false`。
-- `POST /api/misubs` 保存时后端为每项补 `sortIndex`。
-- KV 模式下保存整个数组到 `misub_subscriptions_v1`。
-- D1 模式下优先逐行 upsert/delete；不支持行级处理时回退到兼容主 key 写入。
+- `POST /api/misubs` 保存时后端为每项补 `sortIndex`，`D1StorageAdapter.putSubscription()` 会根据 `url` 自动将 `http(s)` 订阅源写入 `subscriptions` 表、将手动节点写入 `nodes` 表。
+- 定时同步任务（Cron）通过 `getRemoteSubscriptions()` 仅扫描 `subscriptions` 表，不读取 `nodes` 表。
 
 ## 4. 订阅组 Profile 模型
 
@@ -131,7 +124,7 @@ D1 当前采用“行级 JSON”结构：
 - `subscriptions`：订阅源 ID 列表；兼容对象数组，后端会取对象的 `id`。
 - `manualNodes`：手动节点 ID 列表。
 - `sortIndex`：保存时按数组顺序写入。
-- `downloadCount`：展示用下载次数；读取时会从 `misub_profile_download_count_<id>` 叠加。
+- `downloadCount`：展示用下载次数，直接持久化在 `profiles` 表对应行 JSON 内。
 - `expiresAt`：订阅组过期时间。
 
 输出与转换相关字段：
@@ -226,10 +219,9 @@ Profile 输出链路：
 
 保存规则：
 
-- `POST /api/settings` 会读取旧设置后与新设置浅合并。
+- `POST /api/settings` 会读取旧设置后与新设置浅合并并保存到 D1 `settings` 表的 `main` 键。
 - `customLoginPath`、`mytoken`、`profileToken` 会校验保留路径，避免与系统路由冲突。
 - 设置保存后会清除 `SettingsCache` 和节点缓存。
-- 设置保存时会尽量同步到 D1 和 KV，以保持双存储环境一致。
 
 ## 6. 自定义规则模板模型
 
@@ -283,10 +275,8 @@ External Management API（`/api/ext/v1/*`）不会直接暴露内部混合数组
 
 - `isUpdating` 是前端临时字段，保存前剔除。
 - `sortIndex` 是后端保存时补充的排序字段，D1 行级读取会按它排序。
-- `downloadCount` 主要从独立计数 key 附加，不应只看 profile JSON 内的值。
+- `downloadCount` 直接保存在 `profiles` 行数据内，保存订阅组配置时会自动保留不小于当前数据库中的计数。
 - `profile.subscriptions` 兼容字符串 ID 数组和对象数组，但新代码应优先保存 ID 数组。
 - `clashRuleLevel` 是旧字段，保存时会归一为 `ruleLevel`。
 - `defaultNodeTransform` 与 `profile.nodeTransform` 的旧结构仍被输出链路兼容；新功能应优先走 `operators` / `defaultOperators`。
-- KV 模式的订阅源和订阅组保存是全量覆盖；D1 模式优先行级 upsert/delete。
-- `worker_settings_v1` 是决定 `storageType` 的关键设置；读取存储类型时会优先通过 `SettingsCache` 查询设置。
 - 修改设置、订阅源或订阅组后，相关节点缓存会被清理；开启 `enableNodeCache` 的订阅源可在部分保存路径中保留节点缓存。
