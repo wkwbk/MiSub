@@ -13,6 +13,7 @@
     import { parseSurgeConfig } from '@/utils/protocolConverter.js';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
     import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const props = defineProps({
         show: Boolean,
@@ -128,7 +129,7 @@
         if (!props.editingNode?.url) return [];
         const lines = props.editingNode.url
             .split('\n')
-            .map((l) => l.trim())
+            .map((l) => cleanNodeUrl(l.trim()))
             .filter(Boolean);
         return lines.map((line, index) => {
             const protocol = getProtocol(line);
@@ -180,15 +181,18 @@
             return;
         }
 
-        // 单行模式下检测 Surge 配置格式并自动转换
-        if (props.isNew && !isMultiLine.value && props.editingNode?.url) {
-            const surgeNodes = parseSurgeConfig(props.editingNode.url);
-            if (surgeNodes && surgeNodes.length === 1) {
-                props.editingNode.url = surgeNodes[0].url;
-                if (!props.editingNode.name && surgeNodes[0].name) {
-                    props.editingNode.name = surgeNodes[0].name;
+        // 单行模式下检测 Surge 配置格式并自动转换，并对节点链接做导入前清洗
+        if (!isMultiLine.value && props.editingNode?.url) {
+            if (props.isNew) {
+                const surgeNodes = parseSurgeConfig(props.editingNode.url);
+                if (surgeNodes && surgeNodes.length === 1) {
+                    props.editingNode.url = surgeNodes[0].url;
+                    if (!props.editingNode.name && surgeNodes[0].name) {
+                        props.editingNode.name = surgeNodes[0].name;
+                    }
                 }
             }
+            props.editingNode.url = cleanNodeUrl(props.editingNode.url);
         }
 
         emit('confirm');

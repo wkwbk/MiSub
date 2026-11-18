@@ -13,6 +13,7 @@
     import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
     import { readFilesAsText } from '@/utils/importFile.js';
     import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const { t } = useI18n();
 
@@ -64,7 +65,7 @@
         const nodes = (backendNodes || []).map((node) => ({
             id: generateNodeId(),
             name: node.name || 'Unknown',
-            url: node.url,
+            url: cleanNodeUrl(node.url),
             enabled: true,
             protocol: node.protocol || 'unknown',
             source: 'import',

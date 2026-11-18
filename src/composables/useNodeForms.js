@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
-import { extractNodeName } from '@/lib/utils.js';
+import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 import { generateNodeId } from '@/utils/id.js';
 import { t } from '@/i18n/index.js';
 
@@ -53,6 +53,8 @@ export function useNodeForms({ addNode, updateNode }) {
             showToast(t('manualNodes.urlRequired'), 'error');
             return;
         }
+
+        editingNode.value.url = cleanNodeUrl(editingNode.value.url);
 
         if (isNew.value) {
             addNode(editingNode.value);

@@ -59,6 +59,21 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
         return fixSSEncoding(fixedUrl, options);
     }
 
+    if (fixedUrl.startsWith('tuic://')) {
+        const rest = fixedUrl.slice('tuic://'.length);
+        const authorityEnd = rest.search(/[/?#]/);
+        const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
+        const atIndex = authority.lastIndexOf('@');
+        if (atIndex !== -1) {
+            const userInfo = authority.slice(0, atIndex);
+            const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
+            if (cleanedUserInfo !== userInfo) {
+                fixedUrl = `tuic://${cleanedUserInfo}${rest.slice(atIndex)}`;
+            }
+        }
+        return normalizeFragment(fixedUrl);
+    }
+
     if (
         fixedUrl.startsWith('trojan://') ||
         fixedUrl.startsWith('vless://') ||

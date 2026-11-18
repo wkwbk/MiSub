@@ -13,6 +13,7 @@
     import { generateNodeId } from '@/utils/id.js';
     import { readFilesAsText } from '@/utils/importFile.js';
     import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { cleanNodeUrl } from '@/lib/utils.js';
 
     const { t } = useI18n();
     const { manualNodeGroups } = useManualNodes(useDataStore().markDirty);
@@ -86,7 +87,7 @@
             const nodes = (parseResult.data?.nodes || []).map((node) => ({
                 id: generateNodeId(),
                 name: node.name || 'Unknown',
-                url: node.url,
+                url: cleanNodeUrl(node.url),
                 enabled: true,
                 protocol: node.protocol || 'unknown',
                 source: 'import',

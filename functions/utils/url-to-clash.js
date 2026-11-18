@@ -857,7 +857,9 @@ function parseTuicUrl(url) {
         const atIndex = body.lastIndexOf('@');
         if (atIndex === -1) return null;
 
-        const token = body.substring(0, atIndex);
+        const rawToken = body.substring(0, atIndex);
+        // 兼容 v2rayN 等客户端把 uuid:password 中的冒号转义为 %3A 的情况
+        const token = rawToken.includes(':') ? rawToken : rawToken.replace(/%3a/gi, ':');
         const separatorIndex = token.indexOf(':');
         const rawUuid = separatorIndex === -1 ? token : token.substring(0, separatorIndex);
         const rawPassword = separatorIndex === -1 ? '' : token.substring(separatorIndex + 1);

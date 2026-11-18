@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { extractNodeName } from '@/lib/utils.js';
+import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 import { generateNodeId, generateSubscriptionId } from '@/utils/id.js';
 import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@/constants/nodeProtocols.js';
 import { normalizeManualNodeGroupName } from '@/composables/manual-nodes/groups.js';
@@ -74,7 +74,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
         const lines = text
             .split('\n')
-            .map((line) => line.trim())
+            .map((line) => cleanNodeUrl(line.trim()))
             .filter(Boolean);
         const validSubs = [];
         const validNodes = [];
@@ -83,12 +83,13 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         // 如果成功解析出 Surge 节点，使用解析结果
         if (surgeNodes && surgeNodes.length > 0) {
             surgeNodes.forEach((node) => {
+                const cleanedUrl = cleanNodeUrl(node.url);
                 // 去重检查：跳过已存在的 URL
-                if (!existingUrls.has(node.url)) {
+                if (!existingUrls.has(cleanedUrl)) {
                     validNodes.push({
                         id: generateNodeId(),
                         name: node.name || t('bulkImport.unnamed'),
-                        url: node.url,
+                        url: cleanedUrl,
                         enabled: true,
                         status: 'unchecked',
                         group: normalizedGroup || null,

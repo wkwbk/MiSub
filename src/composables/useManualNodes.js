@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast.js'; // Restored
-import { extractHostAndPort, extractNodeName } from '@/lib/utils.js';
+import { cleanNodeUrl, extractHostAndPort, extractNodeName } from '@/lib/utils.js';
 import { pingNode } from '@/utils/ping.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
@@ -121,8 +121,10 @@ export function useManualNodes(markDirty) {
     }
 
     function addNode(node) {
+        const cleanedUrl = cleanNodeUrl(node.url);
         const normalizedNode = {
             ...node,
+            url: cleanedUrl,
             group: normalizeManualNodeGroupName(node.group),
         };
         if (!normalizedNode.name) {
@@ -137,6 +139,7 @@ export function useManualNodes(markDirty) {
     function updateNode(updatedNode) {
         const normalizedNode = {
             ...updatedNode,
+            url: cleanNodeUrl(updatedNode.url),
             group: normalizeManualNodeGroupName(updatedNode.group),
         };
         // Update in shared store
@@ -178,6 +181,7 @@ export function useManualNodes(markDirty) {
         // Reverse insert so they appear in correct order when unshifted
         for (let i = nodes.length - 1; i >= 0; i--) {
             const node = { ...nodes[i] };
+            node.url = cleanNodeUrl(node.url);
             node.group = normalizeManualNodeGroupName(normalizedGroupName || node.group);
             dataStore.addSubscription(node);
         }
