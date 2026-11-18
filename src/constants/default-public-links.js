@@ -247,50 +247,6 @@ export const DEFAULT_PUBLIC_LINKS_CONFIG = {
     items: DEFAULT_PUBLIC_LINKS,
 };
 
-const DEFAULT_ICON_BY_ID = DEFAULT_PUBLIC_LINKS.reduce((map, item) => {
-    map[item.id] = item.icon;
-    return map;
-}, {});
-
-const LEGACY_V1_DEFAULT_IDS = new Set([
-    'fast-com',
-    'speedtest-net',
-    'cloudflare-speed',
-    'ustc-speedtest',
-    'ip-sb',
-    'ping0-cc',
-    'itdog-cn',
-    'sukka-ip',
-    'ipcheck-ing',
-    'pixelscan-net',
-    'dmit-io',
-    'bandwagonhost',
-    'racknerd-com',
-    'v-ps',
-    'vultr-com',
-    'tencent-cloud',
-]);
-
-function isUnmodifiedLegacyV1Defaults(items) {
-    if (!Array.isArray(items) || items.length !== LEGACY_V1_DEFAULT_IDS.size) return false;
-    return items.every((item) => item && LEGACY_V1_DEFAULT_IDS.has(item.id));
-}
-
-function isLegacyLowResBookmarkIcon(icon) {
-    if (typeof icon !== 'string') return false;
-    // Chrome bookmark 16x16 PNG data URL prefix, legacy emoji, or replaced SVG paths
-    return (
-        icon.startsWith('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQ') ||
-        icon === '🖥️' ||
-        icon === '/icons/links/net-coffee.png' ||
-        icon === '/icons/links/who-1ms-dog.svg' ||
-        icon === '/icons/links/dmit-io.svg' ||
-        icon === '/icons/links/ping0-cc.svg' ||
-        icon === '/icons/links/oracle-cloud.svg' ||
-        icon === '/icons/links/google-fiber-speedtest.svg'
-    );
-}
-
 /**
  * Resolve an HD icon URL for a link item.
  * If no icon is provided, falls back to Google 128px favicon service by domain.
@@ -311,7 +267,7 @@ export function resolvePublicLinkIcon(link) {
 
 export function normalizePublicLinksConfig(value) {
     const raw = value && typeof value === 'object' ? value : {};
-    const useDefaults = !Array.isArray(raw.items) || isUnmodifiedLegacyV1Defaults(raw.items);
+    const useDefaults = !Array.isArray(raw.items);
 
     const items = useDefaults
         ? DEFAULT_PUBLIC_LINKS.map((item) => ({ ...item }))
@@ -319,12 +275,7 @@ export function normalizePublicLinksConfig(value) {
               .filter((item) => item && typeof item === 'object' && String(item.name || '').trim())
               .map((item, index) => {
                   const id = String(item.id || `link-${index + 1}`).trim();
-                  const rawIcon = String(item.icon || '').trim();
-                  const defaultHdIcon = DEFAULT_ICON_BY_ID[id];
-                  const upgradedIcon =
-                      defaultHdIcon && (!rawIcon || isLegacyLowResBookmarkIcon(rawIcon))
-                          ? defaultHdIcon
-                          : rawIcon;
+                  const icon = String(item.icon || '').trim();
 
                   return {
                       id,
@@ -332,7 +283,7 @@ export function normalizePublicLinksConfig(value) {
                       category: String(item.category || 'other').trim() || 'other',
                       description: String(item.description || '').trim(),
                       url: String(item.url || '').trim(),
-                      icon: upgradedIcon,
+                      icon,
                       enabled: item.enabled !== false,
                   };
               });
