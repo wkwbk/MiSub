@@ -146,13 +146,19 @@ export async function handleExternalProfilesRequest(
     if (request.method === 'GET' && !id) {
         const profiles = await loadProfiles(storageAdapter);
         const enabledFilter = parseBooleanParam(url.searchParams.get('enabled'));
+        const tagFilter = (url.searchParams.get('tag') || '').trim();
         const keyword = (url.searchParams.get('keyword') || '').trim().toLowerCase();
         const filtered = profiles.filter((profile) => {
             if (enabledFilter !== undefined && (profile.enabled !== false) !== enabledFilter)
                 return false;
+            if (tagFilter) {
+                const tags = Array.isArray(profile.tags) ? profile.tags : [];
+                if (!tags.includes(tagFilter)) return false;
+            }
             if (keyword) {
+                const tagsText = Array.isArray(profile.tags) ? profile.tags.join('\n') : '';
                 const haystack =
-                    `${profile.name || ''}\n${profile.description || ''}\n${profile.customId || ''}`.toLowerCase();
+                    `${profile.name || ''}\n${profile.description || ''}\n${profile.customId || ''}\n${tagsText}`.toLowerCase();
                 if (!haystack.includes(keyword)) return false;
             }
             return true;
@@ -199,6 +205,7 @@ export async function handleExternalProfilesRequest(
             id: generateId(),
             name: String(payload.name).trim(),
             description: String(payload.description || '').trim(),
+            tags: normalizeStringArray(payload.tags),
             enabled: payload.enabled !== false,
             isPublic: payload.isPublic === true,
             customId: String(payload.customId || '').trim(),
@@ -238,6 +245,7 @@ export async function handleExternalProfilesRequest(
             ...(payload.description !== undefined
                 ? { description: String(payload.description || '').trim() }
                 : {}),
+            ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
             ...(payload.enabled !== undefined ? { enabled: payload.enabled !== false } : {}),
             ...(payload.isPublic !== undefined ? { isPublic: payload.isPublic === true } : {}),
             ...(payload.customId !== undefined

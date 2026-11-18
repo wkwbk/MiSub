@@ -1,13 +1,26 @@
 import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
+import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast';
 import { generateProfileId } from '@/utils/id.js';
+import {
+    collectTags,
+    getItemTags,
+    matchesTagFilter,
+    normalizeActiveTagFilters,
+    normalizeTagList,
+    normalizeTagName,
+    removeTagFromList,
+    renameTagInList,
+    toggleTagFilterValue,
+} from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 
 export function useProfiles(markDirty) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
+    const settingsStore = useSettingsStore();
     const { profiles, settings } = storeToRefs(dataStore);
 
     /* Pagination setup */
@@ -20,17 +33,114 @@ export function useProfiles(markDirty) {
     const profilesItemsPerPage = 6;
 
     const searchQuery = ref('');
-    const filteredProfiles = computed(() => {
-        const query = searchQuery.value.trim().toLowerCase();
-        if (!query) return profiles.value;
+    const activeTagFilters = ref([]);
 
-        return profiles.value.filter((profile) =>
+    const profileTags = computed(() => {
+        const customOrder = settingsStore.config.profileTagOrder || [];
+        return collectTags(profiles.value, customOrder);
+    });
+
+    function setTagFilters(filters) {
+        activeTagFilters.value = normalizeActiveTagFilters(filters);
+        profilesCurrentPage.value = 1;
+    }
+
+    function toggleTagFilter(tag) {
+        activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
+        profilesCurrentPage.value = 1;
+    }
+
+    function renameProfileTag(oldName, newName) {
+        const normalizedOld = normalizeTagName(oldName);
+        const normalizedNew = normalizeTagName(newName);
+        if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
+
+        let changed = false;
+        profiles.value.forEach((profile, index) => {
+            const { nextTags, changed: itemChanged } = renameTagInList(
+                getItemTags(profile),
+                normalizedOld,
+                normalizedNew
+            );
+            if (itemChanged) {
+                profiles.value[index] = {
+                    ...profile,
+                    tags: nextTags,
+                };
+                changed = true;
+            }
+        });
+
+        const customOrder = settingsStore.config.profileTagOrder || [];
+        if (customOrder.includes(normalizedOld)) {
+            const nextOrder = normalizeTagList(
+                customOrder.map((tag) => (tag === normalizedOld ? normalizedNew : tag))
+            );
+            settingsStore.updateConfig({ profileTagOrder: nextOrder });
+        }
+
+        if (activeTagFilters.value.includes(normalizedOld)) {
+            activeTagFilters.value = normalizeTagList(
+                activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag))
+            );
+        }
+
+        if (changed) markDirty();
+    }
+
+    function deleteProfileTag(tagName) {
+        const normalized = normalizeTagName(tagName);
+        if (!normalized) return;
+
+        let changed = false;
+        profiles.value.forEach((profile, index) => {
+            const { nextTags, changed: itemChanged } = removeTagFromList(
+                getItemTags(profile),
+                normalized
+            );
+            if (itemChanged) {
+                profiles.value[index] = {
+                    ...profile,
+                    tags: nextTags,
+                };
+                changed = true;
+            }
+        });
+
+        const customOrder = settingsStore.config.profileTagOrder || [];
+        const nextOrder = customOrder.filter((tag) => tag !== normalized);
+        if (nextOrder.length !== customOrder.length) {
+            settingsStore.updateConfig({ profileTagOrder: nextOrder });
+        }
+
+        if (activeTagFilters.value.includes(normalized)) {
+            activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
+        }
+
+        if (changed) markDirty();
+    }
+
+    function reorderProfileTags(newOrder) {
+        settingsStore.updateConfig({ profileTagOrder: normalizeTagList(newOrder) });
+        markDirty();
+    }
+
+    const filteredProfiles = computed(() => {
+        const tagMatched = profiles.value.filter((profile) =>
+            matchesTagFilter(profile, activeTagFilters.value)
+        );
+
+        const query = searchQuery.value.trim().toLowerCase();
+        if (!query) return tagMatched;
+
+        return tagMatched.filter((profile) =>
             [
                 profile.name,
                 profile.description,
                 profile.desc,
                 profile.remark,
                 profile.customId,
+                ...getItemTags(profile),
             ].some((value) =>
                 String(value || '')
                     .toLowerCase()
@@ -48,7 +158,7 @@ export function useProfiles(markDirty) {
         return filteredProfiles.value.slice(start, end);
     });
 
-    watch(searchQuery, () => {
+    watch([searchQuery, activeTagFilters], () => {
         profilesCurrentPage.value = 1;
     });
 
@@ -75,12 +185,13 @@ export function useProfiles(markDirty) {
             enabled: true,
             subscriptions: [],
             manualNodes: [],
+            tags: [],
             customId: '',
             transformConfigMode: 'global',
             transformConfig: '',
             ruleLevel: '',
             expiresAt: '',
-            operators: [], // [New] Initialize operator chain
+            operators: [],
         };
         showProfileModal.value = true;
     };
@@ -90,6 +201,7 @@ export function useProfiles(markDirty) {
         if (profile) {
             isNewProfile.value = false;
             editingProfile.value = JSON.parse(JSON.stringify(profile));
+            editingProfile.value.tags = getItemTags(editingProfile.value);
             if (!editingProfile.value.transformConfigMode) {
                 editingProfile.value.transformConfigMode = editingProfile.value.transformConfig
                     ? 'preset'
@@ -123,12 +235,16 @@ export function useProfiles(markDirty) {
                 return;
             }
         }
+        const normalizedProfile = {
+            ...profileData,
+            tags: normalizeTagList(profileData.tags),
+        };
         if (isNewProfile.value) {
-            dataStore.addProfile({ ...profileData, id: generateProfileId() });
+            dataStore.addProfile({ ...normalizedProfile, id: generateProfileId() });
         } else {
-            const index = profiles.value.findIndex((p) => p.id === profileData.id);
+            const index = profiles.value.findIndex((p) => p.id === normalizedProfile.id);
             if (index !== -1) {
-                profiles.value[index] = profileData;
+                profiles.value[index] = normalizedProfile;
             }
         }
         markDirty();
@@ -163,23 +279,18 @@ export function useProfiles(markDirty) {
         const identifier = profile.customId || profile.id;
         const link = `${window.location.origin}/${token}/${identifier}`;
 
-        // Clipboard API Fallback for non-secure contexts (http)
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard
                 .writeText(link)
                 .then(() => showToast(t('profiles.linkCopied'), 'success'))
                 .catch(() => showToast(t('publicProfiles.copyFailedManual'), 'error'));
         } else {
-            // Fallback method
             const textArea = document.createElement('textarea');
             textArea.value = link;
-
-            // Ensure it's not visible but part of the DOM
             textArea.style.position = 'fixed';
             textArea.style.left = '-9999px';
             textArea.style.top = '0';
             document.body.appendChild(textArea);
-
             textArea.focus();
             textArea.select();
 
@@ -190,7 +301,7 @@ export function useProfiles(markDirty) {
                 } else {
                     showToast(t('publicProfiles.copyFailedManual'), 'error');
                 }
-            } catch (err) {
+            } catch {
                 showToast(t('publicProfiles.copyFailedManual'), 'error');
             }
 
@@ -198,7 +309,6 @@ export function useProfiles(markDirty) {
         }
     };
 
-    // Clash 专用链接复制（带 builtin 转换器参数）
     const copyClashLink = (profileId) => {
         const token = settings.value?.profileToken;
         if (!token || token === 'auto' || !token.trim()) {
@@ -208,25 +318,20 @@ export function useProfiles(markDirty) {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
         if (!profile) return;
         const identifier = profile.customId || profile.id;
-        // 添加 Clash 专用参数
         const link = `${window.location.origin}/${token}/${identifier}?target=clash&builtin=1`;
 
-        // Clipboard API Fallback for non-secure contexts (http)
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard
                 .writeText(link)
                 .then(() => showToast(t('profiles.clashLinkCopied'), 'success'))
                 .catch(() => showToast(t('publicProfiles.copyFailedManual'), 'error'));
         } else {
-            // Fallback method
             const textArea = document.createElement('textarea');
             textArea.value = link;
-
             textArea.style.position = 'fixed';
             textArea.style.left = '-9999px';
             textArea.style.top = '0';
             document.body.appendChild(textArea);
-
             textArea.focus();
             textArea.select();
 
@@ -237,7 +342,7 @@ export function useProfiles(markDirty) {
                 } else {
                     showToast(t('publicProfiles.copyFailedManual'), 'error');
                 }
-            } catch (err) {
+            } catch {
                 showToast(t('publicProfiles.copyFailedManual'), 'error');
             }
 
@@ -271,13 +376,20 @@ export function useProfiles(markDirty) {
 
     return {
         profiles,
+        profileTags,
+        activeTagFilters,
+        setTagFilters,
+        toggleTagFilter,
+        renameProfileTag,
+        deleteProfileTag,
+        reorderProfileTags,
         filteredProfiles,
         searchQuery,
         editingProfile,
         isNewProfile,
         showProfileModal,
         showDeleteProfilesModal,
-        initializeProfiles: () => {}, // No-op now
+        initializeProfiles: () => {},
         handleProfileToggle,
         handleAddProfile,
         handleEditProfile,
@@ -291,8 +403,6 @@ export function useProfiles(markDirty) {
         cleanupNodes,
         cleanupAllSubscriptions,
         cleanupAllNodes,
-        cleanupAllNodes,
-        // Pagination exports
         profilesCurrentPage,
         profilesTotalPages,
         paginatedProfiles,

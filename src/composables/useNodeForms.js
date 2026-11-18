@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 import { generateNodeId } from '@/utils/id.js';
+import { getItemTags, normalizeTagList } from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 
 const isDev = import.meta.env.DEV;
@@ -19,6 +20,7 @@ export function useNodeForms({ addNode, updateNode }) {
             name: '',
             url: '',
             enabled: true,
+            tags: [],
             colorTag: null,
         };
         showModal.value = true;
@@ -33,10 +35,10 @@ export function useNodeForms({ addNode, updateNode }) {
             console.debug('UseNodeForms: openEdit called with', node);
         }
         isNew.value = false;
-        editingNode.value = { ...node };
-        if (isDev) {
-            console.debug('UseNodeForms: editingNode set to', editingNode.value);
-        }
+        editingNode.value = {
+            ...node,
+            tags: getItemTags(node),
+        };
         showModal.value = true;
     };
 
@@ -55,6 +57,7 @@ export function useNodeForms({ addNode, updateNode }) {
         }
 
         editingNode.value.url = cleanNodeUrl(editingNode.value.url);
+        editingNode.value.tags = normalizeTagList(editingNode.value.tags);
 
         if (isNew.value) {
             addNode(editingNode.value);

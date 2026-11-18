@@ -12,6 +12,10 @@
     import { useI18n } from '@/i18n/index.js';
     import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
 
+    const TagManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/TagManagementModal.vue')
+    );
+
     const { t } = useI18n();
     const route = useRoute();
 
@@ -20,10 +24,8 @@
     const { showToast } = useToastStore();
     const isProfileSorting = useSortingMode(dataStore);
 
-    // --- Dashboard deep-link (?focus=profiles) ---
-    // The health card "创建组合订阅" links here with `?focus=profiles`. We use it
-    // to open the "add profile" flow directly instead of dropping the query.
     const profilesSectionRef = ref(null);
+    const showTagManagementModal = ref(false);
 
     function applyFocusFromQuery() {
         if (!resolveProfileFocus(route.query?.focus)) return;
@@ -37,6 +39,12 @@
 
     const {
         profiles,
+        profileTags,
+        activeTagFilters,
+        setTagFilters,
+        renameProfileTag,
+        deleteProfileTag,
+        reorderProfileTags,
         editingProfile,
         isNewProfile,
         showProfileModal,
@@ -56,12 +64,26 @@
         changeProfilesPage,
     } = useProfiles(markDirty);
 
-    // For ProfileModal need access to all subscriptions and nodes
     const { subscriptions } = storeToRefs(dataStore);
     const { manualNodes } = useManualNodes(markDirty);
 
     const toggleProfileSorting = () => {
         isProfileSorting.value = !isProfileSorting.value;
+    };
+
+    const handleTagRename = (oldName, newName) => {
+        renameProfileTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+    };
+
+    const handleTagDelete = (tagName) => {
+        deleteProfileTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+    };
+
+    const handleTagReorder = (newOrder) => {
+        reorderProfileTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
     };
 
     const NodePreviewModal = defineAsyncComponent(
@@ -108,12 +130,11 @@
         }
     };
 
-    // QRCode
     const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
     const qrCodeTitle = ref('');
-    const { settings } = storeToRefs(dataStore); // Check if settings is already imported or available from dataStore
+    const { settings } = storeToRefs(dataStore);
 
     const handleQRCode = (profileId) => {
         const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
@@ -124,7 +145,6 @@
             }
             const token = settings.value.profileToken;
             const baseUrl = window.location.origin;
-            // Use customId if available, otherwise use id
             const idToUse = profile.customId || profile.id;
             qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;
             qrCodeTitle.value = profile.name || t('profiles.qrCodeTitle');
@@ -139,6 +159,8 @@
             <ProfilePanel
                 :profiles="profiles"
                 :paginated-profiles="paginatedProfiles"
+                :tags="profileTags"
+                :active-tag-filters="activeTagFilters"
                 :current-page="profilesCurrentPage"
                 :search-query="profileSearchQuery"
                 :filtered-count="filteredProfiles.length"
@@ -158,8 +180,18 @@
                 @viewLogs="handleViewLogs"
                 @qrcode="handleQRCode"
                 @update-search="profileSearchQuery = $event"
+                @set-tag-filters="setTagFilters"
+                @manage-tags="showTagManagementModal = true"
             />
         </div>
+
+        <TagManagementModal
+            v-model:show="showTagManagementModal"
+            :tags="profileTags"
+            @rename="handleTagRename"
+            @delete="handleTagDelete"
+            @reorder="handleTagReorder"
+        />
 
         <LogModal
             :show="showLogModal"

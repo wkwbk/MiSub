@@ -3,7 +3,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 
-describe('手动节点分组管理', () => {
+describe('手动节点标签管理与批量操作', () => {
     let dataStore;
     let markDirty;
     let manualNodes;
@@ -13,106 +13,81 @@ describe('手动节点分组管理', () => {
         dataStore = useDataStore();
         markDirty = () => {};
 
-        // 初始化测试数据：3个分组，每组2个节点
         dataStore.subscriptions = [
-            { id: 'n1', url: 'ss://test1', name: 'Node1', group: 'USA', enabled: true },
-            { id: 'n2', url: 'ss://test2', name: 'Node2', group: 'USA', enabled: true },
-            { id: 'n3', url: 'ss://test3', name: 'Node3', group: 'Japan', enabled: true },
-            { id: 'n4', url: 'ss://test4', name: 'Node4', group: 'Japan', enabled: true },
-            { id: 'n5', url: 'ss://test5', name: 'Node5', group: 'HK', enabled: true },
-            { id: 'n6', url: 'ss://test6', name: 'Node6', group: 'HK', enabled: true },
+            { id: 'n1', url: 'ss://test1', name: 'Node1', tags: ['USA', '家宽'], enabled: true },
+            { id: 'n2', url: 'ss://test2', name: 'Node2', tags: ['USA'], enabled: true },
+            { id: 'n3', url: 'ss://test3', name: 'Node3', tags: ['Japan'], enabled: true },
+            { id: 'n4', url: 'ss://test4', name: 'Node4', group: 'HK', enabled: true },
         ];
 
         manualNodes = useManualNodes(markDirty);
     });
 
-    it('分组顺序默认按节点首次出现顺序推导', () => {
-        const groups = manualNodes.manualNodeGroups.value;
-
-        // 节点顺序：USA, USA, Japan, Japan, HK, HK
-        // 首次出现顺序：USA, Japan, HK
-        expect(groups).toEqual(['USA', 'Japan', 'HK']);
+    it('标签顺序默认按首次出现顺序推导，并兼容旧版 group 字段', () => {
+        expect(manualNodes.manualNodeTags.value).toEqual(['USA', '家宽', 'Japan', 'HK']);
     });
 
-    it('可以调整分组顺序（不影响节点顺序）', () => {
-        // 用户想把 HK 移到第一位
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
+    it('可以调整标签顺序且新标签自动追加到末尾', () => {
+        manualNodes.reorderTags(['HK', 'Japan', 'USA', '家宽']);
+        expect(manualNodes.manualNodeTags.value).toEqual(['HK', 'Japan', 'USA', '家宽']);
 
-        const groups = manualNodes.manualNodeGroups.value;
-        expect(groups).toEqual(['HK', 'USA', 'Japan']);
-
-        // 节点顺序不变
-        const nodeGroups = dataStore.subscriptions.map((n) => n.group);
-        expect(nodeGroups).toEqual(['USA', 'USA', 'Japan', 'Japan', 'HK', 'HK']);
-    });
-
-    it('调整分组顺序后，新增分组自动追加到末尾', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-
-        // 添加新分组 Singapore
         dataStore.addSubscription({
-            id: 'n7',
-            url: 'ss://test7',
-            name: 'Node7',
-            group: 'Singapore',
+            id: 'n5',
+            url: 'ss://test5',
+            name: 'Node5',
+            tags: ['Singapore'],
             enabled: true,
         });
-
-        const groups = manualNodes.manualNodeGroups.value;
-        expect(groups).toEqual(['HK', 'USA', 'Japan', 'Singapore']);
+        expect(manualNodes.manualNodeTags.value).toEqual([
+            'HK',
+            'Japan',
+            'USA',
+            '家宽',
+            'Singapore',
+        ]);
     });
 
-    it('删除分组时，从自定义排序中移除', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        manualNodes.deleteGroup('USA');
+    it('删除标签时仅移除该标签并保留节点的其他标签', () => {
+        manualNodes.reorderTags(['HK', 'USA', '家宽', 'Japan']);
+        manualNodes.deleteTag('USA');
 
-        const groups = manualNodes.manualNodeGroups.value;
-        expect(groups).toEqual(['HK', 'Japan']);
+        expect(manualNodes.manualNodeTags.value).toEqual(['HK', '家宽', 'Japan']);
+        expect(dataStore.subscriptions[0].tags).toEqual(['家宽']);
+        expect(dataStore.subscriptions[0].group).toBe('家宽');
+        expect(dataStore.subscriptions[1].tags).toEqual([]);
+        expect(dataStore.subscriptions[1].group).toBe('');
     });
 
-    it('重命名分组时，在自定义排序中同步更新', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        manualNodes.renameGroup('USA', 'America');
-
-        const groups = manualNodes.manualNodeGroups.value;
-        expect(groups).toEqual(['HK', 'America', 'Japan']);
+    it('重命名标签时自动去重并同步更新首个标签前缀字段', () => {
+        manualNodes.renameTag('USA', '家宽');
+        // n1 原本有 ['USA', '家宽']，重命名后自动合并去重为 ['家宽']
+        expect(dataStore.subscriptions[0].tags).toEqual(['家宽']);
+        expect(dataStore.subscriptions[1].tags).toEqual(['家宽']);
     });
 
-    it('重命名不存在的分组应不产生影响', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        const beforeGroups = [...manualNodes.manualNodeGroups.value];
+    it('支持批量追加、覆盖、移除、清空标签', () => {
+        manualNodes.batchUpdateTags(['n2', 'n3'], { mode: 'append', tags: ['解锁'] });
+        expect(dataStore.subscriptions[1].tags).toEqual(['USA', '解锁']);
+        expect(dataStore.subscriptions[2].tags).toEqual(['Japan', '解锁']);
 
-        manualNodes.renameGroup('NonExistent', 'NewName');
+        manualNodes.batchUpdateTags(['n2'], { mode: 'replace', tags: ['主力', '低倍率'] });
+        expect(dataStore.subscriptions[1].tags).toEqual(['主力', '低倍率']);
+        expect(dataStore.subscriptions[1].group).toBe('主力');
 
-        const afterGroups = manualNodes.manualNodeGroups.value;
-        expect(afterGroups).toEqual(beforeGroups);
-    });
+        manualNodes.batchUpdateTags(['n2'], { mode: 'remove', tags: ['主力'] });
+        expect(dataStore.subscriptions[1].tags).toEqual(['低倍率']);
+        expect(dataStore.subscriptions[1].group).toBe('低倍率');
 
-    it('删除不存在的分组应不产生影响', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        const beforeGroups = [...manualNodes.manualNodeGroups.value];
-
-        manualNodes.deleteGroup('NonExistent');
-
-        const afterGroups = manualNodes.manualNodeGroups.value;
-        expect(afterGroups).toEqual(beforeGroups);
-    });
-
-    it('重命名为空字符串应被忽略', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        const beforeGroups = [...manualNodes.manualNodeGroups.value];
-
-        manualNodes.renameGroup('USA', '');
-
-        const afterGroups = manualNodes.manualNodeGroups.value;
-        expect(afterGroups).toEqual(beforeGroups);
+        manualNodes.batchUpdateTags(['n2'], { mode: 'clear', tags: [] });
+        expect(dataStore.subscriptions[1].tags).toEqual([]);
+        expect(dataStore.subscriptions[1].group).toBe('');
     });
 
     it('对子集排序时只替换可见节点顺序并保留隐藏节点和订阅', () => {
         dataStore.subscriptions = [
-            { id: 'a1', url: 'ss://a1', name: 'A1', group: 'A', enabled: true },
-            { id: 'b1', url: 'ss://b1', name: 'B1', group: 'B', enabled: true },
-            { id: 'a2', url: 'ss://a2', name: 'A2', group: 'A', enabled: true },
+            { id: 'a1', url: 'ss://a1', name: 'A1', tags: ['A'], enabled: true },
+            { id: 'b1', url: 'ss://b1', name: 'B1', tags: ['B'], enabled: true },
+            { id: 'a2', url: 'ss://a2', name: 'A2', tags: ['A'], enabled: true },
             {
                 id: 's1',
                 url: 'https://subscription.example/sub',
@@ -122,20 +97,10 @@ describe('手动节点分组管理', () => {
         ];
 
         manualNodes.reorderManualNodes([
-            { id: 'a2', url: 'ss://a2', name: 'A2', group: 'A', enabled: true },
-            { id: 'a1', url: 'ss://a1', name: 'A1', group: 'A', enabled: true },
+            { id: 'a2', url: 'ss://a2', name: 'A2', tags: ['A'], enabled: true },
+            { id: 'a1', url: 'ss://a1', name: 'A1', tags: ['A'], enabled: true },
         ]);
 
         expect(dataStore.subscriptions.map((node) => node.id)).toEqual(['a2', 'b1', 'a1', 's1']);
-    });
-
-    it('重命名为相同名称应被忽略', () => {
-        manualNodes.reorderGroups(['HK', 'USA', 'Japan']);
-        const beforeGroups = [...manualNodes.manualNodeGroups.value];
-
-        manualNodes.renameGroup('USA', 'USA');
-
-        const afterGroups = manualNodes.manualNodeGroups.value;
-        expect(afterGroups).toEqual(beforeGroups);
     });
 });

@@ -46,6 +46,9 @@ function normalizeProfile(profile = {}) {
     normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
     normalized.manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
     normalized.subProfiles = Array.isArray(profile.subProfiles) ? profile.subProfiles : [];
+    if (Array.isArray(profile.tags)) {
+        normalized.tags = profile.tags.map((tag) => String(tag || '').trim()).filter(Boolean);
+    }
     normalized.enabled = profile.enabled !== false;
     normalized.isPublic = profile.isPublic === true;
     normalized.downloadCount = Number(profile.downloadCount) || 0;
@@ -773,6 +776,7 @@ export async function handlePublicProfilesRequest(env) {
                 id: p.id,
                 name: p.name,
                 description: p.description || '',
+                tags: Array.isArray(p.tags) ? p.tags : [],
                 customId: p.customId,
                 updatedAt: p.updatedAt,
                 subscriptionCount: (p.subscriptions || []).length,

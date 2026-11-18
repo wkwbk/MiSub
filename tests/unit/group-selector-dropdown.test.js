@@ -1,47 +1,54 @@
 import { describe, expect, it } from 'vitest';
-import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
-import GroupSelector from '@/components/ui/GroupSelector.vue';
+import TagInput from '@/components/ui/TagInput.vue';
 
-describe('GroupSelector', () => {
-    it('点击下拉箭头时展示全部已有分组，而不是只展示当前分组', async () => {
-        const wrapper = mount(GroupSelector, {
+describe('TagInput', () => {
+    it('opens suggestion dropdown on focus and toggles existing tags', async () => {
+        const wrapper = mount(TagInput, {
             props: {
-                modelValue: 'FreezeHost',
-                groups: ['FreezeHost', 'S5'],
-                placeholder: '选择或输入新分组...',
+                modelValue: ['主力'],
+                suggestions: ['主力', '流媒体', '家宽'],
+                placeholder: '输入或选择标签...',
             },
             attachTo: document.body,
-            global: { stubs: { Teleport: false } },
         });
 
-        await wrapper.find('[data-testid="group-selector-toggle"]').trigger('click');
-        await nextTick();
-        await nextTick();
+        const input = wrapper.get('input[role="combobox"]');
+        await input.trigger('focus');
 
-        expect(document.body.textContent).toContain('FreezeHost');
-        expect(document.body.textContent).toContain('S5');
+        const dropdown = document.body.querySelector('[data-testid="tag-input-dropdown"]');
+        expect(dropdown).not.toBeNull();
+        expect(dropdown.textContent).toContain('主力');
+        expect(dropdown.textContent).toContain('流媒体');
+        expect(dropdown.textContent).toContain('家宽');
 
+        const options = Array.from(dropdown.querySelectorAll('[role="option"]'));
+        const mediaOption = options.find((el) => el.textContent.includes('流媒体'));
+        mediaOption.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        await wrapper.vm.$nextTick();
+
+        expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([['主力', '流媒体']]);
         wrapper.unmount();
     });
 
-    it('已有分组只存在首尾空白差异时不显示创建新分组', async () => {
-        const wrapper = mount(GroupSelector, {
+    it('creates a new tag on Enter and removes last tag on Backspace when input is empty', async () => {
+        const wrapper = mount(TagInput, {
             props: {
-                modelValue: ' S5 ',
-                groups: ['S5'],
-                placeholder: '选择或输入新分组...',
+                modelValue: ['香港', '家宽'],
+                suggestions: ['香港'],
             },
             attachTo: document.body,
-            global: { stubs: { Teleport: false } },
         });
 
-        await wrapper.find('[data-testid="group-selector-toggle"]').trigger('click');
-        await nextTick();
-        await nextTick();
+        const input = wrapper.get('input[role="combobox"]');
+        await input.setValue('住宅IP');
+        await input.trigger('keydown', { key: 'Enter' });
 
-        expect(document.body.textContent).toContain('S5');
-        expect(document.body.textContent).not.toContain('创建新分组');
+        expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([['香港', '家宽', '住宅IP']]);
+
+        await input.setValue('');
+        await input.trigger('keydown', { key: 'Backspace' });
+        expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([['香港']]);
 
         wrapper.unmount();
     });

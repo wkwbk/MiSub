@@ -1,24 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import {
-    collectManualNodeGroups,
-    normalizeManualNodeGroupName,
-} from '@/composables/manual-nodes/groups.js';
+import { collectTags, normalizeTagList, normalizeTagName } from '@/utils/tags.js';
 
-describe('manual node group normalization', () => {
-    it('规范化分组名时去掉首尾空白', () => {
-        expect(normalizeManualNodeGroupName('  S5  ')).toBe('S5');
-        expect(normalizeManualNodeGroupName('\tFreezeHost\n')).toBe('FreezeHost');
-        expect(normalizeManualNodeGroupName(null)).toBe('');
+describe('manual node tag normalization', () => {
+    it('规范化标签名时去掉首尾空白', () => {
+        expect(normalizeTagName('  S5  ')).toBe('S5');
+        expect(normalizeTagName('\tFreezeHost\n')).toBe('FreezeHost');
+        expect(normalizeTagName(null)).toBe('');
     });
 
-    it('收集手动节点分组时按 trim 后的名称去重，并保留现有节点中的首次出现顺序', () => {
-        const groups = collectManualNodeGroups([
-            { id: 'n1', group: 'S5' },
+    it('收集节点标签时按 trim 后的名称去重，并保留首次出现顺序', () => {
+        const tags = collectTags([
+            { id: 'n1', tags: ['S5', ' 家宽 '] },
             { id: 'n2', group: ' S5 ' },
-            { id: 'n3', group: 'FreezeHost' },
-            { id: 'n4', group: '' },
+            { id: 'n3', tags: ['FreezeHost'] },
+            { id: 'n4', tags: [] },
         ]);
 
-        expect(groups).toEqual(['S5', 'FreezeHost']);
+        expect(tags).toEqual(['S5', '家宽', 'FreezeHost']);
+        expect(normalizeTagList('S5, 家宽，S5')).toEqual(['S5', '家宽']);
     });
 });

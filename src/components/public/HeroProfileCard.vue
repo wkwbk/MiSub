@@ -1,6 +1,8 @@
 <script setup>
+    import { computed } from 'vue';
     import { Download, Eye, Link2, QrCode } from '@lucide/vue';
     import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
+    import { getItemTags } from '@/utils/tags.js';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -15,6 +17,8 @@
             default: false,
         },
     });
+
+    const profileTags = computed(() => getItemTags(props.profile));
 
     const emit = defineEmits([
         'quick-import',
@@ -50,6 +54,20 @@
                         >
                             {{ profile.name }}
                         </h3>
+                        <div
+                            v-if="profileTags.length > 0"
+                            data-testid="public-hero-profile-tags"
+                            class="mt-2 flex flex-wrap items-center justify-center lg:justify-start gap-1.5"
+                        >
+                            <span
+                                v-for="tag in profileTags"
+                                :key="tag"
+                                class="max-w-[140px] truncate rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-transparent px-2 py-0.5 text-[11px] font-medium text-zinc-600 dark:text-zinc-400"
+                                :title="tag"
+                            >
+                                {{ tag }}
+                            </span>
+                        </div>
                     </div>
                 </div>
 

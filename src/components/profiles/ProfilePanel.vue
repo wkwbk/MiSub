@@ -1,21 +1,38 @@
 <script setup>
-    import { computed } from 'vue';
+    import { computed, ref } from 'vue';
     import { Search, X } from '@lucide/vue';
     import draggable from 'vuedraggable';
     import ProfileCard from '@/components/profiles/ProfileCard.vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
     import PanelPagination from '@/components/shared/PanelPagination.vue';
     import SortingBanner from '@/components/shared/SortingBanner.vue';
+    import TagFilterBar from '@/components/shared/TagFilterBar.vue';
     import EmptyState from '@/components/ui/EmptyState.vue';
     import { useI18n } from '@/i18n/index.js';
+    import {
+        collectTags,
+        normalizeActiveTagFilters,
+        toggleTagFilterValue,
+    } from '@/utils/tags.js';
 
     const { t } = useI18n();
 
     const props = defineProps({
-        profiles: Array,
+        profiles: {
+            type: Array,
+            default: () => [],
+        },
         paginatedProfiles: {
             type: Array,
             default: () => [],
+        },
+        tags: {
+            type: Array,
+            default: undefined,
+        },
+        activeTagFilters: {
+            type: Array,
+            default: undefined,
         },
         currentPage: Number,
         totalPages: Number,
@@ -46,12 +63,35 @@
         'qrcode',
         'toggle-sort',
         'updateSearch',
+        'set-tag-filters',
+        'manage-tags',
     ]);
 
     const searchModel = computed({
         get: () => props.searchQuery,
         set: (value) => emit('updateSearch', value),
     });
+
+    const localTagFilters = ref([]);
+    const currentTagFilters = computed(() =>
+        props.activeTagFilters !== undefined
+            ? normalizeActiveTagFilters(props.activeTagFilters)
+            : localTagFilters.value
+    );
+
+    const availableTags = computed(() =>
+        Array.isArray(props.tags) ? props.tags : collectTags(props.profiles)
+    );
+
+    const setTagFilters = (filters) => {
+        const next = normalizeActiveTagFilters(filters);
+        localTagFilters.value = next;
+        emit('set-tag-filters', next);
+    };
+
+    const toggleTag = (tag) => {
+        setTagFilters(toggleTagFilterValue(currentTagFilters.value, tag));
+    };
 
     const visibleCount = computed(() => props.filteredCount ?? props.profiles.length);
 
@@ -79,7 +119,6 @@
     const handleChangePage = (page) => emit('changePage', page);
     const handleDeleteAll = () => emit('deleteAll');
     const handleToggleSort = () => emit('toggle-sort');
-
     const handleQRCode = (profileId) => emit('qrcode', profileId);
 
     const draggableProfiles = computed({
@@ -136,6 +175,18 @@
                                             : t('actions.manualSort')
                                     }}
                                 </button>
+                                <button
+                                    v-if="availableTags.length > 0"
+                                    type="button"
+                                    data-testid="manage-profile-tags"
+                                    @click="
+                                        emit('manage-tags');
+                                        close();
+                                    "
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                >
+                                    {{ t('actions.manageTags') }}
+                                </button>
                                 <div
                                     class="my-1 border-t border-zinc-200 dark:border-white/10"
                                 ></div>
@@ -182,6 +233,16 @@
                             <X class="h-3.5 w-3.5" />
                         </button>
                     </div>
+                </div>
+
+                <!-- Tag Filter Bar -->
+                <div v-if="availableTags.length > 0 || currentTagFilters.length > 0" class="mt-3">
+                    <TagFilterBar
+                        :tags="availableTags"
+                        :active-filters="currentTagFilters"
+                        test-id-prefix="profile-tag"
+                        @update:active-filters="setTagFilters"
+                    />
                 </div>
             </div>
         </div>
@@ -242,6 +303,7 @@
                         @qrcode="handleQRCode(profile.id)"
                         @view-logs="emit('viewLogs', profile.id)"
                         @open-copy="handleOpenCopy(profile.id)"
+                        @filter-tag="toggleTag"
                     />
                 </div>
             </div>
@@ -252,13 +314,24 @@
                 <p class="text-sm font-medium text-zinc-200">
                     {{ t('profiles.noSearchResults') }}
                 </p>
-                <button
-                    type="button"
-                    class="mt-3 inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
-                    @click="searchModel = ''"
-                >
-                    {{ t('actions.clearSearch') }}
-                </button>
+                <div class="mt-3 flex items-center justify-center gap-2">
+                    <button
+                        v-if="searchQuery"
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                        @click="searchModel = ''"
+                    >
+                        {{ t('actions.clearSearch') }}
+                    </button>
+                    <button
+                        v-if="currentTagFilters.length > 0"
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                        @click="setTagFilters([])"
+                    >
+                        {{ t('tags.clearFilter') }}
+                    </button>
+                </div>
             </div>
             <PanelPagination
                 v-if="

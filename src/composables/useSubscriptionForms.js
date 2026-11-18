@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
-import { normalizeSubscriptionGroupName } from '@/utils/subscription-groups.js';
+import { applyItemTags, getItemTags } from '@/utils/tags.js';
 import { generateSubscriptionId } from '@/utils/id.js';
 import { t } from '@/i18n/index.js';
 
@@ -26,6 +26,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             excludeTraffic: false,
             website: '',
             notes: '',
+            tags: [],
             group: '',
         };
         showModal.value = true;
@@ -40,18 +41,12 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             console.debug('UseSubscriptionForms: openEdit called with', sub);
         }
         isNew.value = false;
-        // Deep copy to avoid mutating store state directly before save
         try {
-            editingSubscription.value = JSON.parse(JSON.stringify(sub));
-            if (isDev) {
-                console.debug(
-                    'UseSubscriptionForms: editingSubscription set to',
-                    editingSubscription.value
-                );
-            }
+            const cloned = JSON.parse(JSON.stringify(sub));
+            cloned.tags = getItemTags(cloned);
+            editingSubscription.value = cloned;
             showModal.value = true;
         } catch (e) {
-            // 克隆失败会导致编辑弹窗打不开，必须告知用户，否则点击「编辑」毫无反应
             console.error('UseSubscriptionForms: Failed to clone subscription', e);
             showToast(t('subscriptions.openEditFailed'), 'error');
         }
@@ -67,12 +62,11 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
             return;
         }
 
-        const payload = {
-            ...editingSubscription.value,
-            group: normalizeSubscriptionGroupName(
-                editingSubscription.value.group ?? editingSubscription.value.airportIdentity?.name
-            ),
-        };
+        const rawTags =
+            editingSubscription.value.tags !== undefined
+                ? editingSubscription.value.tags
+                : getItemTags(editingSubscription.value);
+        const payload = applyItemTags({ ...editingSubscription.value }, rawTags);
         delete payload.airportIdentity;
 
         if (isNew.value) {

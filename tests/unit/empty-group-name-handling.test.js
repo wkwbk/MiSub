@@ -1,93 +1,67 @@
 import { describe, expect, it } from 'vitest';
 import {
-    buildGroupedManualNodes,
-    collectManualNodeGroups,
-    normalizeManualNodeGroupName,
-} from '@/composables/manual-nodes/groups.js';
+    collectTags,
+    matchesTagFilter,
+    normalizeTagList,
+    normalizeTagName,
+    UNTAGGED_KEY,
+} from '@/utils/tags.js';
 
-describe('空分组名处理一致性', () => {
-    it('normalizeManualNodeGroupName 应将空值、空字符串、空格规范化为空字符串', () => {
-        expect(normalizeManualNodeGroupName('')).toBe('');
-        expect(normalizeManualNodeGroupName('   ')).toBe('');
-        expect(normalizeManualNodeGroupName(null)).toBe('');
-        expect(normalizeManualNodeGroupName(undefined)).toBe('');
+describe('空标签名与无标签处理一致性', () => {
+    it('normalizeTagName 应将空值、空字符串、空格及默认占位词规范化为空字符串', () => {
+        expect(normalizeTagName('')).toBe('');
+        expect(normalizeTagName('   ')).toBe('');
+        expect(normalizeTagName(null)).toBe('');
+        expect(normalizeTagName(undefined)).toBe('');
+        expect(normalizeTagName('默认')).toBe('');
+        expect(normalizeTagName('Default')).toBe('');
+        expect(normalizeTagName(UNTAGGED_KEY)).toBe('');
     });
 
-    it('collectManualNodeGroups 应跳过空分组名的节点', () => {
+    it('collectTags 应跳过无标签的节点，并兼容旧版非空 group', () => {
         const nodes = [
-            { id: 'n1', url: 'ss://test1', group: 'USA' },
-            { id: 'n2', url: 'ss://test2', group: '' },
+            { id: 'n1', url: 'ss://test1', tags: ['USA', '家宽'] },
+            { id: 'n2', url: 'ss://test2', tags: [] },
             { id: 'n3', url: 'ss://test3', group: '   ' },
             { id: 'n4', url: 'ss://test4', group: null },
             { id: 'n5', url: 'ss://test5', group: 'Japan' },
         ];
 
-        const groups = collectManualNodeGroups(nodes);
-
-        // 只应包含非空分组
-        expect(groups).toEqual(['USA', 'Japan']);
-        expect(groups).not.toContain('');
+        const tags = collectTags(nodes);
+        expect(tags).toEqual(['USA', '家宽', 'Japan']);
+        expect(tags).not.toContain('');
     });
 
-    it('buildGroupedManualNodes 应将空分组名节点归入"默认"分组', () => {
+    it('matchesTagFilter 支持无标签哨兵与多标签交集匹配', () => {
         const nodes = [
-            { id: 'n1', url: 'ss://test1', group: 'USA' },
-            { id: 'n2', url: 'ss://test2', group: '' },
-            { id: 'n3', url: 'ss://test3', group: '   ' },
-            { id: 'n4', url: 'ss://test4', group: null },
+            { id: 'n1', url: 'ss://test1', tags: ['HK', '家宽', '解锁'] },
+            { id: 'n2', url: 'ss://test2', tags: ['HK'] },
+            { id: 'n3', url: 'ss://test3', tags: [] },
+            { id: 'n4', url: 'ss://test4', group: '   ' },
         ];
 
-        const manualNodeGroups = ['USA']; // collectManualNodeGroups 的输出
-        const grouped = buildGroupedManualNodes(nodes, manualNodeGroups);
+        const untagged = nodes.filter((n) => matchesTagFilter(n, [UNTAGGED_KEY]));
+        expect(untagged.map((n) => n.id)).toEqual(['n3', 'n4']);
 
-        // 空分组名节点应归入"默认"
-        expect(grouped['默认']).toHaveLength(3);
-        expect(grouped['默认'].map((n) => n.id)).toEqual(['n2', 'n3', 'n4']);
+        const hkOnly = nodes.filter((n) => matchesTagFilter(n, ['HK']));
+        expect(hkOnly.map((n) => n.id)).toEqual(['n1', 'n2']);
 
-        // USA 分组正常
-        expect(grouped['USA']).toHaveLength(1);
-        expect(grouped['USA'][0].id).toBe('n1');
+        const intersection = nodes.filter((n) => matchesTagFilter(n, ['HK', '家宽']));
+        expect(intersection.map((n) => n.id)).toEqual(['n1']);
     });
 
-    it('完整流程：空分组名节点应始终显示在"默认"分组', () => {
+    it('自定义标签顺序不应包含空字符串', () => {
         const nodes = [
-            { id: 'n1', url: 'ss://test1', group: 'HK' },
-            { id: 'n2', url: 'ss://test2', group: '' },
-            { id: 'n3', url: 'ss://test3', group: 'USA' },
-            { id: 'n4', url: 'ss://test4', group: null },
+            { id: 'n1', url: 'ss://test1', tags: ['USA'] },
+            { id: 'n2', url: 'ss://test2', tags: [] },
+            { id: 'n3', url: 'ss://test3', tags: ['Japan'] },
         ];
 
-        // Step 1: 收集分组列表
-        const groups = collectManualNodeGroups(nodes);
-        expect(groups).toEqual(['HK', 'USA']);
-
-        // Step 2: 构建分组节点映射
-        const grouped = buildGroupedManualNodes(nodes, groups);
-
-        // 验证空分组名节点归入"默认"
-        expect(grouped['默认']).toBeDefined();
-        expect(grouped['默认']).toHaveLength(2);
-        expect(grouped['默认'].map((n) => n.id)).toEqual(['n2', 'n4']);
-
-        // 验证命名分组正常
-        expect(grouped['HK']).toHaveLength(1);
-        expect(grouped['USA']).toHaveLength(1);
-    });
-
-    it('自定义分组顺序不应包含空字符串', () => {
-        const nodes = [
-            { id: 'n1', url: 'ss://test1', group: 'USA' },
-            { id: 'n2', url: 'ss://test2', group: '' },
-            { id: 'n3', url: 'ss://test3', group: 'Japan' },
-        ];
-
-        // 错误的自定义顺序（包含空字符串）
         const customOrder = ['Japan', '', 'USA'];
+        const tags = collectTags(nodes, customOrder);
 
-        const groups = collectManualNodeGroups(nodes, customOrder);
-
-        // 空字符串不应出现在结果中
-        expect(groups).not.toContain('');
-        expect(groups).toEqual(['Japan', 'USA']);
+        expect(tags).not.toContain('');
+        expect(tags).toEqual(['Japan', 'USA']);
+        expect(normalizeTagList([' A ', '', 'A', 'B'])).toEqual(['A', 'B']);
     });
 });

@@ -8,17 +8,23 @@ import { handleError } from '@/utils/errorHandler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
 import {
-    collectSubscriptionGroups,
-    getSubscriptionGroup,
-    normalizeSubscriptionGroupName,
-} from '@/utils/subscription-groups.js';
+    applyItemTags,
+    collectTags,
+    getItemTags,
+    matchesTagFilter,
+    normalizeActiveTagFilters,
+    normalizeTagList,
+    normalizeTagName,
+    removeTagFromList,
+    renameTagInList,
+    toggleTagFilterValue,
+} from '@/utils/tags.js';
 
 const isDev = import.meta.env.DEV;
 
 export function useSubscriptions(markDirty) {
     const { showToast } = useToastStore();
     const dataStore = useDataStore();
-    // Rename the store ref to avoid confusion, as it contains ALL items
     const { subscriptions: allSubscriptions } = storeToRefs(dataStore);
 
     // Filtered computed property: Only http/https links are "Subscriptions"
@@ -29,71 +35,118 @@ export function useSubscriptions(markDirty) {
     });
 
     const searchQuery = ref('');
-    const activeGroupFilter = ref(null);
+    const activeTagFilters = ref([]);
     const refreshError = ref(false);
     const lastRefreshAt = ref(null);
     const isRefreshing = ref(false);
-    const subscriptionGroups = computed(() => collectSubscriptionGroups(subscriptions.value));
 
-    function setGroupFilter(group) {
-        activeGroupFilter.value = group || null;
+    const getSubscriptionTagOrder = () => dataStore.settings?.subscriptionTagOrder || [];
+    const setSubscriptionTagOrder = (nextOrder) => {
+        if (dataStore.settings && typeof dataStore.settings === 'object') {
+            dataStore.settings.subscriptionTagOrder = nextOrder;
+        }
+    };
+
+    const subscriptionTags = computed(() => {
+        return collectTags(subscriptions.value, getSubscriptionTagOrder());
+    });
+
+    function setTagFilters(filters) {
+        activeTagFilters.value = normalizeActiveTagFilters(filters);
     }
 
-    function renameSubscriptionGroup(oldName, newName) {
-        const normalizedOld = normalizeSubscriptionGroupName(oldName);
-        const normalizedNew = normalizeSubscriptionGroupName(newName);
+    function toggleTagFilter(tag) {
+        activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
+    }
+
+    function renameSubscriptionTag(oldName, newName) {
+        const normalizedOld = normalizeTagName(oldName);
+        const normalizedNew = normalizeTagName(newName);
         if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
 
         let changed = false;
         subscriptions.value.forEach((sub) => {
-            if (getSubscriptionGroup(sub) === normalizedOld) {
-                dataStore.updateSubscription(sub.id, {
-                    ...sub,
-                    group: normalizedNew,
-                    airportIdentity: null,
-                });
+            const { nextTags, changed: itemChanged } = renameTagInList(
+                getItemTags(sub),
+                normalizedOld,
+                normalizedNew
+            );
+            if (itemChanged) {
+                dataStore.updateSubscription(sub.id, applyItemTags(sub, nextTags));
                 changed = true;
             }
         });
-        if (activeGroupFilter.value === normalizedOld) {
-            activeGroupFilter.value = normalizedNew;
+
+        const customOrder = getSubscriptionTagOrder();
+        if (customOrder.includes(normalizedOld)) {
+            const nextOrder = normalizeTagList(
+                customOrder.map((tag) => (tag === normalizedOld ? normalizedNew : tag))
+            );
+            setSubscriptionTagOrder(nextOrder);
         }
+
+        if (activeTagFilters.value.includes(normalizedOld)) {
+            activeTagFilters.value = normalizeTagList(
+                activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag))
+            );
+        }
+
         if (changed) markDirty();
     }
 
-    function deleteSubscriptionGroup(groupName) {
-        const normalized = normalizeSubscriptionGroupName(groupName);
+    function deleteSubscriptionTag(tagName) {
+        const normalized = normalizeTagName(tagName);
         if (!normalized) return;
 
         let changed = false;
         subscriptions.value.forEach((sub) => {
-            if (getSubscriptionGroup(sub) === normalized) {
-                dataStore.updateSubscription(sub.id, {
-                    ...sub,
-                    group: '',
-                    airportIdentity: null,
-                });
+            const { nextTags, changed: itemChanged } = removeTagFromList(
+                getItemTags(sub),
+                normalized
+            );
+            if (itemChanged) {
+                dataStore.updateSubscription(sub.id, applyItemTags(sub, nextTags));
                 changed = true;
             }
         });
-        if (activeGroupFilter.value === normalized) {
-            activeGroupFilter.value = null;
+
+        const customOrder = getSubscriptionTagOrder();
+        const nextOrder = customOrder.filter((tag) => tag !== normalized);
+        if (nextOrder.length !== customOrder.length) {
+            setSubscriptionTagOrder(nextOrder);
         }
+
+        if (activeTagFilters.value.includes(normalized)) {
+            activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
+        }
+
         if (changed) markDirty();
     }
-    const filteredSubscriptions = computed(() => {
-        const query = searchQuery.value.trim().toLowerCase();
-        if (!query) return subscriptions.value;
 
-        return subscriptions.value.filter((sub) =>
+    function reorderSubscriptionTags(newOrder) {
+        setSubscriptionTagOrder(normalizeTagList(newOrder));
+        markDirty();
+    }
+
+    const filteredSubscriptions = computed(() => {
+        const tagMatched = subscriptions.value.filter((sub) =>
+            matchesTagFilter(sub, activeTagFilters.value)
+        );
+
+        const query = searchQuery.value.trim().toLowerCase();
+        if (!query) return tagMatched;
+
+        return tagMatched.filter((sub) =>
             [
                 sub.name,
                 sub.description,
                 sub.remark,
                 sub.note,
+                sub.notes,
                 sub.website,
                 sub.url,
                 sub.customId,
+                ...getItemTags(sub),
             ].some((value) =>
                 String(value || '')
                     .toLowerCase()
@@ -123,17 +176,14 @@ export function useSubscriptions(markDirty) {
     });
 
     async function handleUpdateNodeCount(subId, isInitialLoad = false) {
-        // Find in the filtered list
         const subToUpdate = subscriptions.value.find((s) => s.id === subId);
         if (!subToUpdate) return false;
-        // Double check URL just in case
         if (!subToUpdate.url.startsWith('http')) return false;
 
         if (!isInitialLoad) {
             subToUpdate.isUpdating = true;
         }
 
-        // 添加超时保护:如果30秒后仍在更新状态,强制重置
         const timeoutId = setTimeout(() => {
             if (subToUpdate.isUpdating) {
                 console.warn(
@@ -159,15 +209,12 @@ export function useSubscriptions(markDirty) {
                 subToUpdate.customUserAgent
             );
 
-            // 清除超时保护
             clearTimeout(timeoutId);
 
-            // 检查是否成功
             if (!result.success) {
                 const subscriptionName = subToUpdate.name || t('subscriptions.fallbackName');
                 let userMessage = t('subscriptions.updateFailed', { name: subscriptionName });
 
-                // 根据 errorType 提供更友好的错误提示
                 switch (result.errorType) {
                     case 'timeout':
                         userMessage = t('subscriptions.updateTimeoutRetry', {
@@ -194,14 +241,12 @@ export function useSubscriptions(markDirty) {
                     });
                 }
 
-                // 只有非静默加载时才显示 Toast
                 if (!isInitialLoad) showToast(userMessage, 'error');
                 console.error(
                     `[handleUpdateNodeCount] Failed for ${subToUpdate.name}:`,
                     result.error
                 );
 
-                // 重要: 记录错误到本地对象中(非持久化,仅用于UI展示,直到下次持久化保存)
                 subToUpdate.lastError = result.error;
                 if (subToUpdate.enableNodeCache !== true) {
                     subToUpdate.nodeCount = 0;
@@ -211,14 +256,13 @@ export function useSubscriptions(markDirty) {
                         void dataStore.saveData();
                     }
                 }
-                return false; // 开启保护性缓存节点时，失败保留旧值
+                return false;
             }
 
-            // 成功获取数据
-            const data = result.data.data || result.data; // 兼容后端返回结构
+            const data = result.data.data || result.data;
             subToUpdate.nodeCount = data.count || 0;
             subToUpdate.userInfo = data.userInfo || null;
-            subToUpdate.lastError = null; // 成功后清除错误状态
+            subToUpdate.lastError = null;
 
             if (!isInitialLoad) {
                 showToast(
@@ -228,12 +272,10 @@ export function useSubscriptions(markDirty) {
                     'success'
                 );
                 markDirty();
-                // 自动保存手动更新的结果
                 void dataStore.saveData();
             }
             return true;
         } catch (error) {
-            // 清除超时保护
             clearTimeout(timeoutId);
 
             handleError(error, 'Subscription Update Error', {
@@ -255,21 +297,23 @@ export function useSubscriptions(markDirty) {
     }
 
     function addSubscription(sub) {
-        dataStore.addSubscription(sub);
-        handleUpdateNodeCount(sub.id);
+        const normalized = applyItemTags(sub, sub.tags !== undefined ? sub.tags : sub.group);
+        dataStore.addSubscription(normalized);
+        handleUpdateNodeCount(normalized.id);
         markDirty();
     }
 
     function updateSubscription(updatedSub) {
-        // Verify it exists in our filtered list
         const originalSub = subscriptions.value.find((s) => s.id === updatedSub.id);
         if (originalSub) {
             const urlChanged = originalSub.url !== updatedSub.url;
-            dataStore.updateSubscription(updatedSub.id, updatedSub);
+            const rawTags =
+                updatedSub.tags !== undefined ? updatedSub.tags : getItemTags(updatedSub);
+            const normalized = applyItemTags(updatedSub, rawTags);
+            dataStore.updateSubscription(normalized.id, normalized);
 
             if (urlChanged) {
-                // Re-fetch from filtered list to get the reactive object
-                const sub = subscriptions.value.find((s) => s.id === updatedSub.id);
+                const sub = subscriptions.value.find((s) => s.id === normalized.id);
                 if (sub) {
                     sub.nodeCount = 0;
                     handleUpdateNodeCount(sub.id);
@@ -281,24 +325,19 @@ export function useSubscriptions(markDirty) {
 
     function deleteSubscription(subId) {
         dataStore.removeSubscription(subId);
-        // 清理组合订阅中对该订阅源的引用
         dataStore.removeSubscriptionFromProfiles(subId);
         markDirty();
     }
 
     function deleteAllSubscriptions() {
-        // Only remove the subscriptions visible in this composable (i.e. HTTP subs)
-        // Avoid removing manual nodes which are also in dataStore but filtered out here
         const idsToRemove = subscriptions.value.map((s) => s.id);
 
-        // 如果没有订阅，提示并返回
         if (idsToRemove.length === 0) {
             showToast(t('subscriptions.noSubscriptionsToDelete'), 'info');
             return;
         }
 
         idsToRemove.forEach((id) => dataStore.removeSubscription(id));
-        // 清理组合订阅中对这些订阅源的引用
         dataStore.removeSubscriptionFromProfiles(idsToRemove);
 
         markDirty();
@@ -306,9 +345,10 @@ export function useSubscriptions(markDirty) {
     }
 
     async function addSubscriptionsFromBulk(subs) {
-        // Reverse insert to maintain order
         for (let i = subs.length - 1; i >= 0; i--) {
-            dataStore.addSubscription(subs[i]);
+            const raw = subs[i];
+            const normalized = applyItemTags(raw, raw.tags !== undefined ? raw.tags : raw.group);
+            dataStore.addSubscription(normalized);
         }
         markDirty();
 
@@ -317,13 +357,7 @@ export function useSubscriptions(markDirty) {
         if (subsToUpdate.length > 0) {
             showToast(t('subscriptions.batchUpdating', { count: subsToUpdate.length }), 'info');
 
-            // Use individual updates instead of batch backend update
-            // This avoids 400 error because backend doesn't have these IDs yet.
             const updatePromises = subsToUpdate.map((sub) => handleUpdateNodeCount(sub.id));
-
-            // handleUpdateNodeCount 内部已逐个提示失败，自身不抛出，
-            // 所以 Promise.allSettled 恒为 fulfilled —— 原先包在这里的 try/catch 是死代码。
-            // 改为按返回值统计真实失败数，避免「有失败却提示全部完成」。
             const results = await Promise.allSettled(updatePromises);
             const failedCount = results.filter(
                 (result) => result.status === 'rejected' || result.value === false
@@ -472,14 +506,11 @@ export function useSubscriptions(markDirty) {
                 await handleUpdateNodeCount(sub.id, true);
             }
         } catch (e) {
-            // 后台定时任务：handleUpdateNodeCount 内部已逐个提示失败，
-            // 且用户此刻可能不在页面上，这里只记日志，避免无意义的打扰。
             console.error('Auto update failed', e);
         }
     }
 
     function startAutoUpdate(intervalMinutes = null) {
-        // 如果传入间隔，使用传入值；否则从 settings 读取
         let intervalMs;
         if (intervalMinutes !== null) {
             intervalMs = intervalMinutes * 60 * 1000;
@@ -495,22 +526,18 @@ export function useSubscriptions(markDirty) {
             }
         }
 
-        // 如果间隔为0，表示禁用自动更新
         if (intervalMs === 0) {
             stopAutoUpdate();
             if (isDev) console.debug('[AutoUpdate] Disabled by user setting');
             return;
         }
 
-        // 如果间隔没变且定时器已运行，不需要重启
         if (autoUpdateTimerId && intervalMs === currentIntervalMs) {
             return;
         }
 
-        // 停止旧定时器
         stopAutoUpdate();
 
-        // 启动新定时器
         currentIntervalMs = intervalMs;
         autoUpdateTimerId = setInterval(() => {
             void autoUpdateAllSubscriptions();
@@ -534,31 +561,23 @@ export function useSubscriptions(markDirty) {
     }
 
     function reorderSubscriptions(newOrder) {
-        // 1. Get all Manual Nodes (to preserve them)
-        // We can't rely just on manualNodes computed because it might be filtered or not imported here.
-        // Instead, filter from source of truth: allSubscriptions
         const currentManualNodes = (allSubscriptions.value || []).filter(
             (item) => !item.url || !/^https?:\/\//.test(item.url)
         );
-
-        // 2. Combine New Ordered Subscriptions + Existing Manual Nodes
-        // Logic: Manual Nodes at top, Subscriptions at bottom
         const mergedList = [...currentManualNodes, ...newOrder];
-
-        // 3. Update Store
         dataStore.overwriteSubscriptions(mergedList);
-
-        // 4. Mark Dirty
         markDirty();
     }
 
     return {
         subscriptions,
-        subscriptionGroups,
-        activeGroupFilter,
-        setGroupFilter,
-        renameSubscriptionGroup,
-        deleteSubscriptionGroup,
+        subscriptionTags,
+        activeTagFilters,
+        setTagFilters,
+        toggleTagFilter,
+        renameSubscriptionTag,
+        deleteSubscriptionTag,
+        reorderSubscriptionTags,
         searchQuery,
         filteredSubscriptions,
         filteredCount: computed(() => filteredSubscriptions.value.length),

@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { TIMING } from '@/constants/timing.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
+import { getItemTags, hydrateItemTags, normalizeTagList } from '@/utils/tags.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -52,9 +53,14 @@ export const useDataStore = defineStore('data', () => {
         if (!data) return false;
 
         try {
-            const cleanSubs = (data.misubs || []).map((sub) => ({ ...sub, isUpdating: false }));
+            const cleanSubs = (data.misubs || []).map((sub) =>
+                hydrateItemTags({ ...sub, isUpdating: false })
+            );
             subscriptions.value = cleanSubs;
-            profiles.value = data.profiles || [];
+            profiles.value = (data.profiles || []).map((profile) => ({
+                ...profile,
+                tags: getItemTags(profile),
+            }));
             ruleTemplates.value = data.ruleTemplates || [];
             settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
 
@@ -127,13 +133,16 @@ export const useDataStore = defineStore('data', () => {
         try {
             const sanitizedSubs = subscriptions.value.map((sub) => {
                 const { isUpdating, ...rest } = sub;
-                return rest;
+                return hydrateItemTags(rest);
             });
 
             const payload = {
                 misubs: sanitizedSubs,
                 profiles: profiles.value.map((profile) => {
-                    const normalizedProfile = { ...profile };
+                    const normalizedProfile = {
+                        ...profile,
+                        tags: normalizeTagList(getItemTags(profile)),
+                    };
                     normalizedProfile.ruleLevel =
                         normalizedProfile.ruleLevel || normalizedProfile.clashRuleLevel || '';
                     delete normalizedProfile.clashRuleLevel;

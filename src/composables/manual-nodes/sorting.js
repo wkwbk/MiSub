@@ -1,3 +1,5 @@
+import { getPrimaryTag } from '@/utils/tags.js';
+
 export function buildAutoSortedSubscriptions(allSubscriptions, manualNodes) {
     const subs = allSubscriptions.filter((s) => s.url && /^https?:\/\//.test(s.url));
     const nodes = [...manualNodes];
@@ -33,13 +35,13 @@ export function buildAutoSortedSubscriptions(allSubscriptions, manualNodes) {
         const effectiveIndexA = indexA === -1 ? Infinity : indexA;
         const effectiveIndexB = indexB === -1 ? Infinity : indexB;
 
-        // Primary Sort: Group
-        const groupA = a.group || '';
-        const groupB = b.group || '';
-        if (groupA !== groupB) {
-            if (!groupA) return 1; // Empty group last
-            if (!groupB) return -1;
-            return groupA.localeCompare(groupB, 'zh-CN');
+        // Primary Sort: First Tag
+        const tagA = getPrimaryTag(a);
+        const tagB = getPrimaryTag(b);
+        if (tagA !== tagB) {
+            if (!tagA) return 1; // Untagged last
+            if (!tagB) return -1;
+            return tagA.localeCompare(tagB, 'zh-CN');
         }
 
         if (effectiveIndexA !== effectiveIndexB) return effectiveIndexA - effectiveIndexB;

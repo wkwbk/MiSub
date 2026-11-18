@@ -4,11 +4,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import {
-    collectSubscriptionGroups,
-    getSubscriptionGroup,
-    normalizeSubscriptionGroupName,
-} from '@/utils/subscription-groups.js';
+import { collectTags, getItemTags, normalizeTagName } from '@/utils/tags.js';
 
 const makeSub = (id, name, url, extra = {}) => ({ id, name, url, enabled: true, ...extra });
 
@@ -32,12 +28,12 @@ const mountPanel = (subscriptions, extraProps = {}) =>
         },
     });
 
-describe('机场订阅标签分组', () => {
+describe('机场订阅多选标签交集筛选', () => {
     beforeEach(() => {
         setActivePinia(createPinia());
     });
 
-    it('未设置分组时直接平铺渲染，不显示分组标签栏', async () => {
+    it('未设置任何标签时不显示标签筛选栏', async () => {
         const subs = [
             makeSub('a', 's1', 'https://sub1.gsafevpn.com/x/token1'),
             makeSub('b', 's2', 'https://sub1.gsafevpn.com/x/token2'),
@@ -47,41 +43,51 @@ describe('机场订阅标签分组', () => {
         await wrapper.vm.$nextTick();
 
         expect(wrapper.findAll('.stub-card')).toHaveLength(3);
-        expect(wrapper.find('[data-testid="subscription-group-tabs"]').exists()).toBe(false);
+        expect(wrapper.find('[data-testid="subscription-tag-tabs"]').exists()).toBe(false);
     });
 
-    it('按 group 字段展示标签栏并支持筛选全部/未分组/指定分组', async () => {
+    it('支持多选标签交集筛选、无标签筛选以及恢复全部', async () => {
         const subs = [
-            makeSub('a', '共享', 'https://sub.libk.top/x/share', { group: 'Libk' }),
-            makeSub('b', '自建', 'https://sub.libk.top/x/lisir', { group: 'Libk' }),
-            makeSub('c', '免费', 'https://ijg.cc/helloworld'),
+            makeSub('a', '主力解锁', 'https://sub.libk.top/x/share', { tags: ['主力', '流媒体'] }),
+            makeSub('b', '主力日常', 'https://sub.libk.top/x/lisir', { tags: ['主力'] }),
+            makeSub('c', '免费无标', 'https://ijg.cc/helloworld'),
         ];
         const wrapper = mountPanel(subs);
         await wrapper.vm.$nextTick();
 
-        const tabs = wrapper.get('[data-testid="subscription-group-tabs"]');
-        expect(tabs.text()).toContain('Libk');
-        expect(wrapper.findAll('.stub-card')).toHaveLength(3);
+        const tabs = wrapper.get('[data-testid="subscription-tag-tabs"]');
+        expect(tabs.text()).toContain('主力');
+        expect(tabs.text()).toContain('流媒体');
 
-        const libkBtn = tabs.findAll('button').find((b) => b.text() === 'Libk');
-        await libkBtn.trigger('click');
+        const mainBtn = tabs.findAll('button').find((b) => b.text() === '主力');
+        await mainBtn.trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(2);
-        expect(wrapper.text()).toContain('共享');
-        expect(wrapper.text()).not.toContain('免费');
 
-        await wrapper.get('[data-testid="subscription-group-tab-default"]').trigger('click');
+        // 继续选中「流媒体」求交集，只剩同时具有「主力 + 流媒体」的订阅
+        const mediaBtn = wrapper
+            .get('[data-testid="subscription-tag-tabs"]')
+            .findAll('button')
+            .find((b) => b.text() === '流媒体');
+        await mediaBtn.trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(1);
-        expect(wrapper.text()).toContain('免费');
+        expect(wrapper.text()).toContain('主力解锁');
+        expect(wrapper.text()).not.toContain('主力日常');
 
-        await wrapper.get('[data-testid="subscription-group-tab-all"]').trigger('click');
+        // 点击「无标签」切换为仅筛无标签项
+        await wrapper.get('[data-testid="subscription-tag-tab-untagged"]').trigger('click');
+        expect(wrapper.findAll('.stub-card')).toHaveLength(1);
+        expect(wrapper.text()).toContain('免费无标');
+
+        // 点击「全部」恢复
+        await wrapper.get('[data-testid="subscription-tag-tab-all"]').trigger('click');
         expect(wrapper.findAll('.stub-card')).toHaveLength(3);
     });
 
-    it('分批无限加载与分组筛选协同工作，点击加载更多可追加剩余卡片', async () => {
+    it('分批无限加载与标签筛选协同工作，点击加载更多可追加剩余卡片', async () => {
         const subs = [
-            makeSub('a', 's1', 'https://a.example.com/1', { group: 'G1' }),
-            makeSub('b', 's2', 'https://b.example.com/2', { group: 'G1' }),
-            makeSub('c', 's3', 'https://c.example.com/3', { group: 'G2' }),
+            makeSub('a', 's1', 'https://a.example.com/1', { tags: ['T1'] }),
+            makeSub('b', 's2', 'https://b.example.com/2', { tags: ['T1'] }),
+            makeSub('c', 's3', 'https://c.example.com/3', { tags: ['T2'] }),
         ];
         const wrapper = mountPanel(subs, { batchSize: 2 });
         await wrapper.vm.$nextTick();
@@ -93,36 +99,36 @@ describe('机场订阅标签分组', () => {
         expect(wrapper.find('[data-testid="subscription-load-more-btn"]').exists()).toBe(false);
     });
 
-    it('兼容读取旧版 airportIdentity.name，并支持在 useSubscriptions 中重命名和删除分组', () => {
+    it('兼容读取旧版 group / airportIdentity.name，并支持在 useSubscriptions 中重命名和删除标签', () => {
         const dataStore = useDataStore();
         dataStore.subscriptions = [
             makeSub('a', 's1', 'https://a.test/1', { group: '机场A' }),
             makeSub('b', 's2', 'https://b.test/2', {
                 airportIdentity: { groupId: 'legacy-1', name: '机场A' },
             }),
-            makeSub('c', 's3', 'https://c.test/3', { group: '机场B' }),
+            makeSub('c', 's3', 'https://c.test/3', { tags: ['机场B', '备用'] }),
         ];
 
         const {
-            subscriptionGroups,
-            activeGroupFilter,
-            setGroupFilter,
-            renameSubscriptionGroup,
-            deleteSubscriptionGroup,
+            subscriptionTags,
+            activeTagFilters,
+            setTagFilters,
+            renameSubscriptionTag,
+            deleteSubscriptionTag,
         } = useSubscriptions(vi.fn());
 
-        expect(subscriptionGroups.value).toEqual(['机场A', '机场B']);
-        expect(normalizeSubscriptionGroupName('默认')).toBe('');
-        expect(getSubscriptionGroup(dataStore.subscriptions[1])).toBe('机场A');
+        expect(subscriptionTags.value).toEqual(['机场A', '机场B', '备用']);
+        expect(normalizeTagName('默认')).toBe('');
+        expect(getItemTags(dataStore.subscriptions[1])).toEqual(['机场A']);
 
-        setGroupFilter('机场A');
-        renameSubscriptionGroup('机场A', '主力');
-        expect(activeGroupFilter.value).toBe('主力');
-        expect(collectSubscriptionGroups(dataStore.subscriptions)).toEqual(['主力', '机场B']);
+        setTagFilters(['机场A']);
+        renameSubscriptionTag('机场A', '主力');
+        expect(activeTagFilters.value).toEqual(['主力']);
+        expect(collectTags(dataStore.subscriptions)).toEqual(['主力', '机场B', '备用']);
         expect(dataStore.subscriptions[1].airportIdentity).toBeNull();
 
-        deleteSubscriptionGroup('主力');
-        expect(activeGroupFilter.value).toBeNull();
-        expect(subscriptionGroups.value).toEqual(['机场B']);
+        deleteSubscriptionTag('主力');
+        expect(activeTagFilters.value).toEqual([]);
+        expect(subscriptionTags.value).toEqual(['机场B', '备用']);
     });
 });

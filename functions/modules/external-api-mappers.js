@@ -85,6 +85,7 @@ export function toExternalProfile(profile) {
         id: profile.id,
         name: profile.name || '',
         description: profile.description || '',
+        tags: Array.isArray(profile.tags) ? profile.tags : [],
         enabled: profile.enabled !== false,
         isPublic: profile.isPublic === true,
         customId: profile.customId || '',
@@ -107,6 +108,7 @@ export function toInternalProfilePatch(payload = {}) {
     const internal = {};
     if ('name' in payload) internal.name = payload.name;
     if ('description' in payload) internal.description = payload.description;
+    if ('tags' in payload) internal.tags = payload.tags;
     if ('enabled' in payload) internal.enabled = payload.enabled;
     if ('isPublic' in payload) internal.isPublic = payload.isPublic;
     if ('customId' in payload) internal.customId = payload.customId;

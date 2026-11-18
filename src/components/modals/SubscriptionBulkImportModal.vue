@@ -2,10 +2,11 @@
     import { computed, ref, watch } from 'vue';
     import { Layers } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue';
+    import TagInput from '@/components/ui/TagInput.vue';
     import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import { useDataStore } from '@/stores/useDataStore.js';
-    import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';
+    import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkImport.js';
+    import { normalizeTagList } from '@/utils/tags.js';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -18,10 +19,10 @@
     const emit = defineEmits(['update:show', 'import']);
 
     const importText = ref('');
-    const selectedGroup = ref('');
+    const selectedTags = ref([]);
 
-    const airportGroupNames = computed(() =>
-        extractAirportGroupNames(dataStore.subscriptions || [])
+    const subscriptionTagNames = computed(() =>
+        extractSubscriptionTagNames(dataStore.subscriptions || [])
     );
 
     watch(
@@ -29,16 +30,16 @@
         (visible) => {
             if (!visible) {
                 importText.value = '';
-                selectedGroup.value = '';
+                selectedTags.value = [];
             }
         }
     );
 
     const handleConfirm = () => {
         if (!importText.value.trim()) return;
-        emit('import', importText.value, selectedGroup.value.trim());
+        emit('import', importText.value, normalizeTagList(selectedTags.value));
         importText.value = '';
-        selectedGroup.value = '';
+        selectedTags.value = [];
         emit('update:show', false);
     };
 </script>
@@ -82,24 +83,19 @@
 
         <template #body>
             <div class="space-y-5">
-                <!-- Airport Group Selector -->
                 <div class="relative">
                     <div class="flex flex-col gap-1.5">
-                        <label
-                            for="subscription-import-group"
-                            class="text-xs font-semibold text-zinc-400 mb-1"
-                        >
-                            {{ t('subscriptionBulkImport.groupLabel') }}
+                        <label class="text-xs font-semibold text-zinc-400 mb-1">
+                            {{ t('subscriptionBulkImport.tagsLabel') }}
                         </label>
-                        <GroupSelector
-                            v-model="selectedGroup"
-                            :groups="airportGroupNames"
-                            :placeholder="t('subscriptionBulkImport.groupPlaceholder')"
+                        <TagInput
+                            v-model="selectedTags"
+                            :suggestions="subscriptionTagNames"
+                            :placeholder="t('subscriptionBulkImport.tagsPlaceholder')"
                         />
                     </div>
                 </div>
 
-                <!-- Subscription URLs Textarea -->
                 <div class="relative group space-y-1.5">
                     <LineNumberTextarea
                         v-model="importText"

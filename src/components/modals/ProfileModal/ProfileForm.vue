@@ -4,6 +4,7 @@
     import TransformSelector from '@/components/forms/TransformSelector.vue';
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
+    import TagInput from '@/components/ui/TagInput.vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
     import { useI18n } from '@/i18n/index.js';
@@ -34,6 +35,10 @@
         globalSettings: {
             type: Object,
             default: () => ({}),
+        },
+        profileTags: {
+            type: Array,
+            default: () => [],
         },
     });
 
@@ -134,6 +139,18 @@
                 {{ t('profiles.customIdHint') }}
             </p>
         </div>
+    </div>
+
+    <!-- Profile Tags -->
+    <div class="mt-4">
+        <label class="block text-xs font-medium text-zinc-300 mb-1.5">
+            {{ t('profiles.tagsLabel') }}
+        </label>
+        <TagInput
+            v-model="localProfile.tags"
+            :suggestions="profileTags"
+            :placeholder="t('profiles.tagsPlaceholder')"
+        />
     </div>
 
     <!-- Public Display & Description -->

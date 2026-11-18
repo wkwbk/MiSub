@@ -33,7 +33,10 @@ export const DEFAULT_SETTINGS = {
         subscriptionPrefix: '',
         prependGroupName: false,
     },
-    manualNodeGroupOrder: [], // 用户自定义的分组顺序
+    manualNodeGroupOrder: [], // 兼容旧版自定义分组顺序
+    manualNodeTagOrder: [], // 手动节点标签自定义顺序
+    subscriptionTagOrder: [], // 订阅源标签自定义顺序
+    profileTagOrder: [], // 分享组合标签自定义顺序
     // 首页「待处理事项」里被用户主动忽略的条目 id。
     // 存在设置里是为了跨设备同步（原先只存 localStorage，换设备就丢）。
     // 条目的 id 都是固定字符串（见 src/utils/dashboard-health.js），跨设备可比对。

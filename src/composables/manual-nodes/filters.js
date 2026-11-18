@@ -1,5 +1,5 @@
 import { NODE_PROTOCOL_REGEX } from '@/constants/nodeProtocols.js';
-import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
+import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
 
 export const countryCodeMap = {
     hk: ['🇭🇰', '香港', 'HK'],
@@ -77,31 +77,29 @@ export function isManualNodeEntry(item) {
     }
 }
 
-export function filterManualNodes(nodes, searchTerm, activeColorFilter) {
-    let filtered = nodes;
+export function filterManualNodes(nodes, searchTerm, activeTagFilters) {
+    let filtered = Array.isArray(nodes) ? nodes : [];
 
-    if (activeColorFilter) {
-        if (activeColorFilter === DEFAULT_GROUP_KEY) {
-            filtered = filtered.filter((n) => !n.group);
-        } else {
-            filtered = filtered.filter((n) => n.group === activeColorFilter);
-        }
-    }
+    filtered = filtered.filter((node) => matchesTagFilter(node, activeTagFilters));
 
     if (!searchTerm) {
         return filtered;
     }
 
     const searchQuery = searchTerm.toLowerCase().trim();
+    if (!searchQuery) {
+        return filtered;
+    }
     const alternativeTerms = countryCodeMap[searchQuery] || [];
 
     return filtered.filter((node) => {
-        if (!node.name) return false;
-        const nodeName = node.name.toLowerCase();
-        if (nodeName.includes(searchQuery)) return true;
+        const nodeName = String(node.name || '').toLowerCase();
+        if (nodeName && nodeName.includes(searchQuery)) return true;
         for (const altTerm of alternativeTerms) {
-            if (nodeName.includes(altTerm.toLowerCase())) return true;
+            if (nodeName && nodeName.includes(altTerm.toLowerCase())) return true;
         }
+        const tags = getItemTags(node);
+        if (tags.some((tag) => tag.toLowerCase().includes(searchQuery))) return true;
         return false;
     });
 }

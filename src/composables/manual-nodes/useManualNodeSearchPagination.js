@@ -1,5 +1,6 @@
 import { computed, ref, watch } from 'vue';
 import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manualNodeCountryAliases.js';
+import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
 
 const SEARCH_NODES_PER_PAGE = 24;
 
@@ -8,6 +9,7 @@ export function useManualNodeSearchPagination(options) {
         manualNodes,
         paginatedManualNodes,
         initialSearchTerm,
+        activeTagFilters,
         onBasePageChange,
         onSearchTermChange,
     } = options;
@@ -30,22 +32,32 @@ export function useManualNodeSearchPagination(options) {
     });
 
     const filteredNodes = computed(() => {
+        const tagMatched = (manualNodes.value || []).filter((node) =>
+            matchesTagFilter(node, activeTagFilters?.value)
+        );
+
         if (!localSearchTerm.value) {
-            return manualNodes.value;
+            return tagMatched;
         }
 
         const searchQuery = localSearchTerm.value.toLowerCase().trim();
+        if (!searchQuery) {
+            return tagMatched;
+        }
 
-        return manualNodes.value.filter((node) => {
-            if (!node.name) return false;
-
-            const nodeName = node.name.toLowerCase();
-            if (nodeName.includes(searchQuery)) {
+        return tagMatched.filter((node) => {
+            const nodeName = String(node.name || '').toLowerCase();
+            if (nodeName && nodeName.includes(searchQuery)) {
                 return true;
             }
 
             const alternativeTerms = MANUAL_NODE_COUNTRY_ALIAS_MAP[searchQuery] || [];
-            return alternativeTerms.some((term) => nodeName.includes(term.toLowerCase()));
+            if (nodeName && alternativeTerms.some((term) => nodeName.includes(term.toLowerCase()))) {
+                return true;
+            }
+
+            const tags = getItemTags(node);
+            return tags.some((tag) => tag.toLowerCase().includes(searchQuery));
         });
     });
 

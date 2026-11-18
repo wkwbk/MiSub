@@ -712,9 +712,14 @@ export async function generateCombinedNodeList(
             if (customNodeName && !sub?.isFromSubProfile)
                 processedUrl = applyManualNodeName(processedUrl, customNodeName);
 
-            const nodeGroup = typeof sub.group === 'string' ? sub.group.trim() : '';
-            if (prependGroupName && nodeGroup && !skipPrefixDueToRenaming)
-                processedUrl = prependNodeName(processedUrl, nodeGroup);
+            const primaryTag =
+                Array.isArray(sub.tags) && sub.tags.length > 0
+                    ? String(sub.tags[0] || '').trim()
+                    : typeof sub.group === 'string'
+                      ? sub.group.trim()
+                      : '';
+            if (prependGroupName && primaryTag && !skipPrefixDueToRenaming)
+                processedUrl = prependNodeName(processedUrl, primaryTag);
 
             const shouldAddPrefix =
                 shouldPrependManualNodes && !skipPrefixDueToRenaming && !sub?.isFromSubProfile;

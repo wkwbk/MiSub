@@ -17,8 +17,8 @@
         resolveSubscriptionStatusFilter,
     } from '@/utils/dashboard-deeplink.js';
 
-    const GroupManagementModal = defineAsyncComponent(
-        () => import('@/components/modals/GroupManagementModal.vue')
+    const TagManagementModal = defineAsyncComponent(
+        () => import('@/components/modals/TagManagementModal.vue')
     );
 
     const dataStore = useDataStore();
@@ -28,19 +28,18 @@
     const route = useRoute();
     const router = useRouter();
 
-    // State
-    // State
     const isSortingSubs = useSortingMode(dataStore);
     const showDeleteSubsModal = ref(false);
-    const showGroupManagementModal = ref(false);
+    const showTagManagementModal = ref(false);
 
     const {
         subscriptions,
-        subscriptionGroups,
-        activeGroupFilter,
-        setGroupFilter,
-        renameSubscriptionGroup,
-        deleteSubscriptionGroup,
+        subscriptionTags,
+        activeTagFilters,
+        setTagFilters,
+        renameSubscriptionTag,
+        deleteSubscriptionTag,
+        reorderSubscriptionTags,
         filteredSubscriptions,
         searchQuery: subscriptionSearchQuery,
         addSubscription,
@@ -58,7 +57,6 @@
 
     const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
 
-    // Composables
     const {
         showModal: showSubModal,
         isNew: isNewSubscription,
@@ -89,7 +87,6 @@
         showDeleteSubsModal.value = false;
     };
 
-    // Preview
     const NodePreviewModal = defineAsyncComponent(
         () => import('@/components/modals/NodePreview/NodePreviewModal.vue')
     );
@@ -98,22 +95,24 @@
     const previewSubscriptionName = ref('');
     const previewSubscriptionUrl = ref('');
 
-    // 将当前显示组确认为一个机场身份，并统一显示组名；订阅源自身名称保持不变。
-    const handleGroupRename = (oldName, newName) => {
-        renameSubscriptionGroup(oldName, newName);
-        showToast(t('manualNodes.groupRenamed'), 'success');
+    const handleTagRename = (oldName, newName) => {
+        renameSubscriptionTag(oldName, newName);
+        showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
     };
 
-    const handleGroupDelete = (groupName) => {
-        deleteSubscriptionGroup(groupName);
-        showToast(t('manualNodes.groupDeleted'), 'success');
+    const handleTagDelete = (tagName) => {
+        deleteSubscriptionTag(tagName);
+        showToast(t('tags.tagDeleted', { name: tagName }), 'success');
     };
 
-    // 应用识别到的机场名（来自订阅响应头 / 官网标题）
+    const handleTagReorder = (newOrder) => {
+        reorderSubscriptionTags(newOrder);
+        showToast(t('tags.tagOrderUpdated'), 'success');
+    };
+
     const handleApplyDetectedName = (subscriptionId, name) => {
         const target = String(name || '').trim();
         if (!target) return;
-        // useSubscriptions 的 updateSubscription 接收「完整订阅对象」而非 (id, patch)
         const targetSub = subscriptions.value.find((s) => s.id === subscriptionId);
         if (!targetSub) return;
         updateSubscription({
@@ -133,12 +132,10 @@
         }
     };
 
-    // Subscription Bulk Import Logic
     const SubscriptionBulkImportModal = defineAsyncComponent(
         () => import('@/components/modals/SubscriptionBulkImportModal.vue')
     );
 
-    // QRCode
     const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
     const showQRCodeModal = ref(false);
     const qrCodeUrl = ref('');
@@ -153,9 +150,6 @@
         }
     };
 
-    // --- Dashboard deep-link status filter (?status=error / expired / ...) ---
-    // The dashboard health cards link here with a status. Previously the query
-    // was dropped, so the user landed on an unfiltered list.
     const activeStatusFilter = ref('');
     const STATUS_FILTER_LABEL_KEYS = {
         disabled: 'subscriptions.filterStatusDisabled',
@@ -170,7 +164,6 @@
         return key ? t(key) : '';
     });
 
-    // Subscriptions matching the active status filter, before search/pagination.
     const statusFilteredSubscriptions = computed(() => {
         if (!activeStatusFilter.value) return subscriptions.value;
         return subscriptions.value.filter((sub) =>
@@ -194,8 +187,6 @@
     onMounted(applyStatusFromQuery);
     watch(() => route.query.status, applyStatusFromQuery);
 
-    // `subscriptions` is the prop the panel renders; when a status filter is
-    // active we narrow it so the list, the count and pagination all agree.
     const visibleSubscriptions = computed(() =>
         activeStatusFilter.value ? statusFilteredSubscriptions.value : subscriptions.value
     );
@@ -205,8 +196,8 @@
     <div class="w-full">
         <SubscriptionPanel
             :subscriptions="visibleSubscriptions"
-            :groups="subscriptionGroups"
-            :active-group-filter="activeGroupFilter"
+            :tags="subscriptionTags"
+            :active-tag-filters="activeTagFilters"
             :search-query="subscriptionSearchQuery"
             :filtered-count="filteredSubscriptions.length"
             :status-filter="activeStatusFilter"
@@ -217,8 +208,8 @@
             :is-sorting="isSortingSubs"
             searchable
             @clear-status-filter="clearStatusFilter"
-            @set-group-filter="setGroupFilter"
-            @manage-groups="showGroupManagementModal = true"
+            @set-tag-filters="setTagFilters"
+            @manage-tags="showTagManagementModal = true"
             @add="handleAddSubscription"
             @delete="handleDeleteSubscriptionWithCleanup"
             @update-node-count="handleUpdateNodeCount"
@@ -235,14 +226,14 @@
             @applyDetectedName="handleApplyDetectedName"
         />
 
-        <GroupManagementModal
-            v-model:show="showGroupManagementModal"
-            :groups="subscriptionGroups"
-            @rename="handleGroupRename"
-            @delete="handleGroupDelete"
+        <TagManagementModal
+            v-model:show="showTagManagementModal"
+            :tags="subscriptionTags"
+            @rename="handleTagRename"
+            @delete="handleTagDelete"
+            @reorder="handleTagReorder"
         />
 
-        <!-- Dialogs -->
         <SubscriptionEditModal
             v-model:show="showSubModal"
             :is-new="isNewSubscription"
@@ -270,7 +261,7 @@
             v-if="showBulkImportModal"
             :show="showBulkImportModal"
             @update:show="showBulkImportModal = $event"
-            @import="(txt, groupName) => handleSubscriptionBulkImport(txt, groupName)"
+            @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
         />
 
         <NodePreviewModal

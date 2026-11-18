@@ -187,10 +187,24 @@ export async function handleProfileMode(
         const customName = typeof node.name === 'string' ? node.name.trim() : '';
         const effectiveUrl = customName ? applyManualNodeName(node.url, customName) : node.url;
 
+        const primaryTag =
+            Array.isArray(node.tags) && node.tags.length > 0
+                ? String(node.tags[0] || '').trim()
+                : typeof node.group === 'string'
+                  ? node.group.trim()
+                  : '';
+        const nodeTags =
+            Array.isArray(node.tags) && node.tags.length > 0
+                ? node.tags.map((item) => String(item || '').trim()).filter(Boolean)
+                : primaryTag
+                  ? [primaryTag]
+                  : [];
+
         const nodeInfo = parseNodeInfo(effectiveUrl);
         return {
             subscriptionName: node.name || '手工节点',
-            group: node.group || '',
+            group: primaryTag,
+            tags: nodeTags,
             url: effectiveUrl,
             success: true,
             nodes: [
@@ -198,7 +212,8 @@ export async function handleProfileMode(
                     ...nodeInfo,
                     url: effectiveUrl,
                     subscriptionName: node.name || '手工节点',
-                    group: node.group || '',
+                    group: primaryTag,
+                    tags: nodeTags,
                 },
             ],
             error: null,

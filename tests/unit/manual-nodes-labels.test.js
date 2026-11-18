@@ -11,8 +11,8 @@ describe('manual nodes labels', () => {
                 manualNodesCount: 89,
                 filteredNodesCount: 89,
                 searchTerm: '',
-                activeGroupFilter: null,
-                manualNodeGroups: [],
+                activeTagFilters: [],
+                manualNodeTags: [],
                 viewMode: 'card',
                 isSorting: false,
                 isSelectionMode: false,
@@ -42,12 +42,12 @@ describe('manual nodes labels', () => {
             filteredNodesCount: 0,
             searchTerm: '测试',
         });
-        const groupScroller = wrapper.get('[data-testid="manual-node-mobile-groups"]');
+        const tagScroller = wrapper.get('[data-testid="manual-node-mobile-tags"]');
         const toolbarActions = wrapper.get('[data-testid="manual-node-toolbar-actions"]');
         const search = wrapper.get('[data-testid="manual-node-search"]');
         const searchInput = search.get('input[type="text"]');
 
-        expect(groupScroller.classes()).toEqual(
+        expect(tagScroller.classes()).toEqual(
             expect.arrayContaining(['w-full', 'min-w-0', 'overflow-x-auto', 'md:hidden'])
         );
         expect(toolbarActions.classes()).toEqual(

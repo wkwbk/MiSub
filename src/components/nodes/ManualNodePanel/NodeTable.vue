@@ -25,7 +25,7 @@
         basePage: { type: Number, default: 1 },
         baseTotalPages: { type: Number, default: 1 },
         draggableManualNodes: { type: Array, default: () => [] },
-        itemsPerPage: { type: Number, default: 24 }, // Added
+        itemsPerPage: { type: Number, default: 24 },
         pingResults: { type: Object, default: () => ({}) },
         pingingNodes: { type: Object, default: () => new Set() },
         compactGrid: { type: Boolean, default: false },
@@ -38,8 +38,8 @@
         'delete',
         'sort-end',
         'change-page',
-        'update:itemsPerPage', // Added
-        'set-group-filter', // Added
+        'update:itemsPerPage',
+        'toggle-tag-filter',
         'ping',
         'clear-search',
         'toggle-sort',
@@ -58,7 +58,6 @@
     const handleChangePage = (page) => {
         let p = parseInt(page, 10);
         if (isNaN(p)) return;
-        // Let parent handle boundaries if needed, but safe to clamp here for UI feedback
         if (p < 1) p = 1;
         if (p > displayTotalPages.value) p = displayTotalPages.value;
         emit('change-page', p);
@@ -73,7 +72,6 @@
 
 <template>
     <div v-if="manualNodes.length > 0" :class="{ 'pb-48': isSelectionMode }">
-        <!-- 如果有搜索词，显示搜索提示 -->
         <div
             v-if="localSearchTerm && filteredNodes.length === 0"
             data-testid="manual-node-no-search-results"
@@ -99,7 +97,6 @@
                 button-test-id="node-finish-sort"
                 @finish="emit('toggle-sort')"
             />
-            <!-- 排序模式保持原有扁平列表，方便跨组排序 -->
             <div v-if="viewMode === 'card'">
                 <draggable
                     tag="div"
@@ -129,7 +126,7 @@
                                 @toggle-select="emit('toggle-select', node.id)"
                                 @edit="emit('edit', node.id)"
                                 @delete="emit('delete', node.id)"
-                                @filter-group="emit('set-group-filter', $event)"
+                                @filter-tag="emit('toggle-tag-filter', $event)"
                                 @ping="emit('ping', node.id)"
                             />
                         </div>
@@ -159,7 +156,7 @@
                                 :is-pinging="pingingNodes.has(node.id)"
                                 @edit="emit('edit', node.id)"
                                 @delete="emit('delete', node.id)"
-                                @filter-group="emit('set-group-filter', $event)"
+                                @filter-tag="emit('toggle-tag-filter', $event)"
                                 @ping="emit('ping', node.id)"
                             />
                         </div>
@@ -169,7 +166,6 @@
         </div>
 
         <div v-else>
-            <!-- Flat List Display (No Groups) -->
             <div
                 v-if="viewMode === 'card'"
                 class="grid gap-4"
@@ -194,7 +190,7 @@
                         @toggle-select="emit('toggle-select', node.id)"
                         @edit="emit('edit', node.id)"
                         @delete="emit('delete', node.id)"
-                        @filter-group="emit('set-group-filter', $event)"
+                        @filter-tag="emit('toggle-tag-filter', $event)"
                         @ping="emit('ping', node.id)"
                     />
                 </div>
@@ -214,7 +210,7 @@
                     @toggle-select="emit('toggle-select', node.id)"
                     @edit="emit('edit', node.id)"
                     @delete="emit('delete', node.id)"
-                    @filter-group="emit('set-group-filter', $event)"
+                    @filter-tag="emit('toggle-tag-filter', $event)"
                     @ping="emit('ping', node.id)"
                 />
             </div>

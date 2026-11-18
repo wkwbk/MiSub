@@ -2,8 +2,8 @@
     import { computed } from 'vue';
     import { LayoutGrid, List, Search, X } from '@lucide/vue';
     import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
+    import TagFilterBar from '@/components/shared/TagFilterBar.vue';
     import { useI18n } from '@/i18n/index.js';
-    import { DEFAULT_GROUP_KEY } from '@/composables/manual-nodes/groups.js';
 
     const { t } = useI18n();
 
@@ -20,11 +20,11 @@
             type: String,
             default: '',
         },
-        activeGroupFilter: {
-            type: String,
-            default: null,
+        activeTagFilters: {
+            type: Array,
+            default: () => [],
         },
-        manualNodeGroups: {
+        manualNodeTags: {
             type: Array,
             default: () => [],
         },
@@ -45,7 +45,7 @@
     const emit = defineEmits([
         'update:searchTerm',
         'update:viewMode',
-        'set-group-filter',
+        'set-tag-filters',
         'add',
         'import',
         'auto-sort',
@@ -55,7 +55,7 @@
         'toggle-selection-mode',
         'ping-all',
         'sort-by-latency',
-        'manage-groups',
+        'manage-tags',
     ]);
 
     const searchModel = computed({
@@ -81,48 +81,18 @@
                     {{ t('manualNodes.subtitle') }}
                 </p>
 
-                <!-- Mobile Group Filter -->
+                <!-- Mobile Tag Filter -->
                 <div
-                    data-testid="manual-node-mobile-groups"
+                    data-testid="manual-node-mobile-tags"
                     class="mt-2 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 no-scrollbar md:hidden"
                 >
-                    <button
-                        @click="emit('set-group-filter', null)"
-                        class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                        :class="
-                            !activeGroupFilter
-                                ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                        "
-                    >
-                        {{ t('manualNodes.allGroups') }}
-                    </button>
-                    <button
-                        @click="emit('set-group-filter', DEFAULT_GROUP_KEY)"
-                        class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                        :class="
-                            activeGroupFilter === DEFAULT_GROUP_KEY
-                                ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                        "
-                    >
-                        {{ t('manualNodes.ungrouped') }}
-                    </button>
-                    <button
-                        v-for="group in manualNodeGroups"
-                        :key="group"
-                        @click="
-                            emit('set-group-filter', activeGroupFilter === group ? null : group)
-                        "
-                        class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap"
-                        :class="
-                            activeGroupFilter === group
-                                ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
-                        "
-                    >
-                        {{ group }}
-                    </button>
+                    <TagFilterBar
+                        :tags="manualNodeTags"
+                        :active-filters="activeTagFilters"
+                        always-show
+                        test-id-prefix="manual-node-mobile-tag"
+                        @update:active-filters="emit('set-tag-filters', $event)"
+                    />
                 </div>
             </div>
             <div
@@ -195,13 +165,14 @@
                             {{ t('actions.importSubscription') }}
                         </button>
                         <button
+                            data-testid="manage-manual-node-tags"
                             @click="
-                                emit('manage-groups');
+                                emit('manage-tags');
                                 close();
                             "
                             class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
                         >
-                            {{ t('actions.manageGroups') }}
+                            {{ t('actions.manageTags') }}
                         </button>
                         <button
                             @click="
@@ -285,45 +256,15 @@
             </div>
         </div>
 
-        <!-- Group Filter Chips (New Line) -->
-        <div
-            class="hidden md:flex items-center gap-1.5 mt-3 overflow-x-auto no-scrollbar mask-gradient-r"
-        >
-            <button
-                @click="emit('set-group-filter', null)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0"
-                :class="
-                    !activeGroupFilter
-                        ? 'bg-zinc-100 border-zinc-100 text-zinc-900 font-semibold'
-                        : 'bg-transparent border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ t('manualNodes.allGroups') }}
-            </button>
-            <button
-                @click="emit('set-group-filter', DEFAULT_GROUP_KEY)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0"
-                :class="
-                    activeGroupFilter === DEFAULT_GROUP_KEY
-                        ? 'bg-zinc-100 border-zinc-100 text-zinc-900 font-semibold'
-                        : 'bg-transparent border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ t('manualNodes.ungrouped') }}
-            </button>
-            <button
-                v-for="group in manualNodeGroups"
-                :key="group"
-                @click="emit('set-group-filter', activeGroupFilter === group ? null : group)"
-                class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0"
-                :class="
-                    activeGroupFilter === group
-                        ? 'bg-zinc-100 border-zinc-100 text-zinc-900 font-semibold'
-                        : 'bg-transparent border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
-                "
-            >
-                {{ group }}
-            </button>
+        <!-- Desktop Tag Filter Chips -->
+        <div class="hidden md:flex items-center gap-1.5 mt-3">
+            <TagFilterBar
+                :tags="manualNodeTags"
+                :active-filters="activeTagFilters"
+                always-show
+                test-id-prefix="manual-node-tag"
+                @update:active-filters="emit('set-tag-filters', $event)"
+            />
         </div>
     </div>
 </template>

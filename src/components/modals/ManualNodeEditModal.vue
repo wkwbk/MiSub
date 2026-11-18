@@ -3,7 +3,7 @@
     import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
     import Modal from '@/components/forms/Modal.vue';
     import Input from '@/components/ui/Input.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue'; // Added
+    import TagInput from '@/components/ui/TagInput.vue';
     import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useSubscriptions } from '@/composables/useSubscriptions.js';
@@ -13,13 +13,14 @@
     import { parseSurgeConfig } from '@/utils/protocolConverter.js';
     import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
     import { buildAutoGroupName } from '@/utils/auto-group-name.js';
+    import { normalizeTagList } from '@/utils/tags.js';
     import { cleanNodeUrl } from '@/lib/utils.js';
 
     const props = defineProps({
         show: Boolean,
         isNew: Boolean,
         editingNode: Object,
-        groups: {
+        tags: {
             type: Array,
             default: () => [],
         },
@@ -64,9 +65,10 @@
                     ? t('manualNodes.fileImportPickedMulti', { count: fileCount })
                     : files[0].name;
 
-            // 自动填充分组名（用文件名），用户无需手填；已有分组时不覆盖
-            if (!(props.editingNode.group || '').trim()) {
-                props.editingNode.group = buildAutoGroupName({ fileName: files[0].name });
+            // 自动填充标签（用文件名），用户无需手填；已有标签时不覆盖
+            if (normalizeTagList(props.editingNode.tags).length === 0) {
+                const autoTag = buildAutoGroupName({ fileName: files[0].name });
+                props.editingNode.tags = autoTag ? [autoTag] : [];
             }
         } catch (error) {
             console.error('读取文件失败:', error);
@@ -170,13 +172,14 @@
         const requiresServerParsing = props.isNew && rawUrl && needsServerParsing(rawUrl);
 
         if (props.isNew && (isMultiLine.value || requiresServerParsing)) {
-            // 多行批量导入 / 需后端转换：未填写分组时自动生成一个（用户无需手填）
-            let groupName = (props.editingNode.group || '').trim();
-            if (!groupName) {
-                groupName = buildAutoGroupName();
-                props.editingNode.group = groupName;
+            // 多行批量导入 / 需后端转换：未填写标签时自动生成一个批次标签
+            let targetTags = normalizeTagList(props.editingNode.tags);
+            if (targetTags.length === 0) {
+                const autoTag = buildAutoGroupName();
+                targetTags = autoTag ? [autoTag] : [];
+                props.editingNode.tags = targetTags;
             }
-            await handleBulkImport(props.editingNode.url, groupName);
+            await handleBulkImport(props.editingNode.url, targetTags);
             emit('update:show', false);
             return;
         }
@@ -296,19 +299,19 @@
                         </div>
                     </div>
 
-                    <!-- 分组选择 -->
+                    <!-- 标签选择 -->
                     <div class="relative">
                         <div class="flex flex-col">
                             <label
-                                for="node-group"
+                                for="node-tags"
                                 class="text-xs font-semibold text-zinc-400 mb-1.5"
                             >
-                                {{ t('manualNodes.groupOptional') }}
+                                {{ t('manualNodes.tagsOptional') }}
                             </label>
-                            <GroupSelector
-                                v-model="editingNode.group"
-                                :groups="groups"
-                                :placeholder="t('manualNodes.groupPlaceholder')"
+                            <TagInput
+                                v-model="editingNode.tags"
+                                :suggestions="tags"
+                                :placeholder="t('manualNodes.tagsPlaceholder')"
                             />
                         </div>
                     </div>

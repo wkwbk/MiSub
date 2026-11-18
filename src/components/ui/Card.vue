@@ -12,6 +12,7 @@
         Trash2,
     } from '@lucide/vue';
     import { formatBytes } from '@/lib/utils.js';
+    import { getItemTags } from '@/utils/tags.js';
     import { inferAirportRootDomain } from '@/utils/airport-domain.js';
     import { lookupDomainName } from '@/utils/domain-name-memory.js';
     import { api } from '@/lib/http.js';
@@ -34,8 +35,11 @@
         'preview',
         'qrcode',
         'applyDetectedName',
+        'filter-tag',
     ]);
     const { t } = useI18n();
+
+    const subTags = computed(() => getItemTags(props.misub));
 
     const getProtocol = (url) => {
         try {
@@ -279,6 +283,24 @@
             >
                 {{ misub.name || t('subscriptions.unnamed') }}
             </h3>
+
+            <!-- Tags -->
+            <div
+                v-if="subTags.length > 0"
+                data-testid="subscription-card-tags"
+                class="mt-1.5 flex flex-wrap items-center gap-1.5"
+            >
+                <button
+                    v-for="tag in subTags"
+                    :key="tag"
+                    type="button"
+                    class="max-w-[140px] truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                    :title="tag"
+                    @click.stop="emit('filter-tag', tag)"
+                >
+                    {{ tag }}
+                </button>
+            </div>
 
             <div
                 v-if="rootDomain || (effectiveDetectedName && effectiveDetectedName !== misub.name)"

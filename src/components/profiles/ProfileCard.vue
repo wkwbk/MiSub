@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
     import { Copy, Eye, FileText, Pencil, QrCode, Trash2 } from '@lucide/vue';
+    import { getItemTags } from '@/utils/tags.js';
     import { useI18n } from '@/i18n/index.js';
     import Switch from '@/components/ui/Switch.vue';
 
@@ -29,7 +30,10 @@
         'preview',
         'view-logs',
         'qrcode',
+        'filter-tag',
     ]);
+
+    const profileTags = computed(() => getItemTags(props.profile));
 
     const subscriptionCount = computed(() =>
         Array.isArray(props.profile?.subscriptions) ? props.profile.subscriptions.length : 0
@@ -116,6 +120,23 @@
         >
             {{ profile.name }}
         </p>
+
+        <div
+            v-if="profileTags.length > 0"
+            data-testid="profile-card-tags"
+            class="mt-1.5 flex flex-wrap items-center gap-1.5"
+        >
+            <button
+                v-for="tag in profileTags"
+                :key="tag"
+                type="button"
+                class="max-w-[140px] truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                :title="tag"
+                @click.stop="emit('filter-tag', tag)"
+            >
+                {{ tag }}
+            </button>
+        </div>
 
         <p
             class="mt-1.5 text-xs font-mono text-zinc-400 flex flex-wrap items-center gap-x-2 gap-y-1"

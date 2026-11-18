@@ -1,3 +1,5 @@
+import { getItemTags } from '@/utils/tags.js';
+
 const isDev = import.meta.env.DEV;
 
 const normalizeBase64 = (input) => {
@@ -111,7 +113,7 @@ const getNodePriorityScore = (node) => {
     let score = 0;
     if (node.enabled) score += 8;
     if (node.name && node.name.trim()) score += 4;
-    if (node.group && node.group.trim()) score += 2;
+    if (getItemTags(node).length > 0) score += 2;
     if (node.colorTag) score += 1;
     if (node.notes && node.notes.trim()) score += 1;
     return score;

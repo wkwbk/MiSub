@@ -4,10 +4,6 @@
     import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
     import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
-    import {
-        DEFAULT_GROUP_KEY,
-        normalizeManualNodeGroupName,
-    } from '@/composables/manual-nodes/groups.js';
 
     const props = defineProps({
         manualNodes: { type: Array, default: () => [] },
@@ -17,9 +13,9 @@
         isSorting: Boolean,
         searchTerm: String,
         viewMode: String,
-        groups: { type: Array, default: () => [] },
-        activeGroupFilter: { type: String, default: null }, // New
-        itemsPerPage: { type: Number, default: 24 }, // Added
+        tags: { type: Array, default: () => [] },
+        activeTagFilters: { type: Array, default: () => [] },
+        itemsPerPage: { type: Number, default: 24 },
         pingResults: { type: Object, default: () => ({}) },
         pingingNodes: { type: Object, default: () => new Set() },
         compactGrid: { type: Boolean, default: false },
@@ -39,14 +35,15 @@
         'import',
         'deleteAll',
         'reorder',
-        'rename-group',
-        'delete-group',
-        'update:itemsPerPage', // Added
-        'open-batch-group-modal', // Added
+        'update:itemsPerPage',
+        'set-tag-filters',
+        'toggle-tag-filter',
+        'open-batch-tag-modal',
+        'batch-delete-nodes',
         'ping',
         'ping-all',
         'sort-by-latency',
-        'manage-groups',
+        'manage-tags',
     ]);
 
     const isSelectionMode = ref(false);
@@ -63,6 +60,7 @@
         manualNodes: computed(() => props.manualNodes),
         paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
         initialSearchTerm: computed(() => props.searchTerm || ''),
+        activeTagFilters: computed(() => props.activeTagFilters),
         onBasePageChange: (page) => emit('changePage', page),
         onSearchTermChange: (value) => emit('update:searchTerm', value),
     });
@@ -89,24 +87,14 @@
 
     const toggleSelectAll = () => {
         if (isAllSelected.value) {
-            // Deselect all on current page
             paginatedNodes.value.forEach((node) => selectedNodeIds.value.delete(node.id));
         } else {
-            // Select all on current page
             paginatedNodes.value.forEach((node) => selectedNodeIds.value.add(node.id));
         }
     };
 
-    const handleBatchGroup = () => {
-        emit('open-batch-group-modal', Array.from(selectedNodeIds.value));
-        // Do not clear selection yet, wait for action to complete?
-        // Or clear it now? If user cancels modal, selection is lost.
-        // Better to keep selection until action confirms.
-        // But if we clear here, we can't re-select easily.
-        // Let's NOT clear here. The parent can handle it or we clear on success?
-        // Actually, usually we clear after the operation is DONE.
-        // Since operation is async/handled by parent, we might need a way to clear selection.
-        // For now, let's keep selection.
+    const handleBatchTag = () => {
+        emit('open-batch-tag-modal', Array.from(selectedNodeIds.value));
     };
 
     const handleBatchDelete = () => {
@@ -115,23 +103,8 @@
         isSelectionMode.value = false;
     };
 
-    const sortableManualNodes = computed(() => {
-        const activeGroup = props.activeGroupFilter;
-        let nodes = filteredNodes.value;
-
-        if (activeGroup) {
-            const normalizedActiveGroup =
-                activeGroup === DEFAULT_GROUP_KEY ? '' : normalizeManualNodeGroupName(activeGroup);
-            nodes = nodes.filter(
-                (node) => normalizeManualNodeGroupName(node.group) === normalizedActiveGroup
-            );
-        }
-
-        return nodes;
-    });
-
     const draggableManualNodes = computed({
-        get: () => (props.isSorting ? [...sortableManualNodes.value] : [...props.manualNodes]),
+        get: () => (props.isSorting ? [...filteredNodes.value] : [...props.manualNodes]),
         set: (val) => emit('reorder', val),
     });
 
@@ -145,10 +118,7 @@
     };
     const handleToggleSort = () => {
         emit('toggleSort');
-
-        // 使用 nextTick 等待状态更新完成后重置分页
         nextTick(() => {
-            // 如果已经退出排序模式且没有搜索，重置到第一页
             if (!props.isSorting && !props.searchTerm) {
                 emit('changePage', 1);
             }
@@ -156,23 +126,14 @@
     };
     const handleSortEnd = () => {
         emit('markDirty');
-        // 手动排序完成后重置到第一页
         if (!props.searchTerm) {
             emit('changePage', 1);
         }
     };
-    const handleAutoSort = () => {
-        emit('autoSort');
-    };
-    const handleDeduplicate = () => {
-        emit('deduplicate');
-    };
-    const handleImport = () => {
-        emit('import');
-    };
-    const handleDeleteAll = () => {
-        emit('deleteAll');
-    };
+    const handleAutoSort = () => emit('autoSort');
+    const handleDeduplicate = () => emit('deduplicate');
+    const handleImport = () => emit('import');
+    const handleDeleteAll = () => emit('deleteAll');
 </script>
 
 <template>
@@ -181,14 +142,14 @@
             :manual-nodes-count="manualNodes.length"
             :filtered-nodes-count="filteredNodes.length"
             :search-term="localSearchTerm"
-            :active-group-filter="activeGroupFilter"
-            :manual-node-groups="groups"
+            :active-tag-filters="activeTagFilters"
+            :manual-node-tags="tags"
             :view-mode="viewMode"
             :is-sorting="isSorting"
             :is-selection-mode="isSelectionMode"
             @update:search-term="handleSearchTermUpdate"
             @update:view-mode="handleSetViewMode"
-            @set-group-filter="emit('set-group-filter', $event)"
+            @set-tag-filters="emit('set-tag-filters', $event)"
             @add="handleAdd"
             @import="handleImport"
             @auto-sort="handleAutoSort"
@@ -198,16 +159,15 @@
             @toggle-selection-mode="toggleSelectionMode"
             @ping-all="emit('ping-all')"
             @sort-by-latency="emit('sort-by-latency')"
-            @manage-groups="emit('manage-groups')"
+            @manage-tags="emit('manage-tags')"
         />
 
         <BulkOperations
             :is-selection-mode="isSelectionMode"
             :is-all-selected="isAllSelected"
             :selected-count="selectedCount"
-            :groups="groups"
             @toggle-select-all="toggleSelectAll"
-            @batch-group="handleBatchGroup"
+            @batch-tag="handleBatchTag"
             @batch-delete="handleBatchDelete"
             @exit="
                 () => {
@@ -238,7 +198,7 @@
             @delete="handleDelete"
             @sort-end="handleSortEnd"
             @change-page="handleChangePage"
-            @set-group-filter="emit('set-group-filter', $event)"
+            @toggle-tag-filter="emit('toggle-tag-filter', $event)"
             :ping-results="pingResults"
             :pinging-nodes="pingingNodes"
             :compact-grid="compactGrid"

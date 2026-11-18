@@ -7,16 +7,13 @@
     });
     import Input from '@/components/ui/Input.vue';
     import Switch from '@/components/ui/Switch.vue';
-    import GroupSelector from '@/components/ui/GroupSelector.vue';
+    import TagInput from '@/components/ui/TagInput.vue';
     import { computed, ref, watch } from 'vue';
     import { Loader2, Zap } from '@lucide/vue';
     import { fetchNodeCount } from '@/lib/api.js';
     import { useDataStore } from '@/stores/useDataStore.js';
-    import { extractAirportGroupNames } from '@/composables/useSubscriptionBulkImport.js';
-    import {
-        getSubscriptionGroup,
-        normalizeSubscriptionGroupName,
-    } from '@/utils/subscription-groups.js';
+    import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkImport.js';
+    import { getItemTags, normalizeTagList } from '@/utils/tags.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
 
@@ -24,26 +21,26 @@
     const dataStore = useDataStore();
     const { t } = useI18n();
 
-    const airportGroupNames = computed(() =>
-        extractAirportGroupNames(dataStore.subscriptions || [])
+    const subscriptionTagNames = computed(() =>
+        extractSubscriptionTagNames(dataStore.subscriptions || [])
     );
 
-    const selectedAirportGroup = computed({
-        get: () => getSubscriptionGroup(props.editingSubscription),
+    const selectedTags = computed({
+        get: () => getItemTags(props.editingSubscription),
         set: (val) => {
             if (!props.editingSubscription) return;
-            props.editingSubscription.group = normalizeSubscriptionGroupName(val);
+            const normalized = normalizeTagList(val);
+            props.editingSubscription.tags = normalized;
+            props.editingSubscription.group = normalized[0] || '';
             if ('airportIdentity' in props.editingSubscription) {
                 delete props.editingSubscription.airportIdentity;
             }
         },
     });
 
-    // 使用独立的本地状态，防止用户清空输入框时开关自动跳回关闭状态
     const useFetchProxy = ref(false);
     const isTestingProxy = ref(false);
 
-    // 当弹窗传入新订阅信息时，初始化开关状态
     watch(
         () => props.editingSubscription,
         (newSub) => {
@@ -54,7 +51,6 @@
         { immediate: true }
     );
 
-    // 当用户主动关闭开关时，清理绑定的代理地址
     watch(useFetchProxy, (val) => {
         if (!val && props.editingSubscription) {
             props.editingSubscription.fetchProxy = '';
@@ -112,15 +108,15 @@
         />
     </div>
 
-    <!-- 机场分组 (可选) -->
+    <!-- 订阅标签 (可选) -->
     <div>
         <label class="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1.5">
-            {{ t('subscriptionBulkImport.groupLabel') }}
+            {{ t('subscriptionBulkImport.tagsLabel') }}
         </label>
-        <GroupSelector
-            v-model="selectedAirportGroup"
-            :groups="airportGroupNames"
-            :placeholder="t('subscriptionBulkImport.groupPlaceholder')"
+        <TagInput
+            v-model="selectedTags"
+            :suggestions="subscriptionTagNames"
+            :placeholder="t('subscriptionBulkImport.tagsPlaceholder')"
         />
     </div>
 
@@ -136,7 +132,6 @@
             <Switch v-model="useFetchProxy" />
         </div>
 
-        <!-- 代理输入框 (动画展开) -->
         <div v-if="useFetchProxy" class="mt-3 space-y-2 animate-fade-in">
             <div class="flex gap-2">
                 <Input
