@@ -270,9 +270,14 @@
                           'grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8',
                           shouldCenterMain
                               ? 'py-6 flex items-center justify-center'
-                              : shouldShowFooter
-                                ? 'py-6'
-                                : 'py-6 pb-24 md:pb-6',
+                              : [
+                                    isModernSettingsPage && !isDefaultPassword && !showUpdateNotice
+                                        ? 'pt-0 md:pt-6'
+                                        : 'pt-6',
+                                    showModernNavBar
+                                        ? 'pb-[calc(6rem+max(env(safe-area-inset-bottom,0px),12px))] md:pb-6'
+                                        : 'pb-6',
+                                ],
                       ],
                 {
                     'ios-header-padding': showLegacyHeader,

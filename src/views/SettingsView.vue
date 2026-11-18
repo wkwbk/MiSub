@@ -180,7 +180,7 @@
 </script>
 
 <template>
-    <div class="pb-12 md:pb-0">
+    <div class="pb-10 md:pb-0">
         <SettingsContent
             :active-tab="activeTab"
             @update:active-tab="handleActiveTabUpdate"

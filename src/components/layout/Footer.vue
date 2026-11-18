@@ -21,7 +21,7 @@
 
 <template>
     <footer
-        class="w-full text-center px-4 py-4 border-t border-zinc-800 bg-[#131515]"
+        class="hidden md:block w-full text-center px-4 py-4 border-t border-zinc-800 bg-[#131515]"
         :class="{ 'footer-with-mobile-nav': hasMobileNav }"
     >
         <div

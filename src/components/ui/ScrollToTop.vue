@@ -33,7 +33,7 @@
         <button
             v-if="isVisible"
             @click="scrollToTop"
-            class="fixed z-50 bottom-24 md:bottom-8 right-4 md:right-8 p-2.5 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-md shadow-none transition-colors duration-200 hover:bg-zinc-800 dark:hover:bg-white border border-zinc-800 dark:border-zinc-200"
+            class="hidden md:inline-flex fixed z-50 md:bottom-8 md:right-8 p-2.5 bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-md shadow-none transition-colors duration-200 hover:bg-zinc-800 dark:hover:bg-white border border-zinc-800 dark:border-zinc-200"
             :aria-label="t('common.scrollToTop')"
         >
             <ChevronUp class="h-4 w-4" />
