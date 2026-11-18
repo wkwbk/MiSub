@@ -4,6 +4,7 @@
     import DOMPurify from 'dompurify';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -117,18 +118,21 @@
                 <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
                     t('settings.announcementContent')
                 }}</label>
-                <div class="relative">
-                    <textarea
-                        v-model="announcement.content"
-                        @input="handleContentUpdate"
-                        rows="6"
-                        :placeholder="t('settings.announcementContentPlaceholder')"
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors font-mono"
-                    ></textarea>
-                    <div class="absolute bottom-2 right-2 text-xs text-zinc-500 font-mono">
-                        {{ t('settings.announcementHtmlSupported') }}
-                    </div>
-                </div>
+                <Textarea
+                    v-model="announcement.content"
+                    @input="handleContentUpdate"
+                    rows="6"
+                    :placeholder="t('settings.announcementContentPlaceholder')"
+                    class="px-3 py-2 sm:text-sm text-zinc-100 font-mono"
+                >
+                    <template #overlay>
+                        <div
+                            class="pointer-events-none absolute bottom-2 right-2 text-xs text-zinc-500 font-mono"
+                        >
+                            {{ t('settings.announcementHtmlSupported') }}
+                        </div>
+                    </template>
+                </Textarea>
                 <p class="mt-2 text-xs text-zinc-500 leading-relaxed">
                     {{ t('settings.announcementHtmlHint') }}
                 </p>

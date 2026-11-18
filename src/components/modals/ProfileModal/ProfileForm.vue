@@ -6,6 +6,7 @@
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
     import TagInput from '@/components/ui/TagInput.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
     import { useI18n } from '@/i18n/index.js';
@@ -186,13 +187,14 @@
         </div>
 
         <div v-if="localProfile.isPublic" class="animate-fade-in-down">
-            <textarea
+            <Textarea
                 id="profile-description"
                 v-model="localProfile.description"
                 rows="2"
                 :placeholder="t('profiles.descriptionPlaceholder')"
-                class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-600 text-xs text-zinc-100 placeholder-zinc-600"
-            ></textarea>
+                wrapperClass="focus-within:border-zinc-600 focus-within:ring-0"
+                class="px-3 py-2 text-xs text-zinc-100 placeholder-zinc-600"
+            />
         </div>
         <div v-else class="text-xs text-zinc-500">
             {{ t('profiles.publicDisplayHint') }}

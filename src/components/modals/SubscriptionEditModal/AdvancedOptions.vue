@@ -1,6 +1,7 @@
 <script setup>
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -68,12 +69,13 @@
         <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300">{{
             t('subscriptions.notesLabel')
         }}</label>
-        <textarea
+        <Textarea
             v-model="editingSubscription.notes"
             :placeholder="t('subscriptions.notesPlaceholder')"
             rows="2"
-            class="mt-1 block w-full px-3 py-2 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md text-zinc-900 dark:text-zinc-100 focus:outline-hidden focus:border-zinc-500"
-        ></textarea>
+            wrapperClass="mt-1 bg-white dark:bg-[#131515] border-zinc-300 dark:border-zinc-800 focus-within:ring-0"
+            class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100"
+        />
     </div>
 
     <!-- 开关选项 -->

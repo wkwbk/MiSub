@@ -4,6 +4,7 @@
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
     import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
 
     const emit = defineEmits(['saved']);
 
@@ -242,12 +243,13 @@ overwrite_original_rules=true`;
                             <span>{{ t('transformSelector.templateVariablesTitle') }}</span>
                         </button>
                     </div>
-                    <textarea
+                    <Textarea
                         v-model="selectedTemplate.content"
                         rows="12"
                         spellcheck="false"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-xs leading-relaxed text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
-                    ></textarea>
+                        wrapperClass="focus-within:border-zinc-600 focus-within:ring-0"
+                        class="px-3 py-2 font-mono text-xs leading-relaxed"
+                    />
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-3">

@@ -19,6 +19,7 @@
     import SortEditor from '@/components/features/Operators/components/SortEditor.vue';
     import DedupEditor from '@/components/features/Operators/components/DedupEditor.vue';
     import Input from '@/components/ui/Input.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
 
     const props = defineProps({
         modelValue: {
@@ -426,18 +427,18 @@
                                     :label="t('operators.scriptUrlLabel')"
                                     :placeholder="t('operators.scriptUrlPlaceholder')"
                                 />
-                                <textarea
-                                    :value="op.params.code"
-                                    @input="
-                                        (e) =>
+                                <Textarea
+                                    :modelValue="op.params.code"
+                                    @update:modelValue="
+                                        (val) =>
                                             updateOperatorParams(index, {
                                                 ...op.params,
-                                                code: e.target.value,
+                                                code: val,
                                             })
                                     "
-                                    class="w-full h-64 p-3 font-mono text-xs bg-[#131515] text-zinc-100 border border-zinc-800 rounded-md focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors resize-none"
+                                    class="h-64 p-3 font-mono text-xs resize-none"
                                     placeholder="function operator($proxies, $context) { ... }"
-                                ></textarea>
+                                />
                             </div>
                         </div>
                     </div>

@@ -5,6 +5,7 @@
     import { api } from '@/lib/http.js';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -281,12 +282,12 @@
 
                     <!-- Reply Input -->
                     <div v-if="replyingId === msg.id" class="mb-3 pl-4 border-l-2 border-zinc-800">
-                        <textarea
+                        <Textarea
                             v-model="replyContent"
                             rows="3"
-                            class="block w-full rounded-md border border-zinc-800 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 bg-[#131515] text-zinc-100 sm:text-sm px-3 py-2"
+                            class="sm:text-sm px-3 py-2"
                             :placeholder="t('settings.guestbookReplyPlaceholder')"
-                        ></textarea>
+                        />
                         <div class="mt-2.5 flex justify-end gap-2">
                             <button
                                 @click="cancelReply"

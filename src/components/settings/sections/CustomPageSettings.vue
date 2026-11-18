@@ -4,6 +4,7 @@
     import { useI18n } from '@/i18n/index.js';
     import { confirmAction } from '@/composables/useConfirm.js';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
 
     const { t } = useI18n();
@@ -278,10 +279,10 @@
                                 {&#123;{{ p }}&#125;}
                             </button>
                         </div>
-                        <textarea
+                        <Textarea
                             v-model="props.settings.customPage.content"
                             rows="12"
-                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
+                            class="px-3 py-2.5 font-mono text-xs leading-relaxed"
                             :placeholder="
                                 t('settings.customPageSourcePlaceholder', {
                                     action: t('settings.customPageNormalizeSource'),
@@ -294,10 +295,10 @@
                         <label class="block text-xs font-semibold text-zinc-300 mb-2.5">{{
                             t('settings.customPageCss')
                         }}</label>
-                        <textarea
+                        <Textarea
                             v-model="props.settings.customPage.css"
                             rows="6"
-                            class="w-full px-3 py-2.5 bg-[#131515] border border-zinc-800 rounded-md text-zinc-100 focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 font-mono text-xs leading-relaxed outline-none transition-colors"
+                            class="px-3 py-2.5 font-mono text-xs leading-relaxed"
                             :placeholder="
                                 t('settings.customPageCssPlaceholder', {
                                     name: t('settings.customPageCss'),

@@ -1,6 +1,7 @@
 <script setup>
     import { computed } from 'vue';
     import { ChevronRight, X } from '@lucide/vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -425,7 +426,7 @@
                             >{{ excludeRuleState.tag }}</span
                         >
                     </div>
-                    <textarea
+                    <Textarea
                         id="sub-edit-exclude"
                         :aria-invalid="excludeRuleState.errors.length > 0 ? 'true' : 'false'"
                         :aria-describedby="
@@ -434,13 +435,15 @@
                         v-model="editingSubscription.exclude"
                         :placeholder="t('subscriptions.excludePlaceholder')"
                         rows="8"
-                        class="w-full px-3 py-2 rounded-md sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 leading-6 resize-none bg-white dark:bg-[#131515]"
-                        :class="[
+                        :invalid="excludeRuleState.errors.length > 0"
+                        :wrapperClass="[
+                            'bg-white dark:bg-[#131515] focus-within:ring-0',
                             excludeRuleState.errors.length
-                                ? 'border border-red-500 focus-visible:outline-hidden'
-                                : 'border border-zinc-300 dark:border-zinc-800 focus:border-zinc-500 focus-visible:outline-hidden',
+                                ? 'border-red-500'
+                                : 'border-zinc-300 dark:border-zinc-800 focus-within:border-zinc-500',
                         ]"
-                    ></textarea>
+                        class="px-3 py-2 sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 leading-6 resize-none"
+                    />
                     <div
                         v-if="excludeRuleState.errors.length"
                         id="sub-edit-exclude-error"

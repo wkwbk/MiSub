@@ -2,6 +2,7 @@
     import { computed, ref } from 'vue';
     import { Loader2, Send } from '@lucide/vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -279,11 +280,12 @@
                     <label class="block text-xs font-medium text-zinc-300">{{
                         t('settings.telegramAllowedUsers')
                     }}</label>
-                    <textarea
+                    <Textarea
                         v-model="allowedUsersStr"
                         rows="2"
                         placeholder="123456789, 987654321"
-                        class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
+                        wrapperClass="mt-1.5"
+                        class="px-3 py-2 text-sm font-mono"
                     />
                     <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
                         {{ t('settings.telegramAllowedUsersHint') }}

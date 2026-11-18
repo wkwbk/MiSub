@@ -4,6 +4,7 @@
     import { api } from '@/lib/http.js';
     import Modal from '@/components/forms/Modal.vue';
     import Select from '@/components/ui/Select.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -180,12 +181,13 @@
                         class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
                         >{{ t('guestbook.contentLabel') }}</label
                     >
-                    <textarea
+                    <Textarea
                         v-model="form.content"
                         rows="4"
                         :placeholder="t('guestbook.contentPlaceholder')"
-                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm resize-none"
-                    ></textarea>
+                        wrapperClass="bg-white dark:bg-[#131515] border-zinc-300 dark:border-zinc-800 focus-within:ring-0"
+                        class="text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm resize-none"
+                    />
                 </div>
 
                 <div>

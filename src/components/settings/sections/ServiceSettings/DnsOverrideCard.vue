@@ -3,6 +3,7 @@
     import { Globe } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import * as yaml from 'js-yaml';
 
     const { t } = useI18n();
@@ -83,17 +84,13 @@
             <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-400">
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
-            <textarea
+            <Textarea
                 v-model="inputValue"
                 rows="16"
                 spellcheck="false"
                 :placeholder="t('settings.dnsOverridePlaceholder')"
-                class="block w-full rounded-md border bg-[#131515] px-3 py-2.5 font-mono text-xs leading-relaxed text-zinc-100 shadow-none transition-colors focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
-                :class="
-                    jsonError
-                        ? 'border-red-500/60 focus:border-red-500 focus-visible:ring-red-500'
-                        : 'border-zinc-800'
-                "
+                :invalid="Boolean(jsonError)"
+                class="px-3 py-2.5 font-mono text-xs leading-relaxed"
                 @blur="validateInput"
             />
             <p v-if="jsonError" class="mt-2 text-xs text-red-400">
