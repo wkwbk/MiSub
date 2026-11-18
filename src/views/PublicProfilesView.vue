@@ -239,8 +239,13 @@
             if (!client.repo) return;
             try {
                 const data = await api.get(`/api/github/release?repo=${client.repo}`);
-                if (data && data.tag_name) {
-                    client.version = data.tag_name;
+                if (data) {
+                    if (data.tag_name) {
+                        client.version = data.tag_name;
+                    }
+                    if (data.published_at) {
+                        client.publishedAt = data.published_at;
+                    }
                 }
             } catch (e) {
                 console.warn(`Failed to fetch version for ${client.name}`, e);
@@ -292,6 +297,41 @@
         if (!client.repo && client.platforms?.includes('ios'))
             return t('publicProfiles.appStoreVersion');
         return t('publicProfiles.stableVersion');
+    };
+
+    const RECENT_UPDATE_DAYS = 7;
+
+    const parseClientPublishedDate = (client) => {
+        if (!client?.publishedAt) return null;
+        const date = new Date(client.publishedAt);
+        return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const getClientUpdatedLabel = (client) => {
+        const publishedDate = parseClientPublishedDate(client);
+        if (!publishedDate) return '';
+
+        const diffMs = Date.now() - publishedDate.getTime();
+        if (diffMs >= 0) {
+            const diffDays = Math.floor(diffMs / 86400000);
+            if (diffDays === 0) return t('publicProfiles.updatedToday');
+            if (diffDays <= RECENT_UPDATE_DAYS) {
+                return t('publicProfiles.updatedDaysAgo', { days: diffDays });
+            }
+        }
+
+        const year = publishedDate.getFullYear();
+        const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(publishedDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const getClientUpdatedTitle = (client) => {
+        const publishedDate = parseClientPublishedDate(client);
+        if (!publishedDate) return '';
+        return t('publicProfiles.updatedAtTooltip', {
+            date: publishedDate.toLocaleString(),
+        });
     };
 
     const showPreviewModal = ref(false);
@@ -746,18 +786,27 @@
                                 </div>
 
                                 <div
-                                    class="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800"
+                                    class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-zinc-800"
                                 >
-                                    <span
-                                        class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md"
-                                    >
-                                        {{ getClientVersionLabel(client) }}
-                                    </span>
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md shrink-0"
+                                        >
+                                            {{ getClientVersionLabel(client) }}
+                                        </span>
+                                        <span
+                                            v-if="getClientUpdatedLabel(client)"
+                                            :title="getClientUpdatedTitle(client)"
+                                            class="font-mono text-[11px] text-zinc-500 truncate"
+                                        >
+                                            {{ getClientUpdatedLabel(client) }}
+                                        </span>
+                                    </div>
 
                                     <a
                                         :href="client.url"
                                         target="_blank"
-                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link"
+                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link shrink-0"
                                     >
                                         {{ t('publicProfiles.download') }}
                                         <ArrowRight
