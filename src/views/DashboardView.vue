@@ -286,7 +286,7 @@
 
         <template v-else>
             <section
-                class="relative overflow-hidden bg-surface border border-line rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] transition-[color,background-color,border-color,box-shadow] duration-200"
+                class="relative overflow-hidden bg-surface border border-line rounded-md p-4 sm:p-5 transition-[color,background-color,border-color,box-shadow] duration-200"
             >
                 <div
                     class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
@@ -362,7 +362,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="lg:col-span-2 space-y-4">
                     <section
-                        class="bg-surface p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
+                        class="bg-surface p-5 rounded-md border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <div
                             class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 mb-4 border-b border-line"
@@ -491,7 +491,7 @@
 
                     <section
                         v-if="showFullGuide"
-                        class="bg-surface p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
+                        class="bg-surface p-5 rounded-md border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <h3
                             class="text-base font-semibold text-fg pb-4 mb-4 border-b border-line flex items-center gap-2"

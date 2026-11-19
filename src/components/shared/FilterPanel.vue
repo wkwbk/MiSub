@@ -295,7 +295,7 @@
                         v-if="showApply"
                         type="button"
                         :disabled="loading"
-                        class="px-3 py-1.5 text-sm border border-transparent misub-radius-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                        class="px-3 py-1.5 text-sm border border-transparent misub-radius-md text-accent-fg bg-accent hover:opacity-90 disabled:opacity-50"
                         @click="applyFilters"
                         :aria-label="t('common.apply')"
                     >
@@ -327,7 +327,7 @@
                             :placeholder="filter.placeholder"
                             :value="filterValue(filter)"
                             :disabled="loading || filter.disabled"
-                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong disabled:opacity-50"
                             @input="handleFilterChange(filter, $event.target.value)"
                             :aria-label="filter.label || filter.placeholder"
                         />
@@ -342,7 +342,7 @@
                             :min="filter.min"
                             :max="filter.max"
                             :step="filter.step"
-                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong disabled:opacity-50"
                             @input="handleFilterChange(filter, Number($event.target.value))"
                             :aria-label="filter.label || filter.placeholder"
                         />

@@ -392,7 +392,7 @@
     }
 
     .drag-drop-item-wrapper.chosen {
-        @apply bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700;
+        @apply bg-active border-line-strong;
     }
 
     .drag-drop-item-wrapper.drag {
@@ -408,7 +408,7 @@
     }
 
     .drag-insert-indicator {
-        @apply absolute top-0 left-0 right-0 h-0.5 bg-indigo-500;
+        @apply absolute top-0 left-0 right-0 h-0.5 bg-accent;
     }
 
     .is-dragging .drag-drop-item-wrapper {
@@ -433,7 +433,7 @@
     }
 
     .dark .drag-drop-item-wrapper.chosen {
-        @apply bg-indigo-900/20 border-indigo-700;
+        @apply bg-active border-line-strong;
     }
 
     .dark .drag-handle {

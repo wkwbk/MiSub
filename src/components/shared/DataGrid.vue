@@ -245,7 +245,7 @@
                                         selectedKeys.length > 0 &&
                                         selectedKeys.length < paginatedData.length
                                     "
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                    class="h-4 w-4 rounded border-line-strong text-fg focus-visible:ring-line-strong"
                                     @change="toggleAllSelection"
                                     :aria-label="t('actions.selectAllPage')"
                                 />
@@ -332,7 +332,7 @@
                                 <input
                                     type="checkbox"
                                     :checked="isRowSelected(row)"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                    class="h-4 w-4 rounded border-line-strong text-fg focus-visible:ring-line-strong"
                                     @click.stop
                                     @change="toggleRowSelection(row)"
                                     :aria-label="t('common.selectRow')"
@@ -401,7 +401,7 @@
                         :class="[
                             'px-3 py-2 text-sm border border-line-strong',
                             currentPage === page
-                                ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300'
+                                ? 'bg-active border-line-strong text-fg font-semibold'
                                 : 'bg-surface hover:bg-hover',
                         ]"
                         @click="handlePageChange(page)"

@@ -106,7 +106,7 @@
 
 <template>
     <div
-        class="group relative flex flex-col justify-between rounded-md border p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
+        class="group relative flex flex-col justify-between rounded-md border p-3.5 hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
         :class="[
             isSelectionMode && isSelected
                 ? 'border-line-strong bg-active'

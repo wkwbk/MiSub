@@ -128,7 +128,7 @@
                 v-model="searchQuery"
                 type="text"
                 :placeholder="placeholder || t('common.searchPlaceholder')"
-                class="w-full pl-10 pr-12 py-3 bg-inset/90 backdrop-blur-md border border-line misub-radius-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus:border-transparent smooth-all text-fg"
+                class="w-full pl-10 pr-12 py-3 bg-inset/90 backdrop-blur-md border border-line misub-radius-lg focus-visible:outline-none focus-visible:border-line-strong smooth-all text-fg"
                 @keyup.enter="addToHistory(searchQuery)"
                 :aria-label="placeholder || t('common.searchPlaceholder')"
             />
@@ -154,7 +154,7 @@
                 class="px-3 py-1.5 text-sm font-medium rounded-full smooth-all"
                 :class="
                     activeFilters.has(filter.key)
-                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
+                        ? 'bg-active text-fg'
                         : 'bg-active text-fg-muted hover:bg-hover hover:text-fg'
                 "
             >

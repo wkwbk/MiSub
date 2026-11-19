@@ -401,13 +401,13 @@
                                     'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-canvas border text-fg focus:bg-white dark:focus:bg-gray-800 transition-all outline-none',
                                     regexErrors[idx]
                                         ? 'border-rose-400 dark:border-rose-500/70 focus:border-rose-500'
-                                        : 'border-gray-200/70 dark:border-gray-800 focus:border-indigo-500/40',
+                                        : 'border-line focus:border-line-strong',
                                 ]"
                             />
                             <button
                                 type="button"
                                 @click="addCustomOrderItem(idx)"
-                                class="px-2.5 py-1 rounded-md bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold transition-colors shrink-0"
+                                class="px-2.5 py-1 rounded-md bg-accent hover:opacity-90 text-accent-fg text-[10px] font-bold transition-colors shrink-0"
                             >
                                 + {{ t('operators.add') }}
                             </button>
@@ -437,7 +437,7 @@
                                     v-if="item.key === 'regex'"
                                     type="button"
                                     @click.stop="removeCustomOrderItem(idx, index)"
-                                    class="ml-0.5 text-indigo-400 hover:text-rose-500 transition-colors leading-none"
+                                    class="ml-0.5 text-fg-muted hover:text-rose-500 transition-colors leading-none"
                                     :aria-label="t('operators.removeRule')"
                                 >
                                     ×

@@ -775,7 +775,7 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-14 px-6 text-center text-sm text-fg-subtle bg-surface border border-line shadow-[0_0_13px_rgba(0,0,0,0.05)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] rounded-md"
+                        class="py-14 px-6 text-center text-sm text-fg-subtle bg-surface border border-line rounded-md"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
@@ -843,7 +843,7 @@
                             <div
                                 v-for="client in displayedClients"
                                 :key="client.id || client.name"
-                                class="group relative bg-surface rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div
@@ -969,7 +969,7 @@
                             <div
                                 v-for="core in displayedPublicCores"
                                 :key="core.id || core.name"
-                                class="group relative bg-surface rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div
@@ -1109,7 +1109,7 @@
                             <div
                                 v-for="link in displayedPublicLinks"
                                 :key="link.id || link.name"
-                                class="group relative bg-surface rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div

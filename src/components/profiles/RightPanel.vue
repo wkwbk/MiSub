@@ -130,7 +130,7 @@
 <template>
     <div>
         <div
-            class="bg-surface rounded-md border border-line shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+            class="bg-surface rounded-md border border-line"
             :class="compact ? 'p-4' : 'p-5'"
         >
             <h3

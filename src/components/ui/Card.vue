@@ -224,7 +224,7 @@
 
 <template>
     <div
-        class="group relative flex h-full flex-col overflow-hidden rounded-md border p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
+        class="group relative flex h-full flex-col overflow-hidden rounded-md border p-4 hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="[
             isSelectionMode && isSelected
                 ? 'border-line-strong bg-active'

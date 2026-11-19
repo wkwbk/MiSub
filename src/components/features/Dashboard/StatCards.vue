@@ -71,7 +71,7 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-surface p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-all duration-200 focus-visible:outline-hidden focus-visible:border-line-strong cursor-pointer';
+        'stat-card group w-full text-left bg-surface p-4 sm:p-5 rounded-md border border-line transition-all duration-200 focus-visible:outline-hidden focus-visible:border-line-strong cursor-pointer';
     const normalCardClass = 'border-line';
     const warningCardClass = 'border-line';
 

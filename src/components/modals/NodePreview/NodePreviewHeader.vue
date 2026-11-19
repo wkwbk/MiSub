@@ -46,7 +46,7 @@
             <!-- 关闭按钮 -->
             <button
                 @click="$emit('close')"
-                class="misub-radius-md bg-surface text-fg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 p-2"
+                class="misub-radius-md bg-surface text-fg-subtle hover:text-fg focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong p-2"
             >
                 <span class="sr-only">{{ t('common.close') }}</span>
                 <X class="h-5 w-5" />

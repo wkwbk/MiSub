@@ -55,7 +55,7 @@
             return `${baseClass} bg-gray-300 text-gray-500 cursor-not-allowed`;
         }
 
-        return `${baseClass} bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500`;
+        return `${baseClass} bg-accent text-accent-fg hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong`;
     });
 </script>
 
@@ -77,7 +77,7 @@
                     <!-- Status Icon -->
                     <div
                         v-if="saveState === 'saving'"
-                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"
+                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-fg"
                     ></div>
 
                     <div
