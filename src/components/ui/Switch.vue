@@ -37,9 +37,9 @@
             @change="toggle"
         />
         <div
-            class="w-10 h-5 bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 peer-focus-visible:outline-none rounded-md peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white dark:after:bg-zinc-400 after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:bg-white dark:peer-checked:after:bg-zinc-900 peer-checked:bg-zinc-900 dark:peer-checked:bg-zinc-100 peer-checked:border-zinc-900 dark:peer-checked:border-zinc-100 transition-all duration-200"
+            class="w-10 h-5 bg-inset border border-line-strong peer-focus-visible:outline-none rounded-md peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-fg-subtle after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:bg-accent-fg peer-checked:bg-accent peer-checked:border-accent transition-all duration-200"
         ></div>
-        <span v-if="label" class="ml-3 text-sm font-medium text-zinc-300">
+        <span v-if="label" class="ml-3 text-sm font-medium text-fg-muted">
             {{ label }}
         </span>
     </label>

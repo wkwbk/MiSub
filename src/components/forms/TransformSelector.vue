@@ -231,7 +231,7 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block h-9 w-full rounded-md border border-zinc-800 bg-[#131515] px-3 font-mono text-sm text-zinc-100 placeholder-zinc-600 shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                        class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm text-fg placeholder:text-fg-subtle shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>
@@ -239,7 +239,7 @@
                     v-if="!forceCustom"
                     type="button"
                     @click="switchToSelect"
-                    class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                     :title="t('operators.backToList')"
                     :aria-label="t('operators.backToList')"
                 >
@@ -248,7 +248,7 @@
             </div>
             <p
                 v-if="modelValue"
-                class="mt-1 truncate font-mono text-xs text-zinc-400"
+                class="mt-1 truncate font-mono text-xs text-fg-muted"
                 :title="t('transformSelector.currentCustomValue')"
             >
                 {{ t('transformSelector.currentValue') }}: {{ modelValue }}
@@ -257,12 +257,12 @@
 
         <div
             v-if="missingCustomTemplateValue"
-            class="mt-2 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs leading-relaxed text-zinc-300"
+            class="mt-2 flex items-center gap-2 rounded-md border border-line bg-transparent px-3 py-2 text-xs leading-relaxed text-fg-muted"
         >
             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
             <div>
                 <span>{{ t('transformSelector.missingTemplatePrefix') }}</span><code
-                    class="font-mono text-zinc-100"
+                    class="font-mono text-fg"
                     >{{ missingCustomTemplateValue }}</code
                 ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
             </div>
@@ -272,14 +272,14 @@
             v-if="type === 'config'"
             class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs"
         >
-            <span class="leading-relaxed text-zinc-500">{{ helperText }}</span>
+            <span class="leading-relaxed text-fg-subtle">{{ helperText }}</span>
             <button
                 v-if="!excludeBuiltinAssets"
                 type="button"
                 data-testid="open-template-variables"
                 :aria-expanded="showTemplateVariables"
                 @click="showTemplateVariables = true"
-                class="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                class="inline-flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
             >
                 <Braces class="h-3.5 w-3.5" />
                 <span>{{ t('transformSelector.templateVariablesTitle') }}</span>

@@ -15,14 +15,14 @@
     <Transition name="slide-fade">
         <div
             v-if="isDirty || saveState === 'success'"
-            class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] w-[95%] max-w-2xl px-4 py-3 rounded-md flex flex-row items-center justify-between transition-all duration-200 gap-4 shadow-none bg-[#171717] border border-zinc-800"
+            class="popover-surface fixed bottom-24 left-1/2 -translate-x-1/2 z-[70] w-[95%] max-w-2xl px-4 py-3 rounded-lg flex flex-row items-center justify-between transition-all duration-200 gap-4"
         >
             <div class="flex items-center gap-2.5">
                 <span
                     class="inline-flex rounded-full h-1.5 w-1.5 shrink-0"
                     :class="saveState === 'success' ? 'bg-emerald-500' : 'bg-amber-500'"
                 ></span>
-                <p class="text-xs font-medium text-zinc-200">
+                <p class="text-xs font-medium text-fg">
                     {{
                         saveState === 'success'
                             ? t('common.allChangesSaved')
@@ -35,14 +35,14 @@
                 <button
                     v-if="saveState !== 'success'"
                     @click="$emit('discard')"
-                    class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-zinc-100 border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors rounded-md whitespace-nowrap"
+                    class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium text-fg-muted hover:text-fg border border-line hover:border-line-strong bg-transparent hover:bg-hover transition-colors rounded-md whitespace-nowrap"
                 >
                     {{ t('actions.discard') }}
                 </button>
                 <button
                     @click.prevent="$emit('save')"
                     :disabled="saveState !== 'idle'"
-                    class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
+                    class="flex-1 sm:flex-none px-4 py-1.5 text-xs font-semibold rounded-md flex items-center justify-center transition-opacity disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap bg-accent text-accent-fg hover:opacity-90 border border-accent"
                 >
                     <div v-if="saveState === 'saving'" class="flex items-center">
                         <Loader2 class="w-3.5 h-3.5 mr-1.5 animate-spin" aria-hidden="true" />

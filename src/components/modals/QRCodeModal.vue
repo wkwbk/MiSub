@@ -72,25 +72,25 @@
 <template>
     <Modal :show="show" @update:show="emit('update:show', $event)">
         <template #title>
-            <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            <h3 class="text-base font-semibold text-fg">
                 {{ title || t('qr.title') }}
             </h3>
         </template>
         <template #body>
             <div class="flex flex-col items-center gap-5 py-4">
                 <div
-                    class="bg-white p-3 rounded-md border border-zinc-200 dark:border-zinc-800 shadow-none"
+                    class="bg-white p-3 rounded-md border border-line shadow-none"
                 >
                     <canvas ref="canvasRef" class="w-64 h-64 rounded-sm"></canvas>
                 </div>
 
-                <p class="text-xs font-mono text-center text-zinc-500 max-w-xs break-all">
+                <p class="text-xs font-mono text-center text-fg-subtle max-w-xs break-all">
                     {{ url }}
                 </p>
 
                 <button
                     @click="downloadQRCode"
-                    class="flex items-center gap-2 px-5 py-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 rounded-md text-xs font-medium transition-colors shadow-none"
+                    class="flex items-center gap-2 px-5 py-2 bg-accent hover:opacity-90 text-accent-fg rounded-md text-xs font-medium transition-colors shadow-none"
                 >
                     <Download class="h-4 w-4" />
                     {{ t('qr.saveImage') }}

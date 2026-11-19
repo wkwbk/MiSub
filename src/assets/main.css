@@ -26,6 +26,30 @@
     --default-transition-duration: 200ms;
 }
 
+/* ============================================
+   Semantic Design Tokens (Tailwind v4 @theme inline)
+   Use bg-canvas / bg-surface / bg-elevated / bg-inset / bg-active / bg-hover
+   bg-accent / text-accent-fg / text-fg / text-fg-muted / text-fg-subtle
+   border-line / border-line-strong / border-line-subtle instead of raw hex/zinc.
+   ============================================ */
+@theme inline {
+    --color-canvas: var(--canvas);
+    --color-surface: var(--surface);
+    --color-elevated: var(--elevated);
+    --color-elevated-card: var(--elevated-card);
+    --color-inset: var(--inset);
+    --color-active: var(--active);
+    --color-hover: var(--hover);
+    --color-accent: var(--accent);
+    --color-accent-fg: var(--accent-fg);
+    --color-fg: var(--fg);
+    --color-fg-muted: var(--fg-muted);
+    --color-fg-subtle: var(--fg-subtle);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-line-subtle: var(--line-subtle);
+}
+
 :root {
     --color-primary-50: #f5f6ff;
     --color-primary-100: #ebedff;
@@ -38,14 +62,48 @@
     --color-primary-800: #424a94;
     --color-primary-900: #373d75;
 
-    --bg-page-light: #fafafa;
-    --bg-page-dark: #131515;
+    --bg-page-light: #f4f4f4;
+    --bg-page-dark: #0a0a0a;
     --surface-panel-light: #ffffff;
-    --surface-panel-dark: #171717;
+    --surface-panel-dark: #141414;
     --surface-card-light: #ffffff;
-    --surface-card-dark: #171717;
-    --surface-card-hover-light: #f0f0f3;
-    --surface-card-hover-dark: #242428;
+    --surface-card-dark: #141414;
+    --surface-card-hover-light: #f0f0f0;
+    --surface-card-hover-dark: #1e1e1e;
+
+    /* Pure Neutral Semantic Design Tokens (Light Default) */
+    --canvas: #f4f4f4;
+    --surface: #ffffff;
+    --elevated: #ffffff;
+    --elevated-card: #f5f5f5;
+    --inset: #ffffff;
+    --active: #e8e8e8;
+    --hover: #f0f0f0;
+    --accent: #171717;
+    --accent-fg: #ffffff;
+    --fg: #0a0a0a;
+    --fg-muted: #525252;
+    --fg-subtle: #737373;
+    --line: rgba(0, 0, 0, 0.1);
+    --line-strong: rgba(0, 0, 0, 0.2);
+    --line-subtle: rgba(0, 0, 0, 0.06);
+
+    /* Pure Neutral Modal, Popover & Elevation Tokens (Light Default) */
+    --surface-modal: #ffffff;
+    --surface-modal-chrome: #fafafa;
+    --surface-modal-card: #f5f5f5;
+    --surface-modal-inset: #efefef;
+    --surface-modal-active: #ffffff;
+    --surface-modal-hover: rgba(0, 0, 0, 0.04);
+    --surface-popover: #ffffff;
+    --border-modal-outer: rgba(0, 0, 0, 0.12);
+    --border-modal-divider: rgba(0, 0, 0, 0.08);
+    --border-modal-hairline: rgba(0, 0, 0, 0.06);
+    --border-popover: rgba(0, 0, 0, 0.12);
+    --shadow-modal: 0 24px 64px -12px rgba(0, 0, 0, 0.18), 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+    --shadow-popover: 0 12px 32px -6px rgba(0, 0, 0, 0.14), 0 4px 12px -4px rgba(0, 0, 0, 0.08);
+    --scrollbar-thumb: rgba(0, 0, 0, 0.16);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
     /* Unified Interactive Hover Tokens */
     --hover-surface-light: #e4e4e7;
@@ -54,9 +112,9 @@
     --hover-danger-bg-light: #fee2e2;
     --hover-danger-border-light: #fca5a5;
 
-    --hover-surface-dark: #27272a;
-    --hover-surface-elevated-dark: #303036;
-    --hover-border-dark: #52525b;
+    --hover-surface-dark: #262626;
+    --hover-surface-elevated-dark: #303030;
+    --hover-border-dark: #525252;
     --hover-danger-bg-dark: rgba(239, 68, 68, 0.16);
     --hover-danger-border-dark: rgba(239, 68, 68, 0.45);
 
@@ -102,6 +160,52 @@
     --z-confirm: 1200000;
 }
 
+:root.dark,
+.dark {
+    /* Pure Neutral Semantic Design Tokens (Dark) */
+    --canvas: #0a0a0a;
+    --surface: #141414;
+    --elevated: #181818;
+    --elevated-card: #212121;
+    --inset: #111111;
+    --active: #282828;
+    --hover: #222222;
+    --accent: #f5f5f5;
+    --accent-fg: #0a0a0a;
+    --fg: #fafafa;
+    --fg-muted: #a3a3a3;
+    --fg-subtle: #737373;
+    --line: rgba(255, 255, 255, 0.09);
+    --line-strong: rgba(255, 255, 255, 0.18);
+    --line-subtle: rgba(255, 255, 255, 0.055);
+
+    --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.42);
+    --shadow-card-hover: 0 10px 28px rgba(0, 0, 0, 0.65);
+
+    /* Pure Neutral Modal, Popover & Elevation Tokens (Dark) */
+    --surface-modal: #181818;
+    --surface-modal-chrome: #131313;
+    --surface-modal-card: #212121;
+    --surface-modal-inset: #121212;
+    --surface-modal-active: #2c2c2c;
+    --surface-modal-hover: rgba(255, 255, 255, 0.045);
+    --surface-popover: #1e1e1e;
+    --border-modal-outer: rgba(255, 255, 255, 0.13);
+    --border-modal-divider: rgba(255, 255, 255, 0.085);
+    --border-modal-hairline: rgba(255, 255, 255, 0.055);
+    --border-popover: rgba(255, 255, 255, 0.13);
+    --shadow-modal:
+        0 28px 72px -12px rgba(0, 0, 0, 0.82),
+        0 10px 28px -8px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    --shadow-popover:
+        0 20px 48px -8px rgba(0, 0, 0, 0.72),
+        0 8px 20px -6px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --scrollbar-thumb: rgba(255, 255, 255, 0.16);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+}
+
 @layer base {
     *,
     ::after,
@@ -124,8 +228,6 @@
     .dark,
     .dark html {
         color-scheme: dark;
-        --shadow-card: 0 0 15px rgba(0, 0, 0, 0.45);
-        --shadow-card-hover: 0 8px 26px rgba(0, 0, 0, 0.7);
     }
 
     body {
@@ -319,6 +421,113 @@
     scrollbar-width: none;
 }
 
+/* Global Pure Neutral Thin Scrollbars */
+html,
+body,
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Pure Neutral Thin Scrollbar (Explicit Opt-in) */
+.modal-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Pure Neutral Modal & Floating Popover Surface System */
+.modal-surface {
+    background-color: var(--surface-modal);
+    border: 1px solid var(--border-modal-outer);
+    box-shadow: var(--shadow-modal);
+    /* Native CSS custom property scoping: nested bg-surface cards lift above the modal */
+    --surface: var(--elevated-card);
+}
+
+.dark .modal-surface {
+    --inset: var(--surface-modal-inset);
+}
+
+.popover-surface {
+    background-color: var(--surface-popover);
+    border: 1px solid var(--border-popover);
+    box-shadow: var(--shadow-popover);
+}
+
+.modal-chrome-header {
+    border-bottom: 1px solid var(--border-modal-divider);
+}
+
+.modal-chrome-footer {
+    background-color: var(--surface-modal-chrome);
+    border-top: 1px solid var(--border-modal-divider);
+}
+
+.modal-section-card {
+    background-color: var(--surface-modal-card);
+    border: 1px solid var(--border-modal-divider);
+}
+
+.modal-section-card > .modal-row-list > :not(:last-child) {
+    border-bottom: 1px solid var(--border-modal-hairline);
+}
+
+.modal-row-hover:hover {
+    background-color: var(--surface-modal-hover);
+}
+
+.modal-inset-surface {
+    background-color: var(--surface-modal-inset);
+    border: 1px solid var(--border-modal-divider);
+}
+
+.modal-tab-active {
+    background-color: var(--surface-modal-active);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.dark .modal-tab-active {
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
 .nav-brand-wrap {
     @apply flex items-center gap-2 rounded-md transition-opacity duration-150;
 }
@@ -336,7 +545,7 @@
 }
 
 .nav-brand-text {
-    @apply font-display font-semibold tracking-tight text-zinc-900 dark:text-zinc-100;
+    @apply font-display font-semibold tracking-tight text-fg;
 }
 
 .nav-action-btn {
@@ -346,19 +555,19 @@
 }
 
 .nav-action-btn-neutral {
-    @apply text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800;
+    @apply text-fg-muted hover:text-fg hover:bg-hover;
 }
 
 .nav-action-btn-active {
-    @apply bg-zinc-100 text-zinc-900 border border-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700;
+    @apply bg-active text-fg border border-line-strong;
 }
 
 .nav-action-btn-danger {
-    @apply text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50;
+    @apply text-fg-muted hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/10;
 }
 
 .nav-action-focus {
-    @apply focus-visible:ring-1 focus-visible:ring-zinc-500;
+    @apply focus-visible:ring-1 focus-visible:ring-line-strong;
 }
 
 .nav-action-focus-danger {
@@ -374,15 +583,15 @@
 }
 
 .nav-tab-active {
-    @apply text-zinc-100 dark:text-zinc-900 font-semibold;
+    @apply text-fg font-semibold;
 }
 
 .nav-tab-inactive {
-    @apply text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-800;
+    @apply text-fg-muted hover:text-fg hover:bg-hover;
 }
 
 .nav-tab-active-pill {
-    @apply absolute inset-0 bg-zinc-900 dark:bg-zinc-100 rounded-md -z-10 transition-colors duration-200;
+    @apply absolute inset-0 bg-active border border-line-strong rounded-md -z-10 transition-colors duration-200;
 }
 
 .nav-mobile-item {
@@ -395,11 +604,11 @@
 }
 
 .nav-mobile-item-active {
-    @apply text-zinc-900 dark:text-zinc-100 font-semibold;
+    @apply text-fg font-semibold;
 }
 
 .nav-mobile-item-inactive {
-    @apply text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100;
+    @apply text-fg-muted hover:text-fg;
 }
 
 .nav-mobile-icon-wrap {
@@ -407,7 +616,7 @@
 }
 
 .nav-mobile-item-active .nav-mobile-icon-wrap {
-    @apply bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100;
+    @apply bg-active text-fg;
 }
 
 .misub-radius-sm {
@@ -474,9 +683,9 @@ textarea {
 }
 
 .dark .mobile-nav-glass {
-    background: rgba(19, 21, 21, 0.8);
-    border-top: 1px solid var(--border-subtle-dark);
-    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
+    background: rgba(14, 14, 14, 0.85);
+    border-top: 1px solid var(--border-modal-divider);
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
 }
 
 .content-area {
@@ -646,180 +855,9 @@ textarea {
 }
 
 /* ============================================
-   Light Theme Adaptation (Exposed Hairline Grid)
-   Automatically adapts dark-first zinc/hex utilities when html is not .dark
+   Semantic Status Readability Helpers (Light & Dark)
+   Ensures red/amber/emerald/sky status accents remain crisp on light backgrounds.
    ============================================ */
-html:not(.dark) .bg-\[\#131515\] {
-    background-color: #fafafa;
-}
-
-html:not(.dark) .bg-\[\#131515\]\/95 {
-    background-color: rgba(250, 250, 250, 0.95);
-}
-
-html:not(.dark) .bg-\[\#131515\]\/80 {
-    background-color: rgba(250, 250, 250, 0.85);
-}
-
-html:not(.dark) .bg-\[\#171717\] {
-    background-color: #ffffff;
-}
-
-html:not(.dark) select.bg-\[\#131515\]:not([class*='dark:bg-']),
-html:not(.dark) input.bg-\[\#131515\]:not([class*='dark:bg-']),
-html:not(.dark) textarea.bg-\[\#131515\]:not([class*='dark:bg-']),
-html:not(.dark) option.bg-\[\#131515\] {
-    background-color: #ffffff;
-}
-
-html:not(.dark) .hover\:bg-\[\#171717\]:hover,
-html:not(.dark) .focus-visible\:bg-\[\#171717\]:focus-visible,
-html:not(.dark) .hover\:bg-\[\#202020\]:hover,
-html:not(.dark) .focus-visible\:bg-\[\#202020\]:focus-visible {
-    background-color: var(--hover-surface-light);
-}
-
-html:not(.dark) .bg-zinc-900:not([class*='dark:bg-']) {
-    background-color: #f4f4f5;
-}
-
-html:not(.dark) .bg-zinc-900\/60:not([class*='dark:bg-']),
-html:not(.dark) .bg-zinc-900\/50:not([class*='dark:bg-']),
-html:not(.dark) .bg-zinc-900\/40:not([class*='dark:bg-']),
-html:not(.dark) .bg-zinc-900\/35:not([class*='dark:bg-']),
-html:not(.dark) .bg-zinc-900\/30:not([class*='dark:bg-']) {
-    background-color: rgba(244, 244, 245, 0.75);
-}
-
-html:not(.dark) .bg-zinc-800:not([class*='dark:bg-']) {
-    background-color: #e4e4e7;
-}
-
-html:not(.dark) .bg-zinc-800\/60:not([class*='dark:bg-']),
-html:not(.dark) .bg-zinc-800\/50:not([class*='dark:bg-']) {
-    background-color: rgba(228, 228, 231, 0.75);
-}
-
-html:not(.dark) .hover\:bg-zinc-900:not([class*='dark:hover:bg-']):not(:disabled):hover,
-html:not(.dark) .hover\:bg-zinc-900\/60:not([class*='dark:hover:bg-']):not(:disabled):hover,
-html:not(.dark) .hover\:bg-zinc-900\/50:not([class*='dark:hover:bg-']):not(:disabled):hover,
-html:not(.dark) .hover\:bg-zinc-900\/40:not([class*='dark:hover:bg-']):not(:disabled):hover,
-html:not(.dark) .hover\:bg-zinc-900\/30:not([class*='dark:hover:bg-']):not(:disabled):hover,
-html:not(.dark) .focus-visible\:bg-zinc-900\/60:focus-visible,
-html:not(.dark) .hover\:bg-zinc-100:not(.bg-zinc-900):not(:disabled):hover,
-html:not(.dark) .hover\:bg-gray-100:not(:disabled):hover {
-    background-color: var(--hover-surface-light);
-}
-
-html:not(.dark) .hover\:bg-zinc-50:not(:disabled):hover,
-html:not(.dark) .hover\:bg-gray-50:not(:disabled):hover {
-    background-color: var(--hover-surface-subtle-light);
-}
-
-html:not(.dark) .hover\:bg-zinc-800:not([class*='dark:hover:bg-']):not(:disabled):hover {
-    background-color: #d4d4d8;
-}
-
-/* Primary Buttons, Active Tabs, Selected Chips & Progress Fills */
-html:not(.dark) .bg-zinc-100:not([class*='dark:bg-']) {
-    background-color: #18181b;
-}
-
-html:not(.dark) .bg-zinc-100.text-zinc-900:not([class*='dark:bg-']) {
-    color: #fafafa;
-}
-
-html:not(.dark) .border-zinc-100:not([class*='dark:border-']) {
-    border-color: #18181b;
-}
-
-html:not(.dark) .border-t-zinc-100:not([class*='dark:border-']) {
-    border-top-color: #18181b;
-}
-
-html:not(.dark) .bg-zinc-100.hover\:bg-white:not([class*='dark:bg-']):hover {
-    background-color: #3f3f46;
-}
-
-/* Hairline Borders & Dividers */
-html:not(.dark) .border-zinc-800:not([class*='dark:border-']),
-html:not(.dark) .border-zinc-800\/80:not([class*='dark:border-']),
-html:not(.dark) .border-zinc-800\/60:not([class*='dark:border-']),
-html:not(.dark) .border-zinc-800\/45:not([class*='dark:border-']) {
-    border-color: #e4e4e7;
-}
-
-html:not(.dark) .border-zinc-700:not([class*='dark:border-']) {
-    border-color: #d4d4d8;
-}
-
-html:not(.dark) .border-zinc-600:not([class*='dark:border-']) {
-    border-color: #a1a1aa;
-}
-
-html:not(.dark) .hover\:border-zinc-700:not([class*='dark:hover:border-']):hover,
-html:not(.dark) .hover\:border-zinc-600:not([class*='dark:hover:border-']):hover,
-html:not(.dark) .hover\:border-zinc-500:not([class*='dark:hover:border-']):hover {
-    border-color: #a1a1aa;
-}
-
-html:not(.dark) .focus\:border-zinc-500:focus,
-html:not(.dark) .focus\:border-zinc-400:focus,
-html:not(.dark) .focus-visible\:border-zinc-500:focus-visible,
-html:not(.dark) .focus-visible\:border-zinc-400:focus-visible {
-    border-color: #52525b;
-}
-
-html:not(.dark) :where(.divide-zinc-800:not([class*='dark:divide-']) > :not(:last-child)),
-html:not(.dark) :where(.divide-zinc-800\/80:not([class*='dark:divide-']) > :not(:last-child)),
-html:not(.dark) :where(.divide-zinc-800\/60:not([class*='dark:divide-']) > :not(:last-child)) {
-    border-color: #e4e4e7;
-}
-
-html:not(.dark) .max-md\:\[\&\>\*\:nth-child\(n\+3\)\]\:border-zinc-800 > *:nth-child(n + 3),
-html:not(.dark) .md\:\[\&\>\*\:nth-child\(n\+3\)\]\:border-zinc-800 > *:nth-child(n + 3) {
-    border-color: #e4e4e7;
-}
-
-/* Typography */
-html:not(.dark) .text-zinc-100:not([class*='dark:text-']):not(.bg-zinc-900) {
-    color: #09090b;
-}
-
-html:not(.dark) .text-zinc-200:not([class*='dark:text-']) {
-    color: #18181b;
-}
-
-html:not(.dark) .text-zinc-300:not([class*='dark:text-']) {
-    color: #3f3f46;
-}
-
-html:not(.dark) .text-zinc-400:not([class*='dark:text-']) {
-    color: #52525b;
-}
-
-html:not(.dark) .text-zinc-500:not([class*='dark:text-']),
-html:not(.dark) .text-zinc-600:not([class*='dark:text-']) {
-    color: #71717a;
-}
-
-html:not(.dark) .hover\:text-zinc-100:not([class*='dark:hover:text-']):hover,
-html:not(.dark) .hover\:text-white:not([class*='dark:hover:text-']):hover {
-    color: #09090b;
-}
-
-html:not(.dark) .hover\:text-zinc-200:not([class*='dark:hover:text-']):hover,
-html:not(.dark) .hover\:text-zinc-300:not([class*='dark:hover:text-']):hover {
-    color: #18181b;
-}
-
-html:not(.dark) .group:hover .group-hover\:text-zinc-100:not([class*='dark:group-hover:text-']),
-html:not(.dark) .group:hover .group-hover\:text-zinc-200:not([class*='dark:group-hover:text-']),
-html:not(.dark) .group:hover .group-hover\:text-zinc-300:not([class*='dark:group-hover:text-']) {
-    color: #09090b;
-}
-
-/* Semantic Status Actions in Light Mode */
 html:not(.dark) .hover\:bg-red-950\/40:not(:disabled):hover,
 html:not(.dark) .hover\:bg-red-950\/30:not(:disabled):hover,
 html:not(.dark) .hover\:bg-red-950\/50:not(:disabled):hover {
@@ -833,14 +871,6 @@ html:not(.dark) .border-red-900\/50 {
 
 html:not(.dark) .hover\:border-red-900\/60:not(:disabled):hover {
     border-color: var(--hover-danger-border-light);
-}
-
-/* Light Mode Bordered Interactive Controls Hover */
-html:not(.dark) button.border-zinc-800:not(:disabled):not(.text-red-400):not(.bg-zinc-100):hover,
-html:not(.dark) button.border-zinc-300:not(:disabled):not(.bg-zinc-100):hover,
-html:not(.dark) button.border-zinc-200:not(:disabled):not(.bg-zinc-100):hover,
-html:not(.dark) [role='button'].border-zinc-800:not([aria-disabled='true']):hover {
-    border-color: var(--hover-border-light);
 }
 
 html:not(.dark) .text-red-400:not([class*='dark:text-']),
@@ -862,33 +892,6 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
     color: #0284c7;
 }
 
-/* ============================================
-   Dark Theme Global Hover Contrast Enhancement
-   Upgrades near-invisible zinc-900 (#18181b) / #202020 hover fills
-   against #131515 / #171717 surfaces to crisp elevated contrast.
-   ============================================ */
-.dark .hover\:bg-zinc-900:not(:disabled):hover,
-.dark .dark\:hover\:bg-zinc-900:not(:disabled):hover,
-.dark .hover\:bg-zinc-900\/60:not(:disabled):hover,
-.dark .dark\:hover\:bg-zinc-900\/60:not(:disabled):hover,
-.dark .hover\:bg-zinc-900\/50:not(:disabled):hover,
-.dark .dark\:hover\:bg-zinc-900\/50:not(:disabled):hover,
-.dark .hover\:bg-zinc-900\/40:not(:disabled):hover,
-.dark .hover\:bg-zinc-900\/30:not(:disabled):hover,
-.dark .focus-visible\:bg-zinc-900\/60:focus-visible {
-    background-color: var(--hover-surface-dark);
-}
-
-.dark .hover\:bg-zinc-800:not(:disabled):hover,
-.dark .dark\:hover\:bg-zinc-800:not(:disabled):hover {
-    background-color: var(--hover-surface-elevated-dark);
-}
-
-.dark .hover\:bg-\[\#202020\]:hover,
-.dark .dark\:hover\:bg-\[\#202020\]:hover {
-    background-color: var(--surface-card-hover-dark);
-}
-
 .dark .hover\:bg-red-950\/40:not(:disabled):hover,
 .dark .hover\:bg-red-950\/30:not(:disabled):hover,
 .dark .hover\:bg-red-950\/50:not(:disabled):hover {
@@ -899,24 +902,10 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
     border-color: var(--hover-danger-border-dark);
 }
 
-.dark .hover\:border-zinc-700:not(:disabled):hover,
-.dark .dark\:hover\:border-zinc-700:not(:disabled):hover {
-    border-color: var(--hover-border-dark);
-}
-
-/* Dark Mode Bordered Interactive Controls Hover */
-.dark button.border-zinc-800:not(:disabled):not(.text-red-400):not(.bg-zinc-100):hover,
-.dark [role='button'].border-zinc-800:not([aria-disabled='true']):hover {
-    border-color: var(--hover-border-dark);
-}
-
-/* Universal Card & Panel Shadows (Soft elevation matching IPCheck.ing 0 0 13px rgba(0,0,0,0.11)) */
-.bg-\[\#171717\].rounded-md,
-.bg-\[\#171717\].rounded-lg,
-.bg-\[\#171717\].rounded-xl,
-.bg-white.rounded-md[class*='dark:bg-\[\#171717\]'],
-.bg-white.rounded-lg[class*='dark:bg-\[\#171717\]'],
-.bg-white.rounded-md[class*='dark:border-zinc-800'],
+/* Universal Card & Panel Shadows */
+.bg-surface.rounded-md,
+.bg-surface.rounded-lg,
+.bg-surface.rounded-xl,
 .stat-card,
 .profile-card,
 .announcement-card,
@@ -925,11 +914,15 @@ html:not(.dark) .text-sky-400:not([class*='dark:text-']) {
     box-shadow: var(--shadow-card);
 }
 
-/* Unified 200ms color transition for dark-first surfaces without explicit transition-* utilities */
-:where(
-    .bg-\[\#171717\]:not([class*='transition-']),
-    .bg-\[\#131515\]:not([class*='transition-'])
-) {
+/* Never apply page-level outer shadow to cards nested inside a modal */
+.modal-surface .bg-surface.rounded-md,
+.modal-surface .bg-surface.rounded-lg,
+.modal-surface .bg-surface.rounded-xl {
+    box-shadow: none;
+}
+
+/* Unified 200ms color transition for semantic surfaces without explicit transition-* utilities */
+:where(.bg-surface:not([class*='transition-']), .bg-inset:not([class*='transition-'])) {
     transition:
         background-color 0.2s ease,
         border-color 0.2s ease,

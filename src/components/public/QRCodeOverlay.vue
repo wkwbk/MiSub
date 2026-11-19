@@ -32,34 +32,34 @@
                 v-if="isExpanded"
                 @pointerdown.capture="handleBackdropPointerDown"
                 @click.self="handleBackdropClick"
-                class="fixed inset-0 bg-black/75 flex items-center justify-center"
+                class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center"
                 :style="{ zIndex: 'var(--z-modal)' }"
                 role="dialog"
                 aria-modal="true"
             >
                 <div
-                    class="relative bg-white dark:bg-[#171717] rounded-md p-6 shadow-none max-w-sm w-full mx-4 transform transition-all border border-zinc-200 dark:border-zinc-800"
+                    class="modal-surface relative rounded-lg p-6 max-w-sm w-full mx-4 transform transition-all"
                     @click.stop
                 >
                     <!-- Close Button -->
                     <button
                         @click="emit('close')"
-                        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                        class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-md border border-transparent text-fg-subtle hover:border-line-strong hover:text-fg hover:bg-hover transition-colors"
                         :aria-label="t('common.close')"
                     >
                         <X class="w-4 h-4" />
                     </button>
 
                     <div class="flex flex-col items-center pt-2">
-                        <h4 class="text-base font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
+                        <h4 class="text-base font-semibold text-fg mb-1">
                             {{ profile.name }}
                         </h4>
-                        <p class="text-xs text-zinc-500 mb-5">
+                        <p class="text-xs text-fg-subtle mb-5">
                             {{ t('public.scanToImport') }}
                         </p>
 
                         <div
-                            class="bg-white p-3 rounded-md shadow-none border border-zinc-200 dark:border-zinc-800 w-64 h-64 flex items-center justify-center"
+                            class="bg-white p-3 rounded-md shadow-none border border-line w-64 h-64 flex items-center justify-center"
                         >
                             <canvas
                                 :ref="
@@ -73,7 +73,7 @@
 
                         <button
                             @click="emit('download')"
-                            class="mt-6 w-full flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-medium text-zinc-100 dark:text-zinc-900 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:hover:bg-white rounded-md transition-colors shadow-none"
+                            class="mt-6 w-full flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-medium text-accent-fg bg-accent hover:opacity-90 rounded-md transition-colors shadow-none"
                         >
                             <Download class="w-4 h-4" />
                             {{ t('public.downloadQr') }}

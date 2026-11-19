@@ -41,7 +41,7 @@
     >
         <template #title>
             <div class="bg-transparent px-1 py-0.5">
-                <h3 class="text-base font-semibold text-zinc-100">
+                <h3 class="text-base font-semibold text-fg">
                     {{ t('settings.title') }}
                 </h3>
             </div>

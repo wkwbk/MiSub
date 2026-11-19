@@ -40,11 +40,11 @@
 
 <template>
     <div
-        class="relative overflow-hidden rounded-md border bg-[#131515] transition-colors"
+        class="relative overflow-hidden rounded-md border bg-inset transition-colors"
         :class="[
             invalid
                 ? 'border-red-500/60 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-500'
-                : 'border-zinc-800 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500',
+                : 'border-line hover:border-line-strong focus-within:border-line-strong',
             wrapperClass,
         ]"
         :style="attrs.style"
@@ -56,7 +56,7 @@
             @input="handleInput"
             @focus="emit('focus', $event)"
             @blur="emit('blur', $event)"
-            class="misub-textarea-inner block w-full border-0 bg-transparent text-zinc-100 placeholder-zinc-600 shadow-none outline-none focus:outline-none focus-visible:ring-0"
+            class="misub-textarea-inner block w-full border-0 bg-transparent text-fg placeholder:text-fg-subtle shadow-none outline-none focus:outline-none focus-visible:ring-0"
             :class="[attrs.class, textareaClass]"
         ></textarea>
     </div>

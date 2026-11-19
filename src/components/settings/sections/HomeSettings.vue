@@ -22,7 +22,7 @@
 <template>
     <div v-if="settings" class="space-y-4">
         <!-- {{ t('settings.homeHeroTitle') }} -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.homeHeroTitle')"
                 :description="t('settings.homeHeroDesc')"

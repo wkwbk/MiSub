@@ -114,15 +114,15 @@
         <template #title>
             <div class="flex items-center gap-2.5">
                 <div
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-zinc-800 bg-[#131515] text-zinc-300"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-inset text-fg-muted"
                 >
                     <Braces class="h-3.5 w-3.5" />
                 </div>
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ t('transformSelector.templateVariablesTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
+                    <p class="mt-0.5 text-xs text-fg-muted">
                         {{ t('transformSelector.templateVariablesDesc') }}
                     </p>
                 </div>
@@ -135,9 +135,9 @@
                     v-for="group in templateVariableGroups"
                     :key="group.id"
                     :class="group.wide ? 'md:col-span-2' : ''"
-                    class="rounded-md border border-zinc-800 bg-[#131515] p-4"
+                    class="rounded-md border border-line bg-inset p-4"
                 >
-                    <h4 class="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                    <h4 class="text-xs font-semibold uppercase tracking-wider text-fg-muted">
                         {{ group.title }}
                     </h4>
                     <div
@@ -149,10 +149,10 @@
                             :key="item.key"
                             type="button"
                             @click="copyVariable(item.key)"
-                            class="group flex w-full flex-col items-start rounded-md border border-zinc-800/80 bg-[#171717] px-3 py-2 text-left transition-colors hover:border-zinc-700 hover:bg-zinc-900"
+                            class="group flex w-full flex-col items-start rounded-md border border-line bg-surface px-3 py-2 text-left transition-colors hover:border-line-strong hover:bg-hover"
                         >
                             <div class="flex w-full items-center justify-between gap-2">
-                                <code class="font-mono text-xs text-zinc-100">{{ item.key }}</code>
+                                <code class="font-mono text-xs text-fg">{{ item.key }}</code>
                                 <span
                                     v-if="copiedKey === item.key"
                                     class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400"
@@ -162,10 +162,10 @@
                                 </span>
                                 <Copy
                                     v-else
-                                    class="h-3 w-3 shrink-0 text-zinc-600 transition-colors group-hover:text-zinc-300"
+                                    class="h-3 w-3 shrink-0 text-fg-subtle transition-colors group-hover:text-fg"
                                 />
                             </div>
-                            <p class="mt-1 text-[11px] leading-relaxed text-zinc-500">
+                            <p class="mt-1 text-[11px] leading-relaxed text-fg-subtle">
                                 {{ t('transformSelector.exampleLabel') }}: {{ item.example }}
                             </p>
                         </button>
@@ -178,7 +178,7 @@
             <button
                 type="button"
                 @click="emit('update:show', false)"
-                class="rounded-md bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white"
+                class="rounded-md bg-accent px-4 py-2 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90"
             >
                 {{ t('actions.close') }}
             </button>

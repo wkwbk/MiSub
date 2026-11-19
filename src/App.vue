@@ -244,7 +244,7 @@
 <template>
     <div
         :class="theme"
-        class="min-h-screen flex flex-col text-zinc-900 dark:text-zinc-200 transition-colors duration-200 bg-zinc-50 dark:bg-[#131515]"
+        class="min-h-screen flex flex-col text-fg transition-colors duration-200 bg-canvas"
     >
         <RouteProgressBar
             :is-navigating="isNavigating"
@@ -322,12 +322,12 @@
                 <!-- Security Banner -->
                 <div
                     v-if="isDefaultPassword"
-                    class="mb-4 px-4 py-3 bg-[#171717] text-zinc-200 rounded-md border border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+                    class="mb-4 px-4 py-3 bg-surface text-fg rounded-md border border-line"
                 >
                     <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
                         <div class="flex items-center gap-2.5">
                             <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
-                            <p class="text-xs sm:text-sm font-medium text-zinc-200">
+                            <p class="text-xs sm:text-sm font-medium text-fg">
                                 {{ defaultPasswordWarningMessage }}
                             </p>
                         </div>
@@ -336,12 +336,12 @@
 
                 <div
                     v-if="showUpdateNotice && versionReleaseInfo"
-                    class="mb-4 rounded-md border border-zinc-800 bg-[#171717] px-4 py-3 text-zinc-200 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+                    class="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-fg"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div class="space-y-1">
                             <p
-                                class="text-sm font-semibold text-zinc-100 flex items-center gap-2 font-mono"
+                                class="text-sm font-semibold text-fg flex items-center gap-2 font-mono"
                             >
                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                                 {{

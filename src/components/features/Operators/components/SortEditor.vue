@@ -284,12 +284,12 @@
 <template>
     <div class="space-y-3">
         <div class="flex items-center justify-between">
-            <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+            <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
                 t('operators.sortWeights')
             }}</label>
             <button
                 @click="addKey"
-                class="text-[10px] text-zinc-200 font-semibold hover:text-white"
+                class="text-[10px] text-fg font-semibold hover:text-white"
             >
                 + {{ t('operators.addCondition') }}
             </button>
@@ -299,13 +299,13 @@
             <div
                 v-for="(item, idx) in params.keys"
                 :key="idx"
-                class="flex flex-col gap-2 p-2 bg-transparent rounded-md border border-zinc-800 transition-all"
+                class="flex flex-col gap-2 p-2 bg-transparent rounded-md border border-line transition-all"
             >
                 <div class="flex items-center gap-2">
                     <div class="flex flex-col">
                         <button
                             @click="moveKey(idx, -1)"
-                            class="text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                            class="text-fg-subtle hover:text-fg disabled:opacity-20"
                             :disabled="idx === 0"
                             :aria-label="t('actions.moveUp')"
                         >
@@ -313,7 +313,7 @@
                         </button>
                         <button
                             @click="moveKey(idx, 1)"
-                            class="text-zinc-500 hover:text-zinc-200 disabled:opacity-20"
+                            class="text-fg-subtle hover:text-fg disabled:opacity-20"
                             :disabled="idx === params.keys.length - 1"
                             :aria-label="t('actions.moveDown')"
                         >
@@ -348,7 +348,7 @@
 
                     <button
                         @click="removeKey(idx)"
-                        class="p-1 text-zinc-500 hover:text-red-400 touch-target"
+                        class="p-1 text-fg-subtle hover:text-red-400 touch-target"
                         :aria-label="t('operators.removeSortKey')"
                     >
                         <X class="h-3.5 w-3.5" />
@@ -358,11 +358,11 @@
                 <!-- Custom Order Editor Section -->
                 <div
                     v-if="item.key === 'region' || item.key === 'protocol' || item.key === 'regex'"
-                    class="mt-0.5 p-2 bg-[#131515] rounded-md border border-zinc-800 space-y-2"
+                    class="mt-0.5 p-2 bg-inset rounded-md border border-line space-y-2"
                 >
                     <div class="flex items-center justify-between text-[10px]">
                         <span
-                            class="font-semibold text-zinc-400 uppercase tracking-tight flex items-center gap-1"
+                            class="font-semibold text-fg-muted uppercase tracking-tight flex items-center gap-1"
                         >
                             {{
                                 t('operators.customPriorityOrder', {
@@ -374,7 +374,7 @@
                             v-if="item.key === 'region' || item.key === 'protocol'"
                             type="button"
                             @click="resetToDefaultOrder(idx, item.key)"
-                            class="text-zinc-300 hover:text-white font-semibold"
+                            class="text-fg-muted hover:text-white font-semibold"
                         >
                             {{ t('operators.resetDefault') }}
                         </button>
@@ -398,7 +398,7 @@
                                 @keydown.enter="handleRegexEnter($event, idx)"
                                 :placeholder="t('operators.regexPinPlaceholder')"
                                 :class="[
-                                    'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-gray-50 dark:bg-gray-900 border text-gray-900 dark:text-gray-100 focus:bg-white dark:focus:bg-gray-800 transition-all outline-none',
+                                    'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-canvas border text-fg focus:bg-white dark:focus:bg-gray-800 transition-all outline-none',
                                     regexErrors[idx]
                                         ? 'border-rose-400 dark:border-rose-500/70 focus:border-rose-500'
                                         : 'border-gray-200/70 dark:border-gray-800 focus:border-indigo-500/40',
@@ -427,7 +427,7 @@
                     >
                         <template #item="{ element, index }">
                             <div
-                                class="cursor-grab active:cursor-grabbing inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-transparent border border-zinc-800 font-mono text-[10px] text-zinc-300 font-semibold hover:bg-zinc-900 hover:text-zinc-100 transition-colors select-none"
+                                class="cursor-grab active:cursor-grabbing inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-transparent border border-line font-mono text-[10px] text-fg-muted font-semibold hover:bg-hover hover:text-fg transition-colors select-none"
                             >
                                 <span v-if="item.key === 'regex'" class="opacity-60 font-mono"
                                     >{{ index + 1 }}.</span
@@ -448,7 +448,7 @@
 
                     <div
                         v-if="!(item.customOrder || []).length"
-                        class="text-[9px] text-zinc-500 italic"
+                        class="text-[9px] text-fg-subtle italic"
                     >
                         {{
                             t(
@@ -463,11 +463,11 @@
 
             <div
                 v-if="params.keys.length === 0"
-                class="text-center py-2 text-[10px] text-zinc-500 italic"
+                class="text-center py-2 text-[10px] text-fg-subtle italic"
             >
                 {{ t('operators.emptySortConditions') }}
             </div>
         </div>
-        <p class="text-[10px] text-zinc-500">{{ t('operators.sortHint') }}</p>
+        <p class="text-[10px] text-fg-subtle">{{ t('operators.sortHint') }}</p>
     </div>
 </template>

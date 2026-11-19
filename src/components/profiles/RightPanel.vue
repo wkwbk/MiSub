@@ -130,11 +130,11 @@
 <template>
     <div>
         <div
-            class="bg-[#171717] rounded-md border border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+            class="bg-surface rounded-md border border-line shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
             :class="compact ? 'p-4' : 'p-5'"
         >
             <h3
-                class="font-semibold text-zinc-100 pb-4 mb-4 border-b border-zinc-800 flex items-center gap-2 list-item-animation"
+                class="font-semibold text-fg pb-4 mb-4 border-b border-line flex items-center gap-2 list-item-animation"
                 :class="compact ? 'text-sm' : 'text-base'"
                 style="--delay-index: 0"
             >
@@ -147,10 +147,10 @@
 
             <div
                 v-if="hasSetupTasks"
-                class="mb-4 rounded-md border border-zinc-800 bg-transparent p-3 text-zinc-200 list-item-animation"
+                class="mb-4 rounded-md border border-line bg-transparent p-3 text-fg list-item-animation"
                 style="--delay-index: 1"
             >
-                <p class="text-xs font-medium text-zinc-200 flex items-center gap-2">
+                <p class="text-xs font-medium text-fg flex items-center gap-2">
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                     {{ t('dashboard.linkCard.setupTitle') }}
                 </p>
@@ -159,17 +159,17 @@
                         v-for="task in setupTasks"
                         :key="task.id"
                         :to="task.to"
-                        class="block rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                        class="block rounded-md border border-line bg-transparent px-3 py-2 text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                     >
-                        <span class="block font-medium text-zinc-100">{{ task.title }}</span>
-                        <span class="mt-0.5 block text-zinc-400">{{ task.description }}</span>
+                        <span class="block font-medium text-fg">{{ task.title }}</span>
+                        <span class="mt-0.5 block text-fg-muted">{{ task.description }}</span>
                     </router-link>
                 </div>
             </div>
 
             <div class="mb-4 list-item-animation" style="--delay-index: 2">
                 <label
-                    class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-1.5"
+                    class="block text-xs font-medium text-fg-muted uppercase tracking-wider mb-1.5"
                     >{{ t('dashboard.linkCard.selectContent') }}</label
                 >
                 <Select
@@ -187,7 +187,7 @@
 
             <div class="mb-4 list-item-animation" style="--delay-index: 3">
                 <label
-                    class="block text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2"
+                    class="block text-xs font-medium text-fg-muted uppercase tracking-wider mb-2"
                     >{{ t('dashboard.linkCard.selectFormat') }}</label
                 >
                 <div class="grid gap-2" :class="compact ? 'grid-cols-2' : 'grid-cols-3'">
@@ -200,8 +200,8 @@
                         :style="{ '--delay-index': index }"
                         :class="[
                             selectedFormat === format
-                                ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                : 'bg-transparent text-zinc-300 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                ? 'bg-accent text-accent-fg border-accent font-semibold'
+                                : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
                         ]"
                     >
                         {{ formatLabel(format) }}
@@ -215,9 +215,9 @@
                     :value="subLink"
                     readonly
                     :disabled="!isLinkValid"
-                    class="w-full min-h-11 text-xs sm:text-sm text-zinc-200 bg-transparent rounded-md pl-3 pr-22 py-2.5 border border-zinc-800 focus-visible:outline-hidden focus-visible:border-zinc-500 font-mono shadow-none"
+                    class="w-full min-h-11 text-xs sm:text-sm text-fg bg-transparent rounded-md pl-3 pr-22 py-2.5 border border-line focus-visible:outline-hidden focus-visible:border-line-strong font-mono shadow-none"
                     :class="{
-                        'cursor-not-allowed text-zinc-500': !isLinkValid,
+                        'cursor-not-allowed text-fg-subtle': !isLinkValid,
                     }"
                     :aria-label="t('dashboard.linkCard.linkField')"
                 />
@@ -225,10 +225,10 @@
                     <button
                         @click="$emit('qrcode', subLink, t('dashboard.linkCard.qrTitle'))"
                         :disabled="!isLinkValid"
-                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-200 shadow-none"
+                        class="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors duration-200 shadow-none"
                         :class="
                             isLinkValid
-                                ? 'hover:text-zinc-100 hover:bg-zinc-900'
+                                ? 'hover:text-fg hover:bg-hover'
                                 : 'cursor-not-allowed opacity-50'
                         "
                         :title="t('dashboard.linkCard.showQrCode')"
@@ -239,17 +239,17 @@
                     <button
                         @click="copyToClipboard"
                         :disabled="!isLinkValid"
-                        class="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors duration-200 shadow-none"
+                        class="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors duration-200 shadow-none"
                         :class="
                             isLinkValid
-                                ? 'hover:text-zinc-100 hover:bg-zinc-900'
+                                ? 'hover:text-fg hover:bg-hover'
                                 : 'cursor-not-allowed opacity-50'
                         "
                         :title="t('dashboard.linkCard.copyLink')"
                         :aria-label="t('dashboard.linkCard.copyLink')"
                     >
                         <Transition name="fade" mode="out-in">
-                            <Check v-if="copied" class="h-4 w-4 text-zinc-100" stroke-width="2.5" />
+                            <Check v-if="copied" class="h-4 w-4 text-fg" stroke-width="2.5" />
                             <Copy v-else class="h-4 w-4" stroke-width="1.5" />
                         </Transition>
                     </button>
@@ -258,7 +258,7 @@
 
             <p
                 v-if="!isLinkValid || requiredToken.value === 'auto'"
-                class="text-xs text-zinc-400 mt-3 flex items-start gap-2 list-item-animation"
+                class="text-xs text-fg-muted mt-3 flex items-start gap-2 list-item-animation"
                 style="--delay-index: 5"
             >
                 <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
@@ -268,7 +268,7 @@
                         {{ t('dashboard.linkCard.fixedTokenHint', { name: requiredToken.name }) }}
                         <router-link
                             to="/dashboard/settings"
-                            class="font-medium text-zinc-200 underline decoration-zinc-600 underline-offset-4 hover:text-white"
+                            class="font-medium text-fg underline decoration-zinc-600 underline-offset-4 hover:text-white"
                             >{{ t('dashboard.linkCard.settingsLink') }}</router-link
                         >
                         {{

@@ -89,25 +89,25 @@
         <!-- Regex Rename -->
         <div class="space-y-3">
             <div class="flex items-center justify-between">
-                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+                <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
                     t('operators.regexReplace')
                 }}</label>
                 <div class="flex items-center gap-2">
                     <div class="relative group/presets">
                         <button
-                            class="text-[10px] text-zinc-400 font-medium hover:text-zinc-100 transition-colors flex items-center gap-0.5"
+                            class="text-[10px] text-fg-muted font-medium hover:text-fg transition-colors flex items-center gap-0.5"
                         >
                             {{ t('operators.commonRegex') }}
                             <ChevronDown class="h-2.5 w-2.5" />
                         </button>
                         <div
-                            class="absolute right-0 top-full mt-1 w-40 bg-[#171717] border border-zinc-800 rounded-md shadow-none opacity-0 invisible group-hover/presets:opacity-100 group-hover/presets:visible transition-all z-10 py-1"
+                            class="absolute right-0 top-full mt-1 w-40 bg-surface border border-line rounded-md shadow-none opacity-0 invisible group-hover/presets:opacity-100 group-hover/presets:visible transition-all z-10 py-1"
                         >
                             <button
                                 v-for="rule in presetRegexRules"
                                 :key="rule.nameKey"
                                 @click="applyPresetRegex(rule)"
-                                class="w-full text-left px-3 py-1.5 text-[10px] text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-1.5 text-[10px] text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                             >
                                 {{ t(rule.nameKey) }}
                             </button>
@@ -116,7 +116,7 @@
                     <button
                         v-if="props.modelValue.regex?.enabled"
                         @click="addRule"
-                        class="text-[10px] text-zinc-200 font-semibold ml-1 hover:text-white"
+                        class="text-[10px] text-fg font-semibold ml-1 hover:text-white"
                     >
                         + {{ t('operators.addItem') }}
                     </button>
@@ -129,7 +129,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors ml-2',
-                            props.modelValue.regex?.enabled ? 'text-zinc-100' : 'text-zinc-500',
+                            props.modelValue.regex?.enabled ? 'text-fg' : 'text-fg-subtle',
                         ]"
                     >
                         {{ statusLabel(props.modelValue.regex?.enabled) }}
@@ -141,11 +141,11 @@
                 <div
                     v-for="(rule, idx) in props.modelValue.regex.rules"
                     :key="idx"
-                    class="flex flex-col gap-2 p-3 bg-transparent rounded-md border border-zinc-800 relative group transition-all"
+                    class="flex flex-col gap-2 p-3 bg-transparent rounded-md border border-line relative group transition-all"
                 >
                     <button
                         @click="removeRule(idx)"
-                        class="absolute top-2 right-2 p-1 text-zinc-500 hover:text-red-400 transition-colors touch-target"
+                        class="absolute top-2 right-2 p-1 text-fg-subtle hover:text-red-400 transition-colors touch-target"
                         :aria-label="t('operators.removeRule')"
                     >
                         <X class="h-3 w-3" />
@@ -163,7 +163,7 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexFindPlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
                                 :aria-label="t('operators.regexFindPlaceholder')"
                             />
                         </div>
@@ -178,18 +178,18 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexReplacePlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
                                 :aria-label="t('operators.regexReplacePlaceholder')"
                             />
                         </div>
                     </div>
                 </div>
-                <p class="px-1 text-[10px] text-zinc-500">
+                <p class="px-1 text-[10px] text-fg-subtle">
                     {{ t('operators.regexReplaceHint') }}
                 </p>
                 <div
                     v-if="!props.modelValue.regex.rules?.length"
-                    class="text-center py-2 text-[10px] text-zinc-500 italic"
+                    class="text-center py-2 text-[10px] text-fg-subtle italic"
                 >
                     {{ t('operators.renameEmptyRules') }}
                 </div>
@@ -197,16 +197,16 @@
         </div>
 
         <!-- Template Rename -->
-        <div class="space-y-3 pt-4 border-t border-zinc-800">
+        <div class="space-y-3 pt-4 border-t border-line">
             <div class="flex items-center justify-between">
-                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">{{
+                <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
                     t('operators.templateRewrite')
                 }}</label>
                 <button
                     @click="updateTemplate({ enabled: !props.modelValue.template?.enabled })"
                     :class="[
                         'text-[10px] font-medium transition-colors',
-                        props.modelValue.template?.enabled ? 'text-zinc-100' : 'text-zinc-500',
+                        props.modelValue.template?.enabled ? 'text-fg' : 'text-fg-subtle',
                     ]"
                 >
                     {{ statusLabel(props.modelValue.template?.enabled) }}
@@ -214,13 +214,13 @@
             </div>
 
             <div v-if="props.modelValue.template?.enabled" class="space-y-3">
-                <div class="p-3 bg-transparent rounded-md border border-zinc-800">
+                <div class="p-3 bg-transparent rounded-md border border-line">
                     <div class="space-y-2">
                         <input
                             :value="props.modelValue.template.template || ''"
                             @input="(e) => updateTemplate({ template: e.target.value })"
                             placeholder="{emoji}{region}-{index}"
-                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 outline-none focus:border-zinc-600"
+                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
                             :aria-label="t('operators.templateRewrite')"
                         />
                         <div class="flex flex-wrap gap-1.5">
@@ -239,7 +239,7 @@
                                     '{server}',
                                 ]"
                                 :key="tag"
-                                class="font-mono text-[9px] bg-transparent text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100 transition-colors touch-target-min"
+                                class="font-mono text-[9px] bg-transparent text-fg-muted px-1.5 py-0.5 rounded-md border border-line hover:bg-hover hover:text-fg transition-colors touch-target-min"
                                 @click="
                                     updateTemplate({
                                         template: (props.modelValue.template.template || '') + tag,
@@ -250,22 +250,22 @@
                             </button>
                         </div>
                         <div class="flex items-center gap-2 mt-1">
-                            <span class="text-[9px] text-zinc-500">{{
+                            <span class="text-[9px] text-fg-subtle">{{
                                 t('operators.recommendedTemplates')
                             }}</span>
                             <button
                                 v-for="tpl in presetTemplates"
                                 :key="tpl.nameKey"
                                 @click="applyPresetTemplate(tpl.template)"
-                                class="text-[9px] px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors touch-target-min"
+                                class="text-[9px] px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors touch-target-min"
                             >
                                 {{ t(tpl.nameKey) }}
                             </button>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-zinc-800">
-                        <span class="text-[10px] text-zinc-400 font-medium">{{
+                    <div class="flex items-center gap-2 mt-3 pt-3 border-t border-line">
+                        <span class="text-[10px] text-fg-muted font-medium">{{
                             t('operators.startIndex')
                         }}</span>
                         <input
@@ -274,7 +274,7 @@
                                 (e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })
                             "
                             type="number"
-                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 outline-none focus:border-zinc-600"
+                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-inset border border-line text-fg outline-none focus:border-zinc-600"
                             :aria-label="t('operators.startIndex')"
                         />
                     </div>

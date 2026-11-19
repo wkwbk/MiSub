@@ -44,7 +44,7 @@
         v-if="hasError"
         class="w-full py-12 flex flex-col items-center gap-3 text-sm text-gray-600 dark:text-gray-300"
     >
-        <div class="text-base font-semibold text-gray-900 dark:text-white">
+        <div class="text-base font-semibold text-fg">
             {{ t('common.routeLoadError') }}
         </div>
         <div class="max-w-md text-center text-xs text-gray-500">{{ errorMessage }}</div>

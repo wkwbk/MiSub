@@ -281,15 +281,15 @@
 
 <template>
     <div>
-        <div class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none">
+        <div class="mb-4 min-w-0 rounded-md border border-line bg-surface p-4 shadow-none">
             <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0">
                     <div class="flex min-w-0 flex-wrap items-center gap-3 shrink-0">
-                        <h2 class="text-lg font-semibold text-zinc-100">
+                        <h2 class="text-lg font-semibold text-fg">
                             {{ t('subscriptions.title') }}
                         </h2>
                         <span
-                            class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                            class="rounded-md border border-line bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-fg-muted"
                             >{{ visibleCount }}/{{ subscriptions.length }}</span
                         >
                         <span
@@ -302,7 +302,7 @@
                                     ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
                                     : isRefreshing
                                       ? 'border-sky-500/30 bg-sky-500/10 text-sky-300'
-                                      : 'border-zinc-800 bg-zinc-900/60 text-zinc-400'
+                                      : 'border-line bg-elevated-card text-fg-muted'
                             "
                         >
                             <span
@@ -321,7 +321,7 @@
                             }}</span>
                         </span>
                     </div>
-                    <p class="mt-1 text-xs text-zinc-400">
+                    <p class="mt-1 text-xs text-fg-muted">
                         {{ t('subscriptions.subtitle') }}
                     </p>
                 </div>
@@ -330,13 +330,13 @@
                 >
                     <button
                         @click="handleImport"
-                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                        class="shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                     >
                         {{ t('actions.bulkImport') }}
                     </button>
                     <button
                         @click="handleAdd"
-                        class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
+                        class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
                     >
                         {{ t('actions.add') }}
                     </button>
@@ -349,8 +349,8 @@
                                     toggleSelectionMode();
                                     close?.();
                                 "
-                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
-                                :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg font-medium transition-colors"
+                                :class="isSelectionMode ? 'text-fg font-semibold' : ''"
                             >
                                 {{
                                     isSelectionMode
@@ -358,14 +358,14 @@
                                         : t('actions.bulkActions')
                                 }}
                             </button>
-                            <div class="my-1 border-t border-zinc-800"></div>
+                            <div class="my-1 border-t border-line"></div>
                             <button
                                 :disabled="isRefreshing"
                                 @click="
                                     handleRefreshAll();
                                     close?.();
                                 "
-                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {{ t('actions.refreshAll') }}
                             </button>
@@ -374,7 +374,7 @@
                                     handleToggleSort();
                                     close?.();
                                 "
-                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                             >
                                 {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                             </button>
@@ -386,11 +386,11 @@
                                     emit('manage-tags');
                                     close?.();
                                 "
-                                class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                             >
                                 {{ t('actions.manageTags') }}
                             </button>
-                            <div class="my-1 border-t border-zinc-800"></div>
+                            <div class="my-1 border-t border-line"></div>
                             <button
                                 @click="
                                     handleDeleteAll();
@@ -406,7 +406,7 @@
             </div>
             <div v-if="searchable" class="mt-4 relative">
                 <Search
-                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
+                    class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
                     aria-hidden="true"
                 />
                 <input
@@ -416,20 +416,20 @@
                     :placeholder="t('subscriptions.listSearchPlaceholder')"
                     :aria-label="t('subscriptions.searchPlaceholder')"
                     :disabled="isSorting"
-                    class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
+                    class="w-full rounded-md border border-line bg-transparent py-2 pl-9 pr-24 text-xs text-fg outline-none transition focus:border-line-strong disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-fg-subtle"
                 />
                 <div
                     v-if="searchQuery"
                     class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
                 >
-                    <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                    <span class="pointer-events-none text-xs font-mono text-fg-muted">
                         {{ visibleCount }}/{{ subscriptions.length }}
                     </span>
                     <button
                         data-testid="clear-subscription-search"
                         type="button"
                         :aria-label="t('actions.clearSearch')"
-                        class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                        class="rounded p-0.5 text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
                         @click="searchModel = ''"
                     >
                         <X class="h-3.5 w-3.5" aria-hidden="true" />
@@ -450,18 +450,18 @@
             <div
                 v-if="statusFilter"
                 data-testid="subscription-status-filter-banner"
-                class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-zinc-700/80 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-200"
+                class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-line-strong bg-zinc-900/70 px-3 py-2 text-xs text-fg"
             >
                 <div class="flex items-center gap-2">
                     <span class="font-medium">{{ statusFilterLabel }}</span>
-                    <span class="font-mono text-zinc-400"
+                    <span class="font-mono text-fg-muted"
                         >{{ visibleCount }}/{{ subscriptions.length }}</span
                     >
                 </div>
                 <button
                     type="button"
                     data-testid="clear-subscription-status-filter"
-                    class="rounded border border-zinc-700 px-2 py-0.5 text-xs text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    class="rounded border border-line-strong px-2 py-0.5 text-xs text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
                     @click="emit('clearStatusFilter')"
                 >
                     {{ t('subscriptions.clearStatusFilter') }}
@@ -553,9 +553,9 @@
                 visibleCount === 0
             "
             data-testid="subscription-no-search-results"
-            class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
+            class="rounded-md border border-line bg-surface px-6 py-12 text-center"
         >
-            <p class="text-sm font-medium text-zinc-200">
+            <p class="text-sm font-medium text-fg">
                 {{ t('subscriptions.noSearchResults') }}
             </p>
             <div class="mt-3 flex items-center justify-center gap-2">
@@ -563,7 +563,7 @@
                     v-if="searchQuery"
                     data-testid="clear-subscription-search"
                     type="button"
-                    class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
                     @click="searchModel = ''"
                 >
                     {{ t('actions.clearSearch') }}
@@ -572,7 +572,7 @@
                     v-if="currentTagFilters.length > 0"
                     data-testid="clear-subscription-tag-filter"
                     type="button"
-                    class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                    class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
                     @click="setTagFilters([])"
                 >
                     {{ t('tags.clearFilter') }}
@@ -581,7 +581,7 @@
         </div>
         <div
             v-else-if="subscriptions.length === 0"
-            class="rounded-md border border-zinc-800 bg-[#171717] py-2"
+            class="rounded-md border border-line bg-surface py-2"
         >
             <EmptyState
                 :title="t('subscriptions.empty')"
@@ -599,7 +599,7 @@
             <button
                 type="button"
                 data-testid="subscription-load-more-btn"
-                class="rounded-md border border-zinc-800 bg-[#171717] px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-100 cursor-pointer"
+                class="rounded-md border border-line bg-surface px-4 py-2 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
                 @click="loadMore"
             >
                 {{ t('subscriptions.loadMoreRemaining', { count: remainingCount }) }}

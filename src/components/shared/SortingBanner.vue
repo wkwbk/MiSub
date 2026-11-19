@@ -23,7 +23,7 @@
 <template>
     <div
         :data-testid="bannerTestId"
-        class="mb-4 flex items-center justify-between gap-3 rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs text-zinc-200"
+        class="mb-4 flex items-center justify-between gap-3 rounded-md border border-sky-500/30 bg-sky-500/5 px-4 py-2.5 text-xs text-fg"
     >
         <div class="flex min-w-0 flex-1 items-center gap-2">
             <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>

@@ -65,19 +65,19 @@
 </script>
 
 <template>
-    <div class="mb-4 min-w-0 rounded-md border border-zinc-800 bg-[#171717] p-4 shadow-none">
+    <div class="mb-4 min-w-0 rounded-md border border-line bg-surface p-4 shadow-none">
         <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="min-w-0 flex-1">
                 <div class="flex min-w-0 flex-wrap items-center gap-3">
-                    <h2 class="text-lg font-semibold text-zinc-100">
+                    <h2 class="text-lg font-semibold text-fg">
                         {{ t('manualNodes.title') }}
                     </h2>
                     <span
-                        class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                        class="rounded-md border border-line bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-fg-muted"
                         >{{ manualNodesCount }}</span
                     >
                 </div>
-                <p class="mt-1 text-xs text-zinc-400">
+                <p class="mt-1 text-xs text-fg-muted">
                     {{ t('manualNodes.subtitle') }}
                 </p>
 
@@ -100,15 +100,15 @@
                 class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap lg:shrink-0"
             >
                 <div
-                    class="p-0.5 bg-transparent border border-zinc-800 rounded-md flex items-center shrink-0"
+                    class="p-0.5 bg-transparent border border-line rounded-md flex items-center shrink-0"
                 >
                     <button
                         @click="emit('update:viewMode', 'card')"
                         class="view-mode-toggle p-1 rounded-sm transition-colors flex items-center justify-center touch-target"
                         :class="
                             viewMode === 'card'
-                                ? 'bg-zinc-100 text-zinc-900'
-                                : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
+                                ? 'bg-accent text-accent-fg'
+                                : 'text-fg-muted hover:text-fg hover:bg-hover'
                         "
                         :aria-label="t('common.cardView')"
                     >
@@ -119,8 +119,8 @@
                         class="view-mode-toggle p-1 rounded-sm transition-colors flex items-center justify-center touch-target"
                         :class="
                             viewMode === 'list'
-                                ? 'bg-zinc-100 text-zinc-900'
-                                : 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900'
+                                ? 'bg-accent text-accent-fg'
+                                : 'text-fg-muted hover:text-fg hover:bg-hover'
                         "
                         :aria-label="t('common.listView')"
                     >
@@ -129,14 +129,14 @@
                 </div>
                 <button
                     @click="emit('ping-all')"
-                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ t('actions.pingAll') }}
                 </button>
                 <button
                     @click="emit('add')"
-                    class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
+                    class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
                 >
                     {{ t('actions.add') }}
                 </button>
@@ -147,8 +147,8 @@
                                 emit('toggle-selection-mode');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
-                            :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg font-medium transition-colors"
+                            :class="isSelectionMode ? 'text-fg font-semibold' : ''"
                         >
                             {{
                                 isSelectionMode ? t('actions.exitBatch') : t('actions.bulkActions')
@@ -160,7 +160,7 @@
                                 emit('import');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                         >
                             {{ t('actions.importSubscription') }}
                         </button>
@@ -171,7 +171,7 @@
                                 emit('manage-tags');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                         >
                             {{ t('actions.manageTags') }}
                         </button>
@@ -180,7 +180,7 @@
                                 emit('auto-sort');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                         >
                             {{ t('actions.autoSort') }}
                         </button>
@@ -189,7 +189,7 @@
                                 emit('sort-by-latency');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                         >
                             {{ t('actions.sortByLatency') }}
                         </button>
@@ -198,7 +198,7 @@
                                 emit('deduplicate');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                            class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                         >
                             {{ t('actions.deduplicate') }}
                         </button>
@@ -207,7 +207,7 @@
                                 emit('toggle-sort');
                                 close();
                             "
-                            class="w-full text-left px-3 py-2 rounded text-xs transition-colors text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                            class="w-full text-left px-3 py-2 rounded text-xs transition-colors text-fg-muted hover:bg-hover hover:text-fg"
                         >
                             {{ isSorting ? t('actions.finishSort') : t('actions.manualSort') }}
                         </button>
@@ -228,7 +228,7 @@
 
         <div data-testid="manual-node-search" class="relative mt-4">
             <Search
-                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
+                class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
                 aria-hidden="true"
             />
             <input
@@ -237,18 +237,18 @@
                 :placeholder="t('manualNodes.searchPlaceholder')"
                 :aria-label="t('manualNodes.searchLabel')"
                 :disabled="isSorting"
-                class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
+                class="w-full rounded-md border border-line bg-transparent py-2 pl-9 pr-24 text-xs text-fg outline-none transition focus:border-line-strong disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-fg-subtle"
             />
             <div
                 v-if="searchTerm"
                 class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
             >
-                <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                <span class="pointer-events-none text-xs font-mono text-fg-muted">
                     {{ filteredNodesCount }}/{{ manualNodesCount }}
                 </span>
                 <button
                     type="button"
-                    class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                    class="rounded p-0.5 text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
                     :aria-label="t('actions.clearSearch')"
                     @click="searchModel = ''"
                 >

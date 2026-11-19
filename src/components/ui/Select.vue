@@ -320,15 +320,15 @@
 
     const getOptionClasses = (opt) => {
         if (opt.disabled) {
-            return 'cursor-not-allowed opacity-40 text-zinc-400 dark:text-zinc-500';
+            return 'cursor-not-allowed opacity-40 text-fg-subtle';
         }
         if (highlightedIndex.value === opt.flatIndex) {
-            return 'bg-zinc-100 dark:bg-[#27272a] text-zinc-900 dark:text-zinc-100';
+            return 'bg-active text-fg';
         }
         if (isSelected(opt.value)) {
-            return 'text-zinc-900 dark:text-zinc-100 font-medium hover:bg-zinc-100 dark:hover:bg-[#27272a]';
+            return 'text-fg font-medium hover:bg-hover';
         }
-        return 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#27272a] hover:text-zinc-900 dark:hover:text-zinc-100';
+        return 'text-fg-muted hover:bg-hover hover:text-fg';
     };
 </script>
 
@@ -345,28 +345,24 @@
             :disabled="disabled"
             @click="toggle"
             @keydown="handleTriggerKeydown"
-            class="select-trigger flex w-full items-center justify-between border bg-white dark:bg-[#131515] text-left text-zinc-900 dark:text-zinc-100 shadow-none transition-colors duration-200 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            class="select-trigger flex w-full items-center justify-between border bg-inset text-left text-fg shadow-none transition-colors duration-200 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
             :class="[
                 currentSizeClass,
                 isOpen
-                    ? 'border-zinc-500 dark:border-zinc-500'
-                    : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700 focus-visible:border-zinc-500',
+                    ? 'border-line-strong'
+                    : 'border-line hover:border-line-strong focus-visible:border-line-strong',
                 triggerClass,
             ]"
         >
             <span
                 class="min-w-0 flex-1 truncate"
-                :class="
-                    isPlaceholderShown
-                        ? 'text-zinc-400 dark:text-zinc-500'
-                        : 'text-zinc-900 dark:text-zinc-100'
-                "
+                :class="isPlaceholderShown ? 'text-fg-subtle' : 'text-fg'"
             >
                 {{ displayLabel }}
             </span>
             <ChevronDown
-                class="h-3.5 w-3.5 shrink-0 text-zinc-500 dark:text-zinc-400 transition-transform duration-200"
-                :class="isOpen ? 'rotate-180 text-zinc-700 dark:text-zinc-200' : ''"
+                class="h-3.5 w-3.5 shrink-0 text-fg-muted transition-transform duration-200"
+                :class="isOpen ? 'rotate-180 text-fg' : ''"
             />
         </button>
 
@@ -383,7 +379,7 @@
                     v-if="isOpen"
                     ref="popoverRef"
                     :style="popoverStyle"
-                    class="select-popover rounded-md border border-zinc-200 dark:border-zinc-800 p-1"
+                    class="popover-surface select-popover rounded-md p-1"
                     :class="[placement === 'top' ? 'origin-bottom' : 'origin-top', popoverClass]"
                 >
                     <div
@@ -396,7 +392,7 @@
                             <template v-for="(item, idx) in renderItems" :key="idx">
                                 <div
                                     v-if="item.isGroupHeader"
-                                    class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                                    class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle"
                                 >
                                     {{ item.label }}
                                 </div>
@@ -417,14 +413,14 @@
                                     <span class="min-w-0 flex-1 truncate">{{ item.label }}</span>
                                     <Check
                                         v-if="isSelected(item.value)"
-                                        class="h-3.5 w-3.5 shrink-0 text-zinc-900 dark:text-zinc-100"
+                                        class="h-3.5 w-3.5 shrink-0 text-fg"
                                     />
                                 </button>
                             </template>
                         </template>
                         <div
                             v-else
-                            class="px-3 py-2 text-center text-xs text-zinc-400 dark:text-zinc-500"
+                            class="px-3 py-2 text-center text-xs text-fg-subtle"
                         >
                             No options
                         </div>
@@ -441,17 +437,9 @@
     }
     .select-popover,
     .select-popover:hover {
-        background-color: #ffffff;
-        box-shadow:
-            0 10px 25px -5px rgba(0, 0, 0, 0.12),
-            0 8px 10px -6px rgba(0, 0, 0, 0.08);
-    }
-    .dark .select-popover,
-    .dark .select-popover:hover {
-        background-color: #171717;
-        box-shadow:
-            0 16px 32px -8px rgba(0, 0, 0, 0.5),
-            0 8px 16px -6px rgba(0, 0, 0, 0.35);
+        background-color: var(--surface-popover);
+        border: 1px solid var(--border-popover);
+        box-shadow: var(--shadow-popover);
     }
 </style>
 

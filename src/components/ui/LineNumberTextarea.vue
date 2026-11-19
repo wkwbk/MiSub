@@ -85,13 +85,13 @@
 
 <template>
     <div
-        class="relative border rounded-md transition-colors overflow-hidden bg-[#131515]"
-        :class="[isFocused ? 'border-zinc-600' : 'border-zinc-800 hover:border-zinc-700']"
+        class="relative border rounded-md transition-colors overflow-hidden bg-inset"
+        :class="[isFocused ? 'border-line-strong' : 'border-line hover:border-line-strong']"
     >
         <slot name="overlay" />
         <div class="flex" :style="{ height: viewportHeight }">
             <div
-                class="relative shrink-0 select-none border-r border-zinc-800/80 bg-[#0f1111] font-mono text-xs leading-5 text-zinc-600"
+                class="relative shrink-0 select-none border-r border-line bg-canvas font-mono text-xs leading-5 text-fg-subtle"
                 :style="{ width: gutterWidth }"
                 aria-hidden="true"
             >
@@ -127,7 +127,7 @@
                         @input="handleInput"
                         @focus="handleFocus"
                         @blur="handleBlur"
-                        class="col-start-1 row-start-1 w-full h-full overflow-hidden bg-transparent border-0 focus-visible:ring-0 text-zinc-100 placeholder-zinc-600 text-xs font-mono leading-5 resize-none py-3 pl-3 pr-5 outline-none whitespace-pre"
+                        class="col-start-1 row-start-1 w-full h-full overflow-hidden bg-transparent border-0 focus-visible:ring-0 text-fg placeholder:text-fg-subtle text-xs font-mono leading-5 resize-none py-3 pl-3 pr-5 outline-none whitespace-pre"
                         :class="textareaClass"
                     ></textarea>
                 </div>

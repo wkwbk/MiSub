@@ -81,9 +81,8 @@
     <!-- 主模态框 -->
     <div
         v-if="show"
-        class="fixed inset-0 overflow-y-auto overscroll-contain"
+        class="fixed inset-0 overflow-y-auto overscroll-contain bg-black/75 backdrop-blur-sm"
         :style="{ zIndex: 'var(--z-modal)' }"
-        :class="{ 'bg-black bg-opacity-50': show }"
         role="dialog"
         aria-modal="true"
         @pointerdown.capture="handleBackdropPointerDown"
@@ -91,7 +90,7 @@
     >
         <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             <div
-                class="relative transform overflow-hidden misub-radius-md bg-white dark:bg-gray-800 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl"
+                class="modal-surface relative transform overflow-hidden rounded-lg text-left text-fg transition-all sm:my-8 sm:w-full sm:max-w-6xl"
             >
                 <!-- 头部 -->
                 <NodePreviewHeader
@@ -102,7 +101,7 @@
                 />
 
                 <!-- 主体内容 -->
-                <div class="bg-gray-50 dark:bg-gray-900 px-4 py-5 sm:p-6 sm:pt-4">
+                <div class="px-4 py-5 sm:p-6 sm:pt-4">
                     <!-- 过滤控件 -->
                     <NodeFilterControls
                         :loading="loading"
@@ -132,7 +131,7 @@
                             <div class="text-red-500 text-lg font-medium mb-2">
                                 {{ t('nodePreview.loadFailed') }}
                             </div>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">{{ error }}</p>
+                            <p class="text-sm text-fg-subtle mb-4">{{ error }}</p>
                             <button
                                 @click="loadNodes"
                                 class="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm misub-radius-md transition-colors"

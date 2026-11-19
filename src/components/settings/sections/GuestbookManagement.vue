@@ -127,13 +127,13 @@
     const getStatusBadgeClass = (status) => {
         switch (status) {
             case 'pending':
-                return 'border border-zinc-800 bg-transparent text-amber-400 font-mono';
+                return 'border border-line bg-transparent text-amber-400 font-mono';
             case 'approved':
-                return 'border border-zinc-800 bg-transparent text-emerald-400 font-mono';
+                return 'border border-line bg-transparent text-emerald-400 font-mono';
             case 'replied':
-                return 'border border-zinc-800 bg-transparent text-sky-400 font-mono';
+                return 'border border-line bg-transparent text-sky-400 font-mono';
             default:
-                return 'border border-zinc-800 bg-transparent text-zinc-400 font-mono';
+                return 'border border-line bg-transparent text-fg-muted font-mono';
         }
     };
 
@@ -167,7 +167,7 @@
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+    <section class="rounded-lg border border-line bg-surface p-6">
         <!-- 头部说明 & 开关 -->
         <SectionHeader
             :title="t('settings.guestbookTitle')"
@@ -183,17 +183,17 @@
         </SectionHeader>
 
         <!-- {{ t('settings.guestbookTitle') }}区域 -->
-        <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-zinc-800/60">
+        <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-line">
             <!-- Toolbar -->
             <div
-                class="pb-4 border-b border-zinc-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                class="pb-4 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
             >
                 <div class="flex items-center gap-2">
-                    <h3 class="text-sm font-semibold text-zinc-100">
+                    <h3 class="text-sm font-semibold text-fg">
                         {{ t('settings.guestbookList') }}
                     </h3>
                     <span
-                        class="px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent font-mono text-xs text-zinc-400"
+                        class="px-2 py-0.5 rounded-md border border-line bg-transparent font-mono text-xs text-fg-muted"
                         >{{ messages.length }}</span
                     >
                 </div>
@@ -213,7 +213,7 @@
                     </div>
                     <button
                         @click="fetchMessages"
-                        class="p-1.5 rounded-md border border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"
+                        class="p-1.5 rounded-md border border-line text-fg-muted hover:bg-hover hover:text-fg"
                         :aria-label="t('actions.refresh')"
                     >
                         <RefreshCw class="h-4 w-4" />
@@ -222,13 +222,13 @@
             </div>
 
             <!-- List -->
-            <div class="divide-y divide-zinc-800/60">
-                <div v-if="loading" class="py-8 text-center text-xs text-zinc-500">
+            <div class="divide-y divide-line-subtle">
+                <div v-if="loading" class="py-8 text-center text-xs text-fg-subtle">
                     {{ t('settings.guestbookLoading') }}
                 </div>
                 <div
                     v-else-if="filteredMessages.length === 0"
-                    class="py-8 text-center text-xs text-zinc-500"
+                    class="py-8 text-center text-xs text-fg-subtle"
                 >
                     {{ t('settings.guestbookEmpty') }}
                 </div>
@@ -240,11 +240,11 @@
                 >
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex items-center gap-2.5">
-                            <span class="text-sm font-medium text-zinc-100">{{
+                            <span class="text-sm font-medium text-fg">{{
                                 msg.nickname || t('settings.guestbookAnonymous')
                             }}</span>
                             <span
-                                class="text-[11px] font-mono px-2 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-300"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted"
                             >
                                 {{ getTypeLabel(msg.type) }}
                             </span>
@@ -257,31 +257,31 @@
                                 {{ getStatusLabel(msg.status) }}
                             </span>
                         </div>
-                        <span class="text-xs font-mono text-zinc-500">{{
+                        <span class="text-xs font-mono text-fg-subtle">{{
                             formatDate(msg.createdAt)
                         }}</span>
                     </div>
 
-                    <div class="mb-3 text-sm text-zinc-300 break-words leading-relaxed">
+                    <div class="mb-3 text-sm text-fg-muted break-words leading-relaxed">
                         {{ msg.content }}
                     </div>
 
                     <!-- Reply Display -->
                     <div
                         v-if="msg.reply && replyingId !== msg.id"
-                        class="mb-3 pl-4 border-l-2 border-zinc-800 py-1"
+                        class="mb-3 pl-4 border-l-2 border-line py-1"
                     >
-                        <div class="text-xs text-zinc-300 font-medium mb-0.5 flex justify-between">
+                        <div class="text-xs text-fg-muted font-medium mb-0.5 flex justify-between">
                             <span>{{ t('settings.guestbookAdminReply') }}</span>
-                            <span class="text-zinc-500 font-mono font-normal">{{
+                            <span class="text-fg-subtle font-mono font-normal">{{
                                 formatDate(msg.replyAt)
                             }}</span>
                         </div>
-                        <div class="text-xs text-zinc-400 leading-relaxed">{{ msg.reply }}</div>
+                        <div class="text-xs text-fg-muted leading-relaxed">{{ msg.reply }}</div>
                     </div>
 
                     <!-- Reply Input -->
-                    <div v-if="replyingId === msg.id" class="mb-3 pl-4 border-l-2 border-zinc-800">
+                    <div v-if="replyingId === msg.id" class="mb-3 pl-4 border-l-2 border-line">
                         <Textarea
                             v-model="replyContent"
                             rows="3"
@@ -291,13 +291,13 @@
                         <div class="mt-2.5 flex justify-end gap-2">
                             <button
                                 @click="cancelReply"
-                                class="px-3 py-1.5 text-xs font-medium text-zinc-300 border border-zinc-800 bg-transparent hover:bg-zinc-900 rounded-md"
+                                class="px-3 py-1.5 text-xs font-medium text-fg-muted border border-line bg-transparent hover:bg-hover rounded-md"
                             >
                                 {{ t('actions.cancel') }}
                             </button>
                             <button
                                 @click="submitReply(msg.id)"
-                                class="px-3 py-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 border border-zinc-100 hover:bg-white rounded-md shadow-none"
+                                class="px-3 py-1.5 text-xs font-semibold text-accent-fg bg-accent border border-accent hover:opacity-90 rounded-md shadow-none"
                             >
                                 {{ t('settings.guestbookSendReply') }}
                             </button>
@@ -325,7 +325,7 @@
 
                         <button
                             @click="startReply(msg)"
-                            class="text-zinc-300 hover:text-zinc-100 font-medium flex items-center gap-1"
+                            class="text-fg-muted hover:text-fg font-medium flex items-center gap-1"
                         >
                             <Reply class="w-3.5 h-3.5" />
                             {{ t('settings.guestbookReply') }}

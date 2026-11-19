@@ -61,7 +61,7 @@
     <div class="space-y-4">
         <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
-                <label class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400">{{
+                <label class="text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
                     t('operators.dedupMode')
                 }}</label>
                 <Select
@@ -72,18 +72,18 @@
                         { value: 'url', label: t('operators.dedupFullUrl') },
                     ]"
                 />
-                <p class="text-[10px] text-zinc-500">
+                <p class="text-[10px] text-fg-subtle">
                     {{ t('operators.dedupModeHint') }}
                 </p>
             </div>
 
-            <div class="space-y-2 rounded-md border border-zinc-800 bg-transparent p-3">
+            <div class="space-y-2 rounded-md border border-line bg-transparent p-3">
                 <div class="flex items-center justify-between gap-3">
                     <div>
-                        <p class="text-sm font-medium text-zinc-100">
+                        <p class="text-sm font-medium text-fg">
                             {{ t('operators.includeProtocolDedup') }}
                         </p>
-                        <p class="text-[10px] text-zinc-500">
+                        <p class="text-[10px] text-fg-subtle">
                             {{ t('operators.includeProtocolDedupHint') }}
                         </p>
                     </div>
@@ -91,8 +91,8 @@
                         @click="updateValue({ includeProtocol: !params.includeProtocol })"
                         :class="
                             params.includeProtocol
-                                ? 'bg-zinc-100 text-zinc-900'
-                                : 'border border-zinc-800 bg-transparent text-zinc-400'
+                                ? 'bg-accent text-accent-fg'
+                                : 'border border-line bg-transparent text-fg-muted'
                         "
                         class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
                     >
@@ -103,25 +103,25 @@
         </div>
 
         <div class="space-y-2">
-            <label class="text-[11px] font-semibold uppercase tracking-tight text-zinc-400">{{
+            <label class="text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
                 t('operators.preferredProtocols')
             }}</label>
-            <div class="flex flex-wrap gap-2 rounded-md border border-zinc-800 bg-transparent p-3">
+            <div class="flex flex-wrap gap-2 rounded-md border border-line bg-transparent p-3">
                 <button
                     v-for="protocol in protocolOptions"
                     :key="protocol"
                     @click="toggleProtocol(protocol)"
                     :class="
                         (params.prefer?.protocolOrder || []).includes(protocol)
-                            ? 'bg-zinc-100 text-zinc-900'
-                            : 'border border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200'
+                            ? 'bg-accent text-accent-fg'
+                            : 'border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg'
                     "
                     class="rounded-md px-3 py-1.5 font-mono text-xs font-medium uppercase transition-colors"
                 >
                     {{ protocol }}
                 </button>
             </div>
-            <p class="text-[10px] text-zinc-500">
+            <p class="text-[10px] text-fg-subtle">
                 {{ t('operators.preferredProtocolsHint') }}
             </p>
         </div>

@@ -155,7 +155,7 @@
             aria-haspopup="menu"
             :aria-label="t('actions.bulkActions')"
             :aria-controls="menuId"
-            class="group p-2 rounded-md border border-zinc-800 bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 hover:border-zinc-600 transition-colors"
+            class="group p-2 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
         >
             <MoreHorizontal class="h-4 w-4" />
         </button>
@@ -168,7 +168,7 @@
                 role="menu"
                 @keydown="handleMenuKeydown"
                 :class="[
-                    'absolute right-0 mt-2 p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl z-10',
+                    'popover-surface absolute right-0 mt-2 p-1 rounded-md z-10',
                     menuWidthClass,
                 ]"
             >
@@ -184,7 +184,7 @@
                     :id="menuId"
                     role="menu"
                     :class="[
-                        'fixed overflow-y-auto p-1 bg-[#171717] border border-zinc-800 rounded-md shadow-xl',
+                        'popover-surface fixed overflow-y-auto p-1 rounded-md',
                         menuWidthClass,
                     ]"
                     :style="menuStyle"

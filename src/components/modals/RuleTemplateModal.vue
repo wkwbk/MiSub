@@ -54,10 +54,10 @@
         <template #title>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="min-w-0">
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ t('settings.ruleTemplatesTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400 leading-relaxed">
+                    <p class="mt-0.5 text-xs text-fg-muted leading-relaxed">
                         {{ t('settings.ruleTemplatesDesc') }}
                     </p>
                 </div>
@@ -68,7 +68,7 @@
                         data-testid="modal-refresh-rule-templates"
                         @click="managerRef?.refreshTemplates?.()"
                         :disabled="isLoading"
-                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
+                        class="rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition hover:bg-hover hover:text-fg disabled:opacity-50"
                     >
                         {{
                             isLoading
@@ -80,7 +80,7 @@
                         type="button"
                         data-testid="modal-new-rule-template"
                         @click="managerRef?.createTemplate?.()"
-                        class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-zinc-900 hover:text-zinc-100"
+                        class="rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg transition hover:bg-hover hover:text-fg"
                     >
                         {{ t('settings.ruleTemplatesNew') }}
                     </button>

@@ -161,10 +161,10 @@
 
         <div
             v-if="isLoading"
-            class="text-center p-12 rounded-lg border border-zinc-800 bg-[#171717]"
+            class="text-center p-12 rounded-lg border border-line bg-surface"
         >
-            <Loader2 class="animate-spin h-6 w-6 text-zinc-400 mx-auto mb-3" />
-            <p class="text-xs text-zinc-500">{{ t('settings.loading') }}</p>
+            <Loader2 class="animate-spin h-6 w-6 text-fg-muted mx-auto mb-3" />
+            <p class="text-xs text-fg-subtle">{{ t('settings.loading') }}</p>
         </div>
 
         <div
@@ -185,7 +185,7 @@
                 </span>
                 <button
                     type="button"
-                    class="shrink-0 rounded-md border border-zinc-700 bg-transparent px-3 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+                    class="shrink-0 rounded-md border border-line-strong bg-transparent px-3 py-1 text-xs font-medium text-fg hover:bg-hover"
                     @click="$emit('reload-now')"
                 >
                     {{ t('settings.reloadNow') }}
@@ -223,11 +223,11 @@
                     class="flex-1 sm:flex-none h-[38px] px-5 rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-2 border shadow-[0_4px_16px_rgba(0,0,0,0.16)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.55)]"
                     :class="
                         saveDisabled
-                            ? 'bg-zinc-800 border-zinc-800 text-zinc-500 cursor-not-allowed'
-                            : 'bg-zinc-100 border-zinc-100 text-zinc-900 hover:bg-white'
+                            ? 'bg-active border-line text-fg-subtle cursor-not-allowed'
+                            : 'bg-accent border-accent text-accent-fg hover:opacity-90'
                     "
                 >
-                    <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-zinc-500" />
+                    <Loader2 v-if="isSaving" class="animate-spin h-4 w-4 text-fg-subtle" />
                     <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
                 </button>
                 <button
@@ -236,7 +236,7 @@
                     data-testid="settings-footer-scroll-top"
                     :aria-label="t('common.scrollToTop')"
                     :title="t('common.scrollToTop')"
-                    class="p-2.5 shrink-0 rounded-md bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-white border border-zinc-800 dark:border-zinc-200 transition-colors inline-flex items-center justify-center shadow-none"
+                    class="p-2.5 shrink-0 rounded-md bg-accent text-accent-fg hover:opacity-90 border border-line dark:border-zinc-200 transition-colors inline-flex items-center justify-center shadow-none"
                     @click="scrollToTop"
                 >
                     <ChevronUp class="h-4 w-4" />

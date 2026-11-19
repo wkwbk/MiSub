@@ -136,10 +136,10 @@
 
 <template>
     <!-- 包含/排除节点 -->
-    <div class="border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden">
+    <div class="border border-line rounded-md overflow-hidden">
         <!-- 折叠头部 -->
         <div
-            class="flex items-center justify-between px-4 py-3 bg-zinc-50 dark:bg-[#131515] hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+            class="flex items-center justify-between px-4 py-3 bg-inset hover:bg-hover transition-colors"
         >
             <button
                 type="button"
@@ -150,16 +150,16 @@
             >
                 <div class="flex items-center gap-2">
                     <ChevronRight
-                        class="w-4 h-4 text-zinc-500 transition-transform duration-200"
+                        class="w-4 h-4 text-fg-subtle transition-transform duration-200"
                         :class="{ 'rotate-90': isRuleExpanded }"
                     />
                     <span
-                        class="text-sm font-medium text-zinc-800 dark:text-zinc-200 cursor-pointer"
+                        class="text-sm font-medium text-fg cursor-pointer"
                         >{{ t('subscriptions.includeExclude') }}</span
                     >
                     <span
                         v-if="selectedRules.length > 0"
-                        class="px-1.5 py-0.5 text-xs font-mono font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-700 dark:text-zinc-300"
+                        class="px-1.5 py-0.5 text-xs font-mono font-medium rounded-md border border-line bg-surface text-fg-muted"
                     >
                         {{ selectedRules.length }}
                     </span>
@@ -169,14 +169,14 @@
                 <button
                     v-if="!isAdvancedMode"
                     @click="switchToAdvanced"
-                    class="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
+                    class="text-xs text-fg-muted hover:text-fg hover:underline"
                 >
                     {{ t('subscriptions.advancedMode') }}
                 </button>
                 <button
                     v-else
                     @click="switchToVisual"
-                    class="text-xs text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline"
+                    class="text-xs text-fg-muted hover:text-fg hover:underline"
                 >
                     {{ t('subscriptions.visualMode') }}
                 </button>
@@ -188,7 +188,7 @@
             <div
                 v-show="isRuleExpanded"
                 id="sub-edit-rule-content"
-                class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717]"
+                class="px-4 py-3 border-t border-line bg-surface"
             >
                 <!-- 可视化模式 -->
                 <div v-if="!isAdvancedMode" class="space-y-3">
@@ -201,8 +201,8 @@
                             :class="[
                                 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                 ruleModeModel === 'keep'
-                                    ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100 font-semibold'
-                                    : 'bg-transparent text-zinc-600 border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                                    ? 'bg-active text-fg border-line-strong font-semibold'
+                                    : 'bg-transparent text-fg-subtle border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-hover',
                             ]"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
@@ -221,8 +221,8 @@
                             :class="[
                                 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                 ruleModeModel === 'exclude'
-                                    ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100 font-semibold'
-                                    : 'bg-transparent text-zinc-600 border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                                    ? 'bg-active text-fg border-line-strong font-semibold'
+                                    : 'bg-transparent text-fg-subtle border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-hover',
                             ]"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
@@ -238,7 +238,7 @@
 
                     <!-- 地区标签 -->
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1.5">
+                        <div class="text-xs text-fg-subtle mb-1.5">
                             {{ t('subscriptions.region') }}
                         </div>
                         <div class="flex flex-wrap gap-1.5">
@@ -251,10 +251,10 @@
                                 :class="[
                                     'px-2.5 py-1 text-xs font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                     isSelected(tag.pattern)
-                                        ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                                        ? 'bg-active text-fg border-line-strong'
                                         : isOtherSelected(tag.pattern)
-                                          ? 'bg-transparent text-zinc-400 dark:text-zinc-500 border-dashed border-zinc-300 dark:border-zinc-700'
-                                          : 'bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                                          ? 'bg-transparent text-fg-subtle border-dashed border-line-strong'
+                                          : 'bg-transparent text-fg-muted border-line hover:bg-hover',
                                 ]"
                             >
                                 {{ tag.icon }} {{ tag.label }}
@@ -264,7 +264,7 @@
 
                     <!-- 协议标签 -->
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1.5">
+                        <div class="text-xs text-fg-subtle mb-1.5">
                             {{ t('subscriptions.protocol') }}
                         </div>
                         <div class="flex flex-wrap gap-1.5">
@@ -277,10 +277,10 @@
                                 :class="[
                                     'px-2.5 py-1 text-xs font-mono font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                     isSelected(tag.pattern)
-                                        ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                                        ? 'bg-active text-fg border-line-strong'
                                         : isOtherSelected(tag.pattern)
-                                          ? 'bg-transparent text-zinc-400 dark:text-zinc-500 border-dashed border-zinc-300 dark:border-zinc-700'
-                                          : 'bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                                          ? 'bg-transparent text-fg-subtle border-dashed border-line-strong'
+                                          : 'bg-transparent text-fg-muted border-line hover:bg-hover',
                                 ]"
                             >
                                 {{ tag.label }}
@@ -290,7 +290,7 @@
 
                     <!-- 关键词标签 -->
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1.5">
+                        <div class="text-xs text-fg-subtle mb-1.5">
                             {{ t('subscriptions.keyword') }}
                         </div>
                         <div class="flex flex-wrap gap-1.5">
@@ -303,10 +303,10 @@
                                 :class="[
                                     'px-2.5 py-1 text-xs font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                     isSelected(tag.pattern)
-                                        ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
+                                        ? 'bg-active text-fg border-line-strong'
                                         : isOtherSelected(tag.pattern)
-                                          ? 'bg-transparent text-zinc-400 dark:text-zinc-500 border-dashed border-zinc-300 dark:border-zinc-700'
-                                          : 'bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900',
+                                          ? 'bg-transparent text-fg-subtle border-dashed border-line-strong'
+                                          : 'bg-transparent text-fg-muted border-line hover:bg-hover',
                                 ]"
                             >
                                 {{ tag.label }}
@@ -316,7 +316,7 @@
 
                     <!-- 自定义关键字输入 -->
                     <div>
-                        <div class="text-xs text-zinc-500 mb-1.5">
+                        <div class="text-xs text-fg-subtle mb-1.5">
                             {{ t('subscriptions.customKeyword') }}
                         </div>
                         <div class="flex flex-col sm:flex-row gap-2">
@@ -325,13 +325,13 @@
                                 v-model="customKeywordModel"
                                 @keyup.enter="addCustomKeyword"
                                 :placeholder="t('subscriptions.keywordPlaceholder')"
-                                class="w-full sm:flex-1 min-w-0 px-3 py-1.5 text-sm bg-white dark:bg-[#131515] border border-zinc-300 dark:border-zinc-800 rounded-md focus-visible:outline-hidden focus:border-zinc-500 text-zinc-900 dark:text-zinc-100"
+                                class="w-full sm:flex-1 min-w-0 px-3 py-1.5 text-sm bg-inset border border-line rounded-md focus-visible:outline-hidden focus:border-line-strong text-fg"
                                 :aria-label="t('subscriptions.keywordPlaceholder')"
                             />
                             <button
                                 type="button"
                                 @click="addCustomKeyword"
-                                class="w-full sm:w-auto flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-medium text-zinc-100 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white rounded-md transition-colors !min-h-0 !min-w-0 cursor-pointer"
+                                class="w-full sm:w-auto flex-shrink-0 whitespace-nowrap px-3 py-1.5 text-xs font-medium bg-accent text-accent-fg hover:opacity-90 rounded-md transition-colors !min-h-0 !min-w-0 cursor-pointer"
                             >
                                 {{ t('subscriptions.addKeyword') }}
                             </button>
@@ -341,12 +341,12 @@
                     <!-- 已选规则展示：保留与剔除两组清晰列出 -->
                     <div
                         v-if="effectiveKeepRules.length > 0 || effectiveExcludeRules.length > 0"
-                        class="space-y-2 pt-2 border-t border-zinc-200 dark:border-zinc-800"
+                        class="space-y-2 pt-2 border-t border-line"
                     >
                         <!-- 保留规则列表 -->
                         <div v-if="effectiveKeepRules.length > 0">
                             <div
-                                class="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5"
+                                class="text-xs font-medium text-fg-muted mb-1 flex items-center gap-1.5"
                             >
                                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                                 {{ t('subscriptions.keepRulesTitle') }} (<span class="font-mono">{{
@@ -355,18 +355,18 @@
                                 >)
                             </div>
                             <div
-                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800"
+                                class="flex flex-wrap gap-1.5 p-2 bg-inset rounded-md border border-line"
                             >
                                 <span
                                     v-for="(rule, index) in effectiveKeepRules"
                                     :key="'keep-' + index"
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-line bg-surface text-fg !min-h-0 !min-w-0"
                                 >
                                     {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
                                     <button
                                         type="button"
                                         @click="handleRemoveKeep(index)"
-                                        class="hover:text-red-500 text-zinc-400 transition-colors cursor-pointer !min-h-0 !min-w-0"
+                                        class="hover:text-red-500 text-fg-muted transition-colors cursor-pointer !min-h-0 !min-w-0"
                                         :aria-label="t('operators.removeRule')"
                                     >
                                         <X class="w-3.5 h-3.5" />
@@ -378,7 +378,7 @@
                         <!-- 剔除规则列表 -->
                         <div v-if="effectiveExcludeRules.length > 0">
                             <div
-                                class="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1 flex items-center gap-1.5"
+                                class="text-xs font-medium text-fg-muted mb-1 flex items-center gap-1.5"
                             >
                                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                                 {{ t('subscriptions.excludeRulesTitle') }} (<span
@@ -387,18 +387,18 @@
                                 >)
                             </div>
                             <div
-                                class="flex flex-wrap gap-1.5 p-2 bg-zinc-50 dark:bg-[#131515] rounded-md border border-zinc-200 dark:border-zinc-800"
+                                class="flex flex-wrap gap-1.5 p-2 bg-inset rounded-md border border-line"
                             >
                                 <span
                                     v-for="(rule, index) in effectiveExcludeRules"
                                     :key="'exclude-' + index"
-                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-800 dark:text-zinc-200 !min-h-0 !min-w-0"
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md border border-line bg-surface text-fg !min-h-0 !min-w-0"
                                 >
                                     {{ rule.icon ? rule.icon + ' ' : '' }}{{ rule.label }}
                                     <button
                                         type="button"
                                         @click="handleRemoveExclude(index)"
-                                        class="hover:text-red-500 text-zinc-400 transition-colors cursor-pointer !min-h-0 !min-w-0"
+                                        class="hover:text-red-500 text-fg-muted transition-colors cursor-pointer !min-h-0 !min-w-0"
                                         :aria-label="t('operators.removeRule')"
                                     >
                                         <X class="w-3.5 h-3.5" />
@@ -409,7 +409,7 @@
                     </div>
 
                     <!-- 提示 -->
-                    <p class="text-xs text-zinc-500">
+                    <p class="text-xs text-fg-subtle">
                         {{
                             ruleModeModel === 'keep'
                                 ? t('subscriptions.keepHint')
@@ -422,7 +422,7 @@
                 <div v-else>
                     <div class="flex items-center gap-2 mb-2">
                         <span
-                            class="text-xs px-2 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 font-mono"
+                            class="text-xs px-2 py-0.5 rounded-md border border-line text-fg-muted font-mono"
                             >{{ excludeRuleState.tag }}</span
                         >
                     </div>
@@ -437,12 +437,12 @@
                         rows="8"
                         :invalid="excludeRuleState.errors.length > 0"
                         :wrapperClass="[
-                            'bg-white dark:bg-[#131515] focus-within:ring-0',
+                            'bg-inset focus-within:ring-0',
                             excludeRuleState.errors.length
                                 ? 'border-red-500'
-                                : 'border-zinc-300 dark:border-zinc-800 focus-within:border-zinc-500',
+                                : 'border-line focus-within:border-line-strong',
                         ]"
-                        class="px-3 py-2 sm:text-sm font-mono text-zinc-900 dark:text-zinc-100 leading-6 resize-none"
+                        class="px-3 py-2 sm:text-sm font-mono text-fg leading-6 resize-none"
                     />
                     <div
                         v-if="excludeRuleState.errors.length"
@@ -454,7 +454,7 @@
                             t('subscriptions.ruleInvalid', { message: excludeRuleState.errorsText })
                         }}
                     </div>
-                    <div class="mt-2 text-xs text-zinc-500 space-y-1">
+                    <div class="mt-2 text-xs text-fg-subtle space-y-1">
                         <p>
                             {{ t('subscriptions.ruleLineHelp') }}
                             <code class="font-mono">proto:</code>

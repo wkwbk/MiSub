@@ -137,7 +137,7 @@
     });
 
     const readinessToneClass = computed(() => {
-        return 'bg-transparent text-zinc-300 border-zinc-800';
+        return 'bg-transparent text-fg-muted border-line';
     });
 
     const readinessDotClass = computed(() => {
@@ -148,9 +148,9 @@
     });
 
     const healthToneClasses = {
-        danger: 'border-zinc-800 bg-transparent text-zinc-200',
-        warning: 'border-zinc-800 bg-transparent text-zinc-200',
-        info: 'border-zinc-800 bg-transparent text-zinc-200',
+        danger: 'border-line bg-transparent text-fg',
+        warning: 'border-line bg-transparent text-fg',
+        info: 'border-line bg-transparent text-fg',
     };
 
     const healthDotClasses = {
@@ -279,14 +279,14 @@
 </script>
 
 <template>
-    <div class="space-y-4 text-zinc-100">
+    <div class="space-y-4 text-fg">
         <div v-if="isLoading" class="p-4">
             <SkeletonLoader type="dashboard" />
         </div>
 
         <template v-else>
             <section
-                class="relative overflow-hidden bg-[#171717] border border-zinc-800 rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] transition-[color,background-color,border-color,box-shadow] duration-200"
+                class="relative overflow-hidden bg-surface border border-line rounded-md p-4 sm:p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] transition-[color,background-color,border-color,box-shadow] duration-200"
             >
                 <div
                     class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
@@ -294,7 +294,7 @@
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2.5">
                             <h1
-                                class="text-xl sm:text-2xl font-semibold tracking-tight text-zinc-100"
+                                class="text-xl sm:text-2xl font-semibold tracking-tight text-fg"
                             >
                                 {{ t('dashboard.title') }}
                             </h1>
@@ -310,13 +310,13 @@
                             </span>
                         </div>
                         <p
-                            class="mt-2 text-xs sm:text-sm text-zinc-400 flex flex-wrap items-center gap-x-2 gap-y-1"
+                            class="mt-2 text-xs sm:text-sm text-fg-muted flex flex-wrap items-center gap-x-2 gap-y-1"
                         >
                             <span>{{ t('dashboard.subtitle') }}</span>
                             <span class="hidden sm:inline text-zinc-700">|</span>
                             <span class="w-full sm:w-auto text-xs sm:text-sm"
                                 >{{ t('dashboard.lastUpdate') }}:
-                                <span class="font-mono text-zinc-300">{{
+                                <span class="font-mono text-fg-muted">{{
                                     lastUpdatedTime
                                 }}</span></span
                             >
@@ -326,20 +326,20 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full lg:w-auto">
                         <button
                             @click="showLogModal = true"
-                            class="min-h-10 flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-zinc-200 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors border border-zinc-800 shadow-none"
+                            class="min-h-10 flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
                         >
-                            <FileText class="h-4 w-4 shrink-0 text-zinc-400" stroke-width="1.5" />
+                            <FileText class="h-4 w-4 shrink-0 text-fg-muted" stroke-width="1.5" />
                             {{ t('dashboard.actions.viewLog') }}
                         </button>
                         <button
                             @click="openBulkImportModal"
-                            class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-zinc-200 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors border border-zinc-800 shadow-none"
+                            class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
                         >
                             {{ t('dashboard.actions.bulkImport') }}
                         </button>
                         <button
                             @click="handleAddProfile"
-                            class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md transition-colors border border-zinc-100 shadow-none"
+                            class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md transition-colors border border-accent shadow-none"
                         >
                             {{ t('dashboard.actions.addProfile') }}
                         </button>
@@ -362,14 +362,14 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div class="lg:col-span-2 space-y-4">
                     <section
-                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800 transition-[color,background-color,border-color,box-shadow] duration-200"
+                        class="bg-surface p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <div
-                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 mb-4 border-b border-zinc-800"
+                            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 mb-4 border-b border-line"
                         >
                             <div>
                                 <h3
-                                    class="text-base font-semibold text-zinc-100 flex items-center gap-2"
+                                    class="text-base font-semibold text-fg flex items-center gap-2"
                                 >
                                     <span
                                         class="h-1.5 w-1.5 rounded-full shrink-0"
@@ -377,12 +377,12 @@
                                     ></span>
                                     {{ t('dashboard.health.title') }}
                                 </h3>
-                                <p class="mt-1 text-xs sm:text-sm text-zinc-400">
+                                <p class="mt-1 text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.health.subtitle') }}
                                 </p>
                             </div>
                             <span
-                                class="text-xs font-mono font-medium text-zinc-400 border border-zinc-800 rounded-md px-2 py-0.5 self-start sm:self-auto"
+                                class="text-xs font-mono font-medium text-fg-muted border border-line rounded-md px-2 py-0.5 self-start sm:self-auto"
                                 >{{
                                     t('dashboard.health.itemsCount', {
                                         count: dashboardHealthItems.length,
@@ -406,10 +406,10 @@
                                         "
                                     ></span>
                                     <div class="min-w-0">
-                                        <p class="text-sm font-medium text-zinc-100 font-mono">
+                                        <p class="text-sm font-medium text-fg font-mono">
                                             {{ item.title }}
                                         </p>
-                                        <p class="mt-0.5 text-xs sm:text-sm text-zinc-400">
+                                        <p class="mt-0.5 text-xs sm:text-sm text-fg-muted">
                                             {{ item.description }}
                                         </p>
                                     </div>
@@ -418,7 +418,7 @@
                                     <button
                                         v-if="item.actionLabel"
                                         type="button"
-                                        class="min-h-9 rounded-md border border-zinc-100 bg-zinc-100 text-zinc-900 px-3 py-1.5 text-xs font-semibold hover:bg-white transition-colors shadow-none"
+                                        class="min-h-9 rounded-md border border-accent bg-accent text-accent-fg px-3 py-1.5 text-xs font-semibold hover:opacity-90 transition-colors shadow-none"
                                         @click="handleHealthAction(item)"
                                     >
                                         {{ item.actionLabel }}
@@ -426,14 +426,14 @@
                                     <button
                                         v-if="item.secondaryActionLabel"
                                         type="button"
-                                        class="min-h-9 rounded-md border border-zinc-800 bg-transparent text-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-900 hover:text-zinc-100 transition-colors shadow-none"
+                                        class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none"
                                         @click="handleHealthSecondaryAction(item)"
                                     >
                                         {{ item.secondaryActionLabel }}
                                     </button>
                                     <button
                                         type="button"
-                                        class="min-h-9 rounded-md border border-zinc-800 bg-transparent text-zinc-400 px-3 py-1.5 text-xs font-medium hover:bg-zinc-900 hover:text-zinc-200 transition-colors shadow-none"
+                                        class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none"
                                         :title="t('dashboard.health.dismissItem')"
                                         :aria-label="t('dashboard.health.dismissItem')"
                                         data-testid="health-item-dismiss"
@@ -446,7 +446,7 @@
                             <button
                                 v-if="hiddenHealthItemsCount > 0 || showAllHealthItems"
                                 type="button"
-                                class="min-h-9 justify-self-start rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-mono font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors shadow-none"
+                                class="min-h-9 justify-self-start rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-mono font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors shadow-none"
                                 @click="showAllHealthItems = !showAllHealthItems"
                             >
                                 {{
@@ -460,16 +460,16 @@
                         </div>
                         <div
                             v-else
-                            class="rounded-md border border-zinc-800 bg-transparent p-4 text-zinc-200 flex items-start gap-3"
+                            class="rounded-md border border-line bg-transparent p-4 text-fg flex items-start gap-3"
                         >
                             <span
                                 class="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"
                             ></span>
                             <div>
-                                <p class="text-sm font-medium text-zinc-100">
+                                <p class="text-sm font-medium text-fg">
                                     {{ t('dashboard.health.allGood') }}
                                 </p>
-                                <p class="mt-1 text-xs sm:text-sm text-zinc-400">
+                                <p class="mt-1 text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.health.allGoodDesc') }}
                                 </p>
                             </div>
@@ -477,7 +477,7 @@
                         <button
                             v-if="dismissedHealthItemsCount > 0"
                             type="button"
-                            class="mt-3 justify-self-start text-xs font-mono font-medium text-zinc-400 underline decoration-zinc-700 underline-offset-4 hover:text-zinc-200 transition-colors"
+                            class="mt-3 justify-self-start text-xs font-mono font-medium text-fg-muted underline decoration-zinc-700 underline-offset-4 hover:text-fg transition-colors"
                             data-testid="health-items-restore"
                             @click="restoreDismissedHealthItems"
                         >
@@ -491,46 +491,46 @@
 
                     <section
                         v-if="showFullGuide"
-                        class="bg-[#171717] p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800 transition-[color,background-color,border-color,box-shadow] duration-200"
+                        class="bg-surface p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-[color,background-color,border-color,box-shadow] duration-200"
                     >
                         <h3
-                            class="text-base font-semibold text-zinc-100 pb-4 mb-4 border-b border-zinc-800 flex items-center gap-2"
+                            class="text-base font-semibold text-fg pb-4 mb-4 border-b border-line flex items-center gap-2"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-zinc-400 shrink-0"></span>
                             {{ t('dashboard.guide.title') }}
                         </h3>
                         <div
-                            class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden md:[&>*:nth-child(n+3)]:border-t md:[&>*:nth-child(n+3)]:border-zinc-800"
+                            class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-line-subtle border border-line rounded-md overflow-hidden md:[&>*:nth-child(n+3)]:border-t md:[&>*:nth-child(n+3)]:border-zinc-800"
                         >
                             <div class="p-4 bg-transparent">
-                                <h4 class="text-sm font-mono font-medium text-zinc-200 mb-1.5">
+                                <h4 class="text-sm font-mono font-medium text-fg mb-1.5">
                                     {{ t('dashboard.guide.step1Title') }}
                                 </h4>
-                                <p class="text-xs sm:text-sm text-zinc-400">
+                                <p class="text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.guide.step1Desc') }}
                                 </p>
                             </div>
                             <div class="p-4 bg-transparent">
-                                <h4 class="text-sm font-mono font-medium text-zinc-200 mb-1.5">
+                                <h4 class="text-sm font-mono font-medium text-fg mb-1.5">
                                     {{ t('dashboard.guide.step2Title') }}
                                 </h4>
-                                <p class="text-xs sm:text-sm text-zinc-400">
+                                <p class="text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.guide.step2Desc') }}
                                 </p>
                             </div>
                             <div class="p-4 bg-transparent">
-                                <h4 class="text-sm font-mono font-medium text-zinc-200 mb-1.5">
+                                <h4 class="text-sm font-mono font-medium text-fg mb-1.5">
                                     {{ t('dashboard.guide.step3Title') }}
                                 </h4>
-                                <p class="text-xs sm:text-sm text-zinc-400">
+                                <p class="text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.guide.step3Desc') }}
                                 </p>
                             </div>
                             <div class="p-4 bg-transparent">
-                                <h4 class="text-sm font-mono font-medium text-zinc-200 mb-1.5">
+                                <h4 class="text-sm font-mono font-medium text-fg mb-1.5">
                                     {{ t('dashboard.guide.step4Title') }}
                                 </h4>
-                                <p class="text-xs sm:text-sm text-zinc-400">
+                                <p class="text-xs sm:text-sm text-fg-muted">
                                     {{ t('dashboard.guide.step4Desc') }}
                                 </p>
                             </div>

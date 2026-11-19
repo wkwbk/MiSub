@@ -60,7 +60,7 @@
 <template>
     <div class="space-y-4">
         <!-- Node Prefix Settings -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.globalNodeSettingsTitle')"
                 :description="t('settings.globalNodeSettingsDesc')"
@@ -81,7 +81,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                    <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                         t('settings.globalManualNodePrefixSwitch')
                     }}</label>
                     <Select
@@ -97,7 +97,7 @@
 
                 <!-- 第二排：机场订阅前缀 与 节点国旗 EMOJI -->
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                    <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                         t('settings.globalSubscriptionPrefixSwitch')
                     }}</label>
                     <Select
@@ -112,7 +112,7 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                    <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                         t('settings.globalFlagEmojiSwitch')
                     }}</label>
                     <Select
@@ -129,7 +129,7 @@
         </section>
 
         <!-- Region Overrides -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.regionOverridesTitle')"
                 :description="t('settings.regionOverridesDesc')"
@@ -142,18 +142,18 @@
                     <button
                         type="button"
                         @click="addRegionOverride"
-                        class="shrink-0 whitespace-nowrap rounded-md border border-zinc-100 bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold leading-5 text-zinc-900 transition-colors hover:bg-white"
+                        class="shrink-0 whitespace-nowrap rounded-md border border-accent bg-accent px-3.5 py-1.5 text-xs font-semibold leading-5 text-accent-fg transition-colors hover:opacity-90"
                     >
                         {{ t('settings.regionOverrideAdd') }}
                     </button>
                 </template>
             </SectionHeader>
 
-            <p v-if="!settings.regionOverrides.length" class="text-xs text-zinc-500">
+            <p v-if="!settings.regionOverrides.length" class="text-xs text-fg-subtle">
                 {{ t('settings.regionOverridesEmpty') }}
             </p>
 
-            <div v-else class="divide-y divide-zinc-800/60">
+            <div v-else class="divide-y divide-line-subtle">
                 <div
                     v-for="(rule, index) in settings.regionOverrides"
                     :key="index"
@@ -188,7 +188,7 @@
         </section>
 
         <!-- Unified Operator Chain -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.globalDefaultOperatorsTitle')"
                 :description="t('settings.globalDefaultOperatorsDesc')"
@@ -199,7 +199,7 @@
                 </template>
                 <template #actions>
                     <span
-                        class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-400"
+                        class="rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-fg-muted"
                         >{{ t('settings.globalDefaultBadge') }}</span
                     >
                 </template>

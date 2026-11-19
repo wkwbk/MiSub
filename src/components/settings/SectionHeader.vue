@@ -26,12 +26,12 @@
     >
         <div class="space-y-1.5 min-w-0">
             <div class="flex items-center gap-2">
-                <span v-if="$slots.icon" class="text-zinc-400 shrink-0 flex items-center">
+                <span v-if="$slots.icon" class="text-fg-muted shrink-0 flex items-center">
                     <slot name="icon" />
                 </span>
-                <h3 class="text-sm font-semibold text-zinc-100">{{ title }}</h3>
+                <h3 class="text-sm font-semibold text-fg">{{ title }}</h3>
             </div>
-            <p v-if="description" class="text-xs text-zinc-400 leading-relaxed">
+            <p v-if="description" class="text-xs text-fg-muted leading-relaxed">
                 {{ description }}
             </p>
         </div>

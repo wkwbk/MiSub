@@ -64,8 +64,8 @@
         class="group flex flex-col rounded-md border p-4 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200"
         :class="[
             isSelectionMode && isSelected
-                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
-                : 'border-zinc-800 bg-[#171717]',
+                ? 'border-line-strong bg-active'
+                : 'border-line bg-surface',
             {
                 'opacity-60': !isEnabled && !isSelectionMode,
                 'cursor-pointer': isSelectionMode,
@@ -81,8 +81,8 @@
                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             isSelected
-                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
-                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
+                                ? 'bg-accent border-accent text-accent-fg'
+                                : 'border-line-strong bg-transparent'
                         "
                     >
                         <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
@@ -90,7 +90,7 @@
                 </div>
 
                 <span
-                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    class="shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
                 >
                     {{ t('profiles.badge') }}
                 </span>
@@ -106,7 +106,7 @@
                         :key="tag"
                         type="button"
                         data-testid="profile-tag-badge"
-                        class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                        class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
                         :title="tag"
                         @click.stop="emit('filter-tag', tag)"
                     >
@@ -114,7 +114,7 @@
                     </button>
                     <span
                         v-if="overflowCount > 0"
-                        class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                        class="shrink-0 rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-fg-subtle"
                         :title="profileTags.join(', ')"
                     >
                         +{{ overflowCount }}
@@ -123,14 +123,14 @@
 
                 <span
                     v-if="!isEnabled"
-                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-400"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span>
                     {{ t('profiles.disabled') }}
                 </span>
                 <span
                     v-else-if="isPublic"
-                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ t('profiles.public') }}
@@ -143,7 +143,7 @@
             >
                 <button
                     @click.stop="emit('preview')"
-                    class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.previewNodes')"
                     :aria-label="t('actions.previewNodes')"
                 >
@@ -151,7 +151,7 @@
                 </button>
                 <button
                     @click.stop="emit('qrcode')"
-                    class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.showQrCode')"
                     :aria-label="t('actions.showQrCode')"
                 >
@@ -159,7 +159,7 @@
                 </button>
                 <button
                     @click.stop="emit('edit')"
-                    class="p-1.5 rounded-md border border-transparent hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.edit')"
                     :aria-label="t('actions.edit')"
                 >
@@ -167,7 +167,7 @@
                 </button>
                 <button
                     @click.stop="emit('delete')"
-                    class="p-1.5 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-zinc-400 hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+                    class="p-1.5 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-fg-muted hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
                     :title="t('actions.delete')"
                     :aria-label="t('actions.delete')"
                 >
@@ -177,14 +177,14 @@
         </div>
 
         <p
-            class="mt-2 truncate text-base font-semibold leading-snug text-zinc-100"
+            class="mt-2 truncate text-base font-semibold leading-snug text-fg"
             :title="profile.name"
         >
             {{ profile.name }}
         </p>
 
         <p
-            class="mt-1.5 text-xs font-mono text-zinc-400 flex flex-wrap items-center gap-x-2 gap-y-1"
+            class="mt-1.5 text-xs font-mono text-fg-muted flex flex-wrap items-center gap-x-2 gap-y-1"
         >
             <span>
                 {{
@@ -194,23 +194,23 @@
                     })
                 }}
             </span>
-            <span class="text-zinc-600" aria-hidden="true">·</span>
+            <span class="text-fg-subtle" aria-hidden="true">·</span>
             <span>
                 {{ t('profiles.downloadCount', { count: profile.downloadCount || 0 }) }}
             </span>
             <span
                 v-if="subProfileCount > 0"
-                class="inline-flex items-center px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent text-[11px] font-mono text-zinc-300"
+                class="inline-flex items-center px-1.5 py-0.5 rounded-md border border-line bg-transparent text-[11px] font-mono text-fg-muted"
             >
                 {{ t('profileModal.subProfilesCountBadge', { count: subProfileCount }) }}
             </span>
         </p>
 
         <div
-            class="mt-3 grid gap-2.5 rounded-md border border-zinc-800 bg-transparent p-3 text-xs"
+            class="mt-3 grid gap-2.5 rounded-md border border-line bg-transparent p-3 text-xs"
             :class="{ 'pointer-events-none': isSelectionMode }"
         >
-            <div class="flex items-center justify-between gap-3 text-zinc-300">
+            <div class="flex items-center justify-between gap-3 text-fg-muted">
                 <span>{{ t('profiles.enabledStatus') }}</span>
                 <Switch
                     :model-value="isEnabled"
@@ -218,7 +218,7 @@
                     :label="t('profiles.enable')"
                 />
             </div>
-            <div class="flex items-center justify-between gap-3 text-zinc-300">
+            <div class="flex items-center justify-between gap-3 text-fg-muted">
                 <span>{{ t('profiles.publicAccess') }}</span>
                 <Switch
                     :model-value="isPublic"
@@ -229,13 +229,13 @@
         </div>
 
         <div
-            class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800 pt-3"
+            class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"
             :class="[compact ? 'items-stretch' : '', { 'pointer-events-none': isSelectionMode }]"
         >
             <div class="flex items-center gap-2 sm:gap-4" :class="compact ? 'flex-1' : ''">
                 <button
                     @click="emit('open-copy')"
-                    class="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
                     :class="compact ? 'w-full justify-center' : ''"
                 >
                     <Copy class="h-3.5 w-3.5" />
@@ -245,7 +245,7 @@
             <div class="flex items-center gap-1.5 transition-opacity duration-200">
                 <button
                     @click.stop="emit('view-logs')"
-                    class="inline-flex items-center gap-1 rounded-md border border-zinc-800 bg-transparent px-2.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-100"
+                    class="inline-flex items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
                     :title="t('actions.viewLogs')"
                 >
                     <FileText class="h-3.5 w-3.5" />

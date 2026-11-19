@@ -122,10 +122,10 @@
     <Modal :show="show" size="lg" @update:show="(value) => !value && closeModal()">
         <template #title>
             <div class="pr-10">
-                <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                <h3 class="text-base font-semibold text-fg">
                     {{ showSuccess ? t('guestbook.submitSuccess') : t('guestbook.submitFeedback') }}
                 </h3>
-                <p class="mt-0.5 text-xs text-zinc-500">
+                <p class="mt-0.5 text-xs text-fg-subtle">
                     {{ showSuccess ? t('guestbook.thanksShort') : t('guestbook.feedbackNote') }}
                 </p>
             </div>
@@ -137,11 +137,11 @@
                 class="flex flex-col items-center justify-center py-8 text-center animate-fade-in"
             >
                 <div
-                    class="mb-4 flex h-12 w-12 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent"
+                    class="mb-4 flex h-12 w-12 items-center justify-center rounded-md border border-line bg-transparent"
                 >
                     <Check class="w-6 h-6 text-emerald-500" />
                 </div>
-                <p class="max-w-xs text-xs text-zinc-500">
+                <p class="max-w-xs text-xs text-fg-subtle">
                     {{ t('guestbook.thanksMessage') }}
                 </p>
             </div>
@@ -149,7 +149,7 @@
             <div v-else class="space-y-4">
                 <div>
                     <label
-                        class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+                        class="mb-1 block text-xs font-medium text-fg-muted"
                         >{{ t('guestbook.feedbackType') }}</label
                     >
                     <Select
@@ -164,40 +164,40 @@
 
                 <div>
                     <label
-                        class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+                        class="mb-1 block text-xs font-medium text-fg-muted"
                         >{{ t('guestbook.nicknameOptional') }}</label
                     >
                     <input
                         type="text"
                         v-model="form.nickname"
                         :placeholder="t('guestbook.nicknamePlaceholder')"
-                        class="block w-full rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm"
+                        class="block w-full rounded-md border border-line shadow-none focus:border-line-strong focus:outline-hidden bg-inset text-fg py-2 px-3 text-sm"
                         :aria-label="t('settings.guestbookNickname')"
                     />
                 </div>
 
                 <div>
                     <label
-                        class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+                        class="mb-1 block text-xs font-medium text-fg-muted"
                         >{{ t('guestbook.contentLabel') }}</label
                     >
                     <Textarea
                         v-model="form.content"
                         rows="4"
                         :placeholder="t('guestbook.contentPlaceholder')"
-                        wrapperClass="bg-white dark:bg-[#131515] border-zinc-300 dark:border-zinc-800 focus-within:ring-0"
-                        class="text-zinc-900 dark:text-zinc-100 py-2 px-3 text-sm resize-none"
+                        wrapperClass="bg-inset border-line focus-within:ring-0"
+                        class="text-fg py-2 px-3 text-sm resize-none"
                     />
                 </div>
 
                 <div>
                     <label
-                        class="mb-1 block text-xs font-medium text-zinc-700 dark:text-zinc-300"
+                        class="mb-1 block text-xs font-medium text-fg-muted"
                         >{{ t('guestbook.captchaLabel') }}</label
                     >
                     <div class="flex items-center gap-3">
                         <div
-                            class="min-w-[80px] select-none rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#131515] px-3 py-2 text-center font-mono text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+                            class="min-w-[80px] select-none rounded-md border border-line bg-inset px-3 py-2 text-center font-mono text-sm font-semibold text-fg"
                         >
                             {{ captcha.num1 }} {{ captcha.operator }} {{ captcha.num2 }} = ?
                         </div>
@@ -205,14 +205,14 @@
                             type="number"
                             v-model="form.captcha"
                             :placeholder="t('guestbook.captchaPlaceholder')"
-                            class="block w-24 rounded-md border border-zinc-300 dark:border-zinc-800 shadow-none focus:border-zinc-500 focus:outline-hidden bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 font-mono py-2 px-3 text-sm"
+                            class="block w-24 rounded-md border border-line shadow-none focus:border-line-strong focus:outline-hidden bg-inset text-fg font-mono py-2 px-3 text-sm"
                             @keydown.enter="submitMessage"
                             :aria-label="t('settings.guestbookCaptchaAnswer')"
                         />
                         <button
                             type="button"
                             @click="generateCaptcha"
-                            class="p-1.5 text-zinc-500 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100 touch-target"
+                            class="p-1.5 text-fg-subtle transition-colors hover:text-fg touch-target"
                             :title="t('common.refreshCaptcha')"
                             :aria-label="t('common.refreshCaptcha')"
                         >
@@ -232,7 +232,7 @@
             <div class="flex w-full justify-end gap-2">
                 <button
                     @click="closeModal"
-                    class="px-4 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 bg-transparent border border-zinc-300 dark:border-zinc-800 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                    class="px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover transition-colors"
                 >
                     {{ showSuccess ? t('common.close') : t('actions.cancel') }}
                 </button>
@@ -240,7 +240,7 @@
                     v-if="!showSuccess"
                     @click="submitMessage"
                     :disabled="submitting || !form.content"
-                    class="px-4 py-1.5 text-xs font-medium text-zinc-100 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-none"
+                    class="px-4 py-1.5 text-xs font-medium bg-accent text-accent-fg hover:opacity-90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-none"
                 >
                     {{ submitting ? t('guestbook.submitting') : t('guestbook.submitFeedback') }}
                 </button>

@@ -47,14 +47,14 @@
                 :role="getToastRole(toast.type)"
                 :aria-live="getToastAriaLive(toast.type)"
                 aria-atomic="true"
-                class="toast-container pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md bg-[#171717] border border-zinc-800 rounded-md shadow-none overflow-hidden transition-all duration-200 relative"
+                class="toast-container popover-surface pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md rounded-md overflow-hidden transition-all duration-200 relative"
             >
                 <!-- Toast 内容 -->
                 <div class="relative p-3.5 pl-4">
                     <!-- 关闭按钮 -->
                     <button
                         @click="handleClose(toast.id)"
-                        class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-zinc-500 hover:text-zinc-100 hover:bg-zinc-900 transition-colors focus-visible:outline-none w-6 h-6 touch-target"
+                        class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors focus-visible:outline-none w-6 h-6 touch-target"
                         :aria-label="t('common.toastClose')"
                     >
                         <X class="w-3.5 h-3.5 flex-shrink-0" />
@@ -69,18 +69,16 @@
 
                         <!-- 消息内容 -->
                         <div class="flex-1 min-w-0">
-                            <p
-                                class="text-xs font-medium text-zinc-200 leading-relaxed break-words"
-                            >
+                            <p class="text-xs font-medium text-fg leading-relaxed break-words">
                                 {{ toast.message }}
                             </p>
                         </div>
                     </div>
 
                     <!-- 进度条 -->
-                    <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-zinc-800">
+                    <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-line">
                         <div
-                            class="h-full bg-zinc-500 ease-linear progress-bar"
+                            class="h-full bg-fg-subtle ease-linear progress-bar"
                             :style="{ animationDuration: `${toast.duration}ms` }"
                         ></div>
                     </div>

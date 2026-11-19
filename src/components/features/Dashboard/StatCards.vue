@@ -71,9 +71,9 @@
     const isVisible = ref(true);
 
     const cardBaseClass =
-        'stat-card group w-full text-left bg-[#171717] p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-zinc-800 transition-all duration-200 focus-visible:outline-hidden focus-visible:border-zinc-400 cursor-pointer';
-    const normalCardClass = 'border-zinc-800';
-    const warningCardClass = 'border-zinc-800';
+        'stat-card group w-full text-left bg-surface p-4 sm:p-5 rounded-md shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] border border-line transition-all duration-200 focus-visible:outline-hidden focus-visible:border-line-strong cursor-pointer';
+    const normalCardClass = 'border-line';
+    const warningCardClass = 'border-line';
 
     const navigate = (path, query = {}) => {
         emit('navigate', path, query);
@@ -96,27 +96,27 @@
             "
         >
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 class="text-xs font-medium text-fg-muted uppercase tracking-wider">
                     {{ t('dashboard.remainingTraffic') }}
                 </h3>
-                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                <span class="text-fg-subtle group-hover:text-fg transition-colors">
                     <Zap class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
-            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
+            <p class="text-2xl font-semibold text-fg tracking-tight leading-none font-mono">
                 {{ trafficDisplay.value }}
-                <span class="ml-1 text-xs font-normal text-zinc-500 font-mono">{{
+                <span class="ml-1 text-xs font-normal text-fg-subtle font-mono">{{
                     trafficDisplay.unit
                 }}</span>
             </p>
-            <div class="mt-3 w-full bg-zinc-800 rounded-none h-1 overflow-hidden">
+            <div class="mt-3 w-full bg-active rounded-none h-1 overflow-hidden">
                 <div
                     class="h-1 transition-all duration-1000 ease-out"
-                    :class="hasTrafficWarning ? 'bg-amber-500' : 'bg-zinc-100'"
+                    :class="hasTrafficWarning ? 'bg-amber-500' : 'bg-accent'"
                     :style="{ width: isVisible ? remainingTrafficPercentage + '%' : '0%' }"
                 ></div>
             </div>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
                 <span
                     class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                     :class="hasTrafficWarning ? 'bg-amber-500' : 'bg-emerald-500'"
@@ -146,20 +146,20 @@
             @click="navigate('/dashboard/nodes')"
         >
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 class="text-xs font-medium text-fg-muted uppercase tracking-wider">
                     {{ t('dashboard.manualNodes') }}
                 </h3>
-                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                <span class="text-fg-subtle group-hover:text-fg transition-colors">
                     <Server class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
-            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
+            <p class="text-2xl font-semibold text-fg tracking-tight leading-none font-mono">
                 {{ enabledManualNodesCount }}
-                <span class="text-xs font-normal text-zinc-500 font-mono"
+                <span class="text-xs font-normal text-fg-subtle font-mono"
                     >/ {{ manualNodesCount }}</span
                 >
             </p>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
                 <span
                     class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                     :class="
@@ -205,20 +205,20 @@
             "
         >
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 class="text-xs font-medium text-fg-muted uppercase tracking-wider">
                     {{ t('dashboard.activeSubscriptions') }}
                 </h3>
-                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                <span class="text-fg-subtle group-hover:text-fg transition-colors">
                     <Boxes class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
-            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
+            <p class="text-2xl font-semibold text-fg tracking-tight leading-none font-mono">
                 {{ activeSubscriptionsCount }}
-                <span class="text-xs font-normal text-zinc-500 font-mono"
+                <span class="text-xs font-normal text-fg-subtle font-mono"
                     >/ {{ subscriptionsCount }}</span
                 >
             </p>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
                 <span
                     class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                     :class="
@@ -249,17 +249,17 @@
             "
         >
             <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-medium text-zinc-400 uppercase tracking-wider">
+                <h3 class="text-xs font-medium text-fg-muted uppercase tracking-wider">
                     {{ t('dashboard.combinedSubscriptions') }}
                 </h3>
-                <span class="text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                <span class="text-fg-subtle group-hover:text-fg transition-colors">
                     <ClipboardList class="h-4 w-4" stroke-width="1.5" />
                 </span>
             </div>
-            <p class="text-2xl font-semibold text-zinc-100 tracking-tight leading-none font-mono">
+            <p class="text-2xl font-semibold text-fg tracking-tight leading-none font-mono">
                 {{ activeProfilesCount }}
             </p>
-            <p class="text-xs mt-2 flex items-center gap-1.5 text-zinc-400 font-mono">
+            <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
                 <span
                     class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                     :class="hasProfileWarning ? 'bg-amber-500' : 'bg-emerald-500'"

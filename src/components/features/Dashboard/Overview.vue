@@ -33,7 +33,7 @@
 
 <template>
     <div
-        class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-zinc-800 border border-zinc-800 rounded-md bg-[#171717] overflow-hidden"
+        class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-line-subtle border border-line rounded-md bg-surface overflow-hidden"
     >
         <div
             v-for="stat in statsData"
@@ -41,12 +41,12 @@
             class="bg-transparent p-5 rounded-none shadow-none transition-colors"
         >
             <p
-                class="text-xs font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-2"
+                class="text-xs font-medium text-fg-muted uppercase tracking-wider flex items-center gap-2"
             >
                 <span class="h-1.5 w-1.5 rounded-full shrink-0" :class="stat.dotClass"></span>
                 {{ stat.name }}
             </p>
-            <p class="mt-2 text-2xl font-semibold text-zinc-100 font-mono">{{ stat.value }}</p>
+            <p class="mt-2 text-2xl font-semibold text-fg font-mono">{{ stat.value }}</p>
         </div>
     </div>
 </template>

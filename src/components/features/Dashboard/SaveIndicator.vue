@@ -70,7 +70,7 @@
     >
         <div
             v-if="dirty || saveState !== 'idle'"
-            class="fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 misub-radius-md shadow-lg border border-gray-200 dark:border-gray-700 p-4"
+            class="fixed top-4 right-4 z-50 bg-surface misub-radius-md shadow-lg border border-line p-4"
         >
             <div class="flex items-center space-x-3">
                 <div class="flex items-center space-x-2">

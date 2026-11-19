@@ -265,7 +265,7 @@
         <template #footer>
             <button
                 @click="emit('update:show', false)"
-                class="px-4 py-2 border border-zinc-800 bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 font-medium text-xs rounded-md transition-colors"
+                class="px-4 py-2 border border-line bg-transparent hover:bg-hover text-fg-muted hover:text-fg font-medium text-xs rounded-md transition-colors"
             >
                 {{ t('actions.cancel') }}
             </button>
@@ -273,7 +273,7 @@
                 v-if="activeTab === 'url'"
                 @click="importSubscription"
                 :disabled="isLoading || !subscriptionUrl.trim()"
-                class="px-4 py-2 bg-zinc-100 hover:bg-white text-zinc-900 font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
                 {{ t('actions.import') }}
             </button>
@@ -282,15 +282,15 @@
             <div class="space-y-4">
                 <!-- 来源切换 -->
                 <div
-                    class="grid grid-cols-2 divide-x divide-zinc-800 border border-zinc-800 rounded-md overflow-hidden bg-[#131515]"
+                    class="grid grid-cols-2 divide-x divide-line-subtle border border-line rounded-md overflow-hidden bg-inset"
                 >
                     <button
                         type="button"
                         class="py-1.5 text-xs font-medium transition-colors"
                         :class="
                             activeTab === 'url'
-                                ? 'bg-zinc-100 text-zinc-900 font-semibold'
-                                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                                ? 'bg-accent text-accent-fg font-semibold'
+                                : 'text-fg-muted hover:bg-hover hover:text-fg'
                         "
                         @click="activeTab = 'url'"
                     >
@@ -301,8 +301,8 @@
                         class="py-1.5 text-xs font-medium transition-colors"
                         :class="
                             activeTab === 'file'
-                                ? 'bg-zinc-100 text-zinc-900 font-semibold'
-                                : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                                ? 'bg-accent text-accent-fg font-semibold'
+                                : 'text-fg-muted hover:bg-hover hover:text-fg'
                         "
                         @click="activeTab = 'file'"
                     >
@@ -312,7 +312,7 @@
 
                 <!-- Tag Input -->
                 <div class="relative">
-                    <label class="text-xs font-semibold text-zinc-400 mb-1.5 block">
+                    <label class="text-xs font-semibold text-fg-muted mb-1.5 block">
                         {{ t('importNodes.targetTags') }}
                     </label>
                     <TagInput

@@ -47,13 +47,13 @@
     const variantClasses = computed(() => {
         const variants = {
             primary:
-                'bg-zinc-100 hover:bg-white text-zinc-900 border border-zinc-100 font-semibold shadow-none',
+                'bg-accent hover:opacity-90 text-accent-fg border border-accent font-semibold shadow-none',
             secondary:
-                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-300 hover:text-zinc-100 border border-zinc-800 shadow-none',
-            danger: 'bg-transparent hover:bg-red-950/40 text-red-400 hover:text-red-300 border border-zinc-800 hover:border-red-900/60 shadow-none',
-            ghost: 'bg-transparent hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100',
+                'bg-transparent hover:bg-hover hover:border-line-strong text-fg-muted hover:text-fg border border-line shadow-none',
+            danger: 'bg-transparent hover:bg-red-500/10 text-red-500 dark:text-red-400 hover:text-red-400 dark:hover:text-red-300 border border-line hover:border-red-500/40 shadow-none',
+            ghost: 'bg-transparent hover:bg-hover text-fg-muted hover:text-fg',
             outline:
-                'bg-transparent hover:bg-zinc-800 hover:border-zinc-600 text-zinc-200 hover:text-zinc-100 border border-zinc-800 shadow-none',
+                'bg-transparent hover:bg-hover hover:border-line-strong text-fg border border-line shadow-none',
         };
         return variants[props.variant];
     });

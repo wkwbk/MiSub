@@ -118,11 +118,11 @@
     >
         <template #title>
             <div class="flex justify-between items-center w-full">
-                <span class="text-base font-semibold text-zinc-100">{{ t('logs.title') }}</span>
+                <span class="text-base font-semibold text-fg">{{ t('logs.title') }}</span>
                 <div class="flex gap-2">
                     <button
                         @click="fetchLogs"
-                        class="text-xs px-2.5 py-1 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 transition-colors text-zinc-300 hover:text-zinc-100"
+                        class="text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg"
                     >
                         {{ t('common.refresh') }}
                     </button>
@@ -139,13 +139,13 @@
         <template #body>
             <div class="flex flex-col h-[60vh]">
                 <div class="flex-1 overflow-y-auto pr-2 min-h-0">
-                    <div v-if="isLoading" class="py-12 text-center text-zinc-500">
-                        <Loader2 class="animate-spin h-6 w-6 mx-auto mb-2 text-zinc-400" />
+                    <div v-if="isLoading" class="py-12 text-center text-fg-subtle">
+                        <Loader2 class="animate-spin h-6 w-6 mx-auto mb-2 text-fg-muted" />
                         {{ t('common.loading') }}
                     </div>
                     <div v-else-if="filteredLogs.length === 0" class="py-16 text-center">
-                        <ClipboardList class="mx-auto h-10 w-10 text-zinc-600" />
-                        <p class="mt-2 text-xs text-zinc-500">
+                        <ClipboardList class="mx-auto h-10 w-10 text-fg-subtle" />
+                        <p class="mt-2 text-xs text-fg-subtle">
                             {{ filterProfileName ? t('logs.emptyForProfile') : t('logs.empty') }}
                         </p>
                     </div>
@@ -153,7 +153,7 @@
                         <li
                             v-for="log in paginatedLogs"
                             :key="log.id || log.timestamp"
-                            class="bg-transparent rounded-md p-3 text-xs border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition-colors cursor-pointer"
+                            class="bg-transparent rounded-md p-3 text-xs border border-line relative overflow-hidden group hover:border-line-strong transition-colors cursor-pointer"
                             @click="toggleExpand(log.id)"
                         >
                             <div>
@@ -167,40 +167,40 @@
                                                 'bg-red-400': log.status === 'error',
                                             }"
                                         ></span>
-                                        <span class="font-semibold text-zinc-100 truncate text-xs">
+                                        <span class="font-semibold text-fg truncate text-xs">
                                             {{ log.profileName || 'Unknown Profile' }}
                                         </span>
                                     </div>
                                     <span
-                                        class="shrink-0 px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent font-mono text-[10px] font-medium text-zinc-300 whitespace-nowrap"
+                                        class="shrink-0 px-1.5 py-0.5 rounded-md border border-line bg-transparent font-mono text-[10px] font-medium text-fg-muted whitespace-nowrap"
                                     >
                                         {{ getClientInfo(log.userAgent).name }}
                                     </span>
                                 </div>
 
-                                <div class="flex flex-col gap-1 text-xs text-zinc-400">
+                                <div class="flex flex-col gap-1 text-xs text-fg-muted">
                                     <!-- Compact Info Rows -->
                                     <div class="flex justify-between items-center">
                                         <div class="flex items-center gap-1.5">
                                             <span
-                                                class="text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
+                                                class="text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                                                 >{{ t('logs.time') }}</span
                                             >
-                                            <span class="font-mono text-[10px] text-zinc-300">{{
+                                            <span class="font-mono text-[10px] text-fg-muted">{{
                                                 formatTime(log.timestamp)
                                             }}</span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1.5">
                                         <span
-                                            class="text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
+                                            class="text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                                             >{{ t('logs.location') }}</span
                                         >
-                                        <span class="truncate text-zinc-300">
+                                        <span class="truncate text-fg-muted">
                                             {{ log.geoInfo?.country || 'Unknown' }}
                                             <span
                                                 v-if="log.geoInfo?.city"
-                                                class="text-zinc-500 text-[10px]"
+                                                class="text-fg-subtle text-[10px]"
                                             >
                                                 / {{ log.geoInfo.city }}</span
                                             >
@@ -208,10 +208,10 @@
                                     </div>
                                     <div class="flex items-center gap-1.5">
                                         <span
-                                            class="font-mono text-[10px] px-1 py-px rounded-sm border border-zinc-800 text-zinc-500 min-w-[24px] text-center"
+                                            class="font-mono text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                                             >IP</span
                                         >
-                                        <span class="font-mono text-[10px] text-zinc-300">{{
+                                        <span class="font-mono text-[10px] text-fg-muted">{{
                                             log.clientIp
                                         }}</span>
                                     </div>
@@ -220,32 +220,32 @@
                                 <!-- Expandable Details -->
                                 <div
                                     v-show="expandedLogId === log.id"
-                                    class="mt-3 pt-3 border-t border-zinc-800 text-xs space-y-1.5 animate-fadeIn"
+                                    class="mt-3 pt-3 border-t border-line text-xs space-y-1.5 animate-fadeIn"
                                 >
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                         <div class="flex">
-                                            <span class="font-mono text-zinc-500 w-16 shrink-0"
+                                            <span class="font-mono text-fg-subtle w-16 shrink-0"
                                                 >ISP:</span
                                             >
-                                            <span class="font-mono text-zinc-300 truncate"
+                                            <span class="font-mono text-fg-muted truncate"
                                                 >{{ log.geoInfo?.isp || '-' }} ({{
                                                     log.geoInfo?.asn ? 'AS' + log.geoInfo.asn : '-'
                                                 }})</span
                                             >
                                         </div>
                                         <div class="flex">
-                                            <span class="text-zinc-500 w-16 shrink-0"
+                                            <span class="text-fg-subtle w-16 shrink-0"
                                                 >{{ t('logs.duration') }}:</span
                                             >
-                                            <span class="font-mono text-zinc-300"
+                                            <span class="font-mono text-fg-muted"
                                                 >{{ log.details?.duration || 0 }} ms</span
                                             >
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
-                                            <span class="text-zinc-500 w-16 shrink-0"
+                                            <span class="text-fg-subtle w-16 shrink-0"
                                                 >{{ t('logs.nodes') }}:</span
                                             >
-                                            <span class="font-mono text-zinc-300 truncate">
+                                            <span class="font-mono text-fg-muted truncate">
                                                 {{
                                                     t('logs.nodeSummary', {
                                                         total: log.details?.totalNodes || 0,
@@ -256,11 +256,11 @@
                                             </span>
                                         </div>
                                         <div class="flex col-span-1 sm:col-span-2">
-                                            <span class="font-mono text-zinc-500 w-16 shrink-0"
+                                            <span class="font-mono text-fg-subtle w-16 shrink-0"
                                                 >UA:</span
                                             >
                                             <span
-                                                class="font-mono text-zinc-300 truncate"
+                                                class="font-mono text-fg-muted truncate"
                                                 :title="log.userAgent"
                                                 >{{ log.userAgent }}</span
                                             >
@@ -269,7 +269,7 @@
                                 </div>
 
                                 <div v-show="expandedLogId !== log.id" class="mt-2 text-center">
-                                    <ChevronDown class="h-3.5 w-3.5 mx-auto text-zinc-500" />
+                                    <ChevronDown class="h-3.5 w-3.5 mx-auto text-fg-subtle" />
                                 </div>
                             </div>
                         </li>
@@ -279,9 +279,9 @@
                 <!-- Pagination Footer -->
                 <div
                     v-if="filteredLogs.length > 0"
-                    class="pt-4 mt-2 border-t border-zinc-800 flex justify-between items-center shrink-0"
+                    class="pt-4 mt-2 border-t border-line flex justify-between items-center shrink-0"
                 >
-                    <span class="font-mono text-xs text-zinc-400">
+                    <span class="font-mono text-xs text-fg-muted">
                         {{
                             t('logs.pageSummary', {
                                 current: currentPage,
@@ -294,14 +294,14 @@
                         <button
                             @click="prevPage"
                             :disabled="currentPage === 1"
-                            class="px-3 py-1 text-xs border border-zinc-800 rounded-md bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('common.previousPage') }}
                         </button>
                         <button
                             @click="nextPage"
                             :disabled="currentPage === totalPages"
-                            class="px-3 py-1 text-xs border border-zinc-800 rounded-md bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {{ t('common.nextPage') }}
                         </button>

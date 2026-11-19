@@ -62,7 +62,7 @@
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+    <section class="rounded-lg border border-line bg-surface p-6">
         <SectionHeader
             :title="t('settings.dnsOverrideTitle')"
             :description="t('settings.dnsOverrideDesc')"
@@ -72,7 +72,7 @@
             </template>
             <template v-if="hasValue" #actions>
                 <span
-                    class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300"
+                    class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-fg-muted"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                     {{ t('settings.dnsOverrideActive') }}
@@ -81,7 +81,7 @@
         </SectionHeader>
 
         <div>
-            <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-zinc-400">
+            <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-fg-muted">
                 {{ t('settings.dnsOverrideLabel') }}
             </label>
             <Textarea
@@ -96,7 +96,7 @@
             <p v-if="jsonError" class="mt-2 text-xs text-red-400">
                 {{ jsonError }}
             </p>
-            <p v-else class="mt-2 text-xs leading-relaxed text-zinc-500">
+            <p v-else class="mt-2 text-xs leading-relaxed text-fg-subtle">
                 {{ t('settings.dnsOverrideHint') }}
             </p>
         </div>

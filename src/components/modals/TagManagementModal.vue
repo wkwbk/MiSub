@@ -106,8 +106,8 @@
     <Modal :show="show" @close="handleClose" max-width="max-w-2xl">
         <template #title>
             <div class="flex items-center gap-2">
-                <Tag class="h-4 w-4 text-zinc-500" />
-                <span class="text-base font-semibold text-zinc-900 dark:text-zinc-100">{{
+                <Tag class="h-4 w-4 text-fg-subtle" />
+                <span class="text-base font-semibold text-fg">{{
                     t('tags.manage')
                 }}</span>
             </div>
@@ -115,8 +115,8 @@
 
         <template #body>
             <div class="space-y-3">
-                <div v-if="localTags.length === 0" class="text-center py-8 text-zinc-500">
-                    <Tag class="h-8 w-8 mx-auto mb-2 text-zinc-500" />
+                <div v-if="localTags.length === 0" class="text-center py-8 text-fg-subtle">
+                    <Tag class="h-8 w-8 mx-auto mb-2 text-fg-subtle" />
                     <p class="text-sm">{{ t('tags.noTags') }}</p>
                 </div>
 
@@ -132,17 +132,17 @@
                 >
                     <template #item="{ element, index }">
                         <div
-                            class="flex items-center gap-3 p-3 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] transition-colors"
+                            class="flex items-center gap-3 p-3 rounded-md border border-line bg-inset transition-colors"
                             :class="
                                 editingIndex === index
                                     ? 'border-zinc-500 dark:border-zinc-500'
-                                    : 'hover:border-zinc-300 dark:hover:border-zinc-700'
+                                    : 'hover:border-line-strong'
                             "
                         >
                             <button
                                 v-if="isDraggable"
                                 type="button"
-                                class="drag-handle cursor-move text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200"
+                                class="drag-handle cursor-move text-fg-muted hover:text-zinc-700 dark:hover:text-zinc-200"
                                 :title="t('common.dragToSort')"
                                 :aria-label="t('common.dragToSort')"
                             >
@@ -154,7 +154,7 @@
                                     v-if="editingIndex === index"
                                     v-model="editingName"
                                     type="text"
-                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-white dark:bg-[#171717] text-zinc-900 dark:text-zinc-100"
+                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-surface text-fg"
                                     @keyup.enter="confirmEdit"
                                     @keyup.esc="cancelEdit"
                                     autofocus
@@ -162,7 +162,7 @@
                                 />
                                 <div v-else class="flex items-center gap-2 min-w-0">
                                     <span
-                                        class="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
+                                        class="truncate text-sm font-medium text-fg"
                                         >{{ element.name }}</span
                                     >
                                 </div>
@@ -173,7 +173,7 @@
                                     <button
                                         type="button"
                                         @click="confirmEdit"
-                                        class="p-1.5 text-emerald-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target cursor-pointer"
+                                        class="p-1.5 text-emerald-500 hover:bg-hover rounded-md transition-colors touch-target cursor-pointer"
                                         :title="t('actions.confirm')"
                                         :aria-label="t('actions.confirm')"
                                     >
@@ -182,7 +182,7 @@
                                     <button
                                         type="button"
                                         @click="cancelEdit"
-                                        class="p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target cursor-pointer"
+                                        class="p-1.5 text-fg-subtle hover:bg-hover rounded-md transition-colors touch-target cursor-pointer"
                                         :title="t('actions.cancel')"
                                         :aria-label="t('actions.cancel')"
                                     >
@@ -193,7 +193,7 @@
                                     <button
                                         type="button"
                                         @click="startEdit(index)"
-                                        class="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target cursor-pointer"
+                                        class="p-1.5 text-fg-subtle hover:text-fg hover:bg-hover rounded-md transition-colors touch-target cursor-pointer"
                                         :title="t('tags.renameTag')"
                                         :aria-label="t('tags.renameTag')"
                                     >
@@ -202,7 +202,7 @@
                                     <button
                                         type="button"
                                         @click="handleDelete(element.name)"
-                                        class="p-1.5 text-zinc-500 hover:text-red-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-md transition-colors touch-target cursor-pointer"
+                                        class="p-1.5 text-fg-subtle hover:text-red-500 hover:bg-hover rounded-md transition-colors touch-target cursor-pointer"
                                         :title="t('actions.delete')"
                                         :aria-label="t('actions.delete')"
                                     >
@@ -221,7 +221,7 @@
                 <button
                     type="button"
                     @click="handleClose"
-                    class="px-4 py-2 bg-zinc-900 dark:bg-zinc-100 hover:bg-zinc-800 dark:hover:bg-white text-zinc-100 dark:text-zinc-900 font-semibold text-xs rounded-md transition-colors cursor-pointer"
+                    class="px-4 py-2 bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors cursor-pointer"
                 >
                     {{ t('actions.confirm') }}
                 </button>

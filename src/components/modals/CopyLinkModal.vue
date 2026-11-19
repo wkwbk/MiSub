@@ -114,7 +114,7 @@
 <template>
     <Modal :show="show" @update:show="close" :show-cancel="false" :show-confirm="false">
         <template #title>
-            <h3 class="text-base font-semibold text-zinc-100">
+            <h3 class="text-base font-semibold text-fg">
                 {{ t('copyLink.title') }}
             </h3>
         </template>
@@ -122,14 +122,14 @@
         <template #body>
             <div class="mt-2" v-if="!baseUrl">
                 <div
-                    class="flex items-center gap-2 text-red-400 text-xs bg-transparent p-3 rounded-md border border-zinc-800"
+                    class="flex items-center gap-2 text-red-400 text-xs bg-transparent p-3 rounded-md border border-line"
                 >
                     <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"></span>
                     <span>{{ t('copyLink.tokenMissingHint') }}</span>
                 </div>
             </div>
             <div v-else class="space-y-2 mt-2">
-                <p class="text-xs text-zinc-400 mb-3">
+                <p class="text-xs text-fg-muted mb-3">
                     {{ t('copyLink.formatHint') }}
                 </p>
 
@@ -137,23 +137,23 @@
                     v-for="client in clients"
                     :key="client.type"
                     @click="copyToClipboard(client.format)"
-                    class="flex items-center justify-between p-2.5 border border-zinc-800 rounded-md hover:bg-[#202020] hover:border-zinc-700 cursor-pointer transition-colors group"
+                    class="flex items-center justify-between p-2.5 border border-line rounded-md hover:bg-hover hover:border-line-strong cursor-pointer transition-colors group"
                 >
                     <div class="flex items-center gap-3">
                         <div
-                            class="w-8 h-8 rounded-md border border-zinc-800 bg-transparent flex items-center justify-center text-zinc-400 group-hover:text-zinc-100 transition-colors"
+                            class="w-8 h-8 rounded-md border border-line bg-transparent flex items-center justify-center text-fg-muted group-hover:text-fg transition-colors"
                         >
                             <component :is="client.icon" class="h-4 w-4" />
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-zinc-100">
+                            <p class="text-sm font-medium text-fg">
                                 {{ client.name }}
                             </p>
                         </div>
                     </div>
 
                     <button
-                        class="px-2.5 py-1 text-xs font-medium text-zinc-900 bg-zinc-100 rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
+                        class="px-2.5 py-1 text-xs font-medium text-accent-fg bg-accent rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
                     >
                         {{ t('actions.copy') }}
                     </button>

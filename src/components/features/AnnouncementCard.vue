@@ -104,7 +104,7 @@
     <Transition name="fade-slide">
         <div
             v-if="isVisible"
-            class="group relative overflow-hidden transition-[color,background-color,border-color,box-shadow] duration-200 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
+            class="group relative overflow-hidden transition-[color,background-color,border-color,box-shadow] duration-200 rounded-md border border-line bg-surface shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]"
         >
             <div class="relative p-4 sm:p-5 z-10 flex flex-col gap-2">
                 <!-- Header Area -->
@@ -114,14 +114,14 @@
                             class="h-1.5 w-1.5 rounded-full shrink-0"
                             :class="typeConfig.dot"
                         ></span>
-                        <h3 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                        <h3 class="text-sm font-semibold text-fg truncate">
                             {{ announcement.title || t('common.announcementFallbackTitle') }}
                         </h3>
                     </div>
                     <button
                         v-if="announcement.dismissible"
                         @click="dismiss"
-                        class="p-1 rounded-md text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors touch-target"
+                        class="p-1 rounded-md text-fg-muted hover:text-fg hover:bg-hover transition-colors touch-target"
                         :title="t('common.dismissAnnouncement')"
                         :aria-label="t('common.dismissAnnouncement')"
                     >
@@ -131,13 +131,13 @@
 
                 <!-- Content Area -->
                 <div
-                    class="prose prose-sm max-w-none text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed dark:prose-invert pl-3.5"
+                    class="prose prose-sm max-w-none text-xs text-fg-muted leading-relaxed dark:prose-invert pl-3.5"
                     v-html="sanitizedContent"
                 ></div>
 
                 <div
                     v-if="announcement.updatedAt"
-                    class="pt-1 pl-3.5 text-[11px] font-mono text-zinc-500 flex items-center gap-2"
+                    class="pt-1 pl-3.5 text-[11px] font-mono text-fg-subtle flex items-center gap-2"
                 >
                     {{
                         t('common.updatedAt', {

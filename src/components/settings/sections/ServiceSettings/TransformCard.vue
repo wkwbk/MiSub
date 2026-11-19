@@ -111,10 +111,10 @@
     const showEngineChangeWarning = ref(false);
     const engineChangeNoticeDismissed = ref(false);
     const backendTestToneClass = computed(() => {
-        if (!backendTestStatus.value) return 'border-zinc-800 bg-transparent text-zinc-400';
+        if (!backendTestStatus.value) return 'border-line bg-transparent text-fg-muted';
         return backendTestStatus.value.success
-            ? 'border-zinc-800 bg-transparent text-emerald-400'
-            : 'border-zinc-800 bg-transparent text-red-400';
+            ? 'border-line bg-transparent text-emerald-400'
+            : 'border-line bg-transparent text-red-400';
     });
 
     async function handleTestBackend() {
@@ -207,7 +207,7 @@
 
 <template>
     <div class="space-y-4">
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.transformRulesTitle')"
                 :description="t('settings.transformRulesDesc')"
@@ -217,14 +217,14 @@
                     <FileText class="h-4 w-4" />
                 </template>
                 <template #actions>
-                    <div class="flex rounded-md border border-zinc-800 bg-[#131515] p-0.5 shrink-0">
+                    <div class="flex rounded-md border border-line bg-inset p-0.5 shrink-0">
                         <button
                             type="button"
                             @click="switchToBuiltinEngine"
                             :class="
                                 isBuiltinEngine
-                                    ? 'bg-zinc-100 text-zinc-900 shadow-none'
-                                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                                    ? 'bg-accent text-accent-fg shadow-none'
+                                    : 'text-fg-muted hover:bg-hover hover:text-fg'
                             "
                             class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
                         >
@@ -235,8 +235,8 @@
                             @click="settings.subconverter.engineMode = 'external'"
                             :class="
                                 isExternalEngine
-                                    ? 'bg-zinc-100 text-zinc-900 shadow-none'
-                                    : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                                    ? 'bg-accent text-accent-fg shadow-none'
+                                    : 'text-fg-muted hover:bg-hover hover:text-fg'
                             "
                             class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
                         >
@@ -249,9 +249,9 @@
             <div
                 v-if="showEngineChangeWarning"
                 data-testid="engine-change-notice"
-                class="mb-6 flex flex-col gap-3 rounded-md border border-zinc-800 bg-[#131515] px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+                class="mb-6 flex flex-col gap-3 rounded-md border border-line bg-inset px-3.5 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
             >
-                <div class="flex min-w-0 items-center gap-2.5 text-zinc-300">
+                <div class="flex min-w-0 items-center gap-2.5 text-fg-muted">
                     <Info class="h-3.5 w-3.5 shrink-0 text-amber-400" />
                     <p class="leading-relaxed">
                         {{ t('settings.transformEngineChangeNotice') }}
@@ -261,19 +261,19 @@
                     <button
                         type="button"
                         data-testid="restore-engine-settings"
-                        class="inline-flex h-7 items-center gap-1.5 rounded-md border border-zinc-700/80 bg-zinc-900 px-2.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-600 hover:bg-zinc-800 hover:text-white"
+                        class="inline-flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-2.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white"
                         @click="
                             restorePreviousEngineSettings();
                             engineChangeNoticeDismissed = true;
                         "
                     >
-                        <RotateCcw class="h-3 w-3 text-zinc-400" />
+                        <RotateCcw class="h-3 w-3 text-fg-muted" />
                         <span>{{ t('settings.transformRestoreEngineSettings') }}</span>
                     </button>
                     <button
                         type="button"
                         data-testid="dismiss-engine-change-notice"
-                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
                         :title="t('actions.dismiss')"
                         :aria-label="t('actions.dismiss')"
                         @click="
@@ -290,7 +290,7 @@
                 <div>
                     <div class="mb-1.5 flex min-h-6 items-center">
                         <label
-                            class="block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                            class="block text-xs font-medium uppercase tracking-wider text-fg-muted"
                         >
                             {{ t('settings.transformRuleSource') }}
                         </label>
@@ -308,7 +308,7 @@
                             }))
                         "
                     />
-                    <p class="mt-2 text-xs leading-relaxed text-zinc-400">
+                    <p class="mt-2 text-xs leading-relaxed text-fg-muted">
                         {{ modeHint }}
                     </p>
                 </div>
@@ -316,7 +316,7 @@
                 <div>
                     <div class="mb-1.5 flex min-h-6 items-center justify-between gap-2">
                         <label
-                            class="block text-xs font-medium uppercase tracking-wider text-zinc-400"
+                            class="block text-xs font-medium uppercase tracking-wider text-fg-muted"
                             :class="{ 'opacity-50': isBuiltinMode }"
                         >
                             {{ t('settings.transformTemplateConfig') }}
@@ -329,8 +329,8 @@
                             class="inline-flex h-6 items-center gap-1 rounded px-1.5 text-xs font-medium transition-colors"
                             :class="
                                 isCustomTemplateMode
-                                    ? 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700'
-                                    : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100'
+                                    ? 'bg-active text-fg hover:bg-zinc-700'
+                                    : 'text-fg-muted hover:bg-hover hover:text-fg'
                             "
                         >
                             <SlidersHorizontal class="h-3 w-3" />
@@ -369,7 +369,7 @@
         <section
             v-if="isBuiltinEngine"
             data-testid="builtin-engine-params"
-            class="rounded-lg border border-zinc-800 bg-[#171717] p-6"
+            class="rounded-lg border border-line bg-surface p-6"
         >
             <SectionHeader
                 :title="t('settings.transformBuiltinParams')"
@@ -380,7 +380,7 @@
                 </template>
                 <template #actions>
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#131515] px-2 py-0.5 font-mono text-[10px] text-zinc-400"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-line bg-inset px-2 py-0.5 font-mono text-[10px] text-fg-muted"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                         builtin-core
@@ -390,7 +390,7 @@
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3 md:items-end">
                 <div :class="{ 'opacity-60': !isBuiltinMode }" class="transition-opacity">
-                    <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
+                    <label class="mb-1.5 block text-xs font-medium text-fg-muted">{{
                         t('settings.transformRuleLevel')
                     }}</label>
                     <Select
@@ -406,15 +406,15 @@
                     />
                 </div>
 
-                <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
-                    <span class="text-xs font-medium text-zinc-300">{{
+                <div class="flex items-center justify-between py-2 border-b border-line">
+                    <span class="text-xs font-medium text-fg-muted">{{
                         t('settings.transformBuiltinSkipCert')
                     }}</span>
                     <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
                 </div>
 
-                <div class="flex items-center justify-between py-2 border-b border-zinc-800/60">
-                    <span class="text-xs font-medium text-zinc-300">{{
+                <div class="flex items-center justify-between py-2 border-b border-line">
+                    <span class="text-xs font-medium text-fg-muted">{{
                         t('settings.transformBuiltinUdp')
                     }}</span>
                     <Switch v-model="settings.builtinEnableUdp" size="sm" />
@@ -426,7 +426,7 @@
         <section
             v-if="isExternalEngine"
             data-testid="external-backend-card"
-            class="rounded-lg border border-zinc-800 bg-[#171717] p-6"
+            class="rounded-lg border border-line bg-surface p-6"
         >
             <SectionHeader
                 :title="t('settings.transformExternalParams')"
@@ -437,7 +437,7 @@
                 </template>
                 <template #actions>
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#131515] px-2 py-0.5 font-mono text-[10px] text-zinc-400"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-line bg-inset px-2 py-0.5 font-mono text-[10px] text-fg-muted"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
                         subconverter
@@ -447,7 +447,7 @@
 
             <div class="space-y-6">
                 <div>
-                    <label class="mb-1.5 block text-xs font-medium text-zinc-400">{{
+                    <label class="mb-1.5 block text-xs font-medium text-fg-muted">{{
                         t('settings.transformBackend')
                     }}</label>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -466,11 +466,11 @@
                             type="text"
                             v-model="settings.subconverter.defaultBackend"
                             placeholder="subapi.cmliussss.net"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-xs font-mono text-zinc-100 focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500"
+                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-xs font-mono text-fg focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500"
                             :aria-label="t('settings.transformCustomBackend')"
                         />
                     </div>
-                    <p class="mt-2 text-xs leading-relaxed text-zinc-400">
+                    <p class="mt-2 text-xs leading-relaxed text-fg-muted">
                         {{ t('settings.transformBackendHint') }}
                     </p>
                     <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -480,7 +480,7 @@
                             @click="handleTestBackend"
                             :disabled="!isExternalEngine || isTestingBackend"
                             :aria-busy="String(isTestingBackend)"
-                            class="inline-flex items-center justify-center rounded-md border border-zinc-800 bg-transparent px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            class="inline-flex items-center justify-center rounded-md border border-line bg-transparent px-3.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {{
                                 isTestingBackend
@@ -488,7 +488,7 @@
                                     : t('settings.transformTestBackend')
                             }}
                         </button>
-                        <p class="text-xs leading-relaxed text-zinc-500">
+                        <p class="text-xs leading-relaxed text-fg-subtle">
                             {{ t('settings.transformTestBackendHint') }}
                         </p>
                     </div>
@@ -505,7 +505,7 @@
                             ></span>
                             {{ backendTestStatus.message }}
                         </div>
-                        <div v-if="backendTestStatus.endpoint" class="mt-1 font-mono text-zinc-500">
+                        <div v-if="backendTestStatus.endpoint" class="mt-1 font-mono text-fg-subtle">
                             {{
                                 t('settings.transformProbeEndpoint', {
                                     endpoint: backendTestStatus.endpoint,
@@ -518,14 +518,14 @@
                 </div>
 
                 <div
-                    class="pt-4 border-t border-zinc-800/60 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3"
+                    class="pt-4 border-t border-line grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3"
                 >
                     <div
                         v-for="flag in flagOptions"
                         :key="flag.key"
-                        class="flex items-center justify-between py-2 border-b border-zinc-800/60"
+                        class="flex items-center justify-between py-2 border-b border-line"
                     >
-                        <span class="truncate text-xs text-zinc-300" :title="flag.label">{{
+                        <span class="truncate text-xs text-fg-muted" :title="flag.label">{{
                             flag.label
                         }}</span>
                         <Switch

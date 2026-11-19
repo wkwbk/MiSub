@@ -85,21 +85,21 @@
 <template>
     <div v-if="profiles.length > 0" class="space-y-2">
         <div class="flex justify-between items-center gap-2 h-6">
-            <h4 class="text-xs font-semibold text-zinc-300 truncate">
+            <h4 class="text-xs font-semibold text-fg-muted truncate">
                 {{ t('profileModal.selectSubProfiles') }}
             </h4>
             <div class="space-x-2 shrink-0 whitespace-nowrap">
                 <button
                     type="button"
                     @click="handleSelectAllValid"
-                    class="text-xs text-zinc-300 hover:text-white hover:underline"
+                    class="text-xs text-fg-muted hover:text-white hover:underline"
                 >
                     {{ t('profileModal.selectAll') }}
                 </button>
                 <button
                     type="button"
                     @click="emit('deselect-all')"
-                    class="text-xs text-zinc-400 hover:text-white hover:underline"
+                    class="text-xs text-fg-muted hover:text-white hover:underline"
                 >
                     {{ t('profileModal.deselectAll') }}
                 </button>
@@ -120,13 +120,13 @@
                 type="text"
                 v-model="searchModel"
                 :placeholder="t('profiles.searchPlaceholder')"
-                class="w-full pl-9 pr-3 py-1.5 text-xs bg-[#131515] border border-zinc-800 rounded-md shadow-none text-zinc-100 placeholder-zinc-600 focus-visible:outline-hidden focus:border-zinc-600"
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-inset border border-line rounded-md shadow-none text-fg placeholder:text-fg-subtle focus-visible:outline-hidden focus:border-zinc-600"
                 :aria-label="t('profiles.searchPlaceholder')"
             />
-            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle" />
         </div>
         <div
-            class="overflow-y-auto space-y-2 p-3 bg-[#131515] rounded-md border border-zinc-800 h-36 lg:h-64"
+            class="overflow-y-auto space-y-2 p-3 bg-inset rounded-md border border-line h-36 lg:h-64"
         >
             <div v-for="item in filteredProfiles" :key="item.id">
                 <label
@@ -142,20 +142,20 @@
                         :checked="selectedIds.includes(item.id)"
                         :disabled="isCycleCandidate(item.id)"
                         @change="emit('toggle-selection', item.id)"
-                        class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
+                        class="h-4 w-4 rounded-sm border-line-strong bg-inset text-fg focus:ring-0"
                     />
-                    <span class="text-xs text-zinc-200 truncate flex-1" :title="item.name">
+                    <span class="text-xs text-fg truncate flex-1" :title="item.name">
                         {{ item.name }}
                     </span>
                     <span
                         v-if="isCycleCandidate(item.id)"
-                        class="inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded-md border border-zinc-800 text-red-400 shrink-0"
+                        class="inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded-md border border-line text-red-400 shrink-0"
                         :title="t('profileModal.cycleWarning')"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                         {{ t('profileModal.cycleWarning') }}
                     </span>
-                    <span v-else class="text-[11px] font-mono text-zinc-500 shrink-0">
+                    <span v-else class="text-[11px] font-mono text-fg-subtle shrink-0">
                         {{ (item.subscriptions || []).length }} 机场 ·
                         {{ (item.manualNodes || []).length }} 节点
                     </span>
@@ -163,7 +163,7 @@
             </div>
             <div
                 v-if="filteredProfiles.length === 0"
-                class="text-center text-zinc-500 text-xs py-4"
+                class="text-center text-fg-subtle text-xs py-4"
             >
                 {{ t('profileModal.noMatchedSubProfiles') }}
             </div>
@@ -171,7 +171,7 @@
 
         <div v-if="orderedSelectedProfiles.length > 0" class="mt-3">
             <div class="flex justify-between items-center mb-1.5">
-                <h5 class="text-xs font-medium text-zinc-400">
+                <h5 class="text-xs font-medium text-fg-muted">
                     {{ t('profileModal.selectedDrag', { count: orderedSelectedProfiles.length }) }}
                 </h5>
             </div>
@@ -180,27 +180,27 @@
                 item-key="id"
                 handle=".drag-handle"
                 ghost-class="opacity-40"
-                class="space-y-1 p-2 bg-transparent rounded-md border border-zinc-800 h-32 lg:h-48 overflow-y-auto"
+                class="space-y-1 p-2 bg-transparent rounded-md border border-line h-32 lg:h-48 overflow-y-auto"
             >
                 <template #item="{ element, index }">
                     <div
-                        class="flex items-center gap-2 px-2 py-1.5 bg-[#131515] rounded-md border border-zinc-800 shadow-none"
+                        class="flex items-center gap-2 px-2 py-1.5 bg-inset rounded-md border border-line shadow-none"
                     >
                         <span
-                            class="drag-handle cursor-grab active:cursor-grabbing text-zinc-500 hover:text-zinc-300"
+                            class="drag-handle cursor-grab active:cursor-grabbing text-fg-subtle hover:text-fg-muted"
                         >
                             <GripHorizontal class="w-4 h-4" />
                         </span>
-                        <span class="font-mono text-xs font-medium text-zinc-400 w-5">{{
+                        <span class="font-mono text-xs font-medium text-fg-muted w-5">{{
                             index + 1
                         }}</span>
-                        <span class="text-xs text-zinc-200 truncate flex-1" :title="element.name">
+                        <span class="text-xs text-fg truncate flex-1" :title="element.name">
                             {{ element.name }}
                         </span>
                         <button
                             type="button"
                             @click="emit('toggle-selection', element.id)"
-                            class="text-zinc-500 hover:text-red-400 transition-colors"
+                            class="text-fg-subtle hover:text-red-400 transition-colors"
                             :title="t('profileModal.remove')"
                             :aria-label="t('profileModal.remove')"
                         >
@@ -213,7 +213,7 @@
     </div>
     <div
         v-else
-        class="text-center text-xs text-zinc-500 p-4 bg-transparent border border-zinc-800 rounded-md flex items-center justify-center h-full"
+        class="text-center text-xs text-fg-subtle p-4 bg-transparent border border-line rounded-md flex items-center justify-center h-full"
     >
         {{ t('profileModal.noAvailableSubProfiles') }}
     </div>

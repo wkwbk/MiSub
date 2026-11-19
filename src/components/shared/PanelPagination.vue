@@ -93,9 +93,9 @@
 <template>
     <div
         v-if="shouldShow && isPanelVariant"
-        class="panel-pagination-shell mt-4 px-4 py-3 bg-[#171717] rounded-md shadow-none border border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
+        class="panel-pagination-shell mt-4 px-4 py-3 bg-surface rounded-md border border-line flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
     >
-        <div class="flex items-center space-x-4 text-xs font-mono text-zinc-400 whitespace-nowrap">
+        <div class="flex items-center space-x-4 text-xs font-mono text-fg-muted whitespace-nowrap">
             <span v-if="showTotalItems">{{
                 t('common.totalProfiles', { count: totalItems })
             }}</span>
@@ -124,7 +124,7 @@
             <button
                 @click="emitPageChange(1)"
                 :disabled="currentPage === 1"
-                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
                 :title="t('common.firstPage')"
                 :aria-label="t('common.firstPage')"
             >
@@ -133,7 +133,7 @@
             <button
                 @click="emitPageChange(currentPage - 1)"
                 :disabled="currentPage === 1"
-                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
                 :title="t('common.prevPage')"
                 :aria-label="t('common.prevPage')"
             >
@@ -146,16 +146,16 @@
                     v-model="pageInput"
                     @keydown.enter="jumpToPage"
                     @blur="jumpToPage"
-                    class="w-14 text-center text-xs font-mono py-1 border border-zinc-800 rounded-md bg-transparent text-zinc-200 focus:border-zinc-500 focus-visible:outline-none appearance-none remove-arrow touch-target"
+                    class="w-14 text-center text-xs font-mono py-1 border border-line rounded-md bg-inset text-fg focus:border-line-strong focus-visible:outline-none appearance-none remove-arrow touch-target"
                     :aria-label="t('common.pageNumber')"
                 />
-                <span class="text-xs text-zinc-500">/ {{ totalPages }}</span>
+                <span class="text-xs text-fg-subtle">/ {{ totalPages }}</span>
             </div>
 
             <button
                 @click="emitPageChange(currentPage + 1)"
                 :disabled="currentPage === totalPages"
-                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
                 :title="t('common.nextPage')"
                 :aria-label="t('common.nextPage')"
             >
@@ -164,7 +164,7 @@
             <button
                 @click="emitPageChange(totalPages)"
                 :disabled="currentPage === totalPages"
-                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-zinc-900 disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-zinc-400 hover:text-zinc-100 border border-zinc-800 touch-target"
+                class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
                 :title="t('common.lastPage')"
                 :aria-label="t('common.lastPage')"
             >
@@ -181,17 +181,17 @@
         <button
             @click="emitPageChange(currentPage - 1)"
             :disabled="currentPage === 1"
-            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-zinc-300 border border-zinc-800 hover:bg-zinc-900 touch-target"
+            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover touch-target"
         >
             &laquo; {{ t('common.prevPage') }}
         </button>
-        <span class="text-zinc-400 bg-transparent border border-zinc-800 px-3 py-1 rounded-md">{{
+        <span class="text-fg-muted bg-transparent border border-line px-3 py-1 rounded-md">{{
             t('common.pageOf', { current: currentPage, total: totalPages })
         }}</span>
         <button
             @click="emitPageChange(currentPage + 1)"
             :disabled="currentPage === totalPages"
-            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-zinc-300 border border-zinc-800 hover:bg-zinc-900 touch-target"
+            class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover touch-target"
         >
             {{ t('common.nextPage') }} &raquo;
         </button>

@@ -47,7 +47,7 @@
 
 <template>
     <header
-        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
+        class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
     >
         <div class="ios-status-overlay"></div>
 
@@ -63,7 +63,7 @@
                     <router-link
                         v-else
                         :to="isLoggedIn ? '/dashboard' : '/'"
-                        class="font-mono text-xs font-semibold tracking-widest uppercase text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        class="font-mono text-xs font-semibold tracking-widest uppercase text-fg-subtle hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                         >{{ t('app.home') }}</router-link
                     >
 

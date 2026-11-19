@@ -25,13 +25,13 @@
         @confirm="emit('confirm')"
     >
         <template #title>
-            <h3 class="text-base font-semibold text-zinc-100">
+            <h3 class="text-base font-semibold text-fg">
                 {{ t('manualNodes.dedupConfirmTitle') }}
             </h3>
         </template>
         <template #body>
             <div class="space-y-4">
-                <div class="text-xs text-zinc-300">
+                <div class="text-xs text-fg-muted">
                     {{ t('manualNodes.dedupWillRemovePrefix') }}
                     <span class="font-mono font-semibold text-red-400">{{
                         plan?.removeCount || 0
@@ -43,22 +43,22 @@
                     }}</span>
                     {{ t('manualNodes.dedupKeptSuffix') }}
                 </div>
-                <div v-if="previewList.length > 0" class="border border-zinc-800 rounded-md">
-                    <div class="px-3 py-2 text-xs text-zinc-400 border-b border-zinc-800">
+                <div v-if="previewList.length > 0" class="border border-line rounded-md">
+                    <div class="px-3 py-2 text-xs text-fg-muted border-b border-line">
                         {{ t('manualNodes.dedupPreviewTitle') }}
                     </div>
-                    <div class="max-h-64 overflow-auto divide-y divide-zinc-800">
+                    <div class="max-h-64 overflow-auto divide-y divide-line-subtle">
                         <div v-for="node in previewList" :key="node.id" class="px-3 py-2 text-xs">
-                            <div class="text-zinc-100 truncate">
+                            <div class="text-fg truncate">
                                 {{ node.name || t('manualNodes.unnamedNode') }}
                             </div>
-                            <div class="text-xs text-zinc-500 truncate font-mono mt-0.5">
+                            <div class="text-xs text-fg-subtle truncate font-mono mt-0.5">
                                 {{ node.url }}
                             </div>
                         </div>
                     </div>
                 </div>
-                <div v-else class="text-xs text-zinc-500">
+                <div v-else class="text-xs text-fg-subtle">
                     {{ t('manualNodes.noDuplicatesFound') }}
                 </div>
             </div>

@@ -109,8 +109,8 @@
         class="group relative flex flex-col justify-between rounded-md border p-3.5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
         :class="[
             isSelectionMode && isSelected
-                ? 'border-zinc-500 dark:border-zinc-500 bg-zinc-50 dark:bg-[#202020]'
-                : 'border-zinc-800 bg-[#171717]',
+                ? 'border-line-strong bg-active'
+                : 'border-line bg-surface',
             {
                 'opacity-50': !node.enabled && !isSelectionMode,
                 'cursor-pointer': isSelectionMode,
@@ -128,8 +128,8 @@
                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                         :class="
                             isSelected
-                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
-                                : 'border-zinc-300 dark:border-zinc-700 bg-transparent'
+                                ? 'bg-accent border-accent text-accent-fg'
+                                : 'border-line-strong bg-transparent'
                         "
                     >
                         <Check v-if="isSelected" class="h-3 w-3" stroke-width="3" />
@@ -138,7 +138,7 @@
 
                 <!-- Protocol Badge -->
                 <div
-                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
                 >
                     <span
                         class="h-1.5 w-1.5 rounded-full shrink-0"
@@ -152,7 +152,7 @@
                     v-for="tag in visibleTags"
                     :key="tag"
                     data-testid="manual-node-tag-badge"
-                    class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-200 cursor-pointer"
+                    class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
                     :title="tag"
                     @click.stop="emit('filter-tag', tag)"
                 >
@@ -160,7 +160,7 @@
                 </div>
                 <span
                     v-if="overflowCount > 0"
-                    class="shrink-0 rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-zinc-500"
+                    class="shrink-0 rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-fg-subtle"
                     :title="nodeTags.join(', ')"
                 >
                     +{{ overflowCount }}
@@ -170,7 +170,7 @@
             <!-- Right: Ping Result Badge -->
             <div
                 v-if="pingResult"
-                class="flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                class="flex shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
                 :title="
                     pingResult.message ||
                     (pingResult.status === 'ok'
@@ -197,7 +197,7 @@
         <!-- Middle Row: Node Name -->
         <div class="my-2 min-w-0">
             <h4
-                class="truncate text-sm font-medium text-zinc-100 transition-colors group-hover:text-white"
+                class="truncate text-sm font-medium text-fg transition-colors group-hover:text-white"
                 :title="node.name || t('manualNodes.unnamed')"
             >
                 {{ node.name || t('manualNodes.unnamed') }}
@@ -209,17 +209,17 @@
 
         <!-- Bottom Row: Endpoint (Host:Port) + Quick Actions -->
         <div
-            class="mt-auto flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2.5"
+            class="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2.5"
         >
             <div class="min-w-0 flex-1">
                 <span
                     v-if="hostAndPort.host"
-                    class="block truncate font-mono text-xs text-zinc-500"
+                    class="block truncate font-mono text-xs text-fg-subtle"
                     :title="`${hostAndPort.host}:${hostAndPort.port || ''}`"
                 >
                     {{ hostAndPort.host }}:{{ hostAndPort.port || 'N/A' }}
                 </span>
-                <span v-else class="text-xs font-mono text-zinc-600">-</span>
+                <span v-else class="text-xs font-mono text-fg-subtle">-</span>
             </div>
 
             <div
@@ -228,17 +228,17 @@
             >
                 <button
                     @click.stop="emit('ping')"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-zinc-800 hover:bg-hover hover:text-fg"
                     :title="t('actions.ping')"
                     :aria-label="t('actions.ping')"
                     :disabled="isPinging"
-                    :class="{ 'animate-pulse text-zinc-100': isPinging }"
+                    :class="{ 'animate-pulse text-fg': isPinging }"
                 >
                     <Zap class="h-3.5 w-3.5" />
                 </button>
                 <button
                     @click.stop="emit('detail')"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
                     :title="t('actions.viewDetail')"
                     :aria-label="t('actions.viewDetail')"
                 >
@@ -246,7 +246,7 @@
                 </button>
                 <button
                     @click.stop="copyToClipboard(node.url)"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
                     :title="t('actions.copyLink')"
                     :aria-label="t('actions.copyLink')"
                 >
@@ -254,7 +254,7 @@
                 </button>
                 <button
                     @click.stop="emit('edit')"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
                     :title="t('actions.edit')"
                     :aria-label="t('actions.edit')"
                 >
@@ -262,7 +262,7 @@
                 </button>
                 <button
                     @click.stop="emit('delete')"
-                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-red-900/60 hover:bg-red-950/40 hover:text-red-400"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-red-900/60 hover:bg-red-950/40 hover:text-red-400"
                     :title="t('actions.delete')"
                     :aria-label="t('actions.delete')"
                 >

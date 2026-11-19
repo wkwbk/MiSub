@@ -47,7 +47,7 @@
                 compact ? 'px-1 py-0 text-[9px]' : 'px-1.5 py-0.5 text-[10px]',
                 client.supported
                     ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-                    : 'border-zinc-300/70 dark:border-zinc-800/80 bg-transparent text-zinc-400 dark:text-zinc-600 line-through decoration-zinc-400/70 dark:decoration-zinc-600/70',
+                    : 'border-zinc-300/70 dark:border-zinc-800/80 bg-transparent text-fg-muted dark:text-zinc-600 line-through decoration-zinc-400/70 dark:decoration-zinc-600/70',
             ]"
         >
             <span

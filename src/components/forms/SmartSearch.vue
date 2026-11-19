@@ -121,14 +121,14 @@
         <!-- 搜索输入框 -->
         <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                <Search class="h-5 w-5 text-fg-subtle" />
             </div>
 
             <input
                 v-model="searchQuery"
                 type="text"
                 :placeholder="placeholder || t('common.searchPlaceholder')"
-                class="w-full pl-10 pr-12 py-3 bg-white/90 dark:bg-gray-900/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 misub-radius-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus:border-transparent smooth-all text-gray-900 dark:text-gray-100"
+                class="w-full pl-10 pr-12 py-3 bg-inset/90 backdrop-blur-md border border-line misub-radius-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus:border-transparent smooth-all text-fg"
                 @keyup.enter="addToHistory(searchQuery)"
                 :aria-label="placeholder || t('common.searchPlaceholder')"
             />
@@ -140,7 +140,7 @@
                 class="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
                 <X
-                    class="h-5 w-5 text-gray-500 dark:text-gray-400 hover:text-gray-600 smooth-all"
+                    class="h-5 w-5 text-fg-subtle hover:text-gray-600 smooth-all"
                 />
             </button>
         </div>
@@ -155,7 +155,7 @@
                 :class="
                     activeFilters.has(filter.key)
                         ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                        : 'bg-active text-fg-muted hover:bg-hover hover:text-fg'
                 "
             >
                 {{ filter.label }}
@@ -168,17 +168,17 @@
         <!-- 搜索建议 -->
         <div
             v-if="suggestions.length > 0"
-            class="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md misub-radius-lg card-shadow border border-gray-200 dark:border-gray-700 z-50"
+            class="absolute top-full left-0 right-0 mt-2 bg-elevated/95 backdrop-blur-md misub-radius-lg card-shadow border border-line z-50"
         >
             <div class="p-2">
-                <p class="text-xs text-gray-500 dark:text-gray-400 px-3 py-1">
+                <p class="text-xs text-fg-subtle px-3 py-1">
                     {{ t('common.searchSuggestions') }}
                 </p>
                 <button
                     v-for="suggestion in suggestions"
                     :key="suggestion"
                     @click="selectSuggestion(suggestion)"
-                    class="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 misub-radius-md smooth-all"
+                    class="w-full text-left px-3 py-2 text-sm text-fg-muted hover:bg-hover misub-radius-md smooth-all"
                 >
                     {{ suggestion }}
                 </button>
@@ -186,7 +186,7 @@
         </div>
 
         <!-- 搜索结果统计 -->
-        <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+        <div class="flex items-center justify-between text-sm text-fg-subtle">
             <span>
                 {{ t('common.searchResultCount', { count: searchResults.length }) }}
                 <span v-if="searchQuery">{{
@@ -201,7 +201,7 @@
                     v-for="history in searchHistory.slice(0, 3)"
                     :key="history"
                     @click="searchQuery = history"
-                    class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 smooth-all"
+                    class="text-xs px-2 py-1 bg-active rounded-full hover:bg-hover smooth-all"
                 >
                     {{ history }}
                 </button>
