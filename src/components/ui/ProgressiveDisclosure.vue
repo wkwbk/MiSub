@@ -43,21 +43,18 @@
     const levelClasses = computed(() => {
         const levels = {
             1: {
-                title: 'text-base font-semibold text-zinc-900 dark:text-zinc-100',
-                container:
-                    'bg-white dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                title: 'text-base font-semibold text-fg',
+                container: 'bg-surface border border-line rounded-md shadow-none',
                 padding: 'p-5',
             },
             2: {
-                title: 'text-sm font-semibold text-zinc-800 dark:text-zinc-200',
-                container:
-                    'bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                title: 'text-sm font-semibold text-fg',
+                container: 'bg-inset border border-line rounded-md shadow-none',
                 padding: 'p-4',
             },
             3: {
-                title: 'text-xs font-medium text-zinc-700 dark:text-zinc-300',
-                container:
-                    'bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md shadow-none',
+                title: 'text-xs font-medium text-fg-muted',
+                container: 'bg-transparent border border-line rounded-md shadow-none',
                 padding: 'p-3',
             },
         };
@@ -77,7 +74,7 @@
                 <h3 :class="levelClasses.title" class="truncate">
                     {{ title }}
                 </h3>
-                <p v-if="summary" class="text-xs text-zinc-500 mt-1 truncate">
+                <p v-if="summary" class="text-xs text-fg-subtle mt-1 truncate">
                     {{ summary }}
                 </p>
             </div>
@@ -85,11 +82,11 @@
             <!-- 展开/收起图标 -->
             <button
                 v-if="collapsible"
-                class="ml-4 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors touch-target"
+                class="ml-4 p-1 rounded-md hover:bg-hover transition-colors touch-target"
                 :aria-label="t('common.toggleExpand')"
             >
                 <ChevronDown
-                    class="w-4 h-4 text-zinc-500 transition-transform"
+                    class="w-4 h-4 text-fg-subtle transition-transform"
                     :class="{ 'rotate-180': isExpanded }"
                 />
             </button>
@@ -109,10 +106,7 @@
                 <slot name="content" />
 
                 <!-- 操作区域 -->
-                <div
-                    v-if="$slots.actions"
-                    class="pt-4 border-t border-zinc-200 dark:border-zinc-800"
-                >
+                <div v-if="$slots.actions" class="pt-4 border-t border-line-subtle">
                     <slot name="actions" />
                 </div>
             </div>

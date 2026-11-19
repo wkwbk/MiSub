@@ -50,7 +50,7 @@
 <template>
     <div class="w-full max-w-[420px] relative z-10 px-6">
         <div
-            class="relative bg-[#171717] border border-zinc-800 rounded-md p-8 shadow-none overflow-hidden"
+            class="relative bg-surface border border-line rounded-md p-8 shadow-none overflow-hidden"
         >
             <div class="flex flex-col items-center relative z-10">
                 <div class="w-16 h-16 mb-6 relative group cursor-default">
@@ -67,17 +67,17 @@
                             v-else
                             :size="64"
                             stroke-width="1.5"
-                            class="text-zinc-300"
+                            class="text-fg-muted"
                             aria-hidden="true"
                         />
                     </div>
                 </div>
 
                 <div class="text-center mb-8">
-                    <h1 class="text-xl font-semibold text-zinc-100 mb-1.5 tracking-tight">
+                    <h1 class="text-xl font-semibold text-fg mb-1.5 tracking-tight">
                         {{ t('login.welcomeBack') }}
                     </h1>
-                    <p class="text-xs text-zinc-400">
+                    <p class="text-xs text-fg-muted">
                         {{ t('login.verifyIdentity') }}
                     </p>
                 </div>
@@ -91,7 +91,7 @@
                             :class="
                                 error
                                     ? 'text-red-400'
-                                    : 'text-zinc-500 group-focus-within:text-zinc-300'
+                                    : 'text-fg-subtle group-focus-within:text-fg'
                             "
                         >
                             <Lock v-if="!error" class="h-4 w-4" />
@@ -107,18 +107,18 @@
                             autofocus
                             :disabled="isLoading"
                             :aria-invalid="Boolean(error)"
-                            class="w-full bg-[#131515] border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
+                            class="w-full bg-inset border rounded-md py-2.5 pl-10 pr-10 text-sm outline-none transition-colors disabled:opacity-50"
                             :class="[
                                 error
                                     ? 'border-red-500 text-red-400 placeholder-red-400/60 focus:border-red-500'
-                                    : 'border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600',
+                                    : 'border-line text-fg placeholder:text-fg-subtle focus:border-line-strong',
                             ]"
                             :aria-label="t('login.passwordPlaceholder')"
                         />
                         <button
                             type="button"
                             @click="showPassword = !showPassword"
-                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors focus-visible:outline-none rounded-r-md"
+                            class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-fg-subtle hover:text-fg-muted transition-colors focus-visible:outline-none rounded-r-md"
                             :aria-label="
                                 showPassword ? t('login.hidePassword') : t('login.showPassword')
                             "
@@ -158,7 +158,7 @@
         <div class="mt-6 text-center">
             <router-link
                 to="/"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 text-xs text-zinc-400 hover:text-zinc-100 font-medium transition-colors"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-line bg-transparent hover:bg-hover text-xs text-fg-muted hover:text-fg font-medium transition-colors"
             >
                 <ArrowLeft class="h-3.5 w-3.5" />
                 {{ t('login.backHome') }}

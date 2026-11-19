@@ -241,7 +241,7 @@
         <!-- 过滤器容器 -->
         <div
             :class="[
-                'bg-white dark:bg-gray-800 misub-radius-md border border-gray-200 dark:border-gray-700',
+                'bg-surface misub-radius-md border border-line',
                 inline ? 'p-4' : 'p-6',
             ]"
         >
@@ -253,7 +253,7 @@
                 <div class="flex items-center space-x-2">
                     <h3
                         v-if="$slots.header || !inline"
-                        class="text-lg font-medium text-gray-900 dark:text-white"
+                        class="text-lg font-medium text-fg"
                     >
                         <slot name="header">
                             {{ inline ? '' : t('common.filters') }}
@@ -266,7 +266,7 @@
                     <button
                         v-if="collapsible"
                         type="button"
-                        class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        class="p-2 text-fg-subtle hover:text-fg transition-colors"
                         @click="toggleCollapse"
                         :aria-expanded="!isCollapsed"
                         :aria-label="t('common.expandFilters')"
@@ -283,7 +283,7 @@
                         v-if="showReset"
                         type="button"
                         :disabled="loading"
-                        class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 misub-radius-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        class="px-3 py-1.5 text-sm border border-line-strong misub-radius-md text-fg-muted bg-surface hover:bg-hover disabled:opacity-50"
                         @click="resetFilters"
                         :aria-label="t('common.reset')"
                     >
@@ -295,7 +295,7 @@
                         v-if="showApply"
                         type="button"
                         :disabled="loading"
-                        class="px-3 py-1.5 text-sm border border-transparent misub-radius-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                        class="px-3 py-1.5 text-sm border border-transparent misub-radius-md text-accent-fg bg-accent hover:opacity-90 disabled:opacity-50"
                         @click="applyFilters"
                         :aria-label="t('common.apply')"
                     >
@@ -313,7 +313,7 @@
                     <!-- 标签 -->
                     <label
                         v-if="filter.label"
-                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                        class="block text-sm font-medium text-fg-muted mb-1"
                     >
                         {{ filter.label }}
                     </label>
@@ -327,7 +327,7 @@
                             :placeholder="filter.placeholder"
                             :value="filterValue(filter)"
                             :disabled="loading || filter.disabled"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong disabled:opacity-50"
                             @input="handleFilterChange(filter, $event.target.value)"
                             :aria-label="filter.label || filter.placeholder"
                         />
@@ -342,7 +342,7 @@
                             :min="filter.min"
                             :max="filter.max"
                             :step="filter.step"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 misub-radius-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                            class="w-full px-3 py-2 border border-line-strong misub-radius-md bg-surface text-fg focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong disabled:opacity-50"
                             @input="handleFilterChange(filter, Number($event.target.value))"
                             :aria-label="filter.label || filter.placeholder"
                         />
@@ -381,10 +381,10 @@
                                 type="checkbox"
                                 :checked="Boolean(filterValue(filter))"
                                 :disabled="loading || filter.disabled"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                class="h-4 w-4 rounded border-line-strong text-indigo-600 focus-visible:ring-indigo-500"
                                 @change="handleFilterChange(filter, $event.target.checked)"
                             />
-                            <span class="text-sm text-gray-700 dark:text-gray-300">{{
+                            <span class="text-sm text-fg-muted">{{
                                 filter.checkboxLabel
                             }}</span>
                         </label>

@@ -90,7 +90,7 @@
 
     // 计算样式
     const modalClasses = computed(() => [
-        'relative transform overflow-hidden rounded-md bg-[#171717] text-left shadow-none border border-zinc-800 transition-opacity duration-150',
+        'modal-surface relative transform overflow-hidden rounded-lg text-left text-fg transition-opacity duration-150',
         sizeClasses[props.size] || sizeClasses.medium,
         props.maxWidth ? `max-w-[${props.maxWidth}]` : '',
     ]);
@@ -202,7 +202,7 @@
             <!-- 遮罩层 -->
             <div
                 class="flex min-h-full items-center justify-center p-4 text-center sm:p-0"
-                :class="{ 'bg-black/60 backdrop-blur-sm': show }"
+                :class="{ 'bg-black/75 backdrop-blur-sm': show }"
                 @pointerdown.capture="handleMaskPointerDown"
                 @click="handleMaskClick"
             >
@@ -211,10 +211,10 @@
                     <!-- 头部 -->
                     <div
                         v-if="title || closable"
-                        class="border-b border-zinc-800 px-6 py-4 rounded-t-md"
+                        class="modal-chrome-header px-6 py-4"
                     >
                         <div class="flex items-center justify-between">
-                            <h3 class="text-base font-semibold leading-6 text-zinc-100">
+                            <h3 class="text-base font-semibold leading-6 text-fg">
                                 {{ title }}
                             </h3>
 
@@ -223,7 +223,7 @@
                                 v-if="closable"
                                 type="button"
                                 :disabled="disabled || loading"
-                                class="rounded-md bg-transparent text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-200"
+                                class="rounded-md bg-transparent text-fg-muted hover:text-fg hover:bg-hover focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed p-2 transition-colors duration-200"
                                 @click="handleClose"
                             >
                                 <span class="sr-only">{{ t('common.close') }}</span>
@@ -233,7 +233,11 @@
                     </div>
 
                     <!-- 内容区域 -->
-                    <div ref="contentRef" class="px-6 py-4 overflow-y-auto" :style="contentStyle">
+                    <div
+                        ref="contentRef"
+                        class="modal-scrollbar px-6 py-4 overflow-y-auto"
+                        :style="contentStyle"
+                    >
                         <!-- 默认插槽 -->
                         <slot />
                     </div>
@@ -241,17 +245,17 @@
                     <!-- 底部按钮 -->
                     <div
                         v-if="showFooter || $slots.footer"
-                        class="border-t border-zinc-800 px-6 py-4 bg-[#131515] rounded-b-md"
+                        class="modal-chrome-footer px-6 py-3.5"
                     >
                         <!-- 自定义底部插槽 -->
                         <slot name="footer">
                             <!-- 默认按钮组 -->
-                            <div class="flex justify-end space-x-3">
+                            <div class="flex justify-end items-center gap-2.5">
                                 <button
                                     type="button"
                                     :disabled="disabled || loading"
                                     :class="cancelButtonClass"
-                                    class="inline-flex items-center px-4 py-2 border border-zinc-800 text-sm font-medium rounded-md text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                    class="inline-flex items-center px-4 py-2 border border-line hover:border-line-strong text-sm font-medium rounded-md text-fg-muted bg-transparent hover:bg-hover hover:text-fg focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                                     @click="handleCancel"
                                 >
                                     {{ resolvedCancelText }}
@@ -264,7 +268,7 @@
                                         confirmButtonClass,
                                         { 'opacity-50 cursor-not-allowed': confirmDisabled },
                                     ]"
-                                    class="inline-flex items-center px-4 py-2 border border-zinc-100 text-sm font-semibold rounded-md text-zinc-900 bg-zinc-100 hover:bg-white focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                                    class="inline-flex items-center px-4 py-2 border border-accent text-sm font-semibold rounded-md text-accent-fg bg-accent hover:opacity-90 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed transition-opacity duration-200"
                                     @click="handleConfirm"
                                 >
                                     <!-- 加载图标 -->

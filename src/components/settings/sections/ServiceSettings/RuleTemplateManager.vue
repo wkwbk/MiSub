@@ -4,6 +4,7 @@
     import { useDataStore } from '@/stores/useDataStore.js';
     import { useI18n } from '@/i18n/index.js';
     import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
 
     const emit = defineEmits(['saved']);
 
@@ -146,19 +147,19 @@ overwrite_original_rules=true`;
     <div class="w-full">
         <div
             v-if="!hasTemplates"
-            class="rounded-md border border-dashed border-zinc-800 bg-[#131515]/60 px-6 py-12 text-center"
+            class="rounded-md border border-dashed border-line bg-inset/70 px-6 py-12 text-center"
         >
-            <p class="text-xs font-medium text-zinc-300">
+            <p class="text-xs font-medium text-fg-muted">
                 {{ t('settings.ruleTemplatesEmpty') }}
             </p>
-            <p class="mt-1 text-xs text-zinc-500">
+            <p class="mt-1 text-xs text-fg-subtle">
                 {{ t('settings.ruleTemplatesEmptyHint') }}
             </p>
             <button
                 type="button"
                 data-testid="empty-create-rule-template"
                 @click="createTemplate"
-                class="mt-4 inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white"
+                class="mt-4 inline-flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition hover:opacity-90"
             >
                 <Plus class="h-3.5 w-3.5" />
                 <span>{{ t('settings.ruleTemplatesNew') }}</span>
@@ -174,15 +175,15 @@ overwrite_original_rules=true`;
                     @click="selectedId = template.id"
                     :class="
                         selectedId === template.id
-                            ? 'border-zinc-500 bg-zinc-900 text-zinc-100'
-                            : 'border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900/60 hover:text-zinc-200'
+                            ? 'border-line-strong bg-elevated-card text-fg'
+                            : 'border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg'
                     "
                     class="w-full rounded-md border px-3 py-2 text-left transition"
                 >
                     <div class="truncate text-xs font-semibold">
                         {{ template.name || t('settings.ruleTemplateUnnamed') }}
                     </div>
-                    <div class="mt-1 truncate font-mono text-[10px] text-zinc-500">
+                    <div class="mt-1 truncate font-mono text-[10px] text-fg-subtle">
                         custom:{{ template.id }}
                     </div>
                 </button>
@@ -195,67 +196,68 @@ overwrite_original_rules=true`;
                 <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label class="block">
                         <span
-                            class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                            class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted"
                             >{{ t('settings.ruleTemplateName') }}</span
                         >
                         <input
                             v-model="selectedTemplate.name"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg focus:border-line-strong focus:outline-hidden"
                         />
                     </label>
                     <label class="block">
                         <span
-                            class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                            class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted"
                             >{{ t('settings.ruleTemplateId') }}</span
                         >
                         <input
                             v-model="selectedTemplate.id"
-                            class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-sm text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-sm text-fg focus:border-line-strong focus:outline-hidden"
                         />
                     </label>
                 </div>
 
                 <label class="block">
                     <span
-                        class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                        class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted"
                         >{{ t('settings.ruleTemplateDescription') }}</span
                     >
                     <input
                         v-model="selectedTemplate.description"
                         :placeholder="t('settings.ruleTemplateDescriptionPlaceholder')"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus:outline-hidden"
+                        class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:border-line-strong focus:outline-hidden"
                     />
                 </label>
 
                 <div>
                     <div class="mb-1 flex items-center justify-between gap-2">
                         <span
-                            class="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                            class="text-[11px] font-semibold uppercase tracking-wide text-fg-muted"
                             >{{ t('settings.ruleTemplateContent') }}</span
                         >
                         <button
                             type="button"
                             @click="showTemplateVariables = true"
-                            class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                            class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                         >
                             <Braces class="h-3.5 w-3.5" />
                             <span>{{ t('transformSelector.templateVariablesTitle') }}</span>
                         </button>
                     </div>
-                    <textarea
+                    <Textarea
                         v-model="selectedTemplate.content"
                         rows="12"
                         spellcheck="false"
-                        class="block w-full rounded-md border border-zinc-800 bg-[#131515] px-3 py-2 font-mono text-xs leading-relaxed text-zinc-100 focus:border-zinc-600 focus:outline-hidden"
-                    ></textarea>
+                        wrapperClass="focus-within:border-line-strong focus-within:ring-0"
+                        class="px-3 py-2 font-mono text-xs leading-relaxed"
+                    />
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <label class="flex items-center gap-2 text-xs font-medium text-zinc-300">
+                    <label class="flex items-center gap-2 text-xs font-medium text-fg-muted">
                         <input
                             v-model="selectedTemplate.enabled"
                             type="checkbox"
-                            class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
+                            class="h-4 w-4 rounded-sm border-line-strong bg-inset text-fg focus:ring-0"
                         />
                         {{ t('settings.ruleTemplateEnabled') }}
                     </label>
@@ -263,7 +265,7 @@ overwrite_original_rules=true`;
                         <button
                             type="button"
                             @click="duplicateTemplate(selectedTemplate)"
-                            class="rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                            class="rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg"
                         >
                             {{ t('actions.copy') }}
                         </button>

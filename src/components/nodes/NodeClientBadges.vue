@@ -1,0 +1,60 @@
+<script setup>
+    import { computed } from 'vue';
+    import { getNodeClientCompatibility } from '@/utils/node-client-compatibility.js';
+    import { useI18n } from '@/i18n/index.js';
+
+    const props = defineProps({
+        url: {
+            type: String,
+            default: '',
+        },
+        compact: {
+            type: Boolean,
+            default: false,
+        },
+    });
+
+    const { t } = useI18n();
+
+    const compatibility = computed(() => getNodeClientCompatibility(props.url));
+
+    const getTooltip = (client) => {
+        if (client.supported) {
+            return t('clientCompat.supportedTooltip', { client: client.label });
+        }
+        const reason = client.reasonKey ? t(client.reasonKey, client.reasonParams) : '';
+        return t('clientCompat.unsupportedTooltip', {
+            client: client.label,
+            reason,
+        });
+    };
+</script>
+
+<template>
+    <div
+        v-if="compatibility.clients.length > 0"
+        data-testid="node-client-compatibility"
+        class="flex flex-wrap items-center gap-1"
+    >
+        <span
+            v-for="client in compatibility.clients"
+            :key="client.id"
+            :data-testid="`client-badge-${client.id}`"
+            :data-supported="String(client.supported)"
+            :title="getTooltip(client)"
+            class="inline-flex items-center gap-1 rounded border font-mono leading-tight select-none transition-colors"
+            :class="[
+                compact ? 'px-1 py-0 text-[9px]' : 'px-1.5 py-0.5 text-[10px]',
+                client.supported
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                    : 'border-zinc-300/70 dark:border-zinc-800/80 bg-transparent text-fg-muted dark:text-zinc-600 line-through decoration-zinc-400/70 dark:decoration-zinc-600/70',
+            ]"
+        >
+            <span
+                class="h-1 w-1 rounded-full shrink-0"
+                :class="client.supported ? 'bg-emerald-500' : 'bg-zinc-400/50 dark:bg-zinc-600/70'"
+            ></span>
+            <span>{{ client.label }}</span>
+        </span>
+    </div>
+</template>

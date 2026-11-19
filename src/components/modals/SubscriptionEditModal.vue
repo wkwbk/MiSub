@@ -328,10 +328,10 @@
         }
 
         const tagClassMap = {
-            unset: 'border border-zinc-800 bg-transparent text-zinc-400',
-            exclude: 'border border-zinc-800 bg-transparent text-zinc-300',
-            keepOnly: 'border border-zinc-800 bg-transparent text-zinc-300',
-            mixed: 'border border-zinc-800 bg-transparent text-zinc-300',
+            unset: 'border border-line bg-transparent text-fg-muted',
+            exclude: 'border border-line bg-transparent text-fg-muted',
+            keepOnly: 'border border-line bg-transparent text-fg-muted',
+            mixed: 'border border-line bg-transparent text-fg-muted',
         };
 
         const errors = [];
@@ -422,12 +422,12 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <Link2 class="h-5 w-5 text-zinc-400 shrink-0" />
+                <Link2 class="h-5 w-5 text-fg-muted shrink-0" />
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ isNew ? t('subscriptions.addTitle') : t('subscriptions.editTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
+                    <p class="mt-0.5 text-xs text-fg-muted">
                         {{ t('subscriptions.modalDescription') }}
                     </p>
                 </div>

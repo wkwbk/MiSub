@@ -2,6 +2,7 @@
     import { computed, ref } from 'vue';
     import { Loader2, Send } from '@lucide/vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -140,7 +141,7 @@
 
 <template>
     <div class="space-y-4">
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.telegramNotifyBotTitle')"
                 :description="t('settings.telegramNotifyBotDesc')"
@@ -153,30 +154,30 @@
             <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300 mb-1.5"
+                        <label class="block text-xs font-medium text-fg-muted mb-1.5"
                             >Bot Token</label
                         >
                         <input
                             v-model="settings.BotToken"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100 transition-colors"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg transition-colors"
                         />
-                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                        <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                             {{ t('settings.telegramBotTokenHint') }}
                         </p>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300 mb-1.5"
+                        <label class="block text-xs font-medium text-fg-muted mb-1.5"
                             >Chat ID</label
                         >
                         <input
                             v-model="settings.ChatID"
                             type="text"
                             placeholder="123456789"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100 transition-colors"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg transition-colors"
                         />
-                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                        <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                             {{ t('settings.telegramChatIdHint') }}
                         </p>
                     </div>
@@ -185,11 +186,11 @@
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                     <button
                         type="button"
-                        class="px-4 py-1.5 bg-zinc-100 hover:bg-white border border-zinc-100 text-zinc-900 text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                        class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                         :disabled="isTesting || !settings.BotToken || !settings.ChatID"
                         @click="testNotification"
                     >
-                        <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-zinc-600" />
+                        <Loader2 v-if="isTesting" class="animate-spin h-4 w-4 text-fg-subtle" />
                         <span>{{
                             isTesting
                                 ? t('settings.telegramTesting')
@@ -209,9 +210,9 @@
                         <span>{{ testResult.message }}</span>
                         <details
                             v-if="testResult.detail"
-                            class="mt-2 text-xs font-mono bg-[#131515] border border-zinc-800 p-2 rounded-md max-h-32 overflow-auto"
+                            class="mt-2 text-xs font-mono bg-inset border border-line p-2 rounded-md max-h-32 overflow-auto"
                         >
-                            <summary class="cursor-pointer text-zinc-500">
+                            <summary class="cursor-pointer text-fg-subtle">
                                 {{ t('settings.telegramDetails') }}
                             </summary>
                             <pre>{{ JSON.stringify(testResult.detail, null, 2) }}</pre>
@@ -221,7 +222,7 @@
             </div>
         </section>
 
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 title="Telegram Push Bot"
                 :description="t('settings.telegramPushBotDesc')"
@@ -238,32 +239,32 @@
             <div v-if="telegramPushConfig.enabled" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300"
+                        <label class="block text-xs font-medium text-fg-muted"
                             >Push Bot Token</label
                         >
                         <input
                             v-model="telegramPushConfig.bot_token"
                             type="text"
                             placeholder="123456:ABC-DEF..."
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg"
                         />
-                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                        <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                             {{ t('settings.telegramPushTokenHint') }}
                         </p>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-medium text-zinc-300">{{
+                        <label class="block text-xs font-medium text-fg-muted">{{
                             t('settings.telegramWebhookSecret')
                         }}</label>
                         <input
                             v-model="telegramPushConfig.webhook_secret"
                             type="text"
                             placeholder="random_secret-token"
-                            class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
+                            class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg"
                             :aria-label="t('settings.telegramWebhookSecret')"
                         />
-                        <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                        <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                             {{ t('settings.telegramWebhookSecretHint') }}
                         </p>
                         <p
@@ -276,36 +277,37 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300">{{
+                    <label class="block text-xs font-medium text-fg-muted">{{
                         t('settings.telegramAllowedUsers')
                     }}</label>
-                    <textarea
+                    <Textarea
                         v-model="allowedUsersStr"
                         rows="2"
                         placeholder="123456789, 987654321"
-                        class="mt-1.5 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 text-sm font-mono text-zinc-100"
+                        wrapperClass="mt-1.5"
+                        class="px-3 py-2 text-sm font-mono"
                     />
-                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                    <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                         {{ t('settings.telegramAllowedUsersHint') }}
                         <a
                             href="https://t.me/userinfobot"
                             target="_blank"
-                            class="font-mono text-zinc-300 underline hover:text-zinc-100"
+                            class="font-mono text-fg-muted underline hover:text-fg"
                             >{{ t('settings.telegramGetUserId') }}</a
                         >
                     </p>
                 </div>
 
                 <div
-                    class="flex items-center justify-between gap-6 py-4 border-y border-zinc-800/60"
+                    class="flex items-center justify-between gap-6 py-4 border-y border-line"
                 >
                     <div class="flex items-start gap-2.5">
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                         <div class="space-y-1">
-                            <label class="block text-sm font-medium text-zinc-100">{{
+                            <label class="block text-sm font-medium text-fg">{{
                                 t('settings.telegramPublicAccess')
                             }}</label>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
+                            <p class="text-xs text-fg-muted leading-relaxed">
                                 {{ t('settings.telegramPublicAccessHint') }}
                             </p>
                         </div>
@@ -314,17 +316,17 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300">Webhook URL</label>
+                    <label class="block text-xs font-medium text-fg-muted">Webhook URL</label>
                     <div class="mt-1.5 flex rounded-md shadow-none">
                         <input
                             :value="webhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
+                            class="flex-1 block w-full px-3 py-2 bg-inset border border-line rounded-l-md text-xs font-mono text-fg"
                         />
                         <button
                             type="button"
-                            class="inline-flex items-center px-4 py-2 border border-l-0 border-zinc-800 rounded-r-md bg-transparent text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-hidden"
+                            class="inline-flex items-center px-4 py-2 border border-l-0 border-line rounded-r-md bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg focus-visible:outline-hidden"
                             @click="copyText(webhookUrl, 'webhook')"
                         >
                             {{
@@ -334,13 +336,13 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                    <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                         {{ t('settings.telegramWebhookUrlHint') }}
                     </p>
                 </div>
 
                 <div v-if="setWebhookUrl">
-                    <label class="block text-xs font-medium text-zinc-300">{{
+                    <label class="block text-xs font-medium text-fg-muted">{{
                         t('settings.telegramSetWebhookLink')
                     }}</label>
                     <div class="mt-1.5 flex rounded-md shadow-none">
@@ -348,12 +350,12 @@
                             :value="setWebhookUrl"
                             type="text"
                             readonly
-                            class="flex-1 block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-l-md text-xs font-mono text-zinc-200"
+                            class="flex-1 block w-full px-3 py-2 bg-inset border border-line rounded-l-md text-xs font-mono text-fg"
                             :aria-label="t('settings.telegramPublicAccess')"
                         />
                         <button
                             type="button"
-                            class="inline-flex items-center px-4 py-2 border border-l-0 border-zinc-800 rounded-r-md bg-transparent text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-hidden"
+                            class="inline-flex items-center px-4 py-2 border border-l-0 border-line rounded-r-md bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg focus-visible:outline-hidden"
                             @click="copyText(setWebhookUrl, 'setWebhook')"
                         >
                             {{
@@ -363,12 +365,12 @@
                             }}
                         </button>
                     </div>
-                    <p class="mt-1.5 text-xs text-zinc-500 leading-relaxed">
+                    <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
                         {{ t('settings.telegramSetWebhookHint') }}
                     </p>
                 </div>
 
-                <p v-else class="flex items-center gap-2 text-xs text-zinc-500">
+                <p v-else class="flex items-center gap-2 text-xs text-fg-subtle">
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                     <span>{{ t('settings.telegramSetWebhookEmpty') }}</span>
                 </p>
@@ -379,8 +381,8 @@
                         class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
                         :class="
                             showSetupGuide
-                                ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
-                                : 'bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100'
+                                ? 'bg-accent border-accent text-accent-fg'
+                                : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
                         "
                         @click="showSetupGuide = !showSetupGuide"
                     >
@@ -392,8 +394,8 @@
                         class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
                         :class="
                             showUsageGuide
-                                ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
-                                : 'bg-transparent border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100'
+                                ? 'bg-accent border-accent text-accent-fg'
+                                : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
                         "
                         @click="showUsageGuide = !showUsageGuide"
                     >
@@ -401,9 +403,9 @@
                     </button>
                 </div>
 
-                <div v-if="showSetupGuide" class="pl-4 border-l-2 border-zinc-800 py-1">
+                <div v-if="showSetupGuide" class="pl-4 border-l-2 border-line py-1">
                     <ol
-                        class="list-decimal list-inside space-y-1.5 text-xs text-zinc-400 leading-relaxed"
+                        class="list-decimal list-inside space-y-1.5 text-xs text-fg-muted leading-relaxed"
                     >
                         <li>{{ t('settings.telegramSetupStep1') }}</li>
                         <li>{{ t('settings.telegramSetupStep2') }}</li>
@@ -412,8 +414,8 @@
                     </ol>
                 </div>
 
-                <div v-if="showUsageGuide" class="pl-4 border-l-2 border-zinc-800 py-1">
-                    <div class="space-y-1.5 text-xs text-zinc-400 leading-relaxed">
+                <div v-if="showUsageGuide" class="pl-4 border-l-2 border-line py-1">
+                    <div class="space-y-1.5 text-xs text-fg-muted leading-relaxed">
                         <p>{{ t('settings.telegramUsageCommands') }}</p>
                         <p>{{ t('settings.telegramUsageImport') }}</p>
                         <p>{{ t('settings.telegramUsageIsolation') }}</p>

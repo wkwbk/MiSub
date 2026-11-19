@@ -5,6 +5,7 @@
 
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@/constants/default-public-links.js';
+import { DEFAULT_PUBLIC_CORES_CONFIG } from '@/constants/default-public-cores.js';
 
 export const DEFAULT_SETTINGS = {
     FileName: 'MiSub',
@@ -118,6 +119,8 @@ export const DEFAULT_SETTINGS = {
     },
     // 公开页导航链接设置（测速、IP检测、服务器厂商等）
     publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
+    // 公开页代理内核设置（Xray-core、sing-box、Mihomo、Hysteria 2 等）
+    publicCores: DEFAULT_PUBLIC_CORES_CONFIG,
     webdavBackup: {
         enabled: false,
         endpoint: '',

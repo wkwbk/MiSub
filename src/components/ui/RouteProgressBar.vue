@@ -30,7 +30,7 @@
         aria-hidden="true"
     >
         <div
-            class="h-full bg-zinc-900 dark:bg-zinc-100 transition-[width,opacity] duration-150 ease-out"
+            class="h-full bg-accent transition-[width,opacity] duration-150 ease-out"
             :class="isFadingOut ? 'opacity-0' : 'opacity-100'"
             :style="{ width: `${progress}%` }"
         ></div>
@@ -39,17 +39,17 @@
     <Transition name="fade">
         <div
             v-if="isNavigating && showSlowIndicator"
-            class="fixed inset-0 z-40 flex items-center justify-center bg-zinc-50/40 dark:bg-[#131515]/50 backdrop-blur-[1px] pointer-events-none select-none"
+            class="fixed inset-0 z-40 flex items-center justify-center bg-canvas/50 backdrop-blur-[1px] pointer-events-none select-none"
             role="status"
             aria-live="polite"
         >
             <div
-                class="flex items-center gap-2.5 px-4 py-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-[#171717]/95 shadow-sm"
+                class="flex items-center gap-2.5 px-4 py-2 rounded-md border border-line bg-elevated/95 shadow-sm"
             >
                 <span
-                    class="w-4 h-4 rounded-full border-2 border-zinc-200 dark:border-zinc-700 border-t-zinc-900 dark:border-t-zinc-100 animate-spin"
+                    class="w-4 h-4 rounded-full border-2 border-line border-t-zinc-900 dark:border-t-zinc-100 animate-spin"
                 ></span>
-                <span class="text-xs font-mono text-zinc-700 dark:text-zinc-300">
+                <span class="text-xs font-mono text-fg-muted">
                     {{ t('common.loading') }}
                 </span>
             </div>

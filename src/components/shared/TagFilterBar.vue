@@ -80,8 +80,8 @@
             class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
             :class="
                 isAllActive
-                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                    : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
+                    ? 'bg-active text-fg border-line-strong font-semibold'
+                    : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
             "
             @click="handleSelect(null)"
         >
@@ -95,8 +95,8 @@
             class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
             :class="
                 isUntaggedActive
-                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                    : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
+                    ? 'bg-active text-fg border-line-strong font-semibold'
+                    : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
             "
             @click="handleSelect(UNTAGGED_KEY)"
         >
@@ -111,8 +111,8 @@
             class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
             :class="
                 activeSet.has(tag)
-                    ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                    : 'bg-transparent text-zinc-400 border-zinc-800 hover:text-zinc-200 hover:bg-zinc-900'
+                    ? 'bg-active text-fg border-line-strong font-semibold'
+                    : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
             "
             @click="handleSelect(tag)"
         >

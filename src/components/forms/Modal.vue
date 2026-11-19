@@ -149,7 +149,7 @@
         <Transition name="modal-fade">
             <div
                 v-if="show"
-                class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+                class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
                 :style="{ zIndex }"
                 @pointerdown.capture="handleBackdropPointerDown"
                 @click="handleBackdropClick"
@@ -162,7 +162,7 @@
                         v-if="show"
                         ref="modalPanelRef"
                         tabindex="-1"
-                        class="bg-[#171717] rounded-md shadow-none w-full text-left flex flex-col max-h-[85vh] lg:max-h-[90vh] border border-zinc-800 focus-visible:outline-none text-zinc-100 overflow-hidden"
+                        class="modal-surface rounded-lg w-full text-left flex flex-col max-h-[85vh] lg:max-h-[90vh] focus-visible:outline-none text-fg overflow-hidden"
                         :class="{
                             'max-w-sm': size === 'sm',
                             'max-w-md': size === 'md',
@@ -178,33 +178,33 @@
                     >
                         <div
                             :id="titleId"
-                            class="p-6 pb-4 shrink-0 border-b border-zinc-800 rounded-t-md"
+                            class="modal-chrome-header px-6 py-4 shrink-0"
                         >
                             <slot name="title">
-                                <h3 class="text-base font-semibold text-zinc-100">
+                                <h3 class="text-base font-semibold text-fg">
                                     {{ t('common.confirmAction') }}
                                 </h3>
                             </slot>
                         </div>
 
                         <div
-                            class="grow min-h-0 overflow-y-auto overscroll-contain"
+                            class="modal-scrollbar grow min-h-0 overflow-y-auto overscroll-contain"
                             :class="bodyClass || 'px-6 py-5'"
                         >
                             <slot name="body">
-                                <p class="text-sm text-zinc-400">
+                                <p class="text-sm text-fg-muted">
                                     {{ t('common.confirmContinue') }}
                                 </p>
                             </slot>
                         </div>
 
                         <div
-                            class="p-6 pt-4 flex justify-end space-x-3 shrink-0 border-t border-zinc-800 bg-[#131515] rounded-b-md"
+                            class="modal-chrome-footer px-6 py-3.5 flex justify-end items-center gap-2.5 shrink-0"
                         >
                             <slot name="footer">
                                 <button
                                     @click="emit('update:show', false)"
-                                    class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
+                                    class="px-4 py-2 bg-transparent hover:bg-hover border border-line hover:border-line-strong text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                                 >
                                     {{ cancelLabel }}
                                 </button>
@@ -215,11 +215,11 @@
                                         (confirmKeyword && confirmInput !== confirmKeyword)
                                     "
                                     :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
-                                    class="px-4 py-2 font-semibold text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    class="px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     :class="
                                         confirmVariant === 'danger'
-                                            ? 'bg-transparent border border-red-900/60 text-red-400 hover:bg-red-950/40'
-                                            : 'bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100'
+                                            ? 'bg-transparent border border-red-500/40 text-red-500 dark:text-red-400 hover:bg-red-500/10'
+                                            : 'bg-accent text-accent-fg hover:opacity-90 border border-accent'
                                     "
                                 >
                                     {{ confirmLabel }}

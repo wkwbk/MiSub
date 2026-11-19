@@ -12,6 +12,7 @@
     import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
     import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
     import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
+    import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
     import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
 
     const isDev = import.meta.env.DEV;
@@ -69,6 +70,14 @@
 
     // 复制状态
     const copiedNodeId = ref('');
+
+    // 节点详情弹窗状态
+    const detailNode = ref(null);
+    const showDetailModal = ref(false);
+    const openNodeDetail = (node) => {
+        detailNode.value = node;
+        showDetailModal.value = true;
+    };
 
     // [New] Selection Mode State
     const pickingMode = ref(false);
@@ -216,6 +225,8 @@
             if (newVal) {
                 loadNodes();
             } else {
+                showDetailModal.value = false;
+                detailNode.value = null;
                 resetState();
             }
         }
@@ -378,7 +389,7 @@
 
     // 获取协议类型的显示样式
     const getProtocolStyle = () => {
-        return 'bg-transparent text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 font-mono';
+        return 'bg-transparent text-fg-muted border border-line font-mono';
     };
 
     // 获取地区 Emoji
@@ -527,19 +538,23 @@
 </script>
 
 <template>
-    <Modal :show="show" size="6xl" @update:show="(value) => !value && closeModal()">
+    <Modal
+        :show="show"
+        size="6xl"
+        @update:show="(value) => !value && !showDetailModal && closeModal()"
+    >
         <template #title>
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 space-y-0.5">
                     <div class="flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
                         <h3
-                            class="truncate text-base font-semibold text-zinc-900 dark:text-zinc-100 sm:text-lg tracking-tight"
+                            class="truncate text-base font-semibold text-fg sm:text-lg tracking-tight"
                         >
                             {{ title }}
                         </h3>
                     </div>
-                    <p class="text-xs text-zinc-500 pl-3.5">
+                    <p class="text-xs text-fg-subtle pl-3.5">
                         {{ subtitle }}
                     </p>
                 </div>
@@ -550,8 +565,8 @@
                         class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shadow-none whitespace-nowrap"
                         :class="
                             pickingMode
-                                ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
-                                : 'bg-transparent border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                                ? 'bg-active text-fg border-line-strong'
+                                : 'bg-transparent border-line text-fg-muted hover:bg-hover'
                         "
                     >
                         {{
@@ -560,7 +575,7 @@
                     </button>
                     <button
                         @click="closeModal"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-inset text-fg-subtle hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
                         :aria-label="t('common.close')"
                     >
                         <X class="w-4 h-4" />
@@ -573,44 +588,44 @@
             <!-- 统计信息 (Exposed Hairline Grid Style) -->
             <div
                 v-if="!loading && !error && Object.keys(protocolStats).length > 0"
-                class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-200 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-800 rounded-md overflow-hidden mb-4"
+                class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line rounded-md overflow-hidden mb-4"
             >
-                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
-                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                <div class="bg-inset px-3.5 py-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
                         {{ t('nodePreview.nodesTotal') }}
                     </div>
                     <div
-                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                        class="mt-1 text-xl font-semibold font-mono text-fg"
                     >
                         {{ allNodes.length }}
                     </div>
                 </div>
-                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
-                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                <div class="bg-inset px-3.5 py-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
                         {{ t('nodePreview.protocolTypes') }}
                     </div>
                     <div
-                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                        class="mt-1 text-xl font-semibold font-mono text-fg"
                     >
                         {{ Object.keys(protocolStats).length }}
                     </div>
                 </div>
-                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
-                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                <div class="bg-inset px-3.5 py-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
                         {{ t('nodePreview.regionsCount') }}
                     </div>
                     <div
-                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                        class="mt-1 text-xl font-semibold font-mono text-fg"
                     >
                         {{ Object.keys(regionStats).length }}
                     </div>
                 </div>
-                <div class="bg-zinc-50/70 dark:bg-[#131515] px-3.5 py-3 sm:p-4">
-                    <div class="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
+                <div class="bg-inset px-3.5 py-3 sm:p-4">
+                    <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
                         {{ t('nodePreview.totalPages') }}
                     </div>
                     <div
-                        class="mt-1 text-xl font-semibold font-mono text-zinc-900 dark:text-zinc-100"
+                        class="mt-1 text-xl font-semibold font-mono text-fg"
                     >
                         {{ totalPages }}
                     </div>
@@ -643,12 +658,12 @@
                     <!-- 加载状态 -->
                     <div v-if="loading" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] px-8 py-8 text-center shadow-none"
+                            class="rounded-md border border-line bg-inset px-8 py-8 text-center shadow-none"
                         >
                             <div
-                                class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-zinc-500"
+                                class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-line-strong"
                             ></div>
-                            <p class="mt-3 text-xs text-zinc-500">
+                            <p class="mt-3 text-xs text-fg-subtle">
                                 {{ t('nodePreview.loadingNodes') }}
                             </p>
                         </div>
@@ -657,7 +672,7 @@
                     <!-- 错误状态 -->
                     <div v-else-if="error" class="flex h-64 items-center justify-center">
                         <div
-                            class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] px-8 py-8 text-center shadow-none"
+                            class="rounded-md border border-line bg-inset px-8 py-8 text-center shadow-none"
                         >
                             <div
                                 class="flex items-center justify-center gap-2 text-sm text-red-500"
@@ -667,7 +682,7 @@
                             </div>
                             <button
                                 @click="loadNodes"
-                                class="mt-4 rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-1.5 text-xs font-medium text-zinc-100 dark:text-zinc-900 transition-colors hover:bg-zinc-800 dark:hover:bg-white"
+                                class="mt-4 rounded-md bg-accent px-4 py-1.5 text-xs font-medium text-accent-fg transition-colors hover:opacity-90"
                             >
                                 {{ t('common.retry') }}
                             </button>
@@ -680,9 +695,9 @@
                         class="flex h-64 items-center justify-center"
                     >
                         <div
-                            class="rounded-md border border-dashed border-zinc-300 dark:border-zinc-800 bg-transparent px-8 py-8 text-center"
+                            class="rounded-md border border-dashed border-line bg-transparent px-8 py-8 text-center"
                         >
-                            <p class="text-xs text-zinc-500">
+                            <p class="text-xs text-fg-subtle">
                                 {{ t('nodePreview.noMatchingNodes') }}
                             </p>
                         </div>
@@ -700,6 +715,7 @@
                             :selection-mode="pickingMode"
                             :selected-urls="selectedUrls"
                             @copy="copyNodeUrl"
+                            @detail="openNodeDetail"
                             @toggle-select="toggleNodeSelection"
                         />
 
@@ -713,6 +729,7 @@
                             :selection-mode="pickingMode"
                             :selected-urls="selectedUrls"
                             @copy="copyNodeUrl"
+                            @detail="openNodeDetail"
                             @toggle-select="toggleNodeSelection"
                         />
                     </div>
@@ -735,12 +752,12 @@
                 class="flex w-full flex-wrap items-center justify-between gap-3"
             >
                 <div class="flex flex-col">
-                    <span class="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">
+                    <span class="text-[10px] text-fg-muted uppercase tracking-wider font-semibold">
                         {{ t('nodePreview.pickingMode') }}
                     </span>
-                    <span class="text-xs font-medium text-zinc-300">
+                    <span class="text-xs font-medium text-fg-muted">
                         {{ t('nodePreview.selectedNodesPrefix') }}
-                        <span class="text-sm font-mono font-bold text-zinc-100">{{
+                        <span class="text-sm font-mono font-bold text-fg">{{
                             selectedUrls.size
                         }}</span>
                         {{ t('nodePreview.selectedNodesSuffix') }}
@@ -749,19 +766,19 @@
                 <div class="flex flex-wrap items-center justify-end gap-3">
                     <button
                         @click="selectAll"
-                        class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
+                        class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                     >
                         {{ t('actions.selectAll') }}
                     </button>
                     <button
                         @click="clearSelection"
-                        class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
+                        class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                     >
                         {{ t('common.clear') }}
                     </button>
                     <button
                         @click="handleSaveSelection"
-                        class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
+                        class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-accent text-accent-fg hover:opacity-90 border border-accent"
                     >
                         {{ t('nodePreview.saveSelection') }}
                     </button>
@@ -770,19 +787,21 @@
             <template v-else>
                 <button
                     @click="closeModal"
-                    class="px-4 py-2 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-zinc-100 font-medium text-sm rounded-md transition-colors"
+                    class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                 >
                     {{ t('actions.cancel') }}
                 </button>
                 <button
                     @click="closeModal"
-                    class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-zinc-100 text-zinc-900 hover:bg-white border border-zinc-100"
+                    class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-accent text-accent-fg hover:opacity-90 border border-accent"
                 >
                     {{ t('actions.confirm') }}
                 </button>
             </template>
         </template>
     </Modal>
+
+    <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
 </template>
 
 <style scoped></style>

@@ -5,6 +5,7 @@
     import AnnouncementSettings from '@/components/settings/sections/AnnouncementSettings.vue';
     import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
     import GuestbookManagement from '@/components/settings/sections/GuestbookManagement.vue';
+    import PublicCoresSettings from '@/components/settings/sections/PublicCoresSettings.vue';
     import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -21,7 +22,7 @@
 <template>
     <div v-if="settings" class="space-y-4">
         <!-- {{ t('settings.homeHeroTitle') }} -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.homeHeroTitle')"
                 :description="t('settings.homeHeroDesc')"
@@ -57,6 +58,9 @@
 
         <!-- Client Management -->
         <ClientSettings />
+
+        <!-- Public Cores Management -->
+        <PublicCoresSettings :settings="settings" />
 
         <!-- Public Links Management -->
         <PublicLinksSettings :settings="settings" />

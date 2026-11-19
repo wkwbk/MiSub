@@ -122,7 +122,7 @@
 
         <ThemeToggle />
 
-        <div v-if="showDivider" class="h-4 w-px bg-zinc-200 dark:bg-white/10 mx-0.5"></div>
+        <div v-if="showDivider" class="h-4 w-px bg-line mx-0.5"></div>
 
         <template v-if="isLoggedIn">
             <button

@@ -4,6 +4,7 @@
     import DOMPurify from 'dompurify';
     import Select from '@/components/ui/Select.vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { useI18n } from '@/i18n/index.js';
 
@@ -62,7 +63,7 @@
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+    <section class="rounded-lg border border-line bg-surface p-6">
         <!-- 头部说明 & 开关 -->
         <SectionHeader
             :title="t('settings.announcementTitle')"
@@ -82,7 +83,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- 标题 -->
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                    <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                         t('settings.announcementFieldTitle')
                     }}</label>
                     <input
@@ -90,13 +91,13 @@
                         v-model="announcement.title"
                         @input="handleContentUpdate"
                         :placeholder="t('settings.announcementTitlePlaceholder')"
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors"
+                        class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong sm:text-sm text-fg transition-colors"
                     />
                 </div>
 
                 <!-- 类型 -->
                 <div>
-                    <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                    <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                         t('settings.announcementType')
                     }}</label>
                     <Select
@@ -114,22 +115,25 @@
 
             <!-- 内容 -->
             <div>
-                <label class="block text-xs font-medium text-zinc-300 mb-1.5">{{
+                <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                     t('settings.announcementContent')
                 }}</label>
-                <div class="relative">
-                    <textarea
-                        v-model="announcement.content"
-                        @input="handleContentUpdate"
-                        rows="6"
-                        :placeholder="t('settings.announcementContentPlaceholder')"
-                        class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 sm:text-sm text-zinc-100 transition-colors font-mono"
-                    ></textarea>
-                    <div class="absolute bottom-2 right-2 text-xs text-zinc-500 font-mono">
-                        {{ t('settings.announcementHtmlSupported') }}
-                    </div>
-                </div>
-                <p class="mt-2 text-xs text-zinc-500 leading-relaxed">
+                <Textarea
+                    v-model="announcement.content"
+                    @input="handleContentUpdate"
+                    rows="6"
+                    :placeholder="t('settings.announcementContentPlaceholder')"
+                    class="px-3 py-2 sm:text-sm text-fg font-mono"
+                >
+                    <template #overlay>
+                        <div
+                            class="pointer-events-none absolute bottom-2 right-2 text-xs text-fg-subtle font-mono"
+                        >
+                            {{ t('settings.announcementHtmlSupported') }}
+                        </div>
+                    </template>
+                </Textarea>
+                <p class="mt-2 text-xs text-fg-subtle leading-relaxed">
                     {{ t('settings.announcementHtmlHint') }}
                 </p>
             </div>
@@ -141,20 +145,20 @@
                         type="checkbox"
                         v-model="announcement.dismissible"
                         @change="handleContentUpdate"
-                        class="rounded border-zinc-700 bg-zinc-900 text-zinc-100 shadow-none focus:border-zinc-500"
+                        class="rounded border-line-strong bg-elevated-card text-fg shadow-none focus:border-line-strong"
                     />
-                    <span class="text-sm text-zinc-300">{{
+                    <span class="text-sm text-fg-muted">{{
                         t('settings.announcementDismissible')
                     }}</span>
                 </label>
             </div>
 
             <!-- 预览区域 -->
-            <div class="pt-6 border-t border-zinc-800/60">
-                <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">
+            <div class="pt-6 border-t border-line">
+                <h4 class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-3">
                     {{ t('settings.announcementPreview') }}
                 </h4>
-                <div class="bg-[#131515]/80 rounded-md border border-zinc-800/80 p-4">
+                <div class="bg-canvas/85 rounded-md border border-line p-4">
                     <div class="flex items-start gap-2.5">
                         <span
                             class="h-1.5 w-1.5 rounded-full shrink-0 mt-1.5"
@@ -166,14 +170,14 @@
                             }"
                         ></span>
                         <div class="flex-1 min-w-0">
-                            <h3 class="text-sm font-semibold text-zinc-100 truncate">
+                            <h3 class="text-sm font-semibold text-fg truncate">
                                 {{
                                     announcement.title?.trim() ||
                                     t('common.announcementFallbackTitle')
                                 }}
                             </h3>
                             <div
-                                class="text-xs text-zinc-300 mt-1 prose prose-sm prose-invert max-w-none"
+                                class="text-xs text-fg-muted mt-1 prose prose-sm prose-invert max-w-none"
                                 v-html="sanitizedContent"
                             ></div>
                         </div>

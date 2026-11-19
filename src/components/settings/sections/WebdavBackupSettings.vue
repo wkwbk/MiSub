@@ -190,19 +190,19 @@
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+    <section class="rounded-lg border border-line bg-surface p-6">
         <SectionHeader :title="t('settings.webdavTitle')" :description="t('settings.webdavDesc')">
             <template #icon>
                 <CloudDownload class="h-4 w-4" />
             </template>
             <template #actions>
                 <label
-                    class="flex items-center gap-2.5 text-xs font-medium text-zinc-200 cursor-pointer shrink-0"
+                    class="flex items-center gap-2.5 text-xs font-medium text-fg cursor-pointer shrink-0"
                 >
                     <input
                         type="checkbox"
                         v-model="settings.webdavBackup.enabled"
-                        class="h-4 w-4 text-zinc-100 rounded border-zinc-700 bg-zinc-900"
+                        class="h-4 w-4 text-fg rounded border-line-strong bg-elevated-card"
                     />
                     {{ t('settings.webdavEnable') }}
                 </label>
@@ -246,39 +246,39 @@
                 />
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-zinc-800/60">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-line">
                 <div class="space-y-3">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-fg-muted">
                         {{ t('settings.webdavBackupScope') }}
                     </p>
-                    <label class="flex items-start gap-2.5 text-sm text-zinc-200 cursor-pointer">
+                    <label class="flex items-start gap-2.5 text-sm text-fg cursor-pointer">
                         <input
                             type="radio"
                             value="dataOnly"
                             v-model="settings.webdavBackup.backupScope"
-                            class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
+                            class="mt-1 border-line-strong bg-elevated-card text-fg"
                         />
                         <span
                             ><strong class="font-medium">{{
                                 t('settings.webdavScopeDataOnly')
                             }}</strong
-                            ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
+                            ><br /><span class="text-xs text-fg-subtle leading-relaxed">{{
                                 t('settings.webdavScopeDataOnlyDesc')
                             }}</span></span
                         >
                     </label>
-                    <label class="flex items-start gap-2.5 text-sm text-zinc-200 cursor-pointer">
+                    <label class="flex items-start gap-2.5 text-sm text-fg cursor-pointer">
                         <input
                             type="radio"
                             value="dataAndSettings"
                             v-model="settings.webdavBackup.backupScope"
-                            class="mt-1 border-zinc-700 bg-zinc-900 text-zinc-100"
+                            class="mt-1 border-line-strong bg-elevated-card text-fg"
                         />
                         <span
                             ><strong class="font-medium">{{
                                 t('settings.webdavScopeDataAndSettings')
                             }}</strong
-                            ><br /><span class="text-xs text-zinc-500 leading-relaxed">{{
+                            ><br /><span class="text-xs text-fg-subtle leading-relaxed">{{
                                 t('settings.webdavScopeDataAndSettingsDesc')
                             }}</span></span
                         >
@@ -286,14 +286,14 @@
                 </div>
 
                 <div class="space-y-3">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-fg-muted">
                         {{ t('settings.webdavRequestAutoBackup') }}
                     </p>
-                    <label class="flex items-center gap-2.5 text-sm text-zinc-200 cursor-pointer">
+                    <label class="flex items-center gap-2.5 text-sm text-fg cursor-pointer">
                         <input
                             type="checkbox"
                             v-model="settings.webdavBackup.autoBackup"
-                            class="h-4 w-4 text-zinc-100 rounded border-zinc-700 bg-zinc-900"
+                            class="h-4 w-4 text-fg rounded border-line-strong bg-elevated-card"
                         />
                         {{ t('settings.webdavEnableAutoBackup') }}
                     </label>
@@ -306,42 +306,42 @@
                             { value: 'monthly', label: t('settings.webdavIntervalMonthly') },
                         ]"
                     />
-                    <p class="text-xs text-zinc-500 leading-relaxed">
+                    <p class="text-xs text-fg-subtle leading-relaxed">
                         {{ t('settings.webdavAutoBackupHint') }}
                     </p>
                 </div>
             </div>
 
-            <p class="flex items-start gap-2 text-xs text-zinc-500 leading-relaxed">
+            <p class="flex items-start gap-2 text-xs text-fg-subtle leading-relaxed">
                 <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
                 <span>{{ t('settings.webdavSecurityHint') }}</span>
             </p>
 
             <div
-                class="pt-6 border-t border-zinc-800/60 flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs"
+                class="pt-6 border-t border-line flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs"
             >
                 <div class="space-y-1.5 font-mono">
                     <p
-                        class="font-sans text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2"
+                        class="font-sans text-xs font-semibold uppercase tracking-wider text-fg-muted mb-2"
                     >
                         {{ t('settings.webdavRecentStatus') }}
                     </p>
-                    <p class="text-zinc-400">
+                    <p class="text-fg-muted">
                         {{ t('settings.webdavLastChecked') }}：{{
                             settings.webdavBackup.lastCheckedAt || t('settings.webdavNotChecked')
                         }}
                     </p>
-                    <p class="text-zinc-400">
+                    <p class="text-fg-muted">
                         {{ t('settings.webdavLastBackup') }}：{{
                             settings.webdavBackup.lastBackupAt || t('settings.webdavNotBackedUp')
                         }}
                     </p>
-                    <p class="text-zinc-400">
+                    <p class="text-fg-muted">
                         {{ t('settings.webdavLastResult') }}：{{
                             settings.webdavBackup.lastBackupStatus || t('settings.webdavNone')
                         }}
                     </p>
-                    <p class="text-zinc-400 break-all">
+                    <p class="text-fg-muted break-all">
                         {{ t('settings.webdavLastFile') }}：{{
                             settings.webdavBackup.lastBackupFile || t('settings.webdavNone')
                         }}
@@ -351,7 +351,7 @@
                     <button
                         @click="testConnection"
                         :disabled="isTesting"
-                        class="px-3.5 py-1.5 text-xs font-medium text-zinc-300 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
+                        class="px-3.5 py-1.5 text-xs font-medium text-fg-muted rounded-md border border-line bg-transparent hover:bg-hover hover:text-fg disabled:opacity-50"
                     >
                         {{
                             isTesting
@@ -362,7 +362,7 @@
                     <button
                         @click="runBackup"
                         :disabled="isBackingUp"
-                        class="px-3.5 py-1.5 text-xs font-semibold text-zinc-900 rounded-md border border-zinc-100 bg-zinc-100 hover:bg-white disabled:opacity-50"
+                        class="px-3.5 py-1.5 text-xs font-semibold text-accent-fg rounded-md border border-accent bg-accent hover:opacity-90 disabled:opacity-50"
                     >
                         {{
                             isBackingUp
@@ -373,7 +373,7 @@
                     <button
                         @click="restoreFromLocalFile"
                         :disabled="isRestoring"
-                        class="px-3.5 py-1.5 text-xs font-medium text-zinc-300 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
+                        class="px-3.5 py-1.5 text-xs font-medium text-fg-muted rounded-md border border-line bg-transparent hover:bg-hover hover:text-fg disabled:opacity-50"
                     >
                         {{
                             isRestoring
@@ -384,7 +384,7 @@
                     <button
                         @click="loadRemoteFiles"
                         :disabled="isLoadingRemoteFiles"
-                        class="px-3.5 py-1.5 text-xs font-medium text-zinc-300 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
+                        class="px-3.5 py-1.5 text-xs font-medium text-fg-muted rounded-md border border-line bg-transparent hover:bg-hover hover:text-fg disabled:opacity-50"
                     >
                         {{
                             isLoadingRemoteFiles
@@ -394,30 +394,30 @@
                     </button>
                     <button
                         @click="copyCronHint"
-                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg"
                     >
                         {{ t('settings.webdavCopyCron') }}
                     </button>
                 </div>
             </div>
 
-            <div v-if="remoteFiles.length" class="pt-6 border-t border-zinc-800/60">
-                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+            <div v-if="remoteFiles.length" class="pt-6 border-t border-line">
+                <p class="text-xs font-semibold uppercase tracking-wider text-fg-muted mb-3">
                     {{ t('settings.webdavRemoteFiles') }}
                 </p>
-                <div class="divide-y divide-zinc-800/60 max-h-56 overflow-y-auto">
+                <div class="divide-y divide-line-subtle max-h-56 overflow-y-auto">
                     <div
                         v-for="file in remoteFiles"
                         :key="file.path"
                         class="flex items-center justify-between gap-3 py-2.5"
                     >
-                        <span class="text-xs font-mono text-zinc-300 break-all">{{
+                        <span class="text-xs font-mono text-fg-muted break-all">{{
                             file.name
                         }}</span>
                         <button
                             @click="restoreRemoteFile(file)"
                             :disabled="isRestoring"
-                            class="shrink-0 px-3 py-1 text-xs font-medium text-zinc-300 rounded-md border border-zinc-800 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-50"
+                            class="shrink-0 px-3 py-1 text-xs font-medium text-fg-muted rounded-md border border-line bg-transparent hover:bg-hover hover:text-fg disabled:opacity-50"
                         >
                             {{ t('settings.webdavRestore') }}
                         </button>

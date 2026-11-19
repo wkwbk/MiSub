@@ -19,6 +19,7 @@
     import SortEditor from '@/components/features/Operators/components/SortEditor.vue';
     import DedupEditor from '@/components/features/Operators/components/DedupEditor.vue';
     import Input from '@/components/ui/Input.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
 
     const props = defineProps({
         modelValue: {
@@ -243,27 +244,27 @@
         <!-- Migration Suggestion Card -->
         <div
             v-if="canMigrate"
-            class="group relative mb-6 overflow-hidden rounded-md border border-zinc-800 bg-transparent p-4"
+            class="group relative mb-6 overflow-hidden rounded-md border border-line bg-transparent p-4"
         >
             <div class="relative z-10 flex items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
                     <div
-                        class="w-9 h-9 rounded-md border border-zinc-800 bg-transparent text-zinc-300 flex items-center justify-center shrink-0"
+                        class="w-9 h-9 rounded-md border border-line bg-transparent text-fg-muted flex items-center justify-center shrink-0"
                     >
                         <Zap class="h-4 w-4" />
                     </div>
                     <div>
-                        <h4 class="text-xs font-semibold text-zinc-100">
+                        <h4 class="text-xs font-semibold text-fg">
                             {{ t('operators.legacyConfigFound') }}
                         </h4>
-                        <p class="mt-0.5 text-xs text-zinc-400">
+                        <p class="mt-0.5 text-xs text-fg-muted">
                             {{ t('operators.legacyConfigDesc') }}
                         </p>
                     </div>
                 </div>
                 <button
                     @click="migrateFromLegacy"
-                    class="whitespace-nowrap rounded-md border border-zinc-100 bg-zinc-100 px-4 py-1.5 text-xs font-semibold text-zinc-900 shadow-none transition-colors hover:bg-white"
+                    class="whitespace-nowrap rounded-md border border-accent bg-accent px-4 py-1.5 text-xs font-semibold text-accent-fg shadow-none transition-colors hover:opacity-90"
                 >
                     {{ t('operators.migrateNow') }}
                 </button>
@@ -272,17 +273,17 @@
 
         <div
             v-if="modelValue.length === 0 && !canMigrate"
-            class="rounded-md border border-zinc-800 bg-transparent py-10 text-center"
+            class="rounded-md border border-line bg-transparent py-10 text-center"
         >
             <div
-                class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400"
+                class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted"
             >
                 <Plus class="h-5 w-5" />
             </div>
-            <h3 class="text-xs font-semibold text-zinc-100">
+            <h3 class="text-xs font-semibold text-fg">
                 {{ t('operators.emptyTitle') }}
             </h3>
-            <p class="mt-1 text-xs text-zinc-500">{{ t('operators.emptyDesc') }}</p>
+            <p class="mt-1 text-xs text-fg-subtle">{{ t('operators.emptyDesc') }}</p>
         </div>
 
         <div v-else class="space-y-2">
@@ -292,15 +293,15 @@
                 :class="[
                     'group overflow-hidden rounded-md border bg-transparent transition-colors',
                     expandedIndex === index
-                        ? 'border-zinc-600'
-                        : 'border-zinc-800 hover:border-zinc-700',
+                        ? 'border-line-strong'
+                        : 'border-line hover:border-line-strong',
                     !op.enabled && 'opacity-60 grayscale-[0.5]',
                 ]"
             >
                 <!-- Compact Header -->
                 <div
                     @click="toggleExpand(index)"
-                    class="cursor-pointer select-none p-3 hover:bg-zinc-900/40"
+                    class="cursor-pointer select-none p-3 hover:bg-hover"
                 >
                     <div class="flex items-start justify-between gap-3 sm:items-center">
                         <div class="flex items-center gap-3 min-w-0">
@@ -308,24 +309,24 @@
                                 :class="[
                                     'w-8 h-8 flex items-center justify-center rounded-md border shadow-none transition-colors',
                                     expandedIndex === index
-                                        ? 'bg-zinc-100 border-zinc-100 text-zinc-900'
-                                        : 'bg-transparent border-zinc-800 text-zinc-400',
+                                        ? 'bg-accent border-accent text-accent-fg'
+                                        : 'bg-transparent border-line text-fg-muted',
                                 ]"
                             >
                                 <component :is="getOperatorIcon(op.type)" class="h-4 w-4" />
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h4 class="font-semibold text-xs text-zinc-100">
+                                    <h4 class="font-semibold text-xs text-fg">
                                         {{ operatorLabel(op.type) }}
                                     </h4>
                                     <span
                                         v-if="!op.enabled"
-                                        class="rounded-md border border-zinc-800 bg-transparent px-1.5 py-0.5 font-mono text-[10px] text-zinc-500"
+                                        class="rounded-md border border-line bg-transparent px-1.5 py-0.5 font-mono text-[10px] text-fg-subtle"
                                         >{{ t('operators.paused') }}</span
                                     >
                                 </div>
-                                <p class="mt-1 text-[11px] text-zinc-500 sm:hidden">
+                                <p class="mt-1 text-[11px] text-fg-subtle sm:hidden">
                                     {{
                                         op.enabled
                                             ? t('operators.enabled')
@@ -341,14 +342,14 @@
                             >
                                 <button
                                     @click="(e) => moveOperator(e, index, -1)"
-                                    class="rounded-md p-1 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
+                                    class="rounded-md p-1 text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-30"
                                     :disabled="index === 0"
                                 >
                                     <ChevronUp class="h-4 w-4" />
                                 </button>
                                 <button
                                     @click="(e) => moveOperator(e, index, 1)"
-                                    class="rounded-md p-1 text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100 disabled:opacity-30"
+                                    class="rounded-md p-1 text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-30"
                                     :disabled="index === modelValue.length - 1"
                                 >
                                     <ChevronDown class="h-4 w-4" />
@@ -358,8 +359,8 @@
                                     class="rounded-md p-1"
                                     :class="
                                         op.enabled
-                                            ? 'text-zinc-300 hover:bg-zinc-900 hover:text-amber-400'
-                                            : 'text-zinc-500 hover:bg-zinc-900 hover:text-zinc-100'
+                                            ? 'text-fg-muted hover:bg-hover hover:text-amber-400'
+                                            : 'text-fg-subtle hover:bg-hover hover:text-fg'
                                     "
                                 >
                                     <PauseCircle class="h-4 w-4" />
@@ -371,14 +372,14 @@
                                             removeOperator(index);
                                         }
                                     "
-                                    class="rounded-md p-1 text-zinc-400 hover:bg-red-950/40 hover:text-red-400"
+                                    class="rounded-md p-1 text-fg-muted hover:bg-red-950/40 hover:text-red-400"
                                 >
                                     <X class="h-4 w-4" />
                                 </button>
                             </div>
                             <ChevronDown
-                                class="h-4 w-4 text-zinc-400 transition-transform duration-300"
-                                :class="{ 'rotate-180 text-zinc-100': expandedIndex === index }"
+                                class="h-4 w-4 text-fg-muted transition-transform duration-300"
+                                :class="{ 'rotate-180 text-fg': expandedIndex === index }"
                             />
                         </div>
                     </div>
@@ -393,7 +394,7 @@
                     leave-from-class="max-h-[800px] opacity-100"
                     leave-to-class="max-h-0 opacity-0"
                 >
-                    <div v-show="expandedIndex === index" class="border-t border-zinc-800">
+                    <div v-show="expandedIndex === index" class="border-t border-line">
                         <div class="p-4 sm:p-5">
                             <FilterEditor
                                 v-if="op.type === 'filter'"
@@ -426,18 +427,18 @@
                                     :label="t('operators.scriptUrlLabel')"
                                     :placeholder="t('operators.scriptUrlPlaceholder')"
                                 />
-                                <textarea
-                                    :value="op.params.code"
-                                    @input="
-                                        (e) =>
+                                <Textarea
+                                    :modelValue="op.params.code"
+                                    @update:modelValue="
+                                        (val) =>
                                             updateOperatorParams(index, {
                                                 ...op.params,
-                                                code: e.target.value,
+                                                code: val,
                                             })
                                     "
-                                    class="w-full h-64 p-3 font-mono text-xs bg-[#131515] text-zinc-100 border border-zinc-800 rounded-md focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-zinc-500 outline-none transition-colors resize-none"
+                                    class="h-64 p-3 font-mono text-xs resize-none"
                                     placeholder="function operator($proxies, $context) { ... }"
-                                ></textarea>
+                                />
                             </div>
                         </div>
                     </div>
@@ -448,13 +449,13 @@
         <!-- Add Control (Segmented Style) -->
         <div class="pt-4">
             <div
-                class="grid grid-cols-2 gap-1.5 rounded-md border border-zinc-800 bg-[#131515] p-1 sm:inline-flex sm:flex-wrap"
+                class="grid grid-cols-2 gap-1.5 rounded-md border border-line bg-inset p-1 sm:inline-flex sm:flex-wrap"
             >
                 <button
                     v-for="type in operatorTypes"
                     :key="type"
                     @click="addOperator(type)"
-                    class="rounded-md px-3.5 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 whitespace-nowrap"
+                    class="rounded-md px-3.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg whitespace-nowrap"
                 >
                     + {{ operatorLabel(type) }}
                 </button>

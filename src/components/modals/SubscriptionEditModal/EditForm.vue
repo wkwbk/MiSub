@@ -105,7 +105,7 @@
 
     <!-- 订阅标签 (可选) -->
     <div>
-        <label class="block text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-1.5">
+        <label class="block text-sm font-medium text-fg mb-1.5">
             {{ t('subscriptionBulkImport.tagsLabel') }}
         </label>
         <TagInput
@@ -116,13 +116,13 @@
     </div>
 
     <!-- 专属拉取代理 -->
-    <div class="pt-3 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="pt-3 border-t border-line">
         <div class="flex items-center justify-between mb-2">
             <div>
-                <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{
+                <span class="text-sm font-medium text-fg">{{
                     t('subscriptions.fetchProxyTitle')
                 }}</span>
-                <p class="text-xs text-zinc-500 mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
+                <p class="text-xs text-fg-subtle mt-0.5">{{ t('subscriptions.fetchProxyDesc') }}</p>
             </div>
             <Switch v-model="useFetchProxy" />
         </div>
@@ -143,17 +143,17 @@
                         !editingSubscription.fetchProxy ||
                         !editingSubscription.url
                     "
-                    class="h-[38px] px-3.5 bg-transparent border border-zinc-300 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-md text-xs font-medium hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-zinc-100 disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
+                    class="h-[38px] px-3.5 bg-transparent border border-line text-fg-muted rounded-md text-xs font-medium hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center whitespace-nowrap"
                 >
                     <Loader2
                         v-if="isTestingProxy"
-                        class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-zinc-400"
+                        class="animate-spin -ml-1 mr-1.5 h-3.5 w-3.5 text-fg-muted"
                     />
                     <Zap v-else class="w-3.5 h-3.5 mr-1.5" />
                     {{ isTestingProxy ? t('subscriptions.testing') : t('subscriptions.testProxy') }}
                 </button>
             </div>
-            <p class="text-[11px] text-zinc-500">
+            <p class="text-[11px] text-fg-subtle">
                 {{ t('subscriptions.fetchProxyHint') }}
             </p>
         </div>

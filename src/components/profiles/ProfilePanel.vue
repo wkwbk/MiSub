@@ -183,7 +183,7 @@
     <div>
         <div class="list-item-animation mb-4" style="--delay-index: 0">
             <div
-                class="min-w-0 rounded-md border border-zinc-800 bg-[#171717] shadow-none"
+                class="min-w-0 rounded-md border border-line bg-surface shadow-none"
                 :class="[compact ? 'p-3' : 'p-4']"
             >
                 <div
@@ -191,15 +191,15 @@
                 >
                     <div class="min-w-0">
                         <div class="flex items-center gap-3 shrink-0">
-                            <h2 class="text-lg font-semibold text-zinc-100">
+                            <h2 class="text-lg font-semibold text-fg">
                                 {{ t('profiles.title') }}
                             </h2>
                             <span
-                                class="rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-zinc-300"
+                                class="rounded-md border border-line bg-transparent px-2 py-0.5 text-xs font-mono font-medium text-fg-muted"
                                 >{{ profiles.length }}</span
                             >
                         </div>
-                        <p class="mt-1 text-xs text-zinc-400">
+                        <p class="mt-1 text-xs text-fg-muted">
                             {{ t('profiles.subtitle') }}
                         </p>
                     </div>
@@ -208,7 +208,7 @@
                     >
                         <button
                             @click="handleAdd"
-                            class="shrink-0 rounded-md bg-zinc-100 px-3.5 py-1.5 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white border border-zinc-100"
+                            class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
                         >
                             {{ t('actions.add') }}
                         </button>
@@ -221,8 +221,8 @@
                                         toggleSelectionMode();
                                         close();
                                     "
-                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 font-medium transition-colors"
-                                    :class="isSelectionMode ? 'text-zinc-100 font-semibold' : ''"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg font-medium transition-colors"
+                                    :class="isSelectionMode ? 'text-fg font-semibold' : ''"
                                 >
                                     {{
                                         isSelectionMode
@@ -231,14 +231,14 @@
                                     }}
                                 </button>
                                 <div
-                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                    class="my-1 border-t border-line"
                                 ></div>
                                 <button
                                     @click="
                                         handleToggleSort();
                                         close();
                                     "
-                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                                 >
                                     {{
                                         isSorting
@@ -254,12 +254,12 @@
                                         emit('manage-tags');
                                         close();
                                     "
-                                    class="w-full text-left px-3 py-2 rounded text-xs text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                    class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                                 >
                                     {{ t('actions.manageTags') }}
                                 </button>
                                 <div
-                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                    class="my-1 border-t border-line"
                                 ></div>
                                 <button
                                     @click="
@@ -276,7 +276,7 @@
                 </div>
                 <div v-if="searchable" class="relative mt-4">
                     <Search
-                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500"
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-subtle"
                         aria-hidden="true"
                     />
                     <input
@@ -286,18 +286,18 @@
                         :placeholder="t('profiles.listSearchPlaceholder')"
                         :aria-label="t('profiles.searchPlaceholder')"
                         :disabled="isSorting"
-                        class="w-full rounded-md border border-zinc-800 bg-transparent py-2 pl-9 pr-24 text-xs text-zinc-100 outline-none transition focus:border-zinc-500 disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-zinc-500"
+                        class="w-full rounded-md border border-line bg-transparent py-2 pl-9 pr-24 text-xs text-fg outline-none transition focus:border-line-strong disabled:cursor-not-allowed disabled:opacity-50 placeholder:text-fg-subtle"
                     />
                     <div
                         v-if="searchQuery"
                         class="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5"
                     >
-                        <span class="pointer-events-none text-xs font-mono text-zinc-400">
+                        <span class="pointer-events-none text-xs font-mono text-fg-muted">
                             {{ visibleCount }}/{{ profiles.length }}
                         </span>
                         <button
                             type="button"
-                            class="rounded p-0.5 text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100 cursor-pointer"
+                            class="rounded p-0.5 text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
                             :aria-label="t('actions.clearSearch')"
                             @click="searchModel = ''"
                         >
@@ -397,16 +397,16 @@
             </div>
             <div
                 v-if="!isSorting && displayProfiles.length === 0"
-                class="rounded-md border border-zinc-800 bg-[#171717] px-6 py-12 text-center"
+                class="rounded-md border border-line bg-surface px-6 py-12 text-center"
             >
-                <p class="text-sm font-medium text-zinc-200">
+                <p class="text-sm font-medium text-fg">
                     {{ t('profiles.noSearchResults') }}
                 </p>
                 <div class="mt-3 flex items-center justify-center gap-2">
                     <button
                         v-if="searchQuery"
                         type="button"
-                        class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                        class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
                         @click="searchModel = ''"
                     >
                         {{ t('actions.clearSearch') }}
@@ -414,7 +414,7 @@
                     <button
                         v-if="currentTagFilters.length > 0"
                         type="button"
-                        class="inline-flex items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-medium text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white cursor-pointer"
+                        class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
                         @click="setTagFilters([])"
                     >
                         {{ t('tags.clearFilter') }}
@@ -436,7 +436,7 @@
                 @change-page="handleChangePage"
             />
         </div>
-        <div v-else class="rounded-md border border-zinc-800 bg-[#171717] py-2">
+        <div v-else class="rounded-md border border-line bg-surface py-2">
             <EmptyState
                 :title="t('profiles.empty')"
                 :description="t('profiles.emptyDesc')"

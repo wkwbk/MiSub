@@ -89,7 +89,7 @@
         <label
             v-if="label"
             :for="id"
-            class="block font-medium text-zinc-300"
+            class="block font-medium text-fg-muted"
             :class="currentSize.label"
         >
             {{ label }}
@@ -98,7 +98,7 @@
             <!-- Icon Slot/Prop -->
             <div
                 v-if="hasIcon"
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-500 group-focus-within:text-zinc-300 transition-colors"
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-fg-subtle group-focus-within:text-fg-muted transition-colors"
             >
                 <slot name="icon">
                     <svg
@@ -121,7 +121,7 @@
             <!-- Prefix Slot/Prop -->
             <div
                 v-else-if="hasPrefix"
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-zinc-500"
+                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-fg-subtle"
             >
                 <slot name="prefix">
                     <span
@@ -141,7 +141,7 @@
                 :type="type"
                 :placeholder="placeholder"
                 :disabled="disabled"
-                class="w-full bg-transparent border border-zinc-800 text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus-visible:outline-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
+                class="w-full bg-inset border border-line text-fg placeholder:text-fg-subtle hover:border-line-strong focus:border-line-strong focus-visible:outline-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
                 :class="[
                     currentSize.input,
                     hasIcon || hasPrefix ? 'pl-9' : '',

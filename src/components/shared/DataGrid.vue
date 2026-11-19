@@ -123,13 +123,13 @@
     const tableClasses = computed(() => [
         'w-full',
         {
-            'divide-y divide-gray-200 dark:divide-gray-700': props.bordered,
-            'border border-gray-200 dark:border-gray-700': props.bordered,
+            'divide-y divide-line-subtle': props.bordered,
+            'border border-line': props.bordered,
         },
     ]);
 
     const headerClasses = computed(() => [
-        'bg-gray-50 dark:bg-gray-800',
+        'bg-surface',
         {
             'sticky top-0 z-10': props.maxHeight || props.height !== 'auto',
         },
@@ -137,9 +137,9 @@
 
     const rowClasses = computed(() => (index) => [
         {
-            'bg-white dark:bg-gray-900': !props.striped || index % 2 === 0,
-            'bg-gray-50 dark:bg-gray-800': props.striped && index % 2 === 1,
-            'hover:bg-gray-50 dark:hover:bg-gray-700': props.hoverable,
+            'bg-surface': !props.striped || index % 2 === 0,
+            'bg-surface': props.striped && index % 2 === 1,
+            'hover:bg-hover': props.hoverable,
             'cursor-pointer': props.selectable,
         },
     ]);
@@ -225,7 +225,7 @@
     <div class="data-grid">
         <!-- 表格容器 -->
         <div
-            class="overflow-hidden misub-radius-md border border-gray-200 dark:border-gray-700"
+            class="overflow-hidden misub-radius-md border border-line"
             :style="{ height, maxHeight }"
         >
             <div class="overflow-x-auto overflow-y-auto">
@@ -245,7 +245,7 @@
                                         selectedKeys.length > 0 &&
                                         selectedKeys.length < paginatedData.length
                                     "
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                    class="h-4 w-4 rounded border-line-strong text-fg focus-visible:ring-line-strong"
                                     @change="toggleAllSelection"
                                     :aria-label="t('actions.selectAllPage')"
                                 />
@@ -256,15 +256,15 @@
                                 v-for="column in columns"
                                 :key="column.key"
                                 :class="[
-                                    'px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider',
+                                    'px-6 py-3 text-left text-xs font-medium text-fg-subtle uppercase tracking-wider',
                                     column.width ? `w-${column.width}` : '',
                                     column.align === 'center' ? 'text-center' : '',
                                     column.align === 'right' ? 'text-right' : '',
                                     column.sticky === 'right'
-                                        ? 'sticky right-0 z-20 border-l border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
+                                        ? 'sticky right-0 z-20 border-l border-line bg-surface/95 backdrop-blur'
                                         : '',
                                     column.sticky === 'left'
-                                        ? 'sticky left-0 z-20 border-r border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
+                                        ? 'sticky left-0 z-20 border-r border-line bg-surface/95 backdrop-blur'
                                         : '',
                                 ]"
                             >
@@ -274,7 +274,7 @@
                                     <!-- 排序图标 -->
                                     <button
                                         v-if="column.sortable"
-                                        class="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        class="text-fg-subtle hover:text-fg"
                                         @click="handleSort(column)"
                                         :aria-label="t('common.sortColumn')"
                                     >
@@ -287,7 +287,7 @@
 
                     <!-- 表体 -->
                     <tbody
-                        class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700"
+                        class="bg-surface divide-y divide-line-subtle"
                     >
                         <!-- 加载状态 -->
                         <tr v-if="loading">
@@ -297,9 +297,9 @@
                             >
                                 <div class="flex items-center justify-center space-x-2">
                                     <Loader2
-                                        class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400"
+                                        class="animate-spin h-5 w-5 text-fg-subtle"
                                     />
-                                    <span class="text-gray-500 dark:text-gray-400">{{
+                                    <span class="text-fg-subtle">{{
                                         t('common.loading')
                                     }}</span>
                                 </div>
@@ -312,7 +312,7 @@
                                 :colspan="columns.length + (selectable ? 1 : 0)"
                                 class="px-6 py-12 text-center"
                             >
-                                <div class="text-gray-500 dark:text-gray-400">
+                                <div class="text-fg-subtle">
                                     {{ resolvedEmptyText }}
                                 </div>
                             </td>
@@ -332,7 +332,7 @@
                                 <input
                                     type="checkbox"
                                     :checked="isRowSelected(row)"
-                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                    class="h-4 w-4 rounded border-line-strong text-fg focus-visible:ring-line-strong"
                                     @click.stop
                                     @change="toggleRowSelection(row)"
                                     :aria-label="t('common.selectRow')"
@@ -349,10 +349,10 @@
                                     column.align === 'right' ? 'text-right' : '',
                                     compact ? 'py-2' : '',
                                     column.sticky === 'right'
-                                        ? 'sticky right-0 z-10 border-l border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
+                                        ? 'sticky right-0 z-10 border-l border-line bg-surface/95 backdrop-blur'
                                         : '',
                                     column.sticky === 'left'
-                                        ? 'sticky left-0 z-10 border-r border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
+                                        ? 'sticky left-0 z-10 border-r border-line bg-surface/95 backdrop-blur'
                                         : '',
                                 ]"
                             >
@@ -376,7 +376,7 @@
         <!-- 分页 -->
         <div v-if="pagination && totalPages > 1" class="mt-4">
             <div class="flex items-center justify-between">
-                <div class="text-sm text-gray-700 dark:text-gray-300">
+                <div class="text-sm text-fg-muted">
                     {{
                         t('common.itemRange', {
                             start: (currentPage - 1) * pageSize + 1,
@@ -389,7 +389,7 @@
                 <div class="flex space-x-1">
                     <button
                         :disabled="currentPage <= 1"
-                        class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-l-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        class="px-3 py-2 text-sm border border-line-strong rounded-l-md bg-surface hover:bg-hover disabled:opacity-50"
                         @click="handlePageChange(currentPage - 1)"
                     >
                         {{ t('common.prevPage') }}
@@ -399,10 +399,10 @@
                         v-for="page in Math.min(totalPages, 5)"
                         :key="page"
                         :class="[
-                            'px-3 py-2 text-sm border border-gray-300 dark:border-gray-600',
+                            'px-3 py-2 text-sm border border-line-strong',
                             currentPage === page
-                                ? 'bg-indigo-50 border-indigo-500 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300'
-                                : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700',
+                                ? 'bg-active border-line-strong text-fg font-semibold'
+                                : 'bg-surface hover:bg-hover',
                         ]"
                         @click="handlePageChange(page)"
                     >
@@ -411,7 +411,7 @@
 
                     <button
                         :disabled="currentPage >= totalPages"
-                        class="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-r-md bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                        class="px-3 py-2 text-sm border border-line-strong rounded-r-md bg-surface hover:bg-hover disabled:opacity-50"
                         @click="handlePageChange(currentPage + 1)"
                     >
                         {{ t('common.nextPage') }}

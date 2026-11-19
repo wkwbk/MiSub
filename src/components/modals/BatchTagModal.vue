@@ -68,8 +68,8 @@
     >
         <template #title>
             <div class="flex items-center gap-2">
-                <Tag class="h-4 w-4 text-zinc-500" />
-                <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                <Tag class="h-4 w-4 text-fg-subtle" />
+                <h3 class="text-base font-semibold text-fg">
                     {{ t('tags.batchTitle') }}
                 </h3>
             </div>
@@ -85,8 +85,8 @@
                         class="px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer"
                         :class="
                             mode === item.key
-                                ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100 font-semibold'
-                                : 'bg-transparent text-zinc-600 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900'
+                                ? 'bg-active text-fg border-line-strong font-semibold'
+                                : 'bg-transparent text-fg-muted border-line hover:bg-hover'
                         "
                         @click="mode = item.key"
                     >
@@ -94,12 +94,12 @@
                     </button>
                 </div>
 
-                <p class="text-xs text-zinc-500">
+                <p class="text-xs text-fg-subtle">
                     {{ modeDescription }}
                 </p>
 
                 <div v-if="mode !== 'clear'" class="flex flex-col">
-                    <label class="text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    <label class="text-xs font-medium text-fg-muted mb-1.5">
                         {{ t('tags.label') }}
                     </label>
                     <TagInput

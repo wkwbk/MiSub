@@ -39,7 +39,7 @@
 <template>
     <header
         :aria-label="t('nav.top')"
-        class="app-nav-bar md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 w-full bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
+        class="app-nav-bar md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 w-full bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
     >
         <BrandLogo to="/dashboard" text-size-class="text-lg" :icon-size="28" />
 
@@ -56,7 +56,7 @@
 
     <header
         :aria-label="t('nav.main')"
-        class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0e0e0e]/80 supports-[backdrop-filter:blur(0px)]:bg-white/60 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/60 backdrop-blur border-b border-zinc-200/80 dark:border-white/10 transition-colors duration-200 shadow-none"
+        class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
     >
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div class="shrink-0 pr-5">
@@ -68,11 +68,11 @@
                     v-for="item in navItems"
                     :key="item.path"
                     :to="item.path"
-                    class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors duration-200"
+                    class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium border transition-colors duration-200"
                     :class="
                         isActive(item.path)
-                            ? 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 font-semibold'
-                            : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-100 dark:hover:bg-zinc-900/60'
+                            ? 'bg-active text-fg border-line-strong font-semibold'
+                            : 'text-fg-muted border-transparent hover:text-fg hover:bg-hover'
                     "
                 >
                     <component :is="item.icon" class="relative z-10 h-4 w-4 shrink-0" />

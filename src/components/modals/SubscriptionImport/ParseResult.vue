@@ -27,16 +27,16 @@
         <!-- 加载状态 -->
         <div
             v-if="isLoading"
-            class="flex items-center space-x-2 text-xs text-zinc-600 dark:text-zinc-300"
+            class="flex items-center space-x-2 text-xs text-fg-muted"
         >
-            <div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-zinc-500"></div>
+            <div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-line-strong"></div>
             <span>{{ parseStatus || t('importNodes.processing') }}</span>
         </div>
 
         <!-- 成功信息 -->
         <div
             v-if="successMessage"
-            class="flex items-center space-x-2 text-xs text-zinc-700 dark:text-zinc-300"
+            class="flex items-center space-x-2 text-xs text-fg-muted"
         >
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <span>{{ successMessage }}</span>

@@ -52,10 +52,10 @@
         }
 
         if (!dirty.value) {
-            return `${baseClass} bg-gray-300 text-gray-500 cursor-not-allowed`;
+            return `${baseClass} bg-gray-300 text-fg-subtle cursor-not-allowed`;
         }
 
-        return `${baseClass} bg-indigo-600 text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-500`;
+        return `${baseClass} bg-accent text-accent-fg hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong`;
     });
 </script>
 
@@ -70,14 +70,14 @@
     >
         <div
             v-if="dirty || saveState !== 'idle'"
-            class="fixed top-4 right-4 z-50 bg-white dark:bg-gray-800 misub-radius-md shadow-lg border border-gray-200 dark:border-gray-700 p-4"
+            class="fixed top-4 right-4 z-50 bg-surface misub-radius-md shadow-lg border border-line p-4"
         >
             <div class="flex items-center space-x-3">
                 <div class="flex items-center space-x-2">
                     <!-- Status Icon -->
                     <div
                         v-if="saveState === 'saving'"
-                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"
+                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-fg"
                     ></div>
 
                     <div
@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- Status Text -->
-                <div class="text-sm text-gray-600 dark:text-gray-300">
+                <div class="text-sm text-fg-muted">
                     <span v-if="saveState === 'saving'">{{ t('dashboard.saveInProgress') }}</span>
                     <span v-else-if="saveState === 'success'">{{
                         t('dashboard.saveSuccessStatus')

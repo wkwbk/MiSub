@@ -14,6 +14,7 @@
     import { useToastStore } from '@/stores/toast.js';
     import Modal from '@/components/forms/Modal.vue';
     import Switch from '@/components/ui/Switch.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import SectionHeader from '@/components/settings/SectionHeader.vue';
     import { api } from '@/lib/http.js';
     import {
@@ -341,7 +342,7 @@
 </script>
 
 <template>
-    <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+    <section class="rounded-lg border border-line bg-surface p-6">
         <SectionHeader
             :title="t('publicLinks.managerTitle')"
             :description="t('publicLinks.managerDesc')"
@@ -361,14 +362,14 @@
                         <button
                             type="button"
                             @click="showResetConfirm = true"
-                            class="px-3 py-1.5 text-center text-xs font-medium text-zinc-300 bg-transparent hover:bg-zinc-900 hover:text-zinc-100 rounded-md border border-zinc-800"
+                            class="px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
                         >
                             {{ t('publicLinks.resetDefault') }}
                         </button>
                         <button
                             type="button"
                             @click="handleAdd"
-                            class="px-3.5 py-1.5 text-center text-xs font-semibold text-zinc-900 bg-zinc-100 hover:bg-white rounded-md border border-zinc-100 shadow-none"
+                            class="px-3.5 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
                         >
                             {{ t('publicLinks.addLink') }}
                         </button>
@@ -379,7 +380,7 @@
 
         <div v-if="publicLinksConfig.enabled" class="space-y-4">
             <!-- Category Filter Tabs -->
-            <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-zinc-800/80">
+            <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
                 <button
                     v-for="tab in categoryTabs"
                     :key="tab.value"
@@ -388,8 +389,8 @@
                     class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
                     :class="
                         activeCategory === tab.value
-                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200'
+                            ? 'bg-accent text-accent-fg border-accent font-semibold'
+                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
                     "
                 >
                     {{ tab.label }}
@@ -398,7 +399,7 @@
 
             <div
                 v-if="filteredLinks.length === 0"
-                class="py-8 text-center text-xs text-zinc-500 border border-dashed border-zinc-800 rounded-md"
+                class="py-8 text-center text-xs text-fg-subtle border border-dashed border-line rounded-md"
             >
                 {{ t('publicLinks.emptyCategory') }}
             </div>
@@ -407,11 +408,11 @@
                 <div
                     v-for="(link, index) in filteredLinks"
                     :key="link.id"
-                    class="relative bg-transparent border border-zinc-800/80 rounded-md p-4 shadow-none transition-colors hover:border-zinc-700 group"
+                    class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
                 >
                     <div class="flex items-start gap-3 min-w-0">
                         <div
-                            class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-zinc-300 overflow-hidden border border-zinc-800"
+                            class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
                         >
                             <img
                                 v-if="
@@ -429,23 +430,23 @@
 
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2">
-                                <h4 class="text-sm font-semibold text-zinc-100 truncate">
+                                <h4 class="text-sm font-semibold text-fg truncate">
                                     {{ link.name }}
                                 </h4>
                                 <span
-                                    class="px-1.5 py-0.5 text-[10px] rounded-md border border-zinc-800 bg-transparent text-zinc-400 font-mono shrink-0"
+                                    class="px-1.5 py-0.5 text-[10px] rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
                                 >
                                     {{ getCategoryLabel(link.category) }}
                                 </span>
                             </div>
-                            <p class="text-xs text-zinc-400 truncate mt-1">
+                            <p class="text-xs text-fg-muted truncate mt-1">
                                 {{ link.description }}
                             </p>
                             <a
                                 :href="link.url"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                class="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-500 hover:text-zinc-300 mt-1.5 truncate max-w-full"
+                                class="inline-flex items-center gap-1 text-[11px] font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
                             >
                                 <span class="truncate">{{ getHostname(link.url) }}</span>
                                 <ExternalLink class="w-3 h-3 shrink-0" />
@@ -454,13 +455,13 @@
                     </div>
 
                     <div
-                        class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-zinc-800 pt-3"
+                        class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3"
                     >
                         <button
                             type="button"
                             @click.stop="moveLink(link.id, -1)"
                             :disabled="index === 0"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
                         >
                             <ChevronUp class="w-3.5 h-3.5" />
                             <span>{{ t('actions.moveUp') }}</span>
@@ -469,7 +470,7 @@
                             type="button"
                             @click.stop="moveLink(link.id, 1)"
                             :disabled="index === filteredLinks.length - 1"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors disabled:opacity-40"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
                         >
                             <ChevronDown class="w-3.5 h-3.5" />
                             <span>{{ t('actions.moveDown') }}</span>
@@ -477,7 +478,7 @@
                         <button
                             type="button"
                             @click.stop="handleEdit(link)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 rounded-md transition-colors"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors"
                         >
                             <SquarePen class="w-3.5 h-3.5" />
                             <span>{{ t('actions.edit') }}</span>
@@ -485,7 +486,7 @@
                         <button
                             type="button"
                             @click.stop="handleDelete(link.id)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-zinc-800 text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
+                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
                         >
                             <Trash2 class="w-3.5 h-3.5" />
                             <span>{{ t('actions.delete') }}</span>
@@ -506,14 +507,14 @@
                     <!-- Left Column: Icon -->
                     <div class="md:col-span-5 lg:col-span-4">
                         <div
-                            class="bg-transparent rounded-md p-6 flex flex-col items-center gap-6 h-full border border-zinc-800"
+                            class="bg-transparent rounded-md p-6 flex flex-col items-center gap-6 h-full border border-line"
                         >
                             <div class="text-center space-y-3 w-full">
-                                <label class="block text-xs font-medium text-zinc-300">{{
+                                <label class="block text-xs font-medium text-fg-muted">{{
                                     t('settings.clientIconPreview')
                                 }}</label>
                                 <div
-                                    class="aspect-square w-full max-w-[140px] mx-auto rounded-md flex items-center justify-center text-5xl bg-[#131515] text-zinc-400 border border-zinc-800 overflow-hidden shadow-none"
+                                    class="aspect-square w-full max-w-[140px] mx-auto rounded-md flex items-center justify-center text-5xl bg-inset text-fg-muted border border-line overflow-hidden shadow-none"
                                 >
                                     <img
                                         v-if="
@@ -538,7 +539,7 @@
 
                             <div class="w-full space-y-4">
                                 <div class="space-y-2">
-                                    <label class="block text-xs font-medium text-zinc-300">{{
+                                    <label class="block text-xs font-medium text-fg-muted">{{
                                         t('settings.clientLocalIcon')
                                     }}</label>
                                     <input
@@ -552,7 +553,7 @@
                                         <button
                                             @click="triggerIconFileSelect"
                                             type="button"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg transition-colors"
                                             :disabled="uploadingIcon"
                                         >
                                             <Upload v-if="!uploadingIcon" class="w-3.5 h-3.5" />
@@ -567,26 +568,26 @@
                                             v-if="editingLink.icon"
                                             @click="clearIcon"
                                             type="button"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 bg-transparent border border-zinc-800 rounded-md hover:border-red-900/60 hover:bg-red-950/40 transition-colors"
+                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 bg-transparent border border-line rounded-md hover:border-red-900/60 hover:bg-red-950/40 transition-colors"
                                         >
                                             <Trash2 class="w-3.5 h-3.5" />
                                             <span>{{ t('actions.clearAll') }}</span>
                                         </button>
                                     </div>
-                                    <p v-if="isDataIcon" class="text-xs text-center text-zinc-400">
+                                    <p v-if="isDataIcon" class="text-xs text-center text-fg-muted">
                                         {{ t('settings.clientUsingLocalIcon') }}
                                     </p>
                                 </div>
 
                                 <div class="space-y-2">
-                                    <label class="block text-xs font-medium text-zinc-300"
+                                    <label class="block text-xs font-medium text-fg-muted"
                                         >URL / Emoji</label
                                     >
                                     <input
                                         v-model="iconInputValue"
                                         type="text"
                                         :placeholder="t('settings.clientIconPlaceholder')"
-                                        class="block w-full px-3 py-2 rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                                        class="block w-full px-3 py-2 rounded-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
                                     />
                                 </div>
                             </div>
@@ -596,20 +597,20 @@
                     <!-- Right Column: Form Details -->
                     <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-5">
                         <div>
-                            <label class="block text-xs font-medium text-zinc-300">
+                            <label class="block text-xs font-medium text-fg-muted">
                                 {{ t('publicLinks.nameLabel') }}
                                 <span class="text-red-400">*</span>
                             </label>
                             <input
                                 v-model="editingLink.name"
                                 type="text"
-                                class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
+                                class="mt-1 block w-full rounded-md border border-line bg-inset text-fg shadow-none focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
                                 :placeholder="t('publicLinks.namePlaceholder')"
                             />
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-zinc-300 mb-2">
+                            <label class="block text-xs font-medium text-fg-muted mb-2">
                                 {{ t('publicLinks.categoryLabel') }}
                             </label>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -621,8 +622,8 @@
                                     class="p-2 rounded-md border text-xs font-medium transition-colors text-center"
                                     :class="
                                         editingLink.category === cat.value
-                                            ? 'bg-zinc-900 border-zinc-500 text-zinc-100'
-                                            : 'bg-transparent border-zinc-800 text-zinc-500 hover:bg-zinc-900/50 hover:text-zinc-300'
+                                            ? 'bg-elevated-card border-line-strong text-fg'
+                                            : 'bg-transparent border-line text-fg-subtle hover:bg-hover hover:text-fg-muted'
                                     "
                                 >
                                     {{ t(cat.labelKey) }}
@@ -631,34 +632,35 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-zinc-300">
+                            <label class="block text-xs font-medium text-fg-muted">
                                 {{ t('publicLinks.urlLabel') }}
                                 <span class="text-red-400">*</span>
                             </label>
                             <div class="mt-1 flex rounded-md shadow-none">
                                 <span
-                                    class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-zinc-800 bg-zinc-900 text-zinc-500 font-mono text-xs"
+                                    class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-line bg-elevated-card text-fg-subtle font-mono text-xs"
                                     >URL</span
                                 >
                                 <input
                                     v-model="editingLink.url"
                                     type="text"
-                                    class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-zinc-800 bg-[#131515] text-zinc-100 font-mono focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                                    class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
                                     :placeholder="t('publicLinks.urlPlaceholder')"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-medium text-zinc-300">
+                            <label class="block text-xs font-medium text-fg-muted">
                                 {{ t('publicLinks.descriptionLabel') }}
                             </label>
-                            <textarea
+                            <Textarea
                                 v-model="editingLink.description"
                                 rows="3"
-                                class="mt-1 block w-full rounded-md border border-zinc-800 bg-[#131515] text-zinc-100 shadow-none focus:border-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 resize-none"
+                                wrapperClass="mt-1"
+                                class="sm:text-sm px-3 py-2 resize-none"
                                 :placeholder="t('publicLinks.descriptionPlaceholder')"
-                            ></textarea>
+                            />
                         </div>
                     </div>
                 </div>
@@ -668,7 +670,7 @@
                     <button
                         type="button"
                         @click="showEditModal = false"
-                        class="px-4 py-1.5 text-xs font-medium text-zinc-300 bg-transparent border border-zinc-800 rounded-md hover:bg-zinc-900 hover:text-zinc-100"
+                        class="px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg"
                     >
                         {{ t('actions.cancel') }}
                     </button>
@@ -676,7 +678,7 @@
                         type="button"
                         @click="handleSaveLink"
                         :disabled="saving"
-                        class="px-4 py-1.5 text-xs font-semibold text-zinc-900 bg-zinc-100 border border-zinc-100 rounded-md hover:bg-white disabled:opacity-50"
+                        class="px-4 py-1.5 text-xs font-semibold text-accent-fg bg-accent border border-accent rounded-md hover:opacity-90 disabled:opacity-50"
                     >
                         {{ saving ? t('settings.saving') : t('actions.save') }}
                     </button>
@@ -696,12 +698,12 @@
             <template #body>
                 <div class="space-y-3">
                     <div
-                        class="flex items-center gap-2.5 text-zinc-200 bg-transparent p-3 rounded-md border border-zinc-800"
+                        class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                         <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
                     </div>
-                    <p class="text-xs text-zinc-400">
+                    <p class="text-xs text-fg-muted">
                         {{ t('publicLinks.resetConfirmQuestion') }}
                         <br />
                         {{ t('publicLinks.resetConfirmDesc') }}
@@ -722,12 +724,12 @@
             <template #body>
                 <div class="space-y-3">
                     <div
-                        class="flex items-center gap-2.5 text-zinc-200 bg-transparent p-3 rounded-md border border-zinc-800"
+                        class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
                         <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
                     </div>
-                    <p class="text-xs text-zinc-400">
+                    <p class="text-xs text-fg-muted">
                         {{ t('publicLinks.deleteConfirmQuestion') }}
                     </p>
                 </div>

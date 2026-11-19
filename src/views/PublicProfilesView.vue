@@ -20,6 +20,11 @@
         PUBLIC_LINK_CATEGORIES,
         resolvePublicLinkIcon,
     } from '@/constants/default-public-links.js';
+    import {
+        normalizePublicCoresConfig,
+        PUBLIC_CORE_CATEGORIES,
+        resolvePublicCoreIcon,
+    } from '@/constants/default-public-cores.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -82,6 +87,33 @@
     const getLinkCategoryLabel = (category) => {
         const found = PUBLIC_LINK_CATEGORIES.find((cat) => cat.value === category);
         return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+    };
+    const publicCoresConfig = computed(() => normalizePublicCoresConfig(config.value.publicCores));
+    const enabledPublicCores = computed(() =>
+        publicCoresConfig.value.enabled
+            ? (publicCoresConfig.value.items || []).filter((item) => item.enabled !== false)
+            : []
+    );
+    const activeCoreCategory = ref('all');
+    const availableCoreCategories = computed(() => {
+        const present = new Set(enabledPublicCores.value.map((item) => item.category || 'other'));
+        const dynamicTabs = PUBLIC_CORE_CATEGORIES.filter((cat) => present.has(cat.value)).map(
+            (cat) => ({
+                value: cat.value,
+                label: t(cat.labelKey),
+            })
+        );
+        return [{ value: 'all', label: t('publicProfiles.allCategories') }, ...dynamicTabs];
+    });
+    const displayedPublicCores = computed(() => {
+        if (activeCoreCategory.value === 'all') return enabledPublicCores.value;
+        return enabledPublicCores.value.filter(
+            (item) => (item.category || 'other') === activeCoreCategory.value
+        );
+    });
+    const getCoreCategoryLabel = (category) => {
+        const found = PUBLIC_CORE_CATEGORIES.find((cat) => cat.value === category);
+        return found ? t(found.labelKey) : category || t('publicCores.categories.other');
     };
     const getLinkHostname = (rawUrl) => {
         try {
@@ -239,8 +271,13 @@
             if (!client.repo) return;
             try {
                 const data = await api.get(`/api/github/release?repo=${client.repo}`);
-                if (data && data.tag_name) {
-                    client.version = data.tag_name;
+                if (data) {
+                    if (data.tag_name) {
+                        client.version = data.tag_name;
+                    }
+                    if (data.published_at) {
+                        client.publishedAt = data.published_at;
+                    }
                 }
             } catch (e) {
                 console.warn(`Failed to fetch version for ${client.name}`, e);
@@ -293,6 +330,111 @@
             return t('publicProfiles.appStoreVersion');
         return t('publicProfiles.stableVersion');
     };
+
+    const RECENT_UPDATE_DAYS = 7;
+
+    const parsePublishedDate = (publishedAt) => {
+        if (!publishedAt) return null;
+        const date = new Date(publishedAt);
+        return Number.isNaN(date.getTime()) ? null : date;
+    };
+
+    const formatReleaseUpdatedLabel = (publishedAt) => {
+        const publishedDate = parsePublishedDate(publishedAt);
+        if (!publishedDate) return '';
+
+        const diffMs = Date.now() - publishedDate.getTime();
+        if (diffMs >= 0) {
+            const diffDays = Math.floor(diffMs / 86400000);
+            if (diffDays === 0) return t('publicProfiles.updatedToday');
+            if (diffDays <= RECENT_UPDATE_DAYS) {
+                return t('publicProfiles.updatedDaysAgo', { days: diffDays });
+            }
+        }
+
+        const year = publishedDate.getFullYear();
+        const month = String(publishedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(publishedDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const formatReleaseUpdatedTitle = (publishedAt) => {
+        const publishedDate = parsePublishedDate(publishedAt);
+        if (!publishedDate) return '';
+        return t('publicProfiles.updatedAtTooltip', {
+            date: publishedDate.toLocaleString(),
+        });
+    };
+
+    const getClientUpdatedLabel = (client) => formatReleaseUpdatedLabel(client?.publishedAt);
+
+    const getClientUpdatedTitle = (client) => formatReleaseUpdatedTitle(client?.publishedAt);
+
+    const extractGithubRepo = (item) => {
+        if (item?.repo && /^[\w\-\.]+\/[\w\-\.]+$/.test(item.repo)) {
+            return item.repo;
+        }
+        if (!item?.url) return null;
+        try {
+            const parsed = new URL(item.url);
+            if (parsed.hostname !== 'github.com' && parsed.hostname !== 'www.github.com') {
+                return null;
+            }
+            const parts = parsed.pathname.split('/').filter(Boolean);
+            if (parts.length < 2) return null;
+            const owner = parts[0];
+            const repo = parts[1].replace(/\.git$/i, '');
+            const slug = `${owner}/${repo}`;
+            return /^[\w\-\.]+\/[\w\-\.]+$/.test(slug) ? slug : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const coreReleases = ref({});
+    const fetchedCoreRepos = new Set();
+
+    const fetchCoreReleases = async (cores = []) => {
+        cores.forEach(async (core) => {
+            const repo = extractGithubRepo(core);
+            if (!repo || fetchedCoreRepos.has(repo)) return;
+            fetchedCoreRepos.add(repo);
+            try {
+                const data = await api.get(`/api/github/release?repo=${repo}`);
+                if (data?.published_at) {
+                    coreReleases.value = {
+                        ...coreReleases.value,
+                        [repo]: {
+                            version: data.tag_name || '',
+                            publishedAt: data.published_at,
+                        },
+                    };
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch release date for ${core.name}`, e);
+            }
+        });
+    };
+
+    const getCoreUpdatedLabel = (core) => {
+        const repo = extractGithubRepo(core);
+        return repo ? formatReleaseUpdatedLabel(coreReleases.value[repo]?.publishedAt) : '';
+    };
+
+    const getCoreUpdatedTitle = (core) => {
+        const repo = extractGithubRepo(core);
+        return repo ? formatReleaseUpdatedTitle(coreReleases.value[repo]?.publishedAt) : '';
+    };
+
+    watch(
+        enabledPublicCores,
+        (cores) => {
+            if (cores.length > 0) {
+                fetchCoreReleases(cores);
+            }
+        },
+        { immediate: true }
+    );
 
     const showPreviewModal = ref(false);
     const previewProfileId = ref(null);
@@ -370,7 +512,7 @@
                 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
             ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
         };
-        return map[p] || 'bg-gray-100 text-gray-800 border border-gray-200';
+        return map[p] || 'bg-gray-100 text-gray-800 border border-line';
     };
 
     onMounted(async () => {
@@ -411,10 +553,10 @@
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
                 <div class="space-y-6 animate-pulse">
-                    <div class="h-9 w-36 rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                    <div class="h-9 w-36 rounded-md bg-active"></div>
                     <div class="space-y-3">
                         <div
-                            class="h-10 w-full max-w-3xl rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"
+                            class="h-10 w-full max-w-3xl rounded-md bg-active"
                         ></div>
                         <div
                             class="h-10 w-full max-w-2xl rounded-md bg-zinc-200/70 dark:bg-zinc-800/70"
@@ -431,7 +573,7 @@
                         <div
                             v-for="i in 6"
                             :key="i"
-                            class="h-[260px] rounded-md bg-zinc-100 dark:bg-[#171717] border border-zinc-200 dark:border-zinc-800"
+                            class="h-[260px] rounded-md bg-surface border border-line"
                         ></div>
                     </div>
                 </div>
@@ -458,7 +600,7 @@
                         <h1
                             class="text-4xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[1.1] mb-8 break-words"
                         >
-                            <span class="block text-gray-900 dark:text-white">{{
+                            <span class="block text-fg">{{
                                 heroConfig.title1
                             }}</span>
                             <span
@@ -468,7 +610,7 @@
                             </span>
                         </h1>
                         <p
-                            class="text-base md:text-lg text-gray-500 dark:text-gray-400 leading-relaxed font-medium max-w-5xl"
+                            class="text-base md:text-lg text-fg-subtle leading-relaxed font-medium max-w-5xl"
                         >
                             {{ heroConfig.description }}
                         </p>
@@ -534,42 +676,42 @@
                     <div class="text-left relative z-10 lg:col-span-12 xl:col-span-12">
                         <!-- Badge -->
                         <div
-                            class="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-zinc-800 bg-transparent mb-6 shadow-none"
+                            class="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-line bg-transparent mb-6 shadow-none"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                             <span
-                                class="font-mono text-xs font-medium text-zinc-300 tracking-widest uppercase"
+                                class="font-mono text-xs font-medium text-fg-muted tracking-widest uppercase"
                                 >{{ t('publicProfiles.badge') }}</span
                             >
                         </div>
 
                         <div v-if="isInitialLoading" class="max-w-5xl space-y-4 animate-pulse">
                             <div
-                                class="h-10 w-44 rounded-md bg-zinc-900 sm:h-14 sm:w-56 lg:h-16 lg:w-72"
+                                class="h-10 w-44 rounded-md bg-elevated-card sm:h-14 sm:w-56 lg:h-16 lg:w-72"
                             ></div>
                             <div
-                                class="h-10 w-56 rounded-md bg-zinc-900 sm:h-14 sm:w-72 lg:h-16 lg:w-96"
+                                class="h-10 w-56 rounded-md bg-elevated-card sm:h-14 sm:w-72 lg:h-16 lg:w-96"
                             ></div>
-                            <div class="h-4 w-full max-w-3xl rounded-md bg-zinc-900"></div>
-                            <div class="h-4 w-5/6 max-w-2xl rounded-md bg-zinc-900"></div>
+                            <div class="h-4 w-full max-w-3xl rounded-md bg-elevated-card"></div>
+                            <div class="h-4 w-5/6 max-w-2xl rounded-md bg-elevated-card"></div>
                         </div>
 
                         <template v-else>
                             <h1
                                 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] mb-6 break-words"
                             >
-                                <span class="block text-zinc-100">
+                                <span class="block text-fg">
                                     {{ heroConfig.title1 }}
                                 </span>
                                 <span
-                                    class="block text-2xl sm:text-4xl lg:text-5xl text-zinc-400 pb-2 mt-2"
+                                    class="block text-2xl sm:text-4xl lg:text-5xl text-fg-muted pb-2 mt-2"
                                 >
                                     {{ heroConfig.title2 }}
                                 </span>
                             </h1>
 
                             <p
-                                class="text-sm md:text-base text-zinc-400 leading-relaxed max-w-4xl mb-4 break-words"
+                                class="text-sm md:text-base text-fg-muted leading-relaxed max-w-4xl mb-4 break-words"
                             >
                                 {{ heroConfig.description }}
                             </p>
@@ -597,35 +739,35 @@
                         <div
                             v-for="i in 6"
                             :key="i"
-                            class="h-[260px] bg-[#171717] rounded-md p-6 shadow-none border border-zinc-800 animate-pulse"
+                            class="h-[260px] bg-surface rounded-md p-6 shadow-none border border-line animate-pulse"
                         >
                             <div class="flex items-center gap-4 mb-6">
-                                <div class="h-10 w-10 bg-zinc-900 rounded-md"></div>
-                                <div class="h-5 bg-zinc-900 rounded-md w-1/2"></div>
+                                <div class="h-10 w-10 bg-elevated-card rounded-md"></div>
+                                <div class="h-5 bg-elevated-card rounded-md w-1/2"></div>
                             </div>
-                            <div class="h-4 bg-zinc-900 rounded-md w-full mb-3"></div>
-                            <div class="h-4 bg-zinc-900 rounded-md w-5/6 mb-8"></div>
-                            <div class="mt-auto h-10 bg-zinc-900 rounded-md"></div>
+                            <div class="h-4 bg-elevated-card rounded-md w-full mb-3"></div>
+                            <div class="h-4 bg-elevated-card rounded-md w-5/6 mb-8"></div>
+                            <div class="mt-auto h-10 bg-elevated-card rounded-md"></div>
                         </div>
                     </div>
 
                     <!-- Error State -->
                     <div
                         v-else-if="error"
-                        class="text-center py-16 bg-transparent rounded-md border border-zinc-800"
+                        class="text-center py-16 bg-transparent rounded-md border border-line"
                     >
                         <div
-                            class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-zinc-800 bg-transparent mb-4"
+                            class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-line bg-transparent mb-4"
                         >
                             <AlertTriangle class="w-6 h-6 text-red-400" />
                         </div>
-                        <h3 class="text-base font-semibold text-zinc-100 mb-2">
+                        <h3 class="text-base font-semibold text-fg mb-2">
                             {{ t('publicProfiles.loadFailed') }}
                         </h3>
-                        <p class="text-xs text-zinc-400 mb-6">{{ error }}</p>
+                        <p class="text-xs text-fg-muted mb-6">{{ error }}</p>
                         <button
                             @click="fetchPublicProfiles"
-                            class="px-5 py-2 bg-zinc-100 hover:bg-white text-zinc-900 text-xs font-semibold rounded-md shadow-none transition-colors"
+                            class="px-5 py-2 bg-accent hover:opacity-90 text-accent-fg text-xs font-semibold rounded-md shadow-none transition-colors"
                         >
                             {{ t('publicProfiles.retry') }}
                         </button>
@@ -633,7 +775,7 @@
                     <div
                         v-else-if="publicProfiles.length === 0"
                         role="status"
-                        class="py-14 px-6 text-center text-sm text-zinc-500 dark:text-zinc-400 bg-white dark:bg-[#171717] border border-zinc-200/80 dark:border-zinc-800 shadow-[0_0_13px_rgba(0,0,0,0.05)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] rounded-md"
+                        class="py-14 px-6 text-center text-sm text-fg-subtle bg-surface border border-line rounded-md"
                     >
                         {{ t('publicProfiles.empty') }}
                     </div>
@@ -662,15 +804,15 @@
                         <div class="text-center mb-8 relative">
                             <div class="relative inline-flex flex-col items-center">
                                 <span
-                                    class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
+                                    class="font-mono text-xs font-semibold tracking-widest text-fg-muted uppercase mb-2"
                                     >{{ t('publicProfiles.clientsEyebrow') }}</span
                                 >
                                 <h2
-                                    class="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight"
+                                    class="text-2xl md:text-3xl font-bold text-fg tracking-tight"
                                 >
                                     {{ t('publicProfiles.clientsTitle') }}
                                 </h2>
-                                <p class="mt-2 text-sm text-zinc-400 max-w-2xl mx-auto">
+                                <p class="mt-2 text-sm text-fg-muted max-w-2xl mx-auto">
                                     {{ t('publicProfiles.clientsDescription') }}
                                 </p>
                             </div>
@@ -689,8 +831,8 @@
                                 class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
                                 :class="
                                     activeClientPlatform === tab.value
-                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                        : 'bg-[#171717] text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                                        ? 'bg-accent text-accent-fg border-accent font-semibold'
+                                        : 'bg-surface text-fg-muted border-line hover:border-line-strong hover:text-fg'
                                 "
                             >
                                 {{ tab.label }}
@@ -701,11 +843,11 @@
                             <div
                                 v-for="client in displayedClients"
                                 :key="client.id || client.name"
-                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-zinc-800 transition-all duration-200"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div
-                                        class="h-10 w-10 rounded-md flex items-center justify-center text-2xl shadow-none bg-transparent border border-zinc-800 shrink-0 overflow-hidden"
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-2xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
                                     >
                                         <img
                                             v-if="
@@ -723,7 +865,7 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center justify-between mb-1.5">
                                             <h3
-                                                class="text-sm font-semibold text-zinc-100 truncate"
+                                                class="text-sm font-semibold text-fg truncate"
                                             >
                                                 {{ client.name }}
                                             </h3>
@@ -732,13 +874,13 @@
                                             <span
                                                 v-for="platform in client.platforms"
                                                 :key="platform"
-                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted"
                                             >
                                                 {{ getPlatformLabel(platform) }}
                                             </span>
                                         </div>
                                         <p
-                                            class="text-zinc-400 text-xs line-clamp-2 leading-relaxed h-9"
+                                            class="text-fg-muted text-xs line-clamp-2 leading-relaxed h-9"
                                         >
                                             {{ client.description }}
                                         </p>
@@ -746,20 +888,169 @@
                                 </div>
 
                                 <div
-                                    class="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800"
+                                    class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-line"
                                 >
-                                    <span
-                                        class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md"
-                                    >
-                                        {{ getClientVersionLabel(client) }}
-                                    </span>
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md shrink-0"
+                                        >
+                                            {{ getClientVersionLabel(client) }}
+                                        </span>
+                                        <span
+                                            v-if="getClientUpdatedLabel(client)"
+                                            :title="getClientUpdatedTitle(client)"
+                                            class="font-mono text-[11px] text-fg-subtle truncate"
+                                        >
+                                            {{ getClientUpdatedLabel(client) }}
+                                        </span>
+                                    </div>
 
                                     <a
                                         :href="client.url"
                                         target="_blank"
-                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link"
+                                        class="font-mono text-xs font-semibold text-fg hover:text-white flex items-center gap-1 group/link shrink-0"
                                     >
                                         {{ t('publicProfiles.download') }}
+                                        <ArrowRight
+                                            class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
+                                        />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proxy Cores Section (Xray-core, sing-box, Mihomo, Hysteria 2, etc.) -->
+                <div
+                    v-if="!error && enabledPublicCores.length > 0"
+                    class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
+                >
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center mb-8 relative">
+                            <div class="relative inline-flex flex-col items-center">
+                                <span
+                                    class="font-mono text-xs font-semibold tracking-widest text-fg-muted uppercase mb-2"
+                                    >{{ t('publicProfiles.coresEyebrow') }}</span
+                                >
+                                <h2
+                                    class="text-2xl md:text-3xl font-bold text-fg tracking-tight"
+                                >
+                                    {{ t('publicProfiles.coresTitle') }}
+                                </h2>
+                                <p class="mt-2 text-sm text-fg-muted max-w-2xl mx-auto">
+                                    {{ t('publicProfiles.coresDescription') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Core Category Tabs -->
+                        <div
+                            v-if="availableCoreCategories.length > 2"
+                            class="flex flex-wrap items-center justify-center gap-2 mb-8"
+                        >
+                            <button
+                                v-for="tab in availableCoreCategories"
+                                :key="tab.value"
+                                type="button"
+                                @click="activeCoreCategory = tab.value"
+                                class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
+                                :class="
+                                    activeCoreCategory === tab.value
+                                        ? 'bg-accent text-accent-fg border-accent font-semibold'
+                                        : 'bg-surface text-fg-muted border-line hover:border-line-strong hover:text-fg'
+                                "
+                            >
+                                {{ tab.label }}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div
+                                v-for="core in displayedPublicCores"
+                                :key="core.id || core.name"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+                            >
+                                <div class="flex items-start gap-4">
+                                    <div
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
+                                    >
+                                        <img
+                                            v-if="
+                                                resolvePublicCoreIcon(core) &&
+                                                (resolvePublicCoreIcon(core).includes('/') ||
+                                                    resolvePublicCoreIcon(core).startsWith(
+                                                        'data:'
+                                                    ) ||
+                                                    resolvePublicCoreIcon(core).startsWith('http'))
+                                            "
+                                            :src="resolvePublicCoreIcon(core)"
+                                            :alt="core.name"
+                                            class="w-full h-full object-contain rounded-md p-1"
+                                        />
+                                        <span v-else>{{
+                                            core.icon || core.name?.slice(0, 1) || '⚙️'
+                                        }}</span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                            <h3
+                                                class="text-sm font-semibold text-fg truncate"
+                                            >
+                                                {{ core.name }}
+                                            </h3>
+                                            <span
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted shrink-0"
+                                            >
+                                                {{ getCoreCategoryLabel(core.category) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            v-if="core.tags && core.tags.length > 0"
+                                            class="flex flex-wrap gap-1 mb-2"
+                                        >
+                                            <span
+                                                v-for="tag in core.tags"
+                                                :key="tag"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted"
+                                            >
+                                                {{ tag }}
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="text-fg-muted text-xs line-clamp-2 leading-relaxed h-9"
+                                        >
+                                            {{ core.description }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-line"
+                                >
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md truncate max-w-[140px] shrink-0"
+                                        >
+                                            {{ getLinkHostname(core.url) }}
+                                        </span>
+                                        <span
+                                            v-if="getCoreUpdatedLabel(core)"
+                                            :title="getCoreUpdatedTitle(core)"
+                                            class="font-mono text-[11px] text-fg-subtle truncate"
+                                        >
+                                            {{ getCoreUpdatedLabel(core) }}
+                                        </span>
+                                    </div>
+
+                                    <a
+                                        :href="core.url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-mono text-xs font-semibold text-fg hover:text-white flex items-center gap-1 group/link shrink-0"
+                                    >
+                                        {{ t('publicProfiles.viewRepo') }}
                                         <ArrowRight
                                             class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
                                         />
@@ -779,15 +1070,15 @@
                         <div class="text-center mb-8 relative">
                             <div class="relative inline-flex flex-col items-center">
                                 <span
-                                    class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
+                                    class="font-mono text-xs font-semibold tracking-widest text-fg-muted uppercase mb-2"
                                     >{{ t('publicProfiles.linksEyebrow') }}</span
                                 >
                                 <h2
-                                    class="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight"
+                                    class="text-2xl md:text-3xl font-bold text-fg tracking-tight"
                                 >
                                     {{ t('publicProfiles.linksTitle') }}
                                 </h2>
-                                <p class="mt-2 text-sm text-zinc-400 max-w-2xl mx-auto">
+                                <p class="mt-2 text-sm text-fg-muted max-w-2xl mx-auto">
                                     {{ t('publicProfiles.linksDescription') }}
                                 </p>
                             </div>
@@ -806,8 +1097,8 @@
                                 class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
                                 :class="
                                     activeLinkCategory === tab.value
-                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
-                                        : 'bg-[#171717] text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                                        ? 'bg-accent text-accent-fg border-accent font-semibold'
+                                        : 'bg-surface text-fg-muted border-line hover:border-line-strong hover:text-fg'
                                 "
                             >
                                 {{ tab.label }}
@@ -818,11 +1109,11 @@
                             <div
                                 v-for="link in displayedPublicLinks"
                                 :key="link.id || link.name"
-                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-zinc-800 transition-all duration-200"
+                                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
                             >
                                 <div class="flex items-start gap-4">
                                     <div
-                                        class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-zinc-800 shrink-0 overflow-hidden"
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
                                     >
                                         <img
                                             v-if="
@@ -845,18 +1136,18 @@
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center justify-between gap-2 mb-1.5">
                                             <h3
-                                                class="text-sm font-semibold text-zinc-100 truncate"
+                                                class="text-sm font-semibold text-fg truncate"
                                             >
                                                 {{ link.name }}
                                             </h3>
                                             <span
-                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400 shrink-0"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted shrink-0"
                                             >
                                                 {{ getLinkCategoryLabel(link.category) }}
                                             </span>
                                         </div>
                                         <p
-                                            class="text-zinc-400 text-xs line-clamp-2 leading-relaxed h-9"
+                                            class="text-fg-muted text-xs line-clamp-2 leading-relaxed h-9"
                                         >
                                             {{ link.description }}
                                         </p>
@@ -864,10 +1155,10 @@
                                 </div>
 
                                 <div
-                                    class="mt-4 flex items-center justify-between pt-3 border-t border-zinc-800"
+                                    class="mt-4 flex items-center justify-between pt-3 border-t border-line"
                                 >
                                     <span
-                                        class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md truncate max-w-[60%]"
+                                        class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md truncate max-w-[60%]"
                                     >
                                         {{ getLinkHostname(link.url) }}
                                     </span>
@@ -876,7 +1167,7 @@
                                         :href="link.url"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link shrink-0"
+                                        class="font-mono text-xs font-semibold text-fg hover:text-white flex items-center gap-1 group/link shrink-0"
                                     >
                                         {{ t('publicProfiles.visitSite') }}
                                         <ArrowRight

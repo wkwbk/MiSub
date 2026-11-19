@@ -27,7 +27,7 @@
     <div>
         <label
             for="subscription-url"
-            class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-2"
+            class="block text-xs font-medium text-fg-muted mb-2"
         >
             {{ t('importNodes.subscriptionUrl') }}
         </label>
@@ -36,13 +36,13 @@
             v-model="urlModel"
             type="url"
             placeholder="https://example.com/subscription-link"
-            class="w-full px-3 py-2 text-sm font-mono border border-zinc-300 dark:border-zinc-800 rounded-md bg-white dark:bg-[#131515] text-zinc-900 dark:text-zinc-100 focus-visible:outline-hidden focus:border-zinc-500 disabled:opacity-50"
+            class="w-full px-3 py-2 text-sm font-mono border border-line rounded-md bg-inset text-fg focus-visible:outline-hidden focus:border-line-strong disabled:opacity-50"
             @keyup.enter="emit('submit')"
             :disabled="isLoading"
         />
     </div>
 
-    <div class="text-xs text-zinc-500">
+    <div class="text-xs text-fg-subtle">
         <p>{{ t('importNodes.importHint') }}</p>
     </div>
 </template>

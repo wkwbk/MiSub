@@ -203,7 +203,7 @@
 <template>
     <div class="space-y-4">
         <!-- 默认显示语言 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.defaultLanguageTitle')"
                 :description="t('settings.defaultLanguageDesc')"
@@ -225,7 +225,7 @@
         </section>
 
         <!-- 订阅基本信息配置 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.subscriptionConfigTitle')"
                 :description="t('settings.subscriptionConfigDesc')"
@@ -271,13 +271,13 @@
                     />
                 </div>
             </div>
-            <p class="mt-4 text-xs text-zinc-500 leading-relaxed">
+            <p class="mt-4 text-xs text-fg-subtle leading-relaxed">
                 {{ t('settings.subscriptionTokenRotationHint') }}
             </p>
         </section>
 
         <!-- 功能开关区域 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.featureControlTitle')"
                 :description="t('settings.featureControlDesc')"
@@ -287,25 +287,25 @@
                     <SlidersHorizontal class="h-4 w-4" />
                 </template>
             </SectionHeader>
-            <div class="divide-y divide-zinc-800/60">
+            <div class="divide-y divide-line-subtle">
                 <!-- 订阅自动更新间隔 -->
                 <div class="py-5 first:pt-0 last:pb-0">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="space-y-1">
-                            <p class="text-sm font-medium text-zinc-100">
+                            <p class="text-sm font-medium text-fg">
                                 {{ t('settings.autoUpdateInterval') }}
                             </p>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
+                            <p class="text-xs text-fg-muted leading-relaxed">
                                 {{ t('settings.autoUpdateDesc') }}
                             </p>
                         </div>
                         <div class="flex flex-wrap items-center gap-3 shrink-0">
                             <div
                                 :class="[
-                                    'flex items-center h-8 rounded-md border bg-[#131515] px-2.5 transition-colors',
+                                    'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
                                     isCustomInterval
-                                        ? 'border-zinc-400 ring-1 ring-zinc-400/20'
-                                        : 'border-zinc-800 hover:border-zinc-700 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500/40',
+                                        ? 'border-line-strong'
+                                        : 'border-line hover:border-line-strong focus-within:border-line-strong',
                                 ]"
                             >
                                 <input
@@ -316,17 +316,17 @@
                                     @blur="handleCustomIntervalBlur"
                                     :placeholder="t('settings.customInterval')"
                                     :min="MIN_CUSTOM_INTERVAL"
-                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-zinc-100 placeholder-zinc-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                     :aria-label="t('settings.autoUpdateInterval')"
                                 />
                                 <span
-                                    class="text-[11px] text-zinc-500 select-none pl-2 ml-1 border-l border-zinc-800/80 whitespace-nowrap"
+                                    class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap"
                                 >
                                     {{ t('settings.minutes') }}
                                 </span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <span class="text-xs text-zinc-500 mr-0.5 whitespace-nowrap">{{
+                                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{
                                     t('settings.quickSelect')
                                 }}</span>
                                 <button
@@ -342,8 +342,8 @@
                                     :class="[
                                         'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
                                         settings.autoUpdateInterval === option.value
-                                            ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
-                                            : 'bg-transparent text-zinc-400 border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100',
+                                            ? 'bg-active text-fg border-line-strong font-semibold'
+                                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
                                     ]"
                                 >
                                     {{ option.label }}
@@ -364,10 +364,10 @@
                 <div class="py-5 first:pt-0 last:pb-0 space-y-4">
                     <div class="flex items-center justify-between gap-6">
                         <div class="space-y-1">
-                            <p class="text-sm font-medium text-zinc-100">
+                            <p class="text-sm font-medium text-fg">
                                 {{ t('settings.accessLogTitle') }}
                             </p>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
+                            <p class="text-xs text-fg-muted leading-relaxed">
                                 {{ t('settings.accessLogDesc') }}
                             </p>
                             <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
@@ -380,13 +380,13 @@
 
                     <div
                         v-if="settings.enableAccessLog"
-                        class="pl-4 border-l-2 border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                        class="pl-4 border-l-2 border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                     >
                         <div class="space-y-1">
-                            <p class="text-xs font-medium text-zinc-200">
+                            <p class="text-xs font-medium text-fg">
                                 {{ t('settings.accessLogMode') }}
                             </p>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
+                            <p class="text-xs text-fg-muted leading-relaxed">
                                 {{ t('settings.accessLogModeDesc') }}
                             </p>
                         </div>
@@ -405,10 +405,10 @@
                 <!-- 流量与到期时间节点 -->
                 <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
                     <div class="space-y-1">
-                        <p class="text-sm font-medium text-zinc-100">
+                        <p class="text-sm font-medium text-fg">
                             {{ t('settings.trafficNodeTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
+                        <p class="text-xs text-fg-muted leading-relaxed">
                             {{ t('settings.trafficNodeDesc') }}
                         </p>
                     </div>
@@ -420,10 +420,10 @@
                     class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
                     <div class="space-y-1">
-                        <p class="text-sm font-medium text-zinc-100">
+                        <p class="text-sm font-medium text-fg">
                             {{ t('settings.mergeExpireStrategyTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
+                        <p class="text-xs text-fg-muted leading-relaxed">
                             {{ t('settings.mergeExpireStrategyDesc') }}
                         </p>
                     </div>
@@ -441,7 +441,7 @@
         </section>
 
         <!-- Web 访问控制 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('settings.webAccessTitle')"
                 :description="t('settings.webAccessDesc')"
@@ -452,14 +452,14 @@
                 </template>
             </SectionHeader>
 
-            <div class="divide-y divide-zinc-800/60">
+            <div class="divide-y divide-line-subtle">
                 <!-- 公开页访问 -->
                 <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
                     <div class="space-y-1">
-                        <p class="text-sm font-medium text-zinc-100">
+                        <p class="text-sm font-medium text-fg">
                             {{ t('settings.publicPageAccessTitle') }}
                         </p>
-                        <p class="text-xs text-zinc-400 leading-relaxed">
+                        <p class="text-xs text-fg-muted leading-relaxed">
                             {{ t('settings.publicPageAccessDesc') }}
                         </p>
                     </div>
@@ -470,10 +470,10 @@
                 <div class="py-5 first:pt-0 last:pb-0 space-y-4">
                     <div class="flex items-center justify-between gap-6">
                         <div class="space-y-1">
-                            <p class="text-sm font-medium text-zinc-100">
+                            <p class="text-sm font-medium text-fg">
                                 {{ t('settings.disguisePageTitle') }}
                             </p>
-                            <p class="text-xs text-zinc-400 leading-relaxed">
+                            <p class="text-xs text-fg-muted leading-relaxed">
                                 {{ t('settings.disguisePageDesc') }}
                             </p>
                         </div>
@@ -482,11 +482,11 @@
 
                     <div
                         v-show="disguiseConfig.enabled"
-                        class="pl-4 border-l-2 border-zinc-800 space-y-4 transition-all duration-300"
+                        class="pl-4 border-l-2 border-line space-y-4 transition-all duration-300"
                     >
                         <div>
                             <label
-                                class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2.5 block"
+                                class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-2.5 block"
                                 >{{ t('settings.disguiseStrategy') }}</label
                             >
                             <div class="flex flex-col sm:flex-row gap-6">
@@ -495,14 +495,14 @@
                                         type="radio"
                                         value="default"
                                         v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                                        class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
                                     />
                                     <div class="ml-3 space-y-0.5">
                                         <span
-                                            class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
+                                            class="block text-sm font-medium text-fg group-hover:text-fg"
                                             >{{ t('settings.disguiseDefault404') }}</span
                                         >
-                                        <span class="block text-xs text-zinc-500">{{
+                                        <span class="block text-xs text-fg-subtle">{{
                                             t('settings.disguiseDefault404Desc')
                                         }}</span>
                                     </div>
@@ -512,14 +512,14 @@
                                         type="radio"
                                         value="redirect"
                                         v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-zinc-100 focus-visible:ring-zinc-500 border-zinc-700 bg-zinc-900"
+                                        class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
                                     />
                                     <div class="ml-3 space-y-0.5">
                                         <span
-                                            class="block text-sm font-medium text-zinc-200 group-hover:text-zinc-100"
+                                            class="block text-sm font-medium text-fg group-hover:text-fg"
                                             >{{ t('settings.disguiseRedirect') }}</span
                                         >
-                                        <span class="block text-xs text-zinc-500">{{
+                                        <span class="block text-xs text-fg-subtle">{{
                                             t('settings.disguiseRedirectDesc')
                                         }}</span>
                                     </div>
@@ -539,7 +539,7 @@
                             />
                         </div>
 
-                        <p class="flex items-center gap-2 text-xs text-zinc-500">
+                        <p class="flex items-center gap-2 text-xs text-fg-subtle">
                             <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
                             <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
                         </p>
@@ -577,7 +577,7 @@
                             type="search"
                         />
                     </div>
-                    <p class="text-xs text-zinc-500 mt-2 leading-relaxed">
+                    <p class="text-xs text-fg-subtle mt-2 leading-relaxed">
                         {{ t('settings.customAdminPathHint') }}
                     </p>
                     <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">

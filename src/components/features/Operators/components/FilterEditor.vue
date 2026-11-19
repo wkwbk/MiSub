@@ -88,7 +88,7 @@
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <label
-                        class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
+                        class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight"
                         >{{ t('operators.protocolLimit') }}</label
                     >
                     <button
@@ -100,7 +100,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors',
-                            params.protocols.enabled ? 'text-zinc-100' : 'text-zinc-500',
+                            params.protocols.enabled ? 'text-fg' : 'text-fg-subtle',
                         ]"
                     >
                         {{ statusLabel(params.protocols.enabled) }}
@@ -108,7 +108,7 @@
                 </div>
                 <div
                     v-if="params.protocols.enabled"
-                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
+                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-line"
                 >
                     <button
                         v-for="p in commonProtocols"
@@ -117,8 +117,8 @@
                         :class="[
                             'px-2 py-1 rounded-md font-mono text-[10px] font-semibold uppercase transition-all',
                             params.protocols.values?.includes(p)
-                                ? 'bg-zinc-100 text-zinc-900'
-                                : 'bg-transparent text-zinc-400 border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200',
+                                ? 'bg-accent text-accent-fg'
+                                : 'bg-transparent text-fg-muted border border-line hover:bg-hover hover:text-fg',
                         ]"
                     >
                         {{ p }}
@@ -130,7 +130,7 @@
             <div class="space-y-2">
                 <div class="flex items-center justify-between">
                     <label
-                        class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight"
+                        class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight"
                         >{{ t('operators.regionLimit') }}</label
                     >
                     <button
@@ -142,7 +142,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium transition-colors',
-                            params.regions.enabled ? 'text-zinc-100' : 'text-zinc-500',
+                            params.regions.enabled ? 'text-fg' : 'text-fg-subtle',
                         ]"
                     >
                         {{ statusLabel(params.regions.enabled) }}
@@ -150,7 +150,7 @@
                 </div>
                 <div
                     v-if="params.regions.enabled"
-                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
+                    class="flex flex-wrap gap-1.5 p-2 bg-transparent rounded-md border border-line"
                 >
                     <button
                         v-for="r in commonRegions"
@@ -159,8 +159,8 @@
                         :class="[
                             'px-2 py-1 rounded-md text-[10px] font-semibold transition-all',
                             params.regions.values?.includes(r)
-                                ? 'bg-zinc-100 text-zinc-900'
-                                : 'bg-transparent text-zinc-400 border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-200',
+                                ? 'bg-accent text-accent-fg'
+                                : 'bg-transparent text-fg-muted border border-line hover:bg-hover hover:text-fg',
                         ]"
                     >
                         {{ regionLabel(r) }}
@@ -172,7 +172,7 @@
         <!-- Name Rules (Include/Exclude) -->
         <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
             <div class="flex items-center justify-between">
-                <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-tight">
+                <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">
                     {{
                         t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex')
                     }}
@@ -181,7 +181,7 @@
                     <button
                         v-if="params[type].enabled"
                         @click="addRule(type)"
-                        class="text-[10px] text-zinc-200 font-semibold hover:text-white"
+                        class="text-[10px] text-fg font-semibold hover:text-white"
                     >
                         + {{ t('operators.add') }}
                     </button>
@@ -191,7 +191,7 @@
                         "
                         :class="[
                             'text-[10px] font-medium',
-                            params[type].enabled ? 'text-zinc-100' : 'text-zinc-500',
+                            params[type].enabled ? 'text-fg' : 'text-fg-subtle',
                         ]"
                     >
                         {{ statusLabel(params[type].enabled) }}
@@ -209,23 +209,23 @@
                         v-model="rule.pattern"
                         @input="normalizeRuleFlags(type, idx)"
                         :placeholder="t('operators.regexPlaceholder')"
-                        class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-[#131515] border border-zinc-800 text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 transition-all outline-none"
+                        class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle focus:border-line-strong transition-all outline-none"
                         :aria-label="t('operators.regexPlaceholder')"
                     />
                     <button
                         @click="removeRule(type, idx)"
-                        class="p-1.5 text-zinc-500 hover:text-red-400 touch-target"
+                        class="p-1.5 text-fg-subtle hover:text-red-400 touch-target"
                         :aria-label="t('operators.removeRule')"
                     >
                         <X class="h-3.5 w-3.5" />
                     </button>
                 </div>
-                <p class="text-[10px] text-zinc-500 px-1">
+                <p class="text-[10px] text-fg-subtle px-1">
                     {{ t('operators.regexFlagsHint') }}
                 </p>
                 <div
                     v-if="!params[type].rules?.length"
-                    class="text-center py-2 text-[10px] text-zinc-500 italic"
+                    class="text-center py-2 text-[10px] text-fg-subtle italic"
                 >
                     {{ t('operators.filterEmptyRules') }}
                 </div>

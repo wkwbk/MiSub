@@ -121,7 +121,7 @@
 <template>
     <div class="space-y-4">
         <!-- 外部管理 API -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('systemSettings.externalApiTitle')"
                 :description="t('systemSettings.externalApiDesc')"
@@ -139,10 +139,10 @@
 
             <div class="space-y-5">
                 <div class="space-y-1.5">
-                    <p class="text-xs leading-relaxed text-zinc-400">
+                    <p class="text-xs leading-relaxed text-fg-muted">
                         {{ t('systemSettings.externalApiHint') }}
                     </p>
-                    <p class="text-xs font-mono leading-relaxed text-zinc-500">
+                    <p class="text-xs font-mono leading-relaxed text-fg-subtle">
                         {{ t('systemSettings.externalApiPathHint') }}
                     </p>
                 </div>
@@ -163,13 +163,13 @@
                 <div class="flex flex-wrap gap-2.5">
                     <button
                         @click="handleGenerateExternalApiToken(settings)"
-                        class="px-3.5 py-1.5 text-xs font-semibold text-zinc-900 rounded-md bg-zinc-100 border border-zinc-100 hover:bg-white transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-semibold text-accent-fg rounded-md bg-accent border border-accent hover:opacity-90 transition-colors"
                     >
                         {{ t('systemSettings.externalApiGenerateToken') }}
                     </button>
                     <button
                         @click="handleCopyExternalApiToken(settings)"
-                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-zinc-800 bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+                        class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                     >
                         {{ t('systemSettings.externalApiCopyToken') }}
                     </button>
@@ -178,7 +178,7 @@
         </section>
 
         <!-- 备份与恢复 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('systemSettings.backupRestoreTitle')"
                 :description="t('systemSettings.backupRestoreDesc')"
@@ -190,13 +190,13 @@
                 <template #actions>
                     <button
                         @click="exportBackup"
-                        class="px-4 py-1.5 text-xs font-semibold text-zinc-900 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-zinc-100 border border-zinc-100 hover:bg-white"
+                        class="px-4 py-1.5 text-xs font-semibold text-accent-fg rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-accent border border-accent hover:opacity-90"
                     >
                         {{ t('systemSettings.exportBackup') }}
                     </button>
                     <button
                         @click="importBackup"
-                        class="px-4 py-1.5 text-xs font-medium text-zinc-300 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-zinc-800 hover:bg-zinc-900 hover:text-zinc-100"
+                        class="px-4 py-1.5 text-xs font-medium text-fg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-line hover:bg-hover hover:text-fg"
                     >
                         {{ t('systemSettings.importBackup') }}
                     </button>
@@ -205,7 +205,7 @@
         </section>
 
         <!-- 管理员安全设置 -->
-        <section class="rounded-lg border border-zinc-800 bg-[#171717] p-6">
+        <section class="rounded-lg border border-line bg-surface p-6">
             <SectionHeader
                 :title="t('systemSettings.adminSecurityTitle')"
                 :description="t('systemSettings.adminSecurityDesc')"
@@ -235,9 +235,9 @@
                 <button
                     @click="handleUpdatePassword"
                     :disabled="isUpdatingPassword || !passwordForm.newPassword"
-                    class="px-4 py-1.5 rounded-md text-zinc-900 text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-zinc-100 border border-zinc-100 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-4 py-1.5 rounded-md text-accent-fg text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-accent border border-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <Loader2 v-if="isUpdatingPassword" class="animate-spin h-4 w-4 text-zinc-600" />
+                    <Loader2 v-if="isUpdatingPassword" class="animate-spin h-4 w-4 text-fg-subtle" />
                     <span>{{
                         isUpdatingPassword
                             ? t('systemSettings.updating')
@@ -248,7 +248,7 @@
         </section>
 
         <!-- 危险区域 -->
-        <section class="rounded-lg border border-red-900/50 bg-[#171717] p-6">
+        <section class="rounded-lg border border-red-900/50 bg-surface p-6">
             <SectionHeader
                 :title="t('systemSettings.dangerZoneTitle')"
                 :description="t('systemSettings.dangerZoneDesc')"
@@ -260,10 +260,10 @@
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="space-y-1">
-                    <h4 class="text-sm font-medium text-zinc-100">
+                    <h4 class="text-sm font-medium text-fg">
                         {{ t('systemSettings.factoryResetTitle') }}
                     </h4>
-                    <p class="text-xs text-zinc-400 leading-relaxed">
+                    <p class="text-xs text-fg-muted leading-relaxed">
                         <span v-html="t('systemSettings.factoryResetDesc')"></span>
                     </p>
                 </div>

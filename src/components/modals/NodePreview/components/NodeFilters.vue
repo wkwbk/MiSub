@@ -76,13 +76,13 @@
 <template>
     <!-- 响应式网格布局 -->
     <div
-        class="rounded-md border border-zinc-200 dark:border-zinc-800 bg-zinc-50/60 dark:bg-[#131515]/70 p-3.5 shadow-none sm:p-4"
+        class="rounded-md border border-line bg-inset p-3.5 shadow-none sm:p-4"
     >
         <div class="flex flex-col gap-3 lg:grid lg:grid-cols-4 lg:items-end sm:gap-4">
             <!-- 搜索 (移动端置顶) -->
             <div class="w-full">
                 <label
-                    class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
+                    class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider"
                 >
                     {{ t('nodePreview.searchLabel') }}
                 </label>
@@ -92,11 +92,11 @@
                             v-model="searchModel"
                             type="text"
                             :placeholder="t('nodePreview.searchPlaceholder')"
-                            class="w-full rounded-md border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-[#131515] px-3 py-2 pr-9 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 focus:border-zinc-500 focus:outline-hidden transition-colors shadow-none"
+                            class="w-full rounded-md border border-line bg-inset px-3 py-2 pr-9 text-sm text-fg placeholder:text-fg-subtle focus:border-line-strong focus:outline-hidden transition-colors shadow-none"
                             :aria-label="t('nodePreview.searchLabel')"
                         />
                         <div
-                            class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-500"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-fg-subtle"
                         >
                             <Search class="w-4 h-4" />
                         </div>
@@ -108,8 +108,8 @@
                         @click="emit('update:showProcessed', !showProcessed)"
                         :class="
                             showProcessed
-                                ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
-                                : 'bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-800'
+                                ? 'bg-active text-fg border-line-strong'
+                                : 'bg-transparent text-fg-subtle border-line'
                         "
                         class="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-md border transition-colors lg:hidden"
                         :aria-label="t('nodePreview.toggleProcessed')"
@@ -125,7 +125,7 @@
                 <!-- 协议筛选 -->
                 <div>
                     <label
-                        class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
+                        class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider"
                     >
                         {{ t('nodePreview.protocolFilterLabel') }}
                     </label>
@@ -145,7 +145,7 @@
                 <!-- 地区筛选 -->
                 <div>
                     <label
-                        class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
+                        class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider"
                     >
                         {{ t('nodePreview.regionFilterLabel') }}
                     </label>
@@ -167,19 +167,19 @@
                 <!-- 视图切换 -->
                 <div>
                     <label
-                        class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
+                        class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider"
                     >
                         {{ t('nodePreview.layoutLabel') }}
                     </label>
                     <div
-                        class="inline-flex items-center border border-zinc-300 dark:border-zinc-800 rounded-md overflow-hidden divide-x divide-zinc-300 dark:divide-zinc-800"
+                        class="inline-flex items-center border border-line rounded-md overflow-hidden divide-x divide-line"
                     >
                         <button
                             @click="emit('update:viewMode', 'list')"
                             :class="
                                 viewMode === 'list'
-                                    ? 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                                    : 'bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'
+                                    ? 'bg-accent text-accent-fg'
+                                    : 'bg-transparent text-fg-subtle hover:text-fg'
                             "
                             class="flex h-[36px] w-[36px] items-center justify-center text-sm font-medium transition-colors"
                             :title="t('common.listView')"
@@ -191,8 +191,8 @@
                             @click="emit('update:viewMode', 'card')"
                             :class="
                                 viewMode === 'card'
-                                    ? 'bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900'
-                                    : 'bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'
+                                    ? 'bg-accent text-accent-fg'
+                                    : 'bg-transparent text-fg-subtle hover:text-fg'
                             "
                             class="flex h-[36px] w-[36px] items-center justify-center text-sm font-medium transition-colors"
                             :title="t('common.cardView')"
@@ -206,7 +206,7 @@
                 <!-- 规则处理 -->
                 <div v-if="isProcessedToggleVisible">
                     <label
-                        class="block text-[10px] uppercase font-medium text-zinc-500 mb-1.5 tracking-wider"
+                        class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider"
                     >
                         {{ t('nodePreview.optimizationLabel') }}
                     </label>
@@ -215,8 +215,8 @@
                             @click="emit('update:showProcessed', !showProcessed)"
                             :class="
                                 showProcessed
-                                    ? 'bg-zinc-900 text-zinc-100 border-zinc-900 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-100'
-                                    : 'bg-transparent text-zinc-500 border-zinc-300 dark:border-zinc-800 hover:text-zinc-900 dark:hover:text-zinc-100'
+                                    ? 'bg-active text-fg border-line-strong'
+                                    : 'bg-transparent text-fg-subtle border-line hover:text-fg'
                             "
                             class="flex h-[38px] w-[38px] items-center justify-center rounded-md border text-sm font-medium transition-colors"
                             :title="t('nodePreview.toggleRawName')"

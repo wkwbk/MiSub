@@ -58,7 +58,7 @@
 
 <template>
     <div
-        class="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent text-zinc-300 font-medium transition-colors"
+        class="inline-flex items-center gap-2 rounded-md border border-line bg-transparent text-fg-muted font-medium transition-colors"
         :class="[sizeClasses.container]"
         role="status"
         aria-live="polite"

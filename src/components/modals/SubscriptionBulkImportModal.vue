@@ -53,12 +53,12 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <Layers class="h-5 w-5 text-zinc-400 shrink-0" />
+                <Layers class="h-5 w-5 text-fg-muted shrink-0" />
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ t('subscriptionBulkImport.title') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
+                    <p class="mt-0.5 text-xs text-fg-muted">
                         {{ t('subscriptionBulkImport.description') }}
                     </p>
                 </div>
@@ -68,14 +68,14 @@
         <template #footer>
             <button
                 @click="emit('update:show', false)"
-                class="px-4 py-2 border border-zinc-800 bg-transparent hover:bg-zinc-900 text-zinc-300 hover:text-zinc-100 font-medium text-xs rounded-md transition-colors"
+                class="px-4 py-2 border border-line bg-transparent hover:bg-hover text-fg-muted hover:text-fg font-medium text-xs rounded-md transition-colors"
             >
                 {{ t('actions.cancel') }}
             </button>
             <button
                 @click="handleConfirm"
                 :disabled="!importText.trim()"
-                class="px-4 py-2 bg-zinc-100 hover:bg-white disabled:opacity-50 disabled:pointer-events-none text-zinc-900 font-semibold text-xs rounded-md transition-colors"
+                class="px-4 py-2 bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
             >
                 {{ t('actions.confirm') }}
             </button>
@@ -85,7 +85,7 @@
             <div class="space-y-5">
                 <div class="relative">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-semibold text-zinc-400 mb-1">
+                        <label class="text-xs font-semibold text-fg-muted mb-1">
                             {{ t('subscriptionBulkImport.tagsLabel') }}
                         </label>
                         <TagInput
@@ -102,7 +102,7 @@
                         :rows="8"
                         placeholder="https://example.com/api/v1/client/subscribe?token=...&#10;http://sub.example.com/link/..."
                     />
-                    <p class="text-xs text-zinc-500">
+                    <p class="text-xs text-fg-subtle">
                         {{ t('subscriptionBulkImport.helper') }}
                     </p>
                 </div>

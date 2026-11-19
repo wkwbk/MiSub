@@ -27,8 +27,8 @@
         <aside
             :class="
                 inModal
-                    ? 'sticky top-0 z-20 px-3 py-2 bg-white/95 dark:bg-[#171717]/95 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 md:static md:w-60 lg:w-64 shrink-0 md:border-b-0 md:border-r md:p-3 md:bg-transparent md:dark:bg-transparent md:backdrop-blur-none'
-                    : 'sticky top-14 z-30 will-change-transform -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-zinc-50 dark:bg-[#131515] border-b border-zinc-200/80 dark:border-zinc-800/80 mb-4 md:mx-0 md:mb-0 md:w-64 lg:w-68 shrink-0 md:top-20 md:z-20 md:rounded-lg md:border md:border-zinc-200 md:dark:border-zinc-800 md:bg-white md:dark:bg-[#171717] md:p-2.5 md:shadow-[0_0_13px_rgba(0,0,0,0.11)] md:dark:shadow-[0_0_15px_rgba(0,0,0,0.45)]'
+                    ? 'sticky top-0 z-20 px-3 py-2 bg-elevated/95 backdrop-blur-md border-b border-line md:static md:w-60 lg:w-64 shrink-0 md:border-b-0 md:border-r md:p-3 md:bg-transparent md:backdrop-blur-none'
+                    : 'sticky top-14 z-30 will-change-transform -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-canvas border-b border-line mb-4 md:mx-0 md:mb-0 md:w-64 lg:w-68 shrink-0 md:top-20 md:z-20 md:rounded-lg md:border md:border-line md:bg-surface md:p-2.5 md:shadow-[var(--shadow-card)]'
             "
         >
             <div
@@ -54,16 +54,20 @@
             </div>
 
             <!-- Sticky / Floating Footer Area -->
-            <div
-                v-if="!hideFooter"
-                :class="
-                    inModal
-                        ? 'shrink-0 px-4 md:px-6 py-3 bg-white/95 dark:bg-[#131515]/95 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-sm'
-                        : 'fixed inset-x-4 bottom-24 sm:inset-x-auto sm:right-4 md:bottom-8 md:right-8 z-50 will-change-transform flex items-center justify-end gap-2 pointer-events-none'
-                "
-            >
-                <slot name="footer"></slot>
-            </div>
+            <!-- 独立设置页使用 Teleport 挂载到 body，避免路由过渡动画（route-fade）的 transform 临时接管 fixed 定位基准导致按钮位置跳动 -->
+            <Teleport to="body" :disabled="inModal">
+                <div
+                    v-if="!hideFooter"
+                    data-testid="settings-footer"
+                    :class="
+                        inModal
+                            ? 'modal-chrome-footer shrink-0 px-4 md:px-6 py-3 flex items-center justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-sm'
+                            : 'fixed inset-x-4 bottom-24 sm:inset-x-auto sm:right-4 md:bottom-8 md:right-8 z-50 will-change-transform flex items-center justify-end gap-2 pointer-events-none'
+                    "
+                >
+                    <slot name="footer"></slot>
+                </div>
+            </Teleport>
         </main>
     </div>
 </template>

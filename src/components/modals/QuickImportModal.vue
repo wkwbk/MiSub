@@ -151,16 +151,16 @@
         <template #title>
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ t('quickImport.title') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-500">
+                    <p class="mt-0.5 text-xs text-fg-subtle">
                         {{ t('quickImport.subtitle') }}
                     </p>
                 </div>
                 <button
                     @click="closeModal"
-                    class="w-8 h-8 flex items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+                    class="w-8 h-8 flex items-center justify-center rounded-md border border-line bg-transparent text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
                     :aria-label="t('common.close')"
                 >
                     <X class="w-4 h-4" />
@@ -168,12 +168,12 @@
             </div>
             <div
                 v-if="detectedPlatform"
-                class="mt-3 flex items-center gap-2 px-3 py-2 bg-transparent border border-zinc-200 dark:border-zinc-800 rounded-md"
+                class="mt-3 flex items-center gap-2 px-3 py-2 bg-transparent border border-line rounded-md"
             >
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                <span class="text-xs text-zinc-600 dark:text-zinc-400">
+                <span class="text-xs text-fg-muted">
                     {{ t('quickImport.detectedPrefix') }}
-                    <strong class="font-mono text-zinc-900 dark:text-zinc-100">{{
+                    <strong class="font-mono text-fg">{{
                         getPlatformLabel(detectedPlatform)
                     }}</strong>{{ t('quickImport.detectedSuffix') }}
                 </span>
@@ -181,7 +181,7 @@
         </template>
 
         <template #body>
-            <div v-if="groupedClients.length === 0" class="py-12 text-center text-sm text-zinc-500">
+            <div v-if="groupedClients.length === 0" class="py-12 text-center text-sm text-fg-subtle">
                 {{ t('quickImport.empty') }}
             </div>
 
@@ -193,19 +193,19 @@
                     class="group relative flex flex-col items-center gap-3 p-4 rounded-md border transition-colors shadow-none cursor-pointer"
                     :class="
                         isRecommended(client)
-                            ? 'bg-zinc-50 dark:bg-[#202020] border-zinc-400 dark:border-zinc-600'
-                            : 'bg-white dark:bg-[#171717] border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-[#202020]'
+                            ? 'bg-active border-line-strong'
+                            : 'bg-surface border-line hover:border-line-strong hover:bg-hover'
                     "
                 >
                     <div
                         v-if="isRecommended(client)"
-                        class="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-zinc-900 text-zinc-100 dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-medium rounded-sm shadow-none"
+                        class="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent text-accent-fg text-[10px] font-medium rounded-sm shadow-none"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                         {{ t('quickImport.recommended') }}
                     </div>
                     <div
-                        class="w-12 h-12 rounded-md flex items-center justify-center text-2xl bg-zinc-50 dark:bg-[#131515] border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+                        class="w-12 h-12 rounded-md flex items-center justify-center text-2xl bg-inset border border-line overflow-hidden"
                     >
                         <img
                             v-if="
@@ -220,7 +220,7 @@
                     </div>
                     <div class="text-center">
                         <div
-                            class="text-xs font-semibold text-zinc-900 dark:text-zinc-100 line-clamp-1"
+                            class="text-xs font-semibold text-fg line-clamp-1"
                         >
                             {{ client.name }}
                         </div>
@@ -228,7 +228,7 @@
                             <span
                                 v-for="platform in client.platforms?.slice(0, 2)"
                                 :key="platform"
-                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm border border-zinc-200 dark:border-zinc-800 bg-transparent text-zinc-500 dark:text-zinc-400"
+                                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm border border-line bg-transparent text-fg-subtle"
                             >
                                 {{ getPlatformLabel(platform) }}
                             </span>
@@ -240,19 +240,19 @@
 
         <template #footer>
             <div
-                class="w-full rounded-md border border-zinc-200 dark:border-zinc-800 bg-transparent px-4 py-3 text-xs text-zinc-500"
+                class="w-full rounded-md border border-line bg-transparent px-4 py-3 text-xs text-fg-subtle"
             >
                 <div class="flex items-start gap-2.5">
                     <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-[5px]"></span>
                     <div>
-                        <p class="font-medium text-zinc-800 dark:text-zinc-200">
+                        <p class="font-medium text-fg">
                             {{ t('quickImport.tipsTitle') }}
                         </p>
                         <ul class="mt-1 space-y-1 list-disc list-inside">
                             <li>{{ t('quickImport.tipInstalled') }}</li>
                             <li>{{ t('quickImport.tipOpenApp') }}</li>
                             <li>{{ t('quickImport.tipBrowserConfirm') }}</li>
-                            <li class="font-medium text-zinc-700 dark:text-zinc-300">
+                            <li class="font-medium text-fg-muted">
                                 {{ t('quickImport.tipDefaultApp') }}
                             </li>
                         </ul>

@@ -203,14 +203,14 @@
 </script>
 
 <template>
-    <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div class="min-h-screen bg-canvas">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header with Save Indicator -->
             <SaveIndicator :dirty="dirty" :save-state="saveState" @save="handleSave" />
 
             <!-- Loading State -->
             <div v-if="isLoading" class="flex justify-center items-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-fg"></div>
             </div>
 
             <!-- Main Content -->
@@ -283,7 +283,7 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-fg-subtle">
                     {{ t('subscriptions.deleteAllConfirmBody') }}
                 </p>
             </template>
@@ -296,7 +296,7 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-fg-subtle">
                     {{ t('manualNodes.deleteAllConfirmBody') }}
                 </p>
             </template>
@@ -309,7 +309,7 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-fg-subtle">
                     {{ t('profiles.deleteAllConfirmBody') }}
                 </p>
             </template>

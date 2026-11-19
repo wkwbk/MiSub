@@ -71,11 +71,11 @@
 <template>
     <div class="space-y-4">
         <div
-            class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-[#131515]"
+            class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-inset"
             :class="[
                 isDragging
-                    ? 'border-zinc-500 bg-zinc-900/50'
-                    : 'border-zinc-800 hover:border-zinc-700',
+                    ? 'border-line-strong bg-elevated-card'
+                    : 'border-line hover:border-line-strong',
                 isProcessing ? 'opacity-60 pointer-events-none' : '',
             ]"
             @click="openPicker"
@@ -93,64 +93,64 @@
                 aria-hidden="true"
             />
             <div class="flex flex-col items-center gap-2">
-                <CloudUpload class="h-7 w-7 text-zinc-400" />
-                <p class="text-xs font-medium text-zinc-200">
+                <CloudUpload class="h-7 w-7 text-fg-muted" />
+                <p class="text-xs font-medium text-fg">
                     {{ t('fileImport.dropHint') }}
                 </p>
-                <p class="text-xs text-zinc-500">
+                <p class="text-xs text-fg-subtle">
                     {{ t('fileImport.supportedTypes') }}
                 </p>
             </div>
         </div>
 
-        <div class="bg-transparent border border-zinc-800 rounded-md p-3">
-            <h4 class="text-xs font-semibold text-zinc-200 mb-2">
+        <div class="bg-transparent border border-line rounded-md p-3">
+            <h4 class="text-xs font-semibold text-fg mb-2">
                 {{ t('fileImport.detectedHeading') }}
             </h4>
-            <ul class="text-xs text-zinc-400 space-y-1">
+            <ul class="text-xs text-fg-muted space-y-1">
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtPlainText') }}</strong>：{{
+                    • <strong class="text-fg">{{ t('fileImport.fmtPlainText') }}</strong>：{{
                         t('fileImport.fmtPlainTextDesc')
                     }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtBase64') }}</strong>：{{
+                    • <strong class="text-fg">{{ t('fileImport.fmtBase64') }}</strong>：{{
                         t('fileImport.fmtBase64Desc')
                     }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtClash') }}</strong>：{{
+                    • <strong class="text-fg">{{ t('fileImport.fmtClash') }}</strong>：{{
                         t('fileImport.fmtClashDesc')
                     }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtSurge') }}</strong>：{{
+                    • <strong class="text-fg">{{ t('fileImport.fmtSurge') }}</strong>：{{
                         t('fileImport.fmtSurgeDesc')
                     }}
                 </li>
                 <li>
-                    • <strong class="text-zinc-200">{{ t('fileImport.fmtJson') }}</strong>：{{
+                    • <strong class="text-fg">{{ t('fileImport.fmtJson') }}</strong>：{{
                         t('fileImport.fmtJsonDesc')
                     }}
                 </li>
             </ul>
         </div>
 
-        <div v-if="statusText" class="flex items-center gap-2 text-xs text-zinc-300">
-            <Loader2 class="h-4 w-4 animate-spin text-zinc-400" />
+        <div v-if="statusText" class="flex items-center gap-2 text-xs text-fg-muted">
+            <Loader2 class="h-4 w-4 animate-spin text-fg-muted" />
             <span>{{ statusText }}</span>
         </div>
 
         <div
             v-if="errorMessage"
-            class="flex items-center gap-2 text-xs text-red-400 bg-transparent border border-zinc-800 rounded-md p-2.5"
+            class="flex items-center gap-2 text-xs text-red-400 bg-transparent border border-line rounded-md p-2.5"
         >
             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"></span>
             <span>{{ errorMessage }}</span>
         </div>
         <div
             v-if="successMessage"
-            class="flex items-center gap-2 text-xs text-emerald-400 bg-transparent border border-zinc-800 rounded-md p-2.5"
+            class="flex items-center gap-2 text-xs text-emerald-400 bg-transparent border border-line rounded-md p-2.5"
         >
             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
             <span>{{ successMessage }}</span>

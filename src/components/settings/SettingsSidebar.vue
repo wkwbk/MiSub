@@ -243,11 +243,7 @@
                 v-show="canScrollLeft"
                 aria-hidden="true"
                 class="pointer-events-none absolute inset-y-0 left-0 z-10 w-5 bg-gradient-to-r to-transparent"
-                :class="
-                    inModal
-                        ? 'from-white dark:from-[#171717]'
-                        : 'from-zinc-50 dark:from-[#131515]'
-                "
+                :class="inModal ? 'from-elevated' : 'from-canvas'"
             ></div>
 
             <nav
@@ -270,8 +266,8 @@
                     class="shrink-0 whitespace-nowrap inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-colors touch-target-min"
                     :class="
                         activeTab === tab.id
-                            ? 'bg-zinc-100 text-zinc-900 font-semibold border-zinc-100 shadow-none'
-                            : 'text-zinc-400 border-transparent hover:bg-zinc-900 hover:text-zinc-100'
+                            ? 'bg-active text-fg font-semibold border-line-strong'
+                            : 'text-fg-muted border-transparent hover:bg-hover hover:text-fg'
                     "
                     @click="selectTab(tab.id)"
                     @keydown="handleMobileKeydown($event, tab.id)"
@@ -279,7 +275,7 @@
                     <component
                         :is="tab.icon"
                         class="h-3.5 w-3.5 shrink-0"
-                        :class="activeTab === tab.id ? 'text-current' : 'text-zinc-500'"
+                        :class="activeTab === tab.id ? 'text-fg' : 'text-fg-subtle'"
                     />
                     <span>{{ t(tab.labelKey) }}</span>
                 </button>
@@ -289,16 +285,12 @@
                 v-show="canScrollRight"
                 aria-hidden="true"
                 class="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l to-transparent"
-                :class="
-                    inModal
-                        ? 'from-white dark:from-[#171717]'
-                        : 'from-zinc-50 dark:from-[#131515]'
-                "
+                :class="inModal ? 'from-elevated' : 'from-canvas'"
             ></div>
         </div>
 
         <!-- 移动端全部分类速查按钮 -->
-        <div class="shrink-0 pl-1.5 border-l border-zinc-800/80">
+        <div class="shrink-0 pl-1.5 border-l border-line">
             <button
                 type="button"
                 data-testid="settings-mobile-menu-trigger"
@@ -308,8 +300,8 @@
                 class="inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors touch-target-min"
                 :class="
                     isMobileMenuOpen
-                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100'
-                        : 'border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100'
+                        ? 'bg-active text-fg border-line-strong'
+                        : 'border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg'
                 "
                 @click="isMobileMenuOpen = !isMobileMenuOpen"
             >
@@ -322,15 +314,15 @@
             <div
                 v-if="isMobileMenuOpen"
                 data-testid="settings-mobile-menu"
-                class="absolute left-0 right-0 top-full mt-2 z-40 rounded-lg border border-zinc-800 bg-[#171717] p-2 shadow-[0_12px_32px_rgba(0,0,0,0.22)] dark:shadow-[0_16px_36px_rgba(0,0,0,0.6)] max-h-[70vh] overflow-y-auto"
+                class="popover-surface absolute left-0 right-0 top-full mt-2 z-40 rounded-lg p-2 max-h-[70vh] overflow-y-auto"
             >
                 <div
                     v-for="(group, groupIndex) in tabGroups"
                     :key="group.id"
-                    :class="groupIndex > 0 ? 'mt-2 pt-2 border-t border-zinc-800/80' : ''"
+                    :class="groupIndex > 0 ? 'mt-2 pt-2 border-t border-line-subtle' : ''"
                 >
                     <p
-                        class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
+                        class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle"
                     >
                         {{ t(group.labelKey) }}
                     </p>
@@ -342,8 +334,8 @@
                             class="w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-md text-left transition-colors"
                             :class="
                                 activeTab === tab.id
-                                    ? 'bg-zinc-100 text-zinc-900 border border-zinc-100'
-                                    : 'text-zinc-200 border border-transparent hover:bg-zinc-900'
+                                    ? 'bg-active text-fg border border-line-strong'
+                                    : 'text-fg-muted border border-transparent hover:bg-hover hover:text-fg'
                             "
                             @click="selectTab(tab.id)"
                         >
@@ -351,7 +343,7 @@
                                 <component
                                     :is="tab.icon"
                                     class="h-4 w-4 mt-0.5 shrink-0"
-                                    :class="activeTab === tab.id ? 'text-current' : 'text-zinc-400'"
+                                    :class="activeTab === tab.id ? 'text-fg' : 'text-fg-subtle'"
                                 />
                                 <span class="min-w-0">
                                     <span class="block text-xs font-semibold leading-4 truncate">
@@ -361,8 +353,8 @@
                                         class="block mt-0.5 text-[11px] leading-snug truncate"
                                         :class="
                                             activeTab === tab.id
-                                                ? 'text-current opacity-75'
-                                                : 'text-zinc-500'
+                                                ? 'text-fg-muted'
+                                                : 'text-fg-subtle'
                                         "
                                     >
                                         {{ t(tab.descKey) }}
@@ -371,7 +363,7 @@
                             </span>
                             <Check
                                 v-if="activeTab === tab.id"
-                                class="h-3.5 w-3.5 shrink-0 text-current"
+                                class="h-3.5 w-3.5 shrink-0 text-fg"
                             />
                         </button>
                     </div>
@@ -391,9 +383,9 @@
     >
         <template v-for="(group, groupIndex) in tabGroups" :key="group.id">
             <p
-                class="px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-zinc-500"
+                class="px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle"
                 :class="
-                    groupIndex > 0 ? 'mt-3.5 pt-3 border-t border-zinc-800/80' : 'pt-1'
+                    groupIndex > 0 ? 'mt-3.5 pt-3 border-t border-line-subtle' : 'pt-1'
                 "
             >
                 {{ t(group.labelKey) }}
@@ -409,8 +401,8 @@
                 class="group relative w-full flex items-start gap-2.5 px-2.5 py-2 text-left rounded-md border transition-colors"
                 :class="
                     activeTab === tab.id
-                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 shadow-none'
-                        : 'text-zinc-300 border-transparent hover:bg-zinc-900 hover:text-zinc-100'
+                        ? 'bg-active text-fg border-line-strong'
+                        : 'text-fg-muted border-transparent hover:bg-hover hover:text-fg'
                 "
                 @click="selectTab(tab.id)"
                 @keydown="handleDesktopKeydown($event, tab.id)"
@@ -420,8 +412,8 @@
                     class="mt-0.5 h-4 w-4 shrink-0 transition-colors"
                     :class="
                         activeTab === tab.id
-                            ? 'text-current'
-                            : 'text-zinc-500 group-hover:text-zinc-300'
+                            ? 'text-fg'
+                            : 'text-fg-subtle group-hover:text-fg-muted'
                     "
                 />
                 <span class="min-w-0 flex-1">
@@ -432,8 +424,8 @@
                         class="block mt-0.5 text-[11px] leading-snug truncate"
                         :class="
                             activeTab === tab.id
-                                ? 'text-current opacity-70'
-                                : 'text-zinc-500 group-hover:text-zinc-400'
+                                ? 'text-fg-muted'
+                                : 'text-fg-subtle group-hover:text-fg-muted'
                         "
                     >
                         {{ t(tab.descKey) }}

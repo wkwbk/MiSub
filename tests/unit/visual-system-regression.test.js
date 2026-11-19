@@ -8,16 +8,17 @@ const readSource = async (path) =>
     await import('node:fs/promises').then(({ readFile }) => readFile(path, 'utf8'));
 
 describe('MiSub visual system regression', () => {
-    it('keeps global UI tokens aligned with the clean dashboard design system', async () => {
+    it('keeps global UI tokens aligned with the pure neutral semantic design system', async () => {
         const css = await readSource('src/assets/main.css');
 
-        expect(css).toContain('--bg-page-dark: #131515');
-        expect(css).toContain('--surface-panel-dark: #171717');
-        expect(css).toContain('--surface-card-dark: #171717');
-        expect(css).toContain('--text-primary-dark: #fafafa');
-        expect(css).toContain('--text-secondary-dark: #a1a1a1');
-        expect(css).toContain('--text-muted-dark: #737373');
-        expect(css).toContain('--border-subtle-dark: #262626');
+        expect(css).toContain('--canvas: #f4f4f4');
+        expect(css).toContain('--surface: #ffffff');
+        expect(css).toContain('--canvas: #0a0a0a');
+        expect(css).toContain('--surface: #141414');
+        expect(css).toContain('--fg: #fafafa');
+        expect(css).toContain('--fg-muted: #a3a3a3');
+        expect(css).toContain('--fg-subtle: #737373');
+        expect(css).toContain('--line: rgba(255, 255, 255, 0.11)');
         expect(css).toContain('font-family: var(--font-body)');
         expect(css).toMatch(/font-feature-settings:\s*['"]cv01['"],\s*['"]ss03['"]/);
         expect(css).toContain('scroll-behavior: auto');
@@ -32,8 +33,8 @@ describe('MiSub visual system regression', () => {
         expect(primary.classes().join(' ')).toContain('duration-200');
 
         const primaryButton = primary.find('button');
-        expect(primaryButton.classes().join(' ')).toContain('bg-zinc-100');
-        expect(primaryButton.classes().join(' ')).toContain('text-zinc-900');
+        expect(primaryButton.classes().join(' ')).toContain('bg-accent');
+        expect(primaryButton.classes().join(' ')).toContain('text-accent-fg');
         expect(primaryButton.classes().join(' ')).not.toContain('bg-gradient-to-r');
         expect(primaryButton.classes().join(' ')).not.toContain('shadow-primary-500/20');
 
@@ -41,20 +42,20 @@ describe('MiSub visual system regression', () => {
             props: { variant: 'secondary' },
             slots: { default: '取消' },
         });
-        expect(secondary.find('button').classes().join(' ')).toContain('border-zinc-800');
+        expect(secondary.find('button').classes().join(' ')).toContain('border-line');
         expect(secondary.find('button').classes().join(' ')).toContain('bg-transparent');
-        expect(secondary.find('button').classes().join(' ')).toContain('hover:bg-zinc-800');
+        expect(secondary.find('button').classes().join(' ')).toContain('hover:bg-hover');
     });
 
-    it('defines high-contrast hover tokens for both light and dark modes', async () => {
+    it('defines semantic hover and danger tokens for both light and dark modes', async () => {
         const css = await readSource('src/assets/main.css');
 
-        expect(css).toContain('--hover-surface-light: #e4e4e7');
-        expect(css).toContain('--hover-border-light: #a1a1aa');
-        expect(css).toContain('--hover-surface-dark: #27272a');
-        expect(css).toContain('--hover-surface-elevated-dark: #303036');
-        expect(css).toContain('--hover-border-dark: #52525b');
-        expect(css).toContain('Dark Theme Global Hover Contrast Enhancement');
+        expect(css).toContain('--hover: #f0f0f0');
+        expect(css).toContain('--hover: #222222');
+        expect(css).toContain('--hover-danger-bg-light: #fee2e2');
+        expect(css).toContain('--hover-danger-border-light: #fca5a5');
+        expect(css).toContain('--hover-danger-bg-dark: rgba(239, 68, 68, 0.16)');
+        expect(css).toContain('--hover-danger-border-dark: rgba(239, 68, 68, 0.45)');
     });
 
     it('uses the shared surface and focus treatment for inputs and modals', () => {
@@ -62,9 +63,9 @@ describe('MiSub visual system regression', () => {
             props: { label: '名称', modelValue: '', placeholder: '输入名称' },
         });
         const inputClasses = input.find('input').classes().join(' ');
-        expect(inputClasses).toContain('bg-transparent');
-        expect(inputClasses).toContain('border-zinc-800');
-        expect(inputClasses).toContain('focus:border-zinc-500');
+        expect(inputClasses).toContain('bg-inset');
+        expect(inputClasses).toContain('border-line');
+        expect(inputClasses).toContain('focus:border-line-strong');
 
         const modal = mount(FormModal, {
             props: { show: true, title: '编辑订阅' },
@@ -72,8 +73,8 @@ describe('MiSub visual system regression', () => {
             slots: { default: '<div>content</div>' },
         });
         const html = document.body.innerHTML;
-        expect(html).toContain('bg-[#171717]');
-        expect(html).toContain('border-zinc-800');
+        expect(html).toContain('modal-surface');
+        expect(html).toContain('border-line');
         expect(html).toContain('backdrop-blur-sm');
         modal.unmount();
     });

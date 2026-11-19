@@ -383,12 +383,12 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <Folder class="h-5 w-5 text-zinc-400 shrink-0" />
+                <Folder class="h-5 w-5 text-fg-muted shrink-0" />
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ isNew ? t('profiles.addTitle') : t('profiles.editTitle') }}
                     </h3>
-                    <p class="mt-0.5 text-xs text-zinc-400">
+                    <p class="mt-0.5 text-xs text-fg-muted">
                         {{ t('profiles.modalDescription') }}
                     </p>
                 </div>
@@ -408,7 +408,7 @@
                 />
 
                 <!-- 资源类型 Tab 切换栏 -->
-                <div class="border-b border-zinc-800">
+                <div class="border-b border-line">
                     <nav
                         class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar"
                         aria-label="Tabs"
@@ -418,8 +418,8 @@
                             @click="activeResourceTab = 'manualNodes'"
                             :class="[
                                 activeResourceTab === 'manualNodes'
-                                    ? 'text-zinc-100 font-semibold'
-                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                    ? 'text-fg font-semibold'
+                                    : 'text-fg-muted hover:text-fg font-medium',
                                 'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
@@ -428,8 +428,8 @@
                                 v-if="localProfile.manualNodes?.length"
                                 :class="
                                     activeResourceTab === 'manualNodes'
-                                        ? 'border-zinc-700 text-zinc-200'
-                                        : 'border-zinc-800 text-zinc-400'
+                                        ? 'border-line-strong text-fg'
+                                        : 'border-line text-fg-muted'
                                 "
                                 class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
@@ -437,7 +437,7 @@
                             </span>
                             <span
                                 v-if="activeResourceTab === 'manualNodes'"
-                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
                             ></span>
                         </button>
 
@@ -446,8 +446,8 @@
                             @click="activeResourceTab = 'subscriptions'"
                             :class="[
                                 activeResourceTab === 'subscriptions'
-                                    ? 'text-zinc-100 font-semibold'
-                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                    ? 'text-fg font-semibold'
+                                    : 'text-fg-muted hover:text-fg font-medium',
                                 'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
@@ -456,8 +456,8 @@
                                 v-if="localProfile.subscriptions?.length"
                                 :class="
                                     activeResourceTab === 'subscriptions'
-                                        ? 'border-zinc-700 text-zinc-200'
-                                        : 'border-zinc-800 text-zinc-400'
+                                        ? 'border-line-strong text-fg'
+                                        : 'border-line text-fg-muted'
                                 "
                                 class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
@@ -465,7 +465,7 @@
                             </span>
                             <span
                                 v-if="activeResourceTab === 'subscriptions'"
-                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
                             ></span>
                         </button>
 
@@ -474,8 +474,8 @@
                             @click="activeResourceTab = 'subProfiles'"
                             :class="[
                                 activeResourceTab === 'subProfiles'
-                                    ? 'text-zinc-100 font-semibold'
-                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                    ? 'text-fg font-semibold'
+                                    : 'text-fg-muted hover:text-fg font-medium',
                                 'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
@@ -484,8 +484,8 @@
                                 v-if="localProfile.subProfiles?.length"
                                 :class="
                                     activeResourceTab === 'subProfiles'
-                                        ? 'border-zinc-700 text-zinc-200'
-                                        : 'border-zinc-800 text-zinc-400'
+                                        ? 'border-line-strong text-fg'
+                                        : 'border-line text-fg-muted'
                                 "
                                 class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
                             >
@@ -493,7 +493,7 @@
                             </span>
                             <span
                                 v-if="activeResourceTab === 'subProfiles'"
-                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
                             ></span>
                         </button>
 
@@ -502,15 +502,15 @@
                             @click="activeResourceTab = 'all'"
                             :class="[
                                 activeResourceTab === 'all'
-                                    ? 'text-zinc-100 font-semibold'
-                                    : 'text-zinc-400 hover:text-zinc-200 font-medium',
+                                    ? 'text-fg font-semibold'
+                                    : 'text-fg-muted hover:text-fg font-medium',
                                 'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                             ]"
                         >
                             <span>{{ t('profileModal.tabAll') }}</span>
                             <span
                                 v-if="activeResourceTab === 'all'"
-                                class="absolute inset-x-0 bottom-0 h-0.5 bg-zinc-100"
+                                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
                             ></span>
                         </button>
                     </nav>

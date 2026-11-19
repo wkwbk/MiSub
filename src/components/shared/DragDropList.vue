@@ -269,18 +269,18 @@
             <!-- 加载状态 -->
             <div v-if="loading" class="drag-drop-loading">
                 <div class="flex items-center justify-center py-8">
-                    <Loader2 class="animate-spin h-5 w-5 text-gray-500 dark:text-gray-400 mr-2" />
-                    <span class="text-gray-500 dark:text-gray-400">{{ t('common.loading') }}</span>
+                    <Loader2 class="animate-spin h-5 w-5 text-fg-subtle mr-2" />
+                    <span class="text-fg-subtle">{{ t('common.loading') }}</span>
                 </div>
             </div>
 
             <!-- 空数据状态 -->
             <div v-else-if="items.length === 0" class="drag-drop-empty">
                 <div
-                    class="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400"
+                    class="flex flex-col items-center justify-center py-8 text-fg-subtle"
                 >
                     <ArrowUpDown
-                        class="w-12 h-12 mb-2 text-gray-500 dark:text-gray-400"
+                        class="w-12 h-12 mb-2 text-fg-subtle"
                         stroke-width="1.5"
                     />
                     <span>{{ resolvedEmptyText }}</span>
@@ -306,7 +306,7 @@
                 >
                     <!-- 拖拽手柄 -->
                     <div v-if="showHandle && draggable && !disabled" class="drag-handle">
-                        <GripVertical class="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                        <GripVertical class="w-4 h-4 text-fg-subtle" />
                     </div>
 
                     <!-- 项目内容 -->
@@ -318,7 +318,7 @@
                                     <!-- 项目信息 -->
                                     <div>
                                         <h4
-                                            class="text-sm font-medium text-gray-900 dark:text-white"
+                                            class="text-sm font-medium text-fg"
                                         >
                                             {{
                                                 item.name ||
@@ -328,7 +328,7 @@
                                         </h4>
                                         <p
                                             v-if="item.description"
-                                            class="text-xs text-gray-500 dark:text-gray-400"
+                                            class="text-xs text-fg-subtle"
                                         >
                                             {{ item.description }}
                                         </p>
@@ -376,11 +376,11 @@
     }
 
     .drag-drop-container {
-        @apply border border-gray-200 dark:border-gray-700 misub-radius-md bg-white dark:bg-gray-800 overflow-hidden;
+        @apply border border-line misub-radius-md bg-surface overflow-hidden;
     }
 
     .drag-drop-item-wrapper {
-        @apply relative flex items-center p-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 transition-all duration-200 select-none;
+        @apply relative flex items-center p-4 border-b border-line-subtle last:border-b-0 transition-all duration-200 select-none;
     }
 
     .drag-drop-item-wrapper.drag-over {
@@ -392,7 +392,7 @@
     }
 
     .drag-drop-item-wrapper.chosen {
-        @apply bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-700;
+        @apply bg-active border-line-strong;
     }
 
     .drag-drop-item-wrapper.drag {
@@ -408,7 +408,7 @@
     }
 
     .drag-insert-indicator {
-        @apply absolute top-0 left-0 right-0 h-0.5 bg-indigo-500;
+        @apply absolute top-0 left-0 right-0 h-0.5 bg-accent;
     }
 
     .is-dragging .drag-drop-item-wrapper {
@@ -424,7 +424,7 @@
     }
 
     .drag-drop-footer {
-        @apply text-sm text-gray-500 dark:text-gray-400;
+        @apply text-sm text-fg-subtle dark:text-gray-400;
     }
 
     /* 暗黑模式下的拖拽状态 */
@@ -433,7 +433,7 @@
     }
 
     .dark .drag-drop-item-wrapper.chosen {
-        @apply bg-indigo-900/20 border-indigo-700;
+        @apply bg-active border-line-strong;
     }
 
     .dark .drag-handle {

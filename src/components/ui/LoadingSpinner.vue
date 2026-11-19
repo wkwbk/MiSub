@@ -128,7 +128,7 @@
             <!-- 加载消息 -->
             <p
                 v-if="message"
-                class="text-sm font-medium text-gray-600 dark:text-gray-400 animate-pulse"
+                class="text-sm font-medium text-fg-muted animate-pulse"
             >
                 {{ message }}
             </p>

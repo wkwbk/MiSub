@@ -6,6 +6,7 @@
     import Input from '@/components/ui/Input.vue';
     import Select from '@/components/ui/Select.vue';
     import TagInput from '@/components/ui/TagInput.vue';
+    import Textarea from '@/components/ui/Textarea.vue';
     import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
     import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
     import { useI18n } from '@/i18n/index.js';
@@ -144,7 +145,7 @@
                 :label="t('profiles.customIdLabel')"
                 :placeholder="t('profiles.customIdPlaceholder')"
             />
-            <p class="text-xs text-zinc-500 mt-1">
+            <p class="text-xs text-fg-subtle mt-1">
                 {{ t('profiles.customIdHint') }}
             </p>
         </div>
@@ -152,7 +153,7 @@
 
     <!-- Profile Tags -->
     <div class="mt-4">
-        <label class="block text-xs font-medium text-zinc-300 mb-1.5">
+        <label class="block text-xs font-medium text-fg-muted mb-1.5">
             {{ t('profiles.tagsLabel') }}
         </label>
         <TagInput
@@ -163,21 +164,21 @@
     </div>
 
     <!-- Public Display & Description -->
-    <div class="bg-transparent rounded-md p-4 border border-zinc-800 mt-4">
+    <div class="bg-transparent rounded-md p-4 border border-line mt-4">
         <div class="flex items-center justify-between mb-3">
             <div class="flex items-center">
                 <input
                     type="checkbox"
                     id="profile-is-public"
                     v-model="localProfile.isPublic"
-                    class="h-4 w-4 rounded-sm border-zinc-700 bg-[#131515] text-zinc-100 focus:ring-0"
+                    class="h-4 w-4 rounded-sm border-line-strong bg-inset text-fg focus:ring-0"
                 />
-                <label for="profile-is-public" class="ml-2 block text-xs font-medium text-zinc-200">
+                <label for="profile-is-public" class="ml-2 block text-xs font-medium text-fg">
                     {{ t('profiles.publicDisplay') }}
                 </label>
             </div>
             <span
-                class="inline-flex items-center gap-1.5 text-[11px] text-zinc-300 border border-zinc-800 bg-transparent px-2 py-0.5 rounded-md"
+                class="inline-flex items-center gap-1.5 text-[11px] text-fg-muted border border-line bg-transparent px-2 py-0.5 rounded-md"
                 v-if="localProfile.isPublic"
             >
                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
@@ -186,25 +187,26 @@
         </div>
 
         <div v-if="localProfile.isPublic" class="animate-fade-in-down">
-            <textarea
+            <Textarea
                 id="profile-description"
                 v-model="localProfile.description"
                 rows="2"
                 :placeholder="t('profiles.descriptionPlaceholder')"
-                class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md shadow-none focus-visible:outline-hidden focus:border-zinc-600 text-xs text-zinc-100 placeholder-zinc-600"
-            ></textarea>
+                wrapperClass="focus-within:border-line-strong focus-within:ring-0"
+                class="px-3 py-2 text-xs text-fg placeholder:text-fg-subtle"
+            />
         </div>
-        <div v-else class="text-xs text-zinc-500">
+        <div v-else class="text-xs text-fg-subtle">
             {{ t('profiles.publicDisplayHint') }}
         </div>
     </div>
 
     <!-- Advanced Settings Toggle -->
-    <div class="border-t border-zinc-800 pt-4 mt-6">
+    <div class="border-t border-line pt-4 mt-6">
         <button
             type="button"
             @click="emit('toggle-advanced')"
-            class="flex items-center text-xs font-semibold text-zinc-200 hover:text-white focus-visible:outline-hidden"
+            class="flex items-center text-xs font-semibold text-fg hover:text-white focus-visible:outline-hidden"
         >
             <span>{{ t('profiles.advancedTitle') }}</span>
             <ChevronDown
@@ -217,20 +219,20 @@
             <!-- === 区块 A：渲染核心配置 (Core Logic) === -->
             <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
                         {{ t('profileModal.coreConfig') }}
                     </h3>
-                    <span class="text-[11px] text-zinc-500">{{
+                    <span class="text-[11px] text-fg-subtle">{{
                         t('profileModal.coreConfigDesc')
                     }}</span>
                 </div>
 
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-zinc-800 rounded-md shadow-none"
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-line rounded-md shadow-none"
                 >
                     <!-- 引擎选择 -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-medium text-zinc-400">{{
+                        <label class="block text-xs font-medium text-fg-muted">{{
                             t('profileModal.engineLabel')
                         }}</label>
                         <Select
@@ -247,7 +249,7 @@
                         >
                             <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
+                                class="font-mono text-[10px] text-fg-muted uppercase tracking-tight"
                             >
                                 {{ t('profileModal.currentGlobal', { value: globalEngineLabel }) }}
                             </span>
@@ -256,7 +258,7 @@
 
                     <!-- 方案选择 -->
                     <div class="space-y-1.5">
-                        <label class="block text-xs font-medium text-zinc-400">{{
+                        <label class="block text-xs font-medium text-fg-muted">{{
                             t('profileModal.schemeLabel')
                         }}</label>
                         <Select
@@ -279,7 +281,7 @@
                         />
                         <p
                             v-if="isExternalEngine"
-                            class="mt-1 text-[10px] leading-relaxed text-zinc-400"
+                            class="mt-1 text-[10px] leading-relaxed text-fg-muted"
                         >
                             {{ t('profileModal.externalEngineHint') }}
                         </p>
@@ -289,7 +291,7 @@
                         >
                             <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
+                                class="font-mono text-[10px] text-fg-muted uppercase tracking-tight"
                             >
                                 {{ t('profileModal.currentGlobal', { value: globalConfigLabel }) }}
                             </span>
@@ -299,18 +301,18 @@
                     <!-- 引擎为第三方时的 URL 输入 -->
                     <div
                         v-if="isExternalEngine"
-                        class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
+                        class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3"
                     >
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                        <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                             t('profileModal.backendOverride')
                         }}</label>
                         <input
                             type="text"
                             v-model="localProfile.subconverter.backend"
                             :placeholder="t('profileModal.backendPlaceholder')"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 placeholder-zinc-600 focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
                         />
-                        <p class="mt-1.5 text-[10px] leading-relaxed text-zinc-500">
+                        <p class="mt-1.5 text-[10px] leading-relaxed text-fg-subtle">
                             {{ t('profileModal.backendHint') }}
                         </p>
                         <div
@@ -319,7 +321,7 @@
                         >
                             <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
                             <span
-                                class="font-mono text-[10px] text-zinc-400 uppercase tracking-tight"
+                                class="font-mono text-[10px] text-fg-muted uppercase tracking-tight"
                             >
                                 {{
                                     t('profileModal.currentGlobal', {
@@ -338,17 +340,17 @@
                             localProfile.transformConfigMode !== 'global' &&
                             localProfile.transformConfigMode !== 'builtin'
                         "
-                        class="sm:col-span-2 animate-fade-in-down border-t border-zinc-800 pt-3"
+                        class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3"
                     >
                         <div class="mb-1.5 flex items-center justify-between gap-2">
-                            <label class="block text-xs font-medium text-zinc-400">{{
+                            <label class="block text-xs font-medium text-fg-muted">{{
                                 t('profileModal.templateLabel')
                             }}</label>
                             <button
                                 v-if="localProfile.transformConfigMode === 'custom_template'"
                                 type="button"
                                 @click="showRuleTemplateModal = true"
-                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+                                class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                             >
                                 <SlidersHorizontal class="h-3 w-3" />
                                 <span>{{ t('settings.ruleTemplatesManage') }}</span>
@@ -369,7 +371,7 @@
                         />
                         <div
                             v-if="localProfile.transformConfigMode === 'custom_template'"
-                            class="mt-2 flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-3 py-2 text-[11px] leading-relaxed text-zinc-400"
+                            class="mt-2 flex items-center gap-2 rounded-md border border-line bg-transparent px-3 py-2 text-[11px] leading-relaxed text-fg-muted"
                         >
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
                             <span>{{ t('profileModal.customTemplateHint') }}</span>
@@ -386,32 +388,32 @@
             <!-- === 区块 B：参数微调与后处理 (Parameter Tuning) === -->
             <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
                         {{ t('profileModal.tuningTitle') }}
                     </h3>
-                    <span class="text-[11px] text-zinc-500">{{
+                    <span class="text-[11px] text-fg-subtle">{{
                         t('profileModal.tuningDesc')
                     }}</span>
                 </div>
 
                 <div
-                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-zinc-800 rounded-md shadow-none"
+                    class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-line rounded-md shadow-none"
                 >
                     <!-- 到期时间 -->
                     <div>
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                        <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                             t('profileModal.expiresLabel')
                         }}</label>
                         <input
                             type="date"
                             v-model="localProfile.expiresAt"
-                            class="block w-full px-3 py-2 bg-[#131515] border border-zinc-800 rounded-md font-mono text-xs text-zinc-100 focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg focus:border-line-strong focus-visible:outline-hidden"
                         />
                     </div>
 
                     <!-- 内置规则等级 (当切换到内置引擎，或切换到第三方引擎但使用内置分流方案时显示) -->
                     <div v-if="!isExternalEngine">
-                        <label class="block text-xs font-medium text-zinc-400 mb-1.5">{{
+                        <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
                             t('profileModal.ruleLevelLabel')
                         }}</label>
                         <Select
@@ -432,9 +434,9 @@
                     </div>
 
                     <!-- 节点前缀设置 (合并) -->
-                    <div class="sm:col-span-2 space-y-3 pt-3 border-t border-zinc-800">
+                    <div class="sm:col-span-2 space-y-3 pt-3 border-t border-line">
                         <label
-                            class="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider"
+                            class="block text-[11px] font-semibold text-fg-muted uppercase tracking-wider"
                             >{{ t('profileModal.nodeNameVisibility') }}</label
                         >
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -448,7 +450,7 @@
 
                             <!-- {{ t('profileModal.manualNodeDisplay') }}开关 -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-zinc-400">{{
+                                <label class="block text-xs font-medium text-fg-muted">{{
                                     t('profileModal.manualNodeDisplay')
                                 }}</label>
                                 <Select
@@ -460,7 +462,7 @@
 
                             <!-- 机场订阅展示开关 (自动机场名) -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-zinc-400">{{
+                                <label class="block text-xs font-medium text-fg-muted">{{
                                     t('profileModal.subscriptionPrefix')
                                 }}</label>
                                 <Select
@@ -472,7 +474,7 @@
 
                             <!-- 首个标签前缀开关 -->
                             <div class="space-y-1">
-                                <label class="block text-xs font-medium text-zinc-400">{{
+                                <label class="block text-xs font-medium text-fg-muted">{{
                                     t('profileModal.tagPrefix')
                                 }}</label>
                                 <Select
@@ -490,11 +492,11 @@
                             <div
                                 v-for="flag in flagOptions"
                                 :key="flag.key"
-                                class="flex flex-col gap-1.5 p-2 bg-transparent rounded-md border border-zinc-800"
+                                class="flex flex-col gap-1.5 p-2 bg-transparent rounded-md border border-line"
                             >
                                 <div class="flex items-center gap-1.5">
                                     <span
-                                        class="text-[10px] font-semibold text-zinc-400 uppercase"
+                                        class="text-[10px] font-semibold text-fg-muted uppercase"
                                         >{{ flag.label }}</span
                                     >
                                 </div>
@@ -516,10 +518,10 @@
             <!-- === 区块 C：处理管道 (Process Workflow) === -->
             <div class="space-y-3">
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-zinc-200">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
                         {{ t('profileModal.pipelineTitle') }}
                     </h3>
-                    <span class="text-[11px] text-zinc-500">{{
+                    <span class="text-[11px] text-fg-subtle">{{
                         t('profileModal.pipelineDesc')
                     }}</span>
                 </div>

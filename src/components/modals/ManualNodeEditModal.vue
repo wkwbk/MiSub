@@ -236,17 +236,17 @@
     >
         <template #title>
             <div class="flex items-center gap-3">
-                <Link2 class="h-5 w-5 text-zinc-400 shrink-0" />
+                <Link2 class="h-5 w-5 text-fg-muted shrink-0" />
                 <div>
-                    <h3 class="text-base font-semibold text-zinc-100">
+                    <h3 class="text-base font-semibold text-fg">
                         {{ isNew ? t('manualNodes.addTitle') : t('manualNodes.editTitle') }}
                     </h3>
-                    <p v-if="!(isNew && isMultiLine)" class="mt-0.5 text-xs text-zinc-400">
+                    <p v-if="!(isNew && isMultiLine)" class="mt-0.5 text-xs text-fg-muted">
                         {{ t('manualNodes.modalDescription') }}
                     </p>
                     <p
                         v-if="isNew && isMultiLine"
-                        class="text-xs text-zinc-300 mt-0.5 font-medium flex items-center gap-1.5"
+                        class="text-xs text-fg-muted mt-0.5 font-medium flex items-center gap-1.5"
                     >
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
                         {{ t('manualNodes.validLinksDetected', { count: validLineCount }) }}
@@ -264,7 +264,7 @@
                         <div class="flex flex-col">
                             <label
                                 for="node-name"
-                                class="text-xs font-semibold text-zinc-400 mb-1.5"
+                                class="text-xs font-semibold text-fg-muted mb-1.5"
                             >
                                 {{ t('manualNodes.nameOptional') }}
                             </label>
@@ -285,12 +285,12 @@
                                 v-if="suggestedName && !editingNode.name"
                                 class="mt-1.5 flex items-center gap-1.5"
                             >
-                                <span class="text-xs text-zinc-500">{{
+                                <span class="text-xs text-fg-subtle">{{
                                     t('manualNodes.suggestion')
                                 }}</span>
                                 <button
                                     @click="applySuggestedName"
-                                    class="text-xs text-zinc-200 hover:text-white font-medium flex items-center gap-1 hover:underline"
+                                    class="text-xs text-fg hover:text-white font-medium flex items-center gap-1 hover:underline"
                                 >
                                     {{ suggestedName }}
                                     <ArrowRightCircle class="h-3.5 w-3.5" />
@@ -304,7 +304,7 @@
                         <div class="flex flex-col">
                             <label
                                 for="node-tags"
-                                class="text-xs font-semibold text-zinc-400 mb-1.5"
+                                class="text-xs font-semibold text-fg-muted mb-1.5"
                             >
                                 {{ t('manualNodes.tagsOptional') }}
                             </label>
@@ -323,10 +323,10 @@
                          选中的文件会写入编辑框，复用既有的多行预览 + 批量导入流程。 -->
                     <div
                         v-if="isNew"
-                        class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-zinc-800 bg-transparent px-3 py-2.5"
+                        class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-md border border-line bg-transparent px-3 py-2.5"
                     >
-                        <div class="flex items-center gap-2 text-xs text-zinc-300">
-                            <CloudUpload class="h-4 w-4 shrink-0 text-zinc-400" />
+                        <div class="flex items-center gap-2 text-xs text-fg-muted">
+                            <CloudUpload class="h-4 w-4 shrink-0 text-fg-muted" />
                             <span>{{ t('manualNodes.fileImportHint') }}</span>
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
@@ -341,14 +341,14 @@
                             />
                             <button
                                 type="button"
-                                class="text-xs font-semibold text-zinc-100 hover:underline"
+                                class="text-xs font-semibold text-fg hover:underline"
                                 @click="openFilePicker"
                             >
                                 {{ t('manualNodes.fileImportPick') }}
                             </button>
                             <span
                                 v-if="fileNameHint"
-                                class="font-mono text-xs text-zinc-500 max-w-[10rem] truncate"
+                                class="font-mono text-xs text-fg-subtle max-w-[10rem] truncate"
                                 :title="fileNameHint"
                             >
                                 {{ fileNameHint }}
@@ -368,10 +368,10 @@
                             <!-- 协议检测徽章 - 显示在右上角 -->
                             <div
                                 v-if="singleProtocol && !isMultiLine"
-                                class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-[#171717] border border-zinc-800"
+                                class="absolute right-3 top-3 z-10 px-2 py-0.5 rounded-md bg-surface border border-line"
                             >
                                 <span
-                                    class="font-mono text-xs font-semibold text-zinc-200 uppercase"
+                                    class="font-mono text-xs font-semibold text-fg uppercase"
                                 >
                                     {{ singleProtocol.name }}
                                 </span>
@@ -383,44 +383,44 @@
                 <!-- 批量导入预览 -->
                 <div v-if="isMultiLine && parsedNodes.length > 0" class="space-y-2">
                     <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-semibold text-zinc-300 flex items-center gap-2">
-                            <ClipboardList class="h-4 w-4 text-zinc-400" />
+                        <h4 class="text-xs font-semibold text-fg-muted flex items-center gap-2">
+                            <ClipboardList class="h-4 w-4 text-fg-muted" />
                             {{ t('manualNodes.importPreview') }}
                         </h4>
-                        <span class="font-mono text-xs text-zinc-400">
+                        <span class="font-mono text-xs text-fg-muted">
                             {{ t('manualNodes.nodeCountPreview', { count: parsedNodes.length }) }}
                         </span>
                     </div>
                     <div
-                        class="max-h-48 overflow-y-auto rounded-md border border-zinc-800 bg-[#131515] divide-y divide-zinc-800"
+                        class="max-h-48 overflow-y-auto rounded-md border border-line bg-inset divide-y divide-line-subtle"
                     >
                         <div
                             v-for="(node, idx) in parsedNodes.slice(0, 10)"
                             :key="idx"
                             class="flex items-center gap-3 px-3 py-2"
                         >
-                            <span class="font-mono text-xs text-zinc-500 w-5 text-right">{{
+                            <span class="font-mono text-xs text-fg-subtle w-5 text-right">{{
                                 idx + 1
                             }}</span>
                             <span
                                 v-if="node.protocol"
-                                class="font-mono text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent text-zinc-300 shrink-0"
+                                class="font-mono text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md border border-line bg-transparent text-fg-muted shrink-0"
                             >
                                 {{ node.protocol.name }}
                             </span>
                             <span
                                 v-else
-                                class="font-mono text-[10px] text-zinc-500 px-1.5 py-0.5 rounded-md border border-zinc-800 bg-transparent shrink-0"
+                                class="font-mono text-[10px] text-fg-subtle px-1.5 py-0.5 rounded-md border border-line bg-transparent shrink-0"
                             >
                                 {{ t('manualNodes.unknownProtocol') }}
                             </span>
-                            <span class="text-xs text-zinc-200 truncate flex-1">
+                            <span class="text-xs text-fg truncate flex-1">
                                 {{ node.name }}
                             </span>
                         </div>
                         <div
                             v-if="parsedNodes.length > 10"
-                            class="px-3 py-2 text-center font-mono text-xs text-zinc-500 bg-transparent"
+                            class="px-3 py-2 text-center font-mono text-xs text-fg-subtle bg-transparent"
                         >
                             {{ t('manualNodes.moreNodes', { count: parsedNodes.length - 10 }) }}
                         </div>

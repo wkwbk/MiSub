@@ -27,12 +27,12 @@
         @confirm="handleConfirm"
     >
         <template #title>
-            <h3 class="text-base font-semibold text-zinc-100">
+            <h3 class="text-base font-semibold text-fg">
                 {{ pending && pending.title ? pending.title : t('common.confirmAction') }}
             </h3>
         </template>
         <template #body>
-            <p class="text-sm leading-relaxed text-zinc-300 whitespace-pre-line">
+            <p class="text-sm leading-relaxed text-fg-muted whitespace-pre-line">
                 {{ pending ? pending.message : '' }}
             </p>
         </template>

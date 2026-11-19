@@ -70,16 +70,16 @@
         aria-live="polite"
     >
         <div
-            class="mb-5 flex h-10 w-10 items-center justify-center rounded-md border border-zinc-800 bg-transparent text-zinc-400"
+            class="mb-5 flex h-10 w-10 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted"
         >
             <component :is="currentIcon" class="h-5 w-5" stroke-width="1.5" aria-hidden="true" />
         </div>
 
         <div class="mb-6 max-w-sm space-y-1.5">
-            <h3 class="text-base font-semibold text-zinc-100">
+            <h3 class="text-base font-semibold text-fg">
                 {{ displayTitle }}
             </h3>
-            <p class="text-xs leading-relaxed text-zinc-400">
+            <p class="text-xs leading-relaxed text-fg-muted">
                 {{ displayDescription }}
             </p>
         </div>
@@ -88,7 +88,7 @@
             <button
                 v-if="showResetButton"
                 @click="emit('reset')"
-                class="inline-flex items-center gap-2 rounded-md border border-zinc-800 bg-transparent px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:bg-zinc-900 hover:text-zinc-100 focus-visible:outline-none"
+                class="inline-flex items-center gap-2 rounded-md border border-line bg-transparent px-4 py-2 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg focus-visible:outline-none"
                 :aria-label="t('common.resetFiltersAria')"
             >
                 <RefreshCw class="h-3.5 w-3.5" aria-hidden="true" />
@@ -98,7 +98,7 @@
             <button
                 v-else
                 @click="emit('refresh')"
-                class="inline-flex items-center gap-2 rounded-md bg-zinc-100 px-4 py-2 text-xs font-semibold text-zinc-900 transition-colors hover:bg-white focus-visible:outline-none"
+                class="inline-flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90 focus-visible:outline-none"
                 :aria-label="t('common.refreshListAria')"
             >
                 <RefreshCw class="h-3.5 w-3.5" aria-hidden="true" />
@@ -108,7 +108,7 @@
 
         <div
             v-if="totalCount > 0"
-            class="mt-6 rounded-md border border-zinc-800 bg-transparent px-3 py-1.5 text-xs font-mono text-zinc-400"
+            class="mt-6 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-mono text-fg-muted"
         >
             <p>
                 {{ t('common.filteredSummary', { total: totalCount, filtered: filteredCount }) }}

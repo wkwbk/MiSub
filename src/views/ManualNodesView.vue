@@ -240,7 +240,7 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-500 dark:text-gray-400">
+                <p class="text-sm text-fg-subtle">
                     {{ t('manualNodes.deleteAllConfirmBody') }}
                 </p>
             </template>
@@ -253,7 +253,7 @@
                 </h3>
             </template>
             <template #body>
-                <p class="text-sm text-gray-600 dark:text-gray-300">
+                <p class="text-sm text-fg-muted">
                     {{ t('manualNodes.batchDeleteConfirmBody', { count: batchDeleteIds.length }) }}
                 </p>
             </template>

@@ -1,5 +1,5 @@
 <script setup>
-    import { Check, Copy } from '@lucide/vue';
+    import { Check, Copy, Info } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -32,7 +32,7 @@
         },
     });
 
-    const emit = defineEmits(['copy', 'toggle-select']);
+    const emit = defineEmits(['copy', 'detail', 'toggle-select']);
 
     const handleRowClick = (node) => {
         if (props.selectionMode) {
@@ -43,21 +43,21 @@
 
 <template>
     <div
-        class="hidden lg:flex flex-1 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#131515] shadow-none"
+        class="hidden lg:flex flex-1 overflow-hidden rounded-md border border-line bg-inset shadow-none"
     >
         <div class="h-full overflow-y-auto w-full">
             <div class="w-full">
                 <div class="w-full">
                     <!-- 表头 -->
                     <div
-                        class="sticky top-0 z-10 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-[#171717]"
+                        class="sticky top-0 z-10 border-b border-line bg-surface"
                     >
                         <div
-                            class="grid min-h-[2.75rem] grid-cols-12 gap-2 px-4 py-2 items-center text-[11px] font-medium text-zinc-500 uppercase tracking-wider"
+                            class="grid min-h-[2.75rem] grid-cols-12 gap-2 px-4 py-2 items-center text-[11px] font-medium text-fg-subtle uppercase tracking-wider"
                         >
                             <div
                                 v-if="selectionMode"
-                                class="col-span-1 flex justify-center text-zinc-500"
+                                class="col-span-1 flex justify-center text-fg-subtle"
                             >
                                 {{ t('nodePreview.columnPick') }}
                             </div>
@@ -83,14 +83,14 @@
                     </div>
 
                     <!-- 数据行 -->
-                    <div class="bg-white dark:bg-[#131515]">
+                    <div class="bg-inset">
                         <div
                             v-for="(node, index) in nodes"
                             :key="`${node.url}_${index}`"
                             @click="handleRowClick(node)"
-                            class="group border-b last:border-b-0 border-zinc-200/80 dark:border-zinc-800 odd:bg-white even:bg-zinc-50/50 dark:odd:bg-[#131515] dark:even:bg-[#161818] hover:bg-zinc-100/80 dark:hover:bg-zinc-800/70 transition-colors"
+                            class="group border-b last:border-b-0 border-line odd:bg-inset even:bg-surface/60 hover:bg-hover transition-colors"
                             :class="{
-                                '!bg-zinc-100 dark:!bg-[#202020]':
+                                '!bg-active':
                                     selectionMode && selectedUrls.has(node.url),
                                 'cursor-pointer': selectionMode,
                             }"
@@ -104,8 +104,8 @@
                                         class="w-4 h-4 rounded-sm border flex items-center justify-center transition-colors"
                                         :class="
                                             selectedUrls.has(node.url)
-                                                ? 'bg-zinc-900 border-zinc-900 dark:bg-zinc-100 dark:border-zinc-100 text-zinc-100 dark:text-zinc-900'
-                                                : 'border-zinc-300 dark:border-zinc-700'
+                                                ? 'bg-accent border-accent text-accent-fg'
+                                                : 'border-line-strong'
                                         "
                                     >
                                         <Check
@@ -119,7 +119,7 @@
                                 <!-- 节点名称 -->
                                 <div :class="selectionMode ? 'col-span-3' : 'col-span-4'">
                                     <span
-                                        class="text-xs font-medium text-zinc-900 dark:text-zinc-100 block overflow-hidden"
+                                        class="text-xs font-medium text-fg block overflow-hidden"
                                         :title="parseNodeInfo(node).name"
                                         style="text-overflow: ellipsis; white-space: nowrap"
                                     >
@@ -130,7 +130,7 @@
                                 <!-- 服务器 (桌面端) -->
                                 <div class="col-span-3 hidden sm:block">
                                     <span
-                                        class="text-xs text-zinc-500 font-mono block overflow-hidden"
+                                        class="text-xs text-fg-subtle font-mono block overflow-hidden"
                                         :title="parseNodeInfo(node).server"
                                         style="text-overflow: ellipsis; white-space: nowrap"
                                     >
@@ -141,7 +141,7 @@
                                 <!-- 端口 (桌面端) -->
                                 <div class="col-span-2 hidden md:block text-center">
                                     <span
-                                        class="text-xs text-zinc-500 font-mono block"
+                                        class="text-xs text-fg-subtle font-mono block"
                                         style="min-width: 50px"
                                     >
                                         {{ parseNodeInfo(node).port }}
@@ -151,7 +151,7 @@
                                 <!-- 类型 (桌面端) -->
                                 <div class="col-span-1 hidden sm:block flex justify-center">
                                     <span
-                                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-line text-fg-muted"
                                         style="min-width: 60px"
                                     >
                                         {{ parseNodeInfo(node).protocol }}
@@ -161,7 +161,7 @@
                                 <!-- 地区 (桌面端) -->
                                 <div class="col-span-1 hidden sm:block flex justify-center">
                                     <span
-                                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                        class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-line text-fg-muted"
                                         style="min-width: 60px"
                                     >
                                         {{ parseNodeInfo(node).region }}
@@ -169,14 +169,24 @@
                                 </div>
 
                                 <!-- 操作 (所有设备) -->
-                                <div class="col-span-1 flex justify-center">
+                                <div class="col-span-1 flex items-center justify-center gap-1">
+                                    <button
+                                        v-if="!selectionMode"
+                                        @click.stop="emit('detail', node)"
+                                        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors touch-target"
+                                        :title="t('actions.viewDetail')"
+                                        :aria-label="t('actions.viewDetail')"
+                                    >
+                                        <Info class="w-3.5 h-3.5" />
+                                    </button>
                                     <button
                                         v-if="!selectionMode"
                                         @click.stop="emit('copy', node, node.url)"
-                                        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-target"
+                                        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors touch-target"
                                         :class="{
                                             'text-emerald-500': copiedNodeId === node.url,
                                         }"
+                                        :title="t('actions.copyNode')"
                                         :aria-label="t('actions.copyNode')"
                                     >
                                         <Copy
@@ -191,7 +201,7 @@
                     </div>
 
                     <!-- 空状态 -->
-                    <div v-if="nodes.length === 0" class="py-12 text-center text-xs text-zinc-500">
+                    <div v-if="nodes.length === 0" class="py-12 text-center text-xs text-fg-subtle">
                         {{ t('nodePreview.noNodes') }}
                     </div>
                 </div>

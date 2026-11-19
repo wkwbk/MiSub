@@ -287,15 +287,11 @@
 <template>
     <div ref="containerRef" class="relative w-full">
         <div
-            class="flex min-h-[38px] w-full flex-wrap items-center gap-1.5 rounded-md border bg-white dark:bg-[#131515] pl-8 pr-8 py-1.5 text-sm transition-colors duration-200 cursor-text"
-            :class="
-                isOpen
-                    ? 'border-zinc-500 dark:border-zinc-500'
-                    : 'border-zinc-300 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-700'
-            "
+            class="flex min-h-[38px] w-full flex-wrap items-center gap-1.5 rounded-md border bg-inset pl-8 pr-8 py-1.5 text-sm transition-colors duration-200 cursor-text"
+            :class="isOpen ? 'border-line-strong' : 'border-line hover:border-line-strong'"
             @click="focusInput"
         >
-            <div class="pointer-events-none absolute left-2.5 top-2.5 text-zinc-500">
+            <div class="pointer-events-none absolute left-2.5 top-2.5 text-fg-subtle">
                 <slot name="icon">
                     <Tag class="h-4 w-4" />
                 </slot>
@@ -305,12 +301,12 @@
                 v-for="tag in selectedTags"
                 :key="tag"
                 data-testid="tag-input-chip"
-                class="inline-flex max-w-[180px] items-center gap-1 rounded border border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800/80 px-2 py-0.5 text-xs font-medium text-zinc-800 dark:text-zinc-200"
+                class="inline-flex max-w-[180px] items-center gap-1 rounded border border-line bg-active px-2 py-0.5 text-xs font-medium text-fg"
             >
                 <span class="truncate">{{ tag }}</span>
                 <button
                     type="button"
-                    class="rounded-sm text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-100 focus:outline-none cursor-pointer"
+                    class="rounded-sm text-fg-subtle hover:text-fg focus:outline-none cursor-pointer"
                     :aria-label="`${t('actions.delete')} ${tag}`"
                     @click.stop="removeTag(tag)"
                 >
@@ -323,7 +319,7 @@
                 :value="inputText"
                 type="text"
                 :placeholder="selectedTags.length === 0 ? placeholder : ''"
-                class="min-w-[80px] flex-1 bg-transparent text-xs text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none py-0.5"
+                class="min-w-[80px] flex-1 bg-transparent text-xs text-fg placeholder:text-fg-subtle focus:outline-none py-0.5"
                 :aria-label="placeholder"
                 :aria-expanded="isDropdownVisible"
                 role="combobox"
@@ -337,7 +333,7 @@
             <button
                 type="button"
                 tabindex="-1"
-                class="absolute right-2 top-2 rounded p-0.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+                class="absolute right-2 top-2 rounded p-0.5 text-fg-subtle hover:text-fg transition-colors cursor-pointer"
                 @mousedown.prevent="toggleDropdown"
             >
                 <ChevronDown
@@ -362,7 +358,7 @@
                     :style="popoverStyle"
                     data-testid="tag-input-dropdown"
                     role="listbox"
-                    class="max-h-56 overflow-y-auto rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#18181b] p-1 shadow-lg"
+                    class="popover-surface max-h-56 overflow-y-auto rounded-md p-1"
                 >
                     <button
                         v-for="(item, index) in dropdownItems"
@@ -373,8 +369,8 @@
                         class="flex w-full items-center justify-between gap-2 rounded px-2.5 py-1.5 text-left text-xs transition-colors cursor-pointer"
                         :class="
                             highlightedIndex === index
-                                ? 'bg-zinc-100 dark:bg-[#27272a] text-zinc-900 dark:text-zinc-100'
-                                : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#27272a] hover:text-zinc-900 dark:hover:text-zinc-100'
+                                ? 'bg-active text-fg'
+                                : 'text-fg-muted hover:bg-hover hover:text-fg'
                         "
                         @mousedown.prevent="
                             item.type === 'create' ? addTag(item.value) : toggleTag(item.value)
@@ -390,7 +386,7 @@
 
                         <Check
                             v-if="item.type === 'existing' && selectedTagSet.has(item.value)"
-                            class="h-3.5 w-3.5 shrink-0 text-zinc-900 dark:text-zinc-100"
+                            class="h-3.5 w-3.5 shrink-0 text-fg"
                         />
                     </button>
                 </div>
