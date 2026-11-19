@@ -4,6 +4,7 @@
  */
 
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../src/constants/default-public-links.js';
+import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../src/constants/default-public-cores.js';
 
 // KV storage keys
 export const KV_KEY_SUBS = 'misub_subscriptions_v1';
@@ -128,6 +129,8 @@ export const DEFAULT_SETTINGS = {
     },
     // 公开页导航链接设置
     publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
+    // 公开页代理内核设置
+    publicCores: DEFAULT_PUBLIC_CORES_CONFIG,
     // 自定义公开页设置
     customPage: {
         enabled: false, // 是否启用自定义页面

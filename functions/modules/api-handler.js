@@ -24,6 +24,7 @@ import {
     KV_KEY_SUBS,
 } from './config.js';
 import { normalizePublicLinksConfig } from '../../src/constants/default-public-links.js';
+import { normalizePublicCoresConfig } from '../../src/constants/default-public-cores.js';
 import { listRuleTemplates } from './rule-template-handler.js';
 /**
  * 处理订阅和配置保存API
@@ -752,6 +753,7 @@ export async function handlePublicProfilesRequest(env) {
         };
 
         const publicLinks = normalizePublicLinksConfig(settings.publicLinks);
+        const publicCores = normalizePublicCoresConfig(settings.publicCores);
 
         return createJsonResponse({
             success: true,
@@ -763,6 +765,7 @@ export async function handlePublicProfilesRequest(env) {
                 guestbook,
                 customPage,
                 publicLinks,
+                publicCores,
                 defaultLocale,
             },
         });

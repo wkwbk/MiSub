@@ -20,6 +20,11 @@
         PUBLIC_LINK_CATEGORIES,
         resolvePublicLinkIcon,
     } from '@/constants/default-public-links.js';
+    import {
+        normalizePublicCoresConfig,
+        PUBLIC_CORE_CATEGORIES,
+        resolvePublicCoreIcon,
+    } from '@/constants/default-public-cores.js';
 
     const isDev = import.meta.env.DEV;
 
@@ -82,6 +87,33 @@
     const getLinkCategoryLabel = (category) => {
         const found = PUBLIC_LINK_CATEGORIES.find((cat) => cat.value === category);
         return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+    };
+    const publicCoresConfig = computed(() => normalizePublicCoresConfig(config.value.publicCores));
+    const enabledPublicCores = computed(() =>
+        publicCoresConfig.value.enabled
+            ? (publicCoresConfig.value.items || []).filter((item) => item.enabled !== false)
+            : []
+    );
+    const activeCoreCategory = ref('all');
+    const availableCoreCategories = computed(() => {
+        const present = new Set(enabledPublicCores.value.map((item) => item.category || 'other'));
+        const dynamicTabs = PUBLIC_CORE_CATEGORIES.filter((cat) => present.has(cat.value)).map(
+            (cat) => ({
+                value: cat.value,
+                label: t(cat.labelKey),
+            })
+        );
+        return [{ value: 'all', label: t('publicProfiles.allCategories') }, ...dynamicTabs];
+    });
+    const displayedPublicCores = computed(() => {
+        if (activeCoreCategory.value === 'all') return enabledPublicCores.value;
+        return enabledPublicCores.value.filter(
+            (item) => (item.category || 'other') === activeCoreCategory.value
+        );
+    });
+    const getCoreCategoryLabel = (category) => {
+        const found = PUBLIC_CORE_CATEGORIES.find((cat) => cat.value === category);
+        return found ? t(found.labelKey) : category || t('publicCores.categories.other');
     };
     const getLinkHostname = (rawUrl) => {
         try {
@@ -301,14 +333,14 @@
 
     const RECENT_UPDATE_DAYS = 7;
 
-    const parseClientPublishedDate = (client) => {
-        if (!client?.publishedAt) return null;
-        const date = new Date(client.publishedAt);
+    const parsePublishedDate = (publishedAt) => {
+        if (!publishedAt) return null;
+        const date = new Date(publishedAt);
         return Number.isNaN(date.getTime()) ? null : date;
     };
 
-    const getClientUpdatedLabel = (client) => {
-        const publishedDate = parseClientPublishedDate(client);
+    const formatReleaseUpdatedLabel = (publishedAt) => {
+        const publishedDate = parsePublishedDate(publishedAt);
         if (!publishedDate) return '';
 
         const diffMs = Date.now() - publishedDate.getTime();
@@ -326,13 +358,83 @@
         return `${year}-${month}-${day}`;
     };
 
-    const getClientUpdatedTitle = (client) => {
-        const publishedDate = parseClientPublishedDate(client);
+    const formatReleaseUpdatedTitle = (publishedAt) => {
+        const publishedDate = parsePublishedDate(publishedAt);
         if (!publishedDate) return '';
         return t('publicProfiles.updatedAtTooltip', {
             date: publishedDate.toLocaleString(),
         });
     };
+
+    const getClientUpdatedLabel = (client) => formatReleaseUpdatedLabel(client?.publishedAt);
+
+    const getClientUpdatedTitle = (client) => formatReleaseUpdatedTitle(client?.publishedAt);
+
+    const extractGithubRepo = (item) => {
+        if (item?.repo && /^[\w\-\.]+\/[\w\-\.]+$/.test(item.repo)) {
+            return item.repo;
+        }
+        if (!item?.url) return null;
+        try {
+            const parsed = new URL(item.url);
+            if (parsed.hostname !== 'github.com' && parsed.hostname !== 'www.github.com') {
+                return null;
+            }
+            const parts = parsed.pathname.split('/').filter(Boolean);
+            if (parts.length < 2) return null;
+            const owner = parts[0];
+            const repo = parts[1].replace(/\.git$/i, '');
+            const slug = `${owner}/${repo}`;
+            return /^[\w\-\.]+\/[\w\-\.]+$/.test(slug) ? slug : null;
+        } catch {
+            return null;
+        }
+    };
+
+    const coreReleases = ref({});
+    const fetchedCoreRepos = new Set();
+
+    const fetchCoreReleases = async (cores = []) => {
+        cores.forEach(async (core) => {
+            const repo = extractGithubRepo(core);
+            if (!repo || fetchedCoreRepos.has(repo)) return;
+            fetchedCoreRepos.add(repo);
+            try {
+                const data = await api.get(`/api/github/release?repo=${repo}`);
+                if (data?.published_at) {
+                    coreReleases.value = {
+                        ...coreReleases.value,
+                        [repo]: {
+                            version: data.tag_name || '',
+                            publishedAt: data.published_at,
+                        },
+                    };
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch release date for ${core.name}`, e);
+            }
+        });
+    };
+
+    const getCoreUpdatedLabel = (core) => {
+        const repo = extractGithubRepo(core);
+        return repo ? formatReleaseUpdatedLabel(coreReleases.value[repo]?.publishedAt) : '';
+    };
+
+    const getCoreUpdatedTitle = (core) => {
+        const repo = extractGithubRepo(core);
+        return repo ? formatReleaseUpdatedTitle(coreReleases.value[repo]?.publishedAt) : '';
+    };
+
+    watch(
+        enabledPublicCores,
+        (cores) => {
+            if (cores.length > 0) {
+                fetchCoreReleases(cores);
+            }
+        },
+        { immediate: true }
+    );
 
     const showPreviewModal = ref(false);
     const previewProfileId = ref(null);
@@ -809,6 +911,146 @@
                                         class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link shrink-0"
                                     >
                                         {{ t('publicProfiles.download') }}
+                                        <ArrowRight
+                                            class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
+                                        />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Proxy Cores Section (Xray-core, sing-box, Mihomo, Hysteria 2, etc.) -->
+                <div
+                    v-if="!error && enabledPublicCores.length > 0"
+                    class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
+                >
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="text-center mb-8 relative">
+                            <div class="relative inline-flex flex-col items-center">
+                                <span
+                                    class="font-mono text-xs font-semibold tracking-widest text-zinc-400 uppercase mb-2"
+                                    >{{ t('publicProfiles.coresEyebrow') }}</span
+                                >
+                                <h2
+                                    class="text-2xl md:text-3xl font-bold text-zinc-100 tracking-tight"
+                                >
+                                    {{ t('publicProfiles.coresTitle') }}
+                                </h2>
+                                <p class="mt-2 text-sm text-zinc-400 max-w-2xl mx-auto">
+                                    {{ t('publicProfiles.coresDescription') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Core Category Tabs -->
+                        <div
+                            v-if="availableCoreCategories.length > 2"
+                            class="flex flex-wrap items-center justify-center gap-2 mb-8"
+                        >
+                            <button
+                                v-for="tab in availableCoreCategories"
+                                :key="tab.value"
+                                type="button"
+                                @click="activeCoreCategory = tab.value"
+                                class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
+                                :class="
+                                    activeCoreCategory === tab.value
+                                        ? 'bg-zinc-100 text-zinc-900 border-zinc-100 font-semibold'
+                                        : 'bg-[#171717] text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                                "
+                            >
+                                {{ tab.label }}
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div
+                                v-for="core in displayedPublicCores"
+                                :key="core.id || core.name"
+                                class="group relative bg-[#171717] rounded-md p-5 shadow-[0_0_13px_rgba(0,0,0,0.11)] dark:shadow-[0_0_15px_rgba(0,0,0,0.45)] hover:-translate-y-1 hover:z-10 border border-zinc-800 transition-all duration-200"
+                            >
+                                <div class="flex items-start gap-4">
+                                    <div
+                                        class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-zinc-800 shrink-0 overflow-hidden"
+                                    >
+                                        <img
+                                            v-if="
+                                                resolvePublicCoreIcon(core) &&
+                                                (resolvePublicCoreIcon(core).includes('/') ||
+                                                    resolvePublicCoreIcon(core).startsWith(
+                                                        'data:'
+                                                    ) ||
+                                                    resolvePublicCoreIcon(core).startsWith('http'))
+                                            "
+                                            :src="resolvePublicCoreIcon(core)"
+                                            :alt="core.name"
+                                            class="w-full h-full object-contain rounded-md p-1"
+                                        />
+                                        <span v-else>{{
+                                            core.icon || core.name?.slice(0, 1) || '⚙️'
+                                        }}</span>
+                                    </div>
+
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between gap-2 mb-1.5">
+                                            <h3
+                                                class="text-sm font-semibold text-zinc-100 truncate"
+                                            >
+                                                {{ core.name }}
+                                            </h3>
+                                            <span
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400 shrink-0"
+                                            >
+                                                {{ getCoreCategoryLabel(core.category) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            v-if="core.tags && core.tags.length > 0"
+                                            class="flex flex-wrap gap-1 mb-2"
+                                        >
+                                            <span
+                                                v-for="tag in core.tags"
+                                                :key="tag"
+                                                class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-zinc-800 bg-transparent text-zinc-400"
+                                            >
+                                                {{ tag }}
+                                            </span>
+                                        </div>
+                                        <p
+                                            class="text-zinc-400 text-xs line-clamp-2 leading-relaxed h-9"
+                                        >
+                                            {{ core.description }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-zinc-800"
+                                >
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span
+                                            class="font-mono text-xs text-zinc-400 bg-transparent border border-zinc-800 px-2 py-0.5 rounded-md truncate max-w-[140px] shrink-0"
+                                        >
+                                            {{ getLinkHostname(core.url) }}
+                                        </span>
+                                        <span
+                                            v-if="getCoreUpdatedLabel(core)"
+                                            :title="getCoreUpdatedTitle(core)"
+                                            class="font-mono text-[11px] text-zinc-500 truncate"
+                                        >
+                                            {{ getCoreUpdatedLabel(core) }}
+                                        </span>
+                                    </div>
+
+                                    <a
+                                        :href="core.url"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-mono text-xs font-semibold text-zinc-200 hover:text-white flex items-center gap-1 group/link shrink-0"
+                                    >
+                                        {{ t('publicProfiles.viewRepo') }}
                                         <ArrowRight
                                             class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform"
                                         />
