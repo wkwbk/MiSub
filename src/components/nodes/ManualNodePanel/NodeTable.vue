@@ -35,6 +35,7 @@
         'update:draggableManualNodes',
         'toggle-select',
         'edit',
+        'detail',
         'delete',
         'sort-end',
         'change-page',
@@ -189,6 +190,7 @@
                         :is-pinging="pingingNodes.has(node.id)"
                         @toggle-select="emit('toggle-select', node.id)"
                         @edit="emit('edit', node.id)"
+                        @detail="emit('detail', node)"
                         @delete="emit('delete', node.id)"
                         @filter-tag="emit('toggle-tag-filter', $event)"
                         @ping="emit('ping', node.id)"
@@ -209,6 +211,7 @@
                     :is-pinging="pingingNodes.has(node.id)"
                     @toggle-select="emit('toggle-select', node.id)"
                     @edit="emit('edit', node.id)"
+                    @detail="emit('detail', node)"
                     @delete="emit('delete', node.id)"
                     @filter-tag="emit('toggle-tag-filter', $event)"
                     @ping="emit('ping', node.id)"

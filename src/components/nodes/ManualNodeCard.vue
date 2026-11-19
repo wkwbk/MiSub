@@ -1,10 +1,11 @@
 <script setup>
     import { computed } from 'vue';
-    import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
+    import { Check, Copy, Info, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
     import { getItemTags } from '@/utils/tags.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
+    import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 
     const props = defineProps({
         node: {
@@ -17,7 +18,7 @@
         isPinging: Boolean,
     });
 
-    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-tag', 'ping']);
+    const emit = defineEmits(['delete', 'edit', 'detail', 'toggle-select', 'filter-tag', 'ping']);
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
@@ -203,6 +204,9 @@
             </h4>
         </div>
 
+        <!-- Client Compatibility Row -->
+        <NodeClientBadges :url="node.url" class="mb-2.5" />
+
         <!-- Bottom Row: Endpoint (Host:Port) + Quick Actions -->
         <div
             class="mt-auto flex items-center justify-between gap-2 border-t border-zinc-800/60 pt-2.5"
@@ -231,6 +235,14 @@
                     :class="{ 'animate-pulse text-zinc-100': isPinging }"
                 >
                     <Zap class="h-3.5 w-3.5" />
+                </button>
+                <button
+                    @click.stop="emit('detail')"
+                    class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-zinc-400 transition-colors hover:border-zinc-700 hover:bg-zinc-800 hover:text-zinc-100"
+                    :title="t('actions.viewDetail')"
+                    :aria-label="t('actions.viewDetail')"
+                >
+                    <Info class="h-3.5 w-3.5" />
                 </button>
                 <button
                     @click.stop="copyToClipboard(node.url)"

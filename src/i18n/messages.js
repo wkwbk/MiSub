@@ -79,6 +79,7 @@ export const messages = {
             deselectAll: '取消全选',
             exit: '退出',
             copyNode: '复制节点',
+            viewDetail: '查看详情',
         },
         notices: {
             defaultPasswordWarning:
@@ -286,6 +287,34 @@ export const messages = {
             dedupPreviewTitle: '预览将被移除的节点（最多显示 20 条）',
             unnamedNode: '未命名节点',
             noDuplicatesFound: '没有检测到重复节点。',
+        },
+        clientCompat: {
+            supportedTooltip: '{client}：支持',
+            unsupportedTooltip: '{client}：不支持（{reason}）',
+            reasons: {
+                unsupportedProtocol: '不支持 {protocol} 协议',
+                unsupportedTransport: '不支持 {transport} 传输协议',
+                unsupportedVlessEncryption: '不支持 VLESS Encryption',
+                unsupportedReality: '不支持 Reality',
+                unsupportedSS2022: '不支持 Shadowsocks 2022 加密',
+                unsupportedPlugin: '不支持 {plugin} 插件',
+            },
+        },
+        nodeDetail: {
+            title: '节点配置详情',
+            tabStructured: '配置详情',
+            tabYaml: 'Clash YAML',
+            tabJson: 'JSON',
+            sectionBasic: '基础信息',
+            sectionAuth: '认证与加密',
+            sectionTransport: '传输层',
+            sectionSecurity: 'TLS 与安全',
+            sectionExtra: '其他参数',
+            rawUrl: '原始链接',
+            copyYaml: '复制 YAML',
+            copyJson: '复制 JSON',
+            unsupportedNotice: '当前协议暂不支持完整字段解析，仅展示基础地址与原始链接。',
+            close: '关闭',
         },
         nodePreview: {
             extractedToManual: '已成功提取 {count} 个节点至手动列表，请记得保存更改。',
@@ -797,7 +826,8 @@ export const messages = {
                 other: '其他内核',
             },
             managerTitle: '公开页代理内核',
-            managerDesc: '管理公开页展示的 Xray-core、sing-box、Mihomo、Hysteria 2 等代理内核卡片。',
+            managerDesc:
+                '管理公开页展示的 Xray-core、sing-box、Mihomo、Hysteria 2 等代理内核卡片。',
             resetDefault: '重置默认',
             addCore: '新增内核',
             addModalTitle: '新增代理内核',
@@ -1944,6 +1974,7 @@ export const messages = {
             deselectAll: 'Deselect',
             exit: 'Exit',
             copyNode: 'Copy node',
+            viewDetail: 'View details',
         },
         notices: {
             defaultPasswordWarning:
@@ -2154,6 +2185,35 @@ export const messages = {
             dedupPreviewTitle: 'Preview nodes to remove (up to 20)',
             unnamedNode: 'Unnamed node',
             noDuplicatesFound: 'No duplicate nodes detected.',
+        },
+        clientCompat: {
+            supportedTooltip: '{client}: Supported',
+            unsupportedTooltip: '{client}: Unsupported ({reason})',
+            reasons: {
+                unsupportedProtocol: '{protocol} protocol is not supported',
+                unsupportedTransport: '{transport} transport is not supported',
+                unsupportedVlessEncryption: 'VLESS Encryption is not supported',
+                unsupportedReality: 'Reality is not supported',
+                unsupportedSS2022: 'Shadowsocks 2022 cipher is not supported',
+                unsupportedPlugin: '{plugin} plugin is not supported',
+            },
+        },
+        nodeDetail: {
+            title: 'Node configuration details',
+            tabStructured: 'Details',
+            tabYaml: 'Clash YAML',
+            tabJson: 'JSON',
+            sectionBasic: 'Basic',
+            sectionAuth: 'Auth & Encryption',
+            sectionTransport: 'Transport',
+            sectionSecurity: 'TLS & Security',
+            sectionExtra: 'Other Options',
+            rawUrl: 'Raw link',
+            copyYaml: 'Copy YAML',
+            copyJson: 'Copy JSON',
+            unsupportedNotice:
+                'Full config parsing is not supported for this protocol yet. Showing basic endpoint and raw link.',
+            close: 'Close',
         },
         nodePreview: {
             extractedToManual:
@@ -2705,7 +2765,8 @@ export const messages = {
             invalidUrl: 'Please enter a valid http:// or https:// URL',
             emptyCategory: 'No proxy cores in this category yet. Click "Add core" to add one.',
             resetConfirmQuestion: 'Reset to default proxy cores?',
-            resetConfirmDesc: 'This will overwrite your current custom public page proxy core list.',
+            resetConfirmDesc:
+                'This will overwrite your current custom public page proxy core list.',
             deleteConfirmQuestion: 'Delete this proxy core card?',
         },
         settings: {
@@ -3330,7 +3391,8 @@ export const messages = {
             resetDefault: 'Reset default',
             clearAll: 'Clear all',
             regexPinPlaceholder: 'Enter keyword or regex (e.g. AWS, dmit) and press Enter',
-            invalidRegexError: 'Invalid regular expression syntax. Please check brackets or escapes.',
+            invalidRegexError:
+                'Invalid regular expression syntax. Please check brackets or escapes.',
             emptyRegexPriorityItems:
                 'No pin rules yet. Add keywords or regexes above; unmatched nodes are placed after matched ones.',
             emptyPriorityItems:
@@ -3809,7 +3871,8 @@ export const messages = {
             batchModeReplace: 'Replace',
             batchModeRemove: 'Remove',
             batchModeClear: 'Clear all',
-            batchAppendDesc: 'Append the selected tags to the chosen nodes (keeping existing tags).',
+            batchAppendDesc:
+                'Append the selected tags to the chosen nodes (keeping existing tags).',
             batchReplaceDesc: 'Replace all existing tags on the chosen nodes with the tags below.',
             batchRemoveDesc: 'Remove the specified tags from the chosen nodes.',
             batchClearDesc: 'Clear all tags from the chosen nodes.',

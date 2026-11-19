@@ -1,5 +1,5 @@
 <script setup>
-    import { Check, Copy } from '@lucide/vue';
+    import { Check, Copy, Info } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
 
     const { t } = useI18n();
@@ -32,7 +32,7 @@
         },
     });
 
-    const emit = defineEmits(['copy', 'toggle-select']);
+    const emit = defineEmits(['copy', 'detail', 'toggle-select']);
 
     const handleRowClick = (node) => {
         if (props.selectionMode) {
@@ -169,7 +169,16 @@
                                 </div>
 
                                 <!-- 操作 (所有设备) -->
-                                <div class="col-span-1 flex justify-center">
+                                <div class="col-span-1 flex items-center justify-center gap-1">
+                                    <button
+                                        v-if="!selectionMode"
+                                        @click.stop="emit('detail', node)"
+                                        class="inline-flex items-center justify-center w-7 h-7 rounded-md text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors touch-target"
+                                        :title="t('actions.viewDetail')"
+                                        :aria-label="t('actions.viewDetail')"
+                                    >
+                                        <Info class="w-3.5 h-3.5" />
+                                    </button>
                                     <button
                                         v-if="!selectionMode"
                                         @click.stop="emit('copy', node, node.url)"
@@ -177,6 +186,7 @@
                                         :class="{
                                             'text-emerald-500': copiedNodeId === node.url,
                                         }"
+                                        :title="t('actions.copyNode')"
                                         :aria-label="t('actions.copyNode')"
                                     >
                                         <Copy

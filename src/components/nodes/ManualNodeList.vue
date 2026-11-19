@@ -1,10 +1,11 @@
 <script setup>
     import { computed } from 'vue';
-    import { Check, Copy, Pencil, Trash2, Zap } from '@lucide/vue';
+    import { Check, Copy, Info, Pencil, Trash2, Zap } from '@lucide/vue';
     import { extractHostAndPort } from '@/lib/utils.js';
     import { getItemTags } from '@/utils/tags.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useI18n } from '@/i18n/index.js';
+    import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 
     const props = defineProps({
         node: {
@@ -21,7 +22,7 @@
         isPinging: Boolean,
     });
 
-    const emit = defineEmits(['delete', 'edit', 'toggle-select', 'filter-tag', 'ping']);
+    const emit = defineEmits(['delete', 'edit', 'detail', 'toggle-select', 'filter-tag', 'ping']);
     const { showToast } = useToastStore();
     const { t } = useI18n();
 
@@ -174,6 +175,14 @@
                                 <Zap class="h-4 w-4" />
                             </button>
                             <button
+                                @click.stop="emit('detail')"
+                                class="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
+                                :title="t('actions.viewDetail')"
+                                :aria-label="t('actions.viewDetail')"
+                            >
+                                <Info class="h-4 w-4" />
+                            </button>
+                            <button
                                 @click.stop="copyToClipboard(node.url)"
                                 class="rounded-md p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100"
                                 :title="t('actions.copyLink')"
@@ -235,6 +244,7 @@
                     <p class="mt-1 text-xs text-zinc-500 font-mono">
                         {{ hostAndPort.host || 'N/A' }}:{{ hostAndPort.port || 'N/A' }}
                     </p>
+                    <NodeClientBadges :url="node.url" compact class="mt-1.5" />
                 </div>
             </div>
         </div>
@@ -296,31 +306,36 @@
                 {{ protocolStyle.text }}
             </div>
 
-            <div class="min-w-0 flex items-center gap-2 pr-4">
-                <p class="truncate text-sm font-medium text-zinc-100" :title="node.name">
-                    {{ node.name || t('manualNodes.unnamed') }}
-                </p>
-                <div
-                    v-if="pingResult"
-                    class="flex shrink-0 flex-row items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
-                >
-                    <span
-                        class="h-1.5 w-1.5 rounded-full shrink-0"
-                        :class="{
-                            'bg-emerald-500':
-                                pingResult.status === 'ok' && pingResult.latency < 300,
-                            'bg-amber-500': pingResult.status === 'ok' && pingResult.latency >= 300,
-                            'bg-red-500':
-                                pingResult.status === 'error' || pingResult.status === 'timeout',
-                            'bg-sky-500 animate-pulse': pingResult.status === 'loading',
-                        }"
-                    ></span>
-                    <span v-if="pingResult.status === 'loading'">{{
-                        t('manualNodes.pinging')
-                    }}</span><span v-else-if="pingResult.status === 'ok'"
-                        >{{ pingResult.latency }}ms</span
-                    ><span v-else>{{ t('manualNodes.unreachable') }}</span>
+            <div class="min-w-0 pr-4">
+                <div class="flex items-center gap-2">
+                    <p class="truncate text-sm font-medium text-zinc-100" :title="node.name">
+                        {{ node.name || t('manualNodes.unnamed') }}
+                    </p>
+                    <div
+                        v-if="pingResult"
+                        class="flex shrink-0 flex-row items-center gap-1.5 rounded-md border border-zinc-800 bg-transparent px-2 py-0.5 text-[10px] font-mono text-zinc-300"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 rounded-full shrink-0"
+                            :class="{
+                                'bg-emerald-500':
+                                    pingResult.status === 'ok' && pingResult.latency < 300,
+                                'bg-amber-500':
+                                    pingResult.status === 'ok' && pingResult.latency >= 300,
+                                'bg-red-500':
+                                    pingResult.status === 'error' ||
+                                    pingResult.status === 'timeout',
+                                'bg-sky-500 animate-pulse': pingResult.status === 'loading',
+                            }"
+                        ></span>
+                        <span v-if="pingResult.status === 'loading'">{{
+                            t('manualNodes.pinging')
+                        }}</span><span v-else-if="pingResult.status === 'ok'"
+                            >{{ pingResult.latency }}ms</span
+                        ><span v-else>{{ t('manualNodes.unreachable') }}</span>
+                    </div>
                 </div>
+                <NodeClientBadges :url="node.url" compact class="mt-1" />
             </div>
 
             <div class="min-w-0">
@@ -348,6 +363,14 @@
                     :class="{ 'animate-pulse text-zinc-100': isPinging }"
                 >
                     <Zap class="h-4 w-4" />
+                </button>
+                <button
+                    @click.stop="emit('detail')"
+                    class="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-transparent hover:border-zinc-800 p-2 text-zinc-400 transition-colors hover:bg-zinc-900 hover:text-zinc-100 lg:min-h-0 lg:min-w-0"
+                    :title="t('actions.viewDetail')"
+                    :aria-label="t('actions.viewDetail')"
+                >
+                    <Info class="h-4 w-4" />
                 </button>
                 <button
                     @click.stop="copyToClipboard(node.url)"

@@ -12,6 +12,7 @@
     import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
     import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
     import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
+    import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
     import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
 
     const isDev = import.meta.env.DEV;
@@ -69,6 +70,14 @@
 
     // 复制状态
     const copiedNodeId = ref('');
+
+    // 节点详情弹窗状态
+    const detailNode = ref(null);
+    const showDetailModal = ref(false);
+    const openNodeDetail = (node) => {
+        detailNode.value = node;
+        showDetailModal.value = true;
+    };
 
     // [New] Selection Mode State
     const pickingMode = ref(false);
@@ -216,6 +225,8 @@
             if (newVal) {
                 loadNodes();
             } else {
+                showDetailModal.value = false;
+                detailNode.value = null;
                 resetState();
             }
         }
@@ -527,7 +538,11 @@
 </script>
 
 <template>
-    <Modal :show="show" size="6xl" @update:show="(value) => !value && closeModal()">
+    <Modal
+        :show="show"
+        size="6xl"
+        @update:show="(value) => !value && !showDetailModal && closeModal()"
+    >
         <template #title>
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 space-y-0.5">
@@ -700,6 +715,7 @@
                             :selection-mode="pickingMode"
                             :selected-urls="selectedUrls"
                             @copy="copyNodeUrl"
+                            @detail="openNodeDetail"
                             @toggle-select="toggleNodeSelection"
                         />
 
@@ -713,6 +729,7 @@
                             :selection-mode="pickingMode"
                             :selected-urls="selectedUrls"
                             @copy="copyNodeUrl"
+                            @detail="openNodeDetail"
                             @toggle-select="toggleNodeSelection"
                         />
                     </div>
@@ -783,6 +800,8 @@
             </template>
         </template>
     </Modal>
+
+    <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
 </template>
 
 <style scoped></style>

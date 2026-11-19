@@ -3,6 +3,7 @@
     import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
     import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
     import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
+    import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
     import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
 
     const props = defineProps({
@@ -110,6 +111,12 @@
 
     const handleDelete = (id) => emit('delete', id);
     const handleEdit = (id) => emit('edit', id);
+    const detailNode = ref(null);
+    const showDetailModal = ref(false);
+    const handleDetail = (node) => {
+        detailNode.value = node;
+        showDetailModal.value = true;
+    };
     const handleAdd = () => emit('add');
     const handleChangePage = (page) => handlePageChange(page);
     const handleSetViewMode = (mode) => emit('update:viewMode', mode);
@@ -195,6 +202,7 @@
             @update:items-per-page="emit('update:itemsPerPage', $event)"
             @toggle-select="toggleNodeSelection"
             @edit="handleEdit"
+            @detail="handleDetail"
             @delete="handleDelete"
             @sort-end="handleSortEnd"
             @change-page="handleChangePage"
@@ -206,5 +214,7 @@
             @clear-search="handleSearchTermUpdate('')"
             @toggle-sort="handleToggleSort"
         />
+
+        <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
     </div>
 </template>

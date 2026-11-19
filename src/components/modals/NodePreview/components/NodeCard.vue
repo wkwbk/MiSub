@@ -1,6 +1,7 @@
 <script setup>
-    import { Check, Copy } from '@lucide/vue';
+    import { Check, Copy, Info } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
+    import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 
     const { t } = useI18n();
     const props = defineProps({
@@ -31,7 +32,7 @@
         },
     });
 
-    const emit = defineEmits(['copy', 'toggle-select']);
+    const emit = defineEmits(['copy', 'detail', 'toggle-select']);
 
     const handleCardClick = (node) => {
         if (props.selectionMode) {
@@ -96,22 +97,33 @@
                                 }}
                             </span>
                         </div>
+                        <NodeClientBadges :url="node.url" compact class="mt-1.5" />
                     </div>
                 </div>
 
                 <!-- 右侧：操作按钮 -->
-                <button
-                    v-if="!selectionMode"
-                    @click.stop="emit('copy', node, node.url)"
-                    class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                    :class="{
-                        'text-emerald-500 border-emerald-500/40': copiedNodeId === node.url,
-                    }"
-                    :aria-label="t('actions.copyNode')"
-                >
-                    <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
-                    <Check v-else class="w-3.5 h-3.5" />
-                </button>
+                <div v-if="!selectionMode" class="flex shrink-0 items-center gap-1.5">
+                    <button
+                        @click.stop="emit('detail', node)"
+                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        :title="t('actions.viewDetail')"
+                        :aria-label="t('actions.viewDetail')"
+                    >
+                        <Info class="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        @click.stop="emit('copy', node, node.url)"
+                        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        :class="{
+                            'text-emerald-500 border-emerald-500/40': copiedNodeId === node.url,
+                        }"
+                        :title="t('actions.copyNode')"
+                        :aria-label="t('actions.copyNode')"
+                    >
+                        <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
+                        <Check v-else class="w-3.5 h-3.5" />
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -173,6 +185,9 @@
                         </div>
                     </div>
 
+                    <!-- 客户端兼容性 -->
+                    <NodeClientBadges :url="node.url" class="mb-3" />
+
                     <!-- 服务器信息 -->
                     <div class="mt-auto pt-3 border-t border-zinc-200/80 dark:border-zinc-800">
                         <div class="flex items-center justify-between">
@@ -189,19 +204,30 @@
                                 </div>
                             </div>
 
-                            <!-- 复制按钮 -->
-                            <button
-                                v-if="!selectionMode"
-                                @click.stop="emit('copy', node, node.url)"
-                                class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                                :class="{
-                                    'text-emerald-500 border-emerald-500/40': copiedNodeId === node.url,
-                                }"
-                                :aria-label="t('actions.copyNode')"
-                            >
-                                <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
-                                <Check v-else class="w-3.5 h-3.5" />
-                            </button>
+                            <!-- 操作按钮 -->
+                            <div v-if="!selectionMode" class="flex shrink-0 items-center gap-1.5">
+                                <button
+                                    @click.stop="emit('detail', node)"
+                                    class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                    :title="t('actions.viewDetail')"
+                                    :aria-label="t('actions.viewDetail')"
+                                >
+                                    <Info class="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                    @click.stop="emit('copy', node, node.url)"
+                                    class="p-1.5 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                    :class="{
+                                        'text-emerald-500 border-emerald-500/40':
+                                            copiedNodeId === node.url,
+                                    }"
+                                    :title="t('actions.copyNode')"
+                                    :aria-label="t('actions.copyNode')"
+                                >
+                                    <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
+                                    <Check v-else class="w-3.5 h-3.5" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
