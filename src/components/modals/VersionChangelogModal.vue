@@ -119,7 +119,7 @@
                     :href="release.html_url"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-fg-subtle hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 underline underline-offset-4"
+                    class="inline-flex items-center gap-1.5 text-xs font-mono font-medium text-fg-subtle hover:text-fg underline underline-offset-4"
                 >
                     {{ t('changelog.viewReleasePage') }}
                     <ExternalLink class="w-3.5 h-3.5" />

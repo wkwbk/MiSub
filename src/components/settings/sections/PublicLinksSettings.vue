@@ -622,7 +622,7 @@
                                     class="p-2 rounded-md border text-xs font-medium transition-colors text-center"
                                     :class="
                                         editingLink.category === cat.value
-                                            ? 'bg-elevated-card border-zinc-500 text-fg'
+                                            ? 'bg-elevated-card border-line-strong text-fg'
                                             : 'bg-transparent border-line text-fg-subtle hover:bg-hover hover:text-fg-muted'
                                     "
                                 >

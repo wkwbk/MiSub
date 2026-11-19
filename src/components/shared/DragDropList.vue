@@ -424,7 +424,7 @@
     }
 
     .drag-drop-footer {
-        @apply text-sm text-gray-500 dark:text-gray-400;
+        @apply text-sm text-fg-subtle dark:text-gray-400;
     }
 
     /* 暗黑模式下的拖拽状态 */

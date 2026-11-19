@@ -261,10 +261,10 @@
                                     column.align === 'center' ? 'text-center' : '',
                                     column.align === 'right' ? 'text-right' : '',
                                     column.sticky === 'right'
-                                        ? 'sticky right-0 z-20 border-l border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
+                                        ? 'sticky right-0 z-20 border-l border-line bg-surface/95 backdrop-blur'
                                         : '',
                                     column.sticky === 'left'
-                                        ? 'sticky left-0 z-20 border-r border-gray-200 bg-gray-50/95 backdrop-blur dark:border-gray-700 dark:bg-gray-800/95'
+                                        ? 'sticky left-0 z-20 border-r border-line bg-surface/95 backdrop-blur'
                                         : '',
                                 ]"
                             >
@@ -349,10 +349,10 @@
                                     column.align === 'right' ? 'text-right' : '',
                                     compact ? 'py-2' : '',
                                     column.sticky === 'right'
-                                        ? 'sticky right-0 z-10 border-l border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
+                                        ? 'sticky right-0 z-10 border-l border-line bg-surface/95 backdrop-blur'
                                         : '',
                                     column.sticky === 'left'
-                                        ? 'sticky left-0 z-10 border-r border-gray-200 bg-white/95 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95'
+                                        ? 'sticky left-0 z-10 border-r border-line bg-surface/95 backdrop-blur'
                                         : '',
                                 ]"
                             >

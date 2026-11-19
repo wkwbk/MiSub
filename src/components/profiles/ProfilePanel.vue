@@ -231,7 +231,7 @@
                                     }}
                                 </button>
                                 <div
-                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                    class="my-1 border-t border-line"
                                 ></div>
                                 <button
                                     @click="
@@ -259,7 +259,7 @@
                                     {{ t('actions.manageTags') }}
                                 </button>
                                 <div
-                                    class="my-1 border-t border-zinc-200 dark:border-white/10"
+                                    class="my-1 border-t border-line"
                                 ></div>
                                 <button
                                     @click="

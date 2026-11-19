@@ -512,7 +512,7 @@
                 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
             ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
         };
-        return map[p] || 'bg-gray-100 text-gray-800 border border-gray-200';
+        return map[p] || 'bg-gray-100 text-gray-800 border border-line';
     };
 
     onMounted(async () => {
@@ -553,10 +553,10 @@
         <template v-if="isInitialLoading">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
                 <div class="space-y-6 animate-pulse">
-                    <div class="h-9 w-36 rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"></div>
+                    <div class="h-9 w-36 rounded-md bg-active"></div>
                     <div class="space-y-3">
                         <div
-                            class="h-10 w-full max-w-3xl rounded-md bg-zinc-200/80 dark:bg-zinc-800/80"
+                            class="h-10 w-full max-w-3xl rounded-md bg-active"
                         ></div>
                         <div
                             class="h-10 w-full max-w-2xl rounded-md bg-zinc-200/70 dark:bg-zinc-800/70"

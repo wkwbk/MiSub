@@ -398,7 +398,7 @@
                                 @keydown.enter="handleRegexEnter($event, idx)"
                                 :placeholder="t('operators.regexPinPlaceholder')"
                                 :class="[
-                                    'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-canvas border text-fg focus:bg-white dark:focus:bg-gray-800 transition-all outline-none',
+                                    'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-canvas border text-fg focus:bg-inset transition-all outline-none',
                                     regexErrors[idx]
                                         ? 'border-rose-400 dark:border-rose-500/70 focus:border-rose-500'
                                         : 'border-line focus:border-line-strong',

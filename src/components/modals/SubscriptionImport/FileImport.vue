@@ -74,7 +74,7 @@
             class="relative border rounded-md p-6 text-center transition-colors cursor-pointer bg-inset"
             :class="[
                 isDragging
-                    ? 'border-zinc-500 bg-elevated-card'
+                    ? 'border-line-strong bg-elevated-card'
                     : 'border-line hover:border-line-strong',
                 isProcessing ? 'opacity-60 pointer-events-none' : '',
             ]"

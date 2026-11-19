@@ -594,7 +594,7 @@
                                         class="cursor-pointer group relative flex flex-col items-center justify-center p-2.5 rounded-md border transition-colors select-none text-center font-mono"
                                         :class="
                                             editingClient.platforms.includes(opt.value)
-                                                ? 'bg-elevated-card border-zinc-500 text-fg'
+                                                ? 'bg-elevated-card border-line-strong text-fg'
                                                 : 'bg-transparent border-line text-fg-subtle hover:bg-hover hover:text-fg-muted'
                                         "
                                     >

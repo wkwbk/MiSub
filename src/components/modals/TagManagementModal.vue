@@ -135,14 +135,14 @@
                             class="flex items-center gap-3 p-3 rounded-md border border-line bg-inset transition-colors"
                             :class="
                                 editingIndex === index
-                                    ? 'border-zinc-500 dark:border-zinc-500'
+                                    ? 'border-line-strong'
                                     : 'hover:border-line-strong'
                             "
                         >
                             <button
                                 v-if="isDraggable"
                                 type="button"
-                                class="drag-handle cursor-move text-fg-muted hover:text-zinc-700 dark:hover:text-zinc-200"
+                                class="drag-handle cursor-move text-fg-muted hover:text-fg"
                                 :title="t('common.dragToSort')"
                                 :aria-label="t('common.dragToSort')"
                             >
@@ -154,7 +154,7 @@
                                     v-if="editingIndex === index"
                                     v-model="editingName"
                                     type="text"
-                                    class="w-full px-3 py-1.5 text-sm border border-zinc-400 dark:border-zinc-600 rounded-md focus-visible:outline-none bg-surface text-fg"
+                                    class="w-full px-3 py-1.5 text-sm border border-line-strong rounded-md focus-visible:outline-none bg-surface text-fg"
                                     @keyup.enter="confirmEdit"
                                     @keyup.esc="cancelEdit"
                                     autofocus

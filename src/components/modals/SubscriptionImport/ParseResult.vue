@@ -27,9 +27,9 @@
         <!-- 加载状态 -->
         <div
             v-if="isLoading"
-            class="flex items-center space-x-2 text-xs text-fg-subtle dark:text-zinc-300"
+            class="flex items-center space-x-2 text-xs text-fg-muted"
         >
-            <div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-zinc-500"></div>
+            <div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-line-strong"></div>
             <span>{{ parseStatus || t('importNodes.processing') }}</span>
         </div>
 

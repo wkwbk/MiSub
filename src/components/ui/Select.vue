@@ -386,7 +386,7 @@
                         ref="listRef"
                         role="listbox"
                         :aria-multiselectable="multiple || undefined"
-                        class="max-h-60 overflow-y-auto overscroll-contain space-y-0.5 select-scrollbar"
+                        class="max-h-60 overflow-y-auto overscroll-contain space-y-0.5"
                     >
                         <template v-if="renderItems.length > 0">
                             <template v-for="(item, idx) in renderItems" :key="idx">
@@ -440,21 +440,5 @@
         background-color: var(--surface-popover);
         border: 1px solid var(--border-popover);
         box-shadow: var(--shadow-popover);
-    }
-</style>
-
-<style scoped>
-    .select-scrollbar::-webkit-scrollbar {
-        width: 4px;
-    }
-    .select-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    .select-scrollbar::-webkit-scrollbar-thumb {
-        background: rgba(113, 113, 122, 0.28);
-        border-radius: 9999px;
-    }
-    .select-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: rgba(113, 113, 122, 0.48);
     }
 </style>

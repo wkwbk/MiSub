@@ -112,7 +112,7 @@
                 type="text"
                 v-model="searchModel"
                 :placeholder="t('subscriptions.searchPlaceholder')"
-                class="w-full pl-9 pr-3 py-1.5 text-xs bg-inset border border-line rounded-md shadow-none text-fg placeholder:text-fg-subtle focus-visible:outline-hidden focus:border-zinc-600"
+                class="w-full pl-9 pr-3 py-1.5 text-xs bg-inset border border-line rounded-md shadow-none text-fg placeholder:text-fg-subtle focus-visible:outline-hidden focus:border-line-strong"
                 :aria-label="t('subscriptions.searchPlaceholder')"
             />
             <Search class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-fg-subtle" />

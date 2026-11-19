@@ -51,7 +51,7 @@ export const DEFAULT_PUBLIC_CORES = [
         description:
             '基于 QUIC 协议的高性能抗丢包代理内核，在弱网与高丢包环境下仍能保持极佳吞吐表现。',
         url: 'https://github.com/apernet/hysteria/releases',
-        icon: '/icons/cores/hysteria.png',
+        icon: '/icons/cores/hysteria.svg',
         enabled: true,
     },
     {

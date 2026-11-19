@@ -575,7 +575,7 @@
                     </button>
                     <button
                         @click="closeModal"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-zinc-50 dark:bg-zinc-900/60 text-fg-subtle hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-inset text-fg-subtle hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
                         :aria-label="t('common.close')"
                     >
                         <X class="w-4 h-4" />
@@ -588,7 +588,7 @@
             <!-- 统计信息 (Exposed Hairline Grid Style) -->
             <div
                 v-if="!loading && !error && Object.keys(protocolStats).length > 0"
-                class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-zinc-200 dark:bg-zinc-800 border border-line rounded-md overflow-hidden mb-4"
+                class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line rounded-md overflow-hidden mb-4"
             >
                 <div class="bg-inset px-3.5 py-3 sm:p-4">
                     <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
@@ -661,7 +661,7 @@
                             class="rounded-md border border-line bg-inset px-8 py-8 text-center shadow-none"
                         >
                             <div
-                                class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-zinc-500"
+                                class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-line-strong"
                             ></div>
                             <p class="mt-3 text-xs text-fg-subtle">
                                 {{ t('nodePreview.loadingNodes') }}

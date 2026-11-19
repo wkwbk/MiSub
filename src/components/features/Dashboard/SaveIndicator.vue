@@ -52,7 +52,7 @@
         }
 
         if (!dirty.value) {
-            return `${baseClass} bg-gray-300 text-gray-500 cursor-not-allowed`;
+            return `${baseClass} bg-gray-300 text-fg-subtle cursor-not-allowed`;
         }
 
         return `${baseClass} bg-accent text-accent-fg hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong`;
@@ -105,7 +105,7 @@
                 </div>
 
                 <!-- Status Text -->
-                <div class="text-sm text-gray-600 dark:text-gray-300">
+                <div class="text-sm text-fg-muted">
                     <span v-if="saveState === 'saving'">{{ t('dashboard.saveInProgress') }}</span>
                     <span v-else-if="saveState === 'success'">{{
                         t('dashboard.saveSuccessStatus')

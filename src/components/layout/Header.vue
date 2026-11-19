@@ -63,7 +63,7 @@
                     <router-link
                         v-else
                         :to="isLoggedIn ? '/dashboard' : '/'"
-                        class="font-mono text-xs font-semibold tracking-widest uppercase text-fg-subtle hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        class="font-mono text-xs font-semibold tracking-widest uppercase text-fg-subtle hover:text-fg"
                         >{{ t('app.home') }}</router-link
                     >
 

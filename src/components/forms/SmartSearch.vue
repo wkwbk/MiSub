@@ -140,7 +140,7 @@
                 class="absolute inset-y-0 right-0 pr-3 flex items-center"
             >
                 <X
-                    class="h-5 w-5 text-fg-subtle hover:text-gray-600 smooth-all"
+                    class="h-5 w-5 text-fg-subtle hover:text-fg smooth-all"
                 />
             </button>
         </div>

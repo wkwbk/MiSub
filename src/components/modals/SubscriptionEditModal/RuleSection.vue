@@ -202,7 +202,7 @@
                                 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                 ruleModeModel === 'keep'
                                     ? 'bg-active text-fg border-line-strong font-semibold'
-                                    : 'bg-transparent text-fg-subtle border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-hover',
+                                    : 'bg-transparent text-fg-subtle border-line hover:bg-hover',
                             ]"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
@@ -222,7 +222,7 @@
                                 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                                 ruleModeModel === 'exclude'
                                     ? 'bg-active text-fg border-line-strong font-semibold'
-                                    : 'bg-transparent text-fg-subtle border-zinc-200 dark:text-zinc-400 dark:border-zinc-800 hover:bg-hover',
+                                    : 'bg-transparent text-fg-subtle border-line hover:bg-hover',
                             ]"
                         >
                             <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>

@@ -381,7 +381,7 @@
                                 type="checkbox"
                                 :checked="Boolean(filterValue(filter))"
                                 :disabled="loading || filter.disabled"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus-visible:ring-indigo-500"
+                                class="h-4 w-4 rounded border-line-strong text-indigo-600 focus-visible:ring-indigo-500"
                                 @change="handleFilterChange(filter, $event.target.checked)"
                             />
                             <span class="text-sm text-fg-muted">{{

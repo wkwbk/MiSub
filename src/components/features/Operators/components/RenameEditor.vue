@@ -163,7 +163,7 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexFindPlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
                                 :aria-label="t('operators.regexFindPlaceholder')"
                             />
                         </div>
@@ -178,7 +178,7 @@
                                 "
                                 @change="normalizeRuleFlags(idx)"
                                 :placeholder="t('operators.regexReplacePlaceholder')"
-                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
+                                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
                                 :aria-label="t('operators.regexReplacePlaceholder')"
                             />
                         </div>
@@ -220,7 +220,7 @@
                             :value="props.modelValue.template.template || ''"
                             @input="(e) => updateTemplate({ template: e.target.value })"
                             placeholder="{emoji}{region}-{index}"
-                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-zinc-600"
+                            class="w-full px-3 py-2 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
                             :aria-label="t('operators.templateRewrite')"
                         />
                         <div class="flex flex-wrap gap-1.5">
@@ -274,7 +274,7 @@
                                 (e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })
                             "
                             type="number"
-                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-inset border border-line text-fg outline-none focus:border-zinc-600"
+                            class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-inset border border-line text-fg outline-none focus:border-line-strong"
                             :aria-label="t('operators.startIndex')"
                         />
                     </div>

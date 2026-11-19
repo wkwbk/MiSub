@@ -231,7 +231,7 @@
                         :value="modelValue"
                         @input="handleCustomInput"
                         :placeholder="resolvedCustomPlaceholder"
-                        class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm text-fg placeholder:text-fg-subtle shadow-none focus:border-zinc-600 focus-visible:outline-hidden"
+                        class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm text-fg placeholder:text-fg-subtle shadow-none focus:border-line-strong focus-visible:outline-hidden"
                         :aria-label="resolvedCustomPlaceholder"
                     />
                 </div>

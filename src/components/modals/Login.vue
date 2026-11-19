@@ -91,7 +91,7 @@
                             :class="
                                 error
                                     ? 'text-red-400'
-                                    : 'text-fg-subtle group-focus-within:text-zinc-300'
+                                    : 'text-fg-subtle group-focus-within:text-fg'
                             "
                         >
                             <Lock v-if="!error" class="h-4 w-4" />
@@ -111,7 +111,7 @@
                             :class="[
                                 error
                                     ? 'border-red-500 text-red-400 placeholder-red-400/60 focus:border-red-500'
-                                    : 'border-line text-fg placeholder:text-fg-subtle focus:border-zinc-600',
+                                    : 'border-line text-fg placeholder:text-fg-subtle focus:border-line-strong',
                             ]"
                             :aria-label="t('login.passwordPlaceholder')"
                         />

@@ -172,7 +172,7 @@
                         {{ t('nodePreview.layoutLabel') }}
                     </label>
                     <div
-                        class="inline-flex items-center border border-line rounded-md overflow-hidden divide-x divide-zinc-300 dark:divide-zinc-800"
+                        class="inline-flex items-center border border-line rounded-md overflow-hidden divide-x divide-line"
                     >
                         <button
                             @click="emit('update:viewMode', 'list')"

@@ -175,7 +175,7 @@ overwrite_original_rules=true`;
                     @click="selectedId = template.id"
                     :class="
                         selectedId === template.id
-                            ? 'border-zinc-500 bg-elevated-card text-fg'
+                            ? 'border-line-strong bg-elevated-card text-fg'
                             : 'border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg'
                     "
                     class="w-full rounded-md border px-3 py-2 text-left transition"
@@ -201,7 +201,7 @@ overwrite_original_rules=true`;
                         >
                         <input
                             v-model="selectedTemplate.name"
-                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg focus:border-line-strong focus:outline-hidden"
                         />
                     </label>
                     <label class="block">
@@ -211,7 +211,7 @@ overwrite_original_rules=true`;
                         >
                         <input
                             v-model="selectedTemplate.id"
-                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-sm text-fg focus:border-zinc-600 focus:outline-hidden"
+                            class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-sm text-fg focus:border-line-strong focus:outline-hidden"
                         />
                     </label>
                 </div>
@@ -224,7 +224,7 @@ overwrite_original_rules=true`;
                     <input
                         v-model="selectedTemplate.description"
                         :placeholder="t('settings.ruleTemplateDescriptionPlaceholder')"
-                        class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:border-zinc-600 focus:outline-hidden"
+                        class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:border-line-strong focus:outline-hidden"
                     />
                 </label>
 
@@ -247,7 +247,7 @@ overwrite_original_rules=true`;
                         v-model="selectedTemplate.content"
                         rows="12"
                         spellcheck="false"
-                        wrapperClass="focus-within:border-zinc-600 focus-within:ring-0"
+                        wrapperClass="focus-within:border-line-strong focus-within:ring-0"
                         class="px-3 py-2 font-mono text-xs leading-relaxed"
                     />
                 </div>

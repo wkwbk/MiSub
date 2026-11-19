@@ -192,7 +192,7 @@
                 v-model="localProfile.description"
                 rows="2"
                 :placeholder="t('profiles.descriptionPlaceholder')"
-                wrapperClass="focus-within:border-zinc-600 focus-within:ring-0"
+                wrapperClass="focus-within:border-line-strong focus-within:ring-0"
                 class="px-3 py-2 text-xs text-fg placeholder:text-fg-subtle"
             />
         </div>
@@ -310,7 +310,7 @@
                             type="text"
                             v-model="localProfile.subconverter.backend"
                             :placeholder="t('profileModal.backendPlaceholder')"
-                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
                         />
                         <p class="mt-1.5 text-[10px] leading-relaxed text-fg-subtle">
                             {{ t('profileModal.backendHint') }}
@@ -407,7 +407,7 @@
                         <input
                             type="date"
                             v-model="localProfile.expiresAt"
-                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg focus:border-zinc-600 focus-visible:outline-hidden"
+                            class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg focus:border-line-strong focus-visible:outline-hidden"
                         />
                     </div>
 
