@@ -7,10 +7,10 @@ import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../src/constants/default-public-
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../src/constants/default-public-cores.js';
 
 // Logical storage keys (mapped to D1 tables by D1StorageAdapter)
-export const KV_KEY_SUBS = 'misub_subscriptions_v1';
-export const KV_KEY_PROFILES = 'misub_profiles_v1';
-export const KV_KEY_GUESTBOOK = 'misub_guestbook_v1';
-export const KV_KEY_SETTINGS = 'worker_settings_v1';
+export const STORAGE_KEY_SUBS = 'misub_subscriptions_v1';
+export const STORAGE_KEY_PROFILES = 'misub_profiles_v1';
+export const STORAGE_KEY_GUESTBOOK = 'misub_guestbook_v1';
+export const STORAGE_KEY_SETTINGS = 'worker_settings_v1';
 
 // Auth
 export const COOKIE_NAME = 'auth_session';

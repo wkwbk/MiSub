@@ -2,6 +2,7 @@ import {
     buildListMeta,
     createExternalError,
     createExternalSuccess,
+    generateId,
     getExternalStorageAdapter,
     normalizeStringArray,
     paginate,
@@ -15,14 +16,6 @@ import { inspectRemoteSubscription } from './external-subscriptions-handler.js';
 
 function nowIso() {
     return new Date().toISOString();
-}
-
-function generateId() {
-    try {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-            return crypto.randomUUID();
-    } catch {}
-    return `profile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 async function loadProfiles(storageAdapter) {

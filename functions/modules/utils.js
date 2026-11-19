@@ -786,22 +786,14 @@ export function createErrorResponse(error, status = 500) {
 }
 
 /**
- * 迁移旧版 profile ID，去除 'profile_' 前缀
- * 旧版 generateProfileId() 使用 generateId('profile') 生成带前缀的 ID，
- * 当前版本已修复为不加前缀，但数据库中可能存留旧数据。
- * @param {Array} profiles - 订阅组列表
- * @returns {boolean} 是否发生了迁移
+ * 生成唯一标识符 (UUID v4)
+ * @returns {string}
  */
-export function migrateProfileIds(profiles) {
-    if (!Array.isArray(profiles)) return false;
-    let migrated = false;
-    for (const p of profiles) {
-        if (p.id && p.id.startsWith('profile_')) {
-            p.id = p.id.slice('profile_'.length);
-            migrated = true;
-        }
+export function generateId() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
     }
-    return migrated;
+    return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 /**

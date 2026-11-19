@@ -24,8 +24,8 @@
 
 import { StorageFactory } from '../../storage-adapter.js';
 import { clearAllNodeCaches } from '../../services/node-cache-service.js';
-import { createJsonResponse, escapeHtml, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
-import { KV_KEY_SETTINGS, KV_KEY_SUBS } from '../config.js';
+import { createJsonResponse, escapeHtml, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
+import { STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS } from '../config.js';
 import { extractValidNodes } from '../utils/node-parser.js';
 
 // ==================== 存储与配置 ====================
@@ -58,7 +58,7 @@ async function getCachedStorageAdapter(env, cache) {
 async function getCachedSettings(env, cache) {
     if (cache.settings !== undefined) return cache.settings;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
-    cache.settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+    cache.settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
     return cache.settings;
 }
 
@@ -91,7 +91,7 @@ async function persistCachedProfiles(env, cache) {
 async function persistCachedSettings(env, cache) {
     if (cache.settings === undefined) return;
     const storageAdapter = await getCachedStorageAdapter(env, cache);
-    await storageAdapter.put(KV_KEY_SETTINGS, cache.settings);
+    await storageAdapter.put(STORAGE_KEY_SETTINGS, cache.settings);
 }
 
 /**
@@ -103,7 +103,7 @@ async function getTelegramPushConfig(env, cache = null) {
         settings = await getCachedSettings(env, cache);
     } else {
         const storageAdapter = await getStorageAdapter(env);
-        settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+        settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
     }
     const config = settings.telegram_push_config || {};
     const allowedUserIds = Array.isArray(config.allowed_user_ids)
@@ -130,13 +130,6 @@ async function getTelegramPushConfig(env, cache = null) {
 }
 
 // ==================== 工具函数 ====================
-
-/**
- * 生成随机ID
- */
-function generateId() {
-    return Date.now().toString(36) + Math.random().toString(36).substring(2);
-}
 
 /**
  * 从节点URL提取名称
@@ -2017,7 +2010,7 @@ async function handleImportCommand(chatId, userId, args, env) {
             addedNodes.push(node);
         }
 
-        await storageAdapter.put(KV_KEY_SUBS, allSubscriptions);
+        await storageAdapter.put(STORAGE_KEY_SUBS, allSubscriptions);
 
         await sendTelegramMessage(
             chatId,
@@ -2403,7 +2396,7 @@ async function handleNodeInput(chatId, text, userId, env, requestCache = null, o
                 created_at: new Date().toISOString(),
             };
 
-            // 注意：MiSub 中订阅源也通过 KV_KEY_SUBS 存储
+            // 注意：MiSub 中订阅源也通过 STORAGE_KEY_SUBS 存储
             // 前端通过 URL 格式区分是“手动节点”还是“订阅源”
             // 订阅源 -> type: subscription or implied by http protocol
 
@@ -3047,7 +3040,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                     }
 
                     const profiles = await storageAdapter.getAllProfiles();
-                    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+                    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
                     if (idx < 0 || idx >= targetList.length) {
@@ -3145,7 +3138,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                     const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
                     const profiles = await storageAdapter.getAllProfiles();
-                    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+                    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
                     const boundProfileId = getUserBoundProfileId(config, userId);
@@ -3184,7 +3177,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                     const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
                     const profiles = await storageAdapter.getAllProfiles();
-                    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+                    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
                     const boundProfileId = getUserBoundProfileId(config, userId);
@@ -3221,7 +3214,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                     const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
                     const profiles = await storageAdapter.getAllProfiles();
-                    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+                    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
                     const boundProfileId = getUserBoundProfileId(config, userId);
@@ -3259,7 +3252,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                     const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
                     const profiles = await storageAdapter.getAllProfiles();
-                    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+                    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
                     const config = settings.telegram_push_config || {};
 
                     const boundProfileId = getUserBoundProfileId(config, userId);
@@ -3331,7 +3324,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                         );
 
                         if (isSub) {
-                            // Find original index in KV_KEY_SUBS to update
+                            // Find original index in STORAGE_KEY_SUBS to update
                             // Since targetList is filtered, we need to find the item in the original storage
                             const originalSubs = await storageAdapter.getAllSubscriptions();
                             // Match by ID if possible, or some unique property.

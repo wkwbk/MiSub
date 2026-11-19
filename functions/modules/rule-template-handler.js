@@ -6,7 +6,7 @@ import {
     readJsonWithLimit,
 } from './utils.js';
 
-export const KV_KEY_RULE_TEMPLATES = 'misub_rule_templates_v1';
+export const STORAGE_KEY_RULE_TEMPLATES = 'misub_rule_templates_v1';
 const MAX_TEMPLATE_COUNT = 50;
 const MAX_TEMPLATE_CONTENT_LENGTH = 128 * 1024;
 
@@ -82,7 +82,7 @@ async function getStorageAdapter(env) {
 }
 
 export async function listRuleTemplates(storageAdapter) {
-    const raw = await storageAdapter.get(KV_KEY_RULE_TEMPLATES);
+    const raw = await storageAdapter.get(STORAGE_KEY_RULE_TEMPLATES);
     return normalizeCustomRuleTemplates(Array.isArray(raw) ? raw : []);
 }
 
@@ -126,7 +126,7 @@ export async function handleRuleTemplatesRequest(request, env) {
             }
 
             const templates = normalizeCustomRuleTemplates(body?.templates || body?.data || []);
-            await storageAdapter.put(KV_KEY_RULE_TEMPLATES, templates);
+            await storageAdapter.put(STORAGE_KEY_RULE_TEMPLATES, templates);
             return createJsonResponse({
                 success: true,
                 message: '自定义规则模板已保存',

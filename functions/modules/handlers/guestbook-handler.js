@@ -11,7 +11,7 @@ import {
     readJsonWithLimit,
 } from '../utils.js';
 import { sendTgNotification } from '../notifications.js';
-import { DEFAULT_SETTINGS, KV_KEY_SETTINGS } from '../config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 
 /**
  * 获取存储适配器实例
@@ -41,7 +41,7 @@ export async function handleGuestbookGet(env) {
         const storageAdapter = await getStorageAdapter(env);
         const [messages, settings] = await Promise.all([
             loadGuestbookMessages(storageAdapter),
-            storageAdapter.get(KV_KEY_SETTINGS).then((res) => res || {}),
+            storageAdapter.get(STORAGE_KEY_SETTINGS).then((res) => res || {}),
         ]);
 
         const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
@@ -91,7 +91,7 @@ export async function handleGuestbookGet(env) {
 export async function handleGuestbookPost(request, env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
-        const settings = await storageAdapter.get(KV_KEY_SETTINGS).then((res) => res || {});
+        const settings = await storageAdapter.get(STORAGE_KEY_SETTINGS).then((res) => res || {});
         const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
 
         if (!guestbookConfig.enabled) {

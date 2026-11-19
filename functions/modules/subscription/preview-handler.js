@@ -1,6 +1,6 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
-import { KV_KEY_PROFILES } from '../config.js';
+import { STORAGE_KEY_PROFILES } from '../config.js';
 import { handleProfileMode } from './profile-handler.js';
 import { handleDirectUrlMode, handleSingleSubscriptionMode } from './single-subscription.js';
 
@@ -47,7 +47,7 @@ export async function handlePublicPreviewRequest(request, env) {
         const profile =
             typeof storageAdapter.getProfileById === 'function'
                 ? await storageAdapter.getProfileById(profileId)
-                : ((await storageAdapter.get(KV_KEY_PROFILES)) || []).find(
+                : ((await storageAdapter.get(STORAGE_KEY_PROFILES)) || []).find(
                       (p) => (p.customId && p.customId === profileId) || p.id === profileId
                   );
 

@@ -19,9 +19,9 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import {
     DEFAULT_SETTINGS as defaultSettings,
-    KV_KEY_PROFILES,
-    KV_KEY_SETTINGS,
-    KV_KEY_SUBS,
+    STORAGE_KEY_PROFILES,
+    STORAGE_KEY_SETTINGS,
+    STORAGE_KEY_SUBS,
 } from './config.js';
 import { normalizePublicLinksConfig } from '../../src/constants/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../src/constants/default-public-cores.js';
@@ -276,10 +276,10 @@ export async function handleMisubsSave(request, env) {
             const [currentMisubs, currentProfiles] = await Promise.all([
                 typeof storageAdapter.getAllSubscriptions === 'function'
                     ? storageAdapter.getAllSubscriptions()
-                    : storageAdapter.get(KV_KEY_SUBS).then((res) => res || []),
+                    : storageAdapter.get(STORAGE_KEY_SUBS).then((res) => res || []),
                 typeof storageAdapter.getAllProfiles === 'function'
                     ? storageAdapter.getAllProfiles()
-                    : storageAdapter.get(KV_KEY_PROFILES).then((res) => res || []),
+                    : storageAdapter.get(STORAGE_KEY_PROFILES).then((res) => res || []),
             ]);
 
             // 应用补丁
@@ -375,7 +375,7 @@ export async function handleMisubsSave(request, env) {
         // 步骤4: 获取设置（带错误处理）
         let settings;
         try {
-            settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || defaultSettings;
+            settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || defaultSettings;
         } catch (settingsError) {
             settings = defaultSettings; // 使用默认设置继续
         }
@@ -418,9 +418,9 @@ export async function handleMisubsSave(request, env) {
                 ]);
 
                 const saveTasks = [];
-                if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
+                if (!subsHandled) saveTasks.push(storageAdapter.put(STORAGE_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
-                    saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
+                    saveTasks.push(storageAdapter.put(STORAGE_KEY_PROFILES, finalProfiles));
                 if (saveTasks.length > 0) {
                     await Promise.all(saveTasks);
                 }
@@ -431,9 +431,9 @@ export async function handleMisubsSave(request, env) {
                 ]);
 
                 const saveTasks = [];
-                if (!subsHandled) saveTasks.push(storageAdapter.put(KV_KEY_SUBS, finalMisubs));
+                if (!subsHandled) saveTasks.push(storageAdapter.put(STORAGE_KEY_SUBS, finalMisubs));
                 if (!profilesHandled)
-                    saveTasks.push(storageAdapter.put(KV_KEY_PROFILES, finalProfiles));
+                    saveTasks.push(storageAdapter.put(STORAGE_KEY_PROFILES, finalProfiles));
                 if (saveTasks.length > 0) {
                     await Promise.all(saveTasks);
                 }
@@ -594,7 +594,7 @@ export async function handleSettingsSave(request, env) {
         }
 
         const storageAdapter = await getStorageAdapter(env);
-        const oldSettings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+        const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
         if (newSettings.webdavBackup && oldSettings.webdavBackup) {
             const incomingPassword = newSettings.webdavBackup.password;
             if (incomingPassword === '' || incomingPassword == null) {
@@ -616,7 +616,7 @@ export async function handleSettingsSave(request, env) {
                 503
             );
         }
-        await storageAdapter.put(KV_KEY_SETTINGS, finalSettings);
+        await storageAdapter.put(STORAGE_KEY_SETTINGS, finalSettings);
         SettingsCache.clear();
 
         // 纯界面偏好的保存（客户端用 X-MiSub-Save-Scope: preferences 声明，
@@ -660,7 +660,7 @@ export async function handleSettingsReset(env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
 
-        await storageAdapter.delete(KV_KEY_SETTINGS);
+        await storageAdapter.delete(STORAGE_KEY_SETTINGS);
 
         // 清除内存缓存
         SettingsCache.clear();
@@ -688,7 +688,7 @@ export async function handlePublicProfilesRequest(env) {
         const [profiles, settings] = await Promise.all([
             typeof storageAdapter.getAllProfiles === 'function'
                 ? storageAdapter.getAllProfiles()
-                : storageAdapter.get(KV_KEY_PROFILES).then((res) => res || []),
+                : storageAdapter.get(STORAGE_KEY_PROFILES).then((res) => res || []),
             Promise.resolve(cachedSettings || {}).then((res) => res || {}),
         ]);
 
@@ -783,7 +783,7 @@ export async function handlePublicProfilesRequest(env) {
 export async function handlePublicConfig(request, env) {
     try {
         const storageAdapter = await getStorageAdapter(env);
-        const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || {};
+        const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
 
         // Merge with default settings to ensure enablePublicPage exists
         const mergedSettings = { ...defaultSettings, ...settings };

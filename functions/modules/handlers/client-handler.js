@@ -2,11 +2,12 @@ import { StorageFactory } from '../../storage-adapter.js';
 import {
     createErrorResponse,
     createJsonResponse,
+    generateId,
     JSON_BODY_LIMITS,
     readJsonWithLimit,
 } from '../utils.js';
 
-const KV_KEY_CLIENTS = 'misub_clients_v1';
+const STORAGE_KEY_CLIENTS = 'misub_clients_v1';
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
 async function getStorageAdapter(env) {
@@ -188,14 +189,6 @@ const DEFAULT_CLIENTS = [
 ];
 
 /**
- * Robust UUID generator
- * Falls back to Math.random if crypto.randomUUID is not available
- */
-function generateUUID() {
-    return crypto.randomUUID();
-}
-
-/**
  * Handle client management requests
  * @param {Request} request
  * @param {Object} env
@@ -216,7 +209,7 @@ export async function handleClientRequest(request, env) {
                 });
             }
             try {
-                const data = await storageAdapter.get(KV_KEY_CLIENTS);
+                const data = await storageAdapter.get(STORAGE_KEY_CLIENTS);
                 return createJsonResponse({
                     success: true,
                     data: data || DEFAULT_CLIENTS,
@@ -241,7 +234,7 @@ export async function handleClientRequest(request, env) {
 
         if (request.method === 'POST') {
             if (path.endsWith('/init')) {
-                await storageAdapter.put(KV_KEY_CLIENTS, DEFAULT_CLIENTS);
+                await storageAdapter.put(STORAGE_KEY_CLIENTS, DEFAULT_CLIENTS);
                 return createJsonResponse({
                     success: true,
                     message: 'Clients initialized',
@@ -259,7 +252,7 @@ export async function handleClientRequest(request, env) {
                 );
             }
 
-            let clients = (await storageAdapter.get(KV_KEY_CLIENTS)) || [];
+            let clients = (await storageAdapter.get(STORAGE_KEY_CLIENTS)) || [];
 
             if (Array.isArray(body)) {
                 clients = body;
@@ -276,12 +269,12 @@ export async function handleClientRequest(request, env) {
                 if (index !== -1) {
                     clients[index] = { ...clients[index], ...body };
                 } else {
-                    if (!body.id) body.id = generateUUID();
+                    if (!body.id) body.id = generateId();
                     clients.push(body);
                 }
             }
 
-            await storageAdapter.put(KV_KEY_CLIENTS, clients);
+            await storageAdapter.put(STORAGE_KEY_CLIENTS, clients);
             return createJsonResponse({ success: true, data: clients });
         }
 
@@ -291,7 +284,7 @@ export async function handleClientRequest(request, env) {
                 return createErrorResponse('Client ID is required', 400);
             }
 
-            let clients = (await storageAdapter.get(KV_KEY_CLIENTS)) || [];
+            let clients = (await storageAdapter.get(STORAGE_KEY_CLIENTS)) || [];
             const originalLength = clients.length;
             clients = clients.filter((c) => c.id !== id);
 
@@ -299,7 +292,7 @@ export async function handleClientRequest(request, env) {
                 return createErrorResponse('Client not found', 404);
             }
 
-            await storageAdapter.put(KV_KEY_CLIENTS, clients);
+            await storageAdapter.put(STORAGE_KEY_CLIENTS, clients);
             return createJsonResponse({ success: true, data: clients });
         }
 

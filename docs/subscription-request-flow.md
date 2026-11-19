@@ -31,7 +31,7 @@ API 路径 `/api/*` 总是优先进入 `handleApiRequest(request, env)`，不会
 1. 记录请求方法、路径和 User-Agent（路径会脱敏）。
 2. 通过 `StorageFactory.createAdapter()` 获取存储适配器。
 3. 并行读取：
-    - `KV_KEY_SETTINGS`
+    - `STORAGE_KEY_SETTINGS`
     - 所有订阅源 `getAllSubscriptions()`
     - 所有订阅组 `getAllProfiles()`
 4. 将默认设置与存储设置合并，并执行 `migrateConfigSettings()`。
