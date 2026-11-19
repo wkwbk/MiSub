@@ -60,6 +60,7 @@ describe('manual node sorting filters', () => {
                 stubs: {
                     NodeActions: true,
                     BulkOperations: true,
+                    NodeDetailModal: true,
                     NodeTable: NodeTableProbe,
                 },
             },
