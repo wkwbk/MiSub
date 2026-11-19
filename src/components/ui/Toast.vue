@@ -36,56 +36,58 @@
 </script>
 
 <template>
-    <div
-        class="fixed flex flex-col items-end gap-2.5 pointer-events-none top-20 md:top-4 right-4 left-4 md:left-auto max-h-[calc(100vh-120px)] md:max-h-[100vh] overflow-hidden pr-1 pb-safe"
-        :style="{ zIndex: 'var(--z-toast)' }"
-    >
-        <TransitionGroup name="toast">
-            <div
-                v-for="toast in toastStore.toasts"
-                :key="toast.id"
-                :role="getToastRole(toast.type)"
-                :aria-live="getToastAriaLive(toast.type)"
-                aria-atomic="true"
-                class="toast-container popover-surface pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md rounded-md overflow-hidden transition-all duration-200 relative"
-            >
-                <!-- Toast 内容 -->
-                <div class="relative p-3.5 pl-4">
-                    <!-- 关闭按钮 -->
-                    <button
-                        @click="handleClose(toast.id)"
-                        class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors focus-visible:outline-none w-6 h-6 touch-target"
-                        :aria-label="t('common.toastClose')"
-                    >
-                        <X class="w-3.5 h-3.5 flex-shrink-0" />
-                    </button>
+    <Teleport to="body">
+        <div
+            class="fixed flex flex-col items-end gap-2.5 pointer-events-none top-20 md:top-4 right-4 left-4 md:left-auto max-h-[calc(100vh-120px)] md:max-h-[100vh] overflow-hidden pr-1 pb-safe"
+            :style="{ zIndex: 'var(--z-toast)' }"
+        >
+            <TransitionGroup name="toast">
+                <div
+                    v-for="toast in toastStore.toasts"
+                    :key="toast.id"
+                    :role="getToastRole(toast.type)"
+                    :aria-live="getToastAriaLive(toast.type)"
+                    aria-atomic="true"
+                    class="toast-container popover-surface pointer-events-auto w-full sm:w-auto sm:min-w-80 max-w-md rounded-md overflow-hidden transition-all duration-200 relative"
+                >
+                    <!-- Toast 内容 -->
+                    <div class="relative p-3.5 pl-4">
+                        <!-- 关闭按钮 -->
+                        <button
+                            @click="handleClose(toast.id)"
+                            class="toast-close-btn absolute top-2 right-2 flex items-center justify-center rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors focus-visible:outline-none w-6 h-6 touch-target"
+                            :aria-label="t('common.toastClose')"
+                        >
+                            <X class="w-3.5 h-3.5 flex-shrink-0" />
+                        </button>
 
-                    <!-- 圆点和消息 -->
-                    <div class="flex items-center gap-2.5 pr-7">
-                        <span
-                            class="h-1.5 w-1.5 rounded-full shrink-0"
-                            :class="getToastConfig(toast.type).dot"
-                        ></span>
+                        <!-- 圆点和消息 -->
+                        <div class="flex items-center gap-2.5 pr-7">
+                            <span
+                                class="h-1.5 w-1.5 rounded-full shrink-0"
+                                :class="getToastConfig(toast.type).dot"
+                            ></span>
 
-                        <!-- 消息内容 -->
-                        <div class="flex-1 min-w-0">
-                            <p class="text-xs font-medium text-fg leading-relaxed break-words">
-                                {{ toast.message }}
-                            </p>
+                            <!-- 消息内容 -->
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-fg leading-relaxed break-words">
+                                    {{ toast.message }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 进度条 -->
+                        <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-line">
+                            <div
+                                class="h-full bg-fg-subtle ease-linear progress-bar"
+                                :style="{ animationDuration: `${toast.duration}ms` }"
+                            ></div>
                         </div>
                     </div>
-
-                    <!-- 进度条 -->
-                    <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-line">
-                        <div
-                            class="h-full bg-fg-subtle ease-linear progress-bar"
-                            :style="{ animationDuration: `${toast.duration}ms` }"
-                        ></div>
-                    </div>
                 </div>
-            </div>
-        </TransitionGroup>
-    </div>
+            </TransitionGroup>
+        </div>
+    </Teleport>
 </template>
 
 <style scoped>
