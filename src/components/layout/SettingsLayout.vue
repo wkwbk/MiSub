@@ -54,16 +54,20 @@
             </div>
 
             <!-- Sticky / Floating Footer Area -->
-            <div
-                v-if="!hideFooter"
-                :class="
-                    inModal
-                        ? 'modal-chrome-footer shrink-0 px-4 md:px-6 py-3 flex items-center justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-sm'
-                        : 'fixed inset-x-4 bottom-24 sm:inset-x-auto sm:right-4 md:bottom-8 md:right-8 z-50 will-change-transform flex items-center justify-end gap-2 pointer-events-none'
-                "
-            >
-                <slot name="footer"></slot>
-            </div>
+            <!-- 独立设置页使用 Teleport 挂载到 body，避免路由过渡动画（route-fade）的 transform 临时接管 fixed 定位基准导致按钮位置跳动 -->
+            <Teleport to="body" :disabled="inModal">
+                <div
+                    v-if="!hideFooter"
+                    data-testid="settings-footer"
+                    :class="
+                        inModal
+                            ? 'modal-chrome-footer shrink-0 px-4 md:px-6 py-3 flex items-center justify-end gap-3 sticky bottom-0 z-10 backdrop-blur-sm'
+                            : 'fixed inset-x-4 bottom-24 sm:inset-x-auto sm:right-4 md:bottom-8 md:right-8 z-50 will-change-transform flex items-center justify-end gap-2 pointer-events-none'
+                    "
+                >
+                    <slot name="footer"></slot>
+                </div>
+            </Teleport>
         </main>
     </div>
 </template>

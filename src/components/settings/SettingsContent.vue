@@ -113,6 +113,11 @@
 
     const saveDisabled = computed(() => props.isSaving || props.hasWhitespace);
 
+    function handleSaveClick() {
+        if (props.isLoading || saveDisabled.value) return;
+        emit('save');
+    }
+
     // 独立设置页将「回到顶部」收纳进底部操作栏，彻底避免与保存按钮或表单开关重叠
     const showScrollTop = ref(false);
     const SCROLL_TOP_THRESHOLD = 300;
@@ -217,7 +222,7 @@
             <div class="pointer-events-auto flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                 <button
                     type="button"
-                    @click="emit('save')"
+                    @click="handleSaveClick"
                     :disabled="saveDisabled"
                     :title="hasWhitespace ? t('settings.noWhitespace') : t('settings.saveChanges')"
                     class="flex-1 sm:flex-none h-[38px] px-5 rounded-md text-xs font-semibold transition-colors flex items-center justify-center gap-2 border shadow-[0_4px_16px_rgba(0,0,0,0.16)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.55)]"

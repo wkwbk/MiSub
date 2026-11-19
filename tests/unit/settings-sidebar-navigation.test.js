@@ -40,8 +40,10 @@ vi.mock('@/composables/useSettingsLogic.js', () => ({
     }),
 }));
 
+const mountedWrappers = [];
+
 function mountSettingsView() {
-    return mount(SettingsView, {
+    const wrapper = mount(SettingsView, {
         global: {
             plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
             stubs: {
@@ -55,6 +57,8 @@ function mountSettingsView() {
             },
         },
     });
+    mountedWrappers.push(wrapper);
+    return wrapper;
 }
 
 describe('Settings navigation persistence & responsive sidebar UX', () => {
@@ -67,6 +71,9 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
     });
 
     afterEach(() => {
+        while (mountedWrappers.length > 0) {
+            mountedWrappers.pop().unmount();
+        }
         sessionStorage.clear();
     });
 
@@ -223,7 +230,7 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
             expect(wrapper.emitted('update:activeTab')?.[1]).toEqual(['system']);
         });
 
-        it('integrates scroll-to-top inside the sticky settings footer when scrolled down', async () => {
+        it('integrates scroll-to-top inside the teleported floating settings footer when scrolled down', async () => {
             const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
             Object.defineProperty(window, 'scrollY', {
                 value: 0,
@@ -232,22 +239,31 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
             });
 
             const wrapper = mountSettingsView();
-            expect(wrapper.find('[data-testid="settings-footer-scroll-top"]').exists()).toBe(false);
+            const teleportedFooter = document.body.querySelector('[data-testid="settings-footer"]');
+            expect(teleportedFooter).not.toBeNull();
+            expect(wrapper.element.contains(teleportedFooter)).toBe(false);
+            expect(
+                document.body.querySelector('[data-testid="settings-footer-scroll-top"]')
+            ).toBeNull();
 
             window.scrollY = 420;
             window.dispatchEvent(new Event('scroll'));
             await new Promise((resolve) => window.requestAnimationFrame(resolve));
             await wrapper.vm.$nextTick();
 
-            const scrollTopBtn = wrapper.find('[data-testid="settings-footer-scroll-top"]');
-            expect(scrollTopBtn.exists()).toBe(true);
+            const scrollTopBtn = document.body.querySelector(
+                '[data-testid="settings-footer-scroll-top"]'
+            );
+            expect(scrollTopBtn).not.toBeNull();
 
-            await scrollTopBtn.trigger('click');
+            scrollTopBtn.click();
+            await wrapper.vm.$nextTick();
             expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
 
             window.scrollY = 0;
             scrollToSpy.mockRestore();
             wrapper.unmount();
+            expect(document.body.querySelector('[data-testid="settings-footer"]')).toBeNull();
         });
     });
 });
