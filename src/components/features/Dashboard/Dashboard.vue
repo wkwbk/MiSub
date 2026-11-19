@@ -612,7 +612,10 @@
         <!-- Header -->
         <DashboardHeader
             :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
-            @open-log="showLogModal = true"
+            @open-log="
+                logProfileName = '';
+                showLogModal = true;
+            "
             @open-bulk-import="showBulkImportModal = true"
         />
 
@@ -753,7 +756,7 @@
         v-model:show="showSubBulkImportModal"
         @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
     />
-    <LogModal v-model:show="showLogModal" />
+    <LogModal v-model:show="showLogModal" :filter-profile-name="logProfileName" />
     <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup"
         ><template #title>
             <h3 class="text-lg font-bold text-red-500">

@@ -147,18 +147,7 @@ export async function setCache(storageAdapter, cacheKey, nodes, sources = []) {
             sources,
         };
 
-        // 计算 TTL（秒），使用 MAX_AGE 作为过期时间
-        const ttlSeconds = Math.ceil(CACHE_CONFIG.MAX_AGE / 1000);
-
-        // 尝试使用 KV 原生 TTL
-        if (storageAdapter.kv && typeof storageAdapter.kv.put === 'function') {
-            await storageAdapter.kv.put(cacheKey, JSON.stringify(cacheEntry), {
-                expirationTtl: ttlSeconds,
-            });
-        } else {
-            // 降级：使用普通 put（无 TTL）
-            await storageAdapter.put(cacheKey, cacheEntry);
-        }
+        await storageAdapter.put(cacheKey, cacheEntry);
 
         return true;
     } catch (error) {
@@ -242,65 +231,34 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
         let cleared = 0;
         let failed = 0;
         let skipped = 0;
-        let cursor = null;
         const preserveKeys = new Set(
             Array.isArray(options?.preserveKeys)
                 ? options.preserveKeys.filter(isSubscriptionNodeCacheKey)
                 : []
         );
 
-        // 循环处理分页，KV list 默认最多返回 1000 个 key
-        do {
-            let keys = [];
-            let listComplete = true;
+        if (typeof storageAdapter.list !== 'function') {
+            console.warn('[Cache] Storage adapter does not support list operation');
+            return { cleared, failed, skipped };
+        }
 
-            // 判断存储适配器类型并正确调用
-            if (storageAdapter.kv && typeof storageAdapter.kv.list === 'function') {
-                // 直接使用 KV namespace
-                const listOptions = { prefix: CACHE_CONFIG.KEY_PREFIX };
-                if (cursor) {
-                    listOptions.cursor = cursor;
-                }
-                const result = await storageAdapter.kv.list(listOptions);
-                keys = result.keys || [];
-                cursor = result.list_complete ? null : result.cursor;
-                listComplete = result.list_complete !== false;
-            } else if (typeof storageAdapter.list === 'function') {
-                // 使用适配器的 list 方法（D1StorageAdapter）
-                // 注意：适配器的 list 方法接受 prefix 字符串参数
-                const result = await storageAdapter.list(CACHE_CONFIG.KEY_PREFIX);
-                keys = Array.isArray(result) ? result : result.keys || [];
-                cursor = null; // 适配器可能不支持分页，一次性返回所有
-                listComplete = true;
-            } else {
-                console.warn('[Cache] Storage adapter does not support list operation');
-                break;
-            }
+        const result = await storageAdapter.list(CACHE_CONFIG.KEY_PREFIX);
+        const keys = Array.isArray(result) ? result : result?.keys || [];
 
-            // 删除缓存
-            for (const keyInfo of keys) {
-                const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name || keyInfo;
-                if (preserveKeys.has(key)) {
-                    skipped++;
-                    continue;
-                }
-                try {
-                    if (storageAdapter.kv && typeof storageAdapter.kv.delete === 'function') {
-                        await storageAdapter.kv.delete(key);
-                    } else {
-                        await storageAdapter.delete(key);
-                    }
-                    cleared++;
-                } catch {
-                    failed++;
-                }
+        // 删除缓存
+        for (const keyInfo of keys) {
+            const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name || keyInfo;
+            if (preserveKeys.has(key)) {
+                skipped++;
+                continue;
             }
-
-            // 如果列表完成或没有更多数据，退出循环
-            if (listComplete || keys.length === 0) {
-                cursor = null;
+            try {
+                await storageAdapter.delete(key);
+                cleared++;
+            } catch {
+                failed++;
             }
-        } while (cursor);
+        }
 
         return { cleared, failed, skipped };
     } catch (error) {

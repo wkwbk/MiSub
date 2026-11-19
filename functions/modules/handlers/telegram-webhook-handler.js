@@ -2430,11 +2430,11 @@ async function handleNodeInput(chatId, text, userId, env, requestCache = null, o
                 verifySubs.some((s) => s.id === added.id)
             );
             if (!isVerified) {
-                console.warn('[Telegram Push] KV Verification failed');
-                throw new Error('KV Write Verification Failed. Please try again.');
+                console.warn('[Telegram Push] D1 Verification failed');
+                throw new Error('D1 Write Verification Failed. Please try again.');
             }
         } catch (verifyError) {
-            console.error('[Telegram Push] KV Verification error:', verifyError);
+            console.error('[Telegram Push] D1 Verification error:', verifyError);
             if (verifyError.message.includes('Verification Failed')) throw verifyError;
         }
 

@@ -101,6 +101,26 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
         expect(reports[0]).toMatchObject({ message: 'Boom', context: 'unit-test' });
     });
 
+    it('clears only access_logs matching profileName when specified', async () => {
+        const now = Date.now();
+        const db = createMemoryD1();
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+
+        await adapter.insertAccessLogs([
+            { id: 'log-a1', timestamp: now - 2000, profileName: 'Share A', status: 'success' },
+            { id: 'log-b1', timestamp: now - 1000, profileName: 'Share B', status: 'success' },
+            { id: 'log-a2', timestamp: now, profileName: 'Share A', status: 'error' },
+        ]);
+
+        await adapter.clearAccessLogs({ profileName: 'Share A' });
+
+        const remaining = await adapter.getAccessLogs({ limit: 10 });
+        expect(remaining.map((l) => l.id)).toEqual(['log-b1']);
+
+        await adapter.clearAccessLogs();
+        expect(await adapter.getAccessLogs({ limit: 10 })).toEqual([]);
+    });
+
     it('cascades cleanup of node caches when deleting profiles or subscriptions', async () => {
         const db = createMemoryD1({
             misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP' }],

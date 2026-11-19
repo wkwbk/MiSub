@@ -842,7 +842,20 @@ class D1StorageAdapter {
         }
     }
 
-    async clearAccessLogs() {
+    async clearAccessLogs({ profileName = '' } = {}) {
+        const targetProfileName = typeof profileName === 'string' ? profileName : '';
+        if (targetProfileName) {
+            try {
+                await this.db
+                    .prepare("DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?")
+                    .bind(targetProfileName)
+                    .run();
+            } catch (error) {
+                if (!isSchemaMismatchError(error)) throw error;
+            }
+            return true;
+        }
+
         try {
             await this.db.prepare('DELETE FROM access_logs').run();
         } catch (error) {

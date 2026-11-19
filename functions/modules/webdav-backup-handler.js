@@ -2,7 +2,7 @@
  * WebDAV backup / restore handler for MiSub.
  *
  * Design notes:
- * - Backup is domain-level, not KV/D1 whole-store mirroring.
+ * - Backup is domain-level, not D1 whole-database mirroring.
  * - Restore only touches known MiSub business keys/collections.
  * - WebDAV credentials and runtime secrets are never written into backup payloads.
  */

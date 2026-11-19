@@ -297,7 +297,8 @@ export async function handleApiRequest(request, env, context = null) {
             }
             if (request.method === 'DELETE') {
                 const { LogService } = await import('../services/log-service.js');
-                await LogService.clearLogs(env);
+                const profileName = url.searchParams.get('profileName') || '';
+                await LogService.clearLogs(env, profileName ? { profileName } : {});
                 return createJsonResponse({ success: true });
             }
             return createErrorResponse('Method Not Allowed', 405);

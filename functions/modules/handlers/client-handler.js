@@ -14,15 +14,6 @@ async function getStorageAdapter(env) {
     return StorageFactory.createAdapter(env, storageType);
 }
 
-function isStorageUnavailableError(error) {
-    const message = String(error?.message || error || '').toLowerCase();
-    return (
-        message.includes('kv storage is paused') ||
-        message.includes('storage is paused') ||
-        message.includes('namespace is paused')
-    );
-}
-
 const DEFAULT_CLIENTS = [
     {
         id: 'clash-verge-rev',
@@ -315,12 +306,6 @@ export async function handleClientRequest(request, env) {
         return createErrorResponse('Method Not Allowed', 405);
     } catch (e) {
         console.error('[Client Handler Error]', e);
-        if (isStorageUnavailableError(e)) {
-            return createErrorResponse(
-                'KV 存储已暂停，客户端配置当前无法保存。请先恢复 KV 绑定，或改用 D1。',
-                503
-            );
-        }
         return createErrorResponse(`Operation failed: ${e.message}`, 500);
     }
 }

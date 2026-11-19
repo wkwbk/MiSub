@@ -1,6 +1,6 @@
 /**
  * 错误上报处理器
- * 接收前端错误上报并写入 KV
+ * 接收前端错误上报并写入 D1 error_reports 表
  */
 
 import { StorageFactory } from '../../storage-adapter.js';
@@ -11,7 +11,6 @@ import {
     readJsonWithLimit,
 } from '../utils.js';
 
-const ERROR_REPORT_KV_KEY = 'misub_error_reports';
 const MAX_REPORT_ENTRIES = 100;
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_STACK_LENGTH = 2000;
@@ -117,18 +116,7 @@ export async function handleErrorReportRequest(request, env) {
 
         if (typeof storageAdapter.insertErrorReport === 'function') {
             await storageAdapter.insertErrorReport(report, MAX_REPORT_ENTRIES);
-            return createJsonResponse({ success: true });
         }
-
-        let reports = await storageAdapter.get(ERROR_REPORT_KV_KEY);
-        if (!Array.isArray(reports)) reports = [];
-
-        reports.unshift(report);
-        if (reports.length > MAX_REPORT_ENTRIES) {
-            reports = reports.slice(0, MAX_REPORT_ENTRIES);
-        }
-
-        await storageAdapter.put(ERROR_REPORT_KV_KEY, reports);
 
         return createJsonResponse({ success: true });
     } catch (error) {

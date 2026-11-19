@@ -1,12 +1,12 @@
 /**
  * Unified config file.
- * Includes constants, KV keys, and default settings for the worker.
+ * Includes constants, logical storage keys, and default settings for the worker.
  */
 
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../src/constants/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../src/constants/default-public-cores.js';
 
-// KV storage keys
+// Logical storage keys (mapped to D1 tables by D1StorageAdapter)
 export const KV_KEY_SUBS = 'misub_subscriptions_v1';
 export const KV_KEY_PROFILES = 'misub_profiles_v1';
 export const KV_KEY_GUESTBOOK = 'misub_guestbook_v1';

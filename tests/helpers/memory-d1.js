@@ -350,6 +350,26 @@ export function createMemoryD1(initial = {}) {
                     }
                     return { success: true, meta: { changes } };
                 }
+                if (
+                    /DELETE FROM access_logs WHERE json_extract\(data,\s*'\$\.profileName'\)\s*=\s*\?/i.test(
+                        normalized
+                    )
+                ) {
+                    const targetProfileName = String(args[0] ?? '');
+                    let changes = 0;
+                    for (const [id, entry] of Array.from(tables.access_logs.entries())) {
+                        try {
+                            const parsed = JSON.parse(entry.data);
+                            if (parsed?.profileName === targetProfileName) {
+                                tables.access_logs.delete(id);
+                                changes += 1;
+                            }
+                        } catch {
+                            // Ignore malformed JSON
+                        }
+                    }
+                    return { success: true, meta: { changes } };
+                }
                 const logTrimMatch = normalized.match(
                     /DELETE FROM (access_logs|error_reports) WHERE id NOT IN/i
                 );

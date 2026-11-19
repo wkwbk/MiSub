@@ -610,7 +610,7 @@ export async function getCallbackToken(env) {
 export function migrateConfigSettings(config) {
     const migratedConfig = { ...config };
 
-    // [Fix] 强制转换为布尔值，防止 KV 中存储了字符串"false"导致判断错误
+    // [Fix] 强制转换为布尔值，防止存储中出现字符串"false"导致判断错误
     const toBoolean = (val) => {
         if (typeof val === 'string') {
             return val.toLowerCase() === 'true';
