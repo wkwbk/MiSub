@@ -57,16 +57,29 @@
         }
     };
 
+    const canClearLogs = computed(() => !isLoading.value && filteredLogs.value.length > 0);
+
     const clearLogs = async () => {
+        if (!canClearLogs.value) return;
+        const targetProfileName = props.filterProfileName || '';
         const confirmed = await confirmAction({
-            message: t('logs.clearConfirm'),
+            message: targetProfileName
+                ? t('logs.clearProfileConfirm', { name: targetProfileName })
+                : t('logs.clearConfirm'),
             variant: 'danger',
         });
         if (!confirmed) return;
 
         try {
-            await api.del('/api/logs');
-            logs.value = [];
+            const endpoint = targetProfileName
+                ? `/api/logs?profileName=${encodeURIComponent(targetProfileName)}`
+                : '/api/logs';
+            await api.del(endpoint);
+            if (targetProfileName) {
+                logs.value = logs.value.filter((log) => log.profileName !== targetProfileName);
+            } else {
+                logs.value = [];
+            }
             currentPage.value = 1;
             showToast(t('logs.clearSuccess'), 'success');
         } catch (e) {
@@ -117,9 +130,20 @@
         class="log-modal"
     >
         <template #title>
-            <div class="flex justify-between items-center w-full">
-                <span class="text-base font-semibold text-fg">{{ t('logs.title') }}</span>
-                <div class="flex gap-2">
+            <div class="flex justify-between items-center w-full gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-base font-semibold text-fg shrink-0">{{
+                        t('logs.title')
+                    }}</span>
+                    <span
+                        v-if="filterProfileName"
+                        class="text-xs px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted truncate"
+                        :title="filterProfileName"
+                    >
+                        {{ filterProfileName }}
+                    </span>
+                </div>
+                <div class="flex gap-2 shrink-0">
                     <button
                         @click="fetchLogs"
                         class="text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg"
@@ -128,7 +152,8 @@
                     </button>
                     <button
                         @click="clearLogs"
-                        class="text-xs px-2.5 py-1 rounded-md border border-red-900/60 bg-transparent hover:bg-red-950/30 transition-colors text-red-400"
+                        :disabled="!canClearLogs"
+                        class="text-xs px-2.5 py-1 rounded-md border border-red-900/60 bg-transparent hover:bg-red-950/30 transition-colors text-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                     >
                         {{ t('common.clear') }}
                     </button>

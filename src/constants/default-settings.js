@@ -107,7 +107,7 @@ export const DEFAULT_SETTINGS = {
         enabled: true, // 是否启用公告
         title: '2.5 版本更新说明', // 公告标题
         content:
-            '为降低 Cloudflare D1 / KV 免费额度超限的风险，本版本已进行一系列优化：<br><br>• 移除 VPS 探针功能<br>• 内置订阅转换能力，不再依赖第三方转换服务<br>• 优化数据结构与读写逻辑<br>• 降低高频请求场景下的存储与缓存压力<br><br>本次更新主要聚焦于项目的长期稳定运行与免费额度控制。', // 公告内容（支持富文本/Markdown）
+            '为降低 Cloudflare D1 免费额度超限的风险，本版本已进行一系列优化：<br><br>• 移除 VPS 探针功能<br>• 内置订阅转换能力，不再依赖第三方转换服务<br>• 优化数据结构与读写逻辑<br>• 降低高频请求场景下的存储与缓存压力<br><br>本次更新主要聚焦于项目的长期稳定运行与免费额度控制。', // 公告内容（支持富文本/Markdown）
         type: 'info', // 类型: 'info' | 'warning' | 'success'
         dismissible: true, // 是否可关闭
         updatedAt: '2026-04-13T00:00:00.000Z', // 更新时间

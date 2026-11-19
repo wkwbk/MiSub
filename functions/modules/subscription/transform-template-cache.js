@@ -70,12 +70,8 @@ function getHeader(response, name) {
     return response.headers?.get?.(name) || response.headers?.get?.(name.toLowerCase()) || null;
 }
 
-async function putTemplateCache(storageAdapter, cacheKey, cacheEntry, maxAgeSeconds) {
-    if (storageAdapter?.kv && typeof storageAdapter.kv.put === 'function') {
-        await storageAdapter.kv.put(cacheKey, JSON.stringify(cacheEntry), {
-            expirationTtl: maxAgeSeconds,
-        });
-    } else if (storageAdapter && typeof storageAdapter.put === 'function') {
+async function putTemplateCache(storageAdapter, cacheKey, cacheEntry) {
+    if (storageAdapter && typeof storageAdapter.put === 'function') {
         await storageAdapter.put(cacheKey, cacheEntry);
     }
 }

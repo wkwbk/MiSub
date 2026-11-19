@@ -645,14 +645,11 @@ class D1StorageAdapter {
             for (const row of unindexed?.results || []) {
                 if (!row?.data) continue;
                 const parsed = JSON.parse(row.data);
-                const normalizedId = parsed?.id?.startsWith('profile_')
-                    ? parsed.id.slice('profile_'.length)
-                    : parsed?.id;
-                if (normalizedId === target || parsed?.customId === target) {
+                if (parsed?.id === target || parsed?.customId === target) {
                     if (parsed?.customId) {
-                        await this.putProfile({ ...parsed, id: normalizedId });
+                        await this.putProfile(parsed);
                     }
-                    return { ...parsed, id: normalizedId };
+                    return parsed;
                 }
             }
             return null;
@@ -842,7 +839,20 @@ class D1StorageAdapter {
         }
     }
 
-    async clearAccessLogs() {
+    async clearAccessLogs({ profileName = '' } = {}) {
+        const targetProfileName = typeof profileName === 'string' ? profileName : '';
+        if (targetProfileName) {
+            try {
+                await this.db
+                    .prepare("DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?")
+                    .bind(targetProfileName)
+                    .run();
+            } catch (error) {
+                if (!isSchemaMismatchError(error)) throw error;
+            }
+            return true;
+        }
+
         try {
             await this.db.prepare('DELETE FROM access_logs').run();
         } catch (error) {

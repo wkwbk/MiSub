@@ -1,6 +1,8 @@
 import { StorageFactory } from '../storage-adapter.js';
-import { KV_KEY_SETTINGS } from './config.js';
-import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+import { STORAGE_KEY_SETTINGS } from './config.js';
+import { createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+
+export { generateId };
 
 export async function getExternalStorageAdapter(env) {
     if (env?.__TEST_STORAGE_ADAPTER) return env.__TEST_STORAGE_ADAPTER;
@@ -9,12 +11,7 @@ export async function getExternalStorageAdapter(env) {
 }
 
 export function createRequestId() {
-    try {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-            return `req_${crypto.randomUUID()}`;
-        }
-    } catch {}
-    return `req_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    return `req_${generateId()}`;
 }
 
 export function createExternalSuccess(data, status = 200, meta = undefined) {
@@ -65,7 +62,7 @@ export async function readExternalJson(request) {
 
 export async function getExternalApiSettings(env, storageAdapter = null) {
     const adapter = storageAdapter || (await getExternalStorageAdapter(env));
-    const settings = (await adapter.get(KV_KEY_SETTINGS)) || {};
+    const settings = (await adapter.get(STORAGE_KEY_SETTINGS)) || {};
     return settings.externalApi || {};
 }
 

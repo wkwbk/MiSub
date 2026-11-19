@@ -1,80 +1,42 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
-const createAdapter = vi.fn();
-const getStorageType = vi.fn();
-
-vi.mock('../../functions/storage-adapter.js', () => ({
-    StorageFactory: {
-        createAdapter: (...args) => createAdapter(...args),
-        getStorageType: (...args) => getStorageType(...args),
-    },
-    STORAGE_TYPES: {
-        D1: 'd1',
-    },
-}));
-
-function createMemoryStorage(type) {
-    const store = new Map();
-
-    return {
-        type,
-        store,
-        async get(key) {
-            return store.has(key) ? store.get(key) : null;
-        },
-        async put(key, value) {
-            store.set(key, value);
-            return true;
-        },
-        async delete(key) {
-            store.delete(key);
-            return true;
-        },
-    };
-}
-
-describe('LogService storage selection', () => {
+describe('LogService D1 row-level storage', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.setSystemTime(new Date('2026-04-15T00:00:00Z'));
         vi.resetModules();
-
-        createAdapter.mockReset();
-        getStorageType.mockReset();
-
-        getStorageType.mockResolvedValue('d1');
     });
 
     afterEach(() => {
         vi.useRealTimers();
     });
 
-    it('writes access logs into D1-backed storage', async () => {
-        const d1Storage = createMemoryStorage('d1');
-        createAdapter.mockReturnValue(d1Storage);
+    it('writes anonymized access logs into D1 access_logs table', async () => {
+        const db = createMemoryD1();
+        const env = { MISUB_DB: db };
 
         const { LogService } = await import('../../functions/services/log-service.js');
 
-        const addLogPromise = LogService.addLog(
-            { MISUB_DB: {} },
-            {
-                status: 'success',
-                type: 'profile',
-                token: 'profile-token',
-                format: 'builtin-clash',
-                domain: 'sub.example.com',
-                summary: '生成 10 个节点 (成功: 10, 失败: 0)',
-            }
-        );
+        const addLogPromise = LogService.addLog(env, {
+            profileName: 'Share A',
+            status: 'success',
+            type: 'profile',
+            token: 'profile-token',
+            format: 'builtin-clash',
+            domain: 'sub.example.com',
+            summary: '生成 10 个节点 (成功: 10, 失败: 0)',
+        });
 
         await vi.advanceTimersByTimeAsync(500);
         await addLogPromise;
 
-        expect(Array.from(d1Storage.store.keys())).toContain('misub_system_logs:index');
+        expect(db.tables.access_logs.size).toBe(1);
 
-        const logs = await LogService.getLogs({ MISUB_DB: {} });
+        const logs = await LogService.getLogs(env);
         expect(logs).toHaveLength(1);
         expect(logs[0]).toMatchObject({
+            profileName: 'Share A',
             token: expect.stringMatching(/^profile:[a-f0-9]{12}$/),
             format: 'builtin-clash',
             domain: 'sub.example.com',
@@ -82,21 +44,74 @@ describe('LogService storage selection', () => {
         expect(JSON.stringify(logs)).not.toContain('profile-token');
     });
 
-    it('clears D1 log buckets cleanly', async () => {
-        const d1Storage = createMemoryStorage('d1');
-
-        d1Storage.store.set('misub_system_logs:index', ['misub_system_logs:2026-04-15']);
-        d1Storage.store.set('misub_system_logs:2026-04-15', [
-            { id: 'd1-log', timestamp: Date.now() },
-        ]);
-
-        createAdapter.mockReturnValue(d1Storage);
+    it('clears all D1 access_logs cleanly when no profileName is given', async () => {
+        const db = createMemoryD1();
+        const env = { MISUB_DB: db };
 
         const { LogService } = await import('../../functions/services/log-service.js');
 
-        const result = await LogService.clearLogs({ MISUB_DB: {} });
+        const p1 = LogService.addLog(env, {
+            profileName: 'Share A',
+            status: 'success',
+            type: 'profile',
+            token: 'token-a',
+            format: 'builtin-clash',
+            domain: 'sub.example.com',
+            persistenceMode: 'full',
+        });
+        const p2 = LogService.addLog(env, {
+            profileName: 'Share B',
+            status: 'success',
+            type: 'profile',
+            token: 'token-b',
+            format: 'builtin-clash',
+            domain: 'sub.example.com',
+            persistenceMode: 'full',
+        });
+
+        await vi.advanceTimersByTimeAsync(500);
+        await Promise.all([p1, p2]);
+        expect(db.tables.access_logs.size).toBe(2);
+
+        const result = await LogService.clearLogs(env);
 
         expect(result).toBe(true);
-        expect(d1Storage.store.size).toBe(0);
+        expect(db.tables.access_logs.size).toBe(0);
+    });
+
+    it('clears only the specified profile logs in D1 while keeping other profiles intact', async () => {
+        const db = createMemoryD1();
+        const env = { MISUB_DB: db };
+
+        const { LogService } = await import('../../functions/services/log-service.js');
+
+        const p1 = LogService.addLog(env, {
+            profileName: 'Share A',
+            status: 'success',
+            type: 'profile',
+            token: 'token-a',
+            format: 'builtin-clash',
+            domain: 'sub.example.com',
+            persistenceMode: 'full',
+        });
+        const p2 = LogService.addLog(env, {
+            profileName: 'Share B',
+            status: 'success',
+            type: 'profile',
+            token: 'token-b',
+            format: 'builtin-clash',
+            domain: 'sub.example.com',
+            persistenceMode: 'full',
+        });
+
+        await vi.advanceTimersByTimeAsync(500);
+        await Promise.all([p1, p2]);
+
+        const result = await LogService.clearLogs(env, { profileName: 'Share A' });
+
+        expect(result).toBe(true);
+        const remaining = await LogService.getLogs(env);
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].profileName).toBe('Share B');
     });
 });

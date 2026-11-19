@@ -3,15 +3,14 @@ import {
     base64EncodeUtf8,
     formatBytes,
     migrateConfigSettings,
-    migrateProfileIds,
 } from '../utils.js';
 import { generateCombinedNodeList } from '../../services/subscription-service.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import {
     DEFAULT_SETTINGS as defaultSettings,
     DEFAULT_SUBCONVERTER_BACKEND,
-    KV_KEY_PROFILES,
-    KV_KEY_SETTINGS,
+    STORAGE_KEY_PROFILES,
+    STORAGE_KEY_SETTINGS,
 } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import {
@@ -574,7 +573,7 @@ export async function handleMisubRequest(context) {
         await StorageFactory.getStorageType(env)
     );
     context.storage = storageAdapter;
-    const settingsData = await storageAdapter.get(KV_KEY_SETTINGS);
+    const settingsData = await storageAdapter.get(STORAGE_KEY_SETTINGS);
     const settings = settingsData || {};
 
     // 关键：我们在这里定义了 `config`，后续都应该使用它
@@ -665,14 +664,7 @@ export async function handleMisubRequest(context) {
             const allProfiles =
                 typeof storageAdapter.getAllProfiles === 'function'
                     ? await storageAdapter.getAllProfiles()
-                    : (await storageAdapter.get(KV_KEY_PROFILES)) || [];
-            if (migrateProfileIds(allProfiles)) {
-                storageAdapter
-                    .put(KV_KEY_PROFILES, allProfiles)
-                    .catch((err) =>
-                        console.error('[Migration] Failed to persist migrated profile IDs:', err)
-                    );
-            }
+                    : (await storageAdapter.get(STORAGE_KEY_PROFILES)) || [];
             currentProfile = allProfiles.find(
                 (p) =>
                     (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier

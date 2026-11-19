@@ -2,6 +2,7 @@ import {
     buildListMeta,
     createExternalError,
     createExternalSuccess,
+    generateId,
     getExternalStorageAdapter,
     normalizeStringArray,
     paginate,
@@ -16,14 +17,6 @@ import { getProcessedUserAgent } from '../utils/format-utils.js';
 
 function nowIso() {
     return new Date().toISOString();
-}
-
-function generateId() {
-    try {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function')
-            return crypto.randomUUID();
-    } catch {}
-    return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 }
 
 function nextSortIndex(items) {

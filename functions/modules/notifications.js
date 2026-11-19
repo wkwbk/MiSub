@@ -5,7 +5,7 @@
  */
 
 import { formatBytes } from './utils.js';
-import { DEFAULT_SETTINGS, KV_KEY_SETTINGS, KV_KEY_SUBS, SYSTEM_CONSTANTS } from './config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS, SYSTEM_CONSTANTS } from './config.js';
 // 导入核心通知服务及工具
 import {
     sendEnhancedTgNotification as sendCoreEnhancedTg,
@@ -48,7 +48,7 @@ async function loadSubscriptionsForCron(storageAdapter) {
         }
     }
 
-    const subscriptions = await storageAdapter.get(KV_KEY_SUBS);
+    const subscriptions = await storageAdapter.get(STORAGE_KEY_SUBS);
     return Array.isArray(subscriptions) ? subscriptions : [];
 }
 
@@ -58,7 +58,7 @@ async function persistSubscriptionsForCron(storageAdapter, subscriptions) {
         return;
     }
 
-    await storageAdapter.put(KV_KEY_SUBS, subscriptions);
+    await storageAdapter.put(STORAGE_KEY_SUBS, subscriptions);
 }
 
 /**
@@ -126,7 +126,7 @@ export async function handleCronTrigger(env) {
     );
     const originalSubs = await loadSubscriptionsForCron(storageAdapter);
     const allSubs = JSON.parse(JSON.stringify(originalSubs));
-    const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
+    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;
 
     const httpSubscriptions = allSubs.filter((sub) => sub.url.startsWith('http') && sub.enabled);
 

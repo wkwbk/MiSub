@@ -17,6 +17,10 @@ vi.mock('../../functions/services/node-cache-service.js', () => ({
 
 vi.mock('../../functions/modules/utils.js', () => ({
     createJsonResponse: (data, status = 200) => new Response(JSON.stringify(data), { status }),
+    generateId: () =>
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : 'mock-uuid',
     JSON_BODY_LIMITS: {
         auth: 16 * 1024,
         small: 128 * 1024,

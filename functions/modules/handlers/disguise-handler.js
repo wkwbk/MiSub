@@ -1,5 +1,5 @@
 import { StorageFactory } from '../../storage-adapter.js';
-import { KV_KEY_SETTINGS } from '../config.js';
+import { STORAGE_KEY_SETTINGS } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import { authMiddleware } from '../auth-middleware.js';
 
@@ -26,12 +26,12 @@ export async function handleDisguiseRequest(context, preloadedSettings = null) {
     let settings = preloadedSettings;
     if (!settings) {
         const { StorageFactory } = await import('../../storage-adapter.js');
-        const { KV_KEY_SETTINGS } = await import('../config.js');
+        const { STORAGE_KEY_SETTINGS } = await import('../config.js');
         const storageAdapter = StorageFactory.createAdapter(
             env,
             await StorageFactory.getStorageType(env)
         );
-        const settingsData = await storageAdapter.get(KV_KEY_SETTINGS);
+        const settingsData = await storageAdapter.get(STORAGE_KEY_SETTINGS);
         settings = settingsData || {};
     }
 

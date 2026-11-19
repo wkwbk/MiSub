@@ -2,7 +2,7 @@ import { StorageFactory } from '../../storage-adapter.js';
 import { createJsonResponse } from '../utils.js';
 import { parseNodeInfo } from '../utils/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '../utils/node-parser.js';
-import { KV_KEY_SUBS } from '../config.js';
+import { STORAGE_KEY_SUBS } from '../config.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 
 /**
@@ -29,7 +29,7 @@ export async function handleSingleSubscriptionMode(
     const subscription =
         typeof storageAdapter.getSubscriptionById === 'function'
             ? await storageAdapter.getSubscriptionById(subscriptionId)
-            : ((await storageAdapter.get(KV_KEY_SUBS)) || []).find(
+            : ((await storageAdapter.get(STORAGE_KEY_SUBS)) || []).find(
                   (sub) => sub.id === subscriptionId
               );
 

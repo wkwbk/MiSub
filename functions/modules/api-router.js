@@ -4,7 +4,7 @@
  */
 
 import { StorageFactory } from '../storage-adapter.js';
-import { KV_KEY_SUBS } from './config.js';
+import { STORAGE_KEY_SUBS } from './config.js';
 import {
     createErrorResponse,
     createJsonResponse,
@@ -297,7 +297,8 @@ export async function handleApiRequest(request, env, context = null) {
             }
             if (request.method === 'DELETE') {
                 const { LogService } = await import('../services/log-service.js');
-                await LogService.clearLogs(env);
+                const profileName = url.searchParams.get('profileName') || '';
+                await LogService.clearLogs(env, profileName ? { profileName } : {});
                 return createJsonResponse({ success: true });
             }
             return createErrorResponse('Method Not Allowed', 405);
@@ -811,7 +812,7 @@ async function getAllSubscriptions(env) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const subscriptions = (await storageAdapter.get(KV_KEY_SUBS)) || [];
+        const subscriptions = (await storageAdapter.get(STORAGE_KEY_SUBS)) || [];
         return Array.isArray(subscriptions) ? subscriptions : [];
     } catch (error) {
         console.error('[Cron] Failed to fetch subscriptions:', error);

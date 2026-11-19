@@ -102,13 +102,13 @@
     --misub-radius-md: 0.375rem;
     --misub-radius-lg: 0.375rem;
 
-    /* Keep overlays above fixed app chrome while preserving room for menus/toasts. */
+    /* Keep overlays above fixed app chrome, with toasts always above modals/confirms. */
     --z-nav: 50;
     --z-popover: 100;
-    --z-toast: 900;
     --z-modal: 1000000;
     --z-modal-popover: 1100000;
     --z-confirm: 1200000;
+    --z-toast: 1300000;
 }
 
 :root.dark,

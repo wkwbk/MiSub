@@ -5,7 +5,7 @@
  */
 
 import { SettingsCache, StorageFactory } from '../storage-adapter.js';
-import { KV_KEY_SETTINGS } from './config.js';
+import { STORAGE_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './webdav-backup-handler.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
@@ -61,7 +61,7 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     }
 
     const settings =
-        (await storageAdapter.get(KV_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
+        (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
     const config = settings.webdavBackup || {};
 
     if (!config.enabled || !config.autoBackup) {
@@ -80,7 +80,7 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
             lastCheckedAt: new Date(now).toISOString(),
         },
     };
-    await storageAdapter.put(KV_KEY_SETTINGS, updatedSettings);
+    await storageAdapter.put(STORAGE_KEY_SETTINGS, updatedSettings);
     SettingsCache.clear();
 
     const lastBackupAt = parseTime(config.lastBackupAt);

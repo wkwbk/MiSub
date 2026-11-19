@@ -305,7 +305,8 @@
 
 - `DELETE /api/logs`
     - Handler：`LogService.clearLogs()`
-    - 写入：清空日志存储。
+    - 查询参数：可选 `profileName`（传入时仅清空该订阅组的日志，未传时清空全部日志）。
+    - 写入：清空全部或指定订阅组的日志存储。
 
 - `GET /api/settings`
     - Handler：`handleSettingsGet()`

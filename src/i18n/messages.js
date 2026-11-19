@@ -539,7 +539,7 @@ export const messages = {
             scopeDataAndSettings: '数据 + 设置',
             scopeDataOnly: '仅数据',
             restoreConfirm:
-                '确定要从备份中恢复吗？\n\n备份范围：{scope}\n恢复会覆盖 MiSub 对应的数据集合，但不会清空整个 KV/D1。',
+                '确定要从备份中恢复吗？\n\n备份范围：{scope}\n恢复会覆盖 MiSub 对应的数据集合，但不会清空整个 D1 数据库。',
             restoreFailed: '恢复失败',
             restoreSuccess: '备份已恢复，请刷新页面查看最新数据',
             importFailedWithMessage: '导入失败: {message}',
@@ -940,7 +940,7 @@ export const messages = {
             accessLogTitle: '开启访问日志 & 计数',
             accessLogDesc: '记录订阅访问并统计流量与IP',
             accessLogQuotaHint:
-                '默认使用轻量持久化模式以节省 Cloudflare 免费版 KV 配额，日志会自动去重并限流，频繁刷新不会完整落库。',
+                '默认使用轻量持久化模式以节省 Cloudflare 免费版 D1 写入配额，日志会自动去重并限流，频繁刷新不会完整落库。',
             accessLogMode: '访问日志持久化模式',
             accessLogModeDesc: '免费版建议保持轻量模式，仅在需要完整审计时再切到完整模式。',
             accessLogLight: '轻量持久化（推荐）',
@@ -1078,7 +1078,7 @@ export const messages = {
             webdavBackupSuccess: 'WebDAV 备份成功',
             webdavBackupFailedWithMessage: 'WebDAV 备份失败: {message}',
             webdavRestoreLocalConfirm:
-                '确定从该备份恢复吗？\n\n备份范围：{scope}\n恢复会按 MiSub 数据域覆盖，不会清空整个 KV/D1，WebDAV 配置会保留当前值。',
+                '确定从该备份恢复吗？\n\n备份范围：{scope}\n恢复会按 MiSub 数据域覆盖，不会清空整个 D1 数据库，WebDAV 配置会保留当前值。',
             webdavRestoreFailed: '恢复失败',
             webdavRestoreSuccessReload: '备份已恢复，页面即将刷新',
             webdavRestoreFailedWithMessage: '恢复失败: {message}',
@@ -1086,7 +1086,7 @@ export const messages = {
             webdavLoadRemoteSuccess: '已获取 {count} 个远端备份',
             webdavLoadRemoteFailedWithMessage: '获取远端备份失败: {message}',
             webdavRestoreRemoteConfirm:
-                '确定从远端备份恢复吗？\n\n{name}\n\n恢复会按 MiSub 数据域覆盖，不会清空整个 KV/D1，WebDAV 配置会保留当前值。',
+                '确定从远端备份恢复吗？\n\n{name}\n\n恢复会按 MiSub 数据域覆盖，不会清空整个 D1 数据库，WebDAV 配置会保留当前值。',
             webdavRestoreRemoteSuccessReload: '远端备份已恢复，页面即将刷新',
             webdavRestoreRemoteFailedWithMessage: '远端恢复失败: {message}',
             webdavCronCopied: 'Cron 地址已复制，请按服务集成设置中的密钥方式配置外部定时服务',
@@ -1845,6 +1845,7 @@ export const messages = {
             title: '订阅访问日志',
             fetchFailed: '获取日志失败',
             clearConfirm: '确定要清空所有日志吗？',
+            clearProfileConfirm: '确定要清空「{name}」的订阅日志吗？',
             clearSuccess: '日志已清空',
             clearFailed: '清空日志失败',
             empty: '暂无日志记录',
@@ -2443,7 +2444,7 @@ export const messages = {
             scopeDataAndSettings: 'Data + settings',
             scopeDataOnly: 'Data only',
             restoreConfirm:
-                'Restore from backup?\n\nScope: {scope}\nThis will overwrite MiSub data collections, but will not clear the whole KV/D1.',
+                'Restore from backup?\n\nScope: {scope}\nThis will overwrite MiSub data collections, but will not clear the entire D1 database.',
             restoreFailed: 'Restore failed',
             restoreSuccess: 'Backup restored. Refresh to see latest data.',
             importFailedWithMessage: 'Import failed: {message}',
@@ -2857,7 +2858,7 @@ export const messages = {
             accessLogTitle: 'Access logs & count',
             accessLogDesc: 'Record access and count traffic/IPs',
             accessLogQuotaHint:
-                'Lightweight persistence saves Cloudflare free KV quota. Logs are deduped and rate-limited.',
+                'Lightweight persistence saves Cloudflare free D1 write quota. Logs are deduped and rate-limited.',
             accessLogMode: 'Access log persistence',
             accessLogModeDesc: 'Use lightweight mode unless full audit logs are needed.',
             accessLogLight: 'Lightweight (recommended)',
@@ -3004,7 +3005,7 @@ export const messages = {
             webdavBackupSuccess: 'WebDAV backup succeeded',
             webdavBackupFailedWithMessage: 'WebDAV backup failed: {message}',
             webdavRestoreLocalConfirm:
-                'Restore from this backup?\n\nScope: {scope}\nRestore overwrites MiSub data domains, does not clear the whole KV/D1, and keeps current WebDAV configuration.',
+                'Restore from this backup?\n\nScope: {scope}\nRestore overwrites MiSub data domains, does not clear the entire D1 database, and keeps current WebDAV configuration.',
             webdavRestoreFailed: 'Restore failed',
             webdavRestoreSuccessReload: 'Backup restored. The page will reload soon.',
             webdavRestoreFailedWithMessage: 'Restore failed: {message}',
@@ -3012,7 +3013,7 @@ export const messages = {
             webdavLoadRemoteSuccess: 'Loaded {count} remote backups',
             webdavLoadRemoteFailedWithMessage: 'Failed to load remote backups: {message}',
             webdavRestoreRemoteConfirm:
-                'Restore from this remote backup?\n\n{name}\n\nRestore overwrites MiSub data domains, does not clear the whole KV/D1, and keeps current WebDAV configuration.',
+                'Restore from this remote backup?\n\n{name}\n\nRestore overwrites MiSub data domains, does not clear the entire D1 database, and keeps current WebDAV configuration.',
             webdavRestoreRemoteSuccessReload: 'Remote backup restored. The page will reload soon.',
             webdavRestoreRemoteFailedWithMessage: 'Remote restore failed: {message}',
             webdavCronCopied:
@@ -3825,6 +3826,7 @@ export const messages = {
             title: 'Subscription access logs',
             fetchFailed: 'Failed to load logs',
             clearConfirm: 'Clear all logs?',
+            clearProfileConfirm: 'Clear logs for "{name}"?',
             clearSuccess: 'Logs cleared',
             clearFailed: 'Failed to clear logs',
             empty: 'No log records yet',

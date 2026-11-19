@@ -54,7 +54,7 @@ export function useBackupLogic() {
 
     /**
      * 导入本地备份。
-     * 后端执行集合级恢复，不会清空整个 KV/D1；旧版本地备份格式也由后端兼容。
+     * 后端执行集合级恢复，不会清空整个 D1 数据库；旧版本地备份格式也由后端兼容。
      */
     const importBackup = () => {
         const input = document.createElement('input');

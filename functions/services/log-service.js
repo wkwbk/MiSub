@@ -1,13 +1,10 @@
 /**
  * 日志服务模块
- * 处理订阅访问日志的存储和检索
+ * 处理订阅访问日志的存储和检索（纯 D1 行级表 access_logs）
  */
 
-import { STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
+import { StorageFactory } from '../storage-adapter.js';
 
-const LOG_KV_KEY = 'misub_system_logs';
-const LOG_INDEX_KV_KEY = 'misub_system_logs:index';
-const LOG_BUCKET_PREFIX = 'misub_system_logs:';
 const MAX_LOG_ENTRIES = 200;
 const MAX_LOG_AGE_DAYS = 30;
 const MAX_LOG_AGE_MS = MAX_LOG_AGE_DAYS * 24 * 60 * 60 * 1000;
@@ -45,8 +42,7 @@ function sanitizeLogEntry(logEntry = {}) {
     };
 }
 
-async function resolvePrimaryLogStorage(env) {
-    const storageType = await StorageFactory.getStorageType(env);
+function resolveLogStorage(env) {
     const storage = StorageFactory.createAdapter(env);
     if (!storage || storage.type === 'noop') {
         return null;
@@ -55,59 +51,14 @@ async function resolvePrimaryLogStorage(env) {
         typeof storage.insertAccessLogs === 'function' &&
         typeof storage.getAccessLogs === 'function' &&
         typeof storage.clearAccessLogs === 'function';
-    const hasGenericMethods =
-        typeof storage.get === 'function' &&
-        typeof storage.put === 'function' &&
-        typeof storage.delete === 'function';
 
-    if (!hasRowLogMethods && !hasGenericMethods) {
+    if (!hasRowLogMethods) {
         return null;
     }
 
-    return {
-        storageType: storage.type || storageType,
-        storage,
-        hasRowLogMethods,
-    };
+    return storage;
 }
 
-function getLogBucketKey(timestamp) {
-    const date = new Date(timestamp);
-    const yyyy = date.getUTCFullYear();
-    const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(date.getUTCDate()).padStart(2, '0');
-    return `${LOG_BUCKET_PREFIX}${yyyy}-${mm}-${dd}`;
-}
-
-async function getLogBucketIndex(storage) {
-    const index = await storage.get(LOG_INDEX_KV_KEY);
-    return Array.isArray(index) ? index : [];
-}
-
-async function saveLogBucketIndex(storage, keys) {
-    const unique = Array.from(new Set(keys)).sort().reverse();
-    await storage.put(LOG_INDEX_KV_KEY, unique.slice(0, MAX_LOG_AGE_DAYS + 2));
-}
-
-async function readLogsFromStorage(storage) {
-    const [bucketIndex, legacyLogs] = await Promise.all([
-        getLogBucketIndex(storage),
-        storage.get(LOG_KV_KEY),
-    ]);
-
-    const bucketEntries = await Promise.all(
-        bucketIndex.map((key) =>
-            storage
-                .get(key)
-                .then((raw) => (Array.isArray(raw) ? raw : []))
-                .catch(() => [])
-        )
-    );
-
-    return [...bucketEntries.flat(), ...(Array.isArray(legacyLogs) ? legacyLogs : [])].filter(
-        (log) => Date.now() - log.timestamp <= MAX_LOG_AGE_MS
-    );
-}
 // 全局内存队列，用于削峰填谷和防写竞争
 let logBatch = [];
 let isFlushing = false;
@@ -167,8 +118,8 @@ export const LogService = {
      * @param {Object} logEntry - 日志内容
      */
     async addLog(env, logEntry) {
-        const primaryStorage = await resolvePrimaryLogStorage(env);
-        if (!primaryStorage) return;
+        const storage = resolveLogStorage(env);
+        if (!storage) return;
         const sanitizedLogEntry = sanitizeLogEntry(logEntry);
         if (!shouldPersistLog(sanitizedLogEntry)) return null;
 
@@ -194,7 +145,7 @@ export const LogService = {
     },
 
     /**
-     * 内部方法：将内存队列中的日志批量刷入 KV
+     * 内部方法：将内存队列中的日志批量刷入 D1
      */
     async _flush(env) {
         if (logBatch.length === 0) {
@@ -207,54 +158,15 @@ export const LogService = {
         logBatch = [];
 
         try {
-            const primaryStorage = await resolvePrimaryLogStorage(env);
-            if (!primaryStorage) {
+            const storage = resolveLogStorage(env);
+            if (!storage) {
                 return;
             }
 
-            const { storage, hasRowLogMethods } = primaryStorage;
-            if (hasRowLogMethods) {
-                await storage.insertAccessLogs(batchToFlush, {
-                    maxAgeMs: MAX_LOG_AGE_MS,
-                    maxEntries: MAX_LOG_ENTRIES,
-                });
-                return;
-            }
-
-            const now = Date.now();
-            const bucketKey = getLogBucketKey(now);
-            let logs = await storage.get(bucketKey);
-            if (!Array.isArray(logs)) logs = [];
-
-            // 把新收集到的一批日志插入到头部 (倒序输入保证时间线不乱)
-            logs.unshift(...batchToFlush.reverse());
-
-            // 1. 过滤过期日志 (30天)
-            logs = logs.filter((log) => now - log.timestamp <= MAX_LOG_AGE_MS);
-
-            // 2. 单桶限制数量，避免单 key 无限增长
-            const perBucketLimit = Math.max(MAX_LOG_ENTRIES, 100);
-            if (logs.length > perBucketLimit) {
-                logs = logs.slice(0, perBucketLimit);
-            }
-
-            await storage.put(bucketKey, logs);
-
-            const bucketIndex = await getLogBucketIndex(storage);
-            if (!bucketIndex.includes(bucketKey)) {
-                bucketIndex.push(bucketKey);
-            }
-
-            const validBucketKeys = bucketIndex.filter((key) => {
-                const suffix = key.replace(LOG_BUCKET_PREFIX, '');
-                const bucketTime = Date.parse(`${suffix}T00:00:00Z`);
-                return (
-                    !Number.isNaN(bucketTime) &&
-                    now - bucketTime <= MAX_LOG_AGE_MS + 24 * 60 * 60 * 1000
-                );
+            await storage.insertAccessLogs(batchToFlush, {
+                maxAgeMs: MAX_LOG_AGE_MS,
+                maxEntries: MAX_LOG_ENTRIES,
             });
-
-            await saveLogBucketIndex(storage, validBucketKeys);
         } catch (error) {
             console.error('[LogService] Failed to flush batch logs:', error);
             // 写入失败时尝试把日志塞回队列前部
@@ -276,21 +188,13 @@ export const LogService = {
      */
     async getLogs(env) {
         try {
-            const primaryStorage = await resolvePrimaryLogStorage(env);
-            if (!primaryStorage) return [];
+            const storage = resolveLogStorage(env);
+            if (!storage) return [];
 
-            if (primaryStorage.hasRowLogMethods) {
-                return await primaryStorage.storage.getAccessLogs({
-                    limit: MAX_LOG_ENTRIES,
-                    minTimestamp: Date.now() - MAX_LOG_AGE_MS,
-                });
-            }
-
-            const logs = await readLogsFromStorage(primaryStorage.storage);
-
-            return logs
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, MAX_LOG_ENTRIES);
+            return await storage.getAccessLogs({
+                limit: MAX_LOG_ENTRIES,
+                minTimestamp: Date.now() - MAX_LOG_AGE_MS,
+            });
         } catch (error) {
             console.error('[LogService] Failed to get logs:', error);
             return [];
@@ -300,24 +204,24 @@ export const LogService = {
     /**
      * 清空日志
      * @param {Object} env - Cloudflare Environment
+     * @param {Object} [options] - 可选过滤条件
+     * @param {string} [options.profileName] - 仅清空指定订阅组名称的日志
      */
-    async clearLogs(env) {
+    async clearLogs(env, { profileName = '' } = {}) {
         try {
-            const primaryStorage = await resolvePrimaryLogStorage(env);
-            if (!primaryStorage) return false;
+            const targetProfileName = typeof profileName === 'string' ? profileName : '';
+            const storage = resolveLogStorage(env);
+            if (!storage) return false;
 
-            if (primaryStorage.hasRowLogMethods) {
-                return await primaryStorage.storage.clearAccessLogs();
+            if (targetProfileName) {
+                logBatch = logBatch.filter((log) => log?.profileName !== targetProfileName);
+            } else {
+                logBatch = [];
             }
 
-            const storage = primaryStorage.storage;
-            const bucketIndex = await getLogBucketIndex(storage);
-            await Promise.all([
-                storage.delete(LOG_KV_KEY),
-                storage.delete(LOG_INDEX_KV_KEY),
-                ...bucketIndex.map((key) => storage.delete(key)),
-            ]);
-            return true;
+            return await storage.clearAccessLogs(
+                targetProfileName ? { profileName: targetProfileName } : {}
+            );
         } catch (error) {
             console.error('[LogService] Failed to clear logs:', error);
             return false;

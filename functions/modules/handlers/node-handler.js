@@ -4,7 +4,7 @@
  */
 
 import { StorageFactory } from '../../storage-adapter.js';
-import { DEFAULT_SETTINGS, KV_KEY_SETTINGS } from '../config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import {
     createErrorResponse,
     createJsonResponse,
@@ -63,7 +63,7 @@ async function resolveNodeCountFetchCfOptions(env) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const settings = (await storageAdapter.get(KV_KEY_SETTINGS)) || DEFAULT_SETTINGS;
+        const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;
         if (settings?.builtinSkipCertVerify === true) {
             return { cf: { insecureSkipVerify: true } };
         }
