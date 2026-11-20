@@ -272,4 +272,40 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
             logSpy.mockRestore();
         }
     });
+
+    it('batches putAllSubscriptions/putAllProfiles via db.batch and diffs unchanged rows in syncAllSubscriptions', async () => {
+        const db = createMemoryD1({
+            misub_subscriptions_v1: [
+                { id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' },
+                { id: 'node-1', name: 'Node 1', url: 'vless://u@1.1.1.1:443#N1' },
+            ],
+            misub_profiles_v1: [{ id: 'p-1', customId: 'c1', name: 'Profile 1' }],
+        });
+
+        const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+        const batchSpy = vi.spyOn(db, 'batch');
+
+        await adapter.putAllSubscriptions([
+            { id: 'sub-2', name: 'Sub 2', url: 'https://b.example.com/sub' },
+            { id: 'node-2', name: 'Node 2', url: 'ss://YWVz@2.2.2.2:8388#N2' },
+        ]);
+        expect(batchSpy).toHaveBeenCalledTimes(1);
+        expect(db.tables.subscriptions.has('sub-2')).toBe(true);
+        expect(db.tables.nodes.has('node-2')).toBe(true);
+
+        batchSpy.mockClear();
+        const currentSubs = await adapter.getAllSubscriptions();
+        // Syncing identical items should skip all writes
+        await adapter.syncAllSubscriptions(currentSubs);
+        expect(batchSpy).not.toHaveBeenCalled();
+
+        // Changing 1 item and removing 1 item should execute in a single batch
+        const nextSubs = currentSubs
+            .filter((item) => item.id !== 'node-2')
+            .map((item) => (item.id === 'sub-1' ? { ...item, name: 'Sub 1 Renamed' } : item));
+        await adapter.syncAllSubscriptions(nextSubs);
+        expect(batchSpy).toHaveBeenCalledTimes(1);
+        expect(db.tables.nodes.has('node-2')).toBe(false);
+        expect((await adapter.getSubscriptionById('sub-1')).name).toBe('Sub 1 Renamed');
+    });
 });

@@ -1,16 +1,31 @@
 <script setup>
-    import { computed, onMounted, onUnmounted, ref } from 'vue';
+    import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
     import { ChevronUp, Loader2 } from '@lucide/vue';
     import { useI18n } from '@/i18n/index.js';
     import SettingsLayout from '@/components/layout/SettingsLayout.vue';
     import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
-    import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
-    import HomeSettings from '@/components/settings/sections/HomeSettings.vue';
-    import GlobalSettings from '@/components/settings/sections/GlobalSettings.vue';
-    import ServiceSettings from '@/components/settings/sections/ServiceSettings.vue';
-    import CustomPageSettings from '@/components/settings/sections/CustomPageSettings.vue';
-    import WebdavBackupSettings from '@/components/settings/sections/WebdavBackupSettings.vue';
-    import SystemSettings from '@/components/settings/sections/SystemSettings.vue';
+
+    const BasicSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/BasicSettings.vue')
+    );
+    const HomeSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/HomeSettings.vue')
+    );
+    const GlobalSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/GlobalSettings.vue')
+    );
+    const ServiceSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/ServiceSettings.vue')
+    );
+    const CustomPageSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/CustomPageSettings.vue')
+    );
+    const WebdavBackupSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/WebdavBackupSettings.vue')
+    );
+    const SystemSettings = defineAsyncComponent(
+        () => import('@/components/settings/sections/SystemSettings.vue')
+    );
 
     /**
      * 设置界面的共享内容区。
@@ -91,6 +106,20 @@
         get: () => props.activeTab,
         set: (value) => emit('update:activeTab', value),
     });
+
+    // 仅在首次访问对应 tab 时才挂载该分区组件，后续切换通过 v-show 保留内部状态
+    const visitedTabs = ref(new Set(props.activeTab ? [props.activeTab] : []));
+    watch(
+        () => props.activeTab,
+        (tab) => {
+            if (tab && !visitedTabs.value.has(tab)) {
+                const next = new Set(visitedTabs.value);
+                next.add(tab);
+                visitedTabs.value = next;
+            }
+        },
+        { immediate: true }
+    );
 
     const currentTabLabel = computed(() => {
         switch (props.activeTab) {
@@ -198,16 +227,37 @@
             </div>
 
             <BasicSettings
+                v-if="visitedTabs.has('basic')"
                 v-show="activeTab === 'basic'"
                 :settings="settings"
                 :disguiseConfig="disguiseConfig"
                 :highlighted-focus-id="highlightedFocusId"
             />
-            <HomeSettings v-show="activeTab === 'home'" :settings="settings" />
-            <GlobalSettings v-show="activeTab === 'global'" :settings="settings" />
-            <ServiceSettings v-show="activeTab === 'service'" :settings="settings" />
-            <CustomPageSettings v-show="activeTab === 'custom-page'" :settings="settings" />
-            <div v-show="activeTab === 'system'" class="space-y-4">
+            <HomeSettings
+                v-if="visitedTabs.has('home')"
+                v-show="activeTab === 'home'"
+                :settings="settings"
+            />
+            <GlobalSettings
+                v-if="visitedTabs.has('global')"
+                v-show="activeTab === 'global'"
+                :settings="settings"
+            />
+            <ServiceSettings
+                v-if="visitedTabs.has('service')"
+                v-show="activeTab === 'service'"
+                :settings="settings"
+            />
+            <CustomPageSettings
+                v-if="visitedTabs.has('custom-page')"
+                v-show="activeTab === 'custom-page'"
+                :settings="settings"
+            />
+            <div
+                v-if="visitedTabs.has('system')"
+                v-show="activeTab === 'system'"
+                class="space-y-4"
+            >
                 <WebdavBackupSettings :settings="settings" />
                 <SystemSettings
                     :settings="settings"

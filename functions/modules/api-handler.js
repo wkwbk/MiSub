@@ -140,7 +140,7 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
     const currentMap = new Map(currentItems.map((item) => [item.id, item]));
     const finalMap = new Map(finalItems.map((item) => [item.id, item]));
 
-    const puts = [];
+    const toPut = [];
     const deletes = [];
 
     for (const item of finalItems) {
@@ -156,7 +156,7 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
                   }
                 : item;
         if (!existing || JSON.stringify(existing) !== JSON.stringify(nextItem)) {
-            puts.push(putItem(nextItem));
+            toPut.push(nextItem);
         }
     }
 
@@ -166,7 +166,18 @@ async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
         }
     }
 
-    await Promise.all([...puts, ...deletes]);
+    const putAll = isProfile
+        ? storageAdapter.putAllProfiles?.bind(storageAdapter)
+        : storageAdapter.putAllSubscriptions?.bind(storageAdapter);
+
+    const tasks = [...deletes];
+    if (toPut.length > 1 && putAll) {
+        tasks.unshift(putAll(toPut));
+    } else if (toPut.length > 0) {
+        tasks.unshift(...toPut.map((item) => putItem(item)));
+    }
+
+    await Promise.all(tasks);
     return true;
 }
 
@@ -234,7 +245,7 @@ export async function handleDataRequest(env, context = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleMisubsSave(request, env) {
+export async function handleMisubsSave(request, env, context = null) {
     try {
         // 步骤1: 解析请求体
         let requestData;
@@ -396,10 +407,13 @@ export async function handleMisubsSave(request, env) {
                         })
                     );
 
-                // 并行处理通知，但不等待完成
-                Promise.all(notificationPromises).catch((e) => {
+                // 并行处理通知；在 Cloudflare Workers 中通过 waitUntil 防止响应返回后任务被中止
+                const notificationBatch = Promise.allSettled(notificationPromises).catch((e) => {
                     console.warn('[API] Notification batch error:', e);
                 });
+                if (typeof context?.waitUntil === 'function') {
+                    context.waitUntil(notificationBatch);
+                }
             } catch (notificationError) {
                 console.warn('[API] Notification system error:', notificationError);
             }

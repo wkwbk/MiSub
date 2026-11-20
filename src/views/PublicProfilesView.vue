@@ -10,7 +10,6 @@
     } from 'vue';
     import { useToastStore } from '@/stores/toast.js';
     import { hasStoredLocale, useI18n } from '@/i18n/index.js';
-    import QRCode from 'qrcode';
     import { api } from '@/lib/http.js';
     import ProfileGrid from '@/components/public/ProfileGrid.vue';
     import { AlertTriangle, ArrowRight } from '@lucide/vue';
@@ -473,6 +472,7 @@
                 const identifier = profile.customId || profile.id;
                 const link = `${window.location.origin}/${token}/${identifier}`;
                 try {
+                    const { default: QRCode } = await import('qrcode');
                     await QRCode.toCanvas(canvas, link, {
                         width: 200,
                         margin: 2,

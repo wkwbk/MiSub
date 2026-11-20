@@ -5,7 +5,7 @@ import App from '@/App.vue';
 import router from '@/router';
 import { configureErrorMonitoring, handleError, setToastHandler } from '@/utils/errorHandler.js';
 import { isAppScriptError, isForeignRejection } from '@/utils/error-source.js';
-import { i18n } from '@/i18n/index.js';
+import { ensureLocaleLoaded, i18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
 import { configureUnauthorizedHandler } from '@/lib/http.js';
 import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from '@/utils/url-origin.js';
@@ -195,4 +195,8 @@ const toastStore = useToastStore(pinia);
 setToastHandler(toastStore.showToast);
 configureErrorMonitoring({ endpoint: import.meta.env.VITE_ERROR_REPORT_URL });
 app.use(router); // Use Router
-app.mount('#app');
+ensureLocaleLoaded(i18n.locale.value)
+    .catch(() => undefined)
+    .finally(() => {
+        app.mount('#app');
+    });

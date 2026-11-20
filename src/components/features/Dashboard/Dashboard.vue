@@ -32,14 +32,21 @@
     import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
     import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
     import Modal from '@/components/forms/Modal.vue';
-    import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
-    import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
-    import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
     import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
     import DashboardHeader from '@/components/features/Dashboard/DashboardHeader.vue';
     import SavePrompt from '@/components/ui/SavePrompt.vue';
 
     const isDev = import.meta.env.DEV;
+
+    const SubscriptionEditModal = defineAsyncComponent(
+        () => import('@/components/modals/SubscriptionEditModal.vue')
+    );
+    const ManualNodeEditModal = defineAsyncComponent(
+        () => import('@/components/modals/ManualNodeEditModal.vue')
+    );
+    const ManualNodeDedupModal = defineAsyncComponent(
+        () => import('@/components/modals/ManualNodeDedupModal.vue')
+    );
 
     const SettingsModal = defineAsyncComponent(
         () => import('@/components/modals/SettingsModal.vue')

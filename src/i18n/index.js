@@ -1,6 +1,6 @@
-import { computed, inject, readonly, ref } from 'vue';
+import { computed, inject, readonly, ref, shallowRef } from 'vue';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
-import { messages } from '@/i18n/messages.js';
+import zhCN from '@/i18n/locales/zh-CN.js';
 
 export const DEFAULT_LOCALE = 'zh-CN';
 export const LOCALE_STORAGE_KEY = 'misub:locale';
@@ -11,6 +11,47 @@ export const SUPPORTED_LOCALES = [
 
 const supportedCodes = new Set(SUPPORTED_LOCALES.map((item) => item.code));
 const I18N_KEY = Symbol('misub-i18n');
+
+const loadedMessages = shallowRef({
+    'zh-CN': zhCN,
+});
+
+const localeLoaders = {
+    'en-US': () => import('@/i18n/locales/en-US.js'),
+};
+
+const pendingLocaleLoads = new Map();
+
+export function registerLocaleMessages(locale, dict) {
+    if (!locale || !dict) return;
+    loadedMessages.value = {
+        ...loadedMessages.value,
+        [locale]: dict,
+    };
+}
+
+export async function ensureLocaleLoaded(locale) {
+    const normalized = normalizeLocale(locale);
+    if (loadedMessages.value[normalized]) return loadedMessages.value[normalized];
+
+    const loader = localeLoaders[normalized];
+    if (!loader) return loadedMessages.value[DEFAULT_LOCALE];
+
+    if (!pendingLocaleLoads.has(normalized)) {
+        const promise = loader()
+            .then((mod) => {
+                const dict = mod?.default || mod;
+                registerLocaleMessages(normalized, dict);
+                return dict;
+            })
+            .finally(() => {
+                pendingLocaleLoads.delete(normalized);
+            });
+        pendingLocaleLoads.set(normalized, promise);
+    }
+
+    return pendingLocaleLoads.get(normalized);
+}
 
 function readStoredLocale() {
     return readRawPreference(LOCALE_STORAGE_KEY) || '';
@@ -58,7 +99,7 @@ function lookupMessage(locale, key) {
     return key.split('.').reduce((current, part) => {
         if (!current || typeof current !== 'object') return undefined;
         return current[part];
-    }, messages[locale]);
+    }, loadedMessages.value[locale]);
 }
 
 function interpolate(template, params = {}) {
@@ -67,7 +108,11 @@ function interpolate(template, params = {}) {
 }
 
 export function createI18n(options = {}) {
-    const locale = ref(normalizeLocale(options.initialLocale || detectInitialLocale()));
+    const initial = normalizeLocale(options.initialLocale || detectInitialLocale());
+    const locale = ref(initial);
+    if (initial !== DEFAULT_LOCALE && !loadedMessages.value[initial]) {
+        void ensureLocaleLoaded(initial);
+    }
 
     const translate = (key, params = {}, forcedLocale) => {
         const targetLocale = normalizeLocale(forcedLocale || locale.value);
@@ -77,6 +122,9 @@ export function createI18n(options = {}) {
 
     const set = (nextLocale) => {
         const normalized = normalizeLocale(nextLocale);
+        if (!loadedMessages.value[normalized]) {
+            void ensureLocaleLoaded(normalized);
+        }
         locale.value = normalized;
         writeStoredLocale(normalized);
         if (typeof document !== 'undefined') {

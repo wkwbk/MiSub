@@ -205,7 +205,7 @@ export async function handleApiRequest(request, env, context = null) {
 
     switch (path) {
         case '/misubs':
-            return await handleMisubsSave(request, env);
+            return await handleMisubsSave(request, env, context);
 
         case '/rule_templates':
             return await handleRuleTemplatesRequest(request, env);

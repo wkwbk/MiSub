@@ -312,10 +312,13 @@ class D1StorageAdapter {
         }
     }
 
-    async _runBatchOrSequential(statements) {
+    async _runBatchOrSequential(statements, chunkSize = 80) {
         if (!Array.isArray(statements) || statements.length === 0) return;
         if (typeof this.db.batch === 'function') {
-            await this.db.batch(statements);
+            const safeChunkSize = Math.max(1, Number(chunkSize) || 80);
+            for (let i = 0; i < statements.length; i += safeChunkSize) {
+                await this.db.batch(statements.slice(i, i + safeChunkSize));
+            }
             return;
         }
         for (const stmt of statements) {
@@ -1145,25 +1148,106 @@ class D1StorageAdapter {
 
     async putAllSubscriptions(items) {
         if (!Array.isArray(items)) return false;
-        await Promise.all(items.filter((item) => item?.id).map((item) => this.putSubscription(item)));
+        const validItems = items.filter((item) => item?.id);
+        if (validItems.length === 0) return true;
+
+        const statements = [];
+        for (const item of validItems) {
+            const isManual = isManualNodeRecord(item);
+            const targetTable = isManual ? 'nodes' : 'subscriptions';
+            const otherTable = isManual ? 'subscriptions' : 'nodes';
+            statements.push(
+                this.db
+                    .prepare(
+                        `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
+                         VALUES (?, ?, CURRENT_TIMESTAMP)`
+                    )
+                    .bind(item.id, JSON.stringify(item))
+            );
+            statements.push(
+                this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id)
+            );
+        }
+
+        await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+        invalidateD1CollectionCache(this.db, 'subscriptions');
+        invalidateD1CollectionCache(this.db, 'nodes');
         return true;
     }
 
     async putAllProfiles(items) {
         if (!Array.isArray(items)) return false;
-        await Promise.all(items.filter((item) => item?.id).map((item) => this.putProfile(item)));
+        const validItems = items.filter((item) => item?.id);
+        if (validItems.length === 0) return true;
+
+        const statements = validItems.map((item) => {
+            const customId =
+                typeof item?.customId === 'string' && item.customId.trim()
+                    ? item.customId.trim()
+                    : null;
+            return this.db
+                .prepare(
+                    `INSERT OR REPLACE INTO profiles (id, custom_id, data, updated_at)
+                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+                )
+                .bind(item.id, customId, JSON.stringify(item));
+        });
+
+        await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+        invalidateD1CollectionCache(this.db, 'profiles');
         return true;
     }
 
     async syncAllSubscriptions(items) {
         if (!Array.isArray(items)) return false;
         const current = await this.getAllSubscriptions();
-        const nextIds = new Set(items.map((item) => item?.id).filter(Boolean));
+        const currentMap = new Map(current.filter((item) => item?.id).map((item) => [item.id, item]));
+        const nextIds = new Set();
+        const toUpsert = [];
+
+        for (const item of items) {
+            if (!item?.id) continue;
+            nextIds.add(item.id);
+            const existing = currentMap.get(item.id);
+            if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
+                toUpsert.push(item);
+            }
+        }
+
         const toDelete = current.filter((item) => item?.id && !nextIds.has(item.id));
-        await Promise.all([
-            ...items.filter((item) => item?.id).map((item) => this.putSubscription(item)),
-            ...toDelete.map((item) => this.deleteSubscriptionById(item.id)),
-        ]);
+        if (toUpsert.length === 0 && toDelete.length === 0) {
+            return true;
+        }
+
+        const statements = [];
+        for (const item of toUpsert) {
+            const isManual = isManualNodeRecord(item);
+            const targetTable = isManual ? 'nodes' : 'subscriptions';
+            const otherTable = isManual ? 'subscriptions' : 'nodes';
+            statements.push(
+                this.db
+                    .prepare(
+                        `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
+                         VALUES (?, ?, CURRENT_TIMESTAMP)`
+                    )
+                    .bind(item.id, JSON.stringify(item))
+            );
+            statements.push(
+                this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id)
+            );
+        }
+
+        for (const item of toDelete) {
+            statements.push(
+                this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(item.id),
+                this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(item.id),
+                this.db
+                    .prepare('DELETE FROM cache WHERE key = ?')
+                    .bind(`node_cache_subscription_${encodeURIComponent(item.id)}`)
+            );
+        }
+
+        await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
         invalidateD1CollectionCache(this.db, 'subscriptions');
         invalidateD1CollectionCache(this.db, 'nodes');
         return true;
@@ -1172,12 +1256,55 @@ class D1StorageAdapter {
     async syncAllProfiles(items) {
         if (!Array.isArray(items)) return false;
         const current = await this.getAllProfiles();
-        const nextIds = new Set(items.map((item) => item?.id).filter(Boolean));
+        const currentMap = new Map(current.filter((item) => item?.id).map((item) => [item.id, item]));
+        const nextIds = new Set();
+        const toUpsert = [];
+
+        for (const item of items) {
+            if (!item?.id) continue;
+            nextIds.add(item.id);
+            const existing = currentMap.get(item.id);
+            if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
+                toUpsert.push(item);
+            }
+        }
+
         const toDelete = current.filter((item) => item?.id && !nextIds.has(item.id));
-        await Promise.all([
-            ...items.filter((item) => item?.id).map((item) => this.putProfile(item)),
-            ...toDelete.map((item) => this.deleteProfileById(item.id)),
-        ]);
+        if (toUpsert.length === 0 && toDelete.length === 0) {
+            return true;
+        }
+
+        const statements = [];
+        for (const item of toUpsert) {
+            const customId =
+                typeof item?.customId === 'string' && item.customId.trim()
+                    ? item.customId.trim()
+                    : null;
+            statements.push(
+                this.db
+                    .prepare(
+                        `INSERT OR REPLACE INTO profiles (id, custom_id, data, updated_at)
+                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
+                    )
+                    .bind(item.id, customId, JSON.stringify(item))
+            );
+        }
+
+        for (const item of toDelete) {
+            statements.push(this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(item.id));
+            const customId = typeof item?.customId === 'string' ? item.customId.trim() : '';
+            const idsToClean = new Set([item.id, customId].filter(Boolean));
+            for (const pid of idsToClean) {
+                statements.push(
+                    this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`),
+                    this.db
+                        .prepare('DELETE FROM settings WHERE key = ?')
+                        .bind(`${DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX}${pid}`)
+                );
+            }
+        }
+
+        await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
         invalidateD1CollectionCache(this.db, 'profiles');
         return true;
     }

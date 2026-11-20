@@ -53,10 +53,8 @@ export default defineConfig({
                 },
             },
         },
-        // 压缩配置
-        minify: 'terser',
-
-        // terserOptions removed for debugging
+        // 压缩配置（使用 Vite 8 默认原生压缩器，速度更快）
+        minify: true,
     },
     // 开发服务器配置
     server: {
@@ -84,6 +82,7 @@ export default defineConfig({
     resolve: {
         alias: [
             { find: '@', replacement: '/src' },
+            { find: '@shared', replacement: '/shared' },
             {
                 // vuedraggable 的 package.json main 指向 dist/vuedraggable.umd.min.js，
                 // 该 UMD 构建把 Vue 完整版（含 runtime compiler）一并打包，并在运行时

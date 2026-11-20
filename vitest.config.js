@@ -12,6 +12,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'happy-dom',
+        setupFiles: ['tests/setup/i18n-preload.js'],
         passWithNoTests: true,
         include: ['tests/**/*.{test,spec}.{js,ts}'],
         coverage: {
@@ -24,6 +25,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': '/src',
+            '@shared': '/shared',
         },
     },
 });

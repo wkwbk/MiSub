@@ -13,7 +13,7 @@
     import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
     import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
     import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
-    import { REGION_EMOJI } from '../../../../functions/modules/utils/geo-utils.js';
+    import { REGION_EMOJI } from '@shared/region-emoji.js';
 
     const isDev = import.meta.env.DEV;
     const { t } = useI18n();
@@ -115,9 +115,10 @@
             // Add nodes to data store as manual nodes
             // You can also add logic here to associate them specifically with props.profileId
             // For now, we'll use bulk import logic to create manual nodes
+            const nodeByUrl = new Map(allNodes.value.map((n) => [n.url, n]));
             const nodesToAdd = urls.map((url) => {
                 // Try to find full node object from allNodes
-                const originalNode = allNodes.value.find((n) => n.url === url);
+                const originalNode = nodeByUrl.get(url);
                 return {
                     name: (originalNode?.name || 'Pick').split('#')[0].trim(),
                     url: url,

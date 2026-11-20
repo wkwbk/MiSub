@@ -4,7 +4,7 @@
     import Select from '@/components/ui/Select.vue';
     import { useI18n } from '@/i18n/index.js';
     import draggable from 'vuedraggable';
-    import { REGION_EMOJI } from '../../../../../functions/modules/utils/geo-utils.js';
+    import { REGION_EMOJI } from '@shared/region-emoji.js';
 
     const props = defineProps({
         modelValue: {
