@@ -1,5 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { FolderKanban, Layers, Server } from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useUIStore } from '@/stores/ui.js';
@@ -319,6 +320,42 @@ const handleBeforeUnload = (event) => {
   }
 };
 
+const CLASSIC_TAB_STORAGE_KEY = 'misub_classic_dashboard_tab';
+const VALID_CLASSIC_TABS = ['nodes', 'subscriptions', 'profiles'];
+
+const readInitialClassicTab = () => {
+  if (typeof window === 'undefined') return 'nodes';
+  try {
+    const saved = window.sessionStorage.getItem(CLASSIC_TAB_STORAGE_KEY);
+    return VALID_CLASSIC_TABS.includes(saved) ? saved : 'nodes';
+  } catch {
+    return 'nodes';
+  }
+};
+
+const activeTab = ref(readInitialClassicTab());
+
+const classicTabs = computed(() => [
+  {
+    id: 'nodes',
+    label: t('manualNodes.title'),
+    count: manualNodes.value.length,
+    icon: Server,
+  },
+  {
+    id: 'subscriptions',
+    label: t('subscriptions.title'),
+    count: subscriptions.value.length,
+    icon: Layers,
+  },
+  {
+    id: 'profiles',
+    label: t('nav.subscriptions'),
+    count: profiles.value.length,
+    icon: FolderKanban,
+  },
+]);
+
 const mainGridRef = ref(null);
 const leftColRef = ref(null);
 const rightColRef = ref(null);
@@ -327,6 +364,21 @@ const { refreshStickyColumns, refreshStickyColumnsNow, reobserveStickyColumns } 
   leftColRef,
   rightColRef,
 ]);
+
+const setActiveTab = (tabId) => {
+  if (!VALID_CLASSIC_TABS.includes(tabId) || activeTab.value === tabId) return;
+  activeTab.value = tabId;
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.setItem(CLASSIC_TAB_STORAGE_KEY, tabId);
+    } catch {
+      // ignore storage errors
+    }
+  }
+  nextTick(() => {
+    refreshStickyColumnsNow();
+  });
+};
 
 const handleManualNodesPageChange = (page) => {
   changeManualNodesPage(page);
@@ -641,10 +693,64 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     />
 
     <!-- Main Grid -->
-    <div ref="mainGridRef" class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3">
-      <div ref="leftColRef" class="space-y-4 xl:col-span-2">
+    <div ref="mainGridRef" class="grid grid-cols-1 gap-4 items-start lg:grid-cols-3">
+      <!-- Left Column: Persistent Link Generator -->
+      <div ref="leftColRef" class="space-y-4 lg:col-span-1">
+        <RightPanel
+          :compact="true"
+          :config="config"
+          :profiles="profiles"
+          @qrcode="
+            (url, title) => {
+              qrCodeUrl = url;
+              qrCodeTitle = title;
+              showQRCodeModal = true;
+            }
+          "
+        />
+      </div>
+
+      <!-- Right Column: Tabbed Management Panels -->
+      <div ref="rightColRef" class="space-y-4 lg:col-span-2">
+        <!-- Classic Layout Module Tabs -->
+        <div
+          class="flex items-center gap-1 rounded-md border border-line bg-surface p-1 overflow-x-auto"
+          data-testid="classic-dashboard-tabs"
+          role="tablist"
+        >
+          <button
+            v-for="tab in classicTabs"
+            :key="tab.id"
+            :aria-selected="activeTab === tab.id"
+            :class="[
+              activeTab === tab.id
+                ? 'bg-active text-fg border-line-strong font-semibold'
+                : 'bg-transparent text-fg-muted border-transparent hover:bg-hover hover:text-fg',
+            ]"
+            :data-testid="`classic-tab-${tab.id}`"
+            class="flex-1 min-w-fit inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs sm:text-sm transition-colors cursor-pointer whitespace-nowrap"
+            role="tab"
+            type="button"
+            @click="setActiveTab(tab.id)"
+          >
+            <component :is="tab.icon" class="h-4 w-4 shrink-0" stroke-width="1.75" />
+            <span>{{ tab.label }}</span>
+            <span
+              :class="[
+                activeTab === tab.id
+                  ? 'border-line-strong bg-surface text-fg'
+                  : 'border-line bg-transparent text-fg-subtle',
+              ]"
+              class="rounded-md border px-1.5 py-0.5 text-[11px] font-mono leading-none"
+            >
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+
         <!-- Subscription Panel -->
         <SubscriptionPanel
+          v-if="activeTab === 'subscriptions'"
           :active-tag-filters="subscriptionTagFilters"
           :current-page="subscriptionsCurrentPage"
           :filtered-count="filteredSubscriptionCount"
@@ -681,6 +787,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
 
         <!-- Manual Node Panel -->
         <ManualNodePanel
+          v-else-if="activeTab === 'nodes'"
           :active-tag-filters="activeTagFilters"
           :compact-grid="true"
           :current-page="manualNodesCurrentPage"
@@ -715,25 +822,12 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @manage-tags="handleOpenNodeTagManagement"
           @ping-all="pingAllNodes"
         />
-      </div>
 
-      <!-- Right Column -->
-      <div ref="rightColRef" class="space-y-4 xl:col-span-1">
-        <RightPanel
-          :compact="true"
-          :config="config"
-          :profiles="profiles"
-          @qrcode="
-            (url, title) => {
-              qrCodeUrl = url;
-              qrCodeTitle = title;
-              showQRCodeModal = true;
-            }
-          "
-        />
+        <!-- Profile Panel -->
         <ProfilePanel
+          v-else
           :active-tag-filters="profileTagFilters"
-          :compact="true"
+          :compact="false"
           :current-page="profilesCurrentPage"
           :filtered-count="filteredProfiles.length"
           :is-sorting="isSortingProfiles"

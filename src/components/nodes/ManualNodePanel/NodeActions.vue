@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Loader2, Search, X } from '@lucide/vue';
+import { Loader2, Plus, Search, X, Zap } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -100,18 +100,19 @@ const searchModel = computed({
       >
         <button
           :disabled="isPingingAll"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
           type="button"
           @click="emit('ping-all')"
         >
-          <Loader2 v-if="isPingingAll" aria-hidden="true" class="h-3 w-3 animate-spin text-emerald-500" />
-          <span v-else class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <Loader2 v-if="isPingingAll" aria-hidden="true" class="h-3.5 w-3.5 animate-spin text-emerald-500" />
+          <Zap v-else aria-hidden="true" class="h-3.5 w-3.5 text-emerald-500" stroke-width="1.75" />
           {{ t('actions.pingAll') }}
         </button>
         <button
-          class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
+          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line-strong bg-active px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
           @click="emit('add')"
         >
+          <Plus class="h-3.5 w-3.5 shrink-0" stroke-width="2" />
           {{ t('actions.add') }}
         </button>
         <MoreActionsMenu menu-width-class="w-36">

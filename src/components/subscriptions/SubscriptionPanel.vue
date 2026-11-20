@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
-import { Search, X } from '@lucide/vue';
+import { Plus, Search, Upload, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import Card from '@/components/ui/Card.vue';
 import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
@@ -307,15 +307,17 @@ watch(totalPages, (nextTotal) => {
         </div>
         <div class="flex flex-wrap items-center gap-2 sm:w-auto justify-end sm:justify-start">
           <button
-            class="shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+            class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg shadow-none"
             @click="handleImport"
           >
+            <Upload class="h-3.5 w-3.5 shrink-0" stroke-width="1.5" />
             {{ t('actions.bulkImport') }}
           </button>
           <button
-            class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
+            class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line-strong bg-active px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
             @click="handleAdd"
           >
+            <Plus class="h-3.5 w-3.5 shrink-0" stroke-width="2" />
             {{ t('actions.add') }}
           </button>
           <MoreActionsMenu menu-width-class="w-36">

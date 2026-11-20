@@ -193,10 +193,10 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
     <div
       :class="{ 'pointer-events-none': isSelectionMode }"
-      class="mt-3 grid gap-2.5 rounded-md border border-line bg-transparent p-3 text-xs"
+      class="mt-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5 text-xs"
     >
       <div class="flex items-center justify-between gap-3 text-fg-muted">
-        <span>{{ t('profiles.enabledStatus') }}</span>
+        <span class="shrink-0">{{ t('profiles.enabledStatus') }}</span>
         <Switch
           :label="t('profiles.enable')"
           :model-value="isEnabled"
@@ -204,7 +204,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         />
       </div>
       <div class="flex items-center justify-between gap-3 text-fg-muted">
-        <span>{{ t('profiles.publicAccess') }}</span>
+        <span class="shrink-0">{{ t('profiles.publicAccess') }}</span>
         <Switch
           :label="t('profiles.publicSwitch')"
           :model-value="isPublic"
@@ -220,7 +220,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
       <div :class="compact ? 'flex-1' : ''" class="flex items-center gap-2 sm:gap-4">
         <button
           :class="compact ? 'w-full justify-center' : ''"
-          class="inline-flex items-center gap-1.5 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
+          class="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-3.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-hover"
           @click="emit('open-copy')"
         >
           <Copy class="h-3.5 w-3.5" />

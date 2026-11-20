@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted } from 'vue';
 
-const DESKTOP_BREAKPOINT = 1280;
+const DESKTOP_BREAKPOINT = 1024;
 const BASE_TOP_GAP = 16;
 const BOTTOM_GAP = 24;
 

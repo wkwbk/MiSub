@@ -110,7 +110,7 @@ const copyToClipboard = async (text) => {
         'cursor-pointer': isSelectionMode,
       },
     ]"
-    class="group relative flex flex-col justify-between rounded-md border p-3.5 hover:-translate-y-1 hover:z-10 transition-all duration-200 min-h-[110px]"
+    class="group relative flex flex-col justify-between rounded-md border p-3 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 min-h-[96px]"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
     <!-- Top Row: Badges (Protocol & Tags) + Ping Result Badge -->
@@ -180,20 +180,20 @@ const copyToClipboard = async (text) => {
     </div>
 
     <!-- Middle Row: Node Name -->
-    <div class="my-2 min-w-0">
+    <div class="my-1.5 min-w-0">
       <h4
         :title="node.name || t('manualNodes.unnamed')"
-        class="truncate text-sm font-medium text-fg transition-colors group-hover:text-white"
+        class="truncate text-sm font-medium text-fg transition-colors"
       >
         {{ node.name || t('manualNodes.unnamed') }}
       </h4>
     </div>
 
     <!-- Client Compatibility Row -->
-    <NodeClientBadges :url="node.url" class="mb-2.5" />
+    <NodeClientBadges :url="node.url" class="mb-2" compact />
 
     <!-- Bottom Row: Endpoint (Host:Port) + Quick Actions -->
-    <div class="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2.5">
+    <div class="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2">
       <div class="min-w-0 flex-1">
         <span
           v-if="hostAndPort.host"
@@ -207,7 +207,7 @@ const copyToClipboard = async (text) => {
 
       <div
         v-if="!isSelectionMode"
-        class="flex shrink-0 items-center gap-0.5 transition-opacity duration-150 md:opacity-0 md:group-hover:opacity-100"
+        class="flex shrink-0 items-center gap-0.5 transition-opacity duration-150 md:opacity-55 md:group-hover:opacity-100 md:focus-within:opacity-100"
       >
         <button
           :aria-label="t('actions.ping')"

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, ref } from 'vue';
-import { Search, X } from '@lucide/vue';
+import { Plus, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';
 import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
@@ -201,9 +201,10 @@ const draggableProfiles = computed({
           </div>
           <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0">
             <button
-              class="shrink-0 rounded-md bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-fg transition-colors hover:opacity-90 border border-accent"
+              class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line-strong bg-active px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
               @click="handleAdd"
             >
+              <Plus class="h-3.5 w-3.5 shrink-0" stroke-width="2" />
               {{ t('actions.add') }}
             </button>
             <MoreActionsMenu :teleport-to-body="true" menu-width-class="w-36">

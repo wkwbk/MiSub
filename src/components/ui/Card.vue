@@ -1,12 +1,25 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Check, ExternalLink, Eye, Link2, Lock, MessageSquare, Pencil, QrCode, RefreshCw, Trash2 } from '@lucide/vue';
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  Eye,
+  Link2,
+  Lock,
+  MessageSquare,
+  Pencil,
+  QrCode,
+  RefreshCw,
+  Trash2,
+} from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
 import { getItemTags } from '@/utils/tags.js';
 import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 import { lookupDomainName } from '@/utils/domain-name-memory.js';
 import { api } from '@/lib/http.js';
 import { TIMING } from '@/constants/timing.js';
+import { useToastStore } from '@/stores/toast.js';
 import Switch from '@/components/ui/Switch.vue';
 import { useI18n } from '@/i18n/index.js';
 
@@ -37,6 +50,22 @@ const emit = defineEmits([
   'toggle-select',
 ]);
 const { t } = useI18n();
+const { showToast } = useToastStore();
+
+const copiedUrl = ref(false);
+const copySubscriptionUrl = async () => {
+  if (!props.misub?.url) return;
+  try {
+    await navigator.clipboard.writeText(props.misub.url);
+    copiedUrl.value = true;
+    showToast(t('notices.copied'), 'success');
+    setTimeout(() => {
+      copiedUrl.value = false;
+    }, 1500);
+  } catch {
+    showToast(t('notices.copyFailed'), 'error');
+  }
+};
 
 const subTags = computed(() => getItemTags(props.misub));
 const visibleTags = computed(() => subTags.value.slice(0, 2));
@@ -216,7 +245,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         'cursor-pointer': isSelectionMode,
       },
     ]"
-    class="group relative flex h-full flex-col overflow-hidden rounded-md border p-4 hover:-translate-y-1 hover:z-10 transition-all duration-200"
+    class="group relative flex h-full flex-col overflow-hidden rounded-md border p-3.5 hover:-translate-y-0.5 hover:z-10 transition-all duration-200"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
     <div class="relative z-10 flex flex-col h-full">
@@ -375,22 +404,37 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </template>
       </div>
 
-      <!-- URL Display -->
-      <div :class="{ 'pointer-events-none': isSelectionMode }" class="relative mt-3 mb-3">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Link2 class="h-3.5 w-3.5 text-fg-subtle" />
-        </div>
-        <input
+      <!-- URL Display (compact inline bar with 1-click copy) -->
+      <div
+        :class="{ 'pointer-events-none': isSelectionMode }"
+        class="mt-2.5 mb-2.5 flex items-center gap-1.5 rounded-md border border-line/70 bg-transparent px-2.5 py-1.5 transition-colors hover:border-line-strong"
+      >
+        <Link2 class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+        <span
           :aria-label="t('subscriptions.urlLabel')"
-          :value="misub.url"
-          class="w-full rounded-md border border-line bg-transparent py-2 pl-9 pr-3 font-mono text-xs text-fg-muted transition-colors focus:border-line-strong focus-visible:outline-none"
-          readonly
-          type="text"
-        />
+          :title="misub.url"
+          class="min-w-0 flex-1 truncate font-mono text-xs text-fg-muted select-all"
+        >
+          {{ misub.url }}
+        </span>
+        <button
+          :aria-label="t('actions.copyLink')"
+          :title="t('actions.copyLink')"
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+          type="button"
+          @click.stop="copySubscriptionUrl"
+        >
+          <Check v-if="copiedUrl" class="h-3.5 w-3.5 text-emerald-500" stroke-width="2.5" />
+          <Copy v-else class="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      <div class="grid gap-3 rounded-md border border-line bg-transparent p-3">
-        <div v-if="trafficInfo" class="space-y-2">
+      <!-- Traffic & Node Count -->
+      <div
+        v-if="trafficInfo"
+        class="grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5"
+      >
+        <div class="space-y-1.5">
           <div class="flex items-end justify-between text-xs">
             <span class="text-fg-muted"
               >{{ t('subscriptions.usedTraffic') }}
@@ -405,9 +449,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
             ></div>
           </div>
         </div>
-        <div v-else class="text-xs text-fg-subtle">
-          {{ t('subscriptions.noTrafficData') }}
-        </div>
         <div class="flex items-center justify-between text-xs">
           <span class="text-fg-muted">{{ t('subscriptions.nodeCountLabel') }}</span>
           <span class="font-mono font-semibold text-fg">
@@ -419,11 +460,24 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           </span>
         </div>
       </div>
+      <div
+        v-else
+        class="flex items-center justify-between gap-2 rounded-md border border-line/70 bg-transparent px-3 py-2 text-xs"
+      >
+        <span class="text-fg-subtle">{{ t('subscriptions.noTrafficData') }}</span>
+        <span class="font-mono font-semibold text-fg">
+          {{
+            misub.isUpdating
+              ? t('subscriptions.updating')
+              : t('subscriptions.nodeCount', { count: misub.nodeCount || 0 })
+          }}
+        </span>
+      </div>
 
       <!-- Footer Actions -->
       <div
         :class="{ 'pointer-events-none': isSelectionMode }"
-        class="mt-3 flex items-center justify-between gap-3 border-t border-line pt-3"
+        class="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5"
       >
         <Switch
           v-model="misub.enabled"

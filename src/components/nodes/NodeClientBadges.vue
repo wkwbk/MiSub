@@ -40,10 +40,10 @@ const getTooltip = (client) => {
       v-for="client in compatibility.clients"
       :key="client.id"
       :class="[
-        compact ? 'px-1 py-0 text-[9px]' : 'px-1.5 py-0.5 text-[10px]',
+        compact ? 'px-1 py-0 text-[9.5px]' : 'px-1.5 py-0.5 text-[10px]',
         client.supported
-          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-          : 'border-zinc-300/70 dark:border-zinc-800/80 bg-transparent text-fg-muted dark:text-zinc-600 line-through decoration-zinc-400/70 dark:decoration-zinc-600/70',
+          ? 'border-emerald-500/25 bg-emerald-500/8 text-emerald-700 dark:text-emerald-300'
+          : 'border-transparent bg-transparent text-fg-muted/60 dark:text-zinc-600 line-through decoration-zinc-400/60 dark:decoration-zinc-600/60',
       ]"
       :data-supported="String(client.supported)"
       :data-testid="`client-badge-${client.id}`"

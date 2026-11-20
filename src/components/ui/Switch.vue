@@ -33,7 +33,7 @@ const toggle = () => {
     <div
       class="w-10 h-5 bg-inset border border-line-strong peer-focus-visible:outline-none rounded-md peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-fg-subtle after:rounded-sm after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5 peer-checked:after:bg-accent-fg peer-checked:bg-accent peer-checked:border-accent transition-all duration-200"
     ></div>
-    <span v-if="label" class="ml-3 text-sm font-medium text-fg-muted">
+    <span v-if="label" class="ml-2.5 text-xs sm:text-sm font-medium text-fg-muted whitespace-nowrap shrink-0">
       {{ label }}
     </span>
   </label>

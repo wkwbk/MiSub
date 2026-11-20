@@ -134,22 +134,29 @@ onUnmounted(() => {
 
       <div
         v-if="hasSetupTasks"
-        class="mb-4 rounded-md border border-line bg-transparent p-3 text-fg list-item-animation"
+        class="mb-4 rounded-md border border-line bg-transparent p-2.5 text-fg list-item-animation"
         style="--delay-index: 1"
       >
         <p class="text-xs font-medium text-fg flex items-center gap-2">
           <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
           {{ t('dashboard.linkCard.setupTitle') }}
         </p>
-        <div class="mt-2.5 grid gap-2">
+        <div class="mt-2 grid gap-1.5">
           <router-link
             v-for="task in setupTasks"
             :key="task.id"
             :to="task.to"
-            class="block rounded-md border border-line bg-transparent px-3 py-2 text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
+            class="group/task flex items-center justify-between gap-2 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
           >
-            <span class="block font-medium text-fg">{{ task.title }}</span>
-            <span class="mt-0.5 block text-fg-muted">{{ task.description }}</span>
+            <span class="min-w-0">
+              <span class="block font-medium text-fg">{{ task.title }}</span>
+              <span class="mt-0.5 block text-[11px] leading-snug text-fg-muted">{{ task.description }}</span>
+            </span>
+            <span
+              aria-hidden="true"
+              class="shrink-0 font-mono text-fg-subtle transition-transform group-hover/task:translate-x-0.5 group-hover/task:text-fg"
+              >→</span
+            >
           </router-link>
         </div>
       </div>
@@ -175,18 +182,18 @@ onUnmounted(() => {
         <label class="block text-xs font-medium text-fg-muted uppercase tracking-wider mb-2">{{
           t('dashboard.linkCard.selectFormat')
         }}</label>
-        <div :class="compact ? 'grid-cols-2' : 'grid-cols-3'" class="grid gap-2">
+        <div class="grid grid-cols-3 gap-1.5">
           <button
             v-for="(format, index) in formats"
             :key="format"
             :aria-pressed="selectedFormat === format"
             :class="[
               selectedFormat === format
-                ? 'bg-accent text-accent-fg border-accent font-semibold'
+                ? 'bg-active text-fg border-line-strong font-semibold'
                 : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
             ]"
             :style="{ '--delay-index': index }"
-            class="min-h-10 px-3 py-2 text-xs font-mono font-medium rounded-md border transition-colors flex justify-center items-center text-center shadow-none list-item-animation"
+            class="min-h-9 px-2 py-1.5 text-xs font-mono font-medium rounded-md border transition-colors flex justify-center items-center text-center shadow-none list-item-animation"
             @click="selectedFormat = format"
           >
             {{ formatLabel(format) }}
@@ -219,14 +226,18 @@ onUnmounted(() => {
           </button>
           <button
             :aria-label="t('dashboard.linkCard.copyLink')"
-            :class="isLinkValid ? 'hover:text-fg hover:bg-hover' : 'cursor-not-allowed opacity-50'"
+            :class="
+              isLinkValid
+                ? 'bg-accent text-accent-fg border-accent hover:opacity-90'
+                : 'border-line bg-transparent text-fg-muted cursor-not-allowed opacity-50'
+            "
             :disabled="!isLinkValid"
             :title="t('dashboard.linkCard.copyLink')"
-            class="flex h-8 w-8 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors duration-200 shadow-none"
+            class="flex h-8 w-8 items-center justify-center rounded-md border transition-colors duration-200 shadow-none"
             @click="copyToClipboard"
           >
             <Transition mode="out-in" name="fade">
-              <Check v-if="copied" class="h-4 w-4 text-fg" stroke-width="2.5" />
+              <Check v-if="copied" class="h-4 w-4" stroke-width="2.5" />
               <Copy v-else class="h-4 w-4" stroke-width="1.5" />
             </Transition>
           </button>
@@ -234,7 +245,7 @@ onUnmounted(() => {
       </div>
 
       <p
-        v-if="!isLinkValid || requiredToken.value === 'auto'"
+        v-if="(!isLinkValid && !hasSetupTasks) || (isLinkValid && requiredToken.value === 'auto')"
         class="text-xs text-fg-muted mt-3 flex items-start gap-2 list-item-animation"
         style="--delay-index: 5"
       >

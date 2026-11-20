@@ -110,16 +110,19 @@ function handleItemsPerPageChange(value) {
     v-if="shouldShow && isPanelVariant"
     :class="
       compact
-        ? 'flex flex-col items-center justify-center gap-2.5'
-        : 'flex flex-wrap items-center justify-between gap-2.5 sm:gap-3'
+        ? 'flex flex-col items-center justify-center gap-2'
+        : 'flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3'
     "
-    class="panel-pagination-shell mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-surface rounded-md border border-line transition-colors"
+    class="panel-pagination-shell mt-3 sm:mt-4 px-3 py-2 sm:px-4 sm:py-2.5 bg-surface rounded-md border border-line transition-colors"
   >
-    <div class="flex min-h-8 shrink-0 items-center gap-3 sm:gap-4 text-xs font-mono text-fg-muted whitespace-nowrap">
+    <div
+      :class="compact ? 'justify-center' : 'w-full sm:w-auto justify-between sm:justify-start'"
+      class="flex min-h-7 sm:min-h-8 shrink-0 items-center gap-2.5 sm:gap-4 text-xs font-mono text-fg-muted whitespace-nowrap"
+    >
       <span v-if="showTotalItems">{{ t('pagination.totalItems', { total: totalItems }) }}</span>
-      <div v-if="showItemsPerPage" class="flex items-center gap-2">
+      <div v-if="showItemsPerPage" class="flex items-center gap-1.5 sm:gap-2">
         <span>{{ t('common.perPage') }}</span>
-        <div class="w-20">
+        <div class="w-18 sm:w-20">
           <Select
             :model-value="itemsPerPage"
             :options="
@@ -130,7 +133,7 @@ function handleItemsPerPageChange(value) {
             "
             popover-min-width="96"
             size="sm"
-            trigger-class="font-mono"
+            trigger-class="font-mono text-xs py-1"
             @update:model-value="handleItemsPerPageChange"
           />
         </div>
@@ -138,12 +141,20 @@ function handleItemsPerPageChange(value) {
       <slot name="panel-left" />
     </div>
 
-    <div v-if="totalPages > 1" class="flex shrink-0 items-center gap-1.5">
+    <div
+      v-if="totalPages > 1"
+      :class="
+        compact
+          ? 'justify-center'
+          : 'w-full sm:w-auto justify-center sm:justify-end pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0'
+      "
+      class="flex shrink-0 items-center gap-1 sm:gap-1.5"
+    >
       <button
         :aria-label="t('common.firstPage')"
         :disabled="currentPage === 1"
         :title="t('common.firstPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
+        class="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong shadow-none"
         @click="emitPageChange(1)"
       >
         <ChevronsLeft class="w-3.5 h-3.5" />
@@ -152,17 +163,17 @@ function handleItemsPerPageChange(value) {
         :aria-label="t('common.prevPage')"
         :disabled="currentPage === 1"
         :title="t('common.prevPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
+        class="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong shadow-none"
         @click="emitPageChange(currentPage - 1)"
       >
         <ChevronLeft class="w-3.5 h-3.5" />
       </button>
 
-      <div class="flex shrink-0 items-center gap-1.5 font-mono px-0.5 whitespace-nowrap">
+      <div class="flex shrink-0 items-center gap-1 font-mono px-0.5 whitespace-nowrap">
         <input
           v-model="pageInput"
           :aria-label="t('common.pageNumber')"
-          class="h-8 w-12 text-center text-xs font-mono border border-line rounded-md bg-inset text-fg focus:border-line-strong focus-visible:outline-none appearance-none remove-arrow"
+          class="h-7 w-10 sm:h-8 sm:w-12 text-center text-xs font-mono border border-line rounded-md bg-inset text-fg focus:border-line-strong focus-visible:outline-none appearance-none remove-arrow"
           type="number"
           @blur="jumpToPage"
           @keydown.enter="jumpToPage"
@@ -174,7 +185,7 @@ function handleItemsPerPageChange(value) {
         :aria-label="t('common.nextPage')"
         :disabled="currentPage === totalPages"
         :title="t('common.nextPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
+        class="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong shadow-none"
         @click="emitPageChange(currentPage + 1)"
       >
         <ChevronRight class="w-3.5 h-3.5" />
@@ -183,7 +194,7 @@ function handleItemsPerPageChange(value) {
         :aria-label="t('common.lastPage')"
         :disabled="currentPage === totalPages"
         :title="t('common.lastPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
+        class="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong shadow-none"
         @click="emitPageChange(totalPages)"
       >
         <ChevronsRight class="w-3.5 h-3.5" />

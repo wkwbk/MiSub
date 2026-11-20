@@ -1,6 +1,6 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
-import { FileText } from '@lucide/vue';
+import { FileText, Plus, Upload, Wrench, X } from '@lucide/vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 import { storeToRefs } from 'pinia';
@@ -322,28 +322,30 @@ const handleQRCode = (url, title) => {
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full lg:w-auto">
             <button
-              class="min-h-10 flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
+              class="min-h-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg-muted hover:bg-hover hover:text-fg hover:border-line-strong rounded-md transition-colors border border-line shadow-none"
               @click="showLogModal = true"
               @focus="prefetchLoader(loadLogModal)"
               @mouseenter="prefetchLoader(loadLogModal)"
             >
-              <FileText class="h-4 w-4 shrink-0 text-fg-muted" stroke-width="1.5" />
+              <FileText class="h-4 w-4 shrink-0" stroke-width="1.5" />
               {{ t('dashboard.actions.viewLog') }}
             </button>
             <button
-              class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
+              class="min-h-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg-muted hover:bg-hover hover:text-fg hover:border-line-strong rounded-md transition-colors border border-line shadow-none"
               @click="openBulkImportModal"
               @focus="prefetchLoader(loadBulkImportModal)"
               @mouseenter="prefetchLoader(loadBulkImportModal)"
             >
+              <Upload class="h-4 w-4 shrink-0" stroke-width="1.5" />
               {{ t('dashboard.actions.bulkImport') }}
             </button>
             <button
-              class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md transition-colors border border-accent shadow-none"
+              class="min-h-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold text-fg bg-active hover:bg-hover rounded-md transition-colors border border-line-strong shadow-none"
               @click="handleAddProfile"
               @focus="prefetchLoader(loadProfileModal)"
               @mouseenter="prefetchLoader(loadProfileModal)"
             >
+              <Plus class="h-4 w-4 shrink-0" stroke-width="2" />
               {{ t('dashboard.actions.addProfile') }}
             </button>
           </div>
@@ -416,15 +418,16 @@ const handleQRCode = (url, title) => {
                 <div class="flex shrink-0 flex-col sm:flex-row gap-2 font-sans">
                   <button
                     v-if="item.actionLabel"
-                    class="min-h-9 rounded-md border border-accent bg-accent text-accent-fg px-3 py-1.5 text-xs font-semibold hover:opacity-90 transition-colors shadow-none"
+                    class="min-h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-line-strong bg-active text-fg px-3 py-1.5 text-xs font-semibold hover:bg-hover transition-colors shadow-none"
                     type="button"
                     @click="handleHealthAction(item)"
                   >
+                    <Wrench class="h-3.5 w-3.5 shrink-0" stroke-width="1.75" />
                     {{ item.actionLabel }}
                   </button>
                   <button
                     v-if="item.secondaryActionLabel"
-                    class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none"
+                    class="min-h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none"
                     type="button"
                     @click="handleHealthSecondaryAction(item)"
                   >
@@ -434,11 +437,12 @@ const handleQRCode = (url, title) => {
                     :aria-label="t('dashboard.health.dismissItem')"
                     :disabled="isUpdatingHealthDismissal"
                     :title="t('dashboard.health.dismissItem')"
-                    class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="min-h-9 inline-flex items-center justify-center gap-1 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="health-item-dismiss"
                     type="button"
                     @click="dismissHealthItemById(item.id)"
                   >
+                    <X class="h-3.5 w-3.5 shrink-0" stroke-width="1.75" />
                     {{ t('dashboard.health.dismiss') }}
                   </button>
                 </div>
