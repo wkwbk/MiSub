@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import draggable from 'vuedraggable';
 import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
 import PanelPagination from '@/components/shared/PanelPagination.vue';
@@ -7,6 +7,8 @@ import SortingBanner from '@/components/shared/SortingBanner.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { useI18n } from '@/i18n/index.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
+import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const { t } = useI18n();
 
@@ -23,7 +25,7 @@ const props = defineProps({
   basePage: { type: Number, default: 1 },
   baseTotalPages: { type: Number, default: 1 },
   draggableManualNodes: { type: Array, default: () => [] },
-  itemsPerPage: { type: Number, default: 24 },
+  itemsPerPage: { type: Number, default: DEFAULT_LIST_PAGE_SIZE },
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
   compactGrid: { type: Boolean, default: false },
@@ -49,6 +51,8 @@ const draggableModel = computed({
   set: (val) => emit('update:draggableManualNodes', val),
 });
 
+const listStartRef = ref(null);
+
 const displayPage = computed(() => (props.localSearchTerm ? props.searchPage : props.basePage));
 const displayTotalPages = computed(() => (props.localSearchTerm ? props.searchTotalPages : props.baseTotalPages));
 
@@ -57,7 +61,11 @@ const handleChangePage = (page) => {
   if (isNaN(p)) return;
   if (p < 1) p = 1;
   if (p > displayTotalPages.value) p = displayTotalPages.value;
+  if (p === displayPage.value) return;
   emit('change-page', p);
+  nextTick(() => {
+    scrollToPaginationStart(listStartRef.value);
+  });
 };
 
 const handleDragEnd = (evt) => {
@@ -68,7 +76,7 @@ const handleDragEnd = (evt) => {
 </script>
 
 <template>
-  <div v-if="manualNodes.length > 0" :class="{ 'pb-48': isSelectionMode }">
+  <div v-if="manualNodes.length > 0" ref="listStartRef" :class="{ 'pb-48': isSelectionMode }">
     <div
       v-if="localSearchTerm && filteredNodes.length === 0"
       class="rounded-md border border-line bg-surface px-6 py-12 text-center"
@@ -160,6 +168,7 @@ const handleDragEnd = (evt) => {
     </div>
 
     <PanelPagination
+      v-if="!isSorting && filteredNodes.length > 0"
       :current-page="displayPage"
       :items-per-page="itemsPerPage"
       :show-items-per-page="true"

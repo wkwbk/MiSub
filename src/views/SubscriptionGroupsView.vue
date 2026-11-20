@@ -48,6 +48,9 @@ const {
   reorderSubscriptionTags,
   filteredSubscriptions,
   searchQuery: subscriptionSearchQuery,
+  subscriptionsCurrentPage,
+  subscriptionsPerPage,
+  changeSubscriptionsPage,
   addSubscription,
   updateSubscription,
   deleteSubscription,
@@ -234,9 +237,11 @@ const visibleSubscriptions = computed(() =>
   <div class="w-full">
     <SubscriptionPanel
       :active-tag-filters="activeTagFilters"
+      :current-page="subscriptionsCurrentPage"
       :filtered-count="filteredSubscriptions.length"
       :is-refreshing="isRefreshing"
       :is-sorting="isSortingSubs"
+      :items-per-page="subscriptionsPerPage"
       :last-refresh-at="lastRefreshAt"
       :refresh-error="refreshError"
       :search-query="subscriptionSearchQuery"
@@ -247,12 +252,14 @@ const visibleSubscriptions = computed(() =>
       searchable
       @add="handleAddSubscription"
       @applyDetectedName="handleApplyDetectedName"
+      @change-page="changeSubscriptionsPage"
       @delete="handleDeleteSubscriptionWithCleanup"
       @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
       @import="openBulkImportModal"
       @preview="handlePreviewSubscription"
       @qrcode="handleQRCode"
       @reorder="reorderSubscriptions"
+      @update:items-per-page="(val) => (subscriptionsPerPage = val)"
       @clear-status-filter="clearStatusFilter"
       @set-tag-filters="setTagFilters"
       @manage-tags="showTagManagementModal = true"

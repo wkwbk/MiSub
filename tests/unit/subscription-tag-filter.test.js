@@ -80,20 +80,28 @@ describe('机场订阅多选标签交集筛选', () => {
     expect(wrapper.findAll('.stub-card')).toHaveLength(3);
   });
 
-  it('分批无限加载与标签筛选协同工作，点击加载更多可追加剩余卡片', async () => {
+  it('分页与标签筛选协同工作，翻页和筛选后页码正确重置', async () => {
     const subs = [
       makeSub('a', 's1', 'https://a.example.com/1', { tags: ['T1'] }),
       makeSub('b', 's2', 'https://b.example.com/2', { tags: ['T1'] }),
       makeSub('c', 's3', 'https://c.example.com/3', { tags: ['T2'] }),
     ];
-    const wrapper = mountPanel(subs, { batchSize: 2 });
+    const wrapper = mountPanel(subs, { itemsPerPage: 2 });
     await wrapper.vm.$nextTick();
 
     expect(wrapper.findAll('.stub-card')).toHaveLength(2);
-    const loadMoreBtn = wrapper.get('[data-testid="subscription-load-more-btn"]');
-    await loadMoreBtn.trigger('click');
-    expect(wrapper.findAll('.stub-card')).toHaveLength(3);
-    expect(wrapper.find('[data-testid="subscription-load-more-btn"]').exists()).toBe(false);
+    await wrapper.get('button[aria-label="Next"]').trigger('click');
+    expect(wrapper.findAll('.stub-card')).toHaveLength(1);
+    expect(wrapper.text()).toContain('s3');
+
+    const t1Btn = wrapper
+      .get('[data-testid="subscription-tag-tabs"]')
+      .findAll('button')
+      .find((b) => b.text() === 'T1');
+    await t1Btn.trigger('click');
+    expect(wrapper.findAll('.stub-card')).toHaveLength(2);
+    expect(wrapper.text()).toContain('s1');
+    expect(wrapper.text()).toContain('s2');
   });
 
   it('支持在 useSubscriptions 中重命名和删除标签', () => {

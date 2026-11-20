@@ -4,6 +4,7 @@ import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vu
 import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
 import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
+import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
 
 const props = defineProps({
@@ -15,7 +16,7 @@ const props = defineProps({
   searchTerm: String,
   tags: { type: Array, default: () => [] },
   activeTagFilters: { type: Array, default: () => [] },
-  itemsPerPage: { type: Number, default: 24 },
+  itemsPerPage: { type: Number, default: DEFAULT_LIST_PAGE_SIZE },
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
   isPingingAll: { type: Boolean, default: false },
@@ -55,6 +56,7 @@ const { localSearchTerm, filteredNodes, paginatedNodes, currentSearchPage, total
     paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
     initialSearchTerm: computed(() => props.searchTerm || ''),
     activeTagFilters: computed(() => props.activeTagFilters),
+    itemsPerPage: computed(() => props.itemsPerPage),
     onBasePageChange: (page) => emit('changePage', page),
     onSearchTermChange: (value) => emit('update:searchTerm', value),
   });

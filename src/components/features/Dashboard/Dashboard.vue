@@ -135,6 +135,9 @@ const {
   searchQuery: subscriptionSearchQuery,
   filteredSubscriptions: filteredSubscriptionList,
   filteredCount: filteredSubscriptionCount,
+  subscriptionsCurrentPage,
+  subscriptionsPerPage,
+  changeSubscriptionsPage,
   isRefreshing: isRefreshingSubscriptions,
   refreshError: subscriptionRefreshError,
   lastRefreshAt: lastSubscriptionRefreshAt,
@@ -157,6 +160,7 @@ const {
 const {
   manualNodes,
   manualNodesCurrentPage,
+  manualNodesPerPage,
   manualNodesTotalPages,
   paginatedManualNodes,
   searchTerm,
@@ -216,6 +220,7 @@ const {
   filteredProfiles,
   searchQuery: profileSearchQuery,
   profilesCurrentPage,
+  profilesPerPage,
   profilesTotalPages,
   paginatedProfiles,
   changeProfilesPage,
@@ -318,7 +323,24 @@ const mainGridRef = ref(null);
 const leftColRef = ref(null);
 const rightColRef = ref(null);
 
-const { refreshStickyColumns, reobserveStickyColumns } = useStickyColumns(mainGridRef, [leftColRef, rightColRef]);
+const { refreshStickyColumns, refreshStickyColumnsNow, reobserveStickyColumns } = useStickyColumns(mainGridRef, [
+  leftColRef,
+  rightColRef,
+]);
+
+const handleManualNodesPageChange = (page) => {
+  changeManualNodesPage(page);
+  nextTick(() => {
+    refreshStickyColumnsNow();
+  });
+};
+
+const handleProfilesPageChange = (page) => {
+  changeProfilesPage(page);
+  nextTick(() => {
+    refreshStickyColumnsNow();
+  });
+};
 
 watch([isLoading, mainGridRef], () => {
   nextTick(() => {
@@ -624,9 +646,11 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
         <!-- Subscription Panel -->
         <SubscriptionPanel
           :active-tag-filters="subscriptionTagFilters"
+          :current-page="subscriptionsCurrentPage"
           :filtered-count="filteredSubscriptionCount"
           :is-refreshing="isRefreshingSubscriptions"
           :is-sorting="isSortingSubs"
+          :items-per-page="subscriptionsPerPage"
           :last-refresh-at="lastSubscriptionRefreshAt"
           :refresh-error="subscriptionRefreshError"
           :search-query="subscriptionSearchQuery"
@@ -635,12 +659,14 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           searchable
           @add="handleAddSubscription"
           @applyDetectedName="handleApplyDetectedName"
+          @change-page="changeSubscriptionsPage"
           @delete="handleDeleteSubscriptionWithCleanup"
           @edit="(id) => handleEditSubscription(subscriptions.find((s) => s.id === id))"
           @import="showSubBulkImportModal = true"
           @preview="handlePreviewSubscription"
           @qrcode="(id) => handleQRCode(id, 'subscription')"
           @reorder="reorderSubscriptions"
+          @update:items-per-page="(val) => (subscriptionsPerPage = val)"
           @update-search="(query) => (subscriptionSearchQuery = query)"
           @set-tag-filters="setSubscriptionTagFilters"
           @manage-tags="showSubTagManagementModal = true"
@@ -660,6 +686,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           :current-page="manualNodesCurrentPage"
           :is-pinging-all="isPingingAll"
           :is-sorting="isSortingNodes"
+          :items-per-page="manualNodesPerPage"
           :manual-nodes="manualNodes"
           :paginated-manual-nodes="paginatedManualNodes"
           :ping-results="pingResults"
@@ -674,7 +701,8 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @import="showSubscriptionImportModal = true"
           @ping="pingNodeId"
           @reorder="reorderManualNodes"
-          @change-page="changeManualNodesPage"
+          @change-page="handleManualNodesPageChange"
+          @update:items-per-page="(val) => (manualNodesPerPage = val)"
           @update:search-term="handleSearchTermUpdate"
           @toggle-sort="isSortingNodes = !isSortingNodes"
           @mark-dirty="markDirty"
@@ -709,6 +737,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           :current-page="profilesCurrentPage"
           :filtered-count="filteredProfiles.length"
           :is-sorting="isSortingProfiles"
+          :items-per-page="profilesPerPage"
           :paginated-profiles="paginatedProfiles"
           :profiles="profiles"
           :search-query="profileSearchQuery"
@@ -729,7 +758,8 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @update-search="(query) => (profileSearchQuery = query)"
           @set-tag-filters="setProfileTagFilters"
           @manage-tags="showProfileTagManagementModal = true"
-          @change-page="changeProfilesPage"
+          @change-page="handleProfilesPageChange"
+          @update:items-per-page="(val) => (profilesPerPage = val)"
           @open-copy="handleOpenCopy"
           @toggle-sort="isSortingProfiles = !isSortingProfiles"
           @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'profile')"

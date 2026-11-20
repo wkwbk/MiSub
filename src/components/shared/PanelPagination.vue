@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
+import { DEFAULT_LIST_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({
@@ -23,11 +24,11 @@ const props = defineProps({
   },
   itemsPerPage: {
     type: Number,
-    default: 24,
+    default: DEFAULT_LIST_PAGE_SIZE,
   },
   itemsPerPageOptions: {
     type: Array,
-    default: () => [24, 48, 96, -1],
+    default: () => [...LIST_PAGE_SIZE_OPTIONS],
   },
   showItemsPerPage: {
     type: Boolean,
@@ -41,6 +42,10 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['change-page', 'update:itemsPerPage']);
@@ -49,11 +54,20 @@ const { t } = useI18n();
 
 const isPanelVariant = computed(() => props.variant === 'panel');
 
+const minPositivePageSize = computed(() => {
+  const positive = props.itemsPerPageOptions.filter((option) => Number.isFinite(option) && option > 0);
+  return positive.length > 0 ? Math.min(...positive) : DEFAULT_LIST_PAGE_SIZE;
+});
+
 const shouldShow = computed(() => {
   if (!props.hideWhenSinglePage) return true;
 
   if (isPanelVariant.value) {
-    return props.totalPages > 1 || (props.showItemsPerPage && props.itemsPerPage !== 24);
+    return (
+      props.totalPages > 1 ||
+      (props.showItemsPerPage &&
+        (props.itemsPerPage !== DEFAULT_LIST_PAGE_SIZE || props.totalItems > minPositivePageSize.value))
+    );
   }
 
   return props.totalPages > 1;
@@ -75,6 +89,7 @@ function emitPageChange(page) {
 
   const clamped = Math.min(Math.max(parsed, 1), Math.max(props.totalPages, 1));
   pageInput.value = clamped;
+  if (clamped === props.currentPage) return;
   emit('change-page', clamped);
 }
 
@@ -93,11 +108,16 @@ function handleItemsPerPageChange(value) {
 <template>
   <div
     v-if="shouldShow && isPanelVariant"
-    class="panel-pagination-shell mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-surface rounded-md border border-line flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 transition-colors"
+    :class="
+      compact
+        ? 'flex flex-col items-center justify-center gap-2.5'
+        : 'flex flex-wrap items-center justify-between gap-2.5 sm:gap-3'
+    "
+    class="panel-pagination-shell mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-surface rounded-md border border-line transition-colors"
   >
-    <div class="flex items-center space-x-4 text-xs font-mono text-fg-muted whitespace-nowrap">
-      <span v-if="showTotalItems">{{ t('common.totalProfiles', { count: totalItems }) }}</span>
-      <div v-if="showItemsPerPage" class="flex items-center space-x-2">
+    <div class="flex min-h-8 shrink-0 items-center gap-3 sm:gap-4 text-xs font-mono text-fg-muted whitespace-nowrap">
+      <span v-if="showTotalItems">{{ t('pagination.totalItems', { total: totalItems }) }}</span>
+      <div v-if="showItemsPerPage" class="flex items-center gap-2">
         <span>{{ t('common.perPage') }}</span>
         <div class="w-20">
           <Select
@@ -109,7 +129,7 @@ function handleItemsPerPageChange(value) {
               }))
             "
             popover-min-width="96"
-            size="xs"
+            size="sm"
             trigger-class="font-mono"
             @update:model-value="handleItemsPerPageChange"
           />
@@ -118,7 +138,7 @@ function handleItemsPerPageChange(value) {
       <slot name="panel-left" />
     </div>
 
-    <div v-if="totalPages > 1" class="flex items-center gap-1.5">
+    <div v-if="totalPages > 1" class="flex shrink-0 items-center gap-1.5">
       <button
         :aria-label="t('common.firstPage')"
         :disabled="currentPage === 1"
@@ -138,7 +158,7 @@ function handleItemsPerPageChange(value) {
         <ChevronLeft class="w-3.5 h-3.5" />
       </button>
 
-      <div class="flex items-center gap-1.5 font-mono px-0.5">
+      <div class="flex shrink-0 items-center gap-1.5 font-mono px-0.5 whitespace-nowrap">
         <input
           v-model="pageInput"
           :aria-label="t('common.pageNumber')"
@@ -147,7 +167,7 @@ function handleItemsPerPageChange(value) {
           @blur="jumpToPage"
           @keydown.enter="jumpToPage"
         />
-        <span class="text-xs text-fg-subtle">/ {{ totalPages }}</span>
+        <span class="text-xs text-fg-subtle whitespace-nowrap">/ {{ totalPages }}</span>
       </div>
 
       <button
@@ -169,7 +189,6 @@ function handleItemsPerPageChange(value) {
         <ChevronsRight class="w-3.5 h-3.5" />
       </button>
     </div>
-    <div v-else class="w-[100px]"></div>
   </div>
 
   <div v-else-if="shouldShow" class="flex flex-wrap justify-center items-center gap-2 mt-6 text-xs font-mono">

@@ -1,15 +1,18 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import Card from '@/components/ui/Card.vue';
 import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
+import PanelPagination from '@/components/shared/PanelPagination.vue';
 import SortingBanner from '@/components/shared/SortingBanner.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 import {
   collectTags,
   getItemTags,
@@ -24,7 +27,8 @@ const props = defineProps({
   subscriptions: { type: Array, default: () => [] },
   tags: { type: Array, default: undefined },
   activeTagFilters: { type: Array, default: undefined },
-  batchSize: { type: Number, default: 12 },
+  currentPage: { type: Number, default: undefined },
+  itemsPerPage: { type: Number, default: undefined },
   isSorting: Boolean,
   searchable: { type: Boolean, default: false },
   searchQuery: { type: String, default: '' },
@@ -56,6 +60,8 @@ const emit = defineEmits([
   'manage-tags',
   'open-batch-tag-modal',
   'batch-delete-subscriptions',
+  'changePage',
+  'update:itemsPerPage',
 ]);
 
 const isSelectionMode = ref(false);
@@ -178,10 +184,42 @@ const handleApplyDetectedName = (subscription, name) => {
 
 const refreshingCount = computed(() => props.subscriptions.filter((sub) => sub.isUpdating).length);
 
-const normalizedBatchSize = computed(() => Math.max(1, Number(props.batchSize) || 12));
-const visibleLimit = ref(normalizedBatchSize.value);
+const listStartRef = ref(null);
+const localCurrentPage = ref(1);
+const localItemsPerPage = ref(DEFAULT_LIST_PAGE_SIZE);
 
-const visibleSubscriptions = computed(() => matchedSubscriptions.value.slice(0, visibleLimit.value));
+const effectiveItemsPerPage = computed(() =>
+  props.itemsPerPage !== undefined
+    ? normalizeListPageSize(props.itemsPerPage, DEFAULT_LIST_PAGE_SIZE)
+    : localItemsPerPage.value,
+);
+
+const totalPages = computed(() => {
+  if (effectiveItemsPerPage.value === -1) return 1;
+  const total = Math.ceil(matchedSubscriptions.value.length / effectiveItemsPerPage.value);
+  return total > 0 ? total : 1;
+});
+
+watch(
+  () => props.currentPage,
+  (nextPage) => {
+    if (nextPage === undefined) return;
+    const parsed = parseInt(nextPage, 10);
+    if (!Number.isNaN(parsed)) {
+      localCurrentPage.value = Math.min(Math.max(parsed, 1), totalPages.value);
+    }
+  },
+  { immediate: true },
+);
+
+const effectiveCurrentPage = computed(() => Math.min(Math.max(localCurrentPage.value, 1), totalPages.value));
+
+const visibleSubscriptions = computed(() => {
+  if (effectiveItemsPerPage.value === -1) return matchedSubscriptions.value;
+  const start = (effectiveCurrentPage.value - 1) * effectiveItemsPerPage.value;
+  const end = start + effectiveItemsPerPage.value;
+  return matchedSubscriptions.value.slice(start, end);
+});
 
 const isAllSelected = computed(() => {
   if (visibleSubscriptions.value.length === 0) return false;
@@ -196,60 +234,34 @@ const toggleSelectAll = () => {
   }
 };
 
-const remainingCount = computed(() =>
-  Math.max(0, matchedSubscriptions.value.length - visibleSubscriptions.value.length),
-);
-const hasMore = computed(() => remainingCount.value > 0);
-
-const loadMore = () => {
-  if (!hasMore.value) return;
-  visibleLimit.value += normalizedBatchSize.value;
+const handleChangePage = (page) => {
+  const parsed = parseInt(page, 10);
+  if (Number.isNaN(parsed)) return;
+  const clamped = Math.min(Math.max(parsed, 1), totalPages.value);
+  if (clamped === effectiveCurrentPage.value) return;
+  localCurrentPage.value = clamped;
+  emit('changePage', clamped);
+  nextTick(() => {
+    scrollToPaginationStart(listStartRef.value);
+  });
 };
 
-watch([() => props.searchQuery, () => props.statusFilter, currentTagFilters, normalizedBatchSize], () => {
-  visibleLimit.value = normalizedBatchSize.value;
+const handleItemsPerPageChange = (value) => {
+  const normalized = normalizeListPageSize(value, DEFAULT_LIST_PAGE_SIZE);
+  localItemsPerPage.value = normalized;
+  localCurrentPage.value = 1;
+  emit('update:itemsPerPage', normalized);
+  emit('changePage', 1);
+};
+
+watch([() => props.searchQuery, () => props.statusFilter, currentTagFilters, effectiveItemsPerPage], () => {
+  localCurrentPage.value = 1;
 });
 
-const loadMoreSentinelRef = ref(null);
-let loadMoreObserver = null;
-
-const disconnectLoadMoreObserver = () => {
-  if (loadMoreObserver) {
-    loadMoreObserver.disconnect();
-    loadMoreObserver = null;
+watch(totalPages, (nextTotal) => {
+  if (localCurrentPage.value > nextTotal) {
+    localCurrentPage.value = nextTotal;
   }
-};
-
-const setupLoadMoreObserver = () => {
-  disconnectLoadMoreObserver();
-  if (typeof IntersectionObserver === 'undefined' || !loadMoreSentinelRef.value) return;
-
-  loadMoreObserver = new IntersectionObserver(
-    (entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        loadMore();
-      }
-    },
-    { rootMargin: '200px 0px' },
-  );
-  loadMoreObserver.observe(loadMoreSentinelRef.value);
-};
-
-watch(
-  [loadMoreSentinelRef, hasMore, () => props.isSorting],
-  async () => {
-    await nextTick();
-    if (!props.isSorting && hasMore.value && loadMoreSentinelRef.value) {
-      setupLoadMoreObserver();
-    } else {
-      disconnectLoadMoreObserver();
-    }
-  },
-  { immediate: true },
-);
-
-onBeforeUnmount(() => {
-  disconnectLoadMoreObserver();
 });
 </script>
 
@@ -472,7 +484,7 @@ onBeforeUnmount(() => {
         </template>
       </draggable>
     </div>
-    <div v-else-if="matchedSubscriptions.length > 0" :class="{ 'pb-48': isSelectionMode }" class="space-y-4">
+    <div v-else-if="matchedSubscriptions.length > 0" ref="listStartRef" :class="{ 'pb-48': isSelectionMode }" class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="(subscription, index) in visibleSubscriptions"
@@ -496,6 +508,17 @@ onBeforeUnmount(() => {
           />
         </div>
       </div>
+      <PanelPagination
+        :current-page="effectiveCurrentPage"
+        :items-per-page="effectiveItemsPerPage"
+        :show-items-per-page="true"
+        :show-total-items="true"
+        :total-items="matchedSubscriptions.length"
+        :total-pages="totalPages"
+        variant="panel"
+        @change-page="handleChangePage"
+        @update:items-per-page="handleItemsPerPageChange"
+      />
     </div>
     <div
       v-else-if="subscriptions.length > 0 && (searchQuery || currentTagFilters.length > 0) && visibleCount === 0"
@@ -533,21 +556,6 @@ onBeforeUnmount(() => {
         :total-count="0"
         icon="folder"
       />
-    </div>
-    <div
-      v-if="!isSorting && hasMore"
-      ref="loadMoreSentinelRef"
-      class="mt-4 flex justify-center"
-      data-testid="subscription-load-more-sentinel"
-    >
-      <button
-        class="rounded-md border border-line bg-surface px-4 py-2 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
-        data-testid="subscription-load-more-btn"
-        type="button"
-        @click="loadMore"
-      >
-        {{ t('subscriptions.loadMoreRemaining', { count: remainingCount }) }}
-      </button>
     </div>
   </div>
 </template>

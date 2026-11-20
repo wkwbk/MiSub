@@ -1,9 +1,10 @@
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast';
 import { generateProfileId } from '@/utils/id.js';
+import { useListPagination } from '@/composables/useListPagination.js';
 import {
   collectTags,
   computeBatchUpdatedTags,
@@ -29,9 +30,6 @@ export function useProfiles(markDirty) {
   const editingProfile = ref(null);
   const showProfileModal = ref(false);
   const showDeleteProfilesModal = ref(false);
-
-  const profilesCurrentPage = ref(1);
-  const profilesItemsPerPage = 6;
 
   const searchQuery = ref('');
   const activeTagFilters = ref([]);
@@ -133,21 +131,16 @@ export function useProfiles(markDirty) {
     );
   });
 
-  const profilesTotalPages = computed(() => Math.ceil(filteredProfiles.value.length / profilesItemsPerPage));
-  const paginatedProfiles = computed(() => {
-    const start = (profilesCurrentPage.value - 1) * profilesItemsPerPage;
-    const end = start + profilesItemsPerPage;
-    return filteredProfiles.value.slice(start, end);
+  const {
+    currentPage: profilesCurrentPage,
+    itemsPerPage: profilesPerPage,
+    totalPages: profilesTotalPages,
+    paginatedItems: paginatedProfiles,
+    changePage: changeProfilesPage,
+  } = useListPagination(filteredProfiles, {
+    storageKey: 'profilesPPS',
+    resetDeps: [searchQuery, activeTagFilters],
   });
-
-  watch([searchQuery, activeTagFilters], () => {
-    profilesCurrentPage.value = 1;
-  });
-
-  function changeProfilesPage(page) {
-    if (page < 1 || page > profilesTotalPages.value) return;
-    profilesCurrentPage.value = page;
-  }
 
   const handleProfileToggle = (updatedProfile) => {
     const index = profiles.value.findIndex((p) => p.id === updatedProfile.id);
@@ -429,6 +422,7 @@ export function useProfiles(markDirty) {
     cleanupAllSubscriptions,
     cleanupAllNodes,
     profilesCurrentPage,
+    profilesPerPage,
     profilesTotalPages,
     paginatedProfiles,
     changeProfilesPage,

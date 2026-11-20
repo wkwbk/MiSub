@@ -7,6 +7,7 @@ import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
 import { handleError } from '@/utils/errorHandler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
+import { useListPagination } from '@/composables/useListPagination.js';
 import {
   applyItemTags,
   collectTags,
@@ -141,6 +142,17 @@ export function useSubscriptions(markDirty) {
           .includes(query),
       ),
     );
+  });
+
+  const {
+    currentPage: subscriptionsCurrentPage,
+    itemsPerPage: subscriptionsPerPage,
+    totalPages: subscriptionsTotalPages,
+    paginatedItems: paginatedSubscriptions,
+    changePage: changeSubscriptionsPage,
+  } = useListPagination(filteredSubscriptions, {
+    storageKey: 'subscriptionsPPS',
+    resetDeps: [searchQuery, activeTagFilters],
   });
 
   const enabledSubscriptions = computed(() => subscriptions.value.filter((s) => s.enabled));
@@ -598,6 +610,11 @@ export function useSubscriptions(markDirty) {
     searchQuery,
     filteredSubscriptions,
     filteredCount: computed(() => filteredSubscriptions.value.length),
+    subscriptionsCurrentPage,
+    subscriptionsPerPage,
+    subscriptionsTotalPages,
+    paginatedSubscriptions,
+    changeSubscriptionsPage,
     isRefreshing,
     refreshError,
     lastRefreshAt,

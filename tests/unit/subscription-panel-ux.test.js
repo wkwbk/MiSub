@@ -106,14 +106,14 @@ describe('SubscriptionPanel UX', () => {
     expect(wrapper.emitted('updateSearch')).toEqual([['']]);
   });
 
-  it('renders batched results with progressive load more', async () => {
+  it('paginates results with unified PanelPagination controls', async () => {
     const wrapper = mountPanel({
       subscriptions: [
         { id: 'a1', name: 'A1', url: 'https://sub.example.com/1' },
         { id: 'a2', name: 'A2', url: 'https://sub.example.com/2' },
         { id: 'b1', name: 'B1', url: 'https://other.test/1' },
       ],
-      batchSize: 2,
+      itemsPerPage: 2,
     });
 
     expect(wrapper.text()).toContain('A1');
@@ -121,9 +121,11 @@ describe('SubscriptionPanel UX', () => {
     expect(wrapper.text()).not.toContain('B1');
     expect(wrapper.findAll('.card-stub')).toHaveLength(2);
 
-    await wrapper.get('[data-testid="subscription-load-more-btn"]').trigger('click');
+    await wrapper.get('button[aria-label="下一页"]').trigger('click');
     expect(wrapper.text()).toContain('B1');
-    expect(wrapper.findAll('.card-stub')).toHaveLength(3);
+    expect(wrapper.text()).not.toContain('A1');
+    expect(wrapper.findAll('.card-stub')).toHaveLength(1);
+    expect(wrapper.emitted('changePage')).toEqual([[2]]);
   });
 
   it('uses a concise list search hint that fits mobile screens', () => {

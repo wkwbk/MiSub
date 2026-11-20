@@ -2,7 +2,7 @@
 
 <script setup>
 import { useI18n } from '@/i18n/index.js';
-import { onMounted } from 'vue';
+import { nextTick, onMounted, ref } from 'vue';
 
 // 子组件
 import NodePreviewHeader from '@/components/modals/NodePreview/NodePreviewHeader.vue';
@@ -15,6 +15,7 @@ import EmptyState from './EmptyState.vue'; // Composables
 import { useNodePreview } from '@/composables/useNodePreview.js';
 import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 import { useScrollLock } from '@/composables/useScrollLock.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const { t } = useI18n();
 
@@ -58,6 +59,38 @@ const {
   goToPage,
   updateViewMode,
 } = useNodePreview(props);
+
+const nodeListStartRef = ref(null);
+
+const scrollListToStart = () => {
+  nextTick(() => {
+    scrollToPaginationStart(nodeListStartRef.value);
+  });
+};
+
+const handleNextPage = () => {
+  const prev = currentPage.value;
+  nextPage();
+  if (currentPage.value !== prev) {
+    scrollListToStart();
+  }
+};
+
+const handlePrevPage = () => {
+  const prev = currentPage.value;
+  prevPage();
+  if (currentPage.value !== prev) {
+    scrollListToStart();
+  }
+};
+
+const handleGoToPage = (page) => {
+  const prev = currentPage.value;
+  goToPage(page);
+  if (currentPage.value !== prev) {
+    scrollListToStart();
+  }
+};
 
 // 处理关闭
 const handleClose = () => {
@@ -149,7 +182,7 @@ onMounted(() => {
           />
 
           <!-- 节点列表/卡片视图 -->
-          <div v-else class="h-full flex flex-col">
+          <div v-else ref="nodeListStartRef" class="h-full flex flex-col">
             <!-- 简洁列表视图 (仅大屏桌面端) -->
             <NodeListView
               v-if="effectiveViewMode === 'list'"
@@ -168,9 +201,9 @@ onMounted(() => {
               :page-size="pageSize"
               :total-items="filteredNodes.length"
               :total-pages="totalPages"
-              @next="nextPage"
-              @prev="prevPage"
-              @go-to-page="goToPage"
+              @next="handleNextPage"
+              @prev="handlePrevPage"
+              @go-to-page="handleGoToPage"
             />
           </div>
         </div>

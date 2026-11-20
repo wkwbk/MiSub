@@ -1,9 +1,10 @@
 /** * 共享数据表格组件 * @author MiSub Team */
 
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { ChevronsUpDown, Loader2 } from '@lucide/vue';
 import { t } from '@/i18n/index.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const props = defineProps({
   data: {
@@ -210,17 +211,27 @@ watch(
   { immediate: true },
 );
 
+const gridRootRef = ref(null);
+const tableScrollRef = ref(null);
+
 // 分页事件
 const handlePageChange = (page) => {
+  if (page === props.currentPage || page < 1 || page > totalPages.value) return;
   emit('pageChange', page);
+  nextTick(() => {
+    if (tableScrollRef.value && tableScrollRef.value.scrollTop > 0) {
+      scrollToPaginationStart(tableScrollRef.value);
+    }
+    scrollToPaginationStart(gridRootRef.value);
+  });
 };
 </script>
 
 <template>
-  <div class="data-grid">
+  <div ref="gridRootRef" class="data-grid">
     <!-- 表格容器 -->
     <div :style="{ height, maxHeight }" class="overflow-hidden misub-radius-md border border-line">
-      <div class="overflow-x-auto overflow-y-auto">
+      <div ref="tableScrollRef" class="overflow-x-auto overflow-y-auto">
         <table :class="tableClasses">
           <!-- 表头 -->
           <thead v-if="showHeader" :class="headerClasses">

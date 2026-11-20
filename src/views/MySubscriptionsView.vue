@@ -88,6 +88,7 @@ const {
   filteredProfiles,
   searchQuery: profileSearchQuery,
   profilesCurrentPage,
+  profilesPerPage,
   profilesTotalPages,
   paginatedProfiles,
   changeProfilesPage,
@@ -209,6 +210,7 @@ const handleQRCode = (profileId) => {
         :current-page="profilesCurrentPage"
         :filtered-count="filteredProfiles.length"
         :is-sorting="isProfileSorting"
+        :items-per-page="profilesPerPage"
         :paginated-profiles="paginatedProfiles"
         :profiles="profiles"
         :search-query="profileSearchQuery"
@@ -227,6 +229,7 @@ const handleQRCode = (profileId) => {
         @viewLogs="handleViewLogs"
         @toggle-sort="toggleProfileSorting"
         @change-page="changeProfilesPage"
+        @update:items-per-page="(val) => (profilesPerPage = val)"
         @update-search="profileSearchQuery = $event"
         @set-tag-filters="setTagFilters"
         @manage-tags="showTagManagementModal = true"

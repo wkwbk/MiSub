@@ -193,6 +193,15 @@ export function useStickyColumns(gridRef, columnRefs) {
     layoutRafId = window.requestAnimationFrame(measureAndApply);
   };
 
+  const refreshStickyColumnsNow = () => {
+    if (typeof window === 'undefined') return;
+    if (layoutRafId !== null) {
+      window.cancelAnimationFrame(layoutRafId);
+      layoutRafId = null;
+    }
+    measureAndApply();
+  };
+
   const onScroll = () => {
     if (scrollRafId !== null || typeof window === 'undefined') return;
     scrollRafId = window.requestAnimationFrame(applyScroll);
@@ -233,6 +242,7 @@ export function useStickyColumns(gridRef, columnRefs) {
 
   return {
     refreshStickyColumns: scheduleLayoutMeasure,
+    refreshStickyColumnsNow,
     reobserveStickyColumns: observeElements,
   };
 }

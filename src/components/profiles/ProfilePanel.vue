@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';
@@ -9,8 +9,10 @@ import PanelPagination from '@/components/shared/PanelPagination.vue';
 import SortingBanner from '@/components/shared/SortingBanner.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
+import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
 import { collectTags, normalizeActiveTagFilters, toggleTagFilterValue } from '@/utils/tags.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const { t } = useI18n();
 
@@ -33,6 +35,10 @@ const props = defineProps({
   },
   currentPage: Number,
   totalPages: Number,
+  itemsPerPage: {
+    type: Number,
+    default: DEFAULT_LIST_PAGE_SIZE,
+  },
   isSorting: {
     type: Boolean,
     default: false,
@@ -64,6 +70,7 @@ const emit = defineEmits([
   'manage-tags',
   'open-batch-tag-modal',
   'batch-delete-profiles',
+  'update:itemsPerPage',
 ]);
 
 const isSelectionMode = ref(false);
@@ -148,13 +155,21 @@ const toggleSelectAll = () => {
   }
 };
 
+const listStartRef = ref(null);
+
 const handleEdit = (profileId) => emit('edit', profileId);
 const handleDelete = (profileId) => emit('delete', profileId);
 const handleToggle = (event) => emit('toggle', event);
 const handleOpenCopy = (profileId) => emit('openCopy', profileId);
 const handlePreview = (profileId) => emit('preview', profileId);
 const handleAdd = () => emit('add');
-const handleChangePage = (page) => emit('changePage', page);
+const handleChangePage = (page) => {
+  if (page === props.currentPage) return;
+  emit('changePage', page);
+  nextTick(() => {
+    scrollToPaginationStart(listStartRef.value);
+  });
+};
 const handleDeleteAll = () => emit('deleteAll');
 const handleToggleSort = () => emit('toggle-sort');
 const handleQRCode = (profileId) => emit('qrcode', profileId);
@@ -295,7 +310,7 @@ const draggableProfiles = computed({
       @batch-tag="handleBatchTag"
       @batch-delete="handleBatchDelete"
     />
-    <div v-if="profiles.length > 0" :class="{ 'pb-48': isSelectionMode }">
+    <div v-if="profiles.length > 0" ref="listStartRef" :class="{ 'pb-48': isSelectionMode }">
       <SortingBanner
         v-if="isSorting"
         :hint="t('profiles.sortingHint')"
@@ -376,13 +391,17 @@ const draggableProfiles = computed({
         </div>
       </div>
       <PanelPagination
-        v-if="!isSorting && totalPages > 1 && paginatedProfiles && paginatedProfiles.length > 0"
+        v-if="!isSorting && displayProfiles.length > 0"
+        :compact="compact"
         :current-page="currentPage"
+        :items-per-page="itemsPerPage"
+        :show-items-per-page="true"
         :show-total-items="true"
         :total-items="visibleCount"
         :total-pages="totalPages"
         variant="panel"
         @change-page="handleChangePage"
+        @update:items-per-page="emit('update:itemsPerPage', $event)"
       />
     </div>
     <div v-else class="rounded-md border border-line bg-surface py-2">

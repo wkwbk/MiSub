@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue'; // Added watch
+import { computed, nextTick, ref, watch } from 'vue';
 import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
 import Modal from '@/components/forms/Modal.vue';
 import { useToastStore } from '@/stores/toast';
@@ -7,6 +7,7 @@ import { getClientInfo } from '@/lib/utils';
 import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const props = defineProps({
   show: Boolean,
@@ -97,16 +98,26 @@ const toggleExpand = (id) => {
   expandedLogId.value = expandedLogId.value === id ? null : id;
 };
 
+const logListScrollRef = ref(null);
+
 // Pagination Controls
+const scrollLogListToStart = () => {
+  nextTick(() => {
+    scrollToPaginationStart(logListScrollRef.value);
+  });
+};
+
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
+    scrollLogListToStart();
   }
 };
 
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--;
+    scrollLogListToStart();
   }
 };
 
@@ -157,7 +168,7 @@ watch(
 
     <template #body>
       <div class="flex flex-col h-[60vh]">
-        <div class="flex-1 overflow-y-auto pr-2 min-h-0">
+        <div ref="logListScrollRef" class="flex-1 overflow-y-auto pr-2 min-h-0">
           <div v-if="isLoading" class="py-12 text-center text-fg-subtle">
             <Loader2 class="animate-spin h-6 w-6 mx-auto mb-2 text-fg-muted" />
             {{ t('common.loading') }}

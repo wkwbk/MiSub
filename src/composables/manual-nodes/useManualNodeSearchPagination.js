@@ -1,8 +1,7 @@
 import { computed, ref, watch } from 'vue';
+import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize } from '@/constants/pagination.js';
 import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manualNodeCountryAliases.js';
 import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
-
-const SEARCH_NODES_PER_PAGE = 24;
 
 export function useManualNodeSearchPagination(options) {
   const {
@@ -10,12 +9,17 @@ export function useManualNodeSearchPagination(options) {
     paginatedManualNodes,
     initialSearchTerm,
     activeTagFilters,
+    itemsPerPage,
     onBasePageChange,
     onSearchTermChange,
   } = options;
 
   const localSearchTerm = ref(initialSearchTerm.value || '');
   const currentSearchPage = ref(1);
+
+  const resolvedPageSize = computed(() =>
+    normalizeListPageSize(itemsPerPage ? itemsPerPage.value : DEFAULT_LIST_PAGE_SIZE, DEFAULT_LIST_PAGE_SIZE),
+  );
 
   watch(initialSearchTerm, (value) => {
     const normalized = value || '';
@@ -29,6 +33,10 @@ export function useManualNodeSearchPagination(options) {
     if (typeof onSearchTermChange === 'function') {
       onSearchTermChange(value);
     }
+  });
+
+  watch(resolvedPageSize, () => {
+    currentSearchPage.value = 1;
   });
 
   const filteredNodes = computed(() => {
@@ -60,8 +68,15 @@ export function useManualNodeSearchPagination(options) {
   });
 
   const totalSearchPages = computed(() => {
-    const total = Math.ceil(filteredNodes.value.length / SEARCH_NODES_PER_PAGE);
+    if (resolvedPageSize.value === -1) return 1;
+    const total = Math.ceil(filteredNodes.value.length / resolvedPageSize.value);
     return total > 0 ? total : 1;
+  });
+
+  watch(totalSearchPages, (nextTotal) => {
+    if (currentSearchPage.value > nextTotal) {
+      currentSearchPage.value = nextTotal;
+    }
   });
 
   const paginatedNodes = computed(() => {
@@ -69,8 +84,12 @@ export function useManualNodeSearchPagination(options) {
       return paginatedManualNodes.value || [];
     }
 
-    const start = (currentSearchPage.value - 1) * SEARCH_NODES_PER_PAGE;
-    const end = start + SEARCH_NODES_PER_PAGE;
+    if (resolvedPageSize.value === -1) {
+      return filteredNodes.value;
+    }
+
+    const start = (currentSearchPage.value - 1) * resolvedPageSize.value;
+    const end = start + resolvedPageSize.value;
     return filteredNodes.value.slice(start, end);
   });
 

@@ -7,7 +7,7 @@ import { useToastStore } from '@/stores/toast.js';
 import { cleanNodeUrl, extractHostAndPort, extractNodeName } from '@/lib/utils.js';
 import { pingNode } from '@/utils/ping.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
-import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+import { useListPagination } from '@/composables/useListPagination.js';
 import { buildDedupPlan as buildDedupPlanCore } from '@/composables/manual-nodes/dedup.js';
 import { buildAutoSortedSubscriptions } from '@/composables/manual-nodes/sorting.js';
 import {
@@ -35,42 +35,24 @@ export function useManualNodes(markDirty) {
     return (allSubscriptions.value || []).filter(isManualNodeEntry);
   });
 
-  const manualNodesCurrentPage = ref(1);
-  const manualNodesPerPage = ref(parseInt(readRawPreference('manualNodesPPS'), 10) || 24);
   const searchTerm = ref('');
-
-  watch(manualNodesPerPage, (newVal) => {
-    writeRawPreference('manualNodesPPS', newVal);
-    manualNodesCurrentPage.value = 1;
-  });
-
   const activeTagFilters = ref([]);
 
   const filteredManualNodes = computed(() => {
     return filterManualNodes(manualNodes.value, searchTerm.value, activeTagFilters.value);
   });
 
-  const manualNodesTotalPages = computed(() => {
-    if (manualNodesPerPage.value === -1) return 1;
-    return Math.ceil(filteredManualNodes.value.length / manualNodesPerPage.value);
-  });
-
-  const paginatedManualNodes = computed(() => {
-    if (manualNodesPerPage.value === -1) return filteredManualNodes.value;
-    const start = (manualNodesCurrentPage.value - 1) * manualNodesPerPage.value;
-    const end = start + manualNodesPerPage.value;
-    return filteredManualNodes.value.slice(start, end);
+  const {
+    currentPage: manualNodesCurrentPage,
+    itemsPerPage: manualNodesPerPage,
+    totalPages: manualNodesTotalPages,
+    paginatedItems: paginatedManualNodes,
+    changePage: changeManualNodesPage,
+  } = useListPagination(filteredManualNodes, {
+    storageKey: 'manualNodesPPS',
   });
 
   const enabledManualNodes = computed(() => manualNodes.value.filter((n) => n.enabled));
-
-  function changeManualNodesPage(page) {
-    let p = parseInt(page);
-    if (isNaN(p)) p = 1;
-    if (p < 1) p = 1;
-    if (p > manualNodesTotalPages.value) p = manualNodesTotalPages.value;
-    manualNodesCurrentPage.value = p;
-  }
 
   function setTagFilters(filters) {
     activeTagFilters.value = normalizeActiveTagFilters(filters);

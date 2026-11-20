@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -7,6 +7,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
+import { scrollToPaginationStart } from '@/utils/scroll.js';
 import Modal from '@/components/forms/Modal.vue';
 import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';
 import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
@@ -517,10 +518,19 @@ const parseNodeInfo = (node) => {
   return result;
 };
 
+const nodeListStartRef = ref(null);
+const nodeListScrollRef = ref(null);
+
 // 分页控件
 const goToPage = (page) => {
-  if (page >= 1 && page <= totalPages.value) {
+  if (page >= 1 && page <= totalPages.value && page !== currentPage.value) {
     currentPage.value = page;
+    nextTick(() => {
+      if (nodeListScrollRef.value && nodeListScrollRef.value.scrollTop > 0) {
+        scrollToPaginationStart(nodeListScrollRef.value);
+      }
+      scrollToPaginationStart(nodeListStartRef.value);
+    });
   }
 };
 </script>
@@ -625,8 +635,8 @@ const goToPage = (page) => {
       />
 
       <!-- 节点列表 -->
-      <div class="flex-1 overflow-hidden bg-transparent" style="min-height: 0">
-        <div class="h-full overflow-y-auto">
+      <div ref="nodeListStartRef" class="flex-1 overflow-hidden bg-transparent" style="min-height: 0">
+        <div ref="nodeListScrollRef" class="h-full overflow-y-auto">
           <!-- 加载状态 -->
           <div v-if="loading" class="flex h-64 items-center justify-center">
             <div class="rounded-md border border-line bg-inset px-8 py-8 text-center shadow-none">
