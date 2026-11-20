@@ -4,19 +4,10 @@
  * 子模块位于 ./telegram/ 目录
  */
 
-import {
-    createJsonResponse,
-    escapeHtml,
-    JSON_BODY_LIMITS,
-    readJsonWithLimit,
-} from '../utils.js';
+import { createJsonResponse, escapeHtml, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 import { createRequestCache, getTelegramPushConfig } from './telegram/storage.js';
 import { answerCallbackQuery, sendTelegramMessage } from './telegram/client.js';
-import {
-    checkRateLimit,
-    checkUserPermission,
-    verifyTelegramRequest,
-} from './telegram/auth.js';
+import { checkUserPermission, verifyTelegramRequest } from './telegram/auth.js';
 import { applyTagOperation, handleTagManage } from './telegram/tags.js';
 import {
     handleCopyCommand,
@@ -44,7 +35,7 @@ import {
     handleSortCommand,
     handleUnbindCommand,
 } from './telegram/commands-write.js';
-import { handleCallbackQuery } from './telegram/callbacks.js';
+import { handleCallbackQuery } from './telegram/callbacks.js'; // ==================== 命令路由 ====================
 
 // ==================== 命令路由 ====================
 
@@ -206,7 +197,6 @@ async function handleCommand(chatId, text, userId, env, request, requestCache = 
 
     return createJsonResponse({ ok: true });
 }
-
 
 // ==================== 主 Webhook 处理 ====================
 

@@ -4,12 +4,7 @@
 
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { escapeHtml } from '../../utils.js';
-import {
-    createRequestCache,
-    getCachedStorageAdapter,
-    getCachedSubscriptions,
-    getStorageAdapter,
-} from './storage.js';
+import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions, } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
 import { getTelegramItemTags } from './utils.js';
 import { getUserNodes } from './node-queries.js';
@@ -168,9 +163,7 @@ export async function handleTagActions(
     const count = nodes.filter((n) => getTelegramItemTags(n).includes(tagName)).length;
 
     const text =
-        `🏷️ <b>${escapeHtml(tagName)}</b>\n\n` +
-        `关联 ${count} 项\n\n` +
-        '选择要执行的操作：';
+        `🏷️ <b>${escapeHtml(tagName)}</b>\n\n` + `关联 ${count} 项\n\n` + '选择要执行的操作：';
 
     const encoded = encodeURIComponent(tagName).slice(0, 40);
     const keyboard = {
@@ -225,9 +218,7 @@ export async function applyTagOperation(
         if (op === 'rename') {
             const trimmedNew = String(newName || '').trim();
             if (!trimmedNew) return;
-            sub.tags = [
-                ...new Set(currentTags.map((t) => (t === tagName ? trimmedNew : t))),
-            ];
+            sub.tags = [...new Set(currentTags.map((t) => (t === tagName ? trimmedNew : t)))];
         } else if (op === 'clear') {
             sub.tags = currentTags.filter((t) => t !== tagName);
         }
@@ -256,4 +247,3 @@ export async function applyTagOperation(
 
     return changed;
 }
-

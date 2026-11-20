@@ -22,6 +22,15 @@ function createMemoryStorage(initial = {}) {
             store.delete(key);
             return true;
         },
+        async updateSubscriptionById(id, updater) {
+            const all = store.get('misub_subscriptions_v1');
+            if (!Array.isArray(all)) return false;
+            const index = all.findIndex((item) => item?.id === id);
+            if (index === -1) return false;
+            all[index] = updater(all[index]);
+            store.set('misub_subscriptions_v1', all);
+            return true;
+        },
     };
 }
 

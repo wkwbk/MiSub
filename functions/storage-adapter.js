@@ -323,9 +323,7 @@ class D1StorageAdapter {
         const deduped = new Map();
         subRows.filter(isManualNodeRecord).forEach((item) => deduped.set(item.id, item));
         nodeRows.forEach((item) => deduped.set(item.id, item));
-        return Array.from(deduped.values()).sort(
-            (a, b) => (a.sortIndex || 0) - (b.sortIndex || 0)
-        );
+        return Array.from(deduped.values()).sort((a, b) => (a.sortIndex || 0) - (b.sortIndex || 0));
     }
 
     async getSubscriptionById(id) {
@@ -360,9 +358,7 @@ class D1StorageAdapter {
         nodes.forEach((item) => {
             if (item?.id) deduped.set(item.id, item);
         });
-        return Array.from(deduped.values()).sort(
-            (a, b) => (a.sortIndex || 0) - (b.sortIndex || 0)
-        );
+        return Array.from(deduped.values()).sort((a, b) => (a.sortIndex || 0) - (b.sortIndex || 0));
     }
 
     /**
@@ -458,9 +454,7 @@ class D1StorageAdapter {
 
     async getAllGuestbookMessages() {
         const rows = await this._readTableRows('guestbook');
-        return rows.sort(
-            (a, b) => Date.parse(b?.createdAt || '') - Date.parse(a?.createdAt || '')
-        );
+        return rows.sort((a, b) => Date.parse(b?.createdAt || '') - Date.parse(a?.createdAt || ''));
     }
 
     async getGuestbookMessageById(id) {
@@ -509,7 +503,10 @@ class D1StorageAdapter {
 
     // ========== 访问日志专用行级表操作 (access_logs) ==========
 
-    async insertAccessLogs(entries = [], { maxAgeMs = ACCESS_LOG_MAX_AGE_MS, maxEntries = 200 } = {}) {
+    async insertAccessLogs(
+        entries = [],
+        { maxAgeMs = ACCESS_LOG_MAX_AGE_MS, maxEntries = 200 } = {}
+    ) {
         if (!Array.isArray(entries) || entries.length === 0) return 0;
 
         const now = Date.now();
@@ -590,7 +587,9 @@ class D1StorageAdapter {
         if (targetProfileName) {
             try {
                 await this.db
-                    .prepare("DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?")
+                    .prepare(
+                        "DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?"
+                    )
                     .bind(targetProfileName)
                     .run();
             } catch (error) {
@@ -606,9 +605,7 @@ class D1StorageAdapter {
         }
         // 顺手清理可能尚未移除的旧版 logs 表访问日志行
         try {
-            await this.db
-                .prepare("DELETE FROM logs WHERE key LIKE 'misub_system_logs%'")
-                .run();
+            await this.db.prepare("DELETE FROM logs WHERE key LIKE 'misub_system_logs%'").run();
         } catch {
             // Ignore when legacy logs table does not exist
         }
@@ -944,7 +941,9 @@ class D1StorageAdapter {
     async syncAllSubscriptions(items) {
         if (!Array.isArray(items)) return false;
         const current = await this.getAllSubscriptions();
-        const currentMap = new Map(current.filter((item) => item?.id).map((item) => [item.id, item]));
+        const currentMap = new Map(
+            current.filter((item) => item?.id).map((item) => [item.id, item])
+        );
         const nextIds = new Set();
         const toUpsert = [];
 
@@ -999,7 +998,9 @@ class D1StorageAdapter {
     async syncAllProfiles(items) {
         if (!Array.isArray(items)) return false;
         const current = await this.getAllProfiles();
-        const currentMap = new Map(current.filter((item) => item?.id).map((item) => [item.id, item]));
+        const currentMap = new Map(
+            current.filter((item) => item?.id).map((item) => [item.id, item])
+        );
         const nextIds = new Set();
         const toUpsert = [];
 
@@ -1039,7 +1040,9 @@ class D1StorageAdapter {
             const idsToClean = new Set([item.id, customId].filter(Boolean));
             for (const pid of idsToClean) {
                 statements.push(
-                    this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`),
+                    this.db
+                        .prepare('DELETE FROM cache WHERE key = ?')
+                        .bind(`node_cache_profile_${pid}`),
                     this.db
                         .prepare('DELETE FROM settings WHERE key = ?')
                         .bind(`${DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX}${pid}`)
@@ -1053,10 +1056,7 @@ class D1StorageAdapter {
     }
 
     async _migrateLegacyLogRow(key, rawValue, now, stats) {
-        if (
-            key === 'misub_system_logs:index' ||
-            key === 'misub_system_logs_index'
-        ) {
+        if (key === 'misub_system_logs:index' || key === 'misub_system_logs_index') {
             return;
         }
         try {
@@ -1242,7 +1242,7 @@ class D1StorageAdapter {
                 if (isCacheKey(key)) {
                     await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
                     stats.removedSettingsClutter += 1;
-                    continue;
+
                 }
             }
         } catch (error) {
@@ -1262,7 +1262,10 @@ class D1StorageAdapter {
             await this.db.prepare('DROP TABLE IF EXISTS logs').run();
         } catch (error) {
             if (!isNoSuchTableError(error)) {
-                console.warn('[D1 Maintenance] Failed to migrate legacy logs table:', error?.message);
+                console.warn(
+                    '[D1 Maintenance] Failed to migrate legacy logs table:',
+                    error?.message
+                );
             }
         }
 
@@ -1289,7 +1292,10 @@ class D1StorageAdapter {
                     if (pid && profileByIdentifier.size > 0 && !profileByIdentifier.has(pid)) {
                         shouldDelete = true;
                     }
-                } else if (key.startsWith('node_cache_subscription_') && !key.startsWith('node_cache_subscription_url_')) {
+                } else if (
+                    key.startsWith('node_cache_subscription_') &&
+                    !key.startsWith('node_cache_subscription_url_')
+                ) {
                     const subId = decodeURIComponent(key.slice('node_cache_subscription_'.length));
                     if (subId && validSubIds.size > 0 && !validSubIds.has(subId)) {
                         shouldDelete = true;

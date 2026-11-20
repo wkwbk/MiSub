@@ -3,19 +3,11 @@
  */
 
 import { escapeHtml } from '../../utils.js';
-import { STORAGE_KEY_SETTINGS } from '../../config.js';
-import {
-    createRequestCache,
-    getCachedProfiles,
-    getCachedSettings,
-    getCachedSubscriptions,
-    getStorageAdapter,
-    getTelegramPushConfig,
-} from './storage.js';
+import { createRequestCache, getCachedProfiles, getCachedSettings, } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
 import { getUserBoundProfileId } from './auth.js';
 import { getTelegramItemTags, parseTargetArgs } from './utils.js';
-import { getNodesWithMapping, getUserNodes } from './node-queries.js';
+import { getUserNodes } from './node-queries.js';
 
 /**
  * 处理 /start 命令
@@ -351,7 +343,6 @@ export async function handleStatsCommand(chatId, userId, env, requestCache = nul
     }
 }
 
-
 /**
  * 处理 /search 命令
  */
@@ -539,7 +530,6 @@ export async function handleSubCommandSimple(chatId, env, requestCache = null) {
         await sendTelegramMessage(chatId, `❌ 获取订阅失败: ${escapeHtml(error.message)}`, env);
     }
 }
-
 
 /**
  * 处理 /info 命令 - 节点详情
@@ -749,4 +739,3 @@ export async function handleExportCommand(chatId, userId, args, env) {
         await sendTelegramMessage(chatId, `❌ 导出失败: ${escapeHtml(error.message)}`, env);
     }
 }
-

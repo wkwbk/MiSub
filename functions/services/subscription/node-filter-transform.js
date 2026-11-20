@@ -256,4 +256,3 @@ export function adaptLegacyTransform(config) {
 
     return ops;
 }
-

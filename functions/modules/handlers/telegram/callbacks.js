@@ -3,44 +3,27 @@
  */
 
 import { createJsonResponse, escapeHtml } from '../../utils.js';
-import { STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS } from '../../config.js';
+import { STORAGE_KEY_SETTINGS } from '../../config.js';
 import {
     createRequestCache,
     getCachedProfiles,
     getCachedSettings,
     getStorageAdapter,
-    getTelegramPushConfig,
     persistCachedSettings,
     saveSingleProfile,
     saveSingleSubscription,
 } from './storage.js';
-import {
-    answerCallbackQuery,
-    editTelegramMessage,
-    sendTelegramMessage,
-} from './client.js';
-import {
-    checkUserPermission,
-    getUserBoundProfileId,
-    setUserBoundProfileId,
-} from './auth.js';
+import { answerCallbackQuery, editTelegramMessage, sendTelegramMessage, } from './client.js';
+import { getUserBoundProfileId, setUserBoundProfileId, } from './auth.js';
 import { getUserNodes } from './node-queries.js';
-import {
-    applyTagOperation,
-    handleTagActions,
-    handleTagManage,
-    handleTagSelect,
-} from './tags.js';
+import { applyTagOperation, handleTagActions, handleTagManage, handleTagSelect, } from './tags.js';
 import {
     handleCopyCommand,
     handleExportCommand,
     handleHelpCommand,
-    handleInfoCommand,
     handleListCommand,
-    handleListTypeSelector,
     handleMenuCommand,
     handleStatsCommand,
-    handleSubCommand,
     handleSubCommandSimple,
 } from './commands-read.js';
 import {
@@ -49,8 +32,6 @@ import {
     handleDisableCommand,
     handleDupCommand,
     handleEnableCommand,
-    handleSortCommand,
-    handleUnbindCommand,
 } from './commands-write.js';
 
 /**
@@ -678,7 +659,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                         );
 
                         if (isSub) {
-                            // Find original index in STORAGE_KEY_SUBS to update
+                            // Find original subscription record to update
                             // Since targetList is filtered, we need to find the item in the original storage
                             const originalSubs = await storageAdapter.getAllSubscriptions();
                             // Match by ID if possible, or some unique property.
@@ -925,4 +906,3 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
     return createJsonResponse({ ok: true });
 }
-

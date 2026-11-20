@@ -150,7 +150,11 @@ export function mergeSubscriptionUserInfo(context, subscriptions) {
     );
 }
 
-export function buildUserInfoHeaderFromSubscriptions(context, subscriptions, profileExpiresAt = '') {
+export function buildUserInfoHeaderFromSubscriptions(
+    context,
+    subscriptions,
+    profileExpiresAt = ''
+) {
     const totalUserInfo = mergeSubscriptionUserInfo(context, subscriptions);
 
     const profileExpireTimestamp = profileExpiresAt
@@ -246,4 +250,3 @@ export function countSubscriptionNodes(nodeList, prependedContent = '') {
 
     return lines.length;
 }
-

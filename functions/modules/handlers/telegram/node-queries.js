@@ -49,4 +49,3 @@ export async function getNodesWithMapping(userId, env) {
 
     return { allSubscriptions, userNodes, indexMapping, storageAdapter };
 }
-

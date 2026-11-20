@@ -17,12 +17,7 @@ import { clearAllNodeCaches } from '../services/node-cache-service.js';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
-import {
-    DEFAULT_SETTINGS as defaultSettings,
-    STORAGE_KEY_PROFILES,
-    STORAGE_KEY_SETTINGS,
-    STORAGE_KEY_SUBS,
-} from './config.js';
+import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { normalizePublicLinksConfig } from '../../src/constants/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../src/constants/default-public-cores.js';
 import { listRuleTemplates } from './rule-template-handler.js';
@@ -285,12 +280,8 @@ export async function handleMisubsSave(request, env, context = null) {
             console.info('[API] Processing Diff Patch...');
             // 获取当前数据
             const [currentMisubs, currentProfiles] = await Promise.all([
-                typeof storageAdapter.getAllSubscriptions === 'function'
-                    ? storageAdapter.getAllSubscriptions()
-                    : storageAdapter.get(STORAGE_KEY_SUBS).then((res) => res || []),
-                typeof storageAdapter.getAllProfiles === 'function'
-                    ? storageAdapter.getAllProfiles()
-                    : storageAdapter.get(STORAGE_KEY_PROFILES).then((res) => res || []),
+                storageAdapter.getAllSubscriptions(),
+                storageAdapter.getAllProfiles(),
             ]);
 
             // 应用补丁
@@ -432,9 +423,8 @@ export async function handleMisubsSave(request, env, context = null) {
                 ]);
 
                 const saveTasks = [];
-                if (!subsHandled) saveTasks.push(storageAdapter.put(STORAGE_KEY_SUBS, finalMisubs));
-                if (!profilesHandled)
-                    saveTasks.push(storageAdapter.put(STORAGE_KEY_PROFILES, finalProfiles));
+                if (!subsHandled) saveTasks.push(storageAdapter.putAllSubscriptions(finalMisubs));
+                if (!profilesHandled) saveTasks.push(storageAdapter.putAllProfiles(finalProfiles));
                 if (saveTasks.length > 0) {
                     await Promise.all(saveTasks);
                 }
@@ -445,9 +435,8 @@ export async function handleMisubsSave(request, env, context = null) {
                 ]);
 
                 const saveTasks = [];
-                if (!subsHandled) saveTasks.push(storageAdapter.put(STORAGE_KEY_SUBS, finalMisubs));
-                if (!profilesHandled)
-                    saveTasks.push(storageAdapter.put(STORAGE_KEY_PROFILES, finalProfiles));
+                if (!subsHandled) saveTasks.push(storageAdapter.putAllSubscriptions(finalMisubs));
+                if (!profilesHandled) saveTasks.push(storageAdapter.putAllProfiles(finalProfiles));
                 if (saveTasks.length > 0) {
                     await Promise.all(saveTasks);
                 }
@@ -700,9 +689,7 @@ export async function handlePublicProfilesRequest(env) {
         const storageAdapter = await getStorageAdapter(env);
         const cachedSettings = await SettingsCache.get(env);
         const [profiles, settings] = await Promise.all([
-            typeof storageAdapter.getAllProfiles === 'function'
-                ? storageAdapter.getAllProfiles()
-                : storageAdapter.get(STORAGE_KEY_PROFILES).then((res) => res || []),
+            storageAdapter.getAllProfiles(),
             Promise.resolve(cachedSettings || {}).then((res) => res || {}),
         ]);
 

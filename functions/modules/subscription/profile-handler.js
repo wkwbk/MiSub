@@ -4,7 +4,7 @@ import { parseNodeInfo } from '../utils/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '../utils/node-parser.js';
 import { applyNodeTransformPipeline } from '../../utils/node-transformer.js';
 import { runOperatorChain } from '../../utils/operator-runner.js';
-import { DEFAULT_SETTINGS, STORAGE_KEY_PROFILES, STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS } from '../config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 import { applyManualNodeName } from '../utils/node-cleaner.js';
 
@@ -127,12 +127,7 @@ export async function handleProfileMode(
         await StorageFactory.getStorageType(env)
     );
 
-    const profile =
-        typeof storageAdapter.getProfileById === 'function'
-            ? await storageAdapter.getProfileById(profileId)
-            : ((await storageAdapter.get(STORAGE_KEY_PROFILES)) || []).find(
-                  (p) => (p.customId && p.customId === profileId) || p.id === profileId
-              );
+    const profile = await storageAdapter.getProfileById(profileId);
     const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;
 
     if (!profile || !profile.enabled) {
@@ -155,7 +150,7 @@ export async function handleProfileMode(
             Array.from(new Set([...subSourceIds, ...manualNodeIds]))
         );
     } else {
-        relatedSubs = (await storageAdapter.get(STORAGE_KEY_SUBS)) || [];
+        relatedSubs = (await storageAdapter.getAllSubscriptions()) || [];
     }
     const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 

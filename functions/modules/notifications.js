@@ -5,7 +5,7 @@
  */
 
 import { formatBytes } from '../../shared/format-utils.js';
-import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS, SYSTEM_CONSTANTS } from './config.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
 // 导入核心通知服务及工具
 import {
     sendEnhancedTgNotification as sendCoreEnhancedTg,
@@ -41,24 +41,12 @@ async function loadSubscriptionsForCron(storageAdapter) {
             return subscriptions;
         }
     }
-    if (typeof storageAdapter.getAllSubscriptions === 'function') {
-        const subscriptions = await storageAdapter.getAllSubscriptions();
-        if (Array.isArray(subscriptions)) {
-            return subscriptions;
-        }
-    }
-
-    const subscriptions = await storageAdapter.get(STORAGE_KEY_SUBS);
+    const subscriptions = await storageAdapter.getAllSubscriptions();
     return Array.isArray(subscriptions) ? subscriptions : [];
 }
 
 async function persistSubscriptionsForCron(storageAdapter, subscriptions) {
-    if (typeof storageAdapter.putAllSubscriptions === 'function') {
-        await storageAdapter.putAllSubscriptions(subscriptions);
-        return;
-    }
-
-    await storageAdapter.put(STORAGE_KEY_SUBS, subscriptions);
+    await storageAdapter.putAllSubscriptions(subscriptions);
 }
 
 /**

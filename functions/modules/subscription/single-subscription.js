@@ -2,7 +2,6 @@ import { StorageFactory } from '../../storage-adapter.js';
 import { createJsonResponse } from '../utils.js';
 import { parseNodeInfo } from '../utils/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '../utils/node-parser.js';
-import { STORAGE_KEY_SUBS } from '../config.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 
 /**
@@ -26,12 +25,7 @@ export async function handleSingleSubscriptionMode(
     );
 
     // 查找订阅
-    const subscription =
-        typeof storageAdapter.getSubscriptionById === 'function'
-            ? await storageAdapter.getSubscriptionById(subscriptionId)
-            : ((await storageAdapter.get(STORAGE_KEY_SUBS)) || []).find(
-                  (sub) => sub.id === subscriptionId
-              );
+    const subscription = await storageAdapter.getSubscriptionById(subscriptionId);
 
     if (!subscription || !subscription.enabled) {
         return createJsonResponse({ error: '订阅不存在或已禁用' }, 404);

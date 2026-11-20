@@ -424,7 +424,7 @@ export async function handleNodeCountRequest(request, env) {
                     env,
                     await StorageFactory.getStorageType(env)
                 );
-                const originalSubs = (await storageAdapter.get('misub_subscriptions_v1')) || [];
+                const originalSubs = (await storageAdapter.getAllSubscriptions()) || [];
                 const subToUpdate = originalSubs.find((s) => s.url === subUrl);
 
                 if (subToUpdate) {
@@ -449,27 +449,14 @@ export async function handleNodeCountRequest(request, env) {
                         });
                     }
 
-                    if (typeof storageAdapter.updateSubscriptionById === 'function') {
-                        await storageAdapter.updateSubscriptionById(subToUpdate.id, (current) => ({
-                            ...current,
-                            nodeCount: result.count,
-                            ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
-                            userInfo: result.userInfo,
-                            lastError: null,
-                            lastUpdate: new Date().toISOString(),
-                        }));
-                    } else {
-                        const allSubs = JSON.parse(JSON.stringify(originalSubs));
-                        const target = allSubs.find((s) => s.url === subUrl);
-                        if (target) {
-                            target.nodeCount = result.count;
-                            if (result.count >= 10) target.lastGoodNodeCount = result.count;
-                            target.userInfo = result.userInfo;
-                            target.lastError = null;
-                            target.lastUpdate = new Date().toISOString();
-                            await storageAdapter.put('misub_subscriptions_v1', allSubs);
-                        }
-                    }
+                    await storageAdapter.updateSubscriptionById(subToUpdate.id, (current) => ({
+                        ...current,
+                        nodeCount: result.count,
+                        ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
+                        userInfo: result.userInfo,
+                        lastError: null,
+                        lastUpdate: new Date().toISOString(),
+                    }));
                 }
             } else {
                 // 如果 count 为 0 且没有用户信息，但请求成功了（可能机场真的没节点），也要更新错误状态（可选，此处暂不作为错误）
@@ -526,7 +513,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const allSubscriptions = (await storageAdapter.get('misub_subscriptions_v1')) || [];
+        const allSubscriptions = (await storageAdapter.getAllSubscriptions()) || [];
         const subscriptionMap = new Map();
         for (const sub of allSubscriptions) {
             if (sub?.id) {

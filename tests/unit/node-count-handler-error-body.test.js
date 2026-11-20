@@ -13,6 +13,7 @@ function createAdapter({ settings = {}, subscriptions = [] } = {}) {
             store.set(key, value);
             return true;
         }),
+        getAllSubscriptions: vi.fn(async () => store.get('misub_subscriptions_v1') || []),
         updateSubscriptionById: vi.fn(async (id, updater) => {
             const all = store.get('misub_subscriptions_v1') || [];
             const index = all.findIndex((item) => item.id === id);

@@ -3,12 +3,7 @@ import { base64EncodeUtf8, migrateConfigSettings } from '../utils.js';
 import { formatBytes } from '../../../shared/format-utils.js';
 import { generateCombinedNodeList } from '../../services/subscription-service.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
-import {
-    DEFAULT_SETTINGS as defaultSettings,
-    DEFAULT_SUBCONVERTER_BACKEND,
-    STORAGE_KEY_PROFILES,
-    STORAGE_KEY_SETTINGS,
-} from '../config.js';
+import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import {
     generateCacheKey,
@@ -20,45 +15,38 @@ import { resolveRequestContext } from './request-context.js';
 import { resolveNodeListWithCache } from './cache-manager.js';
 import { ProcessorService } from '../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from './access-logger.js';
-import {
-    determineTargetFormat,
-    isBrowserAgent,
-    isHiddifyAgent,
-    isMetaCore,
-} from './user-agent-utils.js'; // [Added] Import centralized util
+import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js'; // [Added] Import centralized util
 import { authMiddleware } from '../auth-middleware.js';
 import { handleProfileMode } from './profile-handler.js';
-import { assertPublicNetworkUrl } from '../security-utils.js';
 
 import {
-    maskSensitiveLogValue,
-    buildTemplateProxyBlock,
-    extractProxySectionFromBuiltin,
     buildManagedConfigUrl,
-    resolveProfileUpdateInterval,
-    getCurrentRequestUserInfo,
-    mergeSubscriptionUserInfo,
     buildUserInfoHeaderFromSubscriptions,
-    resolveNotificationExpireDate,
-    formatNotificationExpireTime,
-    formatNotificationExpireStatus,
-    formatSubscriptionExpireTime,
     countSubscriptionNodes,
+    extractProxySectionFromBuiltin,
+    formatNotificationExpireStatus,
+    formatNotificationExpireTime,
+    formatSubscriptionExpireTime,
+    getCurrentRequestUserInfo,
+    maskSensitiveLogValue,
+    mergeSubscriptionUserInfo,
+    resolveProfileUpdateInterval,
 } from './userinfo-formatters.js';
 import {
-    resolveTemplateUrl,
-    resolveTemplateSource,
-    resolveExternalTemplateConfigUrl,
+    buildExternalSubconverterUrl,
     normalizeExternalTemplateConfigUrl,
     normalizeSubconverterBackend,
-    buildExternalSubconverterUrl,
-    resolveBuiltinEngineFlags,
-    resolveEffectiveEngine,
-    resolveBuiltinRequestOptions,
-    resolveEffectiveNodeTransform,
     resolveAddFlagEmoji,
+    resolveBuiltinEngineFlags,
+    resolveBuiltinRequestOptions,
+    resolveEffectiveEngine,
+    resolveEffectiveNodeTransform,
+    resolveExternalTemplateConfigUrl,
+    resolveTemplateSource,
+    resolveTemplateUrl,
     shouldRenderClashYamlProfileTemplateLocally,
 } from './engine-options.js';
+
 export {
     extractProxySectionFromBuiltin,
     buildManagedConfigUrl,
@@ -184,18 +172,7 @@ export async function handleMisubRequest(context) {
                 new Response('Not Found', { status: 404 })
             );
         }
-        if (typeof storageAdapter.getProfileById === 'function') {
-            currentProfile = await storageAdapter.getProfileById(profileIdentifier);
-        } else {
-            const allProfiles =
-                typeof storageAdapter.getAllProfiles === 'function'
-                    ? await storageAdapter.getAllProfiles()
-                    : (await storageAdapter.get(STORAGE_KEY_PROFILES)) || [];
-            currentProfile = allProfiles.find(
-                (p) =>
-                    (p.customId && p.customId === profileIdentifier) || p.id === profileIdentifier
-            );
-        }
+        currentProfile = await storageAdapter.getProfileById(profileIdentifier);
         initEngineFlags(currentProfile);
         const profile = currentProfile;
         if (profile && profile.enabled) {
@@ -240,10 +217,7 @@ export async function handleMisubRequest(context) {
                         Array.from(new Set([...subSourceIds, ...manualNodeIds]))
                     );
                 } else {
-                    relatedSubs =
-                        typeof storageAdapter.getAllSubscriptions === 'function'
-                            ? await storageAdapter.getAllSubscriptions()
-                            : (await storageAdapter.get('misub_subscriptions_v1')) || [];
+                    relatedSubs = (await storageAdapter.getAllSubscriptions()) || [];
                 }
                 const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
@@ -361,10 +335,7 @@ export async function handleMisubRequest(context) {
                 new Response('Not Found', { status: 404 })
             );
         }
-        const allMisubs =
-            typeof storageAdapter.getAllSubscriptions === 'function'
-                ? await storageAdapter.getAllSubscriptions()
-                : (await storageAdapter.get('misub_subscriptions_v1')) || [];
+        const allMisubs = (await storageAdapter.getAllSubscriptions()) || [];
         targetMisubs = allMisubs.filter((s) => s.enabled);
         initEngineFlags(null);
     }

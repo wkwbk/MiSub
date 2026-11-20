@@ -3,8 +3,6 @@
  */
 
 import { isLocalProxyEndpoint } from '../../utils/node-utils.js';
-import { createTimeoutFetch } from '../../modules/utils.js';
-import { assertPublicNetworkUrl } from '../../modules/security-utils.js';
 import { inferAirportRootDomain } from '../../../shared/airport-domain.js';
 
 export { inferAirportRootDomain };
@@ -206,4 +204,3 @@ export function parseSubscriptionUserInfoHeader(header) {
 
     return Object.keys(info).length > 0 ? info : null;
 }
-

@@ -4,13 +4,11 @@
  */
 
 import { parseNodeList } from '../modules/utils/node-parser.js';
-import { parseNodeInfo } from '../modules/utils/geo-utils.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {
     addFlagEmoji,
     fixNodeUrlEncoding,
-    isLocalProxyEndpoint,
     prependNodeName,
     removeFlagEmoji,
     sanitizeNodeForYaml,
@@ -20,6 +18,21 @@ import { createTimeoutFetch } from '../modules/utils.js';
 import { assertPublicNetworkUrl } from '../modules/security-utils.js';
 import { isSuspiciousNodeCountDrop } from './node-cache-service.js';
 import { inferAirportRootDomain } from '../../shared/airport-domain.js';
+import {
+    fetchAirportSiteTitle,
+    isRealProxyNode,
+    parseSubscriptionProfileTitle,
+    parseSubscriptionUserInfoHeader,
+} from './subscription/airport-metadata.js';
+import {
+    buildSubscriptionFilterFingerprint,
+    buildSubscriptionNodeCacheKey,
+    readSubscriptionNodeCache,
+    recordCurrentRequestRuntimeInfo,
+    scheduleSubscriptionRuntimeInfoUpdate,
+    writeSubscriptionNodeCache,
+} from './subscription/runtime-cache.js';
+import { adaptLegacyTransform, applyFilterRules } from './subscription/node-filter-transform.js';
 
 export { inferAirportRootDomain };
 
@@ -34,26 +47,6 @@ const FETCH_CONFIG = {
     RETRYABLE_STATUS: [500, 502, 503, 504, 429], // 可重试的 HTTP 状态码
 };
 
-import {
-    isRealProxyNode,
-    parseSubscriptionProfileTitle,
-    fetchAirportSiteTitle,
-    parseSubscriptionUserInfoHeader,
-} from './subscription/airport-metadata.js';
-import {
-    buildSubscriptionNodeCacheKey,
-    buildSubscriptionFilterFingerprint,
-    readSubscriptionNodeCache,
-    writeSubscriptionNodeCache,
-    writeSubscriptionRuntimeInfo,
-    scheduleSubscriptionRuntimeInfoUpdate,
-    recordCurrentRequestRuntimeInfo,
-} from './subscription/runtime-cache.js';
-import {
-    applyFilterRules,
-    applySubscriptionTransforms,
-    adaptLegacyTransform,
-} from './subscription/node-filter-transform.js';
 export {
     isRealProxyNode,
     parseSubscriptionProfileTitle,
@@ -764,7 +757,6 @@ function applyManualNodeName(nodeUrl, customName) {
         return nodeUrl;
     }
 }
-
 
 /**
  * ArrayBuffer -> Base64 ??

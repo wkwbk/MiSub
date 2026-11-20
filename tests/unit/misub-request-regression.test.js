@@ -7,9 +7,8 @@ vi.mock('../../functions/storage-adapter.js', () => ({
     StorageFactory: {
         createAdapter: (...args) => createAdapter(...args),
         getStorageType: (...args) => getStorageType(...args),
-        resolveKV: (env) => env?.MISUB_KV || null,
     },
-    STORAGE_TYPES: { KV: 'kv', D1: 'd1' },
+    STORAGE_TYPES: { D1: 'd1' },
 }));
 
 function createStorageAdapter({ settings = {}, subscriptions = [], profiles = [] } = {}) {
@@ -26,11 +25,24 @@ function createStorageAdapter({ settings = {}, subscriptions = [], profiles = []
             store.set(key, value);
             return true;
         }),
-        getAllSubscriptions: vi.fn(async () => subscriptions),
-        getAllProfiles: vi.fn(async () => profiles),
-        getSubscriptionsByIds: vi.fn(async (ids) =>
-            subscriptions.filter((item) => ids.includes(item.id))
+        getAllSubscriptions: vi.fn(async () => store.get('misub_subscriptions_v1') || []),
+        getAllProfiles: vi.fn(async () => store.get('misub_profiles_v1') || []),
+        getProfileById: vi.fn(async (id) =>
+            (store.get('misub_profiles_v1') || []).find(
+                (p) => (p.customId && p.customId === id) || p.id === id
+            ) || null
         ),
+        getSubscriptionsByIds: vi.fn(async (ids) =>
+            (store.get('misub_subscriptions_v1') || []).filter((item) => ids.includes(item.id))
+        ),
+        updateSubscriptionById: vi.fn(async (id, updater) => {
+            const all = store.get('misub_subscriptions_v1') || [];
+            const index = all.findIndex((item) => item?.id === id);
+            if (index === -1) return false;
+            all[index] = updater(all[index]);
+            store.set('misub_subscriptions_v1', all);
+            return true;
+        }),
     };
 }
 

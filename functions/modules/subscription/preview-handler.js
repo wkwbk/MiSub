@@ -1,6 +1,5 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
-import { STORAGE_KEY_PROFILES } from '../config.js';
 import { handleProfileMode } from './profile-handler.js';
 import { handleDirectUrlMode, handleSingleSubscriptionMode } from './single-subscription.js';
 
@@ -44,12 +43,7 @@ export async function handlePublicPreviewRequest(request, env) {
             env,
             await StorageFactory.getStorageType(env)
         );
-        const profile =
-            typeof storageAdapter.getProfileById === 'function'
-                ? await storageAdapter.getProfileById(profileId)
-                : ((await storageAdapter.get(STORAGE_KEY_PROFILES)) || []).find(
-                      (p) => (p.customId && p.customId === profileId) || p.id === profileId
-                  );
+        const profile = await storageAdapter.getProfileById(profileId);
 
         if (!profile || !profile.enabled || !profile.isPublic) {
             return createJsonResponse({ error: 'Profile not found or not public' }, 404);

@@ -7,9 +7,9 @@
  * - WebDAV credentials and runtime secrets are never written into backup payloads.
  */
 
-import { SettingsCache, STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
-import { STORAGE_KEY_PROFILES, STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS } from './config.js';
-import { STORAGE_KEY_RULE_TEMPLATES, listRuleTemplates } from './rule-template-handler.js';
+import { SettingsCache, StorageFactory } from '../storage-adapter.js';
+import { STORAGE_KEY_SETTINGS } from './config.js';
+import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
 import {
     createErrorResponse,
     createJsonResponse,
@@ -95,12 +95,8 @@ async function getStorage(env) {
 
 async function readBusinessData(storageAdapter) {
     const [subscriptions, profiles, ruleTemplates] = await Promise.all([
-        typeof storageAdapter.getAllSubscriptions === 'function'
-            ? storageAdapter.getAllSubscriptions()
-            : storageAdapter.get(STORAGE_KEY_SUBS).then((value) => value || []),
-        typeof storageAdapter.getAllProfiles === 'function'
-            ? storageAdapter.getAllProfiles()
-            : storageAdapter.get(STORAGE_KEY_PROFILES).then((value) => value || []),
+        storageAdapter.getAllSubscriptions(),
+        storageAdapter.getAllProfiles(),
         listRuleTemplates(storageAdapter).catch(() => []),
     ]);
 
@@ -193,7 +189,6 @@ export function normalizeBackupPayload(raw) {
 async function syncCollection(storageAdapter, type, items) {
     const finalItems = Array.isArray(items) ? items : [];
     const isProfiles = type === 'profiles';
-    const key = isProfiles ? STORAGE_KEY_PROFILES : STORAGE_KEY_SUBS;
 
     const getAll = isProfiles
         ? storageAdapter.getAllProfiles?.bind(storageAdapter)
@@ -230,7 +225,11 @@ async function syncCollection(storageAdapter, type, items) {
         return;
     }
 
-    await storageAdapter.put(key, finalItems);
+    if (isProfiles) {
+        await storageAdapter.putAllProfiles(finalItems);
+    } else {
+        await storageAdapter.putAllSubscriptions(finalItems);
+    }
 }
 
 async function createPreRestoreSnapshot(env, storageAdapter, scope) {

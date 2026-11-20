@@ -4,7 +4,6 @@
 
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { createJsonResponse, escapeHtml, generateId } from '../../utils.js';
-import { STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS } from '../../config.js';
 import { extractValidNodes } from '../../utils/node-parser.js';
 import {
     createRequestCache,
@@ -28,7 +27,7 @@ import {
     extractSubscriptionUrls,
     parseTargetArgs,
 } from './utils.js';
-import { getNodesWithMapping, getUserNodes } from './node-queries.js';
+import { getNodesWithMapping } from './node-queries.js';
 
 /**
  * 处理 Telegram 文件消息：下载文件 → 提取节点/订阅链接 → 导入。
@@ -103,7 +102,6 @@ export async function handleFileInput(chatId, message, userId, config, env, requ
         return createJsonResponse({ ok: true });
     }
 }
-
 
 /**
  * 处理 /delete 命令
@@ -314,7 +312,6 @@ export async function handleToggleCommand(chatId, userId, args, env, enable) {
     }
 }
 
-
 /**
  * 处理 /rename 命令
  */
@@ -372,7 +369,6 @@ export async function handleRenameCommand(chatId, userId, args, env) {
         await sendTelegramMessage(chatId, `❌ 重命名失败: ${escapeHtml(error.message)}`, env);
     }
 }
-
 
 /**
  * 处理 /import 命令 - 导入节点
@@ -465,7 +461,7 @@ export async function handleImportCommand(chatId, userId, args, env) {
             addedNodes.push(node);
         }
 
-        await storageAdapter.put(STORAGE_KEY_SUBS, allSubscriptions);
+        await storageAdapter.putAllSubscriptions(allSubscriptions);
 
         await sendTelegramMessage(
             chatId,
@@ -770,7 +766,14 @@ export async function handleUnbindCommand(chatId, userId, env, requestCache = nu
 /**
  * 处理节点输入（核心逻辑）
  */
-export async function handleNodeInput(chatId, text, userId, env, requestCache = null, options = {}) {
+export async function handleNodeInput(
+    chatId,
+    text,
+    userId,
+    env,
+    requestCache = null,
+    options = {}
+) {
     // 同一批导入的节点共用一个批次标签（文件导入用文件名，文本导入用时间）
     const importTagName = options.tagName || buildImportTagName(options);
     try {
@@ -851,7 +854,7 @@ export async function handleNodeInput(chatId, text, userId, env, requestCache = 
                 created_at: new Date().toISOString(),
             };
 
-            // 注意：MiSub 中订阅源也通过 STORAGE_KEY_SUBS 存储
+            // 注意：MiSub 中手动节点与远程订阅由 D1StorageAdapter 按 URL 协议自动分表存储
             // 前端通过 URL 格式区分是“手动节点”还是“订阅源”
             // 订阅源 -> type: subscription or implied by http protocol
 
@@ -990,4 +993,3 @@ export async function handleNodeInput(chatId, text, userId, env, requestCache = 
         return createJsonResponse({ ok: true });
     }
 }
-

@@ -138,8 +138,7 @@ export const D1_KNOWN_SETTINGS_KEYS = new Set([
 
 export function isCacheKey(keyStr) {
     return (
-        D1_CACHE_KEYS.has(keyStr) ||
-        D1_CACHE_PREFIXES.some((prefix) => keyStr.startsWith(prefix))
+        D1_CACHE_KEYS.has(keyStr) || D1_CACHE_PREFIXES.some((prefix) => keyStr.startsWith(prefix))
     );
 }
 

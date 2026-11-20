@@ -104,16 +104,6 @@ export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {
         if (typeof storage.updateSubscriptionById === 'function') {
             return Boolean(await storage.updateSubscriptionById(sub.id, applyUpdate));
         }
-
-        if (typeof storage.get === 'function' && typeof storage.put === 'function') {
-            const all = await storage.get('misub_subscriptions_v1');
-            if (!Array.isArray(all)) return false;
-            const index = all.findIndex((item) => item?.id === sub.id);
-            if (index === -1) return false;
-            all[index] = applyUpdate(all[index]);
-            await storage.put('misub_subscriptions_v1', all);
-            return true;
-        }
     } catch (error) {
         console.warn('[SubscriptionRuntimeInfo] Failed to write subscription info:', error);
     }
@@ -145,4 +135,3 @@ export function recordCurrentRequestRuntimeInfo(context, sub, runtimeInfo) {
     context.currentSubscriptionRuntimeInfo = context.currentSubscriptionRuntimeInfo || {};
     context.currentSubscriptionRuntimeInfo[key] = runtimeInfo;
 }
-
