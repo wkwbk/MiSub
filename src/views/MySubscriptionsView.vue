@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, nextTick, onMounted, ref, watch } from 'vue';
+import { defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useProfiles } from '@/composables/useProfiles.js';
@@ -12,8 +12,16 @@ import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
-const TagManagementModal = defineAsyncComponent(() => import('@/components/modals/TagManagementModal.vue'));
+const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
+const loadNodePreviewModal = () => import('@/components/modals/NodePreview/NodePreviewModal.vue');
+const loadProfileModal = () => import('@/components/modals/ProfileModal.vue');
+const loadLogModal = () => import('@/components/modals/LogModal.vue');
+const loadCopyLinkModal = () => import('@/components/modals/CopyLinkModal.vue');
+const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
+
+const TagManagementModal = defineAsyncComponent(loadTagManagementModal);
 
 const { t } = useI18n();
 const route = useRoute();
@@ -37,7 +45,23 @@ function applyFocusFromQuery() {
   });
 }
 
-onMounted(applyFocusFromQuery);
+let cancelModalPrefetch = () => {};
+
+onMounted(() => {
+  applyFocusFromQuery();
+  cancelModalPrefetch = scheduleIdlePrefetch([
+    loadProfileModal,
+    loadCopyLinkModal,
+    loadQRCodeModal,
+    loadLogModal,
+    loadTagManagementModal,
+    loadNodePreviewModal,
+  ]);
+});
+
+onUnmounted(() => {
+  cancelModalPrefetch();
+});
 watch(() => route.query.focus, applyFocusFromQuery);
 
 const {
@@ -114,7 +138,7 @@ const confirmBatchDelete = () => {
   showBatchDeleteModal.value = false;
 };
 
-const NodePreviewModal = defineAsyncComponent(() => import('@/components/modals/NodePreview/NodePreviewModal.vue'));
+const NodePreviewModal = defineAsyncComponent(loadNodePreviewModal);
 const showNodePreviewModal = ref(false);
 const previewProfileId = ref(null);
 const previewProfileName = ref('');
@@ -128,9 +152,9 @@ const handlePreviewProfile = (profileId) => {
   }
 };
 
-const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
-const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
-const CopyLinkModal = defineAsyncComponent(() => import('@/components/modals/CopyLinkModal.vue'));
+const ProfileModal = defineAsyncComponent(loadProfileModal);
+const LogModal = defineAsyncComponent(loadLogModal);
+const CopyLinkModal = defineAsyncComponent(loadCopyLinkModal);
 
 const showLogModal = ref(false);
 const logProfileName = ref('');
@@ -154,7 +178,7 @@ const handleViewLogs = (profileId) => {
   }
 };
 
-const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
+const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');

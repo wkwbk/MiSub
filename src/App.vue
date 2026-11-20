@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, onUnmounted, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Globe } from '@lucide/vue';
 import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
 import RouteProgressBar from '@/components/ui/RouteProgressBar.vue';
@@ -15,7 +15,8 @@ import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
 import NavBar from '@/components/layout/NavBar.vue';
 import { useI18n } from '@/i18n/index.js';
-import { configureAuthGuard, translateRouteTitle } from '@/router/index.js';
+import { COMMON_DASHBOARD_ROUTE_LOADERS, configureAuthGuard, translateRouteTitle } from '@/router/index.js';
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import { readSessionPreference } from '@/utils/session-preference.js'; // Lazy components
 
 // Lazy components
@@ -31,7 +32,9 @@ const VersionChangelogModal = defineAsyncComponent(() => import('@/components/mo
 
 const route = useRoute();
 const router = useRouter();
-const { isNavigating, progress, isFadingOut, showSlowIndicator } = useRouteLoading(router);
+const { isNavigating, progress, isFadingOut, showSlowIndicator, pendingPath } = useRouteLoading(router);
+const isDiscarding = ref(false);
+let cancelRoutePrefetch = () => {};
 const { t, locale } = useI18n();
 const themeStore = useThemeStore();
 const { theme } = storeToRefs(themeStore);
@@ -153,6 +156,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  cancelRoutePrefetch();
   window.removeEventListener('misub:unauthorized', handleUnauthorized);
 });
 
@@ -181,6 +185,8 @@ watch(
   async (newVal) => {
     if (newVal === 'loggedIn') {
       await dataStore.fetchData();
+      cancelRoutePrefetch();
+      cancelRoutePrefetch = scheduleIdlePrefetch(COMMON_DASHBOARD_ROUTE_LOADERS);
 
       try {
         await versionStore.checkVersion(false);
@@ -204,8 +210,14 @@ const handleSave = async () => {
   await dataStore.saveData();
 };
 const handleDiscard = async () => {
-  await dataStore.fetchData(true);
-  toastStore.showToast(t('notices.discardedChanges'));
+  if (isDiscarding.value || saveState.value !== 'idle') return;
+  isDiscarding.value = true;
+  try {
+    await dataStore.fetchData(true);
+    toastStore.showToast(t('notices.discardedChanges'));
+  } finally {
+    isDiscarding.value = false;
+  }
 };
 
 const redirectUnauthenticatedRoute = () => {
@@ -242,7 +254,7 @@ const isCustomPageFullWidth = computed(() => {
     />
 
     <!-- Navigation -->
-    <NavBar v-if="showModernNavBar" :is-logged-in="true" @logout="logout" />
+    <NavBar v-if="showModernNavBar" :is-logged-in="true" :pending-path="pendingPath" @logout="logout" />
     <Header
       v-else-if="showLegacyHeader"
       :hide-branding="shouldHidePublicBranding"
@@ -345,7 +357,13 @@ const isCustomPageFullWidth = computed(() => {
           </div>
         </div>
 
-        <SavePrompt :is-dirty="showSavePrompt" :save-state="saveState" @discard="handleDiscard" @save="handleSave" />
+        <SavePrompt
+          :is-dirty="showSavePrompt"
+          :is-discarding="isDiscarding"
+          :save-state="saveState"
+          @discard="handleDiscard"
+          @save="handleSave"
+        />
 
         <router-view v-if="layoutMode === 'modern'" v-slot="{ Component, route: currentRoute }">
           <RouteErrorBoundary :reset-key="currentRoute.fullPath">

@@ -361,6 +361,7 @@ export function useManualNodes(markDirty) {
   // --- 连通性测试 (Ping) ---
   const pingResults = ref({});
   const pingingNodes = ref(new Set());
+  const isPingingAll = ref(false);
 
   async function pingNodeId(nodeId) {
     if (pingingNodes.value.has(nodeId)) return;
@@ -394,26 +395,32 @@ export function useManualNodes(markDirty) {
   }
 
   async function pingAllNodes() {
+    if (isPingingAll.value) return;
     const nodesToTest = enabledManualNodes.value.map((n) => n.id);
     if (nodesToTest.length === 0) return;
 
+    isPingingAll.value = true;
     showToast(t('manualNodes.pingStarted', { count: nodesToTest.length }), 'info');
 
-    const CONCURRENCY = 10;
-    let currentIndex = 0;
+    try {
+      const CONCURRENCY = 10;
+      let currentIndex = 0;
 
-    const workers = Array(Math.min(CONCURRENCY, nodesToTest.length))
-      .fill(null)
-      .map(async () => {
-        while (currentIndex < nodesToTest.length) {
-          const idx = currentIndex++;
-          const nodeId = nodesToTest[idx];
-          await pingNodeId(nodeId);
-        }
-      });
+      const workers = Array(Math.min(CONCURRENCY, nodesToTest.length))
+        .fill(null)
+        .map(async () => {
+          while (currentIndex < nodesToTest.length) {
+            const idx = currentIndex++;
+            const nodeId = nodesToTest[idx];
+            await pingNodeId(nodeId);
+          }
+        });
 
-    await Promise.allSettled(workers);
-    showToast(t('manualNodes.pingCompleted', { count: nodesToTest.length }), 'success');
+      await Promise.allSettled(workers);
+      showToast(t('manualNodes.pingCompleted', { count: nodesToTest.length }), 'success');
+    } finally {
+      isPingingAll.value = false;
+    }
   }
 
   return {
@@ -447,6 +454,7 @@ export function useManualNodes(markDirty) {
     manualNodesPerPage,
     pingResults,
     pingingNodes,
+    isPingingAll,
     pingNodeId,
     pingAllNodes,
   };

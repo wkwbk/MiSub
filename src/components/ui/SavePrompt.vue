@@ -5,6 +5,10 @@ import { useI18n } from '@/i18n/index.js';
 defineProps({
   isDirty: Boolean,
   saveState: String,
+  isDiscarding: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 defineEmits(['save', 'discard']);
@@ -30,7 +34,8 @@ const { t } = useI18n();
       <div class="flex items-center gap-2.5 w-full sm:w-auto">
         <button
           v-if="saveState !== 'success'"
-          class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium text-fg-muted hover:text-fg border border-line hover:border-line-strong bg-transparent hover:bg-hover transition-colors rounded-md whitespace-nowrap"
+          :disabled="saveState !== 'idle' || isDiscarding"
+          class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-medium text-fg-muted hover:text-fg border border-line hover:border-line-strong bg-transparent hover:bg-hover transition-colors rounded-md whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           @click="$emit('discard')"
         >
           {{ t('actions.discard') }}

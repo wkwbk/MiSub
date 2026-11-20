@@ -48,6 +48,7 @@ const ensureConfig = () => {
 };
 
 const testConnection = async () => {
+  if (isTesting.value) return;
   const config = ensureConfig();
   isTesting.value = true;
   try {
@@ -62,6 +63,7 @@ const testConnection = async () => {
 };
 
 const runBackup = async () => {
+  if (isBackingUp.value) return;
   const config = ensureConfig();
   const confirmed = await confirmAction({
     message: t('settings.webdavRunBackupConfirm'),
@@ -119,6 +121,7 @@ const restoreFromLocalFile = () => {
 };
 
 const loadRemoteFiles = async () => {
+  if (isLoadingRemoteFiles.value) return;
   isLoadingRemoteFiles.value = true;
   try {
     const result = await api.get('/api/backup/webdav/list');
@@ -133,7 +136,7 @@ const loadRemoteFiles = async () => {
 };
 
 const restoreRemoteFile = async (file) => {
-  if (!file?.path) return;
+  if (!file?.path || isRestoring.value) return;
   const confirmed = await confirmAction({
     message: t('settings.webdavRestoreRemoteConfirm', { name: file.name }),
     variant: 'danger',

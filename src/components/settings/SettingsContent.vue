@@ -4,16 +4,23 @@ import { ChevronUp, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import SettingsLayout from '@/components/layout/SettingsLayout.vue';
 import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
-const BasicSettings = defineAsyncComponent(() => import('@/components/settings/sections/BasicSettings.vue'));
-const HomeSettings = defineAsyncComponent(() => import('@/components/settings/sections/HomeSettings.vue'));
-const GlobalSettings = defineAsyncComponent(() => import('@/components/settings/sections/GlobalSettings.vue'));
-const ServiceSettings = defineAsyncComponent(() => import('@/components/settings/sections/ServiceSettings.vue'));
-const CustomPageSettings = defineAsyncComponent(() => import('@/components/settings/sections/CustomPageSettings.vue'));
-const WebdavBackupSettings = defineAsyncComponent(
-  () => import('@/components/settings/sections/WebdavBackupSettings.vue'),
-);
-const SystemSettings = defineAsyncComponent(() => import('@/components/settings/sections/SystemSettings.vue'));
+const loadBasicSettings = () => import('@/components/settings/sections/BasicSettings.vue');
+const loadHomeSettings = () => import('@/components/settings/sections/HomeSettings.vue');
+const loadGlobalSettings = () => import('@/components/settings/sections/GlobalSettings.vue');
+const loadServiceSettings = () => import('@/components/settings/sections/ServiceSettings.vue');
+const loadCustomPageSettings = () => import('@/components/settings/sections/CustomPageSettings.vue');
+const loadWebdavBackupSettings = () => import('@/components/settings/sections/WebdavBackupSettings.vue');
+const loadSystemSettings = () => import('@/components/settings/sections/SystemSettings.vue');
+
+const BasicSettings = defineAsyncComponent(loadBasicSettings);
+const HomeSettings = defineAsyncComponent(loadHomeSettings);
+const GlobalSettings = defineAsyncComponent(loadGlobalSettings);
+const ServiceSettings = defineAsyncComponent(loadServiceSettings);
+const CustomPageSettings = defineAsyncComponent(loadCustomPageSettings);
+const WebdavBackupSettings = defineAsyncComponent(loadWebdavBackupSettings);
+const SystemSettings = defineAsyncComponent(loadSystemSettings);
 
 /**
  * 设置界面的共享内容区。
@@ -158,13 +165,25 @@ function scrollToTop() {
   window.scrollTo?.({ top: 0, behavior: 'smooth' });
 }
 
+let cancelSectionsPrefetch = () => {};
+
 onMounted(() => {
+  cancelSectionsPrefetch = scheduleIdlePrefetch([
+    loadBasicSettings,
+    loadHomeSettings,
+    loadGlobalSettings,
+    loadServiceSettings,
+    loadCustomPageSettings,
+    loadWebdavBackupSettings,
+    loadSystemSettings,
+  ]);
   if (props.inModal || props.hideFooter || typeof window === 'undefined') return;
   updateScrollTopVisibility();
   window.addEventListener('scroll', handleWindowScroll, { passive: true });
 });
 
 onUnmounted(() => {
+  cancelSectionsPrefetch();
   if (typeof window !== 'undefined') {
     if (scrollRafId !== null) {
       window.cancelAnimationFrame(scrollRafId);

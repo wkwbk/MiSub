@@ -18,6 +18,7 @@ import { readRawPreference, writeRawPreference } from '@/utils/local-preference.
 import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 import { rememberDomainName } from '@/utils/domain-name-memory.js';
 import { useStickyColumns } from '@/composables/useStickyColumn.js'; // --- Component Imports ---
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import RightPanel from '@/components/profiles/RightPanel.vue';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
@@ -29,24 +30,31 @@ import SavePrompt from '@/components/ui/SavePrompt.vue';
 
 const isDev = import.meta.env.DEV;
 
-const SubscriptionEditModal = defineAsyncComponent(() => import('@/components/modals/SubscriptionEditModal.vue'));
-const ManualNodeEditModal = defineAsyncComponent(() => import('@/components/modals/ManualNodeEditModal.vue'));
+const loadSubscriptionEditModal = () => import('@/components/modals/SubscriptionEditModal.vue');
+const loadManualNodeEditModal = () => import('@/components/modals/ManualNodeEditModal.vue');
+const loadProfileModal = () => import('@/components/modals/ProfileModal.vue');
+const loadBulkImportModal = () => import('@/components/modals/BulkImportModal.vue');
+const loadCopyLinkModal = () => import('@/components/modals/CopyLinkModal.vue');
+const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
+
+const SubscriptionEditModal = defineAsyncComponent(loadSubscriptionEditModal);
+const ManualNodeEditModal = defineAsyncComponent(loadManualNodeEditModal);
 const ManualNodeDedupModal = defineAsyncComponent(() => import('@/components/modals/ManualNodeDedupModal.vue'));
 
 const SettingsModal = defineAsyncComponent(() => import('@/components/modals/SettingsModal.vue'));
-const BulkImportModal = defineAsyncComponent(() => import('@/components/modals/BulkImportModal.vue'));
+const BulkImportModal = defineAsyncComponent(loadBulkImportModal);
 const SubscriptionBulkImportModal = defineAsyncComponent(
   () => import('@/components/modals/SubscriptionBulkImportModal.vue'),
 );
-const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
+const ProfileModal = defineAsyncComponent(loadProfileModal);
 const SubscriptionImportModal = defineAsyncComponent(() => import('@/components/modals/SubscriptionImportModal.vue'));
 const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
 const NodePreviewModal = defineAsyncComponent(() => import('@/components/modals/NodePreview/NodePreviewModal.vue'));
 
 const BatchTagModal = defineAsyncComponent(() => import('@/components/modals/BatchTagModal.vue'));
 const TagManagementModal = defineAsyncComponent(() => import('@/components/modals/TagManagementModal.vue'));
-const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
-const CopyLinkModal = defineAsyncComponent(() => import('@/components/modals/CopyLinkModal.vue'));
+const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
+const CopyLinkModal = defineAsyncComponent(loadCopyLinkModal);
 
 // --- 基礎 Props 和狀態 ---
 const props = defineProps({ data: Object });
@@ -62,6 +70,8 @@ if (isDev) {
 }
 
 const saveState = ref('idle');
+const isDiscarding = ref(false);
+let cancelModalPrefetch = () => {};
 
 // Wrapper for markDirty to also reset saveState
 const markDirty = () => {
@@ -174,6 +184,7 @@ const {
   reorderTags,
   pingResults,
   pingingNodes,
+  isPingingAll,
   pingNodeId,
   pingAllNodes,
 } = useManualNodes(markDirty);
@@ -320,6 +331,14 @@ watch([isLoading, mainGridRef], () => {
 
 onMounted(() => {
   initializeState();
+  cancelModalPrefetch = scheduleIdlePrefetch([
+    loadSubscriptionEditModal,
+    loadManualNodeEditModal,
+    loadProfileModal,
+    loadBulkImportModal,
+    loadCopyLinkModal,
+    loadQRCodeModal,
+  ]);
   window.addEventListener('beforeunload', handleBeforeUnload);
   const savedViewMode = readRawPreference('manualNodeViewMode');
   if (savedViewMode) {
@@ -330,6 +349,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  cancelModalPrefetch();
   window.removeEventListener('beforeunload', handleBeforeUnload);
   // 停止订阅自动更新定时器
   stopAutoUpdate();
@@ -352,12 +372,18 @@ const setViewMode = (mode) => {
 
 // --- 其他 JS 逻辑 (省略) ---
 const handleDiscard = async () => {
-  // 强制刷新数据，忽略缓存
-  await dataStore.fetchData(true);
-  isSortingSubs.value = false;
-  isSortingNodes.value = false;
-  isSortingProfiles.value = false;
-  showToast(t('notices.discardedChanges'));
+  if (isDiscarding.value || saveState.value !== 'idle') return;
+  isDiscarding.value = true;
+  try {
+    // 强制刷新数据，忽略缓存
+    await dataStore.fetchData(true);
+    isSortingSubs.value = false;
+    isSortingNodes.value = false;
+    isSortingProfiles.value = false;
+    showToast(t('notices.discardedChanges'));
+  } finally {
+    isDiscarding.value = false;
+  }
 };
 
 const handleSave = async () => {
@@ -595,7 +621,13 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
       @open-bulk-import="showBulkImportModal = true"
     />
 
-    <SavePrompt :is-dirty="isDirty" :save-state="saveState" @discard="handleDiscard" @save="handleSave" />
+    <SavePrompt
+      :is-dirty="isDirty"
+      :is-discarding="isDiscarding"
+      :save-state="saveState"
+      @discard="handleDiscard"
+      @save="handleSave"
+    />
 
     <!-- Main Grid -->
     <div ref="mainGridRef" class="grid grid-cols-1 gap-4 items-start xl:grid-cols-3">
@@ -637,6 +669,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           :active-tag-filters="activeTagFilters"
           :compact-grid="true"
           :current-page="manualNodesCurrentPage"
+          :is-pinging-all="isPingingAll"
           :is-sorting="isSortingNodes"
           :manual-nodes="manualNodes"
           :paginated-manual-nodes="paginatedManualNodes"

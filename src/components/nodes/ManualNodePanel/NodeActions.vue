@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { LayoutGrid, List, Search, X } from '@lucide/vue';
+import { LayoutGrid, List, Loader2, Search, X } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -37,6 +37,10 @@ const props = defineProps({
     default: false,
   },
   isSelectionMode: {
+    type: Boolean,
+    default: false,
+  },
+  isPingingAll: {
     type: Boolean,
     default: false,
   },
@@ -118,10 +122,13 @@ const searchModel = computed({
           </button>
         </div>
         <button
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+          :disabled="isPingingAll"
+          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+          type="button"
           @click="emit('ping-all')"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <Loader2 v-if="isPingingAll" aria-hidden="true" class="h-3 w-3 animate-spin text-emerald-500" />
+          <span v-else class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
           {{ t('actions.pingAll') }}
         </button>
         <button

@@ -7,6 +7,7 @@ import { storeToRefs } from 'pinia';
 import BrandLogo from '@/components/layout/BrandLogo.vue';
 import NavActionGroup from '@/components/layout/NavActionGroup.vue';
 import { MAIN_NAV_ITEMS } from '@/constants/navigation.js';
+import { prefetchRoute } from '@/router/index.js';
 import { useI18n } from '@/i18n/index.js';
 
 const route = useRoute();
@@ -19,8 +20,12 @@ const hideBranding = computed(
 );
 const { t } = useI18n();
 
-defineProps({
+const props = defineProps({
   isLoggedIn: Boolean,
+  pendingPath: {
+    type: String,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['logout']);
@@ -31,6 +36,12 @@ function isActive(path) {
   if (path === '/') return route.path === '/';
   if (path === '/dashboard') return route.path === '/dashboard';
   return route.path.startsWith(path);
+}
+
+function handleNavClick(event, path) {
+  if (props.pendingPath === path || route.fullPath === path) {
+    event.preventDefault();
+  }
 }
 </script>
 
@@ -72,6 +83,9 @@ function isActive(path) {
           "
           :to="item.path"
           class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium border transition-colors duration-200"
+          @click="handleNavClick($event, item.path)"
+          @focus="prefetchRoute(item.path)"
+          @mouseenter="prefetchRoute(item.path)"
         >
           <component :is="item.icon" class="relative z-10 h-4 w-4 shrink-0" />
           <span class="relative z-10">{{ t(item.key) }}</span>
@@ -101,6 +115,8 @@ function isActive(path) {
         :class="isActive(item.path) ? 'nav-mobile-item-active' : 'nav-mobile-item-inactive'"
         :to="item.path"
         class="nav-mobile-item"
+        @click="handleNavClick($event, item.path)"
+        @touchstart.passive="prefetchRoute(item.path)"
       >
         <span class="nav-mobile-icon-wrap">
           <component

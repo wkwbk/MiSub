@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { isChunkLoadError, shouldReloadForChunkError } from '@/utils/chunk-reload.js';
+import { prefetchLoader } from '@/utils/prefetch.js';
 import { t } from '@/i18n/index.js';
 
 /**
@@ -24,6 +25,31 @@ const MySubscriptionsView = () => import('@/views/MySubscriptionsView.vue');
 const SettingsView = () => import('@/views/SettingsView.vue');
 
 const HomeView = () => import('@/views/HomeView.vue'); // [NEW] Wrapper View
+
+const ROUTE_PREFETCH_LOADERS = {
+  '/dashboard': DashboardView,
+  '/dashboard/groups': SubscriptionGroupsView,
+  '/dashboard/nodes': ManualNodesView,
+  '/dashboard/subscriptions': MySubscriptionsView,
+  '/dashboard/settings': SettingsView,
+  '/': HomeView,
+  '/explore': HomeView,
+};
+
+export function prefetchRoute(path) {
+  const loader = ROUTE_PREFETCH_LOADERS[path];
+  if (loader) {
+    prefetchLoader(loader);
+  }
+}
+
+export const COMMON_DASHBOARD_ROUTE_LOADERS = [
+  DashboardView,
+  ManualNodesView,
+  SubscriptionGroupsView,
+  MySubscriptionsView,
+  SettingsView,
+];
 
 let authContextResolver = () => ({ state: 'loading', loginPath: '/login' });
 

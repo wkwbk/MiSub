@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
@@ -14,8 +14,14 @@ import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import { matchesSubscriptionStatus, resolveSubscriptionStatusFilter } from '@/utils/dashboard-deeplink.js';
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
-const TagManagementModal = defineAsyncComponent(() => import('@/components/modals/TagManagementModal.vue'));
+const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
+const loadNodePreviewModal = () => import('@/components/modals/NodePreview/NodePreviewModal.vue');
+const loadSubscriptionBulkImportModal = () => import('@/components/modals/SubscriptionBulkImportModal.vue');
+const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
+
+const TagManagementModal = defineAsyncComponent(loadTagManagementModal);
 
 const dataStore = useDataStore();
 const { showToast } = useToastStore();
@@ -111,7 +117,7 @@ const confirmBatchDelete = () => {
   showBatchDeleteModal.value = false;
 };
 
-const NodePreviewModal = defineAsyncComponent(() => import('@/components/modals/NodePreview/NodePreviewModal.vue'));
+const NodePreviewModal = defineAsyncComponent(loadNodePreviewModal);
 const showNodePreviewModal = ref(false);
 const previewSubscriptionId = ref(null);
 const previewSubscriptionName = ref('');
@@ -154,11 +160,9 @@ const handlePreviewSubscription = (subscriptionId) => {
   }
 };
 
-const SubscriptionBulkImportModal = defineAsyncComponent(
-  () => import('@/components/modals/SubscriptionBulkImportModal.vue'),
-);
+const SubscriptionBulkImportModal = defineAsyncComponent(loadSubscriptionBulkImportModal);
 
-const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
+const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
@@ -204,7 +208,21 @@ const clearStatusFilter = () => {
   }
 };
 
-onMounted(applyStatusFromQuery);
+let cancelModalPrefetch = () => {};
+
+onMounted(() => {
+  applyStatusFromQuery();
+  cancelModalPrefetch = scheduleIdlePrefetch([
+    loadSubscriptionBulkImportModal,
+    loadQRCodeModal,
+    loadTagManagementModal,
+    loadNodePreviewModal,
+  ]);
+});
+
+onUnmounted(() => {
+  cancelModalPrefetch();
+});
 watch(() => route.query.status, applyStatusFromQuery);
 
 const visibleSubscriptions = computed(() =>

@@ -103,7 +103,7 @@ export function useNodePreview(props) {
 
   // 加载节点数据
   const loadNodes = async () => {
-    if (!props.show) return;
+    if (!props.show || loading.value) return;
 
     loading.value = true;
     error.value = '';

@@ -19,6 +19,7 @@ const props = defineProps({
   itemsPerPage: { type: Number, default: 24 },
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
+  isPingingAll: { type: Boolean, default: false },
   compactGrid: { type: Boolean, default: false },
 });
 
@@ -142,6 +143,7 @@ const handleDeleteAll = () => emit('deleteAll');
     <NodeActions
       :active-tag-filters="activeTagFilters"
       :filtered-nodes-count="filteredNodes.length"
+      :is-pinging-all="isPingingAll"
       :is-selection-mode="isSelectionMode"
       :is-sorting="isSorting"
       :manual-node-tags="tags"

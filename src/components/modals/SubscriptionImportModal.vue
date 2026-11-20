@@ -92,6 +92,7 @@ const commitParsedNodes = (backendNodes, targetTags, sourceLabel) => {
 };
 
 const importFiles = async (fileList) => {
+  if (isLoading.value) return;
   if (normalizeTagList(selectedTags.value).length === 0 && fileList?.length) {
     const autoTag = buildAutoTagName({ fileName: fileList[0].name });
     selectedTags.value = autoTag ? [autoTag] : [];
@@ -153,6 +154,7 @@ const isValidUrl = (url) => {
  * 导入订阅
  */
 const importSubscription = async () => {
+  if (isLoading.value) return;
   const targetTags = [...selectedTags.value];
 
   // 验证URL

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { FileText } from '@lucide/vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
@@ -23,6 +23,12 @@ import {
 import { getDashboardHealthItems, resolveHealthItemCopy, shouldShowFullGuide } from '@/utils/dashboard-health.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
+import { prefetchLoader, scheduleIdlePrefetch } from '@/utils/prefetch.js';
+
+const loadBulkImportModal = () => import('@/components/modals/BulkImportModal.vue');
+const loadProfileModal = () => import('@/components/modals/ProfileModal.vue');
+const loadLogModal = () => import('@/components/modals/LogModal.vue');
+const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
 
 const { t } = useI18n();
 const { showToast } = useToastStore();
@@ -162,16 +168,16 @@ const openBulkImportModal = () => {
   showBulkImportModal.value = true;
 };
 
-const BulkImportModal = defineAsyncComponent(() => import('@/components/modals/BulkImportModal.vue'));
+const BulkImportModal = defineAsyncComponent(loadBulkImportModal);
 
 // --- Profile Modal Logic ---
 const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } = useProfiles(markDirty);
 
-const ProfileModal = defineAsyncComponent(() => import('@/components/modals/ProfileModal.vue'));
+const ProfileModal = defineAsyncComponent(loadProfileModal);
 
 // --- Log Modal Logic ---
 const showLogModal = ref(false);
-const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
+const LogModal = defineAsyncComponent(loadLogModal);
 
 // Kept below the `showLogModal` declaration on purpose: this handler closes
 // over it, so co-locating them keeps the dependency obvious and immune to a
@@ -210,23 +216,38 @@ const persistDismissedHealthItems = async (ids) => {
   }
 };
 
+const isUpdatingHealthDismissal = ref(false);
+
 const dismissHealthItemById = async (id) => {
+  if (isUpdatingHealthDismissal.value) return;
   const current = dismissedHealthItemIds.value;
   // 已经忽略过就不必再往返一次服务端
   if (isHealthItemDismissed(current, id)) return;
-  const persisted = await persistDismissedHealthItems(addDismissedHealthItem(current, id));
-  if (!persisted) {
-    showToast(t('dashboard.health.dismissFailed'), 'error');
+  isUpdatingHealthDismissal.value = true;
+  try {
+    const persisted = await persistDismissedHealthItems(addDismissedHealthItem(current, id));
+    if (!persisted) {
+      showToast(t('dashboard.health.dismissFailed'), 'error');
+    }
+  } finally {
+    isUpdatingHealthDismissal.value = false;
   }
 };
 
 const restoreDismissedHealthItems = async () => {
-  if (dismissedHealthItemIds.value.length === 0) return;
-  const persisted = await persistDismissedHealthItems([]);
-  if (!persisted) {
-    showToast(t('dashboard.health.restoreFailed'), 'error');
+  if (isUpdatingHealthDismissal.value || dismissedHealthItemIds.value.length === 0) return;
+  isUpdatingHealthDismissal.value = true;
+  try {
+    const persisted = await persistDismissedHealthItems([]);
+    if (!persisted) {
+      showToast(t('dashboard.health.restoreFailed'), 'error');
+    }
+  } finally {
+    isUpdatingHealthDismissal.value = false;
   }
 };
+
+let cancelModalPrefetch = () => {};
 
 // 一次性迁移：旧版的忽略记录只存在本机 localStorage，不并进设置的话，
 // 升级后用户之前忽略过的项会全部复活。
@@ -235,6 +256,8 @@ const restoreDismissedHealthItems = async () => {
 // 否则会把用户在别的设备上「全部恢复」掉的项又塞回来。
 // 无论走哪条分支都要清掉旧键，否则每次启动都会重复迁移。
 onMounted(async () => {
+  cancelModalPrefetch = scheduleIdlePrefetch([loadProfileModal, loadBulkImportModal, loadLogModal, loadQRCodeModal]);
+
   const legacy = readLegacyDismissedHealthItemIds();
   if (legacy.length === 0) return;
 
@@ -246,8 +269,12 @@ onMounted(async () => {
   clearLegacyDismissedHealthItemIds();
 });
 
+onUnmounted(() => {
+  cancelModalPrefetch();
+});
+
 // --- QRCode Modal Logic ---
-const QRCodeModal = defineAsyncComponent(() => import('@/components/modals/QRCodeModal.vue'));
+const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
@@ -297,6 +324,8 @@ const handleQRCode = (url, title) => {
             <button
               class="min-h-10 flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
               @click="showLogModal = true"
+              @focus="prefetchLoader(loadLogModal)"
+              @mouseenter="prefetchLoader(loadLogModal)"
             >
               <FileText class="h-4 w-4 shrink-0 text-fg-muted" stroke-width="1.5" />
               {{ t('dashboard.actions.viewLog') }}
@@ -304,12 +333,16 @@ const handleQRCode = (url, title) => {
             <button
               class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg hover:bg-hover hover:text-fg rounded-md transition-colors border border-line shadow-none"
               @click="openBulkImportModal"
+              @focus="prefetchLoader(loadBulkImportModal)"
+              @mouseenter="prefetchLoader(loadBulkImportModal)"
             >
               {{ t('dashboard.actions.bulkImport') }}
             </button>
             <button
               class="min-h-10 px-3.5 py-2 text-xs sm:text-sm font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md transition-colors border border-accent shadow-none"
               @click="handleAddProfile"
+              @focus="prefetchLoader(loadProfileModal)"
+              @mouseenter="prefetchLoader(loadProfileModal)"
             >
               {{ t('dashboard.actions.addProfile') }}
             </button>
@@ -399,8 +432,9 @@ const handleQRCode = (url, title) => {
                   </button>
                   <button
                     :aria-label="t('dashboard.health.dismissItem')"
+                    :disabled="isUpdatingHealthDismissal"
                     :title="t('dashboard.health.dismissItem')"
-                    class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none"
+                    class="min-h-9 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="health-item-dismiss"
                     type="button"
                     @click="dismissHealthItemById(item.id)"
@@ -437,7 +471,8 @@ const handleQRCode = (url, title) => {
             </div>
             <button
               v-if="dismissedHealthItemsCount > 0"
-              class="mt-3 justify-self-start text-xs font-mono font-medium text-fg-muted underline decoration-zinc-700 underline-offset-4 hover:text-fg transition-colors"
+              :disabled="isUpdatingHealthDismissal"
+              class="mt-3 justify-self-start text-xs font-mono font-medium text-fg-muted underline decoration-zinc-700 underline-offset-4 hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="health-items-restore"
               type="button"
               @click="restoreDismissedHealthItems"

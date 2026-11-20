@@ -4,6 +4,7 @@ import { getCurrentInstance, onUnmounted, ref } from 'vue';
  * Tracks route navigation progress and delayed slow-load state for lazy-loaded views.
  */
 export function useRouteLoading(router, options = {}) {
+  const showDelayMs = options.showDelayMs ?? 80;
   const slowThresholdMs = options.slowThresholdMs ?? 150;
   const finishDelayMs = options.finishDelayMs ?? 180;
 
@@ -11,14 +12,20 @@ export function useRouteLoading(router, options = {}) {
   const progress = ref(0);
   const isFadingOut = ref(false);
   const showSlowIndicator = ref(false);
+  const pendingPath = ref(null);
 
   let navigationToken = 0;
+  let showTimer = null;
   let progressTimer = null;
   let slowTimer = null;
   let fadeTimer = null;
   let finishTimer = null;
 
   const clearTimers = () => {
+    if (showTimer !== null) {
+      clearTimeout(showTimer);
+      showTimer = null;
+    }
     if (progressTimer !== null) {
       clearInterval(progressTimer);
       progressTimer = null;
@@ -37,30 +44,66 @@ export function useRouteLoading(router, options = {}) {
     }
   };
 
-  const start = () => {
-    const token = ++navigationToken;
-    clearTimers();
+  const beginVisibleProgress = (token) => {
+    if (token !== navigationToken) return;
     isNavigating.value = true;
     isFadingOut.value = false;
-    showSlowIndicator.value = false;
-    progress.value = 18;
+    progress.value = Math.max(progress.value, 18);
 
-    progressTimer = setInterval(() => {
-      if (token !== navigationToken) return;
-      progress.value = Math.min(88, progress.value + (90 - progress.value) * 0.18);
-    }, 120);
+    if (progressTimer === null) {
+      progressTimer = setInterval(() => {
+        if (token !== navigationToken) return;
+        progress.value = Math.min(88, progress.value + (90 - progress.value) * 0.18);
+      }, 120);
+    }
+  };
+
+  const start = (targetPath) => {
+    // Re-clicking the same in-flight target should NOT reset the progress bar or timers.
+    if (pendingPath.value && pendingPath.value === targetPath) {
+      return;
+    }
+
+    const alreadyVisible = isNavigating.value && !isFadingOut.value;
+    const token = ++navigationToken;
+    clearTimers();
+    pendingPath.value = targetPath;
+    isFadingOut.value = false;
+    showSlowIndicator.value = false;
+
+    if (alreadyVisible) {
+      // Smoothly continue from current progress instead of jumping backwards to 18%.
+      beginVisibleProgress(token);
+    } else {
+      progress.value = 0;
+      if (showDelayMs <= 0) {
+        beginVisibleProgress(token);
+      } else {
+        showTimer = setTimeout(() => {
+          showTimer = null;
+          beginVisibleProgress(token);
+        }, showDelayMs);
+      }
+    }
 
     slowTimer = setTimeout(() => {
       if (token !== navigationToken) return;
+      if (!isNavigating.value) {
+        beginVisibleProgress(token);
+      }
       showSlowIndicator.value = true;
     }, slowThresholdMs);
   };
 
   const finish = () => {
     const token = navigationToken;
+    pendingPath.value = null;
     clearTimers();
     showSlowIndicator.value = false;
-    if (!isNavigating.value) return;
+    if (!isNavigating.value) {
+      progress.value = 0;
+      return;
+    }
 
     progress.value = 100;
     fadeTimer = setTimeout(() => {
@@ -78,7 +121,7 @@ export function useRouteLoading(router, options = {}) {
 
   const removeBeforeEach = router?.beforeEach?.((to, from) => {
     if (from?.matched?.length > 0 && to?.path !== from?.path) {
-      start();
+      start(to.path);
     }
   });
   const removeAfterEach = router?.afterEach?.(() => {
@@ -90,6 +133,7 @@ export function useRouteLoading(router, options = {}) {
 
   const cleanup = () => {
     navigationToken++;
+    pendingPath.value = null;
     clearTimers();
     if (typeof removeBeforeEach === 'function') removeBeforeEach();
     if (typeof removeAfterEach === 'function') removeAfterEach();
@@ -105,6 +149,7 @@ export function useRouteLoading(router, options = {}) {
     progress,
     isFadingOut,
     showSlowIndicator,
+    pendingPath,
     cleanup,
   };
 }

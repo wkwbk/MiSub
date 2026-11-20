@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, ref } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
@@ -13,8 +13,18 @@ import SubscriptionImportModal from '@/components/modals/SubscriptionImportModal
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
-const TagManagementModal = defineAsyncComponent(() => import('@/components/modals/TagManagementModal.vue'));
+const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
+const TagManagementModal = defineAsyncComponent(loadTagManagementModal);
+
+let cancelModalPrefetch = () => {};
+onMounted(() => {
+  cancelModalPrefetch = scheduleIdlePrefetch([loadTagManagementModal]);
+});
+onUnmounted(() => {
+  cancelModalPrefetch();
+});
 
 const dataStore = useDataStore();
 const { showToast } = useToastStore();
@@ -61,6 +71,7 @@ const {
   manualNodesPerPage,
   pingResults,
   pingingNodes,
+  isPingingAll,
   pingNodeId,
   pingAllNodes,
   sortNodesByLatency,
@@ -162,6 +173,7 @@ const handleTagReorder = (newOrder) => {
     <ManualNodePanel
       :active-tag-filters="activeTagFilters"
       :current-page="manualNodesCurrentPage"
+      :is-pinging-all="isPingingAll"
       :is-sorting="isSortingNodes"
       :items-per-page="manualNodesPerPage"
       :manual-nodes="manualNodes"

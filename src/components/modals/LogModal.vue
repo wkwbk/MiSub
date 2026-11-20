@@ -22,6 +22,7 @@ const { showToast } = useToastStore();
 const { t, locale } = useI18n();
 const logs = ref([]);
 const isLoading = ref(false);
+const isClearing = ref(false);
 const expandedLogId = ref(null);
 
 // Pagination State
@@ -43,6 +44,7 @@ const paginatedLogs = computed(() => {
 });
 
 const fetchLogs = async () => {
+  if (isLoading.value) return;
   isLoading.value = true;
   try {
     // Cache busting with explicit timestamp
@@ -57,7 +59,7 @@ const fetchLogs = async () => {
   }
 };
 
-const canClearLogs = computed(() => !isLoading.value && filteredLogs.value.length > 0);
+const canClearLogs = computed(() => !isLoading.value && !isClearing.value && filteredLogs.value.length > 0);
 
 const clearLogs = async () => {
   if (!canClearLogs.value) return;
@@ -68,6 +70,7 @@ const clearLogs = async () => {
   });
   if (!confirmed) return;
 
+  isClearing.value = true;
   try {
     const endpoint = targetProfileName ? `/api/logs?profileName=${encodeURIComponent(targetProfileName)}` : '/api/logs';
     await api.del(endpoint);
@@ -80,6 +83,8 @@ const clearLogs = async () => {
     showToast(t('logs.clearSuccess'), 'success');
   } catch (e) {
     showToast(t('logs.clearFailed'), 'error');
+  } finally {
+    isClearing.value = false;
   }
 };
 
@@ -133,7 +138,8 @@ watch(
         </div>
         <div class="flex gap-2 shrink-0">
           <button
-            class="text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg"
+            :disabled="isLoading || isClearing"
+            class="text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             @click="fetchLogs"
           >
             {{ t('common.refresh') }}

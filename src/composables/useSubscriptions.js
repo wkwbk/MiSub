@@ -167,6 +167,7 @@ export function useSubscriptions(markDirty) {
     const subToUpdate = subscriptions.value.find((s) => s.id === subId);
     if (!subToUpdate) return false;
     if (!subToUpdate.url.startsWith('http')) return false;
+    if (!isInitialLoad && subToUpdate.isUpdating) return false;
 
     if (!isInitialLoad) {
       subToUpdate.isUpdating = true;

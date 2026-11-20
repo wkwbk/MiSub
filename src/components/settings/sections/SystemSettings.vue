@@ -77,6 +77,7 @@ const handleCopyExternalApiToken = async (settings) => {
 };
 
 const handleUpdatePassword = async () => {
+  if (isUpdatingPassword.value) return;
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
     showToast(t('systemSettings.passwordMismatch'), 'error');
     return;
