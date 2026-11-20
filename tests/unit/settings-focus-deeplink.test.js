@@ -33,6 +33,12 @@ vi.mock('@/composables/useSettingsLogic.js', () => ({
     }),
 }));
 
+// VTU 为了匹配 stub 名称会触发 defineAsyncComponent 的 loader，stub 并不能阻止真实模块被动态加载；
+// 直接 mock 模块本身，避免测试结束后仍有真实 import 在途。
+vi.mock('@/components/settings/sections/BasicSettings.vue', () => ({
+    default: { name: 'BasicSettings', template: '<div />' },
+}));
+
 const scrollSpy = vi.fn();
 
 function mountView() {

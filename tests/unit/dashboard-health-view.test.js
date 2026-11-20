@@ -10,6 +10,13 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast.js';
 
+// VTU 为匹配 stub 名称会触发 defineAsyncComponent 的 loader，stub 并不能阻止真实模块被动态加载；
+// 在 CI 这类更快的机器上，这些在途 import 会在 runner 关闭后 reject。这里直接 mock 视图实际用到的懒加载弹窗。
+vi.mock('@/components/modals/BulkImportModal.vue', () => ({ default: { name: 'BulkImportModal', template: '<div />' } }));
+vi.mock('@/components/modals/ProfileModal.vue', () => ({ default: { name: 'ProfileModal', template: '<div />' } }));
+vi.mock('@/components/modals/LogModal.vue', () => ({ default: { name: 'LogModal', template: '<div />' } }));
+vi.mock('@/components/modals/QRCodeModal.vue', () => ({ default: { name: 'QRCodeModal', template: '<div />' } }));
+
 const pushMock = vi.fn();
 
 const subscriptionsRef = { value: [] };
@@ -68,6 +75,7 @@ function mountDashboard(locale = 'zh-CN') {
                 BulkImportModal: true,
                 ProfileModal: true,
                 QRCodeModal: true,
+                LogModal: true,
                 RouterLink: { template: '<a><slot /></a>' },
             },
         },

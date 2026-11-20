@@ -13,7 +13,7 @@ export default defineConfig({
         globals: true,
         pool: 'vmThreads',
         environment: 'happy-dom',
-        setupFiles: ['tests/setup/i18n-preload.js'],
+        setupFiles: ['tests/setup/i18n-preload.js', 'tests/setup/async-components.js'],
         passWithNoTests: true,
         include: ['tests/**/*.{test,spec}.{js,ts}'],
         coverage: {
