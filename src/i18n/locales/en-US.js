@@ -956,6 +956,13 @@ export default {
         option30Minutes: '30 min',
         option1Hour: '1 hr',
         autoUpdateDisabledHint: 'Auto update is disabled. Refresh sources manually.',
+        profileUpdateInterval: 'Client Subscription Update Interval',
+        profileUpdateIntervalDesc:
+            'Injects Profile-Update-Interval header to lock client auto-update interval (v2rayN, FlClash, Clash Verge, etc.), reducing invalid polling',
+        hours: 'hrs',
+        option12Hours: '12 hrs',
+        option24Hours: '24 hrs (Rec)',
+        option48Hours: '48 hrs',
         accessLogTitle: 'Access logs & count',
         accessLogDesc: 'Record access and count traffic/IPs',
         accessLogQuotaHint:

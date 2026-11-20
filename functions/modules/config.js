@@ -37,6 +37,7 @@ export const DEFAULT_SETTINGS = {
     enableFlagEmoji: true,
     enablePublicPage: true,
     storageType: 'd1',
+    profileUpdateInterval: 24, // 客户端订阅默认更新间隔（小时），0 表示禁用注入 Profile-Update-Interval
     // 新增：借鉴Sub-Store和miaomiaowu的功能
     enableSubscriptionSync: true, // 启用订阅同步
     subscriptionCacheExpireMinutes: 60, // 订阅缓存过期时间（分钟）

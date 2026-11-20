@@ -54,7 +54,9 @@ function getRuntimeEnvValue(env, key) {
 }
 
 function isNoSuchTableError(error) {
-    return String(error?.message || error || '').toLowerCase().includes('no such table');
+    return String(error?.message || error || '')
+        .toLowerCase()
+        .includes('no such table');
 }
 
 function isD1StorageUnavailableError(error) {
@@ -648,6 +650,19 @@ export function migrateConfigSettings(config) {
         migratedConfig.builtinLoonSkipCertVerify = toBoolean(
             migratedConfig.builtinLoonSkipCertVerify
         );
+    }
+
+    if (migratedConfig.hasOwnProperty('profileUpdateInterval')) {
+        const parsed = Number(migratedConfig.profileUpdateInterval);
+        migratedConfig.profileUpdateInterval = Number.isFinite(parsed) ? parsed : 24;
+    } else if (migratedConfig.hasOwnProperty('UpdateInterval')) {
+        const parsed = Number(migratedConfig.UpdateInterval);
+        if (Number.isFinite(parsed)) {
+            migratedConfig.profileUpdateInterval =
+                parsed >= 3600 && parsed % 3600 === 0
+                    ? Math.round(parsed / 3600)
+                    : Math.round(parsed);
+        }
     }
 
     return migratedConfig;

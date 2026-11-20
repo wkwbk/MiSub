@@ -1,9 +1,5 @@
 import { StorageFactory } from '../../storage-adapter.js';
-import {
-    base64EncodeUtf8,
-    formatBytes,
-    migrateConfigSettings,
-} from '../utils.js';
+import { base64EncodeUtf8, formatBytes, migrateConfigSettings } from '../utils.js';
 import { generateCombinedNodeList } from '../../services/subscription-service.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import {
@@ -38,6 +34,7 @@ import {
     buildTemplateProxyBlock,
     extractProxySectionFromBuiltin,
     buildManagedConfigUrl,
+    resolveProfileUpdateInterval,
     getCurrentRequestUserInfo,
     mergeSubscriptionUserInfo,
     buildUserInfoHeaderFromSubscriptions,
@@ -64,6 +61,7 @@ import {
 export {
     extractProxySectionFromBuiltin,
     buildManagedConfigUrl,
+    resolveProfileUpdateInterval,
     formatNotificationExpireTime,
     formatNotificationExpireStatus,
     resolveTemplateUrl,
@@ -343,9 +341,7 @@ export async function handleMisubRequest(context) {
                             storageAdapter.incrementProfileDownloadCount?.(
                                 profile.id || profile.customId
                             )
-                        ).catch((err) =>
-                            console.error('[Download Count] Failed to update:', err)
-                        )
+                        ).catch((err) => console.error('[Download Count] Failed to update:', err))
                     );
                 } catch (err) {
                     // 计数失败不影响订阅服务
@@ -374,6 +370,9 @@ export async function handleMisubRequest(context) {
 
     // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
     let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
+
+    const updateIntervalHours = resolveProfileUpdateInterval(currentProfile, config);
+    const updateIntervalSeconds = (updateIntervalHours || 24) * 3600;
 
     // [Access Log] Record access log and stats if enabled
     if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
@@ -702,7 +701,9 @@ export async function handleMisubRequest(context) {
         };
         if (userInfoHeader) {
             nodeHeaders['Subscription-Userinfo'] = userInfoHeader;
-            nodeHeaders['Profile-Update-Interval'] = String(config.UpdateInterval || 24);
+        }
+        if (updateIntervalHours !== null) {
+            nodeHeaders['Profile-Update-Interval'] = String(updateIntervalHours);
         }
         // [兼容性优化] 第三方转换后端对明文列表的支持通常比 Base64 更好。
         // 同时对于 Cloudflare 而言，明文输出更有利于其边缘节点的流式处理。
@@ -736,7 +737,7 @@ export async function handleMisubRequest(context) {
                     addFlagEmoji: resolveAddFlagEmoji(currentProfile, config),
                     fileName: subName,
                     managedConfigUrl: buildManagedConfigUrl(request.url),
-                    interval: config.UpdateInterval || 86400,
+                    interval: updateIntervalSeconds,
                     skipCertVerify: shouldSkipCertificateVerify,
                     enableUdp: shouldEnableUdp,
                     enableTfo: urlTfo === 'true' || urlTfo === '1',
@@ -774,10 +775,9 @@ export async function handleMisubRequest(context) {
                     });
                     if (userInfoHeader) {
                         responseHeaders.set('Subscription-Userinfo', userInfoHeader);
-                        responseHeaders.set(
-                            'Profile-Update-Interval',
-                            String(config.UpdateInterval || 24)
-                        );
+                    }
+                    if (updateIntervalHours !== null) {
+                        responseHeaders.set('Profile-Update-Interval', String(updateIntervalHours));
                     }
                     Object.entries(rendered.headers || {}).forEach(([key, value]) =>
                         responseHeaders.set(key, value)
@@ -830,16 +830,28 @@ export async function handleMisubRequest(context) {
         }
 
         // [重要修复] 使用手动构建出的 302 响应，以确保头部是可变的 (Mutable)
+        const redirectHeaders = {
+            Location: externalUrl.toString(),
+            'Cache-Control': 'no-store, no-cache',
+            'X-MiSub-Mode': 'external-redirect-v2',
+            ...(templateSource.kind === 'builtin'
+                ? { 'X-MiSub-Template-Warning': 'external-engine-ignores-builtin-template' }
+                : {}),
+        };
+        const userInfoHeader = buildUserInfoHeaderFromSubscriptions(
+            context,
+            targetMisubs,
+            currentProfile?.expiresAt
+        );
+        if (userInfoHeader) {
+            redirectHeaders['Subscription-Userinfo'] = userInfoHeader;
+        }
+        if (updateIntervalHours !== null) {
+            redirectHeaders['Profile-Update-Interval'] = String(updateIntervalHours);
+        }
         return new Response(null, {
             status: 302,
-            headers: {
-                Location: externalUrl.toString(),
-                'Cache-Control': 'no-store, no-cache',
-                'X-MiSub-Mode': 'external-redirect-v2',
-                ...(templateSource.kind === 'builtin'
-                    ? { 'X-MiSub-Template-Warning': 'external-engine-ignores-builtin-template' }
-                    : {}),
-            },
+            headers: redirectHeaders,
         });
     }
 
@@ -850,10 +862,21 @@ export async function handleMisubRequest(context) {
         } else {
             contentToEncode = combinedNodeList;
         }
+        const userInfoHeader = buildUserInfoHeaderFromSubscriptions(
+            context,
+            targetMisubs,
+            currentProfile?.expiresAt
+        );
         const headers = {
             'Content-Type': 'text/plain; charset=utf-8',
             'Cache-Control': 'no-store, no-cache',
         };
+        if (userInfoHeader) {
+            headers['Subscription-Userinfo'] = userInfoHeader;
+        }
+        if (updateIntervalHours !== null) {
+            headers['Profile-Update-Interval'] = String(updateIntervalHours);
+        }
         Object.entries(cacheHeaders).forEach(([key, value]) => {
             headers[key] = value;
         });
@@ -910,7 +933,7 @@ export async function handleMisubRequest(context) {
         addFlagEmoji: resolveAddFlagEmoji(currentProfile, config),
         fileName: subName,
         managedConfigUrl: '',
-        interval: config.UpdateInterval || 86400,
+        interval: updateIntervalSeconds,
         skipCertVerify: finalSkipCertVerify,
         enableUdp: finalEnableUdp,
         enableTfo: finalEnableTfo,
@@ -990,7 +1013,9 @@ export async function handleMisubRequest(context) {
 
             if (userInfoHeader) {
                 responseHeaders.set('Subscription-Userinfo', userInfoHeader);
-                responseHeaders.set('Profile-Update-Interval', String(config.UpdateInterval || 24));
+            }
+            if (updateIntervalHours !== null) {
+                responseHeaders.set('Profile-Update-Interval', String(updateIntervalHours));
             }
 
             Object.entries(resultHeaders).forEach(([k, v]) => responseHeaders.set(k, v));
@@ -1043,7 +1068,9 @@ export async function handleMisubRequest(context) {
     );
     if (userInfoHeader) {
         base64Headers['Subscription-Userinfo'] = userInfoHeader;
-        base64Headers['Profile-Update-Interval'] = String(config.UpdateInterval || 24);
+    }
+    if (updateIntervalHours !== null) {
+        base64Headers['Profile-Update-Interval'] = String(updateIntervalHours);
     }
     Object.entries(cacheHeaders).forEach(([key, value]) => {
         base64Headers[key] = value;

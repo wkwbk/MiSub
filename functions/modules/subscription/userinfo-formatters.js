@@ -70,6 +70,38 @@ export function buildManagedConfigUrl(requestUrl) {
     return managedUrl.toString();
 }
 
+/**
+ * 解析并确定客户端订阅更新周期（单位：小时）
+ * 优先级：Profile 覆盖设置 > 全局设置 (profileUpdateInterval / UpdateInterval) > 默认推荐 24 小时
+ * 若显式配置为 0 或负数，则视为禁用注入（返回 null）
+ * @param {Object} [profile]
+ * @param {Object} [config]
+ * @returns {number|null} 周期（小时），若为 null 则不注入 Profile-Update-Interval
+ */
+export function resolveProfileUpdateInterval(profile, config) {
+    const rawVal =
+        profile?.profileUpdateInterval ??
+        profile?.updateInterval ??
+        config?.profileUpdateInterval ??
+        config?.UpdateInterval;
+
+    if (rawVal === undefined || rawVal === null || rawVal === '') {
+        return 24;
+    }
+    const num = Number(rawVal);
+    if (!Number.isFinite(num)) {
+        return 24;
+    }
+    if (num <= 0) {
+        return null;
+    }
+    // 兼容配置为秒（如 86400）的历史遗留情况
+    if (num >= 3600 && num % 3600 === 0) {
+        return Math.round(num / 3600);
+    }
+    return Math.round(num);
+}
+
 export function getCurrentRequestUserInfo(context, sub) {
     const currentInfo = context?.currentSubscriptionRuntimeInfo || {};
     const runtimeKey = [sub?.id, sub?.url].find(

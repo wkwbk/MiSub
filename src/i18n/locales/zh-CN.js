@@ -936,6 +936,13 @@ export default {
         option30Minutes: '30分钟',
         option1Hour: '1小时',
         autoUpdateDisabledHint: '自动更新已禁用，订阅信息需手动刷新',
+        profileUpdateInterval: '客户端订阅更新周期',
+        profileUpdateIntervalDesc:
+            '返回 Profile-Update-Interval 响应头，指示客户端（如 v2rayN、FlClash、Clash Verge 等）锁定默认自动更新周期，避免无效高频请求消耗额度',
+        hours: '小时',
+        option12Hours: '12小时',
+        option24Hours: '24小时 (推荐)',
+        option48Hours: '48小时',
         accessLogTitle: '开启访问日志 & 计数',
         accessLogDesc: '记录订阅访问并统计流量与IP',
         accessLogQuotaHint:
