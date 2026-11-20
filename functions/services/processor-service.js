@@ -261,7 +261,11 @@ export class ProcessorService {
                     fileName: subName,
                     targetFormat,
                     ruleLevel: builtinOptions.ruleLevel,
-                    interval: config.UpdateInterval || 86400,
+                    interval:
+                        builtinOptions.interval ||
+                        (config.profileUpdateInterval
+                            ? config.profileUpdateInterval * 3600
+                            : config.UpdateInterval || 86400),
                     managedConfigUrl,
                     skipCertVerify: builtinOptions.skipCertVerify,
                     enableUdp: builtinOptions.enableUdp,

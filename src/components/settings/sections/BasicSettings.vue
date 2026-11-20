@@ -198,6 +198,54 @@
             customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
         }
     };
+
+    const QUICK_PROFILE_INTERVAL_VALUES = [0, 12, 24, 48];
+    const MIN_CUSTOM_PROFILE_INTERVAL = 1;
+
+    const isCustomProfileInterval = computed(
+        () =>
+            !QUICK_PROFILE_INTERVAL_VALUES.includes(
+                Number(props.settings.profileUpdateInterval ?? 24)
+            )
+    );
+
+    const customProfileIntervalInput = ref(
+        isCustomProfileInterval.value ? String(props.settings.profileUpdateInterval ?? '') : ''
+    );
+
+    watch(
+        () => props.settings.profileUpdateInterval,
+        (val) => {
+            if (QUICK_PROFILE_INTERVAL_VALUES.includes(Number(val))) {
+                customProfileIntervalInput.value = '';
+            } else if (val !== undefined && val !== null) {
+                customProfileIntervalInput.value = String(val);
+            }
+        }
+    );
+
+    const handleCustomProfileIntervalInput = (event) => {
+        const raw = event.target.value;
+        customProfileIntervalInput.value = raw;
+        const parsed = Number.parseInt(raw, 10);
+        if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_PROFILE_INTERVAL) {
+            props.settings.profileUpdateInterval = parsed;
+        }
+    };
+
+    const handleCustomProfileIntervalBlur = () => {
+        const parsed = Number.parseInt(customProfileIntervalInput.value, 10);
+        if (customProfileIntervalInput.value === '' || Number.isNaN(parsed)) {
+            customProfileIntervalInput.value = isCustomProfileInterval.value
+                ? String(props.settings.profileUpdateInterval ?? 24)
+                : '';
+            return;
+        }
+        if (parsed < MIN_CUSTOM_PROFILE_INTERVAL) {
+            props.settings.profileUpdateInterval = MIN_CUSTOM_PROFILE_INTERVAL;
+            customProfileIntervalInput.value = String(MIN_CUSTOM_PROFILE_INTERVAL);
+        }
+    };
 </script>
 
 <template>
@@ -358,6 +406,74 @@
                         <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
                         {{ t('settings.autoUpdateDisabledHint') }}
                     </p>
+                </div>
+
+                <!-- 客户端订阅更新周期 (Profile-Update-Interval) -->
+                <div class="py-5 first:pt-0 last:pb-0">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="space-y-1">
+                            <p class="text-sm font-medium text-fg">
+                                {{ t('settings.profileUpdateInterval') }}
+                            </p>
+                            <p class="text-xs text-fg-muted leading-relaxed">
+                                {{ t('settings.profileUpdateIntervalDesc') }}
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 shrink-0">
+                            <div
+                                :class="[
+                                    'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
+                                    isCustomProfileInterval
+                                        ? 'border-line-strong'
+                                        : 'border-line hover:border-line-strong focus-within:border-line-strong',
+                                ]"
+                            >
+                                <input
+                                    type="number"
+                                    inputmode="numeric"
+                                    :value="customProfileIntervalInput"
+                                    @input="handleCustomProfileIntervalInput"
+                                    @blur="handleCustomProfileIntervalBlur"
+                                    :placeholder="t('settings.customInterval')"
+                                    :min="MIN_CUSTOM_PROFILE_INTERVAL"
+                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                    :aria-label="t('settings.profileUpdateInterval')"
+                                />
+                                <span
+                                    class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap"
+                                >
+                                    {{ t('settings.hours') }}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{
+                                    t('settings.quickSelect')
+                                }}</span>
+                                <button
+                                    v-for="option in [
+                                        { value: 0, label: t('settings.disabledOption') },
+                                        { value: 12, label: t('settings.option12Hours') },
+                                        { value: 24, label: t('settings.option24Hours') },
+                                        { value: 48, label: t('settings.option48Hours') },
+                                    ]"
+                                    :key="option.value"
+                                    type="button"
+                                    @click="settings.profileUpdateInterval = option.value"
+                                    :aria-pressed="
+                                        (settings.profileUpdateInterval ?? 24) === option.value
+                                    "
+                                    :class="[
+                                        'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                                        (settings.profileUpdateInterval ?? 24) === option.value
+                                            ? 'bg-active text-fg border-line-strong font-semibold'
+                                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
+                                    ]"
+                                >
+                                    {{ option.label }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 访问日志 -->
