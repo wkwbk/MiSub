@@ -42,7 +42,6 @@ describe('manual node sorting filters', () => {
         totalPages: 1,
         isSorting: true,
         searchTerm: '',
-        viewMode: 'card',
         tags: ['A', 'B', 'X'],
         activeTagFilters: ['A'],
         itemsPerPage: 24,

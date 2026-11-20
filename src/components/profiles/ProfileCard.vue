@@ -129,12 +129,12 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
       <div
         v-if="!isSelectionMode"
-        class="shrink-0 flex items-center gap-1 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
+        class="shrink-0 flex items-center gap-0.5 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
       >
         <button
           :aria-label="t('actions.previewNodes')"
           :title="t('actions.previewNodes')"
-          class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+          class="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors"
           @click.stop="emit('preview')"
         >
           <Eye class="w-4 h-4" />
@@ -142,7 +142,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         <button
           :aria-label="t('actions.showQrCode')"
           :title="t('actions.showQrCode')"
-          class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+          class="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors"
           @click.stop="emit('qrcode')"
         >
           <QrCode class="w-4 h-4" stroke-width="1.5" />
@@ -150,7 +150,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         <button
           :aria-label="t('actions.edit')"
           :title="t('actions.edit')"
-          class="p-1.5 rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+          class="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-md border border-transparent hover:border-line-strong hover:bg-hover text-fg-muted hover:text-fg transition-colors"
           @click.stop="emit('edit')"
         >
           <Pencil class="w-4 h-4" />
@@ -158,7 +158,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         <button
           :aria-label="t('actions.delete')"
           :title="t('actions.delete')"
-          class="p-1.5 rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-fg-muted hover:text-red-400 transition-colors min-w-[44px] min-h-[44px] lg:min-w-0 lg:min-h-0 flex items-center justify-center"
+          class="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-md border border-transparent hover:border-red-900/60 hover:bg-red-950/40 text-fg-muted hover:text-red-400 transition-colors"
           @click.stop="emit('delete')"
         >
           <Trash2 class="w-4 h-4" />

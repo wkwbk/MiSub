@@ -12,7 +12,6 @@ import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
 import SubscriptionImportModal from '@/components/modals/SubscriptionImportModal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { useI18n } from '@/i18n/index.js';
-import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
 const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
@@ -32,7 +31,6 @@ const { markDirty } = dataStore;
 const { t } = useI18n();
 
 const isSortingNodes = useSortingMode(dataStore);
-const manualNodeViewMode = ref(readRawPreference('manualNodeViewMode') || 'card');
 const showDeleteNodesModal = ref(false);
 const showBatchDeleteModal = ref(false);
 const batchDeleteIds = ref([]);
@@ -90,11 +88,6 @@ const {
   handleUrlInput: handleNodeUrlInput,
   handleSave: handleSaveNode,
 } = useNodeForms({ addNode, updateNode });
-
-const setViewMode = (mode) => {
-  manualNodeViewMode.value = mode;
-  writeRawPreference('manualNodeViewMode', mode);
-};
 
 const handleDeleteNodeWithCleanup = (nodeId) => {
   deleteNode(nodeId);
@@ -183,7 +176,6 @@ const handleTagReorder = (newOrder) => {
       :search-term="searchTerm"
       :tags="manualNodeTags"
       :total-pages="manualNodesTotalPages"
-      :view-mode="manualNodeViewMode"
       @add="handleAddNode"
       @deduplicate="handleDeduplicateNodes"
       @delete="handleDeleteNodeWithCleanup"
@@ -194,7 +186,6 @@ const handleTagReorder = (newOrder) => {
       @update:items-per-page="(val) => (manualNodesPerPage = val)"
       @change-page="changeManualNodesPage"
       @update:search-term="handleSearchTermUpdate"
-      @update:view-mode="setViewMode"
       @toggle-sort="isSortingNodes = !isSortingNodes"
       @mark-dirty="markDirty"
       @auto-sort="handleAutoSortNodes"

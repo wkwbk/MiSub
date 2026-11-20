@@ -93,7 +93,7 @@ function handleItemsPerPageChange(value) {
 <template>
   <div
     v-if="shouldShow && isPanelVariant"
-    class="panel-pagination-shell mt-4 px-4 py-3 bg-surface rounded-md border border-line flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
+    class="panel-pagination-shell mt-4 px-3 py-2.5 sm:px-4 sm:py-3 bg-surface rounded-md border border-line flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 transition-colors"
   >
     <div class="flex items-center space-x-4 text-xs font-mono text-fg-muted whitespace-nowrap">
       <span v-if="showTotalItems">{{ t('common.totalProfiles', { count: totalItems }) }}</span>
@@ -118,31 +118,31 @@ function handleItemsPerPageChange(value) {
       <slot name="panel-left" />
     </div>
 
-    <div v-if="totalPages > 1" class="flex items-center space-x-2">
+    <div v-if="totalPages > 1" class="flex items-center gap-1.5">
       <button
         :aria-label="t('common.firstPage')"
         :disabled="currentPage === 1"
         :title="t('common.firstPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
+        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
         @click="emitPageChange(1)"
       >
-        <ChevronsLeft class="w-4 h-4" />
+        <ChevronsLeft class="w-3.5 h-3.5" />
       </button>
       <button
         :aria-label="t('common.prevPage')"
         :disabled="currentPage === 1"
         :title="t('common.prevPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
+        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
         @click="emitPageChange(currentPage - 1)"
       >
-        <ChevronLeft class="w-4 h-4" />
+        <ChevronLeft class="w-3.5 h-3.5" />
       </button>
 
-      <div class="flex items-center space-x-1 font-mono">
+      <div class="flex items-center gap-1.5 font-mono px-0.5">
         <input
           v-model="pageInput"
           :aria-label="t('common.pageNumber')"
-          class="w-14 text-center text-xs font-mono py-1 border border-line rounded-md bg-inset text-fg focus:border-line-strong focus-visible:outline-none appearance-none remove-arrow touch-target"
+          class="h-8 w-12 text-center text-xs font-mono border border-line rounded-md bg-inset text-fg focus:border-line-strong focus-visible:outline-none appearance-none remove-arrow"
           type="number"
           @blur="jumpToPage"
           @keydown.enter="jumpToPage"
@@ -154,38 +154,38 @@ function handleItemsPerPageChange(value) {
         :aria-label="t('common.nextPage')"
         :disabled="currentPage === totalPages"
         :title="t('common.nextPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
+        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
         @click="emitPageChange(currentPage + 1)"
       >
-        <ChevronRight class="w-4 h-4" />
+        <ChevronRight class="w-3.5 h-3.5" />
       </button>
       <button
         :aria-label="t('common.lastPage')"
         :disabled="currentPage === totalPages"
         :title="t('common.lastPage')"
-        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong touch-target"
+        class="h-8 w-8 flex items-center justify-center rounded-md bg-transparent hover:bg-hover disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-fg-muted hover:text-fg border border-line hover:border-line-strong"
         @click="emitPageChange(totalPages)"
       >
-        <ChevronsRight class="w-4 h-4" />
+        <ChevronsRight class="w-3.5 h-3.5" />
       </button>
     </div>
     <div v-else class="w-[100px]"></div>
   </div>
 
-  <div v-else-if="shouldShow" class="flex flex-wrap justify-center items-center gap-3 mt-6 text-xs font-mono">
+  <div v-else-if="shouldShow" class="flex flex-wrap justify-center items-center gap-2 mt-6 text-xs font-mono">
     <button
       :disabled="currentPage === 1"
-      class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover touch-target"
+      class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover"
       @click="emitPageChange(currentPage - 1)"
     >
       &laquo; {{ t('common.prevPage') }}
     </button>
-    <span class="text-fg-muted bg-transparent border border-line px-3 py-1 rounded-md">{{
+    <span class="text-fg-muted bg-transparent border border-line px-3 py-1.5 rounded-md">{{
       t('common.pageOf', { current: currentPage, total: totalPages })
     }}</span>
     <button
       :disabled="currentPage === totalPages"
-      class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover touch-target"
+      class="h-8 px-3 rounded-md disabled:opacity-50 bg-transparent text-fg-muted hover:text-fg border border-line hover:border-line-strong hover:bg-hover"
       @click="emitPageChange(currentPage + 1)"
     >
       {{ t('common.nextPage') }} &raquo;

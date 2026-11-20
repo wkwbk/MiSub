@@ -14,7 +14,6 @@ import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImpo
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
-import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 import { rememberDomainName } from '@/utils/domain-name-memory.js';
 import { useStickyColumns } from '@/composables/useStickyColumn.js'; // --- Component Imports ---
@@ -85,7 +84,6 @@ const markDirty = () => {
 const isSortingSubs = ref(false);
 const isSortingNodes = ref(false);
 const isSortingProfiles = ref(false);
-const manualNodeViewMode = ref('card');
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
@@ -340,10 +338,6 @@ onMounted(() => {
     loadQRCodeModal,
   ]);
   window.addEventListener('beforeunload', handleBeforeUnload);
-  const savedViewMode = readRawPreference('manualNodeViewMode');
-  if (savedViewMode) {
-    manualNodeViewMode.value = savedViewMode;
-  }
   // 启动订阅自动更新定时器（每30分钟）
   startAutoUpdate();
 });
@@ -364,11 +358,6 @@ watch(
     }
   },
 );
-
-const setViewMode = (mode) => {
-  manualNodeViewMode.value = mode;
-  writeRawPreference('manualNodeViewMode', mode);
-};
 
 // --- 其他 JS 逻辑 (省略) ---
 const handleDiscard = async () => {
@@ -678,7 +667,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           :search-term="searchTerm"
           :tags="manualNodeTags"
           :total-pages="manualNodesTotalPages"
-          :view-mode="manualNodeViewMode"
           @add="handleAddNode"
           @deduplicate="handleDeduplicateNodes"
           @delete="handleDeleteNodeWithCleanup"
@@ -688,7 +676,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @reorder="reorderManualNodes"
           @change-page="changeManualNodesPage"
           @update:search-term="handleSearchTermUpdate"
-          @update:view-mode="setViewMode"
           @toggle-sort="isSortingNodes = !isSortingNodes"
           @mark-dirty="markDirty"
           @auto-sort="handleAutoSortNodes"

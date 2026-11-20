@@ -13,7 +13,6 @@ const props = defineProps({
   totalPages: Number,
   isSorting: Boolean,
   searchTerm: String,
-  viewMode: String,
   tags: { type: Array, default: () => [] },
   activeTagFilters: { type: Array, default: () => [] },
   itemsPerPage: { type: Number, default: 24 },
@@ -29,7 +28,6 @@ const emit = defineEmits([
   'edit',
   'changePage',
   'update:searchTerm',
-  'update:viewMode',
   'toggleSort',
   'markDirty',
   'autoSort',
@@ -114,7 +112,6 @@ const handleDetail = (node) => {
 };
 const handleAdd = () => emit('add');
 const handleChangePage = (page) => handlePageChange(page);
-const handleSetViewMode = (mode) => emit('update:viewMode', mode);
 const handleSearchTermUpdate = (value) => {
   localSearchTerm.value = value || '';
 };
@@ -149,12 +146,10 @@ const handleDeleteAll = () => emit('deleteAll');
       :manual-node-tags="tags"
       :manual-nodes-count="manualNodes.length"
       :search-term="localSearchTerm"
-      :view-mode="viewMode"
       @add="handleAdd"
       @deduplicate="handleDeduplicate"
       @import="handleImport"
       @update:search-term="handleSearchTermUpdate"
-      @update:view-mode="handleSetViewMode"
       @set-tag-filters="emit('set-tag-filters', $event)"
       @auto-sort="handleAutoSort"
       @toggle-sort="handleToggleSort"
@@ -197,7 +192,6 @@ const handleDeleteAll = () => emit('deleteAll');
       :search-page="currentSearchPage"
       :search-total-pages="totalSearchPages"
       :selected-node-ids="selectedNodeIds"
-      :view-mode="viewMode"
       @delete="handleDelete"
       @detail="handleDetail"
       @edit="handleEdit"

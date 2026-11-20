@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { LayoutGrid, List, Loader2, Search, X } from '@lucide/vue';
+import { Loader2, Search, X } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -28,10 +28,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  viewMode: {
-    type: String,
-    default: 'card',
-  },
   isSorting: {
     type: Boolean,
     default: false,
@@ -48,7 +44,6 @@ const props = defineProps({
 
 const emit = defineEmits([
   'update:searchTerm',
-  'update:viewMode',
   'set-tag-filters',
   'add',
   'import',
@@ -103,24 +98,6 @@ const searchModel = computed({
         class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap lg:shrink-0"
         data-testid="manual-node-toolbar-actions"
       >
-        <div class="p-0.5 bg-transparent border border-line rounded-md flex items-center shrink-0">
-          <button
-            :aria-label="t('common.cardView')"
-            :class="viewMode === 'card' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:text-fg hover:bg-hover'"
-            class="view-mode-toggle p-1 rounded-sm transition-colors flex items-center justify-center touch-target"
-            @click="emit('update:viewMode', 'card')"
-          >
-            <LayoutGrid class="h-4 w-4" />
-          </button>
-          <button
-            :aria-label="t('common.listView')"
-            :class="viewMode === 'list' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:text-fg hover:bg-hover'"
-            class="view-mode-toggle p-1 rounded-sm transition-colors flex items-center justify-center touch-target"
-            @click="emit('update:viewMode', 'list')"
-          >
-            <List class="h-4 w-4" />
-          </button>
-        </div>
         <button
           :disabled="isPingingAll"
           class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"

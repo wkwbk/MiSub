@@ -329,7 +329,7 @@ const handleCustomProfileIntervalBlur = () => {
                 {{ t('settings.autoUpdateDesc') }}
               </p>
             </div>
-            <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <div class="flex min-w-0 flex-wrap items-center gap-3 sm:shrink-0">
               <div
                 :class="[
                   'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
@@ -353,7 +353,7 @@ const handleCustomProfileIntervalBlur = () => {
                   {{ t('settings.minutes') }}
                 </span>
               </div>
-              <div class="flex items-center gap-1.5">
+              <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
                 <button
                   v-for="option in [
@@ -377,9 +377,9 @@ const handleCustomProfileIntervalBlur = () => {
               </div>
             </div>
           </div>
-          <p v-if="settings.autoUpdateInterval === 0" class="text-xs text-amber-400 mt-2.5 flex items-center gap-1.5">
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-            {{ t('settings.autoUpdateDisabledHint') }}
+          <p v-if="settings.autoUpdateInterval === 0" class="text-xs text-amber-400 mt-2.5 flex items-start gap-1.5">
+            <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            <span>{{ t('settings.autoUpdateDisabledHint') }}</span>
           </p>
         </div>
 
@@ -394,7 +394,7 @@ const handleCustomProfileIntervalBlur = () => {
                 {{ t('settings.profileUpdateIntervalDesc') }}
               </p>
             </div>
-            <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <div class="flex min-w-0 flex-wrap items-center gap-3 sm:shrink-0">
               <div
                 :class="[
                   'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
@@ -418,7 +418,7 @@ const handleCustomProfileIntervalBlur = () => {
                   {{ t('settings.hours') }}
                 </span>
               </div>
-              <div class="flex items-center gap-1.5">
+              <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
                 <button
                   v-for="option in [
@@ -446,22 +446,22 @@ const handleCustomProfileIntervalBlur = () => {
         </div>
 
         <!-- 访问日志 -->
-        <div class="py-5 first:pt-0 last:pb-0 space-y-4">
-          <div class="flex items-center justify-between gap-6">
-            <div class="space-y-1">
+        <div class="py-5 first:pt-0 last:pb-0 space-y-3">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 space-y-1">
               <p class="text-sm font-medium text-fg">
                 {{ t('settings.accessLogTitle') }}
               </p>
               <p class="text-xs text-fg-muted leading-relaxed">
                 {{ t('settings.accessLogDesc') }}
               </p>
-              <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
-                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                {{ t('settings.accessLogQuotaHint') }}
-              </p>
             </div>
-            <Switch v-model="settings.enableAccessLog" />
+            <Switch v-model="settings.enableAccessLog" class="shrink-0 mt-0.5" />
           </div>
+          <p class="text-xs text-amber-400/90 leading-relaxed flex items-start gap-1.5">
+            <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            <span>{{ t('settings.accessLogQuotaHint') }}</span>
+          </p>
 
           <div
             v-if="settings.enableAccessLog"

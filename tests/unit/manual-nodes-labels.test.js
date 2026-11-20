@@ -13,7 +13,6 @@ describe('manual nodes labels', () => {
         searchTerm: '',
         activeTagFilters: [],
         manualNodeTags: [],
-        viewMode: 'card',
         isSorting: false,
         isSelectionMode: false,
         ...props,
@@ -55,6 +54,7 @@ describe('manual nodes labels', () => {
       expect.arrayContaining(['w-full', 'min-w-0', 'flex-wrap', 'sm:flex-nowrap']),
     );
     expect(toolbarActions.find('[data-testid="manual-node-search"]').exists()).toBe(false);
+    expect(toolbarActions.find('.view-mode-toggle').exists()).toBe(false);
     expect(search.classes()).toEqual(expect.arrayContaining(['relative', 'mt-4']));
     expect(searchInput.attributes('type')).toBe('text');
     expect(search.text()).toContain('0/24');

@@ -932,7 +932,7 @@ export default {
       'Injects Profile-Update-Interval header to lock client auto-update interval (v2rayN, FlClash, Clash Verge, etc.), reducing invalid polling',
     hours: 'hrs',
     option12Hours: '12 hrs',
-    option24Hours: '24 hrs (Rec)',
+    option24Hours: '24 hrs',
     option48Hours: '48 hrs',
     accessLogTitle: 'Access logs & count',
     accessLogDesc: 'Record access and count traffic/IPs',

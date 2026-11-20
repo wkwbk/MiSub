@@ -926,7 +926,7 @@ export default {
       '返回 Profile-Update-Interval 响应头，指示客户端（如 v2rayN、FlClash、Clash Verge 等）锁定默认自动更新周期，避免无效高频请求消耗额度',
     hours: '小时',
     option12Hours: '12小时',
-    option24Hours: '24小时 (推荐)',
+    option24Hours: '24小时',
     option48Hours: '48小时',
     accessLogTitle: '开启访问日志 & 计数',
     accessLogDesc: '记录订阅访问并统计流量与IP',

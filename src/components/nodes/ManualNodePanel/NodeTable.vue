@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import draggable from 'vuedraggable';
 import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
-import ManualNodeList from '@/components/nodes/ManualNodeList.vue';
 import PanelPagination from '@/components/shared/PanelPagination.vue';
 import SortingBanner from '@/components/shared/SortingBanner.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -17,7 +16,6 @@ const props = defineProps({
   filteredNodes: { type: Array, default: () => [] },
   localSearchTerm: { type: String, default: '' },
   isSorting: { type: Boolean, default: false },
-  viewMode: { type: String, default: 'card' },
   isSelectionMode: { type: Boolean, default: false },
   selectedNodeIds: { type: Object, required: true },
   searchPage: { type: Number, default: 1 },
@@ -96,113 +94,61 @@ const handleDragEnd = (evt) => {
         button-test-id="node-finish-sort"
         @finish="emit('toggle-sort')"
       />
-      <div v-if="viewMode === 'card'">
-        <draggable
-          v-model="draggableModel"
-          :class="
-            compactGrid
-              ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2'
-              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3'
-          "
-          animation="300"
-          class="grid gap-4"
-          ghost-class="opacity-50"
-          item-key="id"
-          tag="div"
-          @end="handleDragEnd"
-        >
-          <template #item="{ element: node }">
-            <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
-              <ManualNodeCard
-                :is-pinging="pingingNodes.has(node.id)"
-                :is-selected="selectedNodeIds.has(node.id)"
-                :is-selection-mode="isSelectionMode"
-                :node="node"
-                :ping-result="pingResults[node.id]"
-                class="pointer-events-none select-none"
-                @delete="emit('delete', node.id)"
-                @edit="emit('edit', node.id)"
-                @ping="emit('ping', node.id)"
-                @toggle-select="emit('toggle-select', node.id)"
-                @filter-tag="emit('toggle-tag-filter', $event)"
-              />
-            </div>
-          </template>
-        </draggable>
-      </div>
-      <div v-else class="space-y-3">
-        <draggable
-          v-model="draggableModel"
-          animation="300"
-          class="space-y-2"
-          ghost-class="opacity-50"
-          item-key="id"
-          tag="div"
-          @end="handleDragEnd"
-        >
-          <template #item="{ element: node, index }">
-            <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
-              <ManualNodeList
-                :index="index + 1"
-                :is-pinging="pingingNodes.has(node.id)"
-                :node="node"
-                :ping-result="pingResults[node.id]"
-                :style="{ '--delay-index': Math.min(index, 20) }"
-                class="list-item-animation pointer-events-none select-none"
-                @delete="emit('delete', node.id)"
-                @edit="emit('edit', node.id)"
-                @ping="emit('ping', node.id)"
-                @filter-tag="emit('toggle-tag-filter', $event)"
-              />
-            </div>
-          </template>
-        </draggable>
-      </div>
-    </div>
-
-    <div v-else>
-      <div
-        v-if="viewMode === 'card'"
+      <draggable
+        v-model="draggableModel"
         :class="
           compactGrid
             ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2'
             : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3'
         "
+        animation="300"
         class="grid gap-4"
+        ghost-class="opacity-50"
+        item-key="id"
+        tag="div"
+        @end="handleDragEnd"
       >
-        <div
-          v-for="(node, index) in paginatedNodes"
-          :key="node.id"
-          :style="{ '--delay-index': Math.min(index, 20) }"
-          class="list-item-animation"
-        >
-          <ManualNodeCard
-            :is-pinging="pingingNodes.has(node.id)"
-            :is-selected="selectedNodeIds.has(node.id)"
-            :is-selection-mode="isSelectionMode"
-            :node="node"
-            :ping-result="pingResults[node.id]"
-            @delete="emit('delete', node.id)"
-            @detail="emit('detail', node)"
-            @edit="emit('edit', node.id)"
-            @ping="emit('ping', node.id)"
-            @toggle-select="emit('toggle-select', node.id)"
-            @filter-tag="emit('toggle-tag-filter', $event)"
-          />
-        </div>
-      </div>
-      <div v-else class="space-y-3">
-        <ManualNodeList
-          v-for="(node, index) in paginatedNodes"
-          :key="node.id"
-          :index="paginatedNodes.indexOf(node) + 1"
+        <template #item="{ element: node }">
+          <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
+            <ManualNodeCard
+              :is-pinging="pingingNodes.has(node.id)"
+              :is-selected="selectedNodeIds.has(node.id)"
+              :is-selection-mode="isSelectionMode"
+              :node="node"
+              :ping-result="pingResults[node.id]"
+              class="pointer-events-none select-none"
+              @delete="emit('delete', node.id)"
+              @edit="emit('edit', node.id)"
+              @ping="emit('ping', node.id)"
+              @toggle-select="emit('toggle-select', node.id)"
+              @filter-tag="emit('toggle-tag-filter', $event)"
+            />
+          </div>
+        </template>
+      </draggable>
+    </div>
+
+    <div
+      v-else
+      :class="
+        compactGrid
+          ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2'
+          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3'
+      "
+      class="grid gap-4"
+    >
+      <div
+        v-for="(node, index) in paginatedNodes"
+        :key="node.id"
+        :style="{ '--delay-index': Math.min(index, 20) }"
+        class="list-item-animation"
+      >
+        <ManualNodeCard
           :is-pinging="pingingNodes.has(node.id)"
           :is-selected="selectedNodeIds.has(node.id)"
           :is-selection-mode="isSelectionMode"
           :node="node"
           :ping-result="pingResults[node.id]"
-          :style="{ '--delay-index': Math.min(index, 20) }"
-          class="list-item-animation"
           @delete="emit('delete', node.id)"
           @detail="emit('detail', node)"
           @edit="emit('edit', node.id)"

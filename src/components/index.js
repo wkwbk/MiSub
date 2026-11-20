@@ -90,7 +90,6 @@ export const ComponentMap = {
   // 节点组件
   Nodes: {
     ManualNodeCard: () => import('@/components/nodes/ManualNodeCard.vue'),
-    ManualNodeList: () => import('@/components/nodes/ManualNodeList.vue'),
     ManualNodePanel: () => import('@/components/nodes/ManualNodePanel.vue'),
   },
 
