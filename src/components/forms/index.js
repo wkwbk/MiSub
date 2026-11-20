@@ -7,8 +7,8 @@ export { default as Modal } from '@/components/forms/Modal.vue';
 export { default as SmartSearch } from '@/components/forms/SmartSearch.vue';
 
 export const FormComponents = {
-    Modal,
-    SmartSearch,
+  Modal,
+  SmartSearch,
 };
 
 export default FormComponents;

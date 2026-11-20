@@ -18,13 +18,13 @@ const pad = (n) => String(n).padStart(2, '0');
  * @returns {string} 例如「导入 nodes」
  */
 export function tagNameFromFile(fileName) {
-    const base = String(fileName || '')
-        .replace(/\.[a-z0-9]+$/i, '')
-        .trim();
-    if (!base) return '';
-    // 限制长度，避免超长文件名污染标签
-    const clipped = base.length > 24 ? base.slice(0, 24) : base;
-    return `导入 ${clipped}`;
+  const base = String(fileName || '')
+    .replace(/\.[a-z0-9]+$/i, '')
+    .trim();
+  if (!base) return '';
+  // 限制长度，避免超长文件名污染标签
+  const clipped = base.length > 24 ? base.slice(0, 24) : base;
+  return `导入 ${clipped}`;
 }
 
 /**
@@ -33,9 +33,9 @@ export function tagNameFromFile(fileName) {
  * @returns {string} 例如「导入 09-15 18:30」
  */
 export function tagNameFromTime(now = new Date()) {
-    const date = `${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    return `导入 ${date} ${time}`;
+  const date = `${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const time = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  return `导入 ${date} ${time}`;
 }
 
 /**
@@ -46,5 +46,5 @@ export function tagNameFromTime(now = new Date()) {
  * @returns {string}
  */
 export function buildAutoTagName({ fileName = '', now = new Date() } = {}) {
-    return tagNameFromFile(fileName) || tagNameFromTime(now);
+  return tagNameFromFile(fileName) || tagNameFromTime(now);
 }

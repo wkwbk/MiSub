@@ -3,21 +3,21 @@
  */
 
 export function isSameOriginUrl(value, origin, baseUrl = origin) {
-    if (!origin || value === undefined || value === null || value === '') return false;
+  if (!origin || value === undefined || value === null || value === '') return false;
 
-    try {
-        return new URL(String(value), baseUrl || origin).origin === origin;
-    } catch {
-        return false;
-    }
+  try {
+    return new URL(String(value), baseUrl || origin).origin === origin;
+  } catch {
+    return false;
+  }
 }
 
 export function isLocalHost(hostname) {
-    return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(
-        String(hostname || '')
-            .trim()
-            .toLowerCase()
-    );
+  return ['localhost', '127.0.0.1', '::1', '[::1]'].includes(
+    String(hostname || '')
+      .trim()
+      .toLowerCase(),
+  );
 }
 
 /**
@@ -31,5 +31,5 @@ export function isLocalHost(hostname) {
 const CRITICAL_ASSET_PATTERN = /\/assets\/.+\.(js|css)$/i;
 
 export function isCriticalAssetPath(pathname) {
-    return CRITICAL_ASSET_PATTERN.test(String(pathname || ''));
+  return CRITICAL_ASSET_PATTERN.test(String(pathname || ''));
 }

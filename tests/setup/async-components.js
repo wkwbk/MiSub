@@ -10,5 +10,5 @@ enableAutoUnmount(afterEach);
 // 优先用 vi.mock('<模块路径>') 直接 mock 懒加载模块（stubs 并不能阻止 loader 被调用），
 // 这里再等一小会儿让残留的动态 import 落地。
 afterAll(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 100));
+  await new Promise((resolve) => setTimeout(resolve, 100));
 });

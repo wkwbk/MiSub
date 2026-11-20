@@ -1,130 +1,119 @@
 /** * 保存指示器组件 * @author MiSub Team */
 
 <script setup>
-    import { computed, toRefs } from 'vue';
-    import { Check, X } from '@lucide/vue';
-    import { useI18n } from '@/i18n/index.js';
+import { computed, toRefs } from 'vue';
+import { Check, X } from '@lucide/vue';
+import { useI18n } from '@/i18n/index.js';
 
-    const { t } = useI18n();
-    const props = defineProps({
-        dirty: {
-            type: Boolean,
-            required: true,
-        },
-        saveState: {
-            type: String,
-            required: true,
-            validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value),
-        },
-    });
+const { t } = useI18n();
+const props = defineProps({
+  dirty: {
+    type: Boolean,
+    required: true,
+  },
+  saveState: {
+    type: String,
+    required: true,
+    validator: (value) => ['idle', 'saving', 'success', 'error'].includes(value),
+  },
+});
 
-    const { dirty, saveState } = toRefs(props);
+const { dirty, saveState } = toRefs(props);
 
-    defineEmits(['save']);
+defineEmits(['save']);
 
-    const saveButtonText = computed(() => {
-        switch (saveState.value) {
-            case 'saving':
-                return t('dashboard.saveInProgress');
-            case 'success':
-                return t('dashboard.savedStatus');
-            case 'error':
-                return t('dashboard.saveFailedStatus');
-            default:
-                return t('dashboard.saveChanges');
-        }
-    });
+const saveButtonText = computed(() => {
+  switch (saveState.value) {
+    case 'saving':
+      return t('dashboard.saveInProgress');
+    case 'success':
+      return t('dashboard.savedStatus');
+    case 'error':
+      return t('dashboard.saveFailedStatus');
+    default:
+      return t('dashboard.saveChanges');
+  }
+});
 
-    const saveButtonClass = computed(() => {
-        const baseClass =
-            'px-4 py-2 misub-radius-md text-sm font-medium transition-all duration-200';
+const saveButtonClass = computed(() => {
+  const baseClass = 'px-4 py-2 misub-radius-md text-sm font-medium transition-all duration-200';
 
-        if (saveState.value === 'saving') {
-            return `${baseClass} bg-gray-400 text-white cursor-not-allowed`;
-        }
+  if (saveState.value === 'saving') {
+    return `${baseClass} bg-gray-400 text-white cursor-not-allowed`;
+  }
 
-        if (saveState.value === 'success') {
-            return `${baseClass} bg-green-600 text-white hover:bg-green-700`;
-        }
+  if (saveState.value === 'success') {
+    return `${baseClass} bg-green-600 text-white hover:bg-green-700`;
+  }
 
-        if (saveState.value === 'error') {
-            return `${baseClass} bg-red-600 text-white hover:bg-red-700`;
-        }
+  if (saveState.value === 'error') {
+    return `${baseClass} bg-red-600 text-white hover:bg-red-700`;
+  }
 
-        if (!dirty.value) {
-            return `${baseClass} bg-gray-300 text-fg-subtle cursor-not-allowed`;
-        }
+  if (!dirty.value) {
+    return `${baseClass} bg-gray-300 text-fg-subtle cursor-not-allowed`;
+  }
 
-        return `${baseClass} bg-accent text-accent-fg hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong`;
-    });
+  return `${baseClass} bg-accent text-accent-fg hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-line-strong`;
+});
 </script>
 
 <template>
-    <Transition
-        enter-active-class="transition ease-out duration-300"
-        enter-from-class="opacity-0 transform -translate-y-2"
-        enter-to-class="opacity-100 transform translate-y-0"
-        leave-active-class="transition ease-in duration-200"
-        leave-from-class="opacity-100 transform translate-y-0"
-        leave-to-class="opacity-0 transform -translate-y-2"
+  <Transition
+    enter-active-class="transition ease-out duration-300"
+    enter-from-class="opacity-0 transform -translate-y-2"
+    enter-to-class="opacity-100 transform translate-y-0"
+    leave-active-class="transition ease-in duration-200"
+    leave-from-class="opacity-100 transform translate-y-0"
+    leave-to-class="opacity-0 transform -translate-y-2"
+  >
+    <div
+      v-if="dirty || saveState !== 'idle'"
+      class="fixed top-4 right-4 z-50 bg-surface misub-radius-md shadow-lg border border-line p-4"
     >
-        <div
-            v-if="dirty || saveState !== 'idle'"
-            class="fixed top-4 right-4 z-50 bg-surface misub-radius-md shadow-lg border border-line p-4"
-        >
-            <div class="flex items-center space-x-3">
-                <div class="flex items-center space-x-2">
-                    <!-- Status Icon -->
-                    <div
-                        v-if="saveState === 'saving'"
-                        class="animate-spin rounded-full h-4 w-4 border-b-2 border-fg"
-                    ></div>
+      <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-2">
+          <!-- Status Icon -->
+          <div v-if="saveState === 'saving'" class="animate-spin rounded-full h-4 w-4 border-b-2 border-fg"></div>
 
-                    <div
-                        v-else-if="saveState === 'success'"
-                        class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center"
-                    >
-                        <Check class="w-2.5 h-2.5 text-white" stroke-width="3" />
-                    </div>
+          <div
+            v-else-if="saveState === 'success'"
+            class="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center"
+          >
+            <Check class="w-2.5 h-2.5 text-white" stroke-width="3" />
+          </div>
 
-                    <div
-                        v-else-if="saveState === 'error'"
-                        class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center"
-                    >
-                        <X class="w-2.5 h-2.5 text-white" stroke-width="3" />
-                    </div>
+          <div
+            v-else-if="saveState === 'error'"
+            class="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center"
+          >
+            <X class="w-2.5 h-2.5 text-white" stroke-width="3" />
+          </div>
 
-                    <div
-                        v-else
-                        class="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center"
-                    >
-                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
-                            <circle cx="4" cy="4" r="1" />
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Status Text -->
-                <div class="text-sm text-fg-muted">
-                    <span v-if="saveState === 'saving'">{{ t('dashboard.saveInProgress') }}</span>
-                    <span v-else-if="saveState === 'success'">{{
-                        t('dashboard.saveSuccessStatus')
-                    }}</span>
-                    <span v-else-if="saveState === 'error'">{{
-                        t('dashboard.saveFailedStatus')
-                    }}</span>
-                    <span v-else>{{ t('dashboard.unsavedPending') }}</span>
-                </div>
-
-                <!-- Save Button -->
-                <button
-                    :class="saveButtonClass"
-                    :disabled="saveState === 'saving' || (!dirty && saveState === 'idle')"
-                    @click="$emit('save')"
-                >
-                    {{ saveButtonText }}
-                </button>
-            </div>
+          <div v-else class="w-4 h-4 rounded-full bg-yellow-500 flex items-center justify-center">
+            <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 8 8">
+              <circle cx="4" cy="4" r="1" />
+            </svg>
+          </div>
         </div>
-    </Transition>
+
+        <!-- Status Text -->
+        <div class="text-sm text-fg-muted">
+          <span v-if="saveState === 'saving'">{{ t('dashboard.saveInProgress') }}</span>
+          <span v-else-if="saveState === 'success'">{{ t('dashboard.saveSuccessStatus') }}</span>
+          <span v-else-if="saveState === 'error'">{{ t('dashboard.saveFailedStatus') }}</span>
+          <span v-else>{{ t('dashboard.unsavedPending') }}</span>
+        </div>
+
+        <!-- Save Button -->
+        <button
+          :class="saveButtonClass"
+          :disabled="saveState === 'saving' || (!dirty && saveState === 'idle')"
+          @click="$emit('save')"
+        >
+          {{ saveButtonText }}
+        </button>
+      </div>
+    </div>
+  </Transition>
 </template>

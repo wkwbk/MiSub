@@ -6,24 +6,24 @@ import { generateBuiltinSingboxConfig } from './builtin-singbox-generator.js';
 import { generateBuiltinEgernConfig } from './builtin-egern-generator.js';
 
 export function transformBuiltinSubscription(nodeList, targetFormat, options = {}) {
-    const normalized = (targetFormat || '').toLowerCase();
-    const targetKey = normalized.startsWith('surge&ver=') ? 'surge' : normalized;
+  const normalized = (targetFormat || '').toLowerCase();
+  const targetKey = normalized.startsWith('surge&ver=') ? 'surge' : normalized;
 
-    switch (targetKey) {
-        case 'clash':
-            return generateBuiltinClashConfig(nodeList, options);
-        case 'surge':
-            return generateBuiltinSurgeConfig(nodeList, options);
-        case 'loon':
-            return generateBuiltinLoonConfig(nodeList, options);
-        case 'quanx':
-            return generateBuiltinQuanxConfig(nodeList, options);
-        case 'singbox':
-        case 'sing-box':
-            return generateBuiltinSingboxConfig(nodeList, options);
-        case 'egern':
-            return generateBuiltinEgernConfig(nodeList, options);
-        default:
-            return null;
-    }
+  switch (targetKey) {
+    case 'clash':
+      return generateBuiltinClashConfig(nodeList, options);
+    case 'surge':
+      return generateBuiltinSurgeConfig(nodeList, options);
+    case 'loon':
+      return generateBuiltinLoonConfig(nodeList, options);
+    case 'quanx':
+      return generateBuiltinQuanxConfig(nodeList, options);
+    case 'singbox':
+    case 'sing-box':
+      return generateBuiltinSingboxConfig(nodeList, options);
+    case 'egern':
+      return generateBuiltinEgernConfig(nodeList, options);
+    default:
+      return null;
+  }
 }

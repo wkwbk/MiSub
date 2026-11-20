@@ -19,18 +19,18 @@ export { default as Select } from '@/components/ui/Select.vue';
 export { default as Switch } from '@/components/ui/Switch.vue';
 
 export const UIComponents = {
-    Card,
-    LoadingSpinner,
-    EmptyState,
-    StatusIndicator,
-    Button,
-    ProgressiveDisclosure,
-    Toast,
-    SkeletonLoader,
-    SkeletonCard,
-    Input,
-    Select,
-    Switch,
+  Card,
+  LoadingSpinner,
+  EmptyState,
+  StatusIndicator,
+  Button,
+  ProgressiveDisclosure,
+  Toast,
+  SkeletonLoader,
+  SkeletonCard,
+  Input,
+  Select,
+  Switch,
 };
 
 export default UIComponents;

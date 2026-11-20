@@ -14,20 +14,20 @@ import { isChunkLoadError } from '@/utils/chunk-reload.js';
  * 避免多处模式匹配各自漂移。
  */
 const NETWORK_ERROR_PATTERNS = [
-    'failed to fetch', // Chrome / Edge：fetch 网络层失败
-    'fetch failed', // Node 18+ undici
-    'networkerror', // Firefox：NetworkError when attempting to fetch resource.
-    'network request failed',
-    'load failed', // Safari：fetch 失败只说 Load failed
-    'net::err_', // Chromium 网络层错误码，如 net::ERR_INTERNET_DISCONNECTED
-    'err_internet_disconnected',
-    'err_network_changed',
-    'err_name_not_resolved',
-    'err_connection_refused',
-    'econnrefused',
-    'etimedout',
-    // 兜底保留历史行为：errorHandler 原先就认裸 'network'（例如 "network down"）
-    'network',
+  'failed to fetch', // Chrome / Edge：fetch 网络层失败
+  'fetch failed', // Node 18+ undici
+  'networkerror', // Firefox：NetworkError when attempting to fetch resource.
+  'network request failed',
+  'load failed', // Safari：fetch 失败只说 Load failed
+  'net::err_', // Chromium 网络层错误码，如 net::ERR_INTERNET_DISCONNECTED
+  'err_internet_disconnected',
+  'err_network_changed',
+  'err_name_not_resolved',
+  'err_connection_refused',
+  'econnrefused',
+  'etimedout',
+  // 兜底保留历史行为：errorHandler 原先就认裸 'network'（例如 "network down"）
+  'network',
 ];
 
 /**
@@ -35,13 +35,13 @@ const NETWORK_ERROR_PATTERNS = [
  * @returns {boolean} 是否属于网络类失败
  */
 export function isNetworkErrorMessage(message) {
-    const text = String(message ?? '').toLowerCase();
-    if (!text) return false;
+  const text = String(message ?? '').toLowerCase();
+  if (!text) return false;
 
-    // 必须排除：动态 chunk 加载失败的消息里含 "fetch"
-    //（Failed to fetch dynamically imported module），但那是发版后旧页面请求了
-    // 已删除的资源，让用户去检查网络永远解决不了。
-    if (isChunkLoadError(message)) return false;
+  // 必须排除：动态 chunk 加载失败的消息里含 "fetch"
+  //（Failed to fetch dynamically imported module），但那是发版后旧页面请求了
+  // 已删除的资源，让用户去检查网络永远解决不了。
+  if (isChunkLoadError(message)) return false;
 
-    return NETWORK_ERROR_PATTERNS.some((pattern) => text.includes(pattern));
+  return NETWORK_ERROR_PATTERNS.some((pattern) => text.includes(pattern));
 }

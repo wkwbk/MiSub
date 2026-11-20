@@ -8,35 +8,35 @@ import { inferAirportRootDomain } from '../../../shared/airport-domain.js';
 export { inferAirportRootDomain };
 
 const REAL_PROXY_PROTOCOLS = [
-    'ss://',
-    'ssr://',
-    'vmess://',
-    'vless://',
-    'trojan://',
-    'hysteria://',
-    'hysteria2://',
-    'hy2://',
-    'tuic://',
-    'anytls://',
-    'socks5://',
-    'socks://',
-    'http://',
-    'https://',
-    'naive+https://',
-    'naive+quic://',
-    'wireguard://',
-    'mierus://',
+  'ss://',
+  'ssr://',
+  'vmess://',
+  'vless://',
+  'trojan://',
+  'hysteria://',
+  'hysteria2://',
+  'hy2://',
+  'tuic://',
+  'anytls://',
+  'socks5://',
+  'socks://',
+  'http://',
+  'https://',
+  'naive+https://',
+  'naive+quic://',
+  'wireguard://',
+  'mierus://',
 ];
 
 /**
  * 判断是否是真实代理节点，排除流量/到期/公告等系统伪节点
  */
 export function isRealProxyNode(node) {
-    if (typeof node !== 'string') return false;
-    const trimmed = node.trim().toLowerCase();
-    if (!trimmed) return false;
-    if (isLocalProxyEndpoint(trimmed)) return false;
-    return REAL_PROXY_PROTOCOLS.some((protocol) => trimmed.startsWith(protocol));
+  if (typeof node !== 'string') return false;
+  const trimmed = node.trim().toLowerCase();
+  if (!trimmed) return false;
+  if (isLocalProxyEndpoint(trimmed)) return false;
+  return REAL_PROXY_PROTOCOLS.some((protocol) => trimmed.startsWith(protocol));
 }
 
 /**
@@ -52,63 +52,63 @@ export function isRealProxyNode(node) {
  * @returns {string} 解析出的名称，取不到时返回空字符串
  */
 export function parseSubscriptionProfileTitle(headers) {
-    const read = (name) => {
-        if (!headers) return '';
-        try {
-            if (typeof headers.get === 'function') return headers.get(name) || '';
-        } catch {
-            /* ignore */
-        }
-        const lower = name.toLowerCase();
-        for (const key of Object.keys(headers || {})) {
-            if (key.toLowerCase() === lower) return String(headers[key] || '');
-        }
-        return '';
-    };
-
-    const decodeBase64 = (value) => {
-        try {
-            const binary = atob(value);
-            const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-            return new TextDecoder('utf-8').decode(bytes);
-        } catch {
-            return '';
-        }
-    };
-
-    // 1. profile-title（首选）
-    let raw = String(read('profile-title') || '').trim();
-    if (raw) {
-        if (/^base64:/i.test(raw)) {
-            const decoded = decodeBase64(raw.slice(7).trim());
-            if (decoded) return decoded.trim();
-        } else {
-            return raw;
-        }
+  const read = (name) => {
+    if (!headers) return '';
+    try {
+      if (typeof headers.get === 'function') return headers.get(name) || '';
+    } catch {
+      /* ignore */
     }
-
-    // 2. content-disposition 的 filename*
-    const disposition = String(read('content-disposition') || '');
-    if (disposition) {
-        const utf8 = disposition.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/i);
-        if (utf8) {
-            try {
-                return decodeURIComponent(utf8[1].trim()).trim();
-            } catch {
-                /* ignore */
-            }
-        }
-        const plain = disposition.match(/filename\s*=\s*"?([^";]+)"?/i);
-        if (plain) {
-            const name = plain[1].trim();
-            // 过滤掉通用占位名与纯扩展名
-            if (name && !/^(subscription|config|clash|sub)\.(yaml|yml|txt|conf)$/i.test(name)) {
-                return name.replace(/\.(yaml|yml|txt|conf)$/i, '').trim();
-            }
-        }
+    const lower = name.toLowerCase();
+    for (const key of Object.keys(headers || {})) {
+      if (key.toLowerCase() === lower) return String(headers[key] || '');
     }
-
     return '';
+  };
+
+  const decodeBase64 = (value) => {
+    try {
+      const binary = atob(value);
+      const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+      return new TextDecoder('utf-8').decode(bytes);
+    } catch {
+      return '';
+    }
+  };
+
+  // 1. profile-title（首选）
+  let raw = String(read('profile-title') || '').trim();
+  if (raw) {
+    if (/^base64:/i.test(raw)) {
+      const decoded = decodeBase64(raw.slice(7).trim());
+      if (decoded) return decoded.trim();
+    } else {
+      return raw;
+    }
+  }
+
+  // 2. content-disposition 的 filename*
+  const disposition = String(read('content-disposition') || '');
+  if (disposition) {
+    const utf8 = disposition.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/i);
+    if (utf8) {
+      try {
+        return decodeURIComponent(utf8[1].trim()).trim();
+      } catch {
+        /* ignore */
+      }
+    }
+    const plain = disposition.match(/filename\s*=\s*"?([^";]+)"?/i);
+    if (plain) {
+      const name = plain[1].trim();
+      // 过滤掉通用占位名与纯扩展名
+      if (name && !/^(subscription|config|clash|sub)\.(yaml|yml|txt|conf)$/i.test(name)) {
+        return name.replace(/\.(yaml|yml|txt|conf)$/i, '').trim();
+      }
+    }
+  }
+
+  return '';
 }
 
 /**
@@ -124,65 +124,65 @@ export function parseSubscriptionProfileTitle(headers) {
  * @returns {Promise<string>} 品牌名，取不到时返回空字符串
  */
 const NOISY_SITE_TITLES = [
-    /^attention required/i,
-    /^just a moment/i,
-    /cloudflare$/i,
-    /^notice$/i,
-    /^welcome$/i,
-    /^index$/i,
-    /^home$/i,
-    /^site not found/i,
-    /^404/i,
-    /^error/i,
-    /^nginx$/i,
-    /^apache/i,
-    /^default/i,
-    /^域名/i,
-    /^未找到/i,
+  /^attention required/i,
+  /^just a moment/i,
+  /cloudflare$/i,
+  /^notice$/i,
+  /^welcome$/i,
+  /^index$/i,
+  /^home$/i,
+  /^site not found/i,
+  /^404/i,
+  /^error/i,
+  /^nginx$/i,
+  /^apache/i,
+  /^default/i,
+  /^域名/i,
+  /^未找到/i,
 ];
 
 export async function fetchAirportSiteTitle(rootDomain, options = {}) {
-    const { timeout = 5000 } = options;
-    const domain = String(rootDomain || '').trim();
-    if (!domain || !domain.includes('.')) return '';
+  const { timeout = 5000 } = options;
+  const domain = String(rootDomain || '').trim();
+  if (!domain || !domain.includes('.')) return '';
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeout);
-    try {
-        const response = await fetch(`https://${domain}/`, {
-            method: 'GET',
-            headers: {
-                'User-Agent':
-                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
-                Accept: 'text/html,application/xhtml+xml',
-            },
-            redirect: 'follow',
-            signal: controller.signal,
-        });
-        if (!response.ok) return '';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(`https://${domain}/`, {
+      method: 'GET',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml',
+      },
+      redirect: 'follow',
+      signal: controller.signal,
+    });
+    if (!response.ok) return '';
 
-        // 只读前 64KB，标题一定在 <head> 里
-        const text = (await response.text()).slice(0, 65536);
-        const match = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-        if (!match) return '';
+    // 只读前 64KB，标题一定在 <head> 里
+    const text = (await response.text()).slice(0, 65536);
+    const match = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!match) return '';
 
-        const title = match[1]
-            .replace(/&amp;/g, '&')
-            .replace(/&lt;/g, '<')
-            .replace(/&gt;/g, '>')
-            .replace(/&quot;/g, '"')
-            .replace(/&#39;/g, "'")
-            .replace(/\s+/g, ' ')
-            .trim();
+    const title = match[1]
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
 
-        if (!title || title.length > 60) return '';
-        if (NOISY_SITE_TITLES.some((re) => re.test(title))) return '';
-        return title;
-    } catch {
-        return '';
-    } finally {
-        clearTimeout(timer);
-    }
+    if (!title || title.length > 60) return '';
+    if (NOISY_SITE_TITLES.some((re) => re.test(title))) return '';
+    return title;
+  } catch {
+    return '';
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /**
@@ -191,16 +191,16 @@ export async function fetchAirportSiteTitle(rootDomain, options = {}) {
  * @returns {Object|null}
  */
 export function parseSubscriptionUserInfoHeader(header) {
-    if (typeof header !== 'string' || !header.trim()) return null;
+  if (typeof header !== 'string' || !header.trim()) return null;
 
-    const info = {};
-    header.split(';').forEach((part) => {
-        const [rawKey, rawValue] = part.trim().split('=');
-        const key = rawKey?.trim();
-        const value = rawValue?.trim();
-        if (!key || value === undefined || value === '') return;
-        info[key] = /^\d+$/.test(value) ? Number(value) : value;
-    });
+  const info = {};
+  header.split(';').forEach((part) => {
+    const [rawKey, rawValue] = part.trim().split('=');
+    const key = rawKey?.trim();
+    const value = rawValue?.trim();
+    if (!key || value === undefined || value === '') return;
+    info[key] = /^\d+$/.test(value) ? Number(value) : value;
+  });
 
-    return Object.keys(info).length > 0 ? info : null;
+  return Object.keys(info).length > 0 ? info : null;
 }

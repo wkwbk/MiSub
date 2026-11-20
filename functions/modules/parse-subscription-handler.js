@@ -13,44 +13,42 @@ import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from './util
  * @returns {Promise<Response>} HTTP响应
  */
 export async function handleParseSubscription(request, env) {
-    try {
-        const { content } = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
+  try {
+    const { content } = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
-        if (!content || typeof content !== 'string') {
-            return createJsonResponse(
-                {
-                    success: false,
-                    error: '请提供有效的订阅内容',
-                },
-                400
-            );
-        }
-
-        // 使用后端的节点解析器
-        const parsedNodes = parseNodeList(content);
-
-        // 过滤掉无效节点
-        const validNodes = parsedNodes.filter((node) => node && node.url);
-
-        console.info(
-            `[API /parse_subscription] Parsed ${validNodes.length} valid nodes from ${content.length} characters`
-        );
-
-        return createJsonResponse({
-            success: true,
-            data: {
-                nodes: validNodes,
-                totalCount: validNodes.length,
-            },
-        });
-    } catch (error) {
-        console.error('[API Error /parse_subscription]', error);
-        return createJsonResponse(
-            {
-                success: false,
-                error: `解析失败: ${error.message}`,
-            },
-            500
-        );
+    if (!content || typeof content !== 'string') {
+      return createJsonResponse(
+        {
+          success: false,
+          error: '请提供有效的订阅内容',
+        },
+        400,
+      );
     }
+
+    // 使用后端的节点解析器
+    const parsedNodes = parseNodeList(content);
+
+    // 过滤掉无效节点
+    const validNodes = parsedNodes.filter((node) => node && node.url);
+
+    console.info(`[API /parse_subscription] Parsed ${validNodes.length} valid nodes from ${content.length} characters`);
+
+    return createJsonResponse({
+      success: true,
+      data: {
+        nodes: validNodes,
+        totalCount: validNodes.length,
+      },
+    });
+  } catch (error) {
+    console.error('[API Error /parse_subscription]', error);
+    return createJsonResponse(
+      {
+        success: false,
+        error: `解析失败: ${error.message}`,
+      },
+      500,
+    );
+  }
 }

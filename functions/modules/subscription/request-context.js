@@ -16,44 +16,44 @@
  * @returns {{token: string, profileIdentifier: (string|null)}}
  */
 export function resolveRequestContext(url, config, allProfiles) {
-    let token = '';
-    let profileIdentifier = null;
-    const pathSegments = url.pathname.split('/').filter(Boolean);
+  let token = '';
+  let profileIdentifier = null;
+  const pathSegments = url.pathname.split('/').filter(Boolean);
 
-    if (pathSegments.length >= 3) {
-        if (pathSegments[0] === 'sub') {
-            // 3+ 段：/sub/{token}/{profileId}
-            // 第一段为路由前缀 'sub'，跳过
-            token = pathSegments[1];
-            profileIdentifier = pathSegments[2];
-        } else {
-            // 任意三段路径不能隐式跳过首段；否则 /anything/{profileToken}/{profileId}
-            // 会绕过规范路径校验并泄露公开订阅组。
-            token = pathSegments[0];
-            profileIdentifier = pathSegments[1];
-        }
-    } else if (pathSegments.length === 2) {
-        const [firstSeg, secondSeg] = pathSegments;
-
-        if (firstSeg === config.profileToken || firstSeg === config.mytoken) {
-            // /{token}/{profileId} — 订阅组访问
-            token = firstSeg;
-            profileIdentifier = secondSeg;
-        } else if (firstSeg === 'sub') {
-            // 第一段为订阅路由前缀，第二段为实际 token
-            // 例如：/sub/{mytoken}
-            token = secondSeg;
-        } else {
-            // 兜底：假设为 /{token}/{profileId} 格式，由后续逻辑校验 token 合法性
-            token = firstSeg;
-            profileIdentifier = secondSeg;
-        }
-    } else if (pathSegments.length === 1) {
-        // 单段：/{token}（管理员 mytoken 或 profileToken）
-        token = pathSegments[0];
+  if (pathSegments.length >= 3) {
+    if (pathSegments[0] === 'sub') {
+      // 3+ 段：/sub/{token}/{profileId}
+      // 第一段为路由前缀 'sub'，跳过
+      token = pathSegments[1];
+      profileIdentifier = pathSegments[2];
     } else {
-        token = url.searchParams.get('token');
+      // 任意三段路径不能隐式跳过首段；否则 /anything/{profileToken}/{profileId}
+      // 会绕过规范路径校验并泄露公开订阅组。
+      token = pathSegments[0];
+      profileIdentifier = pathSegments[1];
     }
+  } else if (pathSegments.length === 2) {
+    const [firstSeg, secondSeg] = pathSegments;
 
-    return { token, profileIdentifier };
+    if (firstSeg === config.profileToken || firstSeg === config.mytoken) {
+      // /{token}/{profileId} — 订阅组访问
+      token = firstSeg;
+      profileIdentifier = secondSeg;
+    } else if (firstSeg === 'sub') {
+      // 第一段为订阅路由前缀，第二段为实际 token
+      // 例如：/sub/{mytoken}
+      token = secondSeg;
+    } else {
+      // 兜底：假设为 /{token}/{profileId} 格式，由后续逻辑校验 token 合法性
+      token = firstSeg;
+      profileIdentifier = secondSeg;
+    }
+  } else if (pathSegments.length === 1) {
+    // 单段：/{token}（管理员 mytoken 或 profileToken）
+    token = pathSegments[0];
+  } else {
+    token = url.searchParams.get('token');
+  }
+
+  return { token, profileIdentifier };
 }

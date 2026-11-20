@@ -3,114 +3,99 @@ import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createEnv(settings = {}) {
-    return {
-        MISUB_DB: createMemoryD1({
-            worker_settings_v1: settings,
-        }),
-        COOKIE_SECRET: 'stable-cookie-secret',
-        ADMIN_PASSWORD: 'secret-password',
-    };
+  return {
+    MISUB_DB: createMemoryD1({
+      worker_settings_v1: settings,
+    }),
+    COOKIE_SECRET: 'stable-cookie-secret',
+    ADMIN_PASSWORD: 'secret-password',
+  };
 }
 
 function createRequest(path, { method = 'GET', token, body } = {}) {
-    const headers = new Headers();
-    if (token) headers.set('Authorization', `Bearer ${token}`);
-    if (body) headers.set('Content-Type', 'application/json');
-    return new Request(`https://example.com/api/ext/v1${path}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-    });
+  const headers = new Headers();
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (body) headers.set('Content-Type', 'application/json');
+  return new Request(`https://example.com/api/ext/v1${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
 describe('external api route boundaries', () => {
-    it('returns 401 when bearer token is missing', async () => {
-        const env = createEnv({
-            externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
-
-        const response = await handleApiRequest(createRequest('/subscriptions'), env);
-        const body = await response.json();
-
-        expect(response.status).toBe(401);
-        expect(body.success).toBe(false);
-        expect(body.error.code).toBe('unauthorized');
+  it('returns 401 when bearer token is missing', async () => {
+    const env = createEnv({
+      externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
 
-    it('returns 401 when bearer token is invalid', async () => {
-        const env = createEnv({
-            externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
+    const response = await handleApiRequest(createRequest('/subscriptions'), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/subscriptions', { token: 'wrong_token' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(401);
+    expect(body.success).toBe(false);
+    expect(body.error.code).toBe('unauthorized');
+  });
 
-        expect(response.status).toBe(401);
-        expect(body.error.code).toBe('unauthorized');
+  it('returns 401 when bearer token is invalid', async () => {
+    const env = createEnv({
+      externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
 
-    it('returns 403 when external api is disabled', async () => {
-        const env = createEnv({
-            externalApi: { enabled: false, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
+    const response = await handleApiRequest(createRequest('/subscriptions', { token: 'wrong_token' }), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/subscriptions', { token: 'misub_ok' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(401);
+    expect(body.error.code).toBe('unauthorized');
+  });
 
-        expect(response.status).toBe(403);
-        expect(body.error.code).toBe('forbidden');
+  it('returns 403 when external api is disabled', async () => {
+    const env = createEnv({
+      externalApi: { enabled: false, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
 
-    it('accepts a valid bearer token and reaches external routes', async () => {
-        const env = createEnv({
-            externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
+    const response = await handleApiRequest(createRequest('/subscriptions', { token: 'misub_ok' }), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/subscriptions', { token: 'misub_ok' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(403);
+    expect(body.error.code).toBe('forbidden');
+  });
 
-        expect(response.status).toBe(200);
-        expect(body.success).toBe(true);
-        expect(body.data).toEqual([]);
-        expect(body.meta.total).toBe(0);
+  it('accepts a valid bearer token and reaches external routes', async () => {
+    const env = createEnv({
+      externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
 
-    it('returns 404 for unknown external routes', async () => {
-        const env = createEnv({
-            externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
+    const response = await handleApiRequest(createRequest('/subscriptions', { token: 'misub_ok' }), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/unknown', { token: 'misub_ok' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+    expect(body.data).toEqual([]);
+    expect(body.meta.total).toBe(0);
+  });
 
-        expect(response.status).toBe(404);
-        expect(body.error.code).toBe('not_found');
+  it('returns 404 for unknown external routes', async () => {
+    const env = createEnv({
+      externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
 
-    it('returns 405 for unsupported methods', async () => {
-        const env = createEnv({
-            externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-        });
+    const response = await handleApiRequest(createRequest('/unknown', { token: 'misub_ok' }), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/subscriptions', { method: 'PUT', token: 'misub_ok' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(404);
+    expect(body.error.code).toBe('not_found');
+  });
 
-        expect(response.status).toBe(405);
-        expect(body.error.code).toBe('method_not_allowed');
+  it('returns 405 for unsupported methods', async () => {
+    const env = createEnv({
+      externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
     });
+
+    const response = await handleApiRequest(createRequest('/subscriptions', { method: 'PUT', token: 'misub_ok' }), env);
+    const body = await response.json();
+
+    expect(response.status).toBe(405);
+    expect(body.error.code).toBe('method_not_allowed');
+  });
 });

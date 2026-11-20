@@ -1,11 +1,11 @@
 {
-    "compilerOptions": {
-        "baseUrl": ".",
-        "paths": {
-            "@/*": ["src/*"],
-            "@shared/*": ["shared/*"]
-        }
-    },
-    "include": ["src/**/*", "shared/**/*", "tests/**/*"],
-    "exclude": ["node_modules", "dist"]
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@shared/*": ["shared/*"]
+    }
+  },
+  "include": ["src/**/*", "shared/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

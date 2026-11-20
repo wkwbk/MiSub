@@ -4,26 +4,26 @@
  */
 
 export async function onRequest(context) {
-    const { request, env } = context;
+  const { request, env } = context;
 
-    if (request.method === 'GET') {
-        // 返回定时任务状态页面
-        return getCronDashboard(env);
-    }
+  if (request.method === 'GET') {
+    // 返回定时任务状态页面
+    return getCronDashboard(env);
+  }
 
-    if (request.method === 'POST') {
-        // 手动触发同步
-        return triggerManualSync(env);
-    }
+  if (request.method === 'POST') {
+    // 手动触发同步
+    return triggerManualSync(env);
+  }
 
-    return new Response('Method not allowed', { status: 405 });
+  return new Response('Method not allowed', { status: 405 });
 }
 
 /**
  * 获取定时任务仪表板
  */
 function getCronDashboard(env) {
-    const html = `
+  const html = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -252,39 +252,39 @@ function getCronDashboard(env) {
 </body>
 </html>`;
 
-    return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
+  return new Response(html, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  });
 }
 
 /**
  * 手动触发同步
  */
 async function triggerManualSync(env) {
-    try {
-        // 手动触发同步的请求应该转发到 _schedule.js
-        // 由于Cloudflare Pages Functions限制，这里只返回成功响应
-        return new Response(
-            JSON.stringify({
-                success: true,
-                message: '同步任务已提交，请查看日志获取进度',
-                timestamp: new Date().toISOString(),
-            }),
-            {
-                headers: { 'Content-Type': 'application/json' },
-            }
-        );
-    } catch (error) {
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: error.message,
-                timestamp: new Date().toISOString(),
-            }),
-            {
-                status: 500,
-                headers: { 'Content-Type': 'application/json' },
-            }
-        );
-    }
+  try {
+    // 手动触发同步的请求应该转发到 _schedule.js
+    // 由于Cloudflare Pages Functions限制，这里只返回成功响应
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: '同步任务已提交，请查看日志获取进度',
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        timestamp: new Date().toISOString(),
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
 }

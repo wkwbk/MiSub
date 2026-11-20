@@ -19,11 +19,11 @@ export const UNTAGGED_KEY = '__untagged__';
  * @returns {string}
  */
 export function normalizeTagName(rawTag) {
-    const trimmed = typeof rawTag === 'string' ? rawTag.trim() : '';
-    if (!trimmed || trimmed === UNTAGGED_KEY) {
-        return '';
-    }
-    return trimmed;
+  const trimmed = typeof rawTag === 'string' ? rawTag.trim() : '';
+  if (!trimmed || trimmed === UNTAGGED_KEY) {
+    return '';
+  }
+  return trimmed;
 }
 
 /**
@@ -32,23 +32,23 @@ export function normalizeTagName(rawTag) {
  * @returns {string[]}
  */
 export function normalizeTagList(rawTags) {
-    let source = [];
-    if (Array.isArray(rawTags)) {
-        source = rawTags;
-    } else if (typeof rawTags === 'string') {
-        source = rawTags.split(/[,，]/);
-    }
+  let source = [];
+  if (Array.isArray(rawTags)) {
+    source = rawTags;
+  } else if (typeof rawTags === 'string') {
+    source = rawTags.split(/[,，]/);
+  }
 
-    const seen = new Set();
-    const result = [];
-    for (const item of source) {
-        const tag = normalizeTagName(item);
-        if (tag && !seen.has(tag)) {
-            seen.add(tag);
-            result.push(tag);
-        }
+  const seen = new Set();
+  const result = [];
+  for (const item of source) {
+    const tag = normalizeTagName(item);
+    if (tag && !seen.has(tag)) {
+      seen.add(tag);
+      result.push(tag);
     }
-    return result;
+  }
+  return result;
 }
 
 /**
@@ -57,8 +57,8 @@ export function normalizeTagList(rawTags) {
  * @returns {string[]}
  */
 export function getItemTags(item) {
-    if (!item || typeof item !== 'object' || !Array.isArray(item.tags)) return [];
-    return normalizeTagList(item.tags);
+  if (!item || typeof item !== 'object' || !Array.isArray(item.tags)) return [];
+  return normalizeTagList(item.tags);
 }
 
 /**
@@ -67,8 +67,8 @@ export function getItemTags(item) {
  * @returns {string}
  */
 export function getPrimaryTag(item) {
-    const tags = getItemTags(item);
-    return tags[0] || '';
+  const tags = getItemTags(item);
+  return tags[0] || '';
 }
 
 /**
@@ -79,11 +79,11 @@ export function getPrimaryTag(item) {
  * @returns {T}
  */
 export function applyItemTags(item, nextTags) {
-    if (!item || typeof item !== 'object') return item;
-    return {
-        ...item,
-        tags: normalizeTagList(nextTags),
-    };
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    tags: normalizeTagList(nextTags),
+  };
 }
 
 /**
@@ -93,11 +93,11 @@ export function applyItemTags(item, nextTags) {
  * @returns {T}
  */
 export function hydrateItemTags(item) {
-    if (!item || typeof item !== 'object') return item;
-    return {
-        ...item,
-        tags: getItemTags(item),
-    };
+  if (!item || typeof item !== 'object') return item;
+  return {
+    ...item,
+    tags: getItemTags(item),
+  };
 }
 
 /**
@@ -108,41 +108,41 @@ export function hydrateItemTags(item) {
  * @returns {string[]}
  */
 export function collectTags(items = [], customOrder = []) {
-    const seen = new Set();
-    const allTags = [];
+  const seen = new Set();
+  const allTags = [];
 
-    for (const item of items || []) {
-        for (const tag of getItemTags(item)) {
-            if (!seen.has(tag)) {
-                seen.add(tag);
-                allTags.push(tag);
-            }
-        }
+  for (const item of items || []) {
+    for (const tag of getItemTags(item)) {
+      if (!seen.has(tag)) {
+        seen.add(tag);
+        allTags.push(tag);
+      }
+    }
+  }
+
+  if (Array.isArray(customOrder) && customOrder.length > 0) {
+    const ordered = [];
+    const remaining = new Set(allTags);
+
+    for (const raw of customOrder) {
+      const tag = normalizeTagName(raw);
+      if (tag && remaining.has(tag)) {
+        ordered.push(tag);
+        remaining.delete(tag);
+      }
     }
 
-    if (Array.isArray(customOrder) && customOrder.length > 0) {
-        const ordered = [];
-        const remaining = new Set(allTags);
-
-        for (const raw of customOrder) {
-            const tag = normalizeTagName(raw);
-            if (tag && remaining.has(tag)) {
-                ordered.push(tag);
-                remaining.delete(tag);
-            }
-        }
-
-        for (const tag of allTags) {
-            if (remaining.has(tag)) {
-                ordered.push(tag);
-                remaining.delete(tag);
-            }
-        }
-
-        return ordered;
+    for (const tag of allTags) {
+      if (remaining.has(tag)) {
+        ordered.push(tag);
+        remaining.delete(tag);
+      }
     }
 
-    return allTags;
+    return ordered;
+  }
+
+  return allTags;
 }
 
 /**
@@ -154,12 +154,12 @@ export function collectTags(items = [], customOrder = []) {
  * @returns {string[]}
  */
 export function normalizeActiveTagFilters(rawFilter) {
-    if (!rawFilter) return [];
-    const list = Array.isArray(rawFilter) ? rawFilter : [rawFilter];
-    if (list.some((item) => item === UNTAGGED_KEY)) {
-        return [UNTAGGED_KEY];
-    }
-    return normalizeTagList(list);
+  if (!rawFilter) return [];
+  const list = Array.isArray(rawFilter) ? rawFilter : [rawFilter];
+  if (list.some((item) => item === UNTAGGED_KEY)) {
+    return [UNTAGGED_KEY];
+  }
+  return normalizeTagList(list);
 }
 
 /**
@@ -172,24 +172,24 @@ export function normalizeActiveTagFilters(rawFilter) {
  * @returns {string[]}
  */
 export function toggleTagFilterValue(currentFilters, targetTag) {
-    const current = normalizeActiveTagFilters(currentFilters);
+  const current = normalizeActiveTagFilters(currentFilters);
 
-    if (!targetTag) {
-        return [];
-    }
+  if (!targetTag) {
+    return [];
+  }
 
-    if (targetTag === UNTAGGED_KEY) {
-        return current.length === 1 && current[0] === UNTAGGED_KEY ? [] : [UNTAGGED_KEY];
-    }
+  if (targetTag === UNTAGGED_KEY) {
+    return current.length === 1 && current[0] === UNTAGGED_KEY ? [] : [UNTAGGED_KEY];
+  }
 
-    const normalizedTarget = normalizeTagName(targetTag);
-    if (!normalizedTarget) return current;
+  const normalizedTarget = normalizeTagName(targetTag);
+  if (!normalizedTarget) return current;
 
-    const withoutUntagged = current.filter((t) => t !== UNTAGGED_KEY);
-    if (withoutUntagged.includes(normalizedTarget)) {
-        return withoutUntagged.filter((t) => t !== normalizedTarget);
-    }
-    return [...withoutUntagged, normalizedTarget];
+  const withoutUntagged = current.filter((t) => t !== UNTAGGED_KEY);
+  if (withoutUntagged.includes(normalizedTarget)) {
+    return withoutUntagged.filter((t) => t !== normalizedTarget);
+  }
+  return [...withoutUntagged, normalizedTarget];
 }
 
 /**
@@ -202,16 +202,16 @@ export function toggleTagFilterValue(currentFilters, targetTag) {
  * @returns {boolean}
  */
 export function matchesTagFilter(item, activeFilters) {
-    const filters = normalizeActiveTagFilters(activeFilters);
-    if (filters.length === 0) return true;
+  const filters = normalizeActiveTagFilters(activeFilters);
+  if (filters.length === 0) return true;
 
-    const itemTags = getItemTags(item);
-    if (filters[0] === UNTAGGED_KEY) {
-        return itemTags.length === 0;
-    }
+  const itemTags = getItemTags(item);
+  if (filters[0] === UNTAGGED_KEY) {
+    return itemTags.length === 0;
+  }
 
-    const tagSet = new Set(itemTags);
-    return filters.every((tag) => tagSet.has(tag));
+  const tagSet = new Set(itemTags);
+  return filters.every((tag) => tagSet.has(tag));
 }
 
 /**
@@ -222,21 +222,19 @@ export function matchesTagFilter(item, activeFilters) {
  * @returns {{ nextTags: string[], changed: boolean }}
  */
 export function renameTagInList(tags, oldName, newName) {
-    const normalizedOld = normalizeTagName(oldName);
-    const normalizedNew = normalizeTagName(newName);
-    const current = normalizeTagList(tags);
+  const normalizedOld = normalizeTagName(oldName);
+  const normalizedNew = normalizeTagName(newName);
+  const current = normalizeTagList(tags);
 
-    if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) {
-        return { nextTags: current, changed: false };
-    }
-    if (!current.includes(normalizedOld)) {
-        return { nextTags: current, changed: false };
-    }
+  if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) {
+    return { nextTags: current, changed: false };
+  }
+  if (!current.includes(normalizedOld)) {
+    return { nextTags: current, changed: false };
+  }
 
-    const replaced = normalizeTagList(
-        current.map((tag) => (tag === normalizedOld ? normalizedNew : tag))
-    );
-    return { nextTags: replaced, changed: true };
+  const replaced = normalizeTagList(current.map((tag) => (tag === normalizedOld ? normalizedNew : tag)));
+  return { nextTags: replaced, changed: true };
 }
 
 /**
@@ -246,15 +244,15 @@ export function renameTagInList(tags, oldName, newName) {
  * @returns {{ nextTags: string[], changed: boolean }}
  */
 export function removeTagFromList(tags, targetTag) {
-    const normalizedTarget = normalizeTagName(targetTag);
-    const current = normalizeTagList(tags);
-    if (!normalizedTarget || !current.includes(normalizedTarget)) {
-        return { nextTags: current, changed: false };
-    }
-    return {
-        nextTags: current.filter((tag) => tag !== normalizedTarget),
-        changed: true,
-    };
+  const normalizedTarget = normalizeTagName(targetTag);
+  const current = normalizeTagList(tags);
+  if (!normalizedTarget || !current.includes(normalizedTarget)) {
+    return { nextTags: current, changed: false };
+  }
+  return {
+    nextTags: current.filter((tag) => tag !== normalizedTarget),
+    changed: true,
+  };
 }
 
 /**
@@ -265,29 +263,28 @@ export function removeTagFromList(tags, targetTag) {
  * @returns {{ nextTags: string[], changed: boolean }}
  */
 export function computeBatchUpdatedTags(existingTags, inputTags, mode = 'append') {
-    const current = normalizeTagList(existingTags);
-    const incoming = normalizeTagList(inputTags);
+  const current = normalizeTagList(existingTags);
+  const incoming = normalizeTagList(inputTags);
 
-    let nextTags = current;
-    switch (mode) {
-        case 'clear':
-            nextTags = [];
-            break;
-        case 'replace':
-            nextTags = incoming;
-            break;
-        case 'remove': {
-            const removeSet = new Set(incoming);
-            nextTags = current.filter((tag) => !removeSet.has(tag));
-            break;
-        }
-        case 'append':
-        default:
-            nextTags = normalizeTagList([...current, ...incoming]);
-            break;
+  let nextTags = current;
+  switch (mode) {
+    case 'clear':
+      nextTags = [];
+      break;
+    case 'replace':
+      nextTags = incoming;
+      break;
+    case 'remove': {
+      const removeSet = new Set(incoming);
+      nextTags = current.filter((tag) => !removeSet.has(tag));
+      break;
     }
+    case 'append':
+    default:
+      nextTags = normalizeTagList([...current, ...incoming]);
+      break;
+  }
 
-    const changed =
-        nextTags.length !== current.length || nextTags.some((tag, idx) => tag !== current[idx]);
-    return { nextTags, changed };
+  const changed = nextTags.length !== current.length || nextTags.some((tag, idx) => tag !== current[idx]);
+  return { nextTags, changed };
 }

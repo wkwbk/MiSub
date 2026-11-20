@@ -1,739 +1,696 @@
 <script setup>
-    import { computed, ref, watch } from 'vue';
-    import {
-        ChevronDown,
-        ChevronUp,
-        Compass,
-        ExternalLink,
-        Loader2,
-        SquarePen,
-        Trash2,
-        Upload,
-    } from '@lucide/vue';
-    import { useI18n } from '@/i18n/index.js';
-    import { useToastStore } from '@/stores/toast.js';
-    import Modal from '@/components/forms/Modal.vue';
-    import Switch from '@/components/ui/Switch.vue';
-    import Textarea from '@/components/ui/Textarea.vue';
-    import SectionHeader from '@/components/settings/SectionHeader.vue';
-    import { api } from '@/lib/http.js';
-    import {
-        DEFAULT_PUBLIC_LINKS,
-        normalizePublicLinksConfig,
-        PUBLIC_LINK_CATEGORIES,
-        resolvePublicLinkIcon,
-    } from '@/constants/default-public-links.js';
+import { computed, ref, watch } from 'vue';
+import { ChevronDown, ChevronUp, Compass, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
+import { useI18n } from '@/i18n/index.js';
+import { useToastStore } from '@/stores/toast.js';
+import Modal from '@/components/forms/Modal.vue';
+import Switch from '@/components/ui/Switch.vue';
+import Textarea from '@/components/ui/Textarea.vue';
+import SectionHeader from '@/components/settings/SectionHeader.vue';
+import { api } from '@/lib/http.js';
+import {
+  DEFAULT_PUBLIC_LINKS,
+  normalizePublicLinksConfig,
+  PUBLIC_LINK_CATEGORIES,
+  resolvePublicLinkIcon,
+} from '@/constants/default-public-links.js';
 
-    const props = defineProps({
-        settings: {
-            type: Object,
-            required: true,
-        },
-    });
+const props = defineProps({
+  settings: {
+    type: Object,
+    required: true,
+  },
+});
 
-    const { t } = useI18n();
-    const { showToast } = useToastStore();
+const { t } = useI18n();
+const { showToast } = useToastStore();
 
-    const ensurePublicLinks = () => {
-        if (!props.settings) return;
-        if (
-            !props.settings.publicLinks ||
-            !Array.isArray(props.settings.publicLinks.items)
-        ) {
-            props.settings.publicLinks = normalizePublicLinksConfig(props.settings.publicLinks);
-        }
+const ensurePublicLinks = () => {
+  if (!props.settings) return;
+  if (!props.settings.publicLinks || !Array.isArray(props.settings.publicLinks.items)) {
+    props.settings.publicLinks = normalizePublicLinksConfig(props.settings.publicLinks);
+  }
+};
+
+ensurePublicLinks();
+
+watch(
+  () => props.settings?.publicLinks,
+  (val) => {
+    if (!val || !Array.isArray(val.items)) {
+      ensurePublicLinks();
+    }
+  },
+);
+
+const publicLinksConfig = computed(() => {
+  ensurePublicLinks();
+  return props.settings.publicLinks;
+});
+
+const activeCategory = ref('all');
+const showEditModal = ref(false);
+const showResetConfirm = ref(false);
+const showDeleteConfirm = ref(false);
+const linkToDeleteId = ref(null);
+const isNew = ref(false);
+const saving = ref(false);
+const iconFileInput = ref(null);
+const uploadingIcon = ref(false);
+
+const editingLink = ref({
+  id: '',
+  name: '',
+  category: 'speedtest',
+  description: '',
+  url: '',
+  icon: '',
+  enabled: true,
+});
+
+const isDataIcon = computed(() => {
+  const icon = editingLink.value?.icon;
+  return typeof icon === 'string' && icon.startsWith('data:');
+});
+
+const iconInputValue = computed({
+  get() {
+    const icon = editingLink.value?.icon;
+    if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
+    return icon;
+  },
+  set(value) {
+    editingLink.value = {
+      ...editingLink.value,
+      icon: value,
     };
+  },
+});
 
-    ensurePublicLinks();
+const categoryTabs = computed(() => [
+  { value: 'all', label: t('publicProfiles.allCategories') },
+  ...PUBLIC_LINK_CATEGORIES.map((cat) => ({
+    value: cat.value,
+    label: t(cat.labelKey),
+  })),
+]);
 
-    watch(
-        () => props.settings?.publicLinks,
-        (val) => {
-            if (!val || !Array.isArray(val.items)) {
-                ensurePublicLinks();
-            }
-        }
+const filteredLinks = computed(() => {
+  const items = publicLinksConfig.value.items || [];
+  if (activeCategory.value === 'all') return items;
+  return items.filter((item) => item.category === activeCategory.value);
+});
+
+const getCategoryLabel = (category) => {
+  const found = PUBLIC_LINK_CATEGORIES.find((c) => c.value === category);
+  return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+};
+
+const getHostname = (rawUrl) => {
+  try {
+    return new URL(rawUrl).hostname.replace(/^www\./, '');
+  } catch {
+    return rawUrl || '';
+  }
+};
+
+const normalizeWebsiteUrl = (rawUrl) => {
+  const trimmed = String(rawUrl || '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+};
+
+const persistPublicLinksSilently = async () => {
+  try {
+    await api.post(
+      '/api/settings',
+      { publicLinks: props.settings.publicLinks },
+      { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
     );
+  } catch {
+    // Silent background persistence; user can still save via main Save button
+  }
+};
 
-    const publicLinksConfig = computed(() => {
-        ensurePublicLinks();
-        return props.settings.publicLinks;
-    });
+const handleEnabledToggle = async () => {
+  await persistPublicLinksSilently();
+};
 
-    const activeCategory = ref('all');
-    const showEditModal = ref(false);
-    const showResetConfirm = ref(false);
-    const showDeleteConfirm = ref(false);
-    const linkToDeleteId = ref(null);
-    const isNew = ref(false);
-    const saving = ref(false);
-    const iconFileInput = ref(null);
-    const uploadingIcon = ref(false);
+const handleIconFileSelect = (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
 
-    const editingLink = ref({
-        id: '',
-        name: '',
-        category: 'speedtest',
-        description: '',
-        url: '',
-        icon: '',
-        enabled: true,
-    });
+  const allowedTypes = [
+    'image/svg+xml',
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/webp',
+    'image/x-icon',
+    'image/vnd.microsoft.icon',
+  ];
+  if (!allowedTypes.includes(file.type)) {
+    showToast(t('settings.clientIconInvalidType'), 'error');
+    return;
+  }
 
-    const isDataIcon = computed(() => {
-        const icon = editingLink.value?.icon;
-        return typeof icon === 'string' && icon.startsWith('data:');
-    });
+  const maxSize = 200 * 1024;
+  if (file.size > maxSize) {
+    showToast(t('settings.clientIconTooLarge'), 'error');
+    return;
+  }
 
-    const iconInputValue = computed({
-        get() {
-            const icon = editingLink.value?.icon;
-            if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
-            return icon;
-        },
-        set(value) {
-            editingLink.value = {
-                ...editingLink.value,
-                icon: value,
-            };
-        },
-    });
+  uploadingIcon.value = true;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const result = e.target?.result;
+    if (result) {
+      editingLink.value = {
+        ...editingLink.value,
+        icon: result,
+      };
+    }
+    uploadingIcon.value = false;
+  };
+  reader.onerror = () => {
+    showToast(t('settings.clientIconReadFailed'), 'error');
+    uploadingIcon.value = false;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+};
 
-    const categoryTabs = computed(() => [
-        { value: 'all', label: t('publicProfiles.allCategories') },
-        ...PUBLIC_LINK_CATEGORIES.map((cat) => ({
-            value: cat.value,
-            label: t(cat.labelKey),
-        })),
-    ]);
+const triggerIconFileSelect = () => {
+  iconFileInput.value?.click();
+};
 
-    const filteredLinks = computed(() => {
-        const items = publicLinksConfig.value.items || [];
-        if (activeCategory.value === 'all') return items;
-        return items.filter((item) => item.category === activeCategory.value);
-    });
+const clearIcon = () => {
+  editingLink.value = {
+    ...editingLink.value,
+    icon: '',
+  };
+};
 
-    const getCategoryLabel = (category) => {
-        const found = PUBLIC_LINK_CATEGORIES.find((c) => c.value === category);
-        return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+const handleAdd = () => {
+  isNew.value = true;
+  editingLink.value = {
+    id: '',
+    name: '',
+    category: activeCategory.value === 'all' ? 'speedtest' : activeCategory.value,
+    description: '',
+    url: '',
+    icon: '',
+    enabled: true,
+  };
+  showEditModal.value = true;
+};
+
+const handleEdit = (link) => {
+  isNew.value = false;
+  editingLink.value = JSON.parse(JSON.stringify(link));
+  if (!editingLink.value.category) editingLink.value.category = 'other';
+  showEditModal.value = true;
+};
+
+const handleSaveLink = async () => {
+  const name = String(editingLink.value.name || '').trim();
+  if (!name) {
+    showToast(t('publicLinks.nameRequired'), 'error');
+    return;
+  }
+
+  const normalizedUrl = normalizeWebsiteUrl(editingLink.value.url);
+  if (!normalizedUrl) {
+    showToast(t('publicLinks.urlRequired'), 'error');
+    return;
+  }
+
+  try {
+    const parsed = new URL(normalizedUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      showToast(t('publicLinks.invalidUrl'), 'error');
+      return;
+    }
+  } catch {
+    showToast(t('publicLinks.invalidUrl'), 'error');
+    return;
+  }
+
+  saving.value = true;
+  try {
+    const nextItem = {
+      ...editingLink.value,
+      id: editingLink.value.id || `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name,
+      category: editingLink.value.category || 'other',
+      description: String(editingLink.value.description || '').trim(),
+      url: normalizedUrl,
+      icon: String(editingLink.value.icon || '').trim(),
+      enabled: editingLink.value.enabled !== false,
     };
 
-    const getHostname = (rawUrl) => {
-        try {
-            return new URL(rawUrl).hostname.replace(/^www\./, '');
-        } catch {
-            return rawUrl || '';
-        }
+    const list = [...(publicLinksConfig.value.items || [])];
+    const existingIdx = list.findIndex((item) => item.id === nextItem.id);
+    if (existingIdx !== -1) {
+      list[existingIdx] = nextItem;
+    } else {
+      list.push(nextItem);
+    }
+
+    props.settings.publicLinks = {
+      ...publicLinksConfig.value,
+      items: list,
     };
 
-    const normalizeWebsiteUrl = (rawUrl) => {
-        const trimmed = String(rawUrl || '').trim();
-        if (!trimmed) return '';
-        if (/^https?:\/\//i.test(trimmed)) return trimmed;
-        return `https://${trimmed}`;
-    };
+    await persistPublicLinksSilently();
+    showEditModal.value = false;
+    showToast(t('settings.clientSaveSuccess'), 'success');
+  } finally {
+    saving.value = false;
+  }
+};
 
-    const persistPublicLinksSilently = async () => {
-        try {
-            await api.post(
-                '/api/settings',
-                { publicLinks: props.settings.publicLinks },
-                { headers: { 'X-MiSub-Save-Scope': 'preferences' } }
-            );
-        } catch {
-            // Silent background persistence; user can still save via main Save button
-        }
-    };
+const moveLink = async (linkId, direction) => {
+  const fullList = [...(publicLinksConfig.value.items || [])];
+  const currentVisList = filteredLinks.value;
+  const visIdx = currentVisList.findIndex((item) => item.id === linkId);
+  const targetVisIdx = visIdx + direction;
+  if (visIdx === -1 || targetVisIdx < 0 || targetVisIdx >= currentVisList.length) return;
 
-    const handleEnabledToggle = async () => {
-        await persistPublicLinksSilently();
-    };
+  const itemA = currentVisList[visIdx];
+  const itemB = currentVisList[targetVisIdx];
+  const fullIdxA = fullList.findIndex((item) => item.id === itemA.id);
+  const fullIdxB = fullList.findIndex((item) => item.id === itemB.id);
+  if (fullIdxA === -1 || fullIdxB === -1) return;
 
-    const handleIconFileSelect = (event) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
+  const temp = fullList[fullIdxA];
+  fullList[fullIdxA] = fullList[fullIdxB];
+  fullList[fullIdxB] = temp;
 
-        const allowedTypes = [
-            'image/svg+xml',
-            'image/png',
-            'image/jpeg',
-            'image/gif',
-            'image/webp',
-            'image/x-icon',
-            'image/vnd.microsoft.icon',
-        ];
-        if (!allowedTypes.includes(file.type)) {
-            showToast(t('settings.clientIconInvalidType'), 'error');
-            return;
-        }
+  props.settings.publicLinks = {
+    ...publicLinksConfig.value,
+    items: fullList,
+  };
+  await persistPublicLinksSilently();
+  showToast(t('settings.clientOrderSaved'), 'success');
+};
 
-        const maxSize = 200 * 1024;
-        if (file.size > maxSize) {
-            showToast(t('settings.clientIconTooLarge'), 'error');
-            return;
-        }
+const handleDelete = (id) => {
+  linkToDeleteId.value = id;
+  showDeleteConfirm.value = true;
+};
 
-        uploadingIcon.value = true;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const result = e.target?.result;
-            if (result) {
-                editingLink.value = {
-                    ...editingLink.value,
-                    icon: result,
-                };
-            }
-            uploadingIcon.value = false;
-        };
-        reader.onerror = () => {
-            showToast(t('settings.clientIconReadFailed'), 'error');
-            uploadingIcon.value = false;
-        };
-        reader.readAsDataURL(file);
-        event.target.value = '';
-    };
+const executeDelete = async () => {
+  if (!linkToDeleteId.value) return;
+  const nextItems = (publicLinksConfig.value.items || []).filter((item) => item.id !== linkToDeleteId.value);
+  props.settings.publicLinks = {
+    ...publicLinksConfig.value,
+    items: nextItems,
+  };
+  showDeleteConfirm.value = false;
+  linkToDeleteId.value = null;
+  await persistPublicLinksSilently();
+  showToast(t('settings.clientDeleted'), 'success');
+};
 
-    const triggerIconFileSelect = () => {
-        iconFileInput.value?.click();
-    };
-
-    const clearIcon = () => {
-        editingLink.value = {
-            ...editingLink.value,
-            icon: '',
-        };
-    };
-
-    const handleAdd = () => {
-        isNew.value = true;
-        editingLink.value = {
-            id: '',
-            name: '',
-            category: activeCategory.value === 'all' ? 'speedtest' : activeCategory.value,
-            description: '',
-            url: '',
-            icon: '',
-            enabled: true,
-        };
-        showEditModal.value = true;
-    };
-
-    const handleEdit = (link) => {
-        isNew.value = false;
-        editingLink.value = JSON.parse(JSON.stringify(link));
-        if (!editingLink.value.category) editingLink.value.category = 'other';
-        showEditModal.value = true;
-    };
-
-    const handleSaveLink = async () => {
-        const name = String(editingLink.value.name || '').trim();
-        if (!name) {
-            showToast(t('publicLinks.nameRequired'), 'error');
-            return;
-        }
-
-        const normalizedUrl = normalizeWebsiteUrl(editingLink.value.url);
-        if (!normalizedUrl) {
-            showToast(t('publicLinks.urlRequired'), 'error');
-            return;
-        }
-
-        try {
-            const parsed = new URL(normalizedUrl);
-            if (!['http:', 'https:'].includes(parsed.protocol)) {
-                showToast(t('publicLinks.invalidUrl'), 'error');
-                return;
-            }
-        } catch {
-            showToast(t('publicLinks.invalidUrl'), 'error');
-            return;
-        }
-
-        saving.value = true;
-        try {
-            const nextItem = {
-                ...editingLink.value,
-                id:
-                    editingLink.value.id ||
-                    `link-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                name,
-                category: editingLink.value.category || 'other',
-                description: String(editingLink.value.description || '').trim(),
-                url: normalizedUrl,
-                icon: String(editingLink.value.icon || '').trim(),
-                enabled: editingLink.value.enabled !== false,
-            };
-
-            const list = [...(publicLinksConfig.value.items || [])];
-            const existingIdx = list.findIndex((item) => item.id === nextItem.id);
-            if (existingIdx !== -1) {
-                list[existingIdx] = nextItem;
-            } else {
-                list.push(nextItem);
-            }
-
-            props.settings.publicLinks = {
-                ...publicLinksConfig.value,
-                items: list,
-            };
-
-            await persistPublicLinksSilently();
-            showEditModal.value = false;
-            showToast(t('settings.clientSaveSuccess'), 'success');
-        } finally {
-            saving.value = false;
-        }
-    };
-
-    const moveLink = async (linkId, direction) => {
-        const fullList = [...(publicLinksConfig.value.items || [])];
-        const currentVisList = filteredLinks.value;
-        const visIdx = currentVisList.findIndex((item) => item.id === linkId);
-        const targetVisIdx = visIdx + direction;
-        if (visIdx === -1 || targetVisIdx < 0 || targetVisIdx >= currentVisList.length) return;
-
-        const itemA = currentVisList[visIdx];
-        const itemB = currentVisList[targetVisIdx];
-        const fullIdxA = fullList.findIndex((item) => item.id === itemA.id);
-        const fullIdxB = fullList.findIndex((item) => item.id === itemB.id);
-        if (fullIdxA === -1 || fullIdxB === -1) return;
-
-        const temp = fullList[fullIdxA];
-        fullList[fullIdxA] = fullList[fullIdxB];
-        fullList[fullIdxB] = temp;
-
-        props.settings.publicLinks = {
-            ...publicLinksConfig.value,
-            items: fullList,
-        };
-        await persistPublicLinksSilently();
-        showToast(t('settings.clientOrderSaved'), 'success');
-    };
-
-    const handleDelete = (id) => {
-        linkToDeleteId.value = id;
-        showDeleteConfirm.value = true;
-    };
-
-    const executeDelete = async () => {
-        if (!linkToDeleteId.value) return;
-        const nextItems = (publicLinksConfig.value.items || []).filter(
-            (item) => item.id !== linkToDeleteId.value
-        );
-        props.settings.publicLinks = {
-            ...publicLinksConfig.value,
-            items: nextItems,
-        };
-        showDeleteConfirm.value = false;
-        linkToDeleteId.value = null;
-        await persistPublicLinksSilently();
-        showToast(t('settings.clientDeleted'), 'success');
-    };
-
-    const executeReset = async () => {
-        props.settings.publicLinks = {
-            enabled: publicLinksConfig.value.enabled !== false,
-            items: DEFAULT_PUBLIC_LINKS.map((item) => ({ ...item })),
-        };
-        showResetConfirm.value = false;
-        await persistPublicLinksSilently();
-        showToast(t('settings.clientResetSuccess'), 'success');
-    };
+const executeReset = async () => {
+  props.settings.publicLinks = {
+    enabled: publicLinksConfig.value.enabled !== false,
+    items: DEFAULT_PUBLIC_LINKS.map((item) => ({ ...item })),
+  };
+  showResetConfirm.value = false;
+  await persistPublicLinksSilently();
+  showToast(t('settings.clientResetSuccess'), 'success');
+};
 </script>
 
 <template>
-    <section class="rounded-lg border border-line bg-surface p-6">
-        <SectionHeader
-            :title="t('publicLinks.managerTitle')"
-            :description="t('publicLinks.managerDesc')"
-            :no-margin="!publicLinksConfig.enabled"
-            tone="blue"
-        >
-            <template #icon>
-                <Compass class="h-4 w-4" />
-            </template>
-            <template #actions>
-                <div class="flex flex-wrap items-center gap-2">
-                    <Switch
-                        v-model="publicLinksConfig.enabled"
-                        @change="handleEnabledToggle"
-                    />
-                    <template v-if="publicLinksConfig.enabled">
-                        <button
-                            type="button"
-                            @click="showResetConfirm = true"
-                            class="px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
-                        >
-                            {{ t('publicLinks.resetDefault') }}
-                        </button>
-                        <button
-                            type="button"
-                            @click="handleAdd"
-                            class="px-3.5 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
-                        >
-                            {{ t('publicLinks.addLink') }}
-                        </button>
-                    </template>
-                </div>
-            </template>
-        </SectionHeader>
-
-        <div v-if="publicLinksConfig.enabled" class="space-y-4">
-            <!-- Category Filter Tabs -->
-            <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
-                <button
-                    v-for="tab in categoryTabs"
-                    :key="tab.value"
-                    type="button"
-                    @click="activeCategory = tab.value"
-                    class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
-                    :class="
-                        activeCategory === tab.value
-                            ? 'bg-accent text-accent-fg border-accent font-semibold'
-                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
-                    "
-                >
-                    {{ tab.label }}
-                </button>
-            </div>
-
-            <div
-                v-if="filteredLinks.length === 0"
-                class="py-8 text-center text-xs text-fg-subtle border border-dashed border-line rounded-md"
+  <section class="rounded-lg border border-line bg-surface p-6">
+    <SectionHeader
+      :description="t('publicLinks.managerDesc')"
+      :no-margin="!publicLinksConfig.enabled"
+      :title="t('publicLinks.managerTitle')"
+      tone="blue"
+    >
+      <template #icon>
+        <Compass class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <div class="flex flex-wrap items-center gap-2">
+          <Switch v-model="publicLinksConfig.enabled" @change="handleEnabledToggle" />
+          <template v-if="publicLinksConfig.enabled">
+            <button
+              class="px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
+              type="button"
+              @click="showResetConfirm = true"
             >
-                {{ t('publicLinks.emptyCategory') }}
-            </div>
-
-            <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div
-                    v-for="(link, index) in filteredLinks"
-                    :key="link.id"
-                    class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
-                >
-                    <div class="flex items-start gap-3 min-w-0">
-                        <div
-                            class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
-                        >
-                            <img
-                                v-if="
-                                    resolvePublicLinkIcon(link) &&
-                                    (resolvePublicLinkIcon(link).includes('/') ||
-                                        resolvePublicLinkIcon(link).startsWith('data:') ||
-                                        resolvePublicLinkIcon(link).startsWith('http'))
-                                "
-                                :src="resolvePublicLinkIcon(link)"
-                                :alt="link.name"
-                                class="w-full h-full object-contain rounded-md p-1"
-                            />
-                            <span v-else>{{ link.icon || link.name?.slice(0, 1) || '🌐' }}</span>
-                        </div>
-
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2">
-                                <h4 class="text-sm font-semibold text-fg truncate">
-                                    {{ link.name }}
-                                </h4>
-                                <span
-                                    class="px-1.5 py-0.5 text-[10px] rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
-                                >
-                                    {{ getCategoryLabel(link.category) }}
-                                </span>
-                            </div>
-                            <p class="text-xs text-fg-muted truncate mt-1">
-                                {{ link.description }}
-                            </p>
-                            <a
-                                :href="link.url"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="inline-flex items-center gap-1 text-[11px] font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
-                            >
-                                <span class="truncate">{{ getHostname(link.url) }}</span>
-                                <ExternalLink class="w-3 h-3 shrink-0" />
-                            </a>
-                        </div>
-                    </div>
-
-                    <div
-                        class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3"
-                    >
-                        <button
-                            type="button"
-                            @click.stop="moveLink(link.id, -1)"
-                            :disabled="index === 0"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
-                        >
-                            <ChevronUp class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.moveUp') }}</span>
-                        </button>
-                        <button
-                            type="button"
-                            @click.stop="moveLink(link.id, 1)"
-                            :disabled="index === filteredLinks.length - 1"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
-                        >
-                            <ChevronDown class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.moveDown') }}</span>
-                        </button>
-                        <button
-                            type="button"
-                            @click.stop="handleEdit(link)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors"
-                        >
-                            <SquarePen class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.edit') }}</span>
-                        </button>
-                        <button
-                            type="button"
-                            @click.stop="handleDelete(link.id)"
-                            class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
-                        >
-                            <Trash2 class="w-3.5 h-3.5" />
-                            <span>{{ t('actions.delete') }}</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+              {{ t('publicLinks.resetDefault') }}
+            </button>
+            <button
+              class="px-3.5 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
+              type="button"
+              @click="handleAdd"
+            >
+              {{ t('publicLinks.addLink') }}
+            </button>
+          </template>
         </div>
+      </template>
+    </SectionHeader>
 
-        <!-- Add / Edit Website Modal -->
-        <Modal
-            v-model:show="showEditModal"
-            :title="isNew ? t('publicLinks.addModalTitle') : t('publicLinks.editModalTitle')"
-            size="4xl"
+    <div v-if="publicLinksConfig.enabled" class="space-y-4">
+      <!-- Category Filter Tabs -->
+      <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
+        <button
+          v-for="tab in categoryTabs"
+          :key="tab.value"
+          :class="
+            activeCategory === tab.value
+              ? 'bg-accent text-accent-fg border-accent font-semibold'
+              : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
+          "
+          class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
+          type="button"
+          @click="activeCategory = tab.value"
         >
-            <template #body>
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-                    <!-- Left Column: Icon -->
-                    <div class="md:col-span-5 lg:col-span-4">
-                        <div
-                            class="bg-transparent rounded-md p-6 flex flex-col items-center gap-6 h-full border border-line"
-                        >
-                            <div class="text-center space-y-3 w-full">
-                                <label class="block text-xs font-medium text-fg-muted">{{
-                                    t('settings.clientIconPreview')
-                                }}</label>
-                                <div
-                                    class="aspect-square w-full max-w-[140px] mx-auto rounded-md flex items-center justify-center text-5xl bg-inset text-fg-muted border border-line overflow-hidden shadow-none"
-                                >
-                                    <img
-                                        v-if="
-                                            resolvePublicLinkIcon(editingLink) &&
-                                            (resolvePublicLinkIcon(editingLink).includes('/') ||
-                                                resolvePublicLinkIcon(editingLink).startsWith(
-                                                    'data:'
-                                                ) ||
-                                                resolvePublicLinkIcon(editingLink).startsWith(
-                                                    'http'
-                                                ))
-                                        "
-                                        :src="resolvePublicLinkIcon(editingLink)"
-                                        :alt="editingLink.name"
-                                        class="w-full h-full object-contain rounded-md p-3"
-                                    />
-                                    <span v-else>{{
-                                        editingLink.icon || editingLink.name?.slice(0, 1) || '🌐'
-                                    }}</span>
-                                </div>
-                            </div>
+          {{ tab.label }}
+        </button>
+      </div>
 
-                            <div class="w-full space-y-4">
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-medium text-fg-muted">{{
-                                        t('settings.clientLocalIcon')
-                                    }}</label>
-                                    <input
-                                        ref="iconFileInput"
-                                        type="file"
-                                        accept="image/svg+xml,image/png,image/jpeg,image/gif,image/webp,image/x-icon"
-                                        class="hidden"
-                                        @change="handleIconFileSelect"
-                                    />
-                                    <div class="flex gap-2 justify-center">
-                                        <button
-                                            @click="triggerIconFileSelect"
-                                            type="button"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg transition-colors"
-                                            :disabled="uploadingIcon"
-                                        >
-                                            <Upload v-if="!uploadingIcon" class="w-3.5 h-3.5" />
-                                            <Loader2 v-else class="w-3.5 h-3.5 animate-spin" />
-                                            <span>{{
-                                                uploadingIcon
-                                                    ? t('settings.clientUploading')
-                                                    : t('settings.clientUploadImage')
-                                            }}</span>
-                                        </button>
-                                        <button
-                                            v-if="editingLink.icon"
-                                            @click="clearIcon"
-                                            type="button"
-                                            class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 bg-transparent border border-line rounded-md hover:border-red-900/60 hover:bg-red-950/40 transition-colors"
-                                        >
-                                            <Trash2 class="w-3.5 h-3.5" />
-                                            <span>{{ t('actions.clearAll') }}</span>
-                                        </button>
-                                    </div>
-                                    <p v-if="isDataIcon" class="text-xs text-center text-fg-muted">
-                                        {{ t('settings.clientUsingLocalIcon') }}
-                                    </p>
-                                </div>
+      <div
+        v-if="filteredLinks.length === 0"
+        class="py-8 text-center text-xs text-fg-subtle border border-dashed border-line rounded-md"
+      >
+        {{ t('publicLinks.emptyCategory') }}
+      </div>
 
-                                <div class="space-y-2">
-                                    <label class="block text-xs font-medium text-fg-muted"
-                                        >URL / Emoji</label
-                                    >
-                                    <input
-                                        v-model="iconInputValue"
-                                        type="text"
-                                        :placeholder="t('settings.clientIconPlaceholder')"
-                                        class="block w-full px-3 py-2 rounded-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div
+          v-for="(link, index) in filteredLinks"
+          :key="link.id"
+          class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
+        >
+          <div class="flex items-start gap-3 min-w-0">
+            <div
+              class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
+            >
+              <img
+                v-if="
+                  resolvePublicLinkIcon(link) &&
+                  (resolvePublicLinkIcon(link).includes('/') ||
+                    resolvePublicLinkIcon(link).startsWith('data:') ||
+                    resolvePublicLinkIcon(link).startsWith('http'))
+                "
+                :alt="link.name"
+                :src="resolvePublicLinkIcon(link)"
+                class="w-full h-full object-contain rounded-md p-1"
+              />
+              <span v-else>{{ link.icon || link.name?.slice(0, 1) || '🌐' }}</span>
+            </div>
 
-                    <!-- Right Column: Form Details -->
-                    <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-5">
-                        <div>
-                            <label class="block text-xs font-medium text-fg-muted">
-                                {{ t('publicLinks.nameLabel') }}
-                                <span class="text-red-400">*</span>
-                            </label>
-                            <input
-                                v-model="editingLink.name"
-                                type="text"
-                                class="mt-1 block w-full rounded-md border border-line bg-inset text-fg shadow-none focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
-                                :placeholder="t('publicLinks.namePlaceholder')"
-                            />
-                        </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2">
+                <h4 class="text-sm font-semibold text-fg truncate">
+                  {{ link.name }}
+                </h4>
+                <span
+                  class="px-1.5 py-0.5 text-[10px] rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
+                >
+                  {{ getCategoryLabel(link.category) }}
+                </span>
+              </div>
+              <p class="text-xs text-fg-muted truncate mt-1">
+                {{ link.description }}
+              </p>
+              <a
+                :href="link.url"
+                class="inline-flex items-center gap-1 text-[11px] font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <span class="truncate">{{ getHostname(link.url) }}</span>
+                <ExternalLink class="w-3 h-3 shrink-0" />
+              </a>
+            </div>
+          </div>
 
-                        <div>
-                            <label class="block text-xs font-medium text-fg-muted mb-2">
-                                {{ t('publicLinks.categoryLabel') }}
-                            </label>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <button
-                                    v-for="cat in PUBLIC_LINK_CATEGORIES"
-                                    :key="cat.value"
-                                    type="button"
-                                    @click="editingLink.category = cat.value"
-                                    class="p-2 rounded-md border text-xs font-medium transition-colors text-center"
-                                    :class="
-                                        editingLink.category === cat.value
-                                            ? 'bg-elevated-card border-line-strong text-fg'
-                                            : 'bg-transparent border-line text-fg-subtle hover:bg-hover hover:text-fg-muted'
-                                    "
-                                >
-                                    {{ t(cat.labelKey) }}
-                                </button>
-                            </div>
-                        </div>
+          <div class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3">
+            <button
+              :disabled="index === 0"
+              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
+              type="button"
+              @click.stop="moveLink(link.id, -1)"
+            >
+              <ChevronUp class="w-3.5 h-3.5" />
+              <span>{{ t('actions.moveUp') }}</span>
+            </button>
+            <button
+              :disabled="index === filteredLinks.length - 1"
+              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
+              type="button"
+              @click.stop="moveLink(link.id, 1)"
+            >
+              <ChevronDown class="w-3.5 h-3.5" />
+              <span>{{ t('actions.moveDown') }}</span>
+            </button>
+            <button
+              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors"
+              type="button"
+              @click.stop="handleEdit(link)"
+            >
+              <SquarePen class="w-3.5 h-3.5" />
+              <span>{{ t('actions.edit') }}</span>
+            </button>
+            <button
+              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
+              type="button"
+              @click.stop="handleDelete(link.id)"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              <span>{{ t('actions.delete') }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-                        <div>
-                            <label class="block text-xs font-medium text-fg-muted">
-                                {{ t('publicLinks.urlLabel') }}
-                                <span class="text-red-400">*</span>
-                            </label>
-                            <div class="mt-1 flex rounded-md shadow-none">
-                                <span
-                                    class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-line bg-elevated-card text-fg-subtle font-mono text-xs"
-                                    >URL</span
-                                >
-                                <input
-                                    v-model="editingLink.url"
-                                    type="text"
-                                    class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
-                                    :placeholder="t('publicLinks.urlPlaceholder')"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-fg-muted">
-                                {{ t('publicLinks.descriptionLabel') }}
-                            </label>
-                            <Textarea
-                                v-model="editingLink.description"
-                                rows="3"
-                                wrapperClass="mt-1"
-                                class="sm:text-sm px-3 py-2 resize-none"
-                                :placeholder="t('publicLinks.descriptionPlaceholder')"
-                            />
-                        </div>
-                    </div>
+    <!-- Add / Edit Website Modal -->
+    <Modal
+      v-model:show="showEditModal"
+      :title="isNew ? t('publicLinks.addModalTitle') : t('publicLinks.editModalTitle')"
+      size="4xl"
+    >
+      <template #body>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+          <!-- Left Column: Icon -->
+          <div class="md:col-span-5 lg:col-span-4">
+            <div class="bg-transparent rounded-md p-6 flex flex-col items-center gap-6 h-full border border-line">
+              <div class="text-center space-y-3 w-full">
+                <label class="block text-xs font-medium text-fg-muted">{{ t('settings.clientIconPreview') }}</label>
+                <div
+                  class="aspect-square w-full max-w-[140px] mx-auto rounded-md flex items-center justify-center text-5xl bg-inset text-fg-muted border border-line overflow-hidden shadow-none"
+                >
+                  <img
+                    v-if="
+                      resolvePublicLinkIcon(editingLink) &&
+                      (resolvePublicLinkIcon(editingLink).includes('/') ||
+                        resolvePublicLinkIcon(editingLink).startsWith('data:') ||
+                        resolvePublicLinkIcon(editingLink).startsWith('http'))
+                    "
+                    :alt="editingLink.name"
+                    :src="resolvePublicLinkIcon(editingLink)"
+                    class="w-full h-full object-contain rounded-md p-3"
+                  />
+                  <span v-else>{{ editingLink.icon || editingLink.name?.slice(0, 1) || '🌐' }}</span>
                 </div>
-            </template>
-            <template #footer>
-                <div class="flex justify-end gap-2">
+              </div>
+
+              <div class="w-full space-y-4">
+                <div class="space-y-2">
+                  <label class="block text-xs font-medium text-fg-muted">{{ t('settings.clientLocalIcon') }}</label>
+                  <input
+                    ref="iconFileInput"
+                    accept="image/svg+xml,image/png,image/jpeg,image/gif,image/webp,image/x-icon"
+                    class="hidden"
+                    type="file"
+                    @change="handleIconFileSelect"
+                  />
+                  <div class="flex gap-2 justify-center">
                     <button
-                        type="button"
-                        @click="showEditModal = false"
-                        class="px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg"
+                      :disabled="uploadingIcon"
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg transition-colors"
+                      type="button"
+                      @click="triggerIconFileSelect"
                     >
-                        {{ t('actions.cancel') }}
+                      <Upload v-if="!uploadingIcon" class="w-3.5 h-3.5" />
+                      <Loader2 v-else class="w-3.5 h-3.5 animate-spin" />
+                      <span>{{ uploadingIcon ? t('settings.clientUploading') : t('settings.clientUploadImage') }}</span>
                     </button>
                     <button
-                        type="button"
-                        @click="handleSaveLink"
-                        :disabled="saving"
-                        class="px-4 py-1.5 text-xs font-semibold text-accent-fg bg-accent border border-accent rounded-md hover:opacity-90 disabled:opacity-50"
+                      v-if="editingLink.icon"
+                      class="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 bg-transparent border border-line rounded-md hover:border-red-900/60 hover:bg-red-950/40 transition-colors"
+                      type="button"
+                      @click="clearIcon"
                     >
-                        {{ saving ? t('settings.saving') : t('actions.save') }}
+                      <Trash2 class="w-3.5 h-3.5" />
+                      <span>{{ t('actions.clearAll') }}</span>
                     </button>
+                  </div>
+                  <p v-if="isDataIcon" class="text-xs text-center text-fg-muted">
+                    {{ t('settings.clientUsingLocalIcon') }}
+                  </p>
                 </div>
-            </template>
-        </Modal>
 
-        <!-- Reset Confirmation Modal -->
-        <Modal
-            v-model:show="showResetConfirm"
-            @confirm="executeReset"
-            :title="t('settings.clientResetConfirmTitle')"
-            :confirmText="t('settings.clientResetConfirmAction')"
-            :cancelText="t('actions.cancel')"
-            size="sm"
-        >
-            <template #body>
-                <div class="space-y-3">
-                    <div
-                        class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line"
-                    >
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                        <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
-                    </div>
-                    <p class="text-xs text-fg-muted">
-                        {{ t('publicLinks.resetConfirmQuestion') }}
-                        <br />
-                        {{ t('publicLinks.resetConfirmDesc') }}
-                    </p>
+                <div class="space-y-2">
+                  <label class="block text-xs font-medium text-fg-muted">URL / Emoji</label>
+                  <input
+                    v-model="iconInputValue"
+                    :placeholder="t('settings.clientIconPlaceholder')"
+                    class="block w-full px-3 py-2 rounded-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                    type="text"
+                  />
                 </div>
-            </template>
-        </Modal>
+              </div>
+            </div>
+          </div>
 
-        <!-- Delete Confirmation Modal -->
-        <Modal
-            v-model:show="showDeleteConfirm"
-            @confirm="executeDelete"
-            :title="t('settings.clientDeleteConfirmTitle')"
-            :confirmText="t('settings.clientDeleteConfirmAction')"
-            :cancelText="t('actions.cancel')"
-            size="sm"
-        >
-            <template #body>
-                <div class="space-y-3">
-                    <div
-                        class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line"
-                    >
-                        <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
-                        <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
-                    </div>
-                    <p class="text-xs text-fg-muted">
-                        {{ t('publicLinks.deleteConfirmQuestion') }}
-                    </p>
-                </div>
-            </template>
-        </Modal>
-    </section>
+          <!-- Right Column: Form Details -->
+          <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-5">
+            <div>
+              <label class="block text-xs font-medium text-fg-muted">
+                {{ t('publicLinks.nameLabel') }}
+                <span class="text-red-400">*</span>
+              </label>
+              <input
+                v-model="editingLink.name"
+                :placeholder="t('publicLinks.namePlaceholder')"
+                class="mt-1 block w-full rounded-md border border-line bg-inset text-fg shadow-none focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-sm px-3 py-2 font-medium"
+                type="text"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-fg-muted mb-2">
+                {{ t('publicLinks.categoryLabel') }}
+              </label>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <button
+                  v-for="cat in PUBLIC_LINK_CATEGORIES"
+                  :key="cat.value"
+                  :class="
+                    editingLink.category === cat.value
+                      ? 'bg-elevated-card border-line-strong text-fg'
+                      : 'bg-transparent border-line text-fg-subtle hover:bg-hover hover:text-fg-muted'
+                  "
+                  class="p-2 rounded-md border text-xs font-medium transition-colors text-center"
+                  type="button"
+                  @click="editingLink.category = cat.value"
+                >
+                  {{ t(cat.labelKey) }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-fg-muted">
+                {{ t('publicLinks.urlLabel') }}
+                <span class="text-red-400">*</span>
+              </label>
+              <div class="mt-1 flex rounded-md shadow-none">
+                <span
+                  class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-line bg-elevated-card text-fg-subtle font-mono text-xs"
+                  >URL</span
+                >
+                <input
+                  v-model="editingLink.url"
+                  :placeholder="t('publicLinks.urlPlaceholder')"
+                  class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border border-line bg-inset text-fg font-mono focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500 sm:text-xs"
+                  type="text"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-fg-muted">
+                {{ t('publicLinks.descriptionLabel') }}
+              </label>
+              <Textarea
+                v-model="editingLink.description"
+                :placeholder="t('publicLinks.descriptionPlaceholder')"
+                class="sm:text-sm px-3 py-2 resize-none"
+                rows="3"
+                wrapperClass="mt-1"
+              />
+            </div>
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <button
+            class="px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover hover:text-fg"
+            type="button"
+            @click="showEditModal = false"
+          >
+            {{ t('actions.cancel') }}
+          </button>
+          <button
+            :disabled="saving"
+            class="px-4 py-1.5 text-xs font-semibold text-accent-fg bg-accent border border-accent rounded-md hover:opacity-90 disabled:opacity-50"
+            type="button"
+            @click="handleSaveLink"
+          >
+            {{ saving ? t('settings.saving') : t('actions.save') }}
+          </button>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- Reset Confirmation Modal -->
+    <Modal
+      v-model:show="showResetConfirm"
+      :cancelText="t('actions.cancel')"
+      :confirmText="t('settings.clientResetConfirmAction')"
+      :title="t('settings.clientResetConfirmTitle')"
+      size="sm"
+      @confirm="executeReset"
+    >
+      <template #body>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
+          </div>
+          <p class="text-xs text-fg-muted">
+            {{ t('publicLinks.resetConfirmQuestion') }}
+            <br />
+            {{ t('publicLinks.resetConfirmDesc') }}
+          </p>
+        </div>
+      </template>
+    </Modal>
+
+    <!-- Delete Confirmation Modal -->
+    <Modal
+      v-model:show="showDeleteConfirm"
+      :cancelText="t('actions.cancel')"
+      :confirmText="t('settings.clientDeleteConfirmAction')"
+      :title="t('settings.clientDeleteConfirmTitle')"
+      size="sm"
+      @confirm="executeDelete"
+    >
+      <template #body>
+        <div class="space-y-3">
+          <div class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line">
+            <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
+            <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
+          </div>
+          <p class="text-xs text-fg-muted">
+            {{ t('publicLinks.deleteConfirmQuestion') }}
+          </p>
+        </div>
+      </template>
+    </Modal>
+  </section>
 </template>

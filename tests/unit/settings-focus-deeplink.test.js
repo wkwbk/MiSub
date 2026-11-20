@@ -8,110 +8,110 @@ import { createI18n } from '@/i18n/index.js';
 const route = reactive({ query: {}, path: '/dashboard/settings' });
 
 vi.mock('vue-router', async () => {
-    const actual = await vi.importActual('vue-router');
-    return {
-        ...actual,
-        useRoute: () => route,
-        useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
-    };
+  const actual = await vi.importActual('vue-router');
+  return {
+    ...actual,
+    useRoute: () => route,
+    useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+  };
 });
 
 // The view loads settings on mount; stub the composable so the suite stays
 // offline and focused on the deep-link behaviour.
 vi.mock('@/composables/useSettingsLogic.js', () => ({
-    useSettingsLogic: () => ({
-        settings: { mytoken: 'stable-token', profileToken: 'share-token' },
-        disguiseConfig: {},
-        isLoading: false,
-        isSaving: false,
-        hasWhitespace: false,
-        loadSettings: vi.fn(),
-        handleSave: vi.fn(),
-        handleReset: vi.fn(),
-        exportBackup: vi.fn(),
-        importBackup: vi.fn(),
-    }),
+  useSettingsLogic: () => ({
+    settings: { mytoken: 'stable-token', profileToken: 'share-token' },
+    disguiseConfig: {},
+    isLoading: false,
+    isSaving: false,
+    hasWhitespace: false,
+    loadSettings: vi.fn(),
+    handleSave: vi.fn(),
+    handleReset: vi.fn(),
+    exportBackup: vi.fn(),
+    importBackup: vi.fn(),
+  }),
 }));
 
 // VTU 为了匹配 stub 名称会触发 defineAsyncComponent 的 loader，stub 并不能阻止真实模块被动态加载；
 // 直接 mock 模块本身，避免测试结束后仍有真实 import 在途。
 vi.mock('@/components/settings/sections/BasicSettings.vue', () => ({
-    default: { name: 'BasicSettings', template: '<div />' },
+  default: { name: 'BasicSettings', template: '<div />' },
 }));
 
 const scrollSpy = vi.fn();
 
 function mountView() {
-    return mount(SettingsView, {
-        global: {
-            plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
-            stubs: {
-                SettingsLayout: {
-                    template: '<div><slot name="sidebar" /><slot /><slot name="footer" /></div>',
-                },
-                SettingsSidebar: true,
-                BasicSettings: true,
-                HomeSettings: true,
-                GlobalSettings: true,
-                ServiceSettings: true,
-                ClientSettings: true,
-                CustomPageSettings: true,
-                SystemSettings: true,
-                WebdavBackupSettings: true,
-            },
+  return mount(SettingsView, {
+    global: {
+      plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
+      stubs: {
+        SettingsLayout: {
+          template: '<div><slot name="sidebar" /><slot /><slot name="footer" /></div>',
         },
-    });
+        SettingsSidebar: true,
+        BasicSettings: true,
+        HomeSettings: true,
+        GlobalSettings: true,
+        ServiceSettings: true,
+        ClientSettings: true,
+        CustomPageSettings: true,
+        SystemSettings: true,
+        WebdavBackupSettings: true,
+      },
+    },
+  });
 }
 
 describe('SettingsView 深链 focus (?focus=mytoken / profileToken)', () => {
-    beforeEach(() => {
-        scrollSpy.mockClear();
-        route.query = {};
-        route.path = '/dashboard/settings';
-        setActivePinia(createPinia());
-        Element.prototype.scrollIntoView = scrollSpy;
-    });
+  beforeEach(() => {
+    scrollSpy.mockClear();
+    route.query = {};
+    route.path = '/dashboard/settings';
+    setActivePinia(createPinia());
+    Element.prototype.scrollIntoView = scrollSpy;
+  });
 
-    it('defaults to the basic tab when no focus is present', () => {
-        const wrapper = mountView();
-        expect(wrapper.vm.activeTab).toBe('basic');
-        expect(scrollSpy).not.toHaveBeenCalled();
-    });
+  it('defaults to the basic tab when no focus is present', () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.activeTab).toBe('basic');
+    expect(scrollSpy).not.toHaveBeenCalled();
+  });
 
-    it('selects the basic tab and highlights the main token field for ?focus=mytoken', async () => {
-        route.query = { focus: 'mytoken' };
-        const wrapper = mountView();
-        await wrapper.vm.$nextTick();
+  it('selects the basic tab and highlights the main token field for ?focus=mytoken', async () => {
+    route.query = { focus: 'mytoken' };
+    const wrapper = mountView();
+    await wrapper.vm.$nextTick();
 
-        expect(wrapper.vm.activeTab).toBe('basic');
-        expect(wrapper.vm.highlightedFocusId).toBe('setting-mytoken');
-    });
+    expect(wrapper.vm.activeTab).toBe('basic');
+    expect(wrapper.vm.highlightedFocusId).toBe('setting-mytoken');
+  });
 
-    it('highlights the profile token field for ?focus=profileToken', async () => {
-        route.query = { focus: 'profileToken' };
-        const wrapper = mountView();
-        await wrapper.vm.$nextTick();
+  it('highlights the profile token field for ?focus=profileToken', async () => {
+    route.query = { focus: 'profileToken' };
+    const wrapper = mountView();
+    await wrapper.vm.$nextTick();
 
-        expect(wrapper.vm.activeTab).toBe('basic');
-        expect(wrapper.vm.highlightedFocusId).toBe('setting-profileToken');
-    });
+    expect(wrapper.vm.activeTab).toBe('basic');
+    expect(wrapper.vm.highlightedFocusId).toBe('setting-profileToken');
+  });
 
-    it('ignores an unknown focus and keeps the default tab', async () => {
-        route.query = { focus: 'bogus' };
-        const wrapper = mountView();
-        await wrapper.vm.$nextTick();
+  it('ignores an unknown focus and keeps the default tab', async () => {
+    route.query = { focus: 'bogus' };
+    const wrapper = mountView();
+    await wrapper.vm.$nextTick();
 
-        expect(wrapper.vm.activeTab).toBe('basic');
-        expect(wrapper.vm.highlightedFocusId).toBe('');
-    });
+    expect(wrapper.vm.activeTab).toBe('basic');
+    expect(wrapper.vm.highlightedFocusId).toBe('');
+  });
 
-    it('re-applies the focus when the query changes while mounted', async () => {
-        const wrapper = mountView();
-        expect(wrapper.vm.highlightedFocusId).toBe('');
+  it('re-applies the focus when the query changes while mounted', async () => {
+    const wrapper = mountView();
+    expect(wrapper.vm.highlightedFocusId).toBe('');
 
-        route.query = { focus: 'profileToken' };
-        await wrapper.vm.$nextTick();
+    route.query = { focus: 'profileToken' };
+    await wrapper.vm.$nextTick();
 
-        expect(wrapper.vm.highlightedFocusId).toBe('setting-profileToken');
-    });
+    expect(wrapper.vm.highlightedFocusId).toBe('setting-profileToken');
+  });
 });

@@ -8,9 +8,9 @@ export { default as ProfilePanel } from '@/components/profiles/ProfilePanel.vue'
 export { default as RightPanel } from '@/components/profiles/RightPanel.vue';
 
 export const ProfileComponents = {
-    ProfileCard,
-    ProfilePanel,
-    RightPanel,
+  ProfileCard,
+  ProfilePanel,
+  RightPanel,
 };
 
 export default ProfileComponents;

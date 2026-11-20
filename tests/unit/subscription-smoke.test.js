@@ -7,14 +7,14 @@ import { validateClashConfig, validateSingboxConfig } from '../../scripts/smoke-
 const NODE = 'trojan://password@1.2.3.4:443#SmokeNode';
 
 describe('Clash/sing-box subscription smoke invariants', () => {
-    for (const mode of ['clean', 'polluted']) {
-        it(`accepts ${mode} built-in Clash and sing-box output`, () => {
-            const options = mode === 'polluted' ? { dnsMode: 'polluted' } : {};
-            const clash = yaml.load(generateBuiltinClashConfig(NODE, options));
-            const singbox = JSON.parse(generateBuiltinSingboxConfig(NODE, options));
+  for (const mode of ['clean', 'polluted']) {
+    it(`accepts ${mode} built-in Clash and sing-box output`, () => {
+      const options = mode === 'polluted' ? { dnsMode: 'polluted' } : {};
+      const clash = yaml.load(generateBuiltinClashConfig(NODE, options));
+      const singbox = JSON.parse(generateBuiltinSingboxConfig(NODE, options));
 
-            expect(() => validateClashConfig(clash, mode)).not.toThrow();
-            expect(() => validateSingboxConfig(singbox, mode)).not.toThrow();
-        });
-    }
+      expect(() => validateClashConfig(clash, mode)).not.toThrow();
+      expect(() => validateSingboxConfig(singbox, mode)).not.toThrow();
+    });
+  }
 });

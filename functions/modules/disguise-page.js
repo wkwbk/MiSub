@@ -12,11 +12,11 @@
  * @returns {Response} HTML响应
  */
 export function renderDisguisePage(disguiseConfig) {
-    const homeHref = resolveHomeHref(disguiseConfig);
-    const homeLink = homeHref
-        ? `<a href="${escapeHtml(homeHref)}" class="home-link"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>返回首页</a>`
-        : '';
-    const html = `
+  const homeHref = resolveHomeHref(disguiseConfig);
+  const homeLink = homeHref
+    ? `<a href="${escapeHtml(homeHref)}" class="home-link"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>返回首页</a>`
+    : '';
+  const html = `
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -122,13 +122,13 @@ export function renderDisguisePage(disguiseConfig) {
 </html>
     `;
 
-    return new Response(html, {
-        status: 404,
-        headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'no-cache',
-        },
-    });
+  return new Response(html, {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    },
+  });
 }
 
 /**
@@ -138,33 +138,33 @@ export function renderDisguisePage(disguiseConfig) {
  * @returns {Response}
  */
 export function createDisguiseResponse(disguiseConfig, baseUrl) {
-    if (disguiseConfig && disguiseConfig.pageType === 'redirect' && disguiseConfig.redirectUrl) {
-        const redirectUrl = normalizeRedirectUrl(disguiseConfig.redirectUrl, baseUrl);
-        if (redirectUrl) {
-            return new Response(null, {
-                status: 302,
-                headers: {
-                    Location: redirectUrl,
-                    // 伪装响应绝不能被边缘缓存：否则可能被缓存后被已登录用户命中，
-                    // 或泄露给搜索引擎/第三方来源。
-                    'Cache-Control': 'no-store, no-cache, must-revalidate',
-                    'CDN-Cache-Control': 'no-store',
-                    'Surrogate-Control': 'no-store',
-                },
-            });
-        }
+  if (disguiseConfig && disguiseConfig.pageType === 'redirect' && disguiseConfig.redirectUrl) {
+    const redirectUrl = normalizeRedirectUrl(disguiseConfig.redirectUrl, baseUrl);
+    if (redirectUrl) {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: redirectUrl,
+          // 伪装响应绝不能被边缘缓存：否则可能被缓存后被已登录用户命中，
+          // 或泄露给搜索引擎/第三方来源。
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'CDN-Cache-Control': 'no-store',
+          'Surrogate-Control': 'no-store',
+        },
+      });
     }
-    return renderDisguisePage(disguiseConfig);
+  }
+  return renderDisguisePage(disguiseConfig);
 }
 
 /** 转义 HTML 属性/文本，避免配置里的引号破坏页面结构。 */
 function escapeHtml(value) {
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 /**
@@ -174,46 +174,46 @@ function escapeHtml(value) {
  * @returns {string} 空字符串表示不渲染该链接
  */
 function resolveHomeHref(disguiseConfig) {
-    if (disguiseConfig && typeof disguiseConfig.redirectUrl === 'string') {
-        const trimmed = disguiseConfig.redirectUrl.trim();
-        if (trimmed) {
-            const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
-            if (!hasScheme && !trimmed.startsWith('/') && !trimmed.startsWith('//')) {
-                return `https://${trimmed}`;
-            }
-            // 站内相对路径会回到本站根路径并再次触发伪装，故不渲染
-            if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-                return trimmed;
-            }
-        }
+  if (disguiseConfig && typeof disguiseConfig.redirectUrl === 'string') {
+    const trimmed = disguiseConfig.redirectUrl.trim();
+    if (trimmed) {
+      const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed);
+      if (!hasScheme && !trimmed.startsWith('/') && !trimmed.startsWith('//')) {
+        return `https://${trimmed}`;
+      }
+      // 站内相对路径会回到本站根路径并再次触发伪装，故不渲染
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+        return trimmed;
+      }
     }
-    return '';
+  }
+  return '';
 }
 
 function normalizeRedirectUrl(rawUrl, baseUrl) {
-    if (typeof rawUrl !== 'string') {
-        return null;
-    }
+  if (typeof rawUrl !== 'string') {
+    return null;
+  }
 
-    const trimmed = rawUrl.trim();
-    if (!trimmed) {
-        return null;
-    }
+  const trimmed = rawUrl.trim();
+  if (!trimmed) {
+    return null;
+  }
 
-    let candidate = trimmed;
-    const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(candidate);
-    if (!hasScheme && !candidate.startsWith('/') && !candidate.startsWith('//')) {
-        candidate = `https://${candidate}`;
-    }
+  let candidate = trimmed;
+  const hasScheme = /^[a-z][a-z0-9+.-]*:/i.test(candidate);
+  if (!hasScheme && !candidate.startsWith('/') && !candidate.startsWith('//')) {
+    candidate = `https://${candidate}`;
+  }
 
-    try {
-        const normalized = encodeURI(candidate);
-        const resolved = baseUrl ? new URL(normalized, baseUrl) : new URL(normalized);
-        if (!['http:', 'https:'].includes(resolved.protocol)) {
-            return null;
-        }
-        return resolved.toString();
-    } catch (error) {
-        return null;
+  try {
+    const normalized = encodeURI(candidate);
+    const resolved = baseUrl ? new URL(normalized, baseUrl) : new URL(normalized);
+    if (!['http:', 'https:'].includes(resolved.protocol)) {
+      return null;
     }
+    return resolved.toString();
+  } catch (error) {
+    return null;
+  }
 }

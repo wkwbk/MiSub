@@ -16,14 +16,14 @@
 const RELOAD_KEY = 'misub:chunk-reload';
 
 const CHUNK_ERROR_PATTERNS = [
-    'Failed to fetch dynamically imported module',
-    'error loading dynamically imported module',
+  'Failed to fetch dynamically imported module',
+  'error loading dynamically imported module',
 ];
 
 /** 是否为「动态导入的 chunk 拿不到」这一类错误 */
 export function isChunkLoadError(message) {
-    const text = String(message || '');
-    return CHUNK_ERROR_PATTERNS.some((pattern) => text.includes(pattern));
+  const text = String(message || '');
+  return CHUNK_ERROR_PATTERNS.some((pattern) => text.includes(pattern));
 }
 
 /**
@@ -33,12 +33,12 @@ export function isChunkLoadError(message) {
  * 本次会话内只会返回一次 true（后续同会话的 chunk 错误不再重载，避免循环）。
  */
 export function shouldReloadForChunkError() {
-    try {
-        if (sessionStorage.getItem(RELOAD_KEY) === '1') return false;
-        sessionStorage.setItem(RELOAD_KEY, '1');
-        return true;
-    } catch (error) {
-        console.warn('[Chunk Reload] sessionStorage unavailable, skip auto reload:', error);
-        return false;
-    }
+  try {
+    if (sessionStorage.getItem(RELOAD_KEY) === '1') return false;
+    sessionStorage.setItem(RELOAD_KEY, '1');
+    return true;
+  } catch (error) {
+    console.warn('[Chunk Reload] sessionStorage unavailable, skip auto reload:', error);
+    return false;
+  }
 }

@@ -13,15 +13,15 @@ const isDev = import.meta.env.DEV;
  * @returns {Object} 标准化的错误对象
  */
 export function createApiError(error, context = 'Unknown') {
-    console.error(`[${context}] Error:`, error);
+  console.error(`[${context}] Error:`, error);
 
-    return {
-        success: false,
-        message: error.message || t('errors.unknown'),
-        error: error.name || 'Error',
-        context,
-        timestamp: new Date().toISOString(),
-    };
+  return {
+    success: false,
+    message: error.message || t('errors.unknown'),
+    error: error.name || 'Error',
+    context,
+    timestamp: new Date().toISOString(),
+  };
 }
 
 /**
@@ -31,18 +31,18 @@ export function createApiError(error, context = 'Unknown') {
  * @returns {Promise<Object>} 错误信息
  */
 export async function handleApiResponseError(response, context = 'API Request') {
-    let errorMessage = t('errors.requestFailedWithStatus', { status: response.status });
+  let errorMessage = t('errors.requestFailedWithStatus', { status: response.status });
 
-    try {
-        const errorData = await response.json();
-        errorMessage = errorData.error || errorData.message || errorMessage;
-    } catch (error) {
-        if (isDev) {
-            console.debug('[ErrorUtils] Failed to parse error response JSON:', error);
-        }
+  try {
+    const errorData = await response.json();
+    errorMessage = errorData.error || errorData.message || errorMessage;
+  } catch (error) {
+    if (isDev) {
+      console.debug('[ErrorUtils] Failed to parse error response JSON:', error);
     }
+  }
 
-    return createApiError(new Error(errorMessage), context);
+  return createApiError(new Error(errorMessage), context);
 }
 
 /**
@@ -52,9 +52,9 @@ export async function handleApiResponseError(response, context = 'API Request') 
  * @returns {Error} 错误对象
  */
 export function createUserError(message, userMessage) {
-    const error = new Error(message);
-    error.userMessage = userMessage || message;
-    return error;
+  const error = new Error(message);
+  error.userMessage = userMessage || message;
+  return error;
 }
 
 /**
@@ -64,10 +64,10 @@ export function createUserError(message, userMessage) {
  * @returns {Promise<{success: boolean, data?: any, error?: Object}>} 执行结果
  */
 export async function safeExecute(fn, context = 'Function Execution') {
-    try {
-        const data = await fn();
-        return { success: true, data };
-    } catch (error) {
-        return { success: false, error: createApiError(error, context) };
-    }
+  try {
+    const data = await fn();
+    return { success: true, data };
+  } catch (error) {
+    return { success: false, error: createApiError(error, context) };
+  }
 }

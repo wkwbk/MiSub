@@ -4,24 +4,24 @@
  */
 
 export const API_ENDPOINTS = {
-    // 认证相关
-    LOGIN: '/api/login',
-    LOGOUT: '/api/logout',
+  // 认证相关
+  LOGIN: '/api/login',
+  LOGOUT: '/api/logout',
 
-    // 数据相关
-    DATA: '/api/data',
-    MISUBS: '/api/misubs',
-    SETTINGS: '/api/settings',
+  // 数据相关
+  DATA: '/api/data',
+  MISUBS: '/api/misubs',
+  SETTINGS: '/api/settings',
 
-    // 订阅相关
-    SUB_NODES: '/api/subscription_nodes',
-    NODE_COUNT: '/api/node_count',
-    FETCH_EXTERNAL: '/api/fetch_external_url',
-    BATCH_UPDATE: '/api/batch_update_nodes',
-    DEBUG_SUB: '/api/debug_subscription',
+  // 订阅相关
+  SUB_NODES: '/api/subscription_nodes',
+  NODE_COUNT: '/api/node_count',
+  FETCH_EXTERNAL: '/api/fetch_external_url',
+  BATCH_UPDATE: '/api/batch_update_nodes',
+  DEBUG_SUB: '/api/debug_subscription',
 
-    // 订阅访问
-    SUB_BASE: '/sub',
-    SUB_PROFILE: '/sub/:token/:profileId',
-    SUB_DIRECT: '/sub/:token',
+  // 订阅访问
+  SUB_BASE: '/sub',
+  SUB_PROFILE: '/sub/:token/:profileId',
+  SUB_DIRECT: '/sub/:token',
 };

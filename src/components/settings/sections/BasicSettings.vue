@@ -1,727 +1,680 @@
 <script setup>
-    import { Globe, Info, Languages, SlidersHorizontal } from '@lucide/vue';
-    import SectionHeader from '@/components/settings/SectionHeader.vue';
-    import Input from '@/components/ui/Input.vue';
-    import Select from '@/components/ui/Select.vue';
-    import Switch from '@/components/ui/Switch.vue';
-    import { computed, ref, watch } from 'vue';
-    import { useToastStore } from '@/stores/toast';
-    import { useI18n } from '@/i18n/index.js';
+import { Globe, Info, Languages, SlidersHorizontal } from '@lucide/vue';
+import SectionHeader from '@/components/settings/SectionHeader.vue';
+import Input from '@/components/ui/Input.vue';
+import Select from '@/components/ui/Select.vue';
+import Switch from '@/components/ui/Switch.vue';
+import { computed, ref, watch } from 'vue';
+import { useToastStore } from '@/stores/toast';
+import { useI18n } from '@/i18n/index.js';
 
-    const props = defineProps({
-        settings: {
-            type: Object,
-            required: true,
-        },
-        disguiseConfig: {
-            type: Object,
-            required: true,
-        },
-        // id of the field the dashboard deep-linked to, so we can highlight it.
-        highlightedFocusId: {
-            type: String,
-            default: '',
-        },
-    });
+const props = defineProps({
+  settings: {
+    type: Object,
+    required: true,
+  },
+  disguiseConfig: {
+    type: Object,
+    required: true,
+  },
+  // id of the field the dashboard deep-linked to, so we can highlight it.
+  highlightedFocusId: {
+    type: String,
+    default: '',
+  },
+});
 
-    const { showToast } = useToastStore();
-    const { t } = useI18n();
+const { showToast } = useToastStore();
+const { t } = useI18n();
 
-    // 系统保留路径列表，这些路径会与前端路由或后端 API 冲突
-    const RESERVED_PATHS = [
-        'settings',
-        'login',
-        'groups',
-        'nodes',
-        'subscriptions',
-        'dashboard',
-        'api',
-        'explore',
-        'sub',
-        'cron',
-        'assets',
-        '@vite',
-        'public',
-        'profile',
-        'offline',
-        'logout',
-        'auth_debug',
-        'auth_check',
-        'data',
-        'clients',
-        'system',
-        'github',
-        'telegram',
-        'test_notification',
-        'misubs',
-        'node_count',
-        'fetch_external_url',
-        'batch_update_nodes',
-        'subscription_nodes',
-        'debug_subscription',
-        'preview',
-    ];
+// 系统保留路径列表，这些路径会与前端路由或后端 API 冲突
+const RESERVED_PATHS = [
+  'settings',
+  'login',
+  'groups',
+  'nodes',
+  'subscriptions',
+  'dashboard',
+  'api',
+  'explore',
+  'sub',
+  'cron',
+  'assets',
+  '@vite',
+  'public',
+  'profile',
+  'offline',
+  'logout',
+  'auth_debug',
+  'auth_check',
+  'data',
+  'clients',
+  'system',
+  'github',
+  'telegram',
+  'test_notification',
+  'misubs',
+  'node_count',
+  'fetch_external_url',
+  'batch_update_nodes',
+  'subscription_nodes',
+  'debug_subscription',
+  'preview',
+];
 
-    const getPathSegment = (value) => value.replace(/^\/+/, '').split('/')[0].toLowerCase();
-    const hasInvalidTokenChars = (value) => /[\s\/?#]/.test(value);
+const getPathSegment = (value) => value.replace(/^\/+/, '').split('/')[0].toLowerCase();
+const hasInvalidTokenChars = (value) => /[\s\/?#]/.test(value);
 
-    const customLoginPathError = computed(() => {
-        const value = props.settings.customLoginPath;
-        if (!value) return '';
+const customLoginPathError = computed(() => {
+  const value = props.settings.customLoginPath;
+  if (!value) return '';
 
-        if (/[^a-zA-Z0-9-_\/]/.test(value)) {
-            return t('settings.reservedPathChars');
-        }
+  if (/[^a-zA-Z0-9-_\/]/.test(value)) {
+    return t('settings.reservedPathChars');
+  }
 
-        const pathSegment = getPathSegment(value);
-        if (RESERVED_PATHS.includes(pathSegment)) {
-            return t('settings.reservedPathCustomLogin', { path: pathSegment });
-        }
+  const pathSegment = getPathSegment(value);
+  if (RESERVED_PATHS.includes(pathSegment)) {
+    return t('settings.reservedPathCustomLogin', { path: pathSegment });
+  }
 
-        return '';
-    });
+  return '';
+});
 
-    const myTokenError = computed(() => {
-        const value = props.settings.mytoken;
-        if (!value) return '';
+const myTokenError = computed(() => {
+  const value = props.settings.mytoken;
+  if (!value) return '';
 
-        if (hasInvalidTokenChars(value)) {
-            return t('settings.reservedTokenChars');
-        }
+  if (hasInvalidTokenChars(value)) {
+    return t('settings.reservedTokenChars');
+  }
 
-        const pathSegment = getPathSegment(value);
-        return RESERVED_PATHS.includes(pathSegment)
-            ? t('settings.reservedPathSubscriptionToken')
-            : '';
-    });
+  const pathSegment = getPathSegment(value);
+  return RESERVED_PATHS.includes(pathSegment) ? t('settings.reservedPathSubscriptionToken') : '';
+});
 
-    const profileTokenError = computed(() => {
-        const value = props.settings.profileToken;
-        if (!value) return '';
+const profileTokenError = computed(() => {
+  const value = props.settings.profileToken;
+  if (!value) return '';
 
-        if (hasInvalidTokenChars(value)) {
-            return t('settings.reservedTokenChars');
-        }
+  if (hasInvalidTokenChars(value)) {
+    return t('settings.reservedTokenChars');
+  }
 
-        const pathSegment = getPathSegment(value);
-        return RESERVED_PATHS.includes(pathSegment) ? t('settings.reservedPathProfileToken') : '';
-    });
+  const pathSegment = getPathSegment(value);
+  return RESERVED_PATHS.includes(pathSegment) ? t('settings.reservedPathProfileToken') : '';
+});
 
-    // 监听自定义登录路径，保留输入并通过提示引导修正
-    watch(
-        () => props.settings.customLoginPath,
-        (val) => {
-            if (!val) return;
+// 监听自定义登录路径，保留输入并通过提示引导修正
+watch(
+  () => props.settings.customLoginPath,
+  (val) => {
+    if (!val) return;
 
-            // 仅允许字母、数字、下划线、中划线和斜杠
-            const sanitized = val.replace(/[^a-zA-Z0-9-_\/]/g, '');
+    // 仅允许字母、数字、下划线、中划线和斜杠
+    const sanitized = val.replace(/[^a-zA-Z0-9-_\/]/g, '');
 
-            if (sanitized !== val) {
-                props.settings.customLoginPath = sanitized;
-                showToast(t('settings.reservedPathCharsToast'), 'warning');
-                return;
-            }
-        }
-    );
+    if (sanitized !== val) {
+      props.settings.customLoginPath = sanitized;
+      showToast(t('settings.reservedPathCharsToast'), 'warning');
+    }
+  },
+);
 
-    watch(
-        () => props.settings.mytoken,
-        (val) => {
-            if (!val) return;
-            if (hasInvalidTokenChars(val)) {
-                showToast(t('settings.reservedTokenChars'), 'error');
-                return;
-            }
-            const pathSegment = getPathSegment(val);
-            if (RESERVED_PATHS.includes(pathSegment)) {
-                showToast(t('settings.reservedPathSubscriptionToken'), 'error');
-            }
-        }
-    );
+watch(
+  () => props.settings.mytoken,
+  (val) => {
+    if (!val) return;
+    if (hasInvalidTokenChars(val)) {
+      showToast(t('settings.reservedTokenChars'), 'error');
+      return;
+    }
+    const pathSegment = getPathSegment(val);
+    if (RESERVED_PATHS.includes(pathSegment)) {
+      showToast(t('settings.reservedPathSubscriptionToken'), 'error');
+    }
+  },
+);
 
-    watch(
-        () => props.settings.profileToken,
-        (val) => {
-            if (!val) return;
-            if (hasInvalidTokenChars(val)) {
-                showToast(t('settings.reservedTokenChars'), 'error');
-                return;
-            }
-            const pathSegment = getPathSegment(val);
-            if (RESERVED_PATHS.includes(pathSegment)) {
-                showToast(t('settings.reservedPathProfileToken'), 'error');
-            }
-        }
-    );
+watch(
+  () => props.settings.profileToken,
+  (val) => {
+    if (!val) return;
+    if (hasInvalidTokenChars(val)) {
+      showToast(t('settings.reservedTokenChars'), 'error');
+      return;
+    }
+    const pathSegment = getPathSegment(val);
+    if (RESERVED_PATHS.includes(pathSegment)) {
+      showToast(t('settings.reservedPathProfileToken'), 'error');
+    }
+  },
+);
 
-    const QUICK_INTERVAL_VALUES = [0, 30, 60];
-    const MIN_CUSTOM_INTERVAL = 5;
+const QUICK_INTERVAL_VALUES = [0, 30, 60];
+const MIN_CUSTOM_INTERVAL = 5;
 
-    const isCustomInterval = computed(
-        () => !QUICK_INTERVAL_VALUES.includes(Number(props.settings.autoUpdateInterval))
-    );
+const isCustomInterval = computed(() => !QUICK_INTERVAL_VALUES.includes(Number(props.settings.autoUpdateInterval)));
 
-    const customIntervalInput = ref(
-        isCustomInterval.value ? String(props.settings.autoUpdateInterval ?? '') : ''
-    );
+const customIntervalInput = ref(isCustomInterval.value ? String(props.settings.autoUpdateInterval ?? '') : '');
 
-    watch(
-        () => props.settings.autoUpdateInterval,
-        (val) => {
-            if (QUICK_INTERVAL_VALUES.includes(Number(val))) {
-                customIntervalInput.value = '';
-            } else if (val !== undefined && val !== null) {
-                customIntervalInput.value = String(val);
-            }
-        }
-    );
+watch(
+  () => props.settings.autoUpdateInterval,
+  (val) => {
+    if (QUICK_INTERVAL_VALUES.includes(Number(val))) {
+      customIntervalInput.value = '';
+    } else if (val !== undefined && val !== null) {
+      customIntervalInput.value = String(val);
+    }
+  },
+);
 
-    const handleCustomIntervalInput = (event) => {
-        const raw = event.target.value;
-        customIntervalInput.value = raw;
-        const parsed = Number.parseInt(raw, 10);
-        if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_INTERVAL) {
-            props.settings.autoUpdateInterval = parsed;
-        }
-    };
+const handleCustomIntervalInput = (event) => {
+  const raw = event.target.value;
+  customIntervalInput.value = raw;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_INTERVAL) {
+    props.settings.autoUpdateInterval = parsed;
+  }
+};
 
-    const handleCustomIntervalBlur = () => {
-        const parsed = Number.parseInt(customIntervalInput.value, 10);
-        if (customIntervalInput.value === '' || Number.isNaN(parsed)) {
-            customIntervalInput.value = isCustomInterval.value
-                ? String(props.settings.autoUpdateInterval)
-                : '';
-            return;
-        }
-        if (parsed < MIN_CUSTOM_INTERVAL) {
-            props.settings.autoUpdateInterval = MIN_CUSTOM_INTERVAL;
-            customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
-        }
-    };
+const handleCustomIntervalBlur = () => {
+  const parsed = Number.parseInt(customIntervalInput.value, 10);
+  if (customIntervalInput.value === '' || Number.isNaN(parsed)) {
+    customIntervalInput.value = isCustomInterval.value ? String(props.settings.autoUpdateInterval) : '';
+    return;
+  }
+  if (parsed < MIN_CUSTOM_INTERVAL) {
+    props.settings.autoUpdateInterval = MIN_CUSTOM_INTERVAL;
+    customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
+  }
+};
 
-    const QUICK_PROFILE_INTERVAL_VALUES = [0, 12, 24, 48];
-    const MIN_CUSTOM_PROFILE_INTERVAL = 1;
+const QUICK_PROFILE_INTERVAL_VALUES = [0, 12, 24, 48];
+const MIN_CUSTOM_PROFILE_INTERVAL = 1;
 
-    const isCustomProfileInterval = computed(
-        () =>
-            !QUICK_PROFILE_INTERVAL_VALUES.includes(
-                Number(props.settings.profileUpdateInterval ?? 24)
-            )
-    );
+const isCustomProfileInterval = computed(
+  () => !QUICK_PROFILE_INTERVAL_VALUES.includes(Number(props.settings.profileUpdateInterval ?? 24)),
+);
 
-    const customProfileIntervalInput = ref(
-        isCustomProfileInterval.value ? String(props.settings.profileUpdateInterval ?? '') : ''
-    );
+const customProfileIntervalInput = ref(
+  isCustomProfileInterval.value ? String(props.settings.profileUpdateInterval ?? '') : '',
+);
 
-    watch(
-        () => props.settings.profileUpdateInterval,
-        (val) => {
-            if (QUICK_PROFILE_INTERVAL_VALUES.includes(Number(val))) {
-                customProfileIntervalInput.value = '';
-            } else if (val !== undefined && val !== null) {
-                customProfileIntervalInput.value = String(val);
-            }
-        }
-    );
+watch(
+  () => props.settings.profileUpdateInterval,
+  (val) => {
+    if (QUICK_PROFILE_INTERVAL_VALUES.includes(Number(val))) {
+      customProfileIntervalInput.value = '';
+    } else if (val !== undefined && val !== null) {
+      customProfileIntervalInput.value = String(val);
+    }
+  },
+);
 
-    const handleCustomProfileIntervalInput = (event) => {
-        const raw = event.target.value;
-        customProfileIntervalInput.value = raw;
-        const parsed = Number.parseInt(raw, 10);
-        if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_PROFILE_INTERVAL) {
-            props.settings.profileUpdateInterval = parsed;
-        }
-    };
+const handleCustomProfileIntervalInput = (event) => {
+  const raw = event.target.value;
+  customProfileIntervalInput.value = raw;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_PROFILE_INTERVAL) {
+    props.settings.profileUpdateInterval = parsed;
+  }
+};
 
-    const handleCustomProfileIntervalBlur = () => {
-        const parsed = Number.parseInt(customProfileIntervalInput.value, 10);
-        if (customProfileIntervalInput.value === '' || Number.isNaN(parsed)) {
-            customProfileIntervalInput.value = isCustomProfileInterval.value
-                ? String(props.settings.profileUpdateInterval ?? 24)
-                : '';
-            return;
-        }
-        if (parsed < MIN_CUSTOM_PROFILE_INTERVAL) {
-            props.settings.profileUpdateInterval = MIN_CUSTOM_PROFILE_INTERVAL;
-            customProfileIntervalInput.value = String(MIN_CUSTOM_PROFILE_INTERVAL);
-        }
-    };
+const handleCustomProfileIntervalBlur = () => {
+  const parsed = Number.parseInt(customProfileIntervalInput.value, 10);
+  if (customProfileIntervalInput.value === '' || Number.isNaN(parsed)) {
+    customProfileIntervalInput.value = isCustomProfileInterval.value
+      ? String(props.settings.profileUpdateInterval ?? 24)
+      : '';
+    return;
+  }
+  if (parsed < MIN_CUSTOM_PROFILE_INTERVAL) {
+    props.settings.profileUpdateInterval = MIN_CUSTOM_PROFILE_INTERVAL;
+    customProfileIntervalInput.value = String(MIN_CUSTOM_PROFILE_INTERVAL);
+  }
+};
 </script>
 
 <template>
-    <div class="space-y-4">
-        <!-- 默认显示语言 -->
-        <section class="rounded-lg border border-line bg-surface p-6">
-            <SectionHeader
-                :title="t('settings.defaultLanguageTitle')"
-                :description="t('settings.defaultLanguageDesc')"
-                tone="amber"
-            >
-                <template #icon>
-                    <Languages class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-            <div class="max-w-xs">
-                <Select
-                    v-model="settings.defaultLocale"
-                    :options="[
-                        { value: 'zh-CN', label: t('settings.defaultLanguageZh') },
-                        { value: 'en-US', label: t('settings.defaultLanguageEn') },
-                    ]"
+  <div class="space-y-4">
+    <!-- 默认显示语言 -->
+    <section class="rounded-lg border border-line bg-surface p-6">
+      <SectionHeader
+        :description="t('settings.defaultLanguageDesc')"
+        :title="t('settings.defaultLanguageTitle')"
+        tone="amber"
+      >
+        <template #icon>
+          <Languages class="h-4 w-4" />
+        </template>
+      </SectionHeader>
+      <div class="max-w-xs">
+        <Select
+          v-model="settings.defaultLocale"
+          :options="[
+            { value: 'zh-CN', label: t('settings.defaultLanguageZh') },
+            { value: 'en-US', label: t('settings.defaultLanguageEn') },
+          ]"
+        />
+      </div>
+    </section>
+
+    <!-- 订阅基本信息配置 -->
+    <section class="rounded-lg border border-line bg-surface p-6">
+      <SectionHeader
+        :description="t('settings.subscriptionConfigDesc')"
+        :title="t('settings.subscriptionConfigTitle')"
+        tone="indigo"
+      >
+        <template #icon>
+          <Info class="h-4 w-4" />
+        </template>
+      </SectionHeader>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+          <Input v-model="settings.FileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
+        </div>
+        <div>
+          <Input
+            id="setting-mytoken"
+            v-model="settings.mytoken"
+            :class="{
+              'ring-1 ring-zinc-400 rounded-md': highlightedFocusId === 'setting-mytoken',
+            }"
+            :error="myTokenError"
+            :label="t('settings.customToken')"
+            class="rounded-md font-mono transition-shadow duration-300"
+          />
+        </div>
+        <div>
+          <Input
+            id="setting-profileToken"
+            v-model="settings.profileToken"
+            :class="{
+              'ring-1 ring-zinc-400 rounded-md': highlightedFocusId === 'setting-profileToken',
+            }"
+            :error="profileTokenError"
+            :label="t('settings.profileToken')"
+            :placeholder="t('settings.profileTokenPlaceholder')"
+            class="rounded-md font-mono transition-shadow duration-300"
+          />
+        </div>
+      </div>
+      <p class="mt-4 text-xs text-fg-subtle leading-relaxed">
+        {{ t('settings.subscriptionTokenRotationHint') }}
+      </p>
+    </section>
+
+    <!-- 功能开关区域 -->
+    <section class="rounded-lg border border-line bg-surface p-6">
+      <SectionHeader
+        :description="t('settings.featureControlDesc')"
+        :title="t('settings.featureControlTitle')"
+        tone="green"
+      >
+        <template #icon>
+          <SlidersHorizontal class="h-4 w-4" />
+        </template>
+      </SectionHeader>
+      <div class="divide-y divide-line-subtle">
+        <!-- 订阅自动更新间隔 -->
+        <div class="py-5 first:pt-0 last:pb-0">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-fg">
+                {{ t('settings.autoUpdateInterval') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.autoUpdateDesc') }}
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
+              <div
+                :class="[
+                  'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
+                  isCustomInterval
+                    ? 'border-line-strong'
+                    : 'border-line hover:border-line-strong focus-within:border-line-strong',
+                ]"
+              >
+                <input
+                  :aria-label="t('settings.autoUpdateInterval')"
+                  :min="MIN_CUSTOM_INTERVAL"
+                  :placeholder="t('settings.customInterval')"
+                  :value="customIntervalInput"
+                  class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  inputmode="numeric"
+                  type="number"
+                  @blur="handleCustomIntervalBlur"
+                  @input="handleCustomIntervalInput"
                 />
-            </div>
-        </section>
-
-        <!-- 订阅基本信息配置 -->
-        <section class="rounded-lg border border-line bg-surface p-6">
-            <SectionHeader
-                :title="t('settings.subscriptionConfigTitle')"
-                :description="t('settings.subscriptionConfigDesc')"
-                tone="indigo"
-            >
-                <template #icon>
-                    <Info class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                    <Input
-                        :label="t('settings.customFileName')"
-                        v-model="settings.FileName"
-                        class="rounded-md font-mono"
-                    />
-                </div>
-                <div>
-                    <Input
-                        id="setting-mytoken"
-                        :label="t('settings.customToken')"
-                        v-model="settings.mytoken"
-                        :error="myTokenError"
-                        class="rounded-md font-mono transition-shadow duration-300"
-                        :class="{
-                            'ring-1 ring-zinc-400 rounded-md':
-                                highlightedFocusId === 'setting-mytoken',
-                        }"
-                    />
-                </div>
-                <div>
-                    <Input
-                        id="setting-profileToken"
-                        :label="t('settings.profileToken')"
-                        v-model="settings.profileToken"
-                        :placeholder="t('settings.profileTokenPlaceholder')"
-                        :error="profileTokenError"
-                        class="rounded-md font-mono transition-shadow duration-300"
-                        :class="{
-                            'ring-1 ring-zinc-400 rounded-md':
-                                highlightedFocusId === 'setting-profileToken',
-                        }"
-                    />
-                </div>
-            </div>
-            <p class="mt-4 text-xs text-fg-subtle leading-relaxed">
-                {{ t('settings.subscriptionTokenRotationHint') }}
-            </p>
-        </section>
-
-        <!-- 功能开关区域 -->
-        <section class="rounded-lg border border-line bg-surface p-6">
-            <SectionHeader
-                :title="t('settings.featureControlTitle')"
-                :description="t('settings.featureControlDesc')"
-                tone="green"
-            >
-                <template #icon>
-                    <SlidersHorizontal class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-            <div class="divide-y divide-line-subtle">
-                <!-- 订阅自动更新间隔 -->
-                <div class="py-5 first:pt-0 last:pb-0">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <p class="text-sm font-medium text-fg">
-                                {{ t('settings.autoUpdateInterval') }}
-                            </p>
-                            <p class="text-xs text-fg-muted leading-relaxed">
-                                {{ t('settings.autoUpdateDesc') }}
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 shrink-0">
-                            <div
-                                :class="[
-                                    'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
-                                    isCustomInterval
-                                        ? 'border-line-strong'
-                                        : 'border-line hover:border-line-strong focus-within:border-line-strong',
-                                ]"
-                            >
-                                <input
-                                    type="number"
-                                    inputmode="numeric"
-                                    :value="customIntervalInput"
-                                    @input="handleCustomIntervalInput"
-                                    @blur="handleCustomIntervalBlur"
-                                    :placeholder="t('settings.customInterval')"
-                                    :min="MIN_CUSTOM_INTERVAL"
-                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    :aria-label="t('settings.autoUpdateInterval')"
-                                />
-                                <span
-                                    class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap"
-                                >
-                                    {{ t('settings.minutes') }}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{
-                                    t('settings.quickSelect')
-                                }}</span>
-                                <button
-                                    v-for="option in [
-                                        { value: 0, label: t('settings.disabledOption') },
-                                        { value: 30, label: t('settings.option30Minutes') },
-                                        { value: 60, label: t('settings.option1Hour') },
-                                    ]"
-                                    :key="option.value"
-                                    type="button"
-                                    @click="settings.autoUpdateInterval = option.value"
-                                    :aria-pressed="settings.autoUpdateInterval === option.value"
-                                    :class="[
-                                        'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
-                                        settings.autoUpdateInterval === option.value
-                                            ? 'bg-active text-fg border-line-strong font-semibold'
-                                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
-                                    ]"
-                                >
-                                    {{ option.label }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <p
-                        v-if="settings.autoUpdateInterval === 0"
-                        class="text-xs text-amber-400 mt-2.5 flex items-center gap-1.5"
-                    >
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                        {{ t('settings.autoUpdateDisabledHint') }}
-                    </p>
-                </div>
-
-                <!-- 客户端订阅更新周期 (Profile-Update-Interval) -->
-                <div class="py-5 first:pt-0 last:pb-0">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div class="space-y-1">
-                            <p class="text-sm font-medium text-fg">
-                                {{ t('settings.profileUpdateInterval') }}
-                            </p>
-                            <p class="text-xs text-fg-muted leading-relaxed">
-                                {{ t('settings.profileUpdateIntervalDesc') }}
-                            </p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 shrink-0">
-                            <div
-                                :class="[
-                                    'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
-                                    isCustomProfileInterval
-                                        ? 'border-line-strong'
-                                        : 'border-line hover:border-line-strong focus-within:border-line-strong',
-                                ]"
-                            >
-                                <input
-                                    type="number"
-                                    inputmode="numeric"
-                                    :value="customProfileIntervalInput"
-                                    @input="handleCustomProfileIntervalInput"
-                                    @blur="handleCustomProfileIntervalBlur"
-                                    :placeholder="t('settings.customInterval')"
-                                    :min="MIN_CUSTOM_PROFILE_INTERVAL"
-                                    class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                    :aria-label="t('settings.profileUpdateInterval')"
-                                />
-                                <span
-                                    class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap"
-                                >
-                                    {{ t('settings.hours') }}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{
-                                    t('settings.quickSelect')
-                                }}</span>
-                                <button
-                                    v-for="option in [
-                                        { value: 0, label: t('settings.disabledOption') },
-                                        { value: 12, label: t('settings.option12Hours') },
-                                        { value: 24, label: t('settings.option24Hours') },
-                                        { value: 48, label: t('settings.option48Hours') },
-                                    ]"
-                                    :key="option.value"
-                                    type="button"
-                                    @click="settings.profileUpdateInterval = option.value"
-                                    :aria-pressed="
-                                        (settings.profileUpdateInterval ?? 24) === option.value
-                                    "
-                                    :class="[
-                                        'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
-                                        (settings.profileUpdateInterval ?? 24) === option.value
-                                            ? 'bg-active text-fg border-line-strong font-semibold'
-                                            : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
-                                    ]"
-                                >
-                                    {{ option.label }}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 访问日志 -->
-                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
-                    <div class="flex items-center justify-between gap-6">
-                        <div class="space-y-1">
-                            <p class="text-sm font-medium text-fg">
-                                {{ t('settings.accessLogTitle') }}
-                            </p>
-                            <p class="text-xs text-fg-muted leading-relaxed">
-                                {{ t('settings.accessLogDesc') }}
-                            </p>
-                            <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
-                                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                                {{ t('settings.accessLogQuotaHint') }}
-                            </p>
-                        </div>
-                        <Switch v-model="settings.enableAccessLog" />
-                    </div>
-
-                    <div
-                        v-if="settings.enableAccessLog"
-                        class="pl-4 border-l-2 border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                    >
-                        <div class="space-y-1">
-                            <p class="text-xs font-medium text-fg">
-                                {{ t('settings.accessLogMode') }}
-                            </p>
-                            <p class="text-xs text-fg-muted leading-relaxed">
-                                {{ t('settings.accessLogModeDesc') }}
-                            </p>
-                        </div>
-                        <div class="sm:w-56 shrink-0">
-                            <Select
-                                v-model="settings.accessLogPersistenceMode"
-                                :options="[
-                                    { value: 'light', label: t('settings.accessLogLight') },
-                                    { value: 'full', label: t('settings.accessLogFull') },
-                                ]"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 流量与到期时间节点 -->
-                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-                    <div class="space-y-1">
-                        <p class="text-sm font-medium text-fg">
-                            {{ t('settings.trafficNodeTitle') }}
-                        </p>
-                        <p class="text-xs text-fg-muted leading-relaxed">
-                            {{ t('settings.trafficNodeDesc') }}
-                        </p>
-                    </div>
-                    <Switch v-model="settings.enableTrafficNode" />
-                </div>
-
-                <!-- 合并到期时间策略 -->
-                <div
-                    class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                  {{ t('settings.minutes') }}
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
+                <button
+                  v-for="option in [
+                    { value: 0, label: t('settings.disabledOption') },
+                    { value: 30, label: t('settings.option30Minutes') },
+                    { value: 60, label: t('settings.option1Hour') },
+                  ]"
+                  :key="option.value"
+                  :aria-pressed="settings.autoUpdateInterval === option.value"
+                  :class="[
+                    'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                    settings.autoUpdateInterval === option.value
+                      ? 'bg-active text-fg border-line-strong font-semibold'
+                      : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
+                  ]"
+                  type="button"
+                  @click="settings.autoUpdateInterval = option.value"
                 >
-                    <div class="space-y-1">
-                        <p class="text-sm font-medium text-fg">
-                            {{ t('settings.mergeExpireStrategyTitle') }}
-                        </p>
-                        <p class="text-xs text-fg-muted leading-relaxed">
-                            {{ t('settings.mergeExpireStrategyDesc') }}
-                        </p>
-                    </div>
-                    <div class="sm:w-56 shrink-0">
-                        <Select
-                            v-model="settings.mergeExpireStrategy"
-                            :options="[
-                                { value: 'max', label: t('settings.mergeExpireMax') },
-                                { value: 'min', label: t('settings.mergeExpireMin') },
-                            ]"
-                        />
-                    </div>
-                </div>
+                  {{ option.label }}
+                </button>
+              </div>
             </div>
-        </section>
+          </div>
+          <p v-if="settings.autoUpdateInterval === 0" class="text-xs text-amber-400 mt-2.5 flex items-center gap-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            {{ t('settings.autoUpdateDisabledHint') }}
+          </p>
+        </div>
 
-        <!-- Web 访问控制 -->
-        <section class="rounded-lg border border-line bg-surface p-6">
-            <SectionHeader
-                :title="t('settings.webAccessTitle')"
-                :description="t('settings.webAccessDesc')"
-                tone="blue"
-            >
-                <template #icon>
-                    <Globe class="h-4 w-4" />
-                </template>
-            </SectionHeader>
-
-            <div class="divide-y divide-line-subtle">
-                <!-- 公开页访问 -->
-                <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-                    <div class="space-y-1">
-                        <p class="text-sm font-medium text-fg">
-                            {{ t('settings.publicPageAccessTitle') }}
-                        </p>
-                        <p class="text-xs text-fg-muted leading-relaxed">
-                            {{ t('settings.publicPageAccessDesc') }}
-                        </p>
-                    </div>
-                    <Switch v-model="settings.enablePublicPage" />
-                </div>
-
-                <!-- 伪装页面 -->
-                <div class="py-5 first:pt-0 last:pb-0 space-y-4">
-                    <div class="flex items-center justify-between gap-6">
-                        <div class="space-y-1">
-                            <p class="text-sm font-medium text-fg">
-                                {{ t('settings.disguisePageTitle') }}
-                            </p>
-                            <p class="text-xs text-fg-muted leading-relaxed">
-                                {{ t('settings.disguisePageDesc') }}
-                            </p>
-                        </div>
-                        <Switch v-model="disguiseConfig.enabled" />
-                    </div>
-
-                    <div
-                        v-show="disguiseConfig.enabled"
-                        class="pl-4 border-l-2 border-line space-y-4 transition-all duration-300"
-                    >
-                        <div>
-                            <label
-                                class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-2.5 block"
-                                >{{ t('settings.disguiseStrategy') }}</label
-                            >
-                            <div class="flex flex-col sm:flex-row gap-6">
-                                <label class="flex items-center cursor-pointer group">
-                                    <input
-                                        type="radio"
-                                        value="default"
-                                        v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
-                                    />
-                                    <div class="ml-3 space-y-0.5">
-                                        <span
-                                            class="block text-sm font-medium text-fg group-hover:text-fg"
-                                            >{{ t('settings.disguiseDefault404') }}</span
-                                        >
-                                        <span class="block text-xs text-fg-subtle">{{
-                                            t('settings.disguiseDefault404Desc')
-                                        }}</span>
-                                    </div>
-                                </label>
-                                <label class="flex items-center cursor-pointer group">
-                                    <input
-                                        type="radio"
-                                        value="redirect"
-                                        v-model="disguiseConfig.pageType"
-                                        class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
-                                    />
-                                    <div class="ml-3 space-y-0.5">
-                                        <span
-                                            class="block text-sm font-medium text-fg group-hover:text-fg"
-                                            >{{ t('settings.disguiseRedirect') }}</span
-                                        >
-                                        <span class="block text-xs text-fg-subtle">{{
-                                            t('settings.disguiseRedirectDesc')
-                                        }}</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div
-                            v-if="disguiseConfig.pageType === 'redirect'"
-                            class="animate-fade-in-down max-w-md"
-                        >
-                            <Input
-                                :label="t('settings.disguiseTargetUrl')"
-                                v-model="disguiseConfig.redirectUrl"
-                                placeholder="www.example.com"
-                                type="url"
-                            />
-                        </div>
-
-                        <p class="flex items-center gap-2 text-xs text-fg-subtle">
-                            <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-                            <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 自定义登录路径设置 -->
-                <div class="py-5 first:pt-0 last:pb-0">
-                    <div class="max-w-md">
-                        <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
-                        <input
-                            type="text"
-                            name="fake_user_for_autofill"
-                            autocomplete="username"
-                            style="display: none"
-                            tabindex="-1"
-                            aria-hidden="true"
-                        />
-                        <input
-                            type="password"
-                            name="fake_pass_for_autofill"
-                            autocomplete="current-password"
-                            style="display: none"
-                            tabindex="-1"
-                            aria-hidden="true"
-                        />
-                        <Input
-                            :label="t('settings.customAdminPath')"
-                            v-model="settings.customLoginPath"
-                            :error="customLoginPathError"
-                            :placeholder="t('settings.customAdminPathPlaceholder')"
-                            prefix="/"
-                            autocomplete="off"
-                            name="custom_admin_path_setting_no_autofill"
-                            type="search"
-                        />
-                    </div>
-                    <p class="text-xs text-fg-subtle mt-2 leading-relaxed">
-                        {{ t('settings.customAdminPathHint') }}
-                    </p>
-                    <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">
-                        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-                        {{ t('settings.reservedPathListHint') }}
-                    </p>
-                </div>
+        <!-- 客户端订阅更新周期 (Profile-Update-Interval) -->
+        <div class="py-5 first:pt-0 last:pb-0">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-fg">
+                {{ t('settings.profileUpdateInterval') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.profileUpdateIntervalDesc') }}
+              </p>
             </div>
-        </section>
-    </div>
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
+              <div
+                :class="[
+                  'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
+                  isCustomProfileInterval
+                    ? 'border-line-strong'
+                    : 'border-line hover:border-line-strong focus-within:border-line-strong',
+                ]"
+              >
+                <input
+                  :aria-label="t('settings.profileUpdateInterval')"
+                  :min="MIN_CUSTOM_PROFILE_INTERVAL"
+                  :placeholder="t('settings.customInterval')"
+                  :value="customProfileIntervalInput"
+                  class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  inputmode="numeric"
+                  type="number"
+                  @blur="handleCustomProfileIntervalBlur"
+                  @input="handleCustomProfileIntervalInput"
+                />
+                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                  {{ t('settings.hours') }}
+                </span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
+                <button
+                  v-for="option in [
+                    { value: 0, label: t('settings.disabledOption') },
+                    { value: 12, label: t('settings.option12Hours') },
+                    { value: 24, label: t('settings.option24Hours') },
+                    { value: 48, label: t('settings.option48Hours') },
+                  ]"
+                  :key="option.value"
+                  :aria-pressed="(settings.profileUpdateInterval ?? 24) === option.value"
+                  :class="[
+                    'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                    (settings.profileUpdateInterval ?? 24) === option.value
+                      ? 'bg-active text-fg border-line-strong font-semibold'
+                      : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
+                  ]"
+                  type="button"
+                  @click="settings.profileUpdateInterval = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 访问日志 -->
+        <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+          <div class="flex items-center justify-between gap-6">
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-fg">
+                {{ t('settings.accessLogTitle') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.accessLogDesc') }}
+              </p>
+              <p class="text-xs text-amber-400/90 pt-0.5 flex items-center gap-1.5">
+                <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+                {{ t('settings.accessLogQuotaHint') }}
+              </p>
+            </div>
+            <Switch v-model="settings.enableAccessLog" />
+          </div>
+
+          <div
+            v-if="settings.enableAccessLog"
+            class="pl-4 border-l-2 border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+          >
+            <div class="space-y-1">
+              <p class="text-xs font-medium text-fg">
+                {{ t('settings.accessLogMode') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.accessLogModeDesc') }}
+              </p>
+            </div>
+            <div class="sm:w-56 shrink-0">
+              <Select
+                v-model="settings.accessLogPersistenceMode"
+                :options="[
+                  { value: 'light', label: t('settings.accessLogLight') },
+                  { value: 'full', label: t('settings.accessLogFull') },
+                ]"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 流量与到期时间节点 -->
+        <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-fg">
+              {{ t('settings.trafficNodeTitle') }}
+            </p>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.trafficNodeDesc') }}
+            </p>
+          </div>
+          <Switch v-model="settings.enableTrafficNode" />
+        </div>
+
+        <!-- 合并到期时间策略 -->
+        <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-fg">
+              {{ t('settings.mergeExpireStrategyTitle') }}
+            </p>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.mergeExpireStrategyDesc') }}
+            </p>
+          </div>
+          <div class="sm:w-56 shrink-0">
+            <Select
+              v-model="settings.mergeExpireStrategy"
+              :options="[
+                { value: 'max', label: t('settings.mergeExpireMax') },
+                { value: 'min', label: t('settings.mergeExpireMin') },
+              ]"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Web 访问控制 -->
+    <section class="rounded-lg border border-line bg-surface p-6">
+      <SectionHeader :description="t('settings.webAccessDesc')" :title="t('settings.webAccessTitle')" tone="blue">
+        <template #icon>
+          <Globe class="h-4 w-4" />
+        </template>
+      </SectionHeader>
+
+      <div class="divide-y divide-line-subtle">
+        <!-- 公开页访问 -->
+        <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-fg">
+              {{ t('settings.publicPageAccessTitle') }}
+            </p>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.publicPageAccessDesc') }}
+            </p>
+          </div>
+          <Switch v-model="settings.enablePublicPage" />
+        </div>
+
+        <!-- 伪装页面 -->
+        <div class="py-5 first:pt-0 last:pb-0 space-y-4">
+          <div class="flex items-center justify-between gap-6">
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-fg">
+                {{ t('settings.disguisePageTitle') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.disguisePageDesc') }}
+              </p>
+            </div>
+            <Switch v-model="disguiseConfig.enabled" />
+          </div>
+
+          <div
+            v-show="disguiseConfig.enabled"
+            class="pl-4 border-l-2 border-line space-y-4 transition-all duration-300"
+          >
+            <div>
+              <label class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-2.5 block">{{
+                t('settings.disguiseStrategy')
+              }}</label>
+              <div class="flex flex-col sm:flex-row gap-6">
+                <label class="flex items-center cursor-pointer group">
+                  <input
+                    v-model="disguiseConfig.pageType"
+                    class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
+                    type="radio"
+                    value="default"
+                  />
+                  <div class="ml-3 space-y-0.5">
+                    <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
+                      t('settings.disguiseDefault404')
+                    }}</span>
+                    <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseDefault404Desc') }}</span>
+                  </div>
+                </label>
+                <label class="flex items-center cursor-pointer group">
+                  <input
+                    v-model="disguiseConfig.pageType"
+                    class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
+                    type="radio"
+                    value="redirect"
+                  />
+                  <div class="ml-3 space-y-0.5">
+                    <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
+                      t('settings.disguiseRedirect')
+                    }}</span>
+                    <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseRedirectDesc') }}</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down max-w-md">
+              <Input
+                v-model="disguiseConfig.redirectUrl"
+                :label="t('settings.disguiseTargetUrl')"
+                placeholder="www.example.com"
+                type="url"
+              />
+            </div>
+
+            <p class="flex items-center gap-2 text-xs text-fg-subtle">
+              <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
+              <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- 自定义登录路径设置 -->
+        <div class="py-5 first:pt-0 last:pb-0">
+          <div class="max-w-md">
+            <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
+            <input
+              aria-hidden="true"
+              autocomplete="username"
+              name="fake_user_for_autofill"
+              style="display: none"
+              tabindex="-1"
+              type="text"
+            />
+            <input
+              aria-hidden="true"
+              autocomplete="current-password"
+              name="fake_pass_for_autofill"
+              style="display: none"
+              tabindex="-1"
+              type="password"
+            />
+            <Input
+              v-model="settings.customLoginPath"
+              :error="customLoginPathError"
+              :label="t('settings.customAdminPath')"
+              :placeholder="t('settings.customAdminPathPlaceholder')"
+              autocomplete="off"
+              name="custom_admin_path_setting_no_autofill"
+              prefix="/"
+              type="search"
+            />
+          </div>
+          <p class="text-xs text-fg-subtle mt-2 leading-relaxed">
+            {{ t('settings.customAdminPathHint') }}
+          </p>
+          <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+            {{ t('settings.reservedPathListHint') }}
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>
-    /* Toggle Switch CSS */
+/* Toggle Switch CSS */
 
-    .animate-fade-in-down {
-        animation: fadeInDown 0.3s ease-out;
-    }
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out;
+}
 
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 </style>

@@ -9,168 +9,166 @@
  * @returns {string}
  */
 export function fixNodeUrlEncoding(nodeUrl, options = {}) {
-    if (!nodeUrl) return '';
+  if (!nodeUrl) return '';
 
-    // 辅助函数：安全解码
-    const safeDecode = (value) => {
-        try {
-            return decodeURIComponent(value);
-        } catch (e) {
-            return value;
-        }
-    };
-
-    const { plusAsSpace = false } = options;
-    const normalizeFragment = (url) => {
-        const hashIndex = url.lastIndexOf('#');
-        if (hashIndex === -1) return url;
-
-        const base = url.substring(0, hashIndex + 1);
-        const rawFragment = url.substring(hashIndex + 1);
-        if (!rawFragment) return url;
-
-        const fragmentToDecode = plusAsSpace ? rawFragment.replace(/\+/g, ' ') : rawFragment;
-        try {
-            const decoded = decodeRepeatedly(fragmentToDecode);
-            return base + encodeURIComponent(decoded);
-        } catch (e) {
-            return url;
-        }
-    };
-
-    // 辅助函数：最多解码两次，处理双重编码
-    const decodeRepeatedly = (value, maxRounds = 2) => {
-        let current = value;
-        for (let i = 0; i < maxRounds; i += 1) {
-            const next = safeDecode(current);
-            if (next === current) break;
-            current = next;
-        }
-        return current;
-    };
-
-    let fixedUrl = nodeUrl;
-
-    if (fixedUrl.startsWith('vmess://')) {
-        return fixedUrl;
+  // 辅助函数：安全解码
+  const safeDecode = (value) => {
+    try {
+      return decodeURIComponent(value);
+    } catch (e) {
+      return value;
     }
+  };
 
-    if (fixedUrl.startsWith('ss://')) {
-        return fixSSEncoding(fixedUrl, options);
+  const { plusAsSpace = false } = options;
+  const normalizeFragment = (url) => {
+    const hashIndex = url.lastIndexOf('#');
+    if (hashIndex === -1) return url;
+
+    const base = url.substring(0, hashIndex + 1);
+    const rawFragment = url.substring(hashIndex + 1);
+    if (!rawFragment) return url;
+
+    const fragmentToDecode = plusAsSpace ? rawFragment.replace(/\+/g, ' ') : rawFragment;
+    try {
+      const decoded = decodeRepeatedly(fragmentToDecode);
+      return base + encodeURIComponent(decoded);
+    } catch (e) {
+      return url;
     }
+  };
 
-    if (fixedUrl.startsWith('tuic://')) {
-        const rest = fixedUrl.slice('tuic://'.length);
-        const authorityEnd = rest.search(/[/?#]/);
-        const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
-        const atIndex = authority.lastIndexOf('@');
-        if (atIndex !== -1) {
-            const userInfo = authority.slice(0, atIndex);
-            const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
-            if (cleanedUserInfo !== userInfo) {
-                fixedUrl = `tuic://${cleanedUserInfo}${rest.slice(atIndex)}`;
-            }
-        }
-        return normalizeFragment(fixedUrl);
+  // 辅助函数：最多解码两次，处理双重编码
+  const decodeRepeatedly = (value, maxRounds = 2) => {
+    let current = value;
+    for (let i = 0; i < maxRounds; i += 1) {
+      const next = safeDecode(current);
+      if (next === current) break;
+      current = next;
     }
+    return current;
+  };
 
-    if (
-        fixedUrl.startsWith('trojan://') ||
-        fixedUrl.startsWith('vless://') ||
-        fixedUrl.startsWith('hy2://') ||
-        fixedUrl.startsWith('hysteria2://')
-    ) {
-        try {
-            const urlObj = new URL(fixedUrl);
+  let fixedUrl = nodeUrl;
 
-            // 修复 hash (节点名称)
-            if (urlObj.hash) {
-                const rawHash = urlObj.hash.substring(1);
-                const normalizedHash = plusAsSpace ? rawHash.replace(/\+/g, ' ') : rawHash;
-                const decodedHash = decodeRepeatedly(normalizedHash);
-                urlObj.hash = '#' + encodeURIComponent(decodedHash);
-            }
-
-            // 修复 query params (参数)
-            // 简单处理：hysteria2 特殊 fix
-            /* ... kept simplified ... */
-
-            return urlObj.toString();
-        } catch (e) {
-            return normalizeFragment(fixedUrl);
-        }
-    }
-
+  if (fixedUrl.startsWith('vmess://')) {
     return fixedUrl;
+  }
+
+  if (fixedUrl.startsWith('ss://')) {
+    return fixSSEncoding(fixedUrl, options);
+  }
+
+  if (fixedUrl.startsWith('tuic://')) {
+    const rest = fixedUrl.slice('tuic://'.length);
+    const authorityEnd = rest.search(/[/?#]/);
+    const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
+    const atIndex = authority.lastIndexOf('@');
+    if (atIndex !== -1) {
+      const userInfo = authority.slice(0, atIndex);
+      const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
+      if (cleanedUserInfo !== userInfo) {
+        fixedUrl = `tuic://${cleanedUserInfo}${rest.slice(atIndex)}`;
+      }
+    }
+    return normalizeFragment(fixedUrl);
+  }
+
+  if (
+    fixedUrl.startsWith('trojan://') ||
+    fixedUrl.startsWith('vless://') ||
+    fixedUrl.startsWith('hy2://') ||
+    fixedUrl.startsWith('hysteria2://')
+  ) {
+    try {
+      const urlObj = new URL(fixedUrl);
+
+      // 修复 hash (节点名称)
+      if (urlObj.hash) {
+        const rawHash = urlObj.hash.substring(1);
+        const normalizedHash = plusAsSpace ? rawHash.replace(/\+/g, ' ') : rawHash;
+        const decodedHash = decodeRepeatedly(normalizedHash);
+        urlObj.hash = '#' + encodeURIComponent(decodedHash);
+      }
+
+      // 修复 query params (参数)
+      // 简单处理：hysteria2 特殊 fix
+      /* ... kept simplified ... */
+
+      return urlObj.toString();
+    } catch (e) {
+      return normalizeFragment(fixedUrl);
+    }
+  }
+
+  return fixedUrl;
 }
 
 /**
  * 修复SS节点编码
  */
 export function fixSSEncoding(nodeUrl, options = {}) {
-    if (!nodeUrl.startsWith('ss://')) return nodeUrl;
+  if (!nodeUrl.startsWith('ss://')) return nodeUrl;
 
-    const { plusAsSpace = false } = options;
+  const { plusAsSpace = false } = options;
 
-    const safeDecode = (value) => {
-        try {
-            return decodeURIComponent(value);
-        } catch (e) {
-            return value;
-        }
-    };
-
-    const decodeRepeatedly = (value, maxRounds = 2) => {
-        let current = value;
-        for (let i = 0; i < maxRounds; i += 1) {
-            const next = safeDecode(current);
-            if (next === current) break;
-            current = next;
-        }
-        return current;
-    };
-
-    const payload = nodeUrl.slice('ss://'.length);
-    const hashIndex = payload.indexOf('#');
-
-    const beforeHash = hashIndex === -1 ? payload : payload.slice(0, hashIndex);
-    const rawHash = hashIndex === -1 ? '' : payload.slice(hashIndex + 1);
-
-    const atIndex = beforeHash.indexOf('@');
-    let normalizedBeforeHash = beforeHash;
-
-    if (atIndex !== -1) {
-        const userInfo = beforeHash.slice(0, atIndex);
-        const hostPart = beforeHash.slice(atIndex);
-        normalizedBeforeHash = `${decodeRepeatedly(userInfo)}${hostPart}`;
-    } else {
-        normalizedBeforeHash = decodeRepeatedly(beforeHash);
+  const safeDecode = (value) => {
+    try {
+      return decodeURIComponent(value);
+    } catch (e) {
+      return value;
     }
+  };
 
-    if (!rawHash) {
-        return `ss://${normalizedBeforeHash}`;
+  const decodeRepeatedly = (value, maxRounds = 2) => {
+    let current = value;
+    for (let i = 0; i < maxRounds; i += 1) {
+      const next = safeDecode(current);
+      if (next === current) break;
+      current = next;
     }
+    return current;
+  };
 
-    const normalizedHash = encodeURIComponent(
-        decodeRepeatedly(plusAsSpace ? rawHash.replace(/\+/g, ' ') : rawHash)
-    );
-    return `ss://${normalizedBeforeHash}#${normalizedHash}`;
+  const payload = nodeUrl.slice('ss://'.length);
+  const hashIndex = payload.indexOf('#');
+
+  const beforeHash = hashIndex === -1 ? payload : payload.slice(0, hashIndex);
+  const rawHash = hashIndex === -1 ? '' : payload.slice(hashIndex + 1);
+
+  const atIndex = beforeHash.indexOf('@');
+  let normalizedBeforeHash = beforeHash;
+
+  if (atIndex !== -1) {
+    const userInfo = beforeHash.slice(0, atIndex);
+    const hostPart = beforeHash.slice(atIndex);
+    normalizedBeforeHash = `${decodeRepeatedly(userInfo)}${hostPart}`;
+  } else {
+    normalizedBeforeHash = decodeRepeatedly(beforeHash);
+  }
+
+  if (!rawHash) {
+    return `ss://${normalizedBeforeHash}`;
+  }
+
+  const normalizedHash = encodeURIComponent(decodeRepeatedly(plusAsSpace ? rawHash.replace(/\+/g, ' ') : rawHash));
+  return `ss://${normalizedBeforeHash}#${normalizedHash}`;
 }
 
 /**
  * ArrayBuffer -> Base64
  */
 export function encodeArrayBufferToBase64(buffer) {
-    const bytes = new Uint8Array(buffer);
-    const chunkSize = 0x8000;
-    let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
 
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-        const chunk = bytes.subarray(i, i + chunkSize);
-        binary += String.fromCharCode(...chunk);
-    }
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
 
-    return btoa(binary);
+  return btoa(binary);
 }
 
 // --- Rule Helpers (Exported) ---
@@ -181,91 +179,87 @@ export function encodeArrayBufferToBase64(buffer) {
  * @param {boolean} stripKeepPrefix
  */
 export function buildRuleSet(lines, stripKeepPrefix = false) {
-    const protocols = new Set();
-    const patterns = [];
+  const protocols = new Set();
+  const patterns = [];
 
-    const lineArray = Array.isArray(lines)
-        ? lines
-        : typeof lines === 'string'
-          ? lines.split('\n')
-          : [];
+  const lineArray = Array.isArray(lines) ? lines : typeof lines === 'string' ? lines.split('\n') : [];
 
-    for (const rawLine of lineArray) {
-        let line = rawLine.trim();
-        if (!line || line === '---') continue;
+  for (const rawLine of lineArray) {
+    let line = rawLine.trim();
+    if (!line || line === '---') continue;
 
-        if (stripKeepPrefix && line.toLowerCase().startsWith('keep:')) {
-            line = line.substring('keep:'.length).trim();
-        }
-        if (!line) continue;
+    if (stripKeepPrefix && line.toLowerCase().startsWith('keep:')) {
+      line = line.substring('keep:'.length).trim();
+    }
+    if (!line) continue;
 
-        if (line.toLowerCase().startsWith('proto:')) {
-            const parts = line
-                .substring('proto:'.length)
-                .split(',')
-                .map((p) => p.trim().toLowerCase())
-                .filter(Boolean);
-            parts.forEach((p) => protocols.add(p));
-            continue;
-        }
-
-        patterns.push(line);
+    if (line.toLowerCase().startsWith('proto:')) {
+      const parts = line
+        .substring('proto:'.length)
+        .split(',')
+        .map((p) => p.trim().toLowerCase())
+        .filter(Boolean);
+      parts.forEach((p) => protocols.add(p));
+      continue;
     }
 
-    const nameRegex = buildSafeRegex(patterns);
-    return {
-        protocols,
-        nameRegex,
-        hasRules: protocols.size > 0 || Boolean(nameRegex),
-    };
+    patterns.push(line);
+  }
+
+  const nameRegex = buildSafeRegex(patterns);
+  return {
+    protocols,
+    nameRegex,
+    hasRules: protocols.size > 0 || Boolean(nameRegex),
+  };
 }
 
 export function buildSafeRegex(patterns) {
-    if (!patterns || patterns.length === 0) return null;
-    try {
-        return new RegExp(patterns.join('|'), 'i');
-    } catch (e) {
-        console.warn('Invalid include/exclude regex, skipped:', e.message);
-        return null;
-    }
+  if (!patterns || patterns.length === 0) return null;
+  try {
+    return new RegExp(patterns.join('|'), 'i');
+  } catch (e) {
+    console.warn('Invalid include/exclude regex, skipped:', e.message);
+    return null;
+  }
 }
 
 export function parseFilterRuleText(ruleText) {
-    const lines = Array.isArray(ruleText)
-        ? ruleText.map((line) => String(line || '').trim()).filter(Boolean)
-        : String(ruleText || '')
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean);
+  const lines = Array.isArray(ruleText)
+    ? ruleText.map((line) => String(line || '').trim()).filter(Boolean)
+    : String(ruleText || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
 
-    const includeLines = [];
-    const excludeLines = [];
-    let afterDivider = false;
+  const includeLines = [];
+  const excludeLines = [];
+  let afterDivider = false;
 
-    for (const line of lines) {
-        if (line === '---') {
-            afterDivider = true;
-            continue;
-        }
-
-        if (line.toLowerCase().startsWith('keep:')) {
-            includeLines.push(line);
-            continue;
-        }
-
-        if (afterDivider) {
-            includeLines.push(line);
-        } else {
-            excludeLines.push(line);
-        }
+  for (const line of lines) {
+    if (line === '---') {
+      afterDivider = true;
+      continue;
     }
 
-    return {
-        includeLines,
-        excludeLines,
-        includeRules: buildRuleSet(includeLines, true),
-        excludeRules: buildRuleSet(excludeLines),
-    };
+    if (line.toLowerCase().startsWith('keep:')) {
+      includeLines.push(line);
+      continue;
+    }
+
+    if (afterDivider) {
+      includeLines.push(line);
+    } else {
+      excludeLines.push(line);
+    }
+  }
+
+  return {
+    includeLines,
+    excludeLines,
+    includeRules: buildRuleSet(includeLines, true),
+    excludeRules: buildRuleSet(excludeLines),
+  };
 }
 
 /**
@@ -275,97 +269,97 @@ export function parseFilterRuleText(ruleText) {
  * @param {string} mode 'include' | 'exclude'
  */
 export function filterNodeObjects(nodes, rules, mode = 'exclude') {
-    if (!rules || !rules.hasRules) return nodes;
-    const isInclude = mode === 'include';
+  if (!rules || !rules.hasRules) return nodes;
+  const isInclude = mode === 'include';
 
-    return nodes.filter((node) => {
-        const protocol = (node.protocol || '').toLowerCase();
-        const name = node.name || '';
+  return nodes.filter((node) => {
+    const protocol = (node.protocol || '').toLowerCase();
+    const name = node.name || '';
 
-        const protocolHit = protocol && rules.protocols.has(protocol);
-        const nameHit = rules.nameRegex ? rules.nameRegex.test(name) : false;
+    const protocolHit = protocol && rules.protocols.has(protocol);
+    const nameHit = rules.nameRegex ? rules.nameRegex.test(name) : false;
 
-        if (isInclude) {
-            return protocolHit || nameHit;
-        }
-        return !(protocolHit || nameHit);
-    });
+    if (isInclude) {
+      return protocolHit || nameHit;
+    }
+    return !(protocolHit || nameHit);
+  });
 }
 
 export function filterNodeUrls(nodeUrls, rules, mode = 'exclude') {
-    if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls;
+  if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls;
 
-    const nodes = nodeUrls.map((url) => ({
-        url,
-        protocol:
-            String(url || '')
-                .match(/^(.*?):\/\//)?.[1]
-                ?.toLowerCase() || '',
-        name: parseNodeUrlName(url),
-    }));
-    const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node) => node.url));
-    return nodeUrls.filter((url) => keptUrls.has(url));
+  const nodes = nodeUrls.map((url) => ({
+    url,
+    protocol:
+      String(url || '')
+        .match(/^(.*?):\/\//)?.[1]
+        ?.toLowerCase() || '',
+    name: parseNodeUrlName(url),
+  }));
+  const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node) => node.url));
+  return nodeUrls.filter((url) => keptUrls.has(url));
 }
 
 function parseNodeUrlName(nodeUrl) {
-    if (!nodeUrl || typeof nodeUrl !== 'string') return '';
-    const hashIndex = nodeUrl.lastIndexOf('#');
-    if (hashIndex === -1) return nodeUrl;
-    try {
-        return decodeURIComponent(nodeUrl.substring(hashIndex + 1));
-    } catch {
-        return nodeUrl.substring(hashIndex + 1);
-    }
+  if (!nodeUrl || typeof nodeUrl !== 'string') return '';
+  const hashIndex = nodeUrl.lastIndexOf('#');
+  if (hashIndex === -1) return nodeUrl;
+  try {
+    return decodeURIComponent(nodeUrl.substring(hashIndex + 1));
+  } catch {
+    return nodeUrl.substring(hashIndex + 1);
+  }
 }
 
 /**
  * 将手动节点的自定义名称应用到节点链接中
  */
 export function applyManualNodeName(nodeUrl, customName) {
-    if (!customName || !nodeUrl) return nodeUrl;
+  if (!customName || !nodeUrl) return nodeUrl;
 
-    const encodedName = encodeURIComponent(customName);
+  const encodedName = encodeURIComponent(customName);
 
-    if (nodeUrl.startsWith('vmess://')) {
-        try {
-            const base64Part = nodeUrl.substring(8);
-            const jsonStr = atob(base64Part);
-            const config = JSON.parse(jsonStr);
-            config.ps = customName;
-            return 'vmess://' + btoa(JSON.stringify(config));
-        } catch (e) {
-            return nodeUrl;
-        }
+  if (nodeUrl.startsWith('vmess://')) {
+    try {
+      const base64Part = nodeUrl.substring(8);
+      const jsonStr = atob(base64Part);
+      const config = JSON.parse(jsonStr);
+      config.ps = customName;
+      return 'vmess://' + btoa(JSON.stringify(config));
+    } catch (e) {
+      return nodeUrl;
     }
+  }
 
-    if (nodeUrl.startsWith('ss://')) {
-        const hashIndex = nodeUrl.indexOf('#');
-        const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
-        return `${baseUrl}#${encodedName}`;
-    }
-
-    if (
-        nodeUrl.startsWith('trojan://') ||
-        nodeUrl.startsWith('vless://') ||
-        nodeUrl.startsWith('hysteria2://') ||
-        nodeUrl.startsWith('hy2://') ||
-        nodeUrl.startsWith('tuic://')
-    ) {
-        try {
-            const urlObj = new URL(nodeUrl);
-            urlObj.hash = '#' + encodedName;
-            return urlObj.toString();
-        } catch (e) {
-            const hashIndex = nodeUrl.indexOf('#');
-            const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
-            return `${baseUrl}#${encodedName}`;
-        }
-    }
-
-    // 通用 fallback：对所有其他协议（socks5/http/snell/socks 等）通过 #fragment 写入名称
+  if (nodeUrl.startsWith('ss://')) {
     const hashIndex = nodeUrl.indexOf('#');
     const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
     return `${baseUrl}#${encodedName}`;
+  }
+
+  if (
+    nodeUrl.startsWith('trojan://') ||
+    nodeUrl.startsWith('vless://') ||
+    nodeUrl.startsWith('hysteria2://') ||
+    nodeUrl.startsWith('hy2://') ||
+    nodeUrl.startsWith('tuic://')
+  ) {
+    try {
+      const urlObj = new URL(nodeUrl);
+      urlObj.hash = '#' + encodedName;
+      return urlObj.toString();
+    } catch (e) {
+      const hashIndex = nodeUrl.indexOf('#');
+      const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
+      return `${baseUrl}#${encodedName}`;
+    }
+  }
+
+  // 通用 fallback：对所有其他协议（socks5/http/snell/socks 等）通过 #fragment 写入名称
+  const hashIndex = nodeUrl.indexOf('#');
+  const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
+  return `${baseUrl}#${encodedName}`;
 }
 
 /**
@@ -375,31 +369,31 @@ export function applyManualNodeName(nodeUrl, customName) {
  * @returns {Array} filtered nodes
  */
 export function applyFilterRules(validNodes, sub) {
-    if (!sub || !Array.isArray(validNodes)) return validNodes;
+  if (!sub || !Array.isArray(validNodes)) return validNodes;
 
-    let filteredNodes = [...validNodes];
+  let filteredNodes = [...validNodes];
 
-    // 1. 包含关键词 (Include)
-    if (sub.filterInclude && sub.filterInclude.trim() !== '') {
-        const { includeRules, excludeRules } = parseFilterRuleText(sub.filterInclude);
-        if (includeRules.hasRules) {
-            filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
-        }
-        if (excludeRules.hasRules) {
-            filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
-        }
+  // 1. 包含关键词 (Include)
+  if (sub.filterInclude && sub.filterInclude.trim() !== '') {
+    const { includeRules, excludeRules } = parseFilterRuleText(sub.filterInclude);
+    if (includeRules.hasRules) {
+      filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
     }
-
-    // 2. 排除关键词 (Exclude)
-    if (sub.filterExclude && sub.filterExclude.trim() !== '') {
-        const { includeRules, excludeRules } = parseFilterRuleText(sub.filterExclude);
-        if (includeRules.hasRules) {
-            filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
-        }
-        if (excludeRules.hasRules) {
-            filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
-        }
+    if (excludeRules.hasRules) {
+      filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
     }
+  }
 
-    return filteredNodes;
+  // 2. 排除关键词 (Exclude)
+  if (sub.filterExclude && sub.filterExclude.trim() !== '') {
+    const { includeRules, excludeRules } = parseFilterRuleText(sub.filterExclude);
+    if (includeRules.hasRules) {
+      filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
+    }
+    if (excludeRules.hasRules) {
+      filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
+    }
+  }
+
+  return filteredNodes;
 }

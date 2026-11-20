@@ -33,121 +33,113 @@ const handler = new ErrorHandler();
 const SRC_ROOT = path.resolve(__dirname, '../../src');
 
 function walk(dir, out = []) {
-    for (const entry of readdirSync(dir)) {
-        const full = path.join(dir, entry);
-        if (statSync(full).isDirectory()) {
-            walk(full, out);
-        } else if (/\.(js|vue)$/.test(entry)) {
-            out.push(full);
-        }
+  for (const entry of readdirSync(dir)) {
+    const full = path.join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      walk(full, out);
+    } else if (/\.(js|vue)$/.test(entry)) {
+      out.push(full);
     }
-    return out;
+  }
+  return out;
 }
 
 /** 去掉块注释与行注释，避免文档里举例的写法被当成真实调用 */
 function stripComments(source) {
-    return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 }
 
 /** 收集所有 `new Error(... t('key') ...)` 里引用的 key */
 function collectThrownMessageKeys() {
-    const files = walk(SRC_ROOT);
-    const found = [];
-    const pattern = /new (?:Error|TypeError)\([^;]*?t\('([A-Za-z0-9_.]+)'/g;
+  const files = walk(SRC_ROOT);
+  const found = [];
+  const pattern = /new (?:Error|TypeError)\([^;]*?t\('([A-Za-z0-9_.]+)'/g;
 
-    for (const file of files) {
-        const source = stripComments(readFileSync(file, 'utf8'));
-        let match;
-        while ((match = pattern.exec(source)) !== null) {
-            found.push({ key: match[1], file: path.relative(SRC_ROOT, file) });
-        }
+  for (const file of files) {
+    const source = stripComments(readFileSync(file, 'utf8'));
+    let match;
+    while ((match = pattern.exec(source)) !== null) {
+      found.push({ key: match[1], file: path.relative(SRC_ROOT, file) });
     }
+  }
 
-    return { files: files.length, found };
+  return { files: files.length, found };
 }
 
 const { files: scannedFiles, found: thrownKeys } = collectThrownMessageKeys();
 const uniqueKeys = [...new Set(thrownKeys.map((item) => item.key))];
 
 describe('错误消息文案与网络判定的碰撞守卫', () => {
-    it('扫描范围没有静默空转（防止目录改名后守卫失效）', () => {
-        expect(scannedFiles).toBeGreaterThan(100);
-        expect(uniqueKeys.length).toBeGreaterThan(20);
-    });
+  it('扫描范围没有静默空转（防止目录改名后守卫失效）', () => {
+    expect(scannedFiles).toBeGreaterThan(100);
+    expect(uniqueKeys.length).toBeGreaterThan(20);
+  });
 
-    it('守卫本身有效：真的能抓出撞车的文案', () => {
-        // 这一条保证上面的断言不是因为谓词永远返回 false 而「通过」
-        expect(isNetworkErrorMessage('Failed to fetch nodes')).toBe(true);
-        expect(isNetworkErrorMessage('Load failed')).toBe(true);
-    });
+  it('守卫本身有效：真的能抓出撞车的文案', () => {
+    // 这一条保证上面的断言不是因为谓词永远返回 false 而「通过」
+    expect(isNetworkErrorMessage('Failed to fetch nodes')).toBe(true);
+    expect(isNetworkErrorMessage('Load failed')).toBe(true);
+  });
 
-    it('每个被抛出的文案 key 在两种语言下都有定义', () => {
-        for (const key of uniqueKeys) {
-            for (const locale of ['zh-CN', 'en-US']) {
-                const resolved = t(key, {}, locale);
-                expect(resolved, `${key} 在 ${locale} 下缺失`).not.toBe(key);
-                expect(String(resolved).trim().length).toBeGreaterThan(0);
-            }
+  it('每个被抛出的文案 key 在两种语言下都有定义', () => {
+    for (const key of uniqueKeys) {
+      for (const locale of ['zh-CN', 'en-US']) {
+        const resolved = t(key, {}, locale);
+        expect(resolved, `${key} 在 ${locale} 下缺失`).not.toBe(key);
+        expect(String(resolved).trim().length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('任何被抛出的文案都不会被判成网络错误', () => {
+    const violations = [];
+
+    for (const { key, file } of thrownKeys) {
+      for (const locale of Object.keys(messages)) {
+        const resolved = t(key, {}, locale);
+        if (isNetworkErrorMessage(resolved)) {
+          violations.push(`${locale} ${key} = "${resolved}"  (${file})`);
         }
-    });
+      }
+    }
 
-    it('任何被抛出的文案都不会被判成网络错误', () => {
-        const violations = [];
+    expect(violations, `以下错误文案会被误判成网络问题，请改写措辞：\n${violations.join('\n')}`).toEqual([]);
+  });
 
-        for (const { key, file } of thrownKeys) {
-            for (const locale of Object.keys(messages)) {
-                const resolved = t(key, {}, locale);
-                if (isNetworkErrorMessage(resolved)) {
-                    violations.push(`${locale} ${key} = "${resolved}"  (${file})`);
-                }
-            }
-        }
+  /**
+   * 更强的判据：同一个 key 的中文版与英文版，必须被 errorHandler 分到**同一分支**。
+   *
+   * 只要分类逻辑是「对 message 做模式匹配」，而 message 又是翻译文案，
+   * 中英版本就可能落到不同分支 —— 用户界面语言不同、看到的原因就不同。
+   * 这里把 errorHandler 的输出反查回 errors.* 的 key 名，再比较两个语言下的结果。
+   */
+  const classify = (message, locale) => {
+    setLocale(locale);
+    const text = handler.getUserFriendlyMessage({ message });
+    const dict = messages[locale].errors;
+    return Object.keys(dict).find((k) => dict[k] === text) ?? null;
+  };
 
-        expect(
-            violations,
-            `以下错误文案会被误判成网络问题，请改写措辞：\n${violations.join('\n')}`
-        ).toEqual([]);
-    });
+  it('同一文案的中英版本被分到同一分支（分类不随语言漂移）', () => {
+    const violations = [];
 
-    /**
-     * 更强的判据：同一个 key 的中文版与英文版，必须被 errorHandler 分到**同一分支**。
-     *
-     * 只要分类逻辑是「对 message 做模式匹配」，而 message 又是翻译文案，
-     * 中英版本就可能落到不同分支 —— 用户界面语言不同、看到的原因就不同。
-     * 这里把 errorHandler 的输出反查回 errors.* 的 key 名，再比较两个语言下的结果。
-     */
-    const classify = (message, locale) => {
-        setLocale(locale);
-        const text = handler.getUserFriendlyMessage({ message });
-        const dict = messages[locale].errors;
-        return Object.keys(dict).find((k) => dict[k] === text) ?? null;
-    };
-
-    it('同一文案的中英版本被分到同一分支（分类不随语言漂移）', () => {
-        const violations = [];
-
-        for (const { key, file } of thrownKeys) {
-            const zh = classify(t(key, {}, 'zh-CN'), 'zh-CN');
-            const en = classify(t(key, {}, 'en-US'), 'en-US');
-            if (zh !== en) {
-                violations.push(
-                    `${key} (${file})\n    zh-CN → ${zh} = "${t(key, {}, 'zh-CN')}"` +
-                        `\n    en-US → ${en} = "${t(key, {}, 'en-US')}"`
-                );
-            }
-        }
-
-        expect(
-            violations,
-            `以下文案的中英版本被分到了不同分支，请改写措辞：\n${violations.join('\n')}`
-        ).toEqual([]);
-    });
-
-    it('分类函数本身有效（同一分支时确实返回相同的 key）', () => {
-        // 保证上一条不是「两个语言都返回 null 所以相等」而恒真
-        expect(classify('Failed to fetch', 'zh-CN')).toBe('network');
-        expect(classify('NetworkError when attempting to fetch resource.', 'en-US')).toBe(
-            'network'
+    for (const { key, file } of thrownKeys) {
+      const zh = classify(t(key, {}, 'zh-CN'), 'zh-CN');
+      const en = classify(t(key, {}, 'en-US'), 'en-US');
+      if (zh !== en) {
+        violations.push(
+          `${key} (${file})\n    zh-CN → ${zh} = "${t(key, {}, 'zh-CN')}"` +
+            `\n    en-US → ${en} = "${t(key, {}, 'en-US')}"`,
         );
-    });
+      }
+    }
+
+    expect(violations, `以下文案的中英版本被分到了不同分支，请改写措辞：\n${violations.join('\n')}`).toEqual([]);
+  });
+
+  it('分类函数本身有效（同一分支时确实返回相同的 key）', () => {
+    // 保证上一条不是「两个语言都返回 null 所以相等」而恒真
+    expect(classify('Failed to fetch', 'zh-CN')).toBe('network');
+    expect(classify('NetworkError when attempting to fetch resource.', 'en-US')).toBe('network');
+  });
 });

@@ -1,12 +1,11 @@
 export const BUILTIN_TEMPLATE_REGISTRY = {
-    clash_misub_minimal: {
-        id: 'clash_misub_minimal',
-        name: 'MiSub 极简默认分流',
-        target: 'clash',
-        format: 'ini',
-        description:
-            '更偏日常使用的极简模板，仅保留主选择、自动选择、常用媒体与兜底分组，适合作为统一模板主线默认配置。',
-        content: `[custom]
+  clash_misub_minimal: {
+    id: 'clash_misub_minimal',
+    name: 'MiSub 极简默认分流',
+    target: 'clash',
+    format: 'ini',
+    description: '更偏日常使用的极简模板，仅保留主选择、自动选择、常用媒体与兜底分组，适合作为统一模板主线默认配置。',
+    content: `[custom]
 ruleset=🎬 流媒体,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyMedia.list
 ruleset=📲 电报消息,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Telegram.list
 ruleset=🎯 全球直连,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ChinaDomain.list
@@ -24,14 +23,14 @@ custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择\`[]♻️ 自�
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
-    clash_acl4ssr_lite: {
-        id: 'clash_acl4ssr_lite',
-        name: 'ACL4SSR 精简分流',
-        target: 'clash',
-        format: 'ini',
-        description: '内置精简 ACL4SSR 分流模板，保留常用分组和核心规则，适合作为轻量默认预设。',
-        content: `[custom]
+  },
+  clash_acl4ssr_lite: {
+    id: 'clash_acl4ssr_lite',
+    name: 'ACL4SSR 精简分流',
+    target: 'clash',
+    format: 'ini',
+    description: '内置精简 ACL4SSR 分流模板，保留常用分组和核心规则，适合作为轻量默认预设。',
+    content: `[custom]
 ruleset=🎯 全球直连,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list
 ruleset=🛑 广告拦截,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
 ruleset=📲 电报消息,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Telegram.list
@@ -57,14 +56,14 @@ custom_proxy_group=🇺🇸 美国节点\`url-test\`(美|US|United States|LAX|SJ
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
-    clash_misub_media_ai: {
-        id: 'clash_misub_media_ai',
-        name: 'MiSub 流媒体与 AI 分流',
-        target: 'clash',
-        format: 'ini',
-        description: '面向常见流媒体和 AI 服务场景的内置模板，保留自动选择、地区组和核心服务分流。',
-        content: `[custom]
+  },
+  clash_misub_media_ai: {
+    id: 'clash_misub_media_ai',
+    name: 'MiSub 流媒体与 AI 分流',
+    target: 'clash',
+    format: 'ini',
+    description: '面向常见流媒体和 AI 服务场景的内置模板，保留自动选择、地区组和核心服务分流。',
+    content: `[custom]
 ruleset=🤖 AI 服务,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/OpenAi.list
 ruleset=🤖 AI 服务,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/538b8a79532c44dfbcb8e694d2f43e753c60b157/rule/Clash/Claude/Claude.list
 ruleset=🤖 AI 服务,[]DOMAIN-SUFFIX,x.ai
@@ -103,14 +102,14 @@ custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择\`[]♻️ 自�
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
-    clash_acl4ssr_full: {
-        id: 'clash_acl4ssr_full',
-        name: 'ACL4SSR 完整分流',
-        target: 'clash',
-        format: 'ini',
-        description: '内置完整 ACL4SSR 分流模板，适合作为 Clash 系列的高完整度规则预设。',
-        content: `[custom]
+  },
+  clash_acl4ssr_full: {
+    id: 'clash_acl4ssr_full',
+    name: 'ACL4SSR 完整分流',
+    target: 'clash',
+    format: 'ini',
+    description: '内置完整 ACL4SSR 分流模板，适合作为 Clash 系列的高完整度规则预设。',
+    content: `[custom]
 ruleset=🎯 全球直连,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/LocalAreaNetwork.list
 ruleset=🛑 广告拦截,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/BanAD.list
 ruleset=📲 电报消息,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Telegram.list
@@ -137,15 +136,14 @@ custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择\`[]DIRECT
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
-    clash_exclusive_ai: {
-        id: 'clash_exclusive_ai',
-        name: 'MiSub 深度 AI 开发者模板',
-        target: 'clash',
-        format: 'ini',
-        description:
-            '专为 AI 开发者优化，强化 OpenAI/Claude 路由，增加固定节点漂移保护与纯净度检测引导。',
-        content: `[custom]
+  },
+  clash_exclusive_ai: {
+    id: 'clash_exclusive_ai',
+    name: 'MiSub 深度 AI 开发者模板',
+    target: 'clash',
+    format: 'ini',
+    description: '专为 AI 开发者优化，强化 OpenAI/Claude 路由，增加固定节点漂移保护与纯净度检测引导。',
+    content: `[custom]
 ruleset=🤖 AI 核心服务,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/OpenAi.list
 ruleset=🤖 AI 核心服务,https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/538b8a79532c44dfbcb8e694d2f43e753c60b157/rule/Clash/Claude/Claude.list
 ruleset=🌍 国外媒体,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/ProxyMedia.list
@@ -161,14 +159,14 @@ custom_proxy_group=🌍 国外媒体\`select\`[]🚀 节点选择\`[]♻️ 自�
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
-    clash_game_optimized: {
-        id: 'clash_game_optimized',
-        name: 'MiSub 游戏加速竞技模板',
-        target: 'clash',
-        format: 'ini',
-        description: '强化各平台游戏规则（Steam, Epic, Sony 等），优先选择低延迟线路。',
-        content: `[custom]
+  },
+  clash_game_optimized: {
+    id: 'clash_game_optimized',
+    name: 'MiSub 游戏加速竞技模板',
+    target: 'clash',
+    format: 'ini',
+    description: '强化各平台游戏规则（Steam, Epic, Sony 等），优先选择低延迟线路。',
+    content: `[custom]
 ruleset=🎮 游戏平台,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Steam.list
 ruleset=🎮 游戏平台,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Epic.list
 ruleset=🎮 游戏平台,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/Ruleset/Sony.list
@@ -183,9 +181,9 @@ custom_proxy_group=☑️ 手动切换\`select\`.*
 
 enable_rule_generator=true
 overwrite_original_rules=true`,
-    },
+  },
 };
 
 export function getBuiltinTemplate(templateId) {
-    return BUILTIN_TEMPLATE_REGISTRY[templateId] || null;
+  return BUILTIN_TEMPLATE_REGISTRY[templateId] || null;
 }

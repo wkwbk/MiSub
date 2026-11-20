@@ -1,442 +1,417 @@
 /** * 共享拖拽列表组件 * @author MiSub Team */
 
 <script setup>
-    import { computed, ref } from 'vue';
-    import { ArrowUpDown, GripVertical, Loader2, Trash2 } from '@lucide/vue';
-    import { useI18n } from '@/i18n/index.js';
+import { computed, ref } from 'vue';
+import { ArrowUpDown, GripVertical, Loader2, Trash2 } from '@lucide/vue';
+import { useI18n } from '@/i18n/index.js';
 
-    const props = defineProps({
-        items: {
-            type: Array,
-            required: true,
-        },
-        itemKey: {
-            type: String,
-            default: 'id',
-        },
-        draggable: {
-            type: Boolean,
-            default: true,
-        },
-        disabled: {
-            type: Boolean,
-            default: false,
-        },
-        loading: {
-            type: Boolean,
-            default: false,
-        },
-        height: {
-            type: String,
-            default: 'auto',
-        },
-        maxHeight: {
-            type: String,
-            default: '400px',
-        },
-        emptyText: {
-            type: String,
-            default: '',
-        },
-        showHandle: {
-            type: Boolean,
-            default: true,
-        },
-        animation: {
-            type: Boolean,
-            default: true,
-        },
-        ghostClass: {
-            type: String,
-            default: 'ghost',
-        },
-        chosenClass: {
-            type: String,
-            default: 'chosen',
-        },
-        dragClass: {
-            type: String,
-            default: 'drag',
-        },
-    });
+const props = defineProps({
+  items: {
+    type: Array,
+    required: true,
+  },
+  itemKey: {
+    type: String,
+    default: 'id',
+  },
+  draggable: {
+    type: Boolean,
+    default: true,
+  },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  height: {
+    type: String,
+    default: 'auto',
+  },
+  maxHeight: {
+    type: String,
+    default: '400px',
+  },
+  emptyText: {
+    type: String,
+    default: '',
+  },
+  showHandle: {
+    type: Boolean,
+    default: true,
+  },
+  animation: {
+    type: Boolean,
+    default: true,
+  },
+  ghostClass: {
+    type: String,
+    default: 'ghost',
+  },
+  chosenClass: {
+    type: String,
+    default: 'chosen',
+  },
+  dragClass: {
+    type: String,
+    default: 'drag',
+  },
+});
 
-    const emit = defineEmits([
-        'update:items',
-        'reorder',
-        'itemClick',
-        'itemAdd',
-        'itemRemove',
-        'dragStart',
-        'dragEnd',
-    ]);
+const emit = defineEmits(['update:items', 'reorder', 'itemClick', 'itemAdd', 'itemRemove', 'dragStart', 'dragEnd']);
 
-    const { t } = useI18n();
+const { t } = useI18n();
 
-    const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
+const resolvedEmptyText = computed(() => props.emptyText || t('common.noData'));
 
-    const listRef = ref(null);
-    const draggedIndex = ref(-1);
-    const draggedOverIndex = ref(-1);
-    const dragState = ref({
-        isDragging: false,
-        startIndex: -1,
-        endIndex: -1,
-    });
+const listRef = ref(null);
+const draggedIndex = ref(-1);
+const draggedOverIndex = ref(-1);
+const dragState = ref({
+  isDragging: false,
+  startIndex: -1,
+  endIndex: -1,
+});
 
-    // 计算列表样式
-    const listStyle = computed(() => ({
-        height: props.height === 'auto' ? 'auto' : props.height,
-        maxHeight: props.maxHeight,
-    }));
+// 计算列表样式
+const listStyle = computed(() => ({
+  height: props.height === 'auto' ? 'auto' : props.height,
+  maxHeight: props.maxHeight,
+}));
 
-    // 计算拖拽动画样式
-    const itemStyle = (index) => {
-        if (!props.animation || !dragState.value.isDragging) return {};
+// 计算拖拽动画样式
+const itemStyle = (index) => {
+  if (!props.animation || !dragState.value.isDragging) return {};
 
-        // 简单的拖拽预览动画
-        if (index === dragState.value.startIndex) {
-            return {
-                opacity: 0.5,
-                transform: 'scale(1.05)',
-            };
-        }
-
-        return {};
+  // 简单的拖拽预览动画
+  if (index === dragState.value.startIndex) {
+    return {
+      opacity: 0.5,
+      transform: 'scale(1.05)',
     };
+  }
 
-    // 计算项目的类名
-    const itemClasses = (index, item) => [
-        'drag-drop-item',
-        {
-            'cursor-move': props.draggable && !props.disabled,
-            'cursor-not-allowed': props.disabled,
-            [props.ghostClass]: index === draggedOverIndex.value && draggedIndex.value !== index,
-            [props.chosenClass]: index === draggedIndex.value,
-            [props.dragClass]: dragState.value.isDragging && index === draggedIndex.value,
-            'drag-over': index === draggedOverIndex.value && draggedIndex.value !== index,
-        },
-    ];
+  return {};
+};
 
-    // 处理拖拽开始
-    const handleDragStart = (event, index, item) => {
-        if (!props.draggable || props.disabled) {
-            event.preventDefault();
-            return;
-        }
+// 计算项目的类名
+const itemClasses = (index, item) => [
+  'drag-drop-item',
+  {
+    'cursor-move': props.draggable && !props.disabled,
+    'cursor-not-allowed': props.disabled,
+    [props.ghostClass]: index === draggedOverIndex.value && draggedIndex.value !== index,
+    [props.chosenClass]: index === draggedIndex.value,
+    [props.dragClass]: dragState.value.isDragging && index === draggedIndex.value,
+    'drag-over': index === draggedOverIndex.value && draggedIndex.value !== index,
+  },
+];
 
-        draggedIndex.value = index;
-        dragState.value = {
-            isDragging: true,
-            startIndex: index,
-            endIndex: index,
-        };
+// 处理拖拽开始
+const handleDragStart = (event, index, item) => {
+  if (!props.draggable || props.disabled) {
+    event.preventDefault();
+    return;
+  }
 
-        // 设置拖拽数据
-        event.dataTransfer.effectAllowed = 'move';
-        event.dataTransfer.setData('text/html', event.target.outerHTML);
-        event.dataTransfer.setData('text/plain', JSON.stringify(item));
+  draggedIndex.value = index;
+  dragState.value = {
+    isDragging: true,
+    startIndex: index,
+    endIndex: index,
+  };
 
-        // 设置自定义拖拽图片
-        if (event.dataTransfer.setDragImage) {
-            const dragImage = event.target.cloneNode(true);
-            dragImage.style.opacity = '0.8';
-            dragImage.style.transform = 'rotate(5deg)';
-            event.dataTransfer.setDragImage(dragImage, event.offsetX, event.offsetY);
-        }
+  // 设置拖拽数据
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/html', event.target.outerHTML);
+  event.dataTransfer.setData('text/plain', JSON.stringify(item));
 
-        emit('dragStart', { event, index, item });
-    };
+  // 设置自定义拖拽图片
+  if (event.dataTransfer.setDragImage) {
+    const dragImage = event.target.cloneNode(true);
+    dragImage.style.opacity = '0.8';
+    dragImage.style.transform = 'rotate(5deg)';
+    event.dataTransfer.setDragImage(dragImage, event.offsetX, event.offsetY);
+  }
 
-    // 处理拖拽结束
-    const handleDragEnd = (event) => {
-        draggedIndex.value = -1;
-        draggedOverIndex.value = -1;
+  emit('dragStart', { event, index, item });
+};
 
-        if (dragState.value.isDragging) {
-            emit('dragEnd', { event, ...dragState.value });
+// 处理拖拽结束
+const handleDragEnd = (event) => {
+  draggedIndex.value = -1;
+  draggedOverIndex.value = -1;
 
-            // 如果位置发生变化，触发重排序事件
-            if (dragState.value.startIndex !== dragState.value.endIndex) {
-                const reorderedItems = [...props.items];
-                const [movedItem] = reorderedItems.splice(dragState.value.startIndex, 1);
-                reorderedItems.splice(dragState.value.endIndex, 0, movedItem);
+  if (dragState.value.isDragging) {
+    emit('dragEnd', { event, ...dragState.value });
 
-                emit('update:items', reorderedItems);
-                emit('reorder', {
-                    fromIndex: dragState.value.startIndex,
-                    toIndex: dragState.value.endIndex,
-                    item: movedItem,
-                    items: reorderedItems,
-                });
-            }
-        }
+    // 如果位置发生变化，触发重排序事件
+    if (dragState.value.startIndex !== dragState.value.endIndex) {
+      const reorderedItems = [...props.items];
+      const [movedItem] = reorderedItems.splice(dragState.value.startIndex, 1);
+      reorderedItems.splice(dragState.value.endIndex, 0, movedItem);
 
-        dragState.value = {
-            isDragging: false,
-            startIndex: -1,
-            endIndex: -1,
-        };
-    };
+      emit('update:items', reorderedItems);
+      emit('reorder', {
+        fromIndex: dragState.value.startIndex,
+        toIndex: dragState.value.endIndex,
+        item: movedItem,
+        items: reorderedItems,
+      });
+    }
+  }
 
-    // 处理拖拽悬停
-    const handleDragOver = (event, index) => {
-        if (!props.draggable || props.disabled) return;
+  dragState.value = {
+    isDragging: false,
+    startIndex: -1,
+    endIndex: -1,
+  };
+};
 
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'move';
+// 处理拖拽悬停
+const handleDragOver = (event, index) => {
+  if (!props.draggable || props.disabled) return;
 
-        draggedOverIndex.value = index;
-    };
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
 
-    // 处理拖拽进入
-    const handleDragEnter = (event, index) => {
-        if (!props.draggable || props.disabled) return;
+  draggedOverIndex.value = index;
+};
 
-        event.preventDefault();
-        draggedOverIndex.value = index;
+// 处理拖拽进入
+const handleDragEnter = (event, index) => {
+  if (!props.draggable || props.disabled) return;
 
-        // 更新目标位置
-        if (draggedIndex.value !== -1 && draggedIndex.value !== index) {
-            dragState.value.endIndex = index;
-        }
-    };
+  event.preventDefault();
+  draggedOverIndex.value = index;
 
-    // 处理拖拽离开
-    const handleDragLeave = (event) => {
-        // 防止频繁触发
-        const rect = event.currentTarget.getBoundingClientRect();
-        const x = event.clientX;
-        const y = event.clientY;
+  // 更新目标位置
+  if (draggedIndex.value !== -1 && draggedIndex.value !== index) {
+    dragState.value.endIndex = index;
+  }
+};
 
-        if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
-            draggedOverIndex.value = -1;
-        }
-    };
+// 处理拖拽离开
+const handleDragLeave = (event) => {
+  // 防止频繁触发
+  const rect = event.currentTarget.getBoundingClientRect();
+  const x = event.clientX;
+  const y = event.clientY;
 
-    // 处理放置
-    const handleDrop = (event, index) => {
-        if (!props.draggable || props.disabled) return;
+  if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
+    draggedOverIndex.value = -1;
+  }
+};
 
-        event.preventDefault();
-        event.stopPropagation();
+// 处理放置
+const handleDrop = (event, index) => {
+  if (!props.draggable || props.disabled) return;
 
-        draggedOverIndex.value = -1;
+  event.preventDefault();
+  event.stopPropagation();
 
-        // 更新最终位置
-        if (draggedIndex.value !== -1) {
-            dragState.value.endIndex = index;
-        }
-    };
+  draggedOverIndex.value = -1;
 
-    // 处理项目点击
-    const handleItemClick = (item, index) => {
-        if (props.disabled) return;
-        emit('itemClick', { item, index });
-    };
+  // 更新最终位置
+  if (draggedIndex.value !== -1) {
+    dragState.value.endIndex = index;
+  }
+};
 
-    // 添加项目
-    const addItem = (item) => {
-        if (props.disabled) return;
+// 处理项目点击
+const handleItemClick = (item, index) => {
+  if (props.disabled) return;
+  emit('itemClick', { item, index });
+};
 
-        const newItems = [...props.items, item];
-        emit('update:items', newItems);
-        emit('itemAdd', { item, items: newItems });
-    };
+// 添加项目
+const addItem = (item) => {
+  if (props.disabled) return;
 
-    // 移除项目
-    const removeItem = (index) => {
-        if (props.disabled || index < 0 || index >= props.items.length) return;
+  const newItems = [...props.items, item];
+  emit('update:items', newItems);
+  emit('itemAdd', { item, items: newItems });
+};
 
-        const newItems = props.items.filter((_, i) => i !== index);
-        const removedItem = props.items[index];
+// 移除项目
+const removeItem = (index) => {
+  if (props.disabled || index < 0 || index >= props.items.length) return;
 
-        emit('update:items', newItems);
-        emit('itemRemove', { item: removedItem, index, items: newItems });
-    };
+  const newItems = props.items.filter((_, i) => i !== index);
+  const removedItem = props.items[index];
 
-    // 暴露方法给父组件
-    defineExpose({
-        addItem,
-        removeItem,
-        // 可以添加其他公共方法
-    });
+  emit('update:items', newItems);
+  emit('itemRemove', { item: removedItem, index, items: newItems });
+};
+
+// 暴露方法给父组件
+defineExpose({
+  addItem,
+  removeItem,
+  // 可以添加其他公共方法
+});
 </script>
 
 <template>
-    <div ref="listRef" class="drag-drop-list" :style="listStyle">
-        <!-- 列表容器 -->
-        <div class="drag-drop-container">
-            <!-- 加载状态 -->
-            <div v-if="loading" class="drag-drop-loading">
-                <div class="flex items-center justify-center py-8">
-                    <Loader2 class="animate-spin h-5 w-5 text-fg-subtle mr-2" />
-                    <span class="text-fg-subtle">{{ t('common.loading') }}</span>
-                </div>
-            </div>
-
-            <!-- 空数据状态 -->
-            <div v-else-if="items.length === 0" class="drag-drop-empty">
-                <div
-                    class="flex flex-col items-center justify-center py-8 text-fg-subtle"
-                >
-                    <ArrowUpDown
-                        class="w-12 h-12 mb-2 text-fg-subtle"
-                        stroke-width="1.5"
-                    />
-                    <span>{{ resolvedEmptyText }}</span>
-                </div>
-            </div>
-
-            <!-- 列表项目 -->
-            <div v-else class="drag-drop-items" :class="{ 'is-dragging': dragState.isDragging }">
-                <div
-                    v-for="(item, index) in items"
-                    :key="item[itemKey] || index"
-                    :class="itemClasses(index, item)"
-                    :style="itemStyle(index)"
-                    class="drag-drop-item-wrapper"
-                    draggable="draggable"
-                    @click="handleItemClick(item, index)"
-                    @dragstart="handleDragStart($event, index, item)"
-                    @dragend="handleDragEnd($event)"
-                    @dragover="handleDragOver($event, index)"
-                    @dragenter="handleDragEnter($event, index)"
-                    @dragleave="handleDragLeave($event)"
-                    @drop="handleDrop($event, index)"
-                >
-                    <!-- 拖拽手柄 -->
-                    <div v-if="showHandle && draggable && !disabled" class="drag-handle">
-                        <GripVertical class="w-4 h-4 text-fg-subtle" />
-                    </div>
-
-                    <!-- 项目内容 -->
-                    <div class="drag-item-content">
-                        <!-- 默认插槽 -->
-                        <slot :item="item" :index="index">
-                            <div class="flex items-center justify-between w-full">
-                                <div class="flex items-center space-x-3">
-                                    <!-- 项目信息 -->
-                                    <div>
-                                        <h4
-                                            class="text-sm font-medium text-fg"
-                                        >
-                                            {{
-                                                item.name ||
-                                                item.title ||
-                                                t('common.itemName', { index: index + 1 })
-                                            }}
-                                        </h4>
-                                        <p
-                                            v-if="item.description"
-                                            class="text-xs text-fg-subtle"
-                                        >
-                                            {{ item.description }}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- 操作按钮 -->
-                                <div class="flex items-center space-x-2">
-                                    <slot name="actions" :item="item" :index="index">
-                                        <!-- 删除按钮 -->
-                                        <button
-                                            v-if="!disabled"
-                                            type="button"
-                                            class="p-1 text-red-400 hover:text-red-600 transition-colors touch-target"
-                                            @click.stop="removeItem(index)"
-                                            :aria-label="t('actions.delete')"
-                                        >
-                                            <Trash2 class="w-4 h-4" />
-                                        </button>
-                                    </slot>
-                                </div>
-                            </div>
-                        </slot>
-                    </div>
-
-                    <!-- 拖拽插入指示器 -->
-                    <div
-                        v-if="draggedOverIndex === index && draggedIndex !== index"
-                        class="drag-insert-indicator"
-                    ></div>
-                </div>
-            </div>
+  <div ref="listRef" :style="listStyle" class="drag-drop-list">
+    <!-- 列表容器 -->
+    <div class="drag-drop-container">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="drag-drop-loading">
+        <div class="flex items-center justify-center py-8">
+          <Loader2 class="animate-spin h-5 w-5 text-fg-subtle mr-2" />
+          <span class="text-fg-subtle">{{ t('common.loading') }}</span>
         </div>
+      </div>
 
-        <!-- 底部插槽 -->
-        <div v-if="$slots.footer" class="drag-drop-footer mt-4">
-            <slot name="footer" :items="items" />
+      <!-- 空数据状态 -->
+      <div v-else-if="items.length === 0" class="drag-drop-empty">
+        <div class="flex flex-col items-center justify-center py-8 text-fg-subtle">
+          <ArrowUpDown class="w-12 h-12 mb-2 text-fg-subtle" stroke-width="1.5" />
+          <span>{{ resolvedEmptyText }}</span>
         </div>
+      </div>
+
+      <!-- 列表项目 -->
+      <div v-else :class="{ 'is-dragging': dragState.isDragging }" class="drag-drop-items">
+        <div
+          v-for="(item, index) in items"
+          :key="item[itemKey] || index"
+          :class="itemClasses(index, item)"
+          :style="itemStyle(index)"
+          class="drag-drop-item-wrapper"
+          draggable="draggable"
+          @click="handleItemClick(item, index)"
+          @dragend="handleDragEnd($event)"
+          @dragenter="handleDragEnter($event, index)"
+          @dragleave="handleDragLeave($event)"
+          @dragover="handleDragOver($event, index)"
+          @dragstart="handleDragStart($event, index, item)"
+          @drop="handleDrop($event, index)"
+        >
+          <!-- 拖拽手柄 -->
+          <div v-if="showHandle && draggable && !disabled" class="drag-handle">
+            <GripVertical class="w-4 h-4 text-fg-subtle" />
+          </div>
+
+          <!-- 项目内容 -->
+          <div class="drag-item-content">
+            <!-- 默认插槽 -->
+            <slot :index="index" :item="item">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center space-x-3">
+                  <!-- 项目信息 -->
+                  <div>
+                    <h4 class="text-sm font-medium text-fg">
+                      {{ item.name || item.title || t('common.itemName', { index: index + 1 }) }}
+                    </h4>
+                    <p v-if="item.description" class="text-xs text-fg-subtle">
+                      {{ item.description }}
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex items-center space-x-2">
+                  <slot :index="index" :item="item" name="actions">
+                    <!-- 删除按钮 -->
+                    <button
+                      v-if="!disabled"
+                      :aria-label="t('actions.delete')"
+                      class="p-1 text-red-400 hover:text-red-600 transition-colors touch-target"
+                      type="button"
+                      @click.stop="removeItem(index)"
+                    >
+                      <Trash2 class="w-4 h-4" />
+                    </button>
+                  </slot>
+                </div>
+              </div>
+            </slot>
+          </div>
+
+          <!-- 拖拽插入指示器 -->
+          <div v-if="draggedOverIndex === index && draggedIndex !== index" class="drag-insert-indicator"></div>
+        </div>
+      </div>
     </div>
+
+    <!-- 底部插槽 -->
+    <div v-if="$slots.footer" class="drag-drop-footer mt-4">
+      <slot :items="items" name="footer" />
+    </div>
+  </div>
 </template>
 
 <style scoped>
-    .drag-drop-list {
-        @apply w-full;
-    }
+.drag-drop-list {
+  @apply w-full;
+}
 
-    .drag-drop-container {
-        @apply border border-line misub-radius-md bg-surface overflow-hidden;
-    }
+.drag-drop-container {
+  @apply border border-line misub-radius-md bg-surface overflow-hidden;
+}
 
-    .drag-drop-item-wrapper {
-        @apply relative flex items-center p-4 border-b border-line-subtle last:border-b-0 transition-all duration-200 select-none;
-    }
+.drag-drop-item-wrapper {
+  @apply relative flex items-center p-4 border-b border-line-subtle last:border-b-0 transition-all duration-200 select-none;
+}
 
-    .drag-drop-item-wrapper.drag-over {
-        @apply bg-gray-50 dark:bg-gray-700;
-    }
+.drag-drop-item-wrapper.drag-over {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
 
-    .drag-drop-item-wrapper.ghost {
-        @apply opacity-50;
-    }
+.drag-drop-item-wrapper.ghost {
+  @apply opacity-50;
+}
 
-    .drag-drop-item-wrapper.chosen {
-        @apply bg-active border-line-strong;
-    }
+.drag-drop-item-wrapper.chosen {
+  @apply bg-active border-line-strong;
+}
 
-    .drag-drop-item-wrapper.drag {
-        @apply shadow-lg transform scale-105 z-50;
-    }
+.drag-drop-item-wrapper.drag {
+  @apply shadow-lg transform scale-105 z-50;
+}
 
-    .drag-handle {
-        @apply mr-3 cursor-move p-1;
-    }
+.drag-handle {
+  @apply mr-3 cursor-move p-1;
+}
 
-    .drag-item-content {
-        @apply flex-1 min-w-0;
-    }
+.drag-item-content {
+  @apply flex-1 min-w-0;
+}
 
-    .drag-insert-indicator {
-        @apply absolute top-0 left-0 right-0 h-0.5 bg-accent;
-    }
+.drag-insert-indicator {
+  @apply absolute top-0 left-0 right-0 h-0.5 bg-accent;
+}
 
-    .is-dragging .drag-drop-item-wrapper {
-        @apply transition-transform duration-200;
-    }
+.is-dragging .drag-drop-item-wrapper {
+  @apply transition-transform duration-200;
+}
 
-    .drag-drop-empty {
-        @apply py-8;
-    }
+.drag-drop-empty {
+  @apply py-8;
+}
 
-    .drag-drop-loading {
-        @apply py-8;
-    }
+.drag-drop-loading {
+  @apply py-8;
+}
 
-    .drag-drop-footer {
-        @apply text-sm text-fg-subtle dark:text-gray-400;
-    }
+.drag-drop-footer {
+  @apply text-sm text-fg-subtle dark:text-gray-400;
+}
 
-    /* 暗黑模式下的拖拽状态 */
-    .dark .drag-drop-item-wrapper.drag-over {
-        @apply bg-gray-700;
-    }
+/* 暗黑模式下的拖拽状态 */
+.dark .drag-drop-item-wrapper.drag-over {
+  @apply bg-gray-700;
+}
 
-    .dark .drag-drop-item-wrapper.chosen {
-        @apply bg-active border-line-strong;
-    }
+.dark .drag-drop-item-wrapper.chosen {
+  @apply bg-active border-line-strong;
+}
 
-    .dark .drag-handle {
-        @apply text-gray-500;
-    }
+.dark .drag-handle {
+  @apply text-gray-500;
+}
 </style>

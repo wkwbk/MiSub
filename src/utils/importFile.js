@@ -17,17 +17,9 @@ import { t } from '@/i18n/index.js';
 export const MAX_IMPORT_FILE_SIZE = 1.5 * 1024 * 1024;
 
 /** 允许的扩展名 / MIME 提示（仅用于 文件选择框 过滤，不做强校验）。 */
-export const IMPORT_FILE_ACCEPT = [
-    '.txt',
-    '.yaml',
-    '.yml',
-    '.json',
-    '.conf',
-    '.config',
-    '.ini',
-    '.list',
-    '.text',
-].join(',');
+export const IMPORT_FILE_ACCEPT = ['.txt', '.yaml', '.yml', '.json', '.conf', '.config', '.ini', '.list', '.text'].join(
+  ',',
+);
 
 /**
  * 把 File 读成文本。
@@ -35,12 +27,12 @@ export const IMPORT_FILE_ACCEPT = [
  * @returns {Promise<string>}
  */
 export function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result || ''));
-        reader.onerror = () => reject(reader.error || new Error(t('fileImport.readFailed')));
-        reader.readAsText(file);
-    });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(reader.error || new Error(t('fileImport.readFailed')));
+    reader.readAsText(file);
+  });
 }
 
 /**
@@ -48,15 +40,15 @@ export function readFileAsText(file) {
  * @param {File} file
  */
 export function assertFileSize(file) {
-    if (file && typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_SIZE) {
-        const mb = (MAX_IMPORT_FILE_SIZE / 1024 / 1024).toFixed(1);
-        throw new Error(
-            t('fileImport.tooLarge', {
-                size: (file.size / 1024 / 1024).toFixed(1),
-                limit: mb,
-            })
-        );
-    }
+  if (file && typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_SIZE) {
+    const mb = (MAX_IMPORT_FILE_SIZE / 1024 / 1024).toFixed(1);
+    throw new Error(
+      t('fileImport.tooLarge', {
+        size: (file.size / 1024 / 1024).toFixed(1),
+        limit: mb,
+      }),
+    );
+  }
 }
 
 /**
@@ -65,20 +57,20 @@ export function assertFileSize(file) {
  * @returns {Promise<{ text: string, fileCount: number, byteSize: number }>}
  */
 export async function readFilesAsText(files) {
-    const list = Array.from(files || []);
-    const chunks = [];
-    let byteSize = 0;
+  const list = Array.from(files || []);
+  const chunks = [];
+  let byteSize = 0;
 
-    for (const file of list) {
-        assertFileSize(file);
-        const text = await readFileAsText(file);
-        byteSize += file.size || text.length;
-        chunks.push(text.trim());
-    }
+  for (const file of list) {
+    assertFileSize(file);
+    const text = await readFileAsText(file);
+    byteSize += file.size || text.length;
+    chunks.push(text.trim());
+  }
 
-    return {
-        text: chunks.filter(Boolean).join('\n'),
-        fileCount: list.length,
-        byteSize,
-    };
+  return {
+    text: chunks.filter(Boolean).join('\n'),
+    fileCount: list.length,
+    byteSize,
+  };
 }
