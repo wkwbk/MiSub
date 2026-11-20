@@ -6,6 +6,23 @@ import SubscriptionGroupsView from '@/views/SubscriptionGroupsView.vue';
 import { createI18n } from '@/i18n/index.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 
+vi.mock('@/components/modals/TagManagementModal.vue', () => ({
+    __esModule: true,
+    default: { name: 'TagManagementModal', render: () => null },
+}));
+vi.mock('@/components/modals/NodePreview/NodePreviewModal.vue', () => ({
+    __esModule: true,
+    default: { name: 'NodePreviewModal', render: () => null },
+}));
+vi.mock('@/components/modals/SubscriptionBulkImportModal.vue', () => ({
+    __esModule: true,
+    default: { name: 'SubscriptionBulkImportModal', render: () => null },
+}));
+vi.mock('@/components/modals/QRCodeModal.vue', () => ({
+    __esModule: true,
+    default: { name: 'QRCodeModal', render: () => null },
+}));
+
 // Reactive so the view's `watch(() => route.query.status)` actually fires.
 const route = reactive({ query: {}, path: '/dashboard/subscriptions' });
 const replaceMock = vi.fn();

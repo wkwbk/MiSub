@@ -19,6 +19,9 @@ import { runOperatorChain } from '../utils/operator-runner.js';
 import { createTimeoutFetch } from '../modules/utils.js';
 import { assertPublicNetworkUrl } from '../modules/security-utils.js';
 import { isSuspiciousNodeCountDrop } from './node-cache-service.js';
+import { inferAirportRootDomain } from '../../shared/airport-domain.js';
+
+export { inferAirportRootDomain };
 
 /**
  * 订阅获取配置常量
@@ -134,111 +137,6 @@ export function parseSubscriptionProfileTitle(headers) {
 
     return '';
 }
-
-/**
- * 从订阅 URL 推断机场主域名（用于后续抓取官网标题识别品牌）。
- *
- * 机场订阅常挂在子域名上，去掉常见的前缀/子域后可得到主域名：
- *   sub1.gsafevpn.com      -> gsafevpn.com
- *   dy11.baipiaoyes.com    -> baipiaoyes.com
- *   api.5ufclub.com        -> 5ufclub.com
- *   jms.937745389.xyz      -> 937745389.xyz
- *
- * 注意：对于 CDN / 托管平台域名（pages.dev、workers.dev、githubusercontent.com 等）
- * 返回空字符串——它们不属于机场自有域名，抓标题只会得到平台错误页。
- *
- * @param {string} url 订阅源地址
- * @returns {string} 主域名，无法推断时返回空字符串
- */
-const NON_AIRPORT_HOSTS = [
-    /\.pages\.dev$/i,
-    /\.workers\.dev$/i,
-    /\.vercel\.app$/i,
-    /\.netlify\.app$/i,
-    /\.githubusercontent\.com$/i,
-    /\.github\.io$/i,
-    /\.r2\.dev$/i,
-    /\.trafficmanager\.net$/i,
-    /\.cloudfront\.net$/i,
-    /\.herokuapp\.com$/i,
-    /\.onrender\.com$/i,
-];
-
-export function inferAirportRootDomain(sourceUrl) {
-    const raw = String(sourceUrl || '').trim();
-    if (!/^https?:\/\//i.test(raw)) return '';
-
-    try {
-        const host = new URL(raw).hostname.toLowerCase();
-        if (!host.includes('.')) return '';
-        if (NON_AIRPORT_HOSTS.some((re) => re.test(host))) return '';
-
-        const parts = host.split('.');
-        const suffix = parts.slice(-2).join('.');
-        const rootLabelCount = MULTI_LABEL_PUBLIC_SUFFIXES.has(suffix) ? 3 : 2;
-        // 常见机场子域前缀（去掉后取主域名）
-        const COMMON_SUBDOMAIN_LABELS = new Set([
-            'sub',
-            'sub1',
-            'sub2',
-            'sub3',
-            'sub4',
-            'sub5',
-            'api',
-            'www',
-            'jms',
-            'dy',
-            'node',
-            'nodes',
-            'cdn',
-            's',
-            'go',
-            'get',
-            'link',
-            'links',
-            'v',
-            'v2',
-        ]);
-
-        let base;
-        if (parts.length >= 3) {
-            const first = parts[0];
-            const isCommonPrefix = COMMON_SUBDOMAIN_LABELS.has(first);
-            const isNumberedPrefix = /^[a-z]{0,4}\d+$/i.test(first); // 如 dy11 / sub12 / node3
-            base = parts.slice(-rootLabelCount);
-        } else {
-            base = parts;
-        }
-
-        const root = base.join('.');
-        // 至少要有 host.tld 两段
-        return root.split('.').length >= 2 ? root : '';
-    } catch {
-        return '';
-    }
-}
-
-const MULTI_LABEL_PUBLIC_SUFFIXES = new Set([
-    'com.cn',
-    'net.cn',
-    'org.cn',
-    'gov.cn',
-    'com.hk',
-    'com.tw',
-    'co.uk',
-    'org.uk',
-    'me.uk',
-    'ac.uk',
-    'gov.uk',
-    'com.au',
-    'net.au',
-    'org.au',
-    'co.jp',
-    'co.kr',
-    'co.nz',
-    'com.sg',
-    'appspot.com',
-]);
 
 /**
  * 抓取机场官网标题，作为品牌名的兜底识别来源。

@@ -11,6 +11,7 @@ export default defineConfig({
     ],
     test: {
         globals: true,
+        pool: 'vmThreads',
         environment: 'happy-dom',
         setupFiles: ['tests/setup/i18n-preload.js'],
         passWithNoTests: true,

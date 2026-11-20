@@ -24,6 +24,35 @@ vi.mock('vue-router', async () => {
     };
 });
 
+vi.mock('@/components/settings/sections/BasicSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'BasicSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/HomeSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'HomeSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/GlobalSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'GlobalSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/ServiceSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'ServiceSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/CustomPageSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'CustomPageSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/WebdavBackupSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'WebdavBackupSettings', render: () => null },
+}));
+vi.mock('@/components/settings/sections/SystemSettings.vue', () => ({
+    __esModule: true,
+    default: { name: 'SystemSettings', render: () => null },
+}));
+
 vi.mock('@/composables/useSettingsLogic.js', () => ({
     useSettingsLogic: () => ({
         settings: { mytoken: 'stable-token', profileToken: 'share-token' },
