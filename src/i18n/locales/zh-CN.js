@@ -379,7 +379,6 @@ export default {
         visitSite: '访问 {domain} 官网',
         subtitle: '维护机场订阅源，添加/导入后可在卡片中查看节点、流量与到期信息。',
         unnamed: '未命名订阅',
-        qrCodeTitle: '订阅二维码',
         deleteAllConfirmTitle: '确认清空订阅',
         deleteAllConfirmBody: '您确定要删除所有**订阅**吗？',
         empty: '没有机场订阅',
@@ -853,9 +852,6 @@ export default {
         deleteConfirmQuestion: '确定要删除此代理内核卡片吗？',
     },
     settings: {
-        customPageSourcePlaceholder:
-            '支持直接粘贴整份 HTML 源码，点击「{action}」可自动提取 CSS。',
-        customPageCssPlaceholder: '请输入{name} 样式...',
         title: '设置',
         loading: '正在加载设置...',
         currentModule: '当前模块',

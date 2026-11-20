@@ -1,5 +1,6 @@
 import { StorageFactory } from '../../storage-adapter.js';
-import { base64EncodeUtf8, formatBytes, migrateConfigSettings } from '../utils.js';
+import { base64EncodeUtf8, migrateConfigSettings } from '../utils.js';
+import { formatBytes } from '../../../shared/format-utils.js';
 import { generateCombinedNodeList } from '../../services/subscription-service.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import {

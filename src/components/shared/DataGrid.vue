@@ -137,7 +137,6 @@
 
     const rowClasses = computed(() => (index) => [
         {
-            'bg-surface': !props.striped || index % 2 === 0,
             'bg-surface': props.striped && index % 2 === 1,
             'hover:bg-hover': props.hoverable,
             'cursor-pointer': props.selectable,

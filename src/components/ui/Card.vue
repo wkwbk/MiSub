@@ -12,7 +12,7 @@
         RefreshCw,
         Trash2,
     } from '@lucide/vue';
-    import { formatBytes } from '@/lib/utils.js';
+    import { formatBytes } from '@shared/format-utils.js';
     import { getItemTags } from '@/utils/tags.js';
     import { inferAirportRootDomain } from '@/utils/airport-domain.js';
     import { lookupDomainName } from '@/utils/domain-name-memory.js';

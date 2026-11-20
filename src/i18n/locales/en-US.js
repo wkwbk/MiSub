@@ -382,7 +382,6 @@ export default {
         visitSite: 'Visit {domain}',
         subtitle: 'Manage sources; view nodes, traffic, expiry.',
         unnamed: 'Unnamed',
-        qrCodeTitle: 'QR Code',
         deleteAllConfirmTitle: 'Clear sources?',
         deleteAllConfirmBody: 'Delete all **sources**?',
         empty: 'No sources',
@@ -872,9 +871,6 @@ export default {
         deleteConfirmQuestion: 'Delete this proxy core card?',
     },
     settings: {
-        customPageSourcePlaceholder:
-            'Paste a full HTML source here; click "{action}" to extract the CSS automatically.',
-        customPageCssPlaceholder: 'Enter {name} styles...',
         title: 'Settings',
         loading: 'Loading...',
         currentModule: 'Module',

@@ -5,5 +5,5 @@
 
 export * from '@/utils/error-utils.js';
 export * from '@/utils/loading-utils.js';
-export * from '@/utils/format-utils.js';
+export * from '@shared/format-utils.js';
 export * from '@/utils/validation-utils.js';

@@ -4,7 +4,7 @@
  * 核心发送逻辑已抽离至 functions/services/notification-service.js
  */
 
-import { formatBytes } from './utils.js';
+import { formatBytes } from '../../shared/format-utils.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, STORAGE_KEY_SUBS, SYSTEM_CONSTANTS } from './config.js';
 // 导入核心通知服务及工具
 import {

@@ -12,7 +12,7 @@ import {
     readJsonWithLimit,
 } from '../utils.js';
 import { parseNodeList } from '../utils/node-parser.js';
-import { getProcessedUserAgent } from '../../utils/format-utils.js';
+import { getProcessedUserAgent } from '../../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.js';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.js';
 

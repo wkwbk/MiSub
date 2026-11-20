@@ -7,7 +7,7 @@ import {
 import { parseNodeList } from '../../functions/modules/utils/node-parser.js';
 import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { urlToClashProxy } from '../../functions/utils/url-to-clash.js';
+import { urlToClashProxy } from '../../shared/url-to-clash.js';
 
 const MIHOMO_MIERU_YAML = `proxies:
   - name: Mieru 文档节点

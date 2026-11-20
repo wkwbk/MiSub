@@ -13,7 +13,7 @@ import {
 } from './external-api-utils.js';
 import { isRemoteSubscription, toExternalSubscription } from './external-api-mappers.js';
 import { handleNodeCountRequest } from './handlers/node-handler.js';
-import { getProcessedUserAgent } from '../utils/format-utils.js';
+import { getProcessedUserAgent } from '../../shared/format-utils.js';
 
 function nowIso() {
     return new Date().toISOString();

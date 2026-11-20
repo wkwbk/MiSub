@@ -8,7 +8,7 @@
         ref,
         watch,
     } from 'vue';
-    import { formatBytes } from '@/lib/utils.js';
+    import { formatBytes } from '@shared/format-utils.js';
     import { useToastStore } from '@/stores/toast.js';
     import { useUIStore } from '@/stores/ui.js';
     import { useDataStore } from '@/stores/useDataStore.js';

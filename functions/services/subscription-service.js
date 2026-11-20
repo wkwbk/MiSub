@@ -5,7 +5,7 @@
 
 import { parseNodeList } from '../modules/utils/node-parser.js';
 import { parseNodeInfo } from '../modules/utils/geo-utils.js';
-import { getProcessedUserAgent } from '../utils/format-utils.js';
+import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {
     addFlagEmoji,
@@ -684,7 +684,6 @@ export async function generateCombinedNodeList(
 async function decodeBase64Content(text) {
     try {
         const cleanedText = text.replace(/\s/g, '');
-        const { isValidBase64 } = await import('../utils/format-utils.js');
         if (isValidBase64(cleanedText)) {
             let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
             const padding = normalized.length % 4;

@@ -1,5 +1,5 @@
 import * as yaml from 'js-yaml';
-import { urlToClashProxy } from '../../functions/utils/url-to-clash.js';
+import { urlToClashProxy } from '@shared/url-to-clash.js';
 import { extractHostAndPort } from '@/lib/utils.js';
 
 const BASIC_KEYS = new Set([

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
-import { urlsToClashProxies, urlToClashProxy } from '../../functions/utils/url-to-clash.js';
+import { urlToClashProxy } from '../../shared/url-to-clash.js';
+import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
 import { extractValidNodes } from '../../functions/modules/utils/node-parser.js';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
 

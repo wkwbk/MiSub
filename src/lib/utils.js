@@ -439,4 +439,3 @@ export function getClientInfo(userAgent) {
     };
 }
 
-export { formatBytes } from '@/shared/utils.js';

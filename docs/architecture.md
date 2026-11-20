@@ -280,12 +280,13 @@ maxSubscriptionConcurrency
 ```text
 functions/modules/utils/node-parser.js     # 订阅内容解析，含 Clash YAML → 节点 URL
 functions/utils/clash-to-url.js            # Clash proxy 对象 → 节点 URL
-functions/utils/url-to-clash.js            # 节点 URL → Clash proxy / Clash config
-functions/utils/xhttp-extra.js              # xHTTP extra ↔ Clash xhttp-opts 字段双向映射
+shared/url-to-clash.js                     # 前后端共享：节点 URL → Clash proxy 纯协议解析（含 shared/clash-parsers/）
+shared/xhttp-extra.js                      # 前后端共享：xHTTP extra ↔ Clash xhttp-opts 字段双向映射
+functions/utils/url-to-clash.js            # 后端增强层：批量转换、元数据注入、Clash config 生成
 functions/utils/node-utils.js              # 节点命名、国旗、编码修正、YAML 安全处理
 functions/utils/node-transformer.js        # 节点 record 化、过滤、重命名、排序、去重
 functions/utils/operator-runner.js         # 新版操作符链执行
-functions/utils/format-utils.js            # UA/URL 格式判断辅助
+shared/format-utils.js                     # 前后端共享：字节/日期/文本格式化与 UA/URL 格式判断辅助
 ```
 
 当前支持的常见协议包括：

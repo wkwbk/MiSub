@@ -19,7 +19,7 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'json', 'html'],
-            include: ['src/**/*.{js,vue}', 'functions/**/*.js'],
+            include: ['src/**/*.{js,vue}', 'functions/**/*.js', 'shared/**/*.js'],
             exclude: ['node_modules', 'dist', 'dev-dist'],
         },
     },
