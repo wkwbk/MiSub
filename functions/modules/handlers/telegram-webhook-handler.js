@@ -38,6 +38,8 @@ import {
     persistCachedProfiles,
     persistCachedSettings,
     persistCachedSubscriptions,
+    saveSingleProfile,
+    saveSingleSubscription,
 } from './telegram/storage.js';
 import {
     answerCallbackQuery,
@@ -1204,7 +1206,7 @@ async function handleRenameCommand(chatId, userId, args, env) {
         const oldName = allSubscriptions[allIdx].name;
         allSubscriptions[allIdx].name = newName;
 
-        await storageAdapter.putAllSubscriptions(allSubscriptions);
+        await saveSingleSubscription(storageAdapter, allSubscriptions[allIdx], allSubscriptions);
 
         await sendTelegramMessage(
             chatId,
@@ -1969,7 +1971,7 @@ async function handleNodeInput(chatId, text, userId, env, requestCache = null, o
                 }
 
                 if (updated) {
-                    await storageAdapter.putAllProfiles(profiles);
+                    await saveSingleProfile(storageAdapter, targetProfile, profiles);
                     boundProfileName = targetProfile.name;
                 }
             }
@@ -2656,7 +2658,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                             profile.manualNodes = profile.manualNodes || [];
                             if (!profile.manualNodes.includes(node.id)) {
                                 profile.manualNodes.push(node.id);
-                                await storageAdapter.putAllProfiles(profiles);
+                                await saveSingleProfile(storageAdapter, profile, profiles);
                             }
                             await answerCallbackQuery(
                                 callbackQuery.id,
@@ -2695,7 +2697,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                             profile.manualNodes = profile.manualNodes.filter(
                                 (id) => id !== node.id
                             );
-                            await storageAdapter.putAllProfiles(profiles);
+                            await saveSingleProfile(storageAdapter, profile, profiles);
                             await answerCallbackQuery(
                                 callbackQuery.id,
                                 `已从 ${profile.name} 移除`,
@@ -2732,7 +2734,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                             profile.subscriptions = profile.subscriptions || [];
                             if (!profile.subscriptions.includes(sub.id)) {
                                 profile.subscriptions.push(sub.id);
-                                await storageAdapter.putAllProfiles(profiles);
+                                await saveSingleProfile(storageAdapter, profile, profiles);
                             }
                             await answerCallbackQuery(
                                 callbackQuery.id,
@@ -2770,7 +2772,7 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
                             profile.subscriptions = profile.subscriptions.filter(
                                 (id) => id !== sub.id
                             );
-                            await storageAdapter.putAllProfiles(profiles);
+                            await saveSingleProfile(storageAdapter, profile, profiles);
                             await answerCallbackQuery(
                                 callbackQuery.id,
                                 `已从 ${profile.name} 移除`,
@@ -2840,7 +2842,11 @@ async function handleCallbackQuery(callbackQuery, env, request, requestCache = n
 
                             if (subToUpdate) {
                                 subToUpdate.enabled = !isEnabled;
-                                await storageAdapter.putAllSubscriptions(originalSubs);
+                                await saveSingleSubscription(
+                                    storageAdapter,
+                                    subToUpdate,
+                                    originalSubs
+                                );
                                 await handleListCommand(chatId, userId, env, 0, 'sub');
                             }
                         } else {

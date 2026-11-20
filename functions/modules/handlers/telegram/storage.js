@@ -70,6 +70,26 @@ export async function persistCachedSettings(env, cache) {
 }
 
 /**
+ * 优先走单行 D1 写入（O(1)），在未实现 putSubscription 的测试桩中回退到全量写入
+ */
+export async function saveSingleSubscription(storageAdapter, item, fallbackAll) {
+    if (item?.id && typeof storageAdapter.putSubscription === 'function') {
+        return storageAdapter.putSubscription(item);
+    }
+    return storageAdapter.putAllSubscriptions(fallbackAll);
+}
+
+/**
+ * 优先走单行 D1 写入（O(1)），在未实现 putProfile 的测试桩中回退到全量写入
+ */
+export async function saveSingleProfile(storageAdapter, profile, fallbackAll) {
+    if (profile?.id && typeof storageAdapter.putProfile === 'function') {
+        return storageAdapter.putProfile(profile);
+    }
+    return storageAdapter.putAllProfiles(fallbackAll);
+}
+
+/**
  * 获取 Telegram Bot 推送配置
  */
 export async function getTelegramPushConfig(env, cache = null) {
