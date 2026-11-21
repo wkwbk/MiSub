@@ -52,7 +52,7 @@ export function redactUrl(value) {
     url.pathname = pathParts.join('/');
     url.hash = '';
     return url.toString();
-  } catch (_) {
+  } catch {
     return REDACTED;
   }
 }
@@ -61,7 +61,7 @@ export function validatePublicFetchUrl(value) {
   let url;
   try {
     url = new URL(String(value || '').trim());
-  } catch (_) {
+  } catch {
     return {
       ok: false,
       error: 'Invalid or missing URL parameter. Must be a valid HTTP/HTTPS URL.',
@@ -137,7 +137,7 @@ export function validatePublicNetworkUrl(value) {
   let url;
   try {
     url = new URL(String(value || '').trim());
-  } catch (_) {
+  } catch {
     return {
       ok: false,
       error: 'Invalid or missing URL parameter. Must be a valid HTTP/HTTPS URL.',

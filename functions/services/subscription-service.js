@@ -144,7 +144,7 @@ function ensureArray(data) {
     try {
       const parsed = JSON.parse(data);
       return Array.isArray(parsed) ? parsed : [];
-    } catch (e) {
+    } catch {
       return [];
     }
   }
@@ -298,7 +298,7 @@ export async function generateCombinedNodeList(
       if (transformed.length > 0) {
         manualProcessedLines.push(...transformed);
       }
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }
@@ -363,7 +363,7 @@ export async function generateCombinedNodeList(
           const parsedUrl = new URL(requestUrl);
           parsedUrl.searchParams.set('_t', Date.now().toString());
           requestUrl = parsedUrl.toString();
-        } catch (e) {
+        } catch {
           requestUrl += (requestUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
         }
       }
@@ -478,7 +478,7 @@ export async function generateCombinedNodeList(
       return shouldAddSubPrefix && sub.name
         ? validNodes.map((node) => prependNodeName(node, sub.name)).join('\n')
         : validNodes.join('\n');
-    } catch (e) {
+    } catch {
       recordEmptyRuntimeInfo();
       return (await readCachedNodes()).join('\n');
     }
@@ -715,7 +715,7 @@ function applyManualNodeName(nodeUrl, customName) {
     const hashIndex = nodeUrl.lastIndexOf('#');
     const baseLink = hashIndex !== -1 ? nodeUrl.substring(0, hashIndex) : nodeUrl;
     return `${baseLink}#${encodeURIComponent(customName)}`;
-  } catch (e) {
+  } catch {
     return nodeUrl;
   }
 }

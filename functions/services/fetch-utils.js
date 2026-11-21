@@ -118,13 +118,6 @@ export async function collectWithinTimeout(promises, timeoutMs) {
   let results = [];
 
   if (raceResult === 'TIMEOUT') {
-    const completedCount = wrappedPromises.filter((p) => {
-      // 这是一个稍微取巧的方法查看 Promise 状态，但在标准 JS 中无法同步查看。
-      // 实际上 Promise.race 返回时，未完成的 promise 还在 pending。
-      // 我们这里其实需要获取那些已经 settled 的 promise 的值。
-      // 更好的做法是：所有 promise 都有独立的状态跟踪。
-      return false; // See implementation fix below
-    }).length;
     console.warn(`[Subscription Fetch] Timeout of ${timeoutMs}ms reached. Handling partial results...`);
 
     // 由于无法直接检查 pending 状态，我们修改策略：

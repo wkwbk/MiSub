@@ -1,5 +1,3 @@
-import { StorageFactory } from '../../storage-adapter.js';
-import { STORAGE_KEY_SETTINGS } from '../config.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import { authMiddleware } from '../auth-middleware.js';
 

@@ -25,6 +25,7 @@ import {
  */
 function cleanControlChars(str) {
   if (typeof str !== 'string') return str;
+  // oxlint-disable-next-line no-control-regex
   return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 }
 
@@ -280,9 +281,6 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
   const {
     managedConfigUrl = '',
     interval = 86400,
-    skipCertVerify = false,
-    enableUdp = false,
-    enableTfo = false,
     ruleLevel = 'std',
   } = options;
 

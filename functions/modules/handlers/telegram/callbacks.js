@@ -696,14 +696,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           }
           const idx = parseInt(idxStr);
 
-          // Store state? Ideally use ForceReply.
-          // Simplified: Just tell user command
-          const cmdPrefix = type === 'sub' ? '/set_sub_name' : '/rename';
-          // Wait, do we have /set_sub_name? Probably not.
-          // If no command exists for renaming subs via bot, we might need to add one or just say "Not supported via bot yet".
-          // But for now, let's assume rename is only for nodes or implemented generically.
-          // Checking implementation: handleRenameCommand usually takes indices.
-
           if (type === 'sub') {
             await answerCallbackQuery(callbackQuery.id, '暂不支持在 Bot 中重命名订阅', env, true);
           } else {

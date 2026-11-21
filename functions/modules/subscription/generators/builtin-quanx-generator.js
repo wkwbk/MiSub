@@ -31,25 +31,6 @@ function sanitizeNodeName(name) {
   return safe || 'Untitled';
 }
 
-function qxQuote(value) {
-  if (value === undefined || value === null) return '';
-  return encodeURIComponent(String(value));
-}
-
-function getIconByNodeName(name) {
-  if (/港|HK|Hong Kong/i.test(name)) return `${ICON_REPO}/Hong_Kong.png`;
-  if (/台|TW|Taiwan/i.test(name)) return `${ICON_REPO}/Taiwan.png`;
-  if (/日|JP|Japan/i.test(name)) return `${ICON_REPO}/Japan.png`;
-  if (/新|SG|Singapore|狮城/i.test(name)) return `${ICON_REPO}/Singapore.png`;
-  if (/美|US|America/i.test(name)) return `${ICON_REPO}/United_States.png`;
-  if (/韩|KR|Korea/i.test(name)) return `${ICON_REPO}/South_Korea.png`;
-  if (/英|UK|Great Britain/i.test(name)) return `${ICON_REPO}/United_Kingdom.png`;
-  if (/德|DE|Germany/i.test(name)) return `${ICON_REPO}/Germany.png`;
-  if (/法|FR|France/i.test(name)) return `${ICON_REPO}/France.png`;
-  if (/俄|RU|Russia/i.test(name)) return `${ICON_REPO}/Russia.png`;
-  return null;
-}
-
 function appendQxTlsParams(extraParts, proxy) {
   if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
     extraParts.push('tls-verification=false');
@@ -98,7 +79,6 @@ function buildQxLine(proxy) {
   if (type === 'vmess') {
     const uuid = proxy.uuid || '';
     const method = normalizeQxVmessMethod(proxy.cipher);
-    const aid = Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0;
     const extraParts = [];
     const sni = proxy.sni || proxy.servername;
     const hasTlsLayer = proxy.tls || sni;
@@ -243,9 +223,6 @@ export function generateBuiltinQuanxConfig(nodeList, options = {}) {
   const {
     managedConfigUrl = '',
     interval = 86400,
-    skipCertVerify = false,
-    enableUdp = false,
-    enableTfo = false,
     ruleLevel = 'std',
   } = options;
 

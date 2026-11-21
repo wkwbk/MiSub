@@ -84,7 +84,7 @@ function updateSsrRemarks(link, updater) {
     if (!newRemarks || newRemarks === oldRemarks) return `ssr://${base64UrlSafeEncodeUtf8(decoded)}`;
     params.set('remarks', base64UrlSafeEncodeUtf8(newRemarks));
     return `ssr://${base64UrlSafeEncodeUtf8(mainPart + params.toString())}`;
-  } catch (e) {
+  } catch {
     return link;
   }
 }
@@ -109,7 +109,7 @@ export function prependNodeName(link, prefix) {
       const rawName = baseLink.substring(hashIndex + 1);
       try {
         originalName = decodeURIComponent(rawName);
-      } catch (e) {
+      } catch {
         // 避免非法百分号编码导致 Worker 1101，回退使用原始片段
         originalName = rawName;
       }
@@ -194,7 +194,7 @@ export function addFlagEmoji(link) {
         return 'vmess://' + newBase64Part;
       }
       return link;
-    } catch (e) {
+    } catch {
       return link;
     }
   } else {
@@ -211,7 +211,7 @@ export function addFlagEmoji(link) {
         if (originalName.includes('%')) {
           originalName = decodeURIComponent(originalName);
         }
-      } catch (e) {
+      } catch {
         originalName = rawName;
       }
     } else {
@@ -264,7 +264,7 @@ export function removeFlagEmoji(link) {
         base64Part += '=';
       }
       return JSON.parse(new TextDecoder('utf-8').decode(Uint8Array.from(atob(base64Part), (c) => c.charCodeAt(0))));
-    } catch (e) {
+    } catch {
       return null;
     }
   };
@@ -281,7 +281,7 @@ export function removeFlagEmoji(link) {
         return 'vmess://' + newBase64Part;
       }
       return link;
-    } catch (e) {
+    } catch {
       return link;
     }
   }
@@ -292,7 +292,7 @@ export function removeFlagEmoji(link) {
     const originalName = decodeURIComponent(link.substring(hashIndex + 1));
     const newName = stripFlagEmoji(originalName);
     return link.substring(0, hashIndex + 1) + encodeURIComponent(newName);
-  } catch (e) {
+  } catch {
     return link;
   }
 }
@@ -319,7 +319,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
     try {
       const decoded = decodeURIComponent(fragmentToDecode);
       return base + encodeURIComponent(decoded);
-    } catch (e) {
+    } catch {
       return url;
     }
   };
@@ -329,7 +329,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
     const safeDecode = (value) => {
       try {
         return decodeURIComponent(value);
-      } catch (e) {
+      } catch {
         return value;
       }
     };
@@ -362,7 +362,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
       }
       const rebuilt = urlObj.toString();
       return normalizeFragment(rebuilt);
-    } catch (e) {
+    } catch {
       return normalizeFragment(nodeUrl);
     }
   }
@@ -406,7 +406,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
     }
 
     return normalizeFragment(baseLink + fragment);
-  } catch (e) {
+  } catch {
     return normalizeFragment(nodeUrl);
   }
 }
@@ -473,7 +473,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
         }
       }
       return nodeUrl;
-    } catch (e) {
+    } catch {
       return nodeUrl;
     }
   } else {
@@ -486,7 +486,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
         return nodeUrl.substring(0, hashIndex + 1) + encodeURIComponent(newName);
       }
       return nodeUrl;
-    } catch (e) {
+    } catch {
       return nodeUrl;
     }
   }

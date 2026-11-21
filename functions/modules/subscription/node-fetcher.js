@@ -85,7 +85,7 @@ export async function fetchSubscriptionNodes(
         const parsedUrl = new URL(requestUrl);
         parsedUrl.searchParams.set('_t', Date.now().toString());
         requestUrl = parsedUrl.toString();
-      } catch (e) {
+      } catch {
         requestUrl += (requestUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
       }
     }

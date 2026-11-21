@@ -42,39 +42,6 @@ function warnInvalidRegex(rule, error) {
 
 // ============ 工具函数 ============
 
-function safeDecodeURI(value) {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
-function normalizeBase64(input) {
-  let s = String(input || '')
-    .trim()
-    .replace(/\s+/g, '');
-  if (!s) return '';
-  // 处理可能被 URL 编码的 Base64
-  if (s.includes('%')) {
-    try {
-      s = decodeURIComponent(s);
-    } catch (error) {
-      console.debug('[NodeTransform] Failed to decode base64 segment:', error);
-    }
-  }
-  s = s.replace(/-/g, '+').replace(/_/g, '/');
-  while (s.length % 4 !== 0) s += '=';
-  return s;
-}
-
-function base64Encode(text) {
-  const bytes = new TextEncoder().encode(String(text));
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
 /**
  * 归一化协议名称，将别名统一为标准名
  */

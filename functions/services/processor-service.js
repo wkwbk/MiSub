@@ -43,7 +43,7 @@ export function isIniTemplateSource(templateSource, builtinTemplateEntry = null)
 
 function stripInternalProxyFields(proxy) {
   if (!proxy || typeof proxy !== 'object') return proxy;
-  const { metadata, ...publicProxy } = proxy;
+  const { metadata: _metadata, ...publicProxy } = proxy;
   return publicProxy;
 }
 

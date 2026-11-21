@@ -202,7 +202,7 @@ function _generateRegionGroups(proxies, options = {}) {
  */
 export const POLICY_GROUPS = {
   // 基础配置：精简版
-  BASE: (proxies, options = {}) => {
+  BASE: (proxies) => {
     const proxyNames = proxies.map((p) => p.tag || p.name);
     return [
       dnsProxyGroup(proxyNames),

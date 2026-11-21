@@ -22,7 +22,7 @@ export async function onRequest(context) {
 /**
  * 获取定时任务仪表板
  */
-function getCronDashboard(env) {
+function getCronDashboard(_env) {
   const html = `
 <!DOCTYPE html>
 <html lang="zh-CN">
@@ -260,7 +260,7 @@ function getCronDashboard(env) {
 /**
  * 手动触发同步
  */
-async function triggerManualSync(env) {
+async function triggerManualSync(_env) {
   try {
     // 手动触发同步的请求应该转发到 _schedule.js
     // 由于Cloudflare Pages Functions限制，这里只返回成功响应

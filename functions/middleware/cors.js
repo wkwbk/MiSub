@@ -36,7 +36,7 @@ export async function corsMiddleware(request, next, options = {}) {
       if (allowCredentials && allowOriginValue !== '*')
         response.headers.set('Access-Control-Allow-Credentials', 'true');
       return response;
-    } catch (e) {
+    } catch {
       const newHeaders = new Headers(response.headers);
       newHeaders.set('Access-Control-Allow-Origin', allowOriginValue);
       if (shouldSetVary) newHeaders.append('Vary', 'Origin');
@@ -82,7 +82,7 @@ export async function corsMiddleware(request, next, options = {}) {
 
   try {
     response.headers.set('Access-Control-Expose-Headers', headers.join(', '));
-  } catch (e) {
+  } catch {
     const newHeaders = new Headers(response.headers);
     newHeaders.set('Access-Control-Expose-Headers', headers.join(', '));
     response = new Response(response.body, {
@@ -124,7 +124,7 @@ export async function csrfOriginMiddleware(request, next, options = {}) {
   let sourceOrigin = '';
   try {
     sourceOrigin = origin || (referer ? new URL(referer).origin : '');
-  } catch (_) {
+  } catch {
     return new Response('Origin Not Allowed', { status: 403 });
   }
 
@@ -151,7 +151,7 @@ export async function securityHeadersMiddleware(request, next) {
 
   try {
     Object.entries(headersToSet).forEach(([k, v]) => response.headers.set(k, v));
-  } catch (e) {
+  } catch {
     // 如果响应头不可变，构造新的 Response
     const newHeaders = new Headers(response.headers);
     Object.entries(headersToSet).forEach(([k, v]) => newHeaders.set(k, v));

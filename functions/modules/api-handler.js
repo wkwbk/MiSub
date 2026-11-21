@@ -360,7 +360,7 @@ export async function handleMisubsSave(request, env, context = null) {
     let settings;
     try {
       settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || defaultSettings;
-    } catch (settingsError) {
+    } catch {
       settings = defaultSettings; // 使用默认设置继续
     }
 
@@ -621,7 +621,7 @@ export async function handleSettingsSave(request, env) {
       message: '设置已保存',
       data: redactSettingsForResponse(finalSettings),
     });
-  } catch (e) {
+  } catch {
     return createErrorResponse('保存设置失败', 500);
   }
 }

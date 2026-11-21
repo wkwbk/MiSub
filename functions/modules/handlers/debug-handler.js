@@ -303,7 +303,7 @@ export async function handleExportDataRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePreviewContentRequest(request, env) {
+export async function handlePreviewContentRequest(request, _env) {
   if (request.method !== 'POST') {
     return createJsonResponse('Method Not Allowed', 405);
   }
@@ -400,7 +400,7 @@ export async function handlePreviewContentRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleTestNotificationRequest(request, env) {
+export async function handleTestNotificationRequest(request, _env) {
   if (request.method !== 'POST') {
     return createErrorResponse('Method Not Allowed', 405);
   }

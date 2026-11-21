@@ -407,12 +407,8 @@ function appendTlsParams(parts, proxy) {
 
 export function generateBuiltinSurgeConfig(nodeList, options = {}) {
   const {
-    fileName = 'MiSub',
     managedConfigUrl = '',
     interval = 86400,
-    skipCertVerify = false,
-    enableUdp = false,
-    enableTfo = false,
     ruleLevel = 'std',
   } = options;
 

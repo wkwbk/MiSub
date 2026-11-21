@@ -186,7 +186,7 @@ export async function handleListCommand(
       } else if (nodeUrl.includes('://')) {
         try {
           protocol = nodeUrl.split('://')[0].toUpperCase();
-        } catch (e) {
+        } catch {
           protocol = 'UNKNOWN';
         }
       }
@@ -203,7 +203,6 @@ export async function handleListCommand(
     // 构建按钮：当前页节点的快捷按钮
     const nodeButtons = [];
     for (let i = startIdx; i < endIdx; i++) {
-      const isSubList = type === 'sub';
       // 如果是混合列表('all'), 检测URL; 如果明确是 'sub', 则就是sub.
       // 但 handleListCommand 的 type 参数已经区分了 'node', 'sub', 'all'.
       // 这里我们尽量明确:
@@ -368,7 +367,7 @@ export async function handleSearchCommand(chatId, userId, args, env) {
     const userNodes = await getUserNodes(userId, env);
     const lowerKeyword = keyword.toLowerCase();
 
-    const results = userNodes.filter((node, idx) => {
+    const results = userNodes.filter((node) => {
       const protocol = node.url.split('://')[0].toLowerCase();
       return node.name.toLowerCase().includes(lowerKeyword) || protocol.includes(lowerKeyword);
     });
@@ -380,7 +379,7 @@ export async function handleSearchCommand(chatId, userId, args, env) {
 
     let message = `🔍 <b>搜索结果</b>：${results.length} 个\n\n`;
 
-    results.slice(0, 10).forEach((node, i) => {
+    results.slice(0, 10).forEach((node) => {
       const protocol = node.url.split('://')[0].toUpperCase();
       const status = node.enabled ? '✅' : '⛔';
       const originalIdx = userNodes.indexOf(node) + 1;
@@ -421,7 +420,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
       try {
         const url = new URL(request.url);
         baseUrl = `${url.protocol}//${url.host}`;
-      } catch (e) {
+      } catch {
         baseUrl = '';
       }
     }
@@ -546,16 +545,6 @@ export async function handleInfoCommand(chatId, userId, args, env) {
     const createdAt = node.created_at
       ? new Date(node.created_at).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })
       : '未知';
-
-    // 脱敏显示服务器地址
-    let serverInfo = '未解析';
-    try {
-      const urlPart = node.url.split('://')[1]?.split('#')[0];
-      if (urlPart) {
-        // 简单脱敏
-        serverInfo = urlPart.length > 20 ? urlPart.substring(0, 10) + '...' + urlPart.slice(-8) : urlPart;
-      }
-    } catch {}
 
     let message = `📄 <b>节点详情 #${idx + 1}</b>\n\n`;
     message += `<b>名称：</b>${node.name}\n`;

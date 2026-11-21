@@ -80,7 +80,7 @@ export function generateClashConfig(urls, options = {}) {
 
   for (const proxy of proxies) {
     // [元数据清理] 移除内部元数据字段，避免污染 YAML
-    const { metadata, ...rest } = proxy;
+    const { metadata: _metadata, ...rest } = proxy;
     yaml += `  - ${JSON.stringify(rest)}\n`;
   }
 

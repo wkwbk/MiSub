@@ -410,7 +410,7 @@ export async function handleWebdavBackupStatus(env) {
   const { storageAdapter } = await getStorage(env);
   const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
   const config = normalizeWebdavConfig(settings);
-  const { password, ...safeConfig } = config;
+  const { password: _password, ...safeConfig } = config;
   return createJsonResponse({ success: true, data: safeConfig });
 }
 

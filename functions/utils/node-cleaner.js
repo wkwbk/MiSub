@@ -15,7 +15,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
   const safeDecode = (value) => {
     try {
       return decodeURIComponent(value);
-    } catch (e) {
+    } catch {
       return value;
     }
   };
@@ -33,7 +33,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
     try {
       const decoded = decodeRepeatedly(fragmentToDecode);
       return base + encodeURIComponent(decoded);
-    } catch (e) {
+    } catch {
       return url;
     }
   };
@@ -96,7 +96,7 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
       /* ... kept simplified ... */
 
       return urlObj.toString();
-    } catch (e) {
+    } catch {
       return normalizeFragment(fixedUrl);
     }
   }
@@ -115,7 +115,7 @@ export function fixSSEncoding(nodeUrl, options = {}) {
   const safeDecode = (value) => {
     try {
       return decodeURIComponent(value);
-    } catch (e) {
+    } catch {
       return value;
     }
   };
@@ -327,7 +327,7 @@ export function applyManualNodeName(nodeUrl, customName) {
       const config = JSON.parse(jsonStr);
       config.ps = customName;
       return 'vmess://' + btoa(JSON.stringify(config));
-    } catch (e) {
+    } catch {
       return nodeUrl;
     }
   }
@@ -349,7 +349,7 @@ export function applyManualNodeName(nodeUrl, customName) {
       const urlObj = new URL(nodeUrl);
       urlObj.hash = '#' + encodedName;
       return urlObj.toString();
-    } catch (e) {
+    } catch {
       const hashIndex = nodeUrl.indexOf('#');
       const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
       return `${baseUrl}#${encodedName}`;

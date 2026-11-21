@@ -99,6 +99,7 @@ function adaptLegacyTransform(config) {
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleProfileMode(
+  // oxlint-disable-next-line oxc/only-used-in-recursion
   request,
   env,
   profileId,

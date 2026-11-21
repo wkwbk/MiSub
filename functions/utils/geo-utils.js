@@ -523,7 +523,7 @@ export function parseNodeInfo(nodeUrl) {
   if (hashIndex !== -1) {
     try {
       nodeName = decodeURIComponent(nodeUrl.substring(hashIndex + 1));
-    } catch (e) {
+    } catch {
       nodeName = nodeUrl.substring(hashIndex + 1);
     }
   }
@@ -534,7 +534,7 @@ export function parseNodeInfo(nodeUrl) {
     if (paramsMatch && paramsMatch[2]) {
       try {
         nodeName = decodeURIComponent(paramsMatch[2]);
-      } catch (e) {
+      } catch {
         nodeName = paramsMatch[2];
       }
     }
@@ -567,9 +567,6 @@ export function parseNodeInfo(nodeUrl) {
           while (safeBody.length % 4) {
             safeBody += '=';
           }
-          const jsonStr = atob(safeBody); // 使用 decodeURIComponent(escape(atob(safeBody))) 处理中文?
-          // 不, atob 解码后通常是 UTF-8 字节流乱码 if directly used as string for Chinese
-          // 需要用 TextDecoder
           const binaryString = atob(safeBody);
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
@@ -672,7 +669,7 @@ export function parseNodeInfo(nodeUrl) {
                 if (remarksDecoded) {
                   nodeName = remarksDecoded.trim();
                 }
-              } catch (e) {
+              } catch {
                 // Base64 解码失败，尝试使用原始值
                 const fallback = tryDecodeBase64(remarksB64);
                 if (fallback) nodeName = fallback.trim();
@@ -692,7 +689,7 @@ export function parseNodeInfo(nodeUrl) {
       if (hIndex !== -1) {
         try {
           nodeName = decodeURIComponent(body.substring(hIndex + 1));
-        } catch (e) {
+        } catch {
           nodeName = body.substring(hIndex + 1);
         }
         body = body.substring(0, hIndex);
@@ -755,7 +752,7 @@ export function parseNodeInfo(nodeUrl) {
             const decodedAtIndex = decoded.lastIndexOf('@');
             serverPart = decoded.substring(decodedAtIndex + 1);
           }
-        } catch (e) {
+        } catch {
           // Base64 解码失败，继续使用原逻辑
           console.debug('[GeoUtils] VLESS base64 decode attempt failed (expected for standard format)');
         }

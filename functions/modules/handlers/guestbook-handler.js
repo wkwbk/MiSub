@@ -190,7 +190,6 @@ export async function handleGuestbookManageAction(request, env) {
     }
 
     let updatedMessage = messages[index];
-    let notificationMsg = null;
 
     if (action === 'delete') {
       messages.splice(index, 1);

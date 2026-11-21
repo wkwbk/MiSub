@@ -146,13 +146,13 @@ async function parseSubscriptionContent(content) {
   try {
     const config = jsyaml.load(content);
     return config.proxies || [];
-  } catch (error) {
+  } catch {
     // 尝试 base64 解码
     try {
       const decoded = atob(content.trim());
       const config = jsyaml.load(decoded);
       return config.proxies || [];
-    } catch (decodeError) {
+    } catch {
       throw new Error('Unable to parse subscription content');
     }
   }

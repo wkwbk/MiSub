@@ -156,7 +156,7 @@ export async function getAuthSessionDiagnostic(request, env) {
   try {
     token = decodeURIComponent(rawToken);
     result.token.decodeMode = 'decodeURIComponent';
-  } catch (_) {
+  } catch {
     result.token.decodeMode = 'raw';
   }
 
@@ -258,7 +258,7 @@ export async function getLoginPasswordDiagnostic(request, env) {
   let payload;
   try {
     payload = await readJsonWithLimit(request, JSON_BODY_LIMITS.auth);
-  } catch (_) {
+  } catch {
     result.reason = 'invalid_json';
     return result;
   }

@@ -52,7 +52,7 @@ async function persistSubscriptionsForCron(storageAdapter, subscriptions) {
 /**
  * 检查并发送订阅到期和流量预警通知
  */
-export async function checkAndNotify(sub, settings, env) {
+export async function checkAndNotify(sub, settings, _env) {
   if (!sub?.enabled || !sub.userInfo) return;
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;

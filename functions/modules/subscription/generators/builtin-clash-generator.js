@@ -75,7 +75,7 @@ function deduplicateNames(proxies) {
  */
 function stripInternalProxyFields(proxies) {
   return proxies.map((proxy) => {
-    const { metadata, ...publicProxy } = proxy;
+    const { metadata: _metadata, ...publicProxy } = proxy;
     return publicProxy;
   });
 }
@@ -133,10 +133,6 @@ function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
  */
 export function generateBuiltinClashConfig(nodeList, options = {}) {
   const {
-    fileName = 'MiSub',
-    enableUdp = true,
-    enableTfo = false,
-    skipCertVerify = false,
     ruleLevel = 'std', // [New] 支持 base, std, full
     userAgent = '',
     hiddifyCompatible = false,
@@ -295,7 +291,7 @@ export function generateProxiesOnly(nodeList) {
     );
 
     return cleanControlChars(yamlStr);
-  } catch (e) {
+  } catch {
     const fallbackProxies = Array.isArray(proxies) ? stripInternalProxyFields(proxies) : [];
     return `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n`;
   }

@@ -380,8 +380,7 @@ export async function handleMisubRequest(context) {
     url.searchParams.has('refresh') || url.searchParams.has('nocache') || url.searchParams.has('debug');
 
   // 定义刷新函数（用于后台刷新）
-  const refreshNodes = async (isBackground = false) => {
-    const isDebugToken = token === 'b0b422857bb46aba65da8234c84f38c6';
+  const refreshNodes = async (_isBackground = false) => {
     // 组合节点列表
     // 传递 context 对象以获取请求信息用于日志记录
     context.startTime = Date.now();
@@ -836,8 +835,6 @@ export async function handleMisubRequest(context) {
           contentType = 'text/plain; charset=utf-8';
         }
       }
-
-      const isJson = targetFormat === 'singbox' || targetFormat === 'sing-box';
 
       // [RFC 6266 / RFC 5987] Standardized Content-Disposition
       // filename: ASCII-only fallback, filename*: UTF-8 encoded

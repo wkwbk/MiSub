@@ -159,7 +159,6 @@ export function fixSS2022Node(nodeUrl) {
   try {
     // 提取各部分
     const atIndex = nodeUrl.indexOf('@');
-    const hashIndex = nodeUrl.indexOf('#');
     const base64Part = nodeUrl.substring(5, atIndex);
     const serverPart = nodeUrl.substring(atIndex);
 

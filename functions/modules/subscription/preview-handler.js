@@ -81,7 +81,6 @@ export async function handleSubscriptionNodesRequest(request, env) {
       subscriptionId,
       profileId,
       userAgent = 'MiSub-Node-Preview/1.0',
-      applyTransform = false, // 管理后台默认不应用转换，由前端控制
       skipCertVerify = false,
       plusAsSpace = false,
     } = requestData;

@@ -197,7 +197,6 @@ export async function handleNodeCountRequest(request, env) {
     }
 
     const result = { count: 0, userInfo: null };
-    let trafficRequestSucceeded = false;
     let nodeCountRequestSucceeded = false;
     let fetchError = null;
 
@@ -233,7 +232,6 @@ export async function handleNodeCountRequest(request, env) {
         const info = extractUserInfo(responses[0].value);
         if (info) {
           result.userInfo = info;
-          trafficRequestSucceeded = true;
         }
       } else {
         // 仅记录警告，不视为严重错误，因为我们还有 fallback
@@ -623,8 +621,6 @@ export async function handleCleanNodesRequest(request, env) {
     const requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
     const { profileId } = requestData;
 
-    const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
-
     if (profileId) {
       // 清理指定订阅组的节点
       const { handleSubscriptionNodesRequest } = await import('../subscription-handler.js');
@@ -668,14 +664,14 @@ export async function handleCleanNodesRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleHealthCheckRequest(request, env) {
+export async function handleHealthCheckRequest(request, _env) {
   if (request.method !== 'POST') {
     return createJsonResponse('Method Not Allowed', 405);
   }
 
   try {
     const requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
-    const { nodeUrls, timeout = 5000 } = requestData;
+    const { nodeUrls } = requestData;
 
     if (!nodeUrls || !Array.isArray(nodeUrls) || nodeUrls.length === 0) {
       return createJsonResponse(
@@ -709,7 +705,7 @@ export async function handleHealthCheckRequest(request, env) {
           error: isValidProtocol ? null : '不支持的协议',
           checkTime: new Date().toISOString(),
         };
-      } catch (e) {
+      } catch {
         return {
           nodeUrl,
           healthy: false,

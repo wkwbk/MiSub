@@ -290,15 +290,6 @@ const SUPPORTED_SS_CIPHERS = [
 ];
 
 /**
- * 验证 UUID 格式
- */
-function isValidUUID(uuid) {
-  if (!uuid || typeof uuid !== 'string') return false;
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
-}
-
-/**
  * 解析节点列表 (用于预览和计数)
  */
 export function parseNodeList(content, options = {}) {
@@ -451,7 +442,7 @@ export function parseNodeList(content, options = {}) {
                   // 解码成功但不是 auto: 开头，可能是正常 UUID
                   id = decoded;
                 }
-              } catch (e) {
+              } catch {
                 // Base64 解码失败，使用原始 userPart 作为 ID
                 id = userPart;
               }

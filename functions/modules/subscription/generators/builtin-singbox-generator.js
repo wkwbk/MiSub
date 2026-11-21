@@ -253,13 +253,7 @@ function buildOutbound(proxy) {
 }
 
 export function generateBuiltinSingboxConfig(nodeList, options = {}) {
-  const {
-    managedConfigUrl = '',
-    skipCertVerify = false,
-    enableUdp = false,
-    enableTfo = false,
-    ruleLevel = 'std',
-  } = options;
+  const { ruleLevel = 'std' } = options;
 
   const cleanedNodeList = cleanControlChars(nodeList);
   const nodeUrls = cleanedNodeList
@@ -287,7 +281,6 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     }
   }
 
-  const proxyOutboundTags = outbounds.map((item) => item.tag);
   if (outbounds.length === 0) {
     outbounds.push({ tag: 'DIRECT', type: 'direct' });
   }

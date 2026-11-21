@@ -213,7 +213,7 @@ function normalizeRedirectUrl(rawUrl, baseUrl) {
       return null;
     }
     return resolved.toString();
-  } catch (error) {
+  } catch {
     return null;
   }
 }
