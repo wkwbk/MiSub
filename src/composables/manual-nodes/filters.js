@@ -77,10 +77,144 @@ export function isManualNodeEntry(item) {
   }
 }
 
-export function filterManualNodes(nodes, searchTerm, activeTagFilters) {
+export const PROTOCOL_LABELS = {
+  anytls: 'AnyTLS',
+  vless: 'VLESS',
+  hysteria2: 'HY2',
+  hysteria: 'Hysteria',
+  tuic: 'TUIC',
+  trojan: 'TROJAN',
+  ssr: 'SSR',
+  ss: 'SS',
+  vmess: 'VMESS',
+  socks5: 'SOCKS5',
+  http: 'HTTP',
+  snell: 'SNELL',
+  naive: 'NAIVE',
+};
+
+export function getManualNodeProtocol(url) {
+  if (!url || typeof url !== 'string') return 'unknown';
+  const lowerUrl = url.trim().toLowerCase();
+  if (lowerUrl.startsWith('anytls://')) return 'anytls';
+  if (lowerUrl.startsWith('hysteria2://') || lowerUrl.startsWith('hy2://')) return 'hysteria2';
+  if (lowerUrl.startsWith('hysteria://') || lowerUrl.startsWith('hy://')) return 'hysteria';
+  if (lowerUrl.startsWith('ssr://')) return 'ssr';
+  if (lowerUrl.startsWith('tuic://')) return 'tuic';
+  if (lowerUrl.startsWith('ss://')) return 'ss';
+  if (lowerUrl.startsWith('vmess://')) return 'vmess';
+  if (lowerUrl.startsWith('vless://')) return 'vless';
+  if (lowerUrl.startsWith('trojan://')) return 'trojan';
+  if (lowerUrl.startsWith('socks5://') || lowerUrl.startsWith('socks://')) return 'socks5';
+  if (lowerUrl.startsWith('snell://')) return 'snell';
+  if (
+    lowerUrl.startsWith('naive+https://') ||
+    lowerUrl.startsWith('naive+http://') ||
+    lowerUrl.startsWith('naive+quic://')
+  ) {
+    return 'naive';
+  }
+  if (lowerUrl.startsWith('http://') || lowerUrl.startsWith('https://')) return 'http';
+  return 'unknown';
+}
+
+export function getManualNodeProtocolLabel(protocol) {
+  return PROTOCOL_LABELS[protocol] || String(protocol || 'LINK').toUpperCase();
+}
+
+export function matchesNodeAttributeFilters(node, attrFilters = null, inspectMap = null) {
+  if (!attrFilters || typeof attrFilters !== 'object') return true;
+  const protocolFilter = String(attrFilters.protocol || '')
+    .trim()
+    .toLowerCase();
+  const countryFilter = String(attrFilters.country || '')
+    .trim()
+    .toUpperCase();
+  const networkFilter = String(attrFilters.network || '')
+    .trim()
+    .toLowerCase();
+
+  if (protocolFilter && getManualNodeProtocol(node?.url) !== protocolFilter) {
+    return false;
+  }
+
+  if (countryFilter || networkFilter) {
+    const info = inspectMap?.[node?.id];
+    if (!info) return false;
+    if (countryFilter) {
+      if (info.isRelay || String(info.countryCode || '').toUpperCase() !== countryFilter) {
+        return false;
+      }
+    }
+    if (networkFilter) {
+      const nodeNetwork = info.isRelay ? 'relay' : String(info.networkType || '').toLowerCase();
+      if (nodeNetwork !== networkFilter) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+export function collectNodeAttributeOptions(nodes, inspectMap = {}) {
+  const list = Array.isArray(nodes) ? nodes : [];
+  const protocolCounts = new Map();
+  const countryCounts = new Map();
+  const networkCounts = new Map();
+
+  for (const node of list) {
+    const proto = getManualNodeProtocol(node?.url);
+    if (proto && proto !== 'unknown') {
+      protocolCounts.set(proto, (protocolCounts.get(proto) || 0) + 1);
+    }
+
+    const info = inspectMap?.[node?.id];
+    if (!info) continue;
+
+    if (!info.isRelay && info.countryCode) {
+      const code = String(info.countryCode).toUpperCase();
+      const existing = countryCounts.get(code);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        const label = info.country && info.country !== code ? info.country : code;
+        countryCounts.set(code, {
+          value: code,
+          label: info.flag && label !== code ? `${info.flag} ${label}` : label,
+          count: 1,
+        });
+      }
+    }
+
+    const net = info.isRelay ? 'relay' : String(info.networkType || '').toLowerCase();
+    if (net === 'direct' || net === 'cdn' || net === 'relay') {
+      networkCounts.set(net, (networkCounts.get(net) || 0) + 1);
+    }
+  }
+
+  const protocols = Array.from(protocolCounts.entries())
+    .map(([value, count]) => ({ value, label: getManualNodeProtocolLabel(value), count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+
+  const countries = Array.from(countryCounts.values()).sort(
+    (a, b) => b.count - a.count || a.value.localeCompare(b.value),
+  );
+
+  const networkOrder = ['direct', 'cdn', 'relay'];
+  const networks = networkOrder
+    .filter((key) => (networkCounts.get(key) || 0) > 0)
+    .map((value) => ({ value, count: networkCounts.get(value) }));
+
+  return { protocols, countries, networks };
+}
+
+export function filterManualNodes(nodes, searchTerm, activeTagFilters, attrFilters = null, inspectMap = null) {
   let filtered = Array.isArray(nodes) ? nodes : [];
 
-  filtered = filtered.filter((node) => matchesTagFilter(node, activeTagFilters));
+  filtered = filtered.filter(
+    (node) => matchesTagFilter(node, activeTagFilters) && matchesNodeAttributeFilters(node, attrFilters, inspectMap),
+  );
 
   if (!searchTerm) {
     return filtered;
@@ -100,6 +234,14 @@ export function filterManualNodes(nodes, searchTerm, activeTagFilters) {
     }
     const tags = getItemTags(node);
     if (tags.some((tag) => tag.toLowerCase().includes(searchQuery))) return true;
+
+    const info = inspectMap?.[node?.id];
+    if (info) {
+      if (info.ip && String(info.ip).toLowerCase().includes(searchQuery)) return true;
+      if (info.country && String(info.country).toLowerCase().includes(searchQuery)) return true;
+      if (info.countryCode && String(info.countryCode).toLowerCase() === searchQuery) return true;
+    }
+
     return false;
   });
 }

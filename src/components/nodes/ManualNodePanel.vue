@@ -6,6 +6,7 @@ import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
+import { collectNodeAttributeOptions } from '@/composables/manual-nodes/filters.js';
 
 const props = defineProps({
   manualNodes: { type: Array, default: () => [] },
@@ -23,6 +24,7 @@ const props = defineProps({
   nodeInspectMap: { type: Object, default: () => ({}) },
   isInspectingNodes: { type: Boolean, default: false },
   pingMode: { type: String, default: 'local' },
+  attrFilters: { type: Object, default: () => ({ protocol: '', country: '', network: '' }) },
   compactGrid: { type: Boolean, default: false },
 });
 
@@ -42,6 +44,10 @@ const emit = defineEmits([
   'update:itemsPerPage',
   'set-tag-filters',
   'toggle-tag-filter',
+  'toggle-protocol-filter',
+  'toggle-country-filter',
+  'toggle-network-filter',
+  'clear-attr-filters',
   'open-batch-tag-modal',
   'batch-delete-nodes',
   'ping',
@@ -55,16 +61,27 @@ const emit = defineEmits([
 const isSelectionMode = ref(false);
 const selectedNodeIds = ref(new Set());
 
-const { localSearchTerm, filteredNodes, paginatedNodes, currentSearchPage, totalSearchPages, handlePageChange } =
-  useManualNodeSearchPagination({
-    manualNodes: computed(() => props.manualNodes),
-    paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
-    initialSearchTerm: computed(() => props.searchTerm || ''),
-    activeTagFilters: computed(() => props.activeTagFilters),
-    itemsPerPage: computed(() => props.itemsPerPage),
-    onBasePageChange: (page) => emit('changePage', page),
-    onSearchTermChange: (value) => emit('update:searchTerm', value),
-  });
+const attributeOptions = computed(() => collectNodeAttributeOptions(props.manualNodes, props.nodeInspectMap));
+
+const {
+  localSearchTerm,
+  filteredNodes,
+  paginatedNodes,
+  currentSearchPage,
+  totalSearchPages,
+  useLocalPagination,
+  handlePageChange,
+} = useManualNodeSearchPagination({
+  manualNodes: computed(() => props.manualNodes),
+  paginatedManualNodes: computed(() => props.paginatedManualNodes || []),
+  initialSearchTerm: computed(() => props.searchTerm || ''),
+  activeTagFilters: computed(() => props.activeTagFilters),
+  attrFilters: computed(() => props.attrFilters),
+  nodeInspectMap: computed(() => props.nodeInspectMap),
+  itemsPerPage: computed(() => props.itemsPerPage),
+  onBasePageChange: (page) => emit('changePage', page),
+  onSearchTermChange: (value) => emit('update:searchTerm', value),
+});
 
 const toggleSelectionMode = () => {
   isSelectionMode.value = !isSelectionMode.value;
@@ -146,6 +163,8 @@ const handleDeleteAll = () => emit('deleteAll');
   <div>
     <NodeActions
       :active-tag-filters="activeTagFilters"
+      :attr-filters="attrFilters"
+      :attribute-options="attributeOptions"
       :filtered-nodes-count="filteredNodes.length"
       :is-inspecting-nodes="isInspectingNodes"
       :is-pinging-all="isPingingAll"
@@ -156,10 +175,14 @@ const handleDeleteAll = () => emit('deleteAll');
       :ping-mode="pingMode"
       :search-term="localSearchTerm"
       @add="handleAdd"
+      @clear-attr-filters="emit('clear-attr-filters')"
       @deduplicate="handleDeduplicate"
       @import="handleImport"
       @update:search-term="handleSearchTermUpdate"
       @set-tag-filters="emit('set-tag-filters', $event)"
+      @toggle-country-filter="emit('toggle-country-filter', $event)"
+      @toggle-network-filter="emit('toggle-network-filter', $event)"
+      @toggle-protocol-filter="emit('toggle-protocol-filter', $event)"
       @auto-sort="handleAutoSort"
       @toggle-sort="handleToggleSort"
       @delete-all="handleDeleteAll"
@@ -188,6 +211,7 @@ const handleDeleteAll = () => emit('deleteAll');
 
     <NodeTable
       v-model:draggable-manual-nodes="draggableManualNodes"
+      :attr-filters="attrFilters"
       :base-page="props.currentPage"
       :base-total-pages="props.totalPages"
       :compact-grid="compactGrid"
@@ -204,6 +228,8 @@ const handleDeleteAll = () => emit('deleteAll');
       :search-page="currentSearchPage"
       :search-total-pages="totalSearchPages"
       :selected-node-ids="selectedNodeIds"
+      :use-local-pagination="useLocalPagination"
+      @clear-attr-filters="emit('clear-attr-filters')"
       @delete="handleDelete"
       @detail="handleDetail"
       @edit="handleEdit"
@@ -213,6 +239,9 @@ const handleDeleteAll = () => emit('deleteAll');
       @sort-end="handleSortEnd"
       @change-page="handleChangePage"
       @toggle-tag-filter="emit('toggle-tag-filter', $event)"
+      @toggle-protocol-filter="emit('toggle-protocol-filter', $event)"
+      @toggle-country-filter="emit('toggle-country-filter', $event)"
+      @toggle-network-filter="emit('toggle-network-filter', $event)"
       @clear-search="handleSearchTermUpdate('')"
       @toggle-sort="handleToggleSort"
     />

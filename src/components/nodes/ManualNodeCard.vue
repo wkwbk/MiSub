@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Check, Copy, Info, Pencil, Trash2, Zap } from '@lucide/vue';
 import { extractHostAndPort } from '@/lib/utils.js';
 import { getItemTags } from '@/utils/tags.js';
+import { getManualNodeProtocol } from '@/composables/manual-nodes/filters.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
@@ -23,7 +24,17 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['delete', 'edit', 'detail', 'toggle-select', 'filter-tag', 'ping']);
+const emit = defineEmits([
+  'delete',
+  'edit',
+  'detail',
+  'toggle-select',
+  'filter-tag',
+  'filter-protocol',
+  'filter-country',
+  'filter-network',
+  'ping',
+]);
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
@@ -31,35 +42,7 @@ const nodeTags = computed(() => getItemTags(props.node));
 const visibleTags = computed(() => nodeTags.value.slice(0, 2));
 const overflowCount = computed(() => Math.max(0, nodeTags.value.length - 2));
 
-const getProtocol = (url) => {
-  try {
-    if (!url) return 'unknown';
-    const lowerUrl = url.toLowerCase();
-    if (lowerUrl.startsWith('anytls://')) return 'anytls';
-    if (lowerUrl.startsWith('hysteria2://') || lowerUrl.startsWith('hy2://')) return 'hysteria2';
-    if (lowerUrl.startsWith('hysteria://') || lowerUrl.startsWith('hy://')) return 'hysteria';
-    if (lowerUrl.startsWith('ssr://')) return 'ssr';
-    if (lowerUrl.startsWith('tuic://')) return 'tuic';
-    if (lowerUrl.startsWith('ss://')) return 'ss';
-    if (lowerUrl.startsWith('vmess://')) return 'vmess';
-    if (lowerUrl.startsWith('vless://')) return 'vless';
-    if (lowerUrl.startsWith('trojan://')) return 'trojan';
-    if (lowerUrl.startsWith('socks5://') || lowerUrl.startsWith('socks://')) return 'socks5';
-    if (lowerUrl.startsWith('snell://')) return 'snell';
-    if (
-      lowerUrl.startsWith('naive+https://') ||
-      lowerUrl.startsWith('naive+http://') ||
-      lowerUrl.startsWith('naive+quic://')
-    )
-      return 'naive';
-    if (lowerUrl.startsWith('http')) return 'http';
-  } catch {
-    return 'unknown';
-  }
-  return 'unknown';
-};
-
-const protocol = computed(() => getProtocol(props.node.url));
+const protocol = computed(() => getManualNodeProtocol(props.node.url));
 const hostAndPort = computed(() => extractHostAndPort(props.node.url));
 
 const countryBadge = computed(() => {
@@ -186,50 +169,61 @@ const copyToClipboard = async (text) => {
         </div>
 
         <!-- Protocol Badge -->
-        <div
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
+        <button
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+          data-testid="manual-node-protocol-badge"
+          type="button"
+          @click.stop="emit('filter-protocol', protocol)"
         >
           <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
           {{ protocolStyle.text }}
-        </div>
+        </button>
 
         <!-- Country / Relay Badge -->
-        <span
+        <button
           v-if="countryBadge"
           :class="countryBadge.className"
           :title="countryBadge.title"
-          class="inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-[10px] font-medium leading-none transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-country-badge"
+          type="button"
+          @click.stop="
+            inspectInfo?.isRelay
+              ? emit('filter-network', 'relay')
+              : emit('filter-country', inspectInfo?.countryCode || '')
+          "
         >
           {{ countryBadge.text }}
-        </span>
+        </button>
 
         <!-- CDN / Direct Badge -->
-        <span
+        <button
           v-if="networkBadge"
           :class="networkBadge.className"
           :title="networkBadge.title"
-          class="inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-[10px] font-medium leading-none transition-colors hover:opacity-85 cursor-pointer"
           data-testid="manual-node-network-badge"
+          type="button"
+          @click.stop="emit('filter-network', inspectInfo?.networkType || '')"
         >
           {{ networkBadge.text }}
-        </span>
+        </button>
 
         <!-- Tag Badges -->
         <div
           v-for="tag in visibleTags"
           :key="tag"
           :title="tag"
-          class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+          class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center truncate rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-tag-badge"
           @click.stop="emit('filter-tag', tag)"
         >
-          {{ tag }}
+          <span class="truncate">{{ tag }}</span>
         </div>
         <span
           v-if="overflowCount > 0"
           :title="nodeTags.join(', ')"
-          class="shrink-0 rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-fg-subtle"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
         >
           +{{ overflowCount }}
         </span>
@@ -239,7 +233,7 @@ const copyToClipboard = async (text) => {
       <div
         v-if="pingResult"
         :title="pingTooltip"
-        class="flex shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
+        class="flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
       >
         <span
           :class="{

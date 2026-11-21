@@ -10,7 +10,6 @@ import { isUdpOnlyProtocol, tcpingNodes } from '@/utils/tcping.js';
 import { api } from '@/lib/http.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
-import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import { buildDedupPlan as buildDedupPlanCore } from '@/composables/manual-nodes/dedup.js';
@@ -42,9 +41,59 @@ export function useManualNodes(markDirty) {
 
   const searchTerm = ref('');
   const activeTagFilters = ref([]);
+  const attrFilters = ref({ protocol: '', country: '', network: '' });
+
+  // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别，本机 localStorage 24h 缓存） ---
+  const INSPECT_CACHE_KEY = 'misub_node_inspect_cache_v1';
+  const INSPECT_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const PING_MODE_PREF_KEY = 'misub_manual_nodes_ping_mode';
+
+  const nodeInspectMap = ref({});
+  const isInspectingNodes = ref(false);
+  const pingMode = ref(readRawPreference(PING_MODE_PREF_KEY) === 'tcping' ? 'tcping' : 'local');
+
+  function toggleProtocolFilter(protocol) {
+    const normalized = String(protocol || '')
+      .trim()
+      .toLowerCase();
+    attrFilters.value = {
+      ...attrFilters.value,
+      protocol: attrFilters.value.protocol === normalized ? '' : normalized,
+    };
+  }
+
+  function toggleCountryFilter(countryCode) {
+    const normalized = String(countryCode || '')
+      .trim()
+      .toUpperCase();
+    attrFilters.value = {
+      ...attrFilters.value,
+      country: attrFilters.value.country === normalized ? '' : normalized,
+    };
+  }
+
+  function toggleNetworkFilter(networkType) {
+    const normalized = String(networkType || '')
+      .trim()
+      .toLowerCase();
+    attrFilters.value = {
+      ...attrFilters.value,
+      network: attrFilters.value.network === normalized ? '' : normalized,
+    };
+  }
+
+  function clearAttrFilters() {
+    attrFilters.value = { protocol: '', country: '', network: '' };
+  }
 
   const filteredManualNodes = computed(() => {
-    return filterManualNodes(manualNodes.value, searchTerm.value, activeTagFilters.value);
+    return filterManualNodes(
+      manualNodes.value,
+      searchTerm.value,
+      activeTagFilters.value,
+      attrFilters.value,
+      nodeInspectMap.value,
+    );
   });
 
   const {
@@ -55,7 +104,7 @@ export function useManualNodes(markDirty) {
     changePage: changeManualNodesPage,
   } = useListPagination(filteredManualNodes, {
     storageKey: 'manualNodesPPS',
-    resetDeps: [searchTerm, activeTagFilters],
+    resetDeps: [searchTerm, activeTagFilters, attrFilters],
   });
 
   const enabledManualNodes = computed(() => manualNodes.value.filter((n) => n.enabled));
@@ -326,24 +375,15 @@ export function useManualNodes(markDirty) {
     markDirty();
   }
 
-  // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别） ---
-  const INSPECT_CACHE_KEY = 'misub_node_inspect_cache_v1';
-  const INSPECT_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-  const PING_MODE_PREF_KEY = 'misub_manual_nodes_ping_mode';
-
-  const nodeInspectMap = ref({});
-  const isInspectingNodes = ref(false);
-  const pingMode = ref(readRawPreference(PING_MODE_PREF_KEY) === 'tcping' ? 'tcping' : 'local');
-
   function setPingMode(mode) {
     const next = mode === 'tcping' ? 'tcping' : 'local';
     pingMode.value = next;
     writeRawPreference(PING_MODE_PREF_KEY, next);
   }
 
-  function readInspectSessionCache() {
+  function readInspectLocalCache() {
     try {
-      const raw = readSessionPreference(INSPECT_CACHE_KEY);
+      const raw = readRawPreference(INSPECT_CACHE_KEY);
       if (!raw) return {};
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object') return {};
@@ -360,19 +400,41 @@ export function useManualNodes(markDirty) {
     }
   }
 
-  function writeInspectSessionCache(cacheObj) {
+  function writeInspectLocalCache(cacheObj) {
     try {
-      writeSessionPreference(INSPECT_CACHE_KEY, JSON.stringify(cacheObj));
+      writeRawPreference(INSPECT_CACHE_KEY, JSON.stringify(cacheObj));
     } catch {
       // Ignore storage quota errors
     }
   }
 
+  function hydrateInspectCache(targetNodes = manualNodes.value) {
+    const list = (Array.isArray(targetNodes) ? targetNodes : []).filter((n) => n && n.id && n.url);
+    if (list.length === 0) return;
+    const localCache = readInspectLocalCache();
+    let changed = false;
+    const nextMap = { ...nodeInspectMap.value };
+    for (const node of list) {
+      if (nextMap[node.id]?.__url === node.url) continue;
+      const cached = localCache[node.url];
+      if (cached?.data) {
+        nextMap[node.id] = { ...cached.data, id: node.id, __url: node.url };
+        changed = true;
+      }
+    }
+    if (changed) {
+      nodeInspectMap.value = nextMap;
+    }
+  }
+
+  // 初始化时立即从本机 localStorage 缓存恢复，首屏 0ms 可直接展示与筛选
+  hydrateInspectCache(manualNodes.value);
+
   async function inspectNodes(targetNodes = manualNodes.value, { force = false, silent = false } = {}) {
     const list = (Array.isArray(targetNodes) ? targetNodes : []).filter((n) => n && n.id && n.url);
     if (list.length === 0) return;
 
-    const sessionCache = force ? {} : readInspectSessionCache();
+    const localCache = force ? {} : readInspectLocalCache();
     const nextMap = { ...nodeInspectMap.value };
     const toQuery = [];
 
@@ -380,7 +442,7 @@ export function useManualNodes(markDirty) {
       if (!force && nextMap[node.id] && nextMap[node.id].__url === node.url) {
         continue;
       }
-      const cached = !force ? sessionCache[node.url] : null;
+      const cached = !force ? localCache[node.url] : null;
       if (cached?.data) {
         nextMap[node.id] = { ...cached.data, id: node.id, __url: node.url };
       } else {
@@ -403,7 +465,7 @@ export function useManualNodes(markDirty) {
     try {
       const CHUNK_SIZE = 100;
       const updatedMap = { ...nodeInspectMap.value };
-      const cacheToSave = readInspectSessionCache();
+      const cacheToSave = readInspectLocalCache();
       const expiresAt = Date.now() + INSPECT_CACHE_TTL_MS;
 
       for (let i = 0; i < toQuery.length; i += CHUNK_SIZE) {
@@ -423,7 +485,7 @@ export function useManualNodes(markDirty) {
       }
 
       nodeInspectMap.value = updatedMap;
-      writeInspectSessionCache(cacheToSave);
+      writeInspectLocalCache(cacheToSave);
 
       if (!silent) {
         showToast(t('manualNodes.inspectCompleted', { count: toQuery.length }), 'success');
@@ -620,6 +682,11 @@ export function useManualNodes(markDirty) {
     enabledManualNodesCount: computed(() => enabledManualNodes.value.length),
     searchTerm,
     activeTagFilters,
+    attrFilters,
+    toggleProtocolFilter,
+    toggleCountryFilter,
+    toggleNetworkFilter,
+    clearAttrFilters,
     changeManualNodesPage,
     addNode,
     updateNode,

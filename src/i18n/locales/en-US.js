@@ -262,6 +262,8 @@ export default {
     badgeDirect: 'Direct',
     badgeCdn: 'CDN',
     resolvedIp: 'Resolved IP',
+    clearAttrFilters: 'Clear filters',
+    noFilterResult: 'No nodes match the current filters',
     sortByLatencyDone: 'Sorted by latency (fastest first). Save manually to apply',
     sortByLatencyNoData: 'No latency data yet. Run "Test all latencies" first',
     latencyHint:

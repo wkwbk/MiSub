@@ -48,11 +48,23 @@ const props = defineProps({
     type: String,
     default: 'local',
   },
+  attrFilters: {
+    type: Object,
+    default: () => ({ protocol: '', country: '', network: '' }),
+  },
+  attributeOptions: {
+    type: Object,
+    default: () => ({ protocols: [], countries: [], networks: [] }),
+  },
 });
 
 const emit = defineEmits([
   'update:searchTerm',
   'set-tag-filters',
+  'toggle-protocol-filter',
+  'toggle-country-filter',
+  'toggle-network-filter',
+  'clear-attr-filters',
   'add',
   'import',
   'auto-sort',
@@ -66,6 +78,27 @@ const emit = defineEmits([
   'sort-by-latency',
   'manage-tags',
 ]);
+
+const hasAttrOptions = computed(() => {
+  const opts = props.attributeOptions;
+  return Boolean(
+    opts &&
+    ((opts.protocols && opts.protocols.length > 0) ||
+      (opts.networks && opts.networks.length > 0) ||
+      (opts.countries && opts.countries.length > 0)),
+  );
+});
+
+const hasActiveAttrFilters = computed(() =>
+  Boolean(props.attrFilters?.protocol || props.attrFilters?.country || props.attrFilters?.network),
+);
+
+const networkLabel = (net) => {
+  if (net === 'direct') return t('manualNodes.badgeDirect');
+  if (net === 'cdn') return t('manualNodes.badgeCdn');
+  if (net === 'relay') return t('manualNodes.badgeRelay');
+  return net;
+};
 
 const searchModel = computed({
   get: () => props.searchTerm,
@@ -270,6 +303,102 @@ const searchModel = computed({
         test-id-prefix="manual-node-tag"
         @update:active-filters="emit('set-tag-filters', $event)"
       />
+    </div>
+
+    <!-- Dynamic Attribute Filter Chips (Protocol / Network / Country) -->
+    <div
+      v-if="hasAttrOptions || hasActiveAttrFilters"
+      class="mt-2 flex flex-wrap items-center gap-1.5"
+      data-testid="manual-node-attr-filters"
+    >
+      <!-- Protocols -->
+      <button
+        v-for="item in attributeOptions.protocols"
+        :key="`proto-${item.value}`"
+        :class="
+          attrFilters?.protocol === item.value
+            ? 'bg-active text-fg border-line-strong font-semibold'
+            : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
+        "
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+        data-testid="attr-filter-protocol"
+        type="button"
+        @click="emit('toggle-protocol-filter', item.value)"
+      >
+        <span class="font-mono">{{ item.label }}</span>
+        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+      </button>
+
+      <span
+        v-if="
+          attributeOptions.protocols?.length > 0 &&
+          (attributeOptions.networks?.length > 0 || attributeOptions.countries?.length > 0)
+        "
+        aria-hidden="true"
+        class="mx-0.5 h-4 w-px bg-line"
+      ></span>
+
+      <!-- Network Type (Direct / CDN / Relay) -->
+      <button
+        v-for="item in attributeOptions.networks"
+        :key="`net-${item.value}`"
+        :class="
+          attrFilters?.network === item.value
+            ? 'bg-active text-fg border-line-strong font-semibold'
+            : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
+        "
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+        data-testid="attr-filter-network"
+        type="button"
+        @click="emit('toggle-network-filter', item.value)"
+      >
+        <span
+          :class="{
+            'bg-emerald-500': item.value === 'direct',
+            'bg-sky-400': item.value === 'cdn',
+            'bg-amber-500': item.value === 'relay',
+          }"
+          class="h-1.5 w-1.5 rounded-full shrink-0"
+        ></span>
+        <span>{{ networkLabel(item.value) }}</span>
+        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+      </button>
+
+      <span
+        v-if="attributeOptions.networks?.length > 0 && attributeOptions.countries?.length > 0"
+        aria-hidden="true"
+        class="mx-0.5 h-4 w-px bg-line"
+      ></span>
+
+      <!-- Countries -->
+      <button
+        v-for="item in attributeOptions.countries"
+        :key="`country-${item.value}`"
+        :class="
+          attrFilters?.country === item.value
+            ? 'bg-active text-fg border-line-strong font-semibold'
+            : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
+        "
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+        data-testid="attr-filter-country"
+        type="button"
+        @click="emit('toggle-country-filter', item.value)"
+      >
+        <span>{{ item.label }}</span>
+        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+      </button>
+
+      <!-- Clear Attribute Filters -->
+      <button
+        v-if="hasActiveAttrFilters"
+        class="inline-flex items-center gap-1 px-2.5 py-1 text-xs leading-4 font-medium rounded-md border border-transparent text-fg-subtle transition-colors hover:bg-hover hover:text-fg shrink-0 whitespace-nowrap cursor-pointer"
+        data-testid="clear-attr-filters-btn"
+        type="button"
+        @click="emit('clear-attr-filters')"
+      >
+        <X class="h-3.5 w-3.5" />
+        {{ t('manualNodes.clearAttrFilters') }}
+      </button>
     </div>
   </div>
 </template>

@@ -1,6 +1,7 @@
 import { computed, ref, watch } from 'vue';
 import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize } from '@/constants/pagination.js';
 import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manual-node-country-aliases.js';
+import { matchesNodeAttributeFilters } from '@/composables/manual-nodes/filters.js';
 import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
 
 export function useManualNodeSearchPagination(options) {
@@ -9,6 +10,8 @@ export function useManualNodeSearchPagination(options) {
     paginatedManualNodes,
     initialSearchTerm,
     activeTagFilters,
+    attrFilters,
+    nodeInspectMap,
     itemsPerPage,
     onBasePageChange,
     onSearchTermChange,
@@ -20,6 +23,13 @@ export function useManualNodeSearchPagination(options) {
   const resolvedPageSize = computed(() =>
     normalizeListPageSize(itemsPerPage ? itemsPerPage.value : DEFAULT_LIST_PAGE_SIZE, DEFAULT_LIST_PAGE_SIZE),
   );
+
+  const hasActiveAttrFilters = computed(() => {
+    const f = attrFilters?.value;
+    return Boolean(f && (f.protocol || f.country || f.network));
+  });
+
+  const useLocalPagination = computed(() => Boolean(localSearchTerm.value) || hasActiveAttrFilters.value);
 
   watch(initialSearchTerm, (value) => {
     const normalized = value || '';
@@ -35,23 +45,35 @@ export function useManualNodeSearchPagination(options) {
     }
   });
 
+  watch(
+    () => [attrFilters?.value?.protocol, attrFilters?.value?.country, attrFilters?.value?.network],
+    () => {
+      currentSearchPage.value = 1;
+    },
+  );
+
   watch(resolvedPageSize, () => {
     currentSearchPage.value = 1;
   });
 
   const filteredNodes = computed(() => {
-    const tagMatched = (manualNodes.value || []).filter((node) => matchesTagFilter(node, activeTagFilters?.value));
+    const inspectMap = nodeInspectMap?.value || null;
+    const activeAttrs = attrFilters?.value || null;
+    const matched = (manualNodes.value || []).filter(
+      (node) =>
+        matchesTagFilter(node, activeTagFilters?.value) && matchesNodeAttributeFilters(node, activeAttrs, inspectMap),
+    );
 
     if (!localSearchTerm.value) {
-      return tagMatched;
+      return matched;
     }
 
     const searchQuery = localSearchTerm.value.toLowerCase().trim();
     if (!searchQuery) {
-      return tagMatched;
+      return matched;
     }
 
-    return tagMatched.filter((node) => {
+    return matched.filter((node) => {
       const nodeName = String(node.name || '').toLowerCase();
       if (nodeName && nodeName.includes(searchQuery)) {
         return true;
@@ -63,7 +85,18 @@ export function useManualNodeSearchPagination(options) {
       }
 
       const tags = getItemTags(node);
-      return tags.some((tag) => tag.toLowerCase().includes(searchQuery));
+      if (tags.some((tag) => tag.toLowerCase().includes(searchQuery))) {
+        return true;
+      }
+
+      const info = inspectMap?.[node.id];
+      if (info) {
+        if (info.ip && String(info.ip).toLowerCase().includes(searchQuery)) return true;
+        if (info.country && String(info.country).toLowerCase().includes(searchQuery)) return true;
+        if (info.countryCode && String(info.countryCode).toLowerCase() === searchQuery) return true;
+      }
+
+      return false;
     });
   });
 
@@ -80,7 +113,7 @@ export function useManualNodeSearchPagination(options) {
   });
 
   const paginatedNodes = computed(() => {
-    if (!localSearchTerm.value) {
+    if (!useLocalPagination.value) {
       return paginatedManualNodes.value || [];
     }
 
@@ -97,7 +130,7 @@ export function useManualNodeSearchPagination(options) {
     const parsed = parseInt(page, 10);
     if (Number.isNaN(parsed)) return;
 
-    if (localSearchTerm.value) {
+    if (useLocalPagination.value) {
       const clamped = Math.min(Math.max(parsed, 1), totalSearchPages.value);
       currentSearchPage.value = clamped;
       return;
@@ -114,6 +147,7 @@ export function useManualNodeSearchPagination(options) {
     paginatedNodes,
     currentSearchPage,
     totalSearchPages,
+    useLocalPagination,
     handlePageChange,
   };
 }

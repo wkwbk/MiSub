@@ -64,6 +64,11 @@ const {
   activeTagFilters,
   setTagFilters,
   toggleTagFilter,
+  attrFilters,
+  toggleProtocolFilter,
+  toggleCountryFilter,
+  toggleNetworkFilter,
+  clearAttrFilters,
   batchUpdateTags,
   batchDeleteNodes,
   manualNodesPerPage,
@@ -180,6 +185,7 @@ const handleTagReorder = (newOrder) => {
   <div class="w-full">
     <ManualNodePanel
       :active-tag-filters="activeTagFilters"
+      :attr-filters="attrFilters"
       :current-page="manualNodesCurrentPage"
       :is-inspecting-nodes="isInspectingNodes"
       :is-pinging-all="isPingingAll"
@@ -212,6 +218,10 @@ const handleTagReorder = (newOrder) => {
       @delete-all="showDeleteNodesModal = true"
       @set-tag-filters="setTagFilters"
       @toggle-tag-filter="toggleTagFilter"
+      @toggle-protocol-filter="toggleProtocolFilter"
+      @toggle-country-filter="toggleCountryFilter"
+      @toggle-network-filter="toggleNetworkFilter"
+      @clear-attr-filters="clearAttrFilters"
       @batch-delete-nodes="handleBatchDeleteRequest"
       @open-batch-tag-modal="handleOpenBatchTagModal"
       @manage-tags="handleOpenTagManagement"

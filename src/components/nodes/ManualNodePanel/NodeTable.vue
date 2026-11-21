@@ -29,6 +29,8 @@ const props = defineProps({
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
   nodeInspectMap: { type: Object, default: () => ({}) },
+  attrFilters: { type: Object, default: () => ({ protocol: '', country: '', network: '' }) },
+  useLocalPagination: { type: Boolean, default: false },
   compactGrid: { type: Boolean, default: false },
 });
 
@@ -42,6 +44,10 @@ const emit = defineEmits([
   'change-page',
   'update:itemsPerPage',
   'toggle-tag-filter',
+  'toggle-protocol-filter',
+  'toggle-country-filter',
+  'toggle-network-filter',
+  'clear-attr-filters',
   'ping',
   'clear-search',
   'toggle-sort',
@@ -54,8 +60,14 @@ const draggableModel = computed({
 
 const listStartRef = ref(null);
 
-const displayPage = computed(() => (props.localSearchTerm ? props.searchPage : props.basePage));
-const displayTotalPages = computed(() => (props.localSearchTerm ? props.searchTotalPages : props.baseTotalPages));
+const hasActiveAttrFilters = computed(() =>
+  Boolean(props.attrFilters?.protocol || props.attrFilters?.country || props.attrFilters?.network),
+);
+
+const displayPage = computed(() => (props.localSearchTerm || props.useLocalPagination ? props.searchPage : props.basePage));
+const displayTotalPages = computed(() =>
+  props.localSearchTerm || props.useLocalPagination ? props.searchTotalPages : props.baseTotalPages,
+);
 
 const handleChangePage = (page) => {
   let p = parseInt(page, 10);
@@ -79,20 +91,27 @@ const handleDragEnd = (evt) => {
 <template>
   <div v-if="manualNodes.length > 0" ref="listStartRef" :class="{ 'pb-48': isSelectionMode }">
     <div
-      v-if="localSearchTerm && filteredNodes.length === 0"
+      v-if="(localSearchTerm || hasActiveAttrFilters) && filteredNodes.length === 0"
       class="rounded-md border border-line bg-surface px-6 py-12 text-center"
       data-testid="manual-node-no-search-results"
     >
       <p class="text-sm font-medium text-fg">
-        {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
+        {{
+          localSearchTerm
+            ? t('manualNodes.noSearchResult', { keyword: localSearchTerm })
+            : t('manualNodes.noFilterResult')
+        }}
       </p>
       <button
         class="mt-3 inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
         data-testid="clear-manual-node-search"
         type="button"
-        @click="emit('clear-search')"
+        @click="
+          emit('clear-search');
+          emit('clear-attr-filters');
+        "
       >
-        {{ t('actions.clearSearch') }}
+        {{ localSearchTerm ? t('actions.clearSearch') : t('manualNodes.clearAttrFilters') }}
       </button>
     </div>
 
@@ -166,6 +185,9 @@ const handleDragEnd = (evt) => {
           @ping="emit('ping', node.id)"
           @toggle-select="emit('toggle-select', node.id)"
           @filter-tag="emit('toggle-tag-filter', $event)"
+          @filter-protocol="emit('toggle-protocol-filter', $event)"
+          @filter-country="emit('toggle-country-filter', $event)"
+          @filter-network="emit('toggle-network-filter', $event)"
         />
       </div>
     </div>

@@ -173,6 +173,11 @@ const {
   activeTagFilters,
   setTagFilters,
   toggleTagFilter,
+  attrFilters,
+  toggleProtocolFilter,
+  toggleCountryFilter,
+  toggleNetworkFilter,
+  clearAttrFilters,
   batchUpdateTags,
   batchDeleteNodes,
   buildDedupPlan,
@@ -755,6 +760,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
         <ManualNodePanel
           v-else-if="activeTab === 'nodes'"
           :active-tag-filters="activeTagFilters"
+          :attr-filters="attrFilters"
           :compact-grid="true"
           :current-page="manualNodesCurrentPage"
           :is-inspecting-nodes="isInspectingNodes"
@@ -788,6 +794,10 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @delete-all="showDeleteNodesModal = true"
           @set-tag-filters="setTagFilters"
           @toggle-tag-filter="toggleTagFilter"
+          @toggle-protocol-filter="toggleProtocolFilter"
+          @toggle-country-filter="toggleCountryFilter"
+          @toggle-network-filter="toggleNetworkFilter"
+          @clear-attr-filters="clearAttrFilters"
           @batch-delete-nodes="handleBatchDeleteRequest"
           @open-batch-tag-modal="handleOpenBatchTagModal"
           @manage-tags="handleOpenNodeTagManagement"

@@ -263,6 +263,8 @@ export default {
     badgeDirect: '直连',
     badgeCdn: 'CDN',
     resolvedIp: '解析 IP',
+    clearAttrFilters: '清除筛选',
+    noFilterResult: '当前筛选条件下没有匹配的节点',
     sortByLatencyDone: '已按延迟排序（快的在前），请手动保存',
     sortByLatencyNoData: '暂无延迟数据，请先点击「全部检测延迟」',
     latencyHint:
