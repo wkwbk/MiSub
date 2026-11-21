@@ -16,6 +16,7 @@ export const useSessionStore = defineStore('session', () => {
   const defaultPublicConfig = Object.freeze({
     enablePublicPage: true,
     isLoginPath: false,
+    hasCustomLoginPath: false,
     customLoginPath: 'login',
     customPage: {
       enabled: false,

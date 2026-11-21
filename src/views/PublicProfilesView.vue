@@ -364,15 +364,15 @@ const getPlatformStyle = (p) => {
 };
 
 onMounted(async () => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('open-guestbook', handleGuestbookEvent);
+  }
   fetchPublicProfiles();
   await fetchClients();
   if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
     window.requestIdleCallback(() => fetchClientVersions(), { timeout: 1500 });
   } else {
     setTimeout(fetchClientVersions, 200);
-  }
-  if (typeof window !== 'undefined') {
-    window.addEventListener('open-guestbook', handleGuestbookEvent);
   }
 });
 

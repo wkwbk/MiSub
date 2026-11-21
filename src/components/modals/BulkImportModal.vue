@@ -51,7 +51,7 @@ watch(
 );
 
 const handleConfirm = () => {
-  if (activeTab.value !== 'text') return;
+  if (activeTab.value !== 'text' || !importText.value.trim()) return;
   let tags = normalizeTagList(selectedTags.value);
   if (tags.length === 0) {
     const autoTag = buildAutoTagName();

@@ -21,6 +21,10 @@ const shouldHideLoginButton = computed(() => {
     return true;
   }
 
+  if (sessionStore.publicConfig?.hasCustomLoginPath) {
+    return true;
+  }
+
   const rawPath = sessionStore.publicConfig?.customLoginPath;
   if (!rawPath || typeof rawPath !== 'string') {
     return false;

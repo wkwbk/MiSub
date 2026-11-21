@@ -114,30 +114,31 @@ const handleKeydown = (e) => {
   }
 };
 
-watch(
-  () => props.show,
-  async (val) => {
-    if (val) {
-      previouslyFocused = document.activeElement;
-      window.addEventListener('keydown', handleKeydown);
-      await nextTick();
-      // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
-      const focusable = getFocusableElements();
-      if (focusable.length) {
-        focusable[0].focus();
+  watch(
+    () => props.show,
+    async (val) => {
+      if (val) {
+        previouslyFocused = document.activeElement;
+        window.addEventListener('keydown', handleKeydown);
+        await nextTick();
+        // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
+        const focusable = getFocusableElements();
+        if (focusable.length) {
+          focusable[0].focus();
+        } else {
+          modalPanelRef.value?.focus();
+        }
       } else {
-        modalPanelRef.value?.focus();
+        window.removeEventListener('keydown', handleKeydown);
+        // 还原焦点到触发元素
+        if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+          previouslyFocused.focus();
+          previouslyFocused = null;
+        }
       }
-    } else {
-      window.removeEventListener('keydown', handleKeydown);
-      // 还原焦点到触发元素
-      if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
-        previouslyFocused.focus();
-        previouslyFocused = null;
-      }
-    }
-  },
-);
+    },
+    { immediate: true },
+  );
 
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 

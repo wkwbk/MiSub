@@ -166,8 +166,8 @@ export function ensureRegionInfo(record, enableEmoji = false) {
   if (record.regionZh) return record;
 
   // 优先使用预解析的元数据
-  let regionZh = record.metadata?.regionZh || extractNodeRegion(record.name);
-  let regionCode = record.metadata?.region || '';
+  let regionZh = record.metadata?.regionZh || record.metadata?.region || extractNodeRegion(record.name);
+  let regionCode = record.metadata?.regionCode || '';
 
   if (regionZh === '其他' && record.server) {
     regionZh = extractNodeRegion(record.server);
@@ -768,7 +768,7 @@ export function applyNodeTransformPipeline(nodeUrls, transformConfig = {}) {
   if (cfg.filter.script.enabled && cfg.filter.script.expression) {
     records = records
       .map((r, index) => ({
-        ...(needRegionEmoji ? r : ensureRegionInfo(r, cfg.enableEmoji)),
+        ...(needRegionEmoji ? ensureRegionInfo(r, cfg.enableEmoji) : r),
         index: index + 1,
       }))
       .filter((r) => Boolean(evaluateScriptExpression(r, cfg.filter.script.expression)));

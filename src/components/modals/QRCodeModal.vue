@@ -70,7 +70,7 @@ const downloadQRCode = () => {
 </script>
 
 <template>
-  <Modal :show="show" @update:show="emit('update:show', $event)">
+  <Modal :show="show" :show-confirm="false" @update:show="emit('update:show', $event)">
     <template #title>
       <h3 class="text-base font-semibold text-fg">
         {{ title || t('qr.title') }}

@@ -107,7 +107,7 @@ function buildOutbound(proxy) {
     } else if (network === 'h2' || network === 'http') {
       const opts = proxy[`${network}-opts`] || proxy[`${network}Opts`];
       outbound.transport = {
-        type: network === 'h2' ? 'h2' : 'http',
+        type: 'http',
         host: opts?.host ? (Array.isArray(opts.host) ? opts.host : [opts.host]) : [],
         path: opts?.path || '/',
       };
@@ -179,9 +179,6 @@ function buildOutbound(proxy) {
           public_key: realityOpts['public-key'] || realityOpts.publicKey || '',
           short_id: realityOpts['short-id'] || realityOpts.shortId || '',
         };
-        if (realityOpts['spider-x'] || realityOpts.spiderX) {
-          outbound.tls.reality.spider_x = realityOpts['spider-x'] || realityOpts.spiderX;
-        }
       }
     }
     return outbound;
@@ -330,16 +327,22 @@ function detectRuleSetFormat(url) {
 }
 
 function buildRuleSets(rules) {
-  const remoteRuleSets = rules
-    .filter((rule) => String(rule.type || '').toLowerCase() === 'rule-set' && rule.source === 'remote')
-    .map((rule) => ({
-      tag: sanitizeTag(`${rule.policy}_${rule.value}`),
+  const seenRemote = new Set();
+  const remoteRuleSets = [];
+  rules.forEach((rule) => {
+    if (String(rule.type || '').toLowerCase() !== 'rule-set' || rule.source !== 'remote') return;
+    const tag = sanitizeTag(`${rule.policy}_${rule.value}`);
+    if (seenRemote.has(tag)) return;
+    seenRemote.add(tag);
+    remoteRuleSets.push({
+      tag,
       type: 'remote',
       format: detectRuleSetFormat(rule.value),
       url: pinRemoteRuleUrl(rule.value),
       update_interval: '24h',
       download_detour: DNS_PROXY_GROUP,
-    }));
+    });
+  });
 
   const implicitRuleSets = [];
   const seen = new Set();

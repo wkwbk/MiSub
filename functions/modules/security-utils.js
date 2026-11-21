@@ -1,7 +1,7 @@
 const REDACTED = '[REDACTED]';
 
 const SENSITIVE_KEY_PATTERN =
-  /(token|secret|password|passwd|pwd|key|cookie|authorization|auth|credential|webhook|uuid|url)$/i;
+  /(token|secret|password|passwd|pwd|key|cookie|authorization|auth|credential|webhook|uuid)$/i;
 const URL_KEY_PATTERN = /(url|uri|link|endpoint)$/i;
 const ALLOWED_FETCH_PROTOCOLS = new Set(['http:', 'https:']);
 const MAX_SAFE_REDIRECTS = 3;

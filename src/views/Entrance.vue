@@ -55,21 +55,29 @@ function checkPath() {
   const config = publicConfig.value || {};
   const currentPath = route.path;
 
-  // customLoginPath 不再由公开 API 返回；后端只在当前 Referer 是实际登录路径时
-  // 返回 isLoginPath=true。未知路径不会被误当成登录页。
-  let rememberedPath = readSessionPreference('misub:login-path') || '';
-  const inferredPath = config.isLoginPath ? currentPath : rememberedPath;
-  const hasCustomPath = isValidCustomLoginPath(config.customLoginPath) || Boolean(inferredPath);
-  const configuredPath = isValidCustomLoginPath(config.customLoginPath)
-    ? '/' + config.customLoginPath.trim().replace(/^\/+/, '')
-    : inferredPath || '/login';
+  // customLoginPath 不再由公开 API 返回；后端返回 hasCustomLoginPath 布尔值，
+  // 并只在当前请求路径命中实际登录路径时返回 isLoginPath=true。
+  const hasCustomPath = Boolean(config.hasCustomLoginPath) || isValidCustomLoginPath(config.customLoginPath);
+  let isMatchedLoginPath = false;
 
-  if (config.isLoginPath && inferredPath) {
-    // 写失败不影响可用性：当前路由本身仍然有效，下次从路由推断即可。
-    writeSessionPreference('misub:login-path', inferredPath);
+  if (hasCustomPath) {
+    // 启用了自定义登录路径时，/login 永远不允许打开登录页
+    if (currentPath !== '/login') {
+      if (config.isLoginPath) {
+        writeSessionPreference('misub:login-path', currentPath);
+        isMatchedLoginPath = true;
+      } else {
+        const knownCustomPath = isValidCustomLoginPath(config.customLoginPath)
+          ? '/' + config.customLoginPath.trim().replace(/^\/+/, '')
+          : readSessionPreference('misub:login-path') || '';
+        isMatchedLoginPath = Boolean(
+          knownCustomPath && knownCustomPath !== '/login' && currentPath === knownCustomPath,
+        );
+      }
+    }
+  } else {
+    isMatchedLoginPath = currentPath === '/login';
   }
-
-  const isMatchedLoginPath = currentPath === configuredPath || (currentPath === '/login' && !hasCustomPath);
 
   if (isMatchedLoginPath) {
     if (sessionStore.sessionState === 'loggedIn') {

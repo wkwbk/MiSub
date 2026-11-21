@@ -11,7 +11,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const params = computed({
   get: () => ({
@@ -63,7 +63,8 @@ const regionLabels = {
   德国: 'Germany',
 };
 const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
-const regionLabel = (region) => t('operators.regionLabel', { region: regionLabels[region] || region });
+const regionLabel = (region) =>
+  t('operators.regionLabel', { region: locale.value === 'en-US' ? regionLabels[region] || region : region });
 
 const toggleValue = (type, value) => {
   const current = { ...params.value[type] };

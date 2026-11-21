@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const regexDrafts = ref({});
 const regexErrors = ref({});
 // 按行下标与条件类型暂存已编辑的 customOrder，防止切换条件类型后配置丢失
@@ -263,7 +263,7 @@ const regionLabels = {
 };
 const displayTagName = (item, name) =>
   item.key === 'region'
-    ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: regionLabels[name] || name })}`
+    ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: locale.value === 'en-US' ? regionLabels[name] || name : name })}`
     : name;
 </script>
 

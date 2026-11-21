@@ -179,7 +179,7 @@ export function applyMihomoChainProxyToClashConfig(config, { chainConfigs = [], 
       outputGroup.proxies = Array.isArray(group.members) ? [...group.members] : [];
     }
 
-    if (chainGroupNames.has(group.name)) {
+    if (enableDialerProxy && chainGroupNames.has(group.name)) {
       DYNAMIC_MEMBER_OPTION_KEYS.forEach((key) => delete outputGroup[key]);
     }
 

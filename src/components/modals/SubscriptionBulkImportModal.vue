@@ -43,7 +43,14 @@ const handleConfirm = () => {
 </script>
 
 <template>
-  <Modal :show="show" size="2xl" @confirm="handleConfirm" @update:show="emit('update:show', $event)">
+  <Modal
+    :close-on-confirm="false"
+    :confirm-disabled="!importText.trim()"
+    :show="show"
+    size="2xl"
+    @confirm="handleConfirm"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex items-center gap-3">
         <Layers class="h-5 w-5 text-fg-muted shrink-0" />

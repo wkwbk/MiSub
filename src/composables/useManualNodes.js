@@ -557,7 +557,8 @@ export function useManualNodes(markDirty) {
         const inspectHost = nodeInspectMap.value[nodeId]?.ip || host;
         const { results, unsupported } = await tcpingNodes([{ id: nodeId, host: inspectHost, port }], 3000);
         if (unsupported) {
-          // 自动回退到本地 Ping
+          // 服务端不支持 TCPing 时自动切换并回退到本地 Ping，避免重复 501
+          setPingMode('local');
           const fallback = await pingNode(host, port, 3000, { url: node.url });
           pingResults.value = { ...pingResults.value, [nodeId]: fallback };
         } else {

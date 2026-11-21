@@ -583,6 +583,7 @@ export async function handlePublicConfig(request, env) {
     return createJsonResponse({
       enablePublicPage: mergedSettings.enablePublicPage,
       isLoginPath,
+      hasCustomLoginPath: configuredLoginPath !== '/login',
       customPage: {
         enabled: mergedSettings.customPage?.enabled || false,
         useDefaultLayout: mergedSettings.customPage?.useDefaultLayout !== false,
