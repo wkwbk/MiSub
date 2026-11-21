@@ -6,7 +6,7 @@
  * 拆成独立文件是为了让新增逻辑不污染 node-parser.js 的主流程。
  */
 
-import { utf8ToBase64 } from '../../../shared/base64.js';
+import { utf8ToBase64 } from '../../shared/base64.js';
 
 const V2RAYN_SCHEME = /^v2rayn:\/\/([a-z0-9+.-]+)\/(.+)$/i;
 

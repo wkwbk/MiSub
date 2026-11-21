@@ -1,4 +1,4 @@
-import { base64Encode } from '@/utils/protocols/common/base64.js';
+import { utf8ToBase64 as base64Encode } from '@shared/base64.js';
 
 /**
  * Shadowsocks配置转换为URL

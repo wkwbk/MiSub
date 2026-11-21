@@ -6,7 +6,7 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
-import { parseNodeList } from '../utils/node-parser.js';
+import { parseNodeList } from '../../utils/node-parser.js';
 import { getProcessedUserAgent } from '../../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.js';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.js'; // 创建用于全局匹配的协议正则表达式

@@ -1,6 +1,6 @@
-import { StorageFactory } from '../storage-adapter.js';
-import { STORAGE_KEY_SETTINGS } from './config.js';
-import { createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+import { StorageFactory } from '../../storage-adapter.js';
+import { STORAGE_KEY_SETTINGS } from '../config.js';
+import { createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
 export { generateId };
 

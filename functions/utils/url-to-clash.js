@@ -3,7 +3,7 @@
  * 纯协议解析复用于 shared/url-to-clash.js；本文件负责批量增强、元数据注入与配置生成。
  */
 
-import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
+import { extractNodeMetadata } from './metadata-extractor.js';
 import { isLocalProxyEndpoint } from './node-utils.js';
 import { isVirtualInfoProxy } from '../../shared/clash-parsers/common.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';

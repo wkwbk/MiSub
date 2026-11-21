@@ -3,7 +3,7 @@
  * 用于检测 SS 2022 节点的密钥长度是否与加密方式匹配
  */
 
-import { utf8ToBase64 } from '../../../shared/base64.js';
+import { utf8ToBase64 } from '../../shared/base64.js';
 
 /**
  * SS 2022 加密方式与密钥长度映射表

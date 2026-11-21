@@ -3,7 +3,6 @@
  * @author MiSub Team
  */
 
-export { default as Card } from '@/components/ui/Card.vue';
 export { default as LoadingSpinner } from '@/components/ui/LoadingSpinner.vue';
 export { default as EmptyState } from '@/components/ui/EmptyState.vue';
 export { default as StatusIndicator } from '@/components/ui/StatusIndicator.vue';
@@ -19,7 +18,6 @@ export { default as Select } from '@/components/ui/Select.vue';
 export { default as Switch } from '@/components/ui/Switch.vue';
 
 export const UIComponents = {
-  Card,
   LoadingSpinner,
   EmptyState,
   StatusIndicator,

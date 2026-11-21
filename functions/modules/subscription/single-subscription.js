@@ -1,7 +1,7 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { createJsonResponse } from '../utils.js';
-import { parseNodeInfo } from '../utils/geo-utils.js';
-import { calculateProtocolStats, calculateRegionStats } from '../utils/node-parser.js';
+import { parseNodeInfo } from '../../utils/geo-utils.js';
+import { calculateProtocolStats, calculateRegionStats } from '../../utils/node-parser.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 
 /**

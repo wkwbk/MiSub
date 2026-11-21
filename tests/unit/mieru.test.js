@@ -4,7 +4,7 @@ import {
   generateBuiltinClashConfig,
   generateProxiesOnly,
 } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { parseNodeList } from '../../functions/modules/utils/node-parser.js';
+import { parseNodeList } from '../../functions/utils/node-parser.js';
 import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';

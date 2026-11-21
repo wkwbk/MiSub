@@ -3,7 +3,7 @@
  * 用于前端导入订阅功能
  */
 
-import { parseNodeList } from './utils/node-parser.js';
+import { parseNodeList } from '../utils/node-parser.js';
 import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from './utils.js';
 
 /**

@@ -5,7 +5,7 @@
 import { base64ToUtf8 } from '../../../../shared/base64.js';
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { createJsonResponse, escapeHtml, generateId } from '../../utils.js';
-import { extractValidNodes } from '../../utils/node-parser.js';
+import { extractValidNodes } from '../../../utils/node-parser.js';
 import {
   createRequestCache,
   getCachedProfiles,

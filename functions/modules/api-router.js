@@ -67,7 +67,7 @@ import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './securit
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { handleExternalNodesCallbackRequest } from '../services/external-nodes-callback-service.js';
-import { handleExternalApiRequest } from './external-api-router.js';
+import { handleExternalApiRequest } from './external-api/external-api-router.js';
 
 function isAuthDiagnosticsEnabled(env) {
   return String(env?.ENABLE_AUTH_DIAGNOSTICS || '').toLowerCase() === 'true';

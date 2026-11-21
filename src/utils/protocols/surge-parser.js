@@ -1,5 +1,5 @@
 import { generateNodeId } from '@/utils/id.js';
-import { base64Encode } from '@/utils/protocols/common/base64.js';
+import { utf8ToBase64 as base64Encode } from '@shared/base64.js';
 
 /**
  * 解析Surge配置

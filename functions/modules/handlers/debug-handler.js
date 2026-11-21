@@ -7,7 +7,7 @@ import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
 import { handleSubscriptionNodesRequest } from '../subscription-handler.js';
 import { debugTgNotification } from '../../services/notification-service.js';
-import { calculateProtocolStats, calculateRegionStats, } from '../utils/node-parser.js';
+import { calculateProtocolStats, calculateRegionStats, } from '../../utils/node-parser.js';
 import { redactSensitiveObject, redactUrl, safeFetchPublicUrl, validatePublicFetchUrl, } from '../security-utils.js';
 
 /**

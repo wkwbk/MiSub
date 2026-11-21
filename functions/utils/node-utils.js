@@ -5,8 +5,8 @@
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
 import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
-import { extractNodeRegion } from '../modules/utils/geo-utils.js';
-import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
+import { extractNodeRegion } from './geo-utils.js';
+import { extractNodeMetadata } from './metadata-extractor.js';
 
 /**
  * 节点协议正则表达式

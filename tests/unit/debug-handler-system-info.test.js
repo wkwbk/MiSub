@@ -26,7 +26,7 @@ vi.mock('../../functions/services/notification-service.js', () => ({
   debugTgNotification: vi.fn(),
 }));
 
-vi.mock('../../functions/modules/utils/node-parser.js', () => ({
+vi.mock('../../functions/utils/node-parser.js', () => ({
   parseNodeList: vi.fn(),
   calculateProtocolStats: vi.fn(),
   calculateRegionStats: vi.fn(),

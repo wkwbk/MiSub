@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
 import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
-import Card from '@/components/ui/Card.vue';
+import Card from '@/components/subscriptions/Card.vue';
 import { createI18n } from '@/i18n/index.js';
 
 function withZhI18n(stubs = {}) {

@@ -2,7 +2,7 @@
  * 地理识别工具模块
  * 提供节点地区识别和相关功能
  */
-import { REGION_EMOJI } from '../../../shared/region-emoji.js';
+import { REGION_EMOJI } from '../../shared/region-emoji.js';
 
 export { REGION_EMOJI };
 

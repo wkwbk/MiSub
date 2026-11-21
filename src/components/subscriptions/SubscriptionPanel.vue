@@ -2,7 +2,7 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import { Plus, Search, Upload, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
-import Card from '@/components/ui/Card.vue';
+import Card from '@/components/subscriptions/Card.vue';
 import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import PanelPagination from '@/components/shared/PanelPagination.vue';

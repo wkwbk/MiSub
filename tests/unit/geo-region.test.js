@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { extractNodeRegion, getRegionEmoji } from '../../functions/modules/utils/geo-utils.js';
+import { extractNodeRegion, getRegionEmoji } from '../../functions/utils/geo-utils.js';
 import { addFlagEmoji } from '../../functions/utils/node-utils.js';
 
 function ss(name) {

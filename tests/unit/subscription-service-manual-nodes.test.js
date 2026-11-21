@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
 import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { parseNodeList } from '../../functions/modules/utils/node-parser.js';
+import { parseNodeList } from '../../functions/utils/node-parser.js';
 
 describe('subscription-service 手动节点健壮性', () => {
   afterEach(() => {

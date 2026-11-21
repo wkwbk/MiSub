@@ -4,7 +4,7 @@ import {
   parseNodeList,
   parseSnellUrl,
   validateSnellNode,
-} from '../../functions/modules/utils/node-parser.js';
+} from '../../functions/utils/node-parser.js';
 import { parseSurgeConfig } from '@/utils/protocolConverter.js';
 
 describe('Snell 协议支持', () => {

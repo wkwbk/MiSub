@@ -8,7 +8,7 @@
  * 返回链接数组；无法识别的出站跳过。
  */
 
-import { utf8ToBase64 } from '../../../shared/base64.js';
+import { utf8ToBase64 } from '../../shared/base64.js';
 
 function toArray(value) {
   if (value === undefined || value === null) return [];

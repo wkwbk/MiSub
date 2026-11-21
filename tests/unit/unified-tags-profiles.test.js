@@ -7,7 +7,7 @@ import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
-import Card from '@/components/ui/Card.vue';
+import Card from '@/components/subscriptions/Card.vue';
 import PublicProfileCard from '@/components/public/ProfileCard.vue';
 import HeroProfileCard from '@/components/public/HeroProfileCard.vue';
 import { createI18n } from '@/i18n/index.js';

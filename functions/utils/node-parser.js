@@ -7,8 +7,8 @@ import * as yaml from 'js-yaml';
 import { extractNodeRegion, parseNodeInfo } from './geo-utils.js';
 // [注意] node-parser.js 在 functions/modules/utils/，而 node-utils.js 在 functions/utils/
 // 所以需要向上两级找到 functions/utils/
-import { fixNodeUrlEncoding } from '../../utils/node-utils.js';
-import { convertClashProxyToUrl } from '../../utils/clash-to-url.js';
+import { fixNodeUrlEncoding } from './node-utils.js';
+import { convertClashProxyToUrl } from './clash-to-url.js';
 import { extractSingboxNodes } from './singbox-to-url.js';
 import { fixSS2022Node, validateSS2022Node } from './ss2022-validator.js';
 import { extractNodeMetadata } from './metadata-extractor.js';

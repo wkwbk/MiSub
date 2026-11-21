@@ -2,7 +2,7 @@
  * 订阅节点过滤规则（include/exclude/proto）与算子链/旧版转换桥接
  */
 
-import { parseNodeInfo } from '../../modules/utils/geo-utils.js';
+import { parseNodeInfo } from '../../utils/geo-utils.js';
 import { runOperatorChain } from '../../utils/operator-runner.js';
 
 /**

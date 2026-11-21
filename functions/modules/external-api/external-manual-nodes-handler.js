@@ -12,7 +12,7 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { detectNodeProtocol, isManualNode, toExternalManualNode } from './external-api-mappers.js';
-import { parseNodeList } from './utils/node-parser.js';
+import { parseNodeList } from '../../utils/node-parser.js';
 
 function nowIso() {
   return new Date().toISOString();

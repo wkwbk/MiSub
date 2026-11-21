@@ -4,7 +4,7 @@
  */
 
 import { utf8ToBase64 } from '../../shared/base64.js';
-import { parseNodeList } from '../modules/utils/node-parser.js';
+import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {

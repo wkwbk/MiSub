@@ -3,8 +3,8 @@
  * 支持：正则过滤、正则重命名、模板重命名、智能去重、排序
  */
 
-import { extractNodeRegion, getRegionEmoji, parseNodeInfo, REGION_KEYWORDS } from '../modules/utils/geo-utils.js';
-import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
+import { extractNodeRegion, getRegionEmoji, parseNodeInfo, REGION_KEYWORDS } from './geo-utils.js';
+import { extractNodeMetadata } from './metadata-extractor.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
 import { evaluateDslExpression, renderDslTemplate } from './expression-dsl.js'; // ============ 默认配置 ============
 

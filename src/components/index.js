@@ -49,7 +49,7 @@ export const ComponentMap = {
 
   // UI组件
   UI: {
-    Card: () => import('@/components/ui/Card.vue'),
+    Card: () => import('@/components/subscriptions/Card.vue'),
     LoadingSpinner: () => import('@/components/ui/LoadingSpinner.vue'),
     EmptyState: () => import('@/components/ui/EmptyState.vue'),
     StatusIndicator: () => import('@/components/ui/StatusIndicator.vue'),
