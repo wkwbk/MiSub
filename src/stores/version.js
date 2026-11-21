@@ -7,112 +7,109 @@ import { readRawPreference, writeRawPreference } from '@/utils/local-preference.
 import packageJson from '../../package.json';
 
 export const useVersionStore = defineStore('version', () => {
-    // --- State ---
-    const currentVersion = ref(packageJson.version);
-    const latestRelease = ref(null);
-    const showModal = ref(false);
-    const showUpdateNotice = ref(false);
-    const upstreamRepo = 'wkwbk/MiSub';
+  // --- State ---
+  const currentVersion = ref(packageJson.version);
+  const latestRelease = ref(null);
+  const showModal = ref(false);
+  const showUpdateNotice = ref(false);
+  const upstreamRepo = 'wkwbk/MiSub';
 
-    // 本地更新日志 (v2.8.3)
-    const localChangelog = `✨ **节点详情与内核导航、正则置顶排序及中性色设计体系重构**
-- **节点详情与公开页增强**：新增节点详情弹窗与客户端协议兼容性徽章；公开页新增代理内核分区与后台管理设置，客户端卡片支持展示版本发布日期。
-- **排序与订阅生成修复**：新增正则置顶优先排序并优化排序项顺序；修复 \`addFlagEmoji\` 未透传至内置生成器导致的国旗前缀开关失效问题。
-- **纯中性色 UI 重构与细节打磨**：全站迁移至纯中性语义化设计 Token，统一边框、阴影、聚焦态与滚动条样式，清理 \`main.css\` 冗余规则，修复多行输入框圆角滚动条裁切并统一中文路由规则术语。`;
+  // 本地更新日志 (v2.8.4)
+  const localChangelog = `✨ **全站代码质量优化、目录架构重组与 UI/性能改进**
+- **UI 与交互优化**：优化仪表盘布局与移动端视图，统一手动节点卡片视图及节点/订阅/订阅组的分页控件；修复导航与按钮连点问题并预取懒加载弹窗，优化公开页图片与静态资源加载。
+- **兼容性清理与工具统一**：移除过时的 \`document.execCommand('copy')\` 与 \`escape/unescape\` Base64 兼容代码，统一为现代 Clipboard API 与 \`TextEncoder/TextDecoder\` UTF-8 Base64 工具；清理全局与组件死 CSS 及孤立模块。
+- **架构与代码规范升级**：重组前后端模块目录（收拢 \`external-api/\`、\`handlers/\`、\`subscription/generators/\`，拍平前端组件目录并统一 \`kebab-case\` 命名），引入 \`oxlint\` 并将全仓库静态检查警告清零。`;
 
-    // --- Getters ---
-    const hasUpdate = computed(() => {
-        if (!latestRelease.value?.tag_name) return false;
-        return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
-    });
+  // --- Getters ---
+  const hasUpdate = computed(() => {
+    if (!latestRelease.value?.tag_name) return false;
+    return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
+  });
 
-    const isUpToDate = computed(() => {
-        if (!latestRelease.value?.tag_name) return true;
-        return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
-    });
+  const isUpToDate = computed(() => {
+    if (!latestRelease.value?.tag_name) return true;
+    return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
+  });
 
-    // --- Helpers ---
-    function normalizeVersion(version) {
-        return String(version || '')
-            .trim()
-            .replace(/^v/i, '');
+  // --- Helpers ---
+  function normalizeVersion(version) {
+    return String(version || '')
+      .trim()
+      .replace(/^v/i, '');
+  }
+
+  function compareVersions(left, right) {
+    const a = normalizeVersion(left)
+      .split('.')
+      .map((n) => parseInt(n, 10) || 0);
+    const b = normalizeVersion(right)
+      .split('.')
+      .map((n) => parseInt(n, 10) || 0);
+    const maxLen = Math.max(a.length, b.length);
+    for (let i = 0; i < maxLen; i += 1) {
+      const av = a[i] || 0;
+      const bv = b[i] || 0;
+      if (av > bv) return 1;
+      if (av < bv) return -1;
     }
+    return 0;
+  }
 
-    function compareVersions(left, right) {
-        const a = normalizeVersion(left)
-            .split('.')
-            .map((n) => parseInt(n, 10) || 0);
-        const b = normalizeVersion(right)
-            .split('.')
-            .map((n) => parseInt(n, 10) || 0);
-        const maxLen = Math.max(a.length, b.length);
-        for (let i = 0; i < maxLen; i += 1) {
-            const av = a[i] || 0;
-            const bv = b[i] || 0;
-            if (av > bv) return 1;
-            if (av < bv) return -1;
+  function getDismissKey(releaseTag) {
+    return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
+  }
+
+  // --- Actions ---
+  async function checkVersion(suppressModal = false) {
+    try {
+      const release = await fetchGithubLatestRelease(upstreamRepo);
+      if (release?.tag_name) {
+        latestRelease.value = release;
+        const comparison = compareVersions(release.tag_name, currentVersion.value);
+
+        if (comparison > 0) {
+          showUpdateNotice.value = true;
+        } else if (comparison === 0 && !suppressModal) {
+          // 如果已是最新且未被禁止，则尝试显示更新日志
+          const dismissKey = getDismissKey(release.tag_name);
+          if (readRawPreference(dismissKey) !== 'true') {
+            showModal.value = true;
+          }
         }
-        return 0;
+      }
+    } catch (error) {
+      console.error('[VersionStore] Failed to check version:', error);
     }
+  }
 
-    function getDismissKey(releaseTag) {
-        return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
+  function openModal() {
+    showModal.value = true;
+  }
+
+  function closeModal() {
+    showModal.value = false;
+  }
+
+  function suppressUpdateModal() {
+    if (latestRelease.value?.tag_name) {
+      // 写失败时必须告知用户：否则下次启动更新提示又会冒出来。
+      const persisted = writeRawPreference(getDismissKey(latestRelease.value.tag_name), 'true');
+      if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');
     }
+    showModal.value = false;
+  }
 
-    // --- Actions ---
-    async function checkVersion(suppressModal = false) {
-        try {
-            const release = await fetchGithubLatestRelease(upstreamRepo);
-            if (release?.tag_name) {
-                latestRelease.value = release;
-                const comparison = compareVersions(release.tag_name, currentVersion.value);
-
-                if (comparison > 0) {
-                    showUpdateNotice.value = true;
-                } else if (comparison === 0 && !suppressModal) {
-                    // 如果已是最新且未被禁止，则尝试显示更新日志
-                    const dismissKey = getDismissKey(release.tag_name);
-                    if (readRawPreference(dismissKey) !== 'true') {
-                        showModal.value = true;
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('[VersionStore] Failed to check version:', error);
-        }
-    }
-
-    function openModal() {
-        showModal.value = true;
-    }
-
-    function closeModal() {
-        showModal.value = false;
-    }
-
-    function suppressUpdateModal() {
-        if (latestRelease.value?.tag_name) {
-            // 写失败时必须告知用户：否则下次启动更新提示又会冒出来。
-            const persisted = writeRawPreference(
-                getDismissKey(latestRelease.value.tag_name),
-                'true'
-            );
-            if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');
-        }
-        showModal.value = false;
-    }
-
-    return {
-        currentVersion,
-        latestRelease,
-        localChangelog,
-        showModal,
-        showUpdateNotice,
-        hasUpdate,
-        isUpToDate,
-        checkVersion,
-        openModal,
-        closeModal,
-        suppressUpdateModal,
-    };
+  return {
+    currentVersion,
+    latestRelease,
+    localChangelog,
+    showModal,
+    showUpdateNotice,
+    hasUpdate,
+    isUpToDate,
+    checkVersion,
+    openModal,
+    closeModal,
+    suppressUpdateModal,
+  };
 });

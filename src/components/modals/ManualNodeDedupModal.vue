@@ -1,67 +1,58 @@
 <script setup>
-    import { computed } from 'vue';
-    import Modal from '@/components/forms/Modal.vue';
-    import { useI18n } from '@/i18n/index.js';
+import { computed } from 'vue';
+import Modal from '@/components/ui/Modal.vue';
+import { useI18n } from '@/i18n/index.js';
 
-    const props = defineProps({
-        show: Boolean,
-        plan: Object,
-    });
+const props = defineProps({
+  show: Boolean,
+  plan: Object,
+});
 
-    const emit = defineEmits(['update:show', 'confirm']);
-    const { t } = useI18n();
+const emit = defineEmits(['update:show', 'confirm']);
+const { t } = useI18n();
 
-    const previewList = computed(() => {
-        const list = props.plan?.removeNodes || [];
-        return list.slice(0, 20);
-    });
+const previewList = computed(() => {
+  const list = props.plan?.removeNodes || [];
+  return list.slice(0, 20);
+});
 </script>
 
 <template>
-    <Modal
-        :show="show"
-        size="2xl"
-        @update:show="emit('update:show', $event)"
-        @confirm="emit('confirm')"
-    >
-        <template #title>
-            <h3 class="text-base font-semibold text-fg">
-                {{ t('manualNodes.dedupConfirmTitle') }}
-            </h3>
-        </template>
-        <template #body>
-            <div class="space-y-4">
-                <div class="text-xs text-fg-muted">
-                    {{ t('manualNodes.dedupWillRemovePrefix') }}
-                    <span class="font-mono font-semibold text-red-400">{{
-                        plan?.removeCount || 0
-                    }}</span>
-                    {{ t('manualNodes.dedupWillRemoveMiddle') }}
-                    {{ t('manualNodes.dedupWillRemoveSuffix') }}
-                    <span class="font-mono font-semibold text-emerald-400">{{
-                        plan?.keepCount || 0
-                    }}</span>
-                    {{ t('manualNodes.dedupKeptSuffix') }}
-                </div>
-                <div v-if="previewList.length > 0" class="border border-line rounded-md">
-                    <div class="px-3 py-2 text-xs text-fg-muted border-b border-line">
-                        {{ t('manualNodes.dedupPreviewTitle') }}
-                    </div>
-                    <div class="max-h-64 overflow-auto divide-y divide-line-subtle">
-                        <div v-for="node in previewList" :key="node.id" class="px-3 py-2 text-xs">
-                            <div class="text-fg truncate">
-                                {{ node.name || t('manualNodes.unnamedNode') }}
-                            </div>
-                            <div class="text-xs text-fg-subtle truncate font-mono mt-0.5">
-                                {{ node.url }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div v-else class="text-xs text-fg-subtle">
-                    {{ t('manualNodes.noDuplicatesFound') }}
-                </div>
+  <Modal :show="show" size="2xl" @confirm="emit('confirm')" @update:show="emit('update:show', $event)">
+    <template #title>
+      <h3 class="text-base font-semibold text-fg">
+        {{ t('manualNodes.dedupConfirmTitle') }}
+      </h3>
+    </template>
+    <template #body>
+      <div class="space-y-4">
+        <div class="text-xs text-fg-muted">
+          {{ t('manualNodes.dedupWillRemovePrefix') }}
+          <span class="font-mono font-semibold text-red-400">{{ plan?.removeCount || 0 }}</span>
+          {{ t('manualNodes.dedupWillRemoveMiddle') }}
+          {{ t('manualNodes.dedupWillRemoveSuffix') }}
+          <span class="font-mono font-semibold text-emerald-400">{{ plan?.keepCount || 0 }}</span>
+          {{ t('manualNodes.dedupKeptSuffix') }}
+        </div>
+        <div v-if="previewList.length > 0" class="border border-line rounded-md">
+          <div class="px-3 py-2 text-xs text-fg-muted border-b border-line">
+            {{ t('manualNodes.dedupPreviewTitle') }}
+          </div>
+          <div class="max-h-64 overflow-auto divide-y divide-line-subtle">
+            <div v-for="node in previewList" :key="node.id" class="px-3 py-2 text-xs">
+              <div class="text-fg truncate">
+                {{ node.name || t('manualNodes.unnamedNode') }}
+              </div>
+              <div class="text-xs text-fg-subtle truncate font-mono mt-0.5">
+                {{ node.url }}
+              </div>
             </div>
-        </template>
-    </Modal>
+          </div>
+        </div>
+        <div v-else class="text-xs text-fg-subtle">
+          {{ t('manualNodes.noDuplicatesFound') }}
+        </div>
+      </div>
+    </template>
+  </Modal>
 </template>

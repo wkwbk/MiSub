@@ -1,128 +1,174 @@
-import { computed, inject, readonly, ref } from 'vue';
+import { computed, inject, readonly, ref, shallowRef } from 'vue';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
-import { messages } from '@/i18n/messages.js';
+import zhCN from '@/i18n/locales/zh-CN.js';
 
 export const DEFAULT_LOCALE = 'zh-CN';
 export const LOCALE_STORAGE_KEY = 'misub:locale';
 export const SUPPORTED_LOCALES = [
-    { code: 'zh-CN', label: '简体中文' },
-    { code: 'en-US', label: 'English' },
+  { code: 'zh-CN', label: '简体中文' },
+  { code: 'en-US', label: 'English' },
 ];
 
 const supportedCodes = new Set(SUPPORTED_LOCALES.map((item) => item.code));
 const I18N_KEY = Symbol('misub-i18n');
 
+const loadedMessages = shallowRef({
+  'zh-CN': zhCN,
+});
+
+const localeLoaders = {
+  'en-US': () => import('@/i18n/locales/en-US.js'),
+};
+
+const pendingLocaleLoads = new Map();
+
+export function registerLocaleMessages(locale, dict) {
+  if (!locale || !dict) return;
+  loadedMessages.value = {
+    ...loadedMessages.value,
+    [locale]: dict,
+  };
+}
+
+export async function ensureLocaleLoaded(locale) {
+  const normalized = normalizeLocale(locale);
+  if (loadedMessages.value[normalized]) return loadedMessages.value[normalized];
+
+  const loader = localeLoaders[normalized];
+  if (!loader) return loadedMessages.value[DEFAULT_LOCALE];
+
+  if (!pendingLocaleLoads.has(normalized)) {
+    const promise = loader()
+      .then((mod) => {
+        const dict = mod?.default || mod;
+        registerLocaleMessages(normalized, dict);
+        return dict;
+      })
+      .finally(() => {
+        pendingLocaleLoads.delete(normalized);
+      });
+    pendingLocaleLoads.set(normalized, promise);
+  }
+
+  return pendingLocaleLoads.get(normalized);
+}
+
 function readStoredLocale() {
-    return readRawPreference(LOCALE_STORAGE_KEY) || '';
+  return readRawPreference(LOCALE_STORAGE_KEY) || '';
 }
 
 function writeStoredLocale(locale) {
-    // 写入失败（隐私模式 / 存储被禁用）只影响「下次启动的语言」，
-    // 本次切换已经生效，不需要打扰用户。
-    writeRawPreference(LOCALE_STORAGE_KEY, locale);
+  // 写入失败（隐私模式 / 存储被禁用）只影响「下次启动的语言」，
+  // 本次切换已经生效，不需要打扰用户。
+  writeRawPreference(LOCALE_STORAGE_KEY, locale);
 }
 
 export function hasStoredLocale() {
-    return supportedCodes.has(readStoredLocale());
+  return supportedCodes.has(readStoredLocale());
 }
 
 export function normalizeLocale(locale) {
-    if (!locale || typeof locale !== 'string') return DEFAULT_LOCALE;
-    if (supportedCodes.has(locale)) return locale;
-    const lower = locale.toLowerCase();
-    if (lower.startsWith('zh')) return 'zh-CN';
-    if (lower.startsWith('en')) return 'en-US';
-    return DEFAULT_LOCALE;
+  if (!locale || typeof locale !== 'string') return DEFAULT_LOCALE;
+  if (supportedCodes.has(locale)) return locale;
+  const lower = locale.toLowerCase();
+  if (lower.startsWith('zh')) return 'zh-CN';
+  if (lower.startsWith('en')) return 'en-US';
+  return DEFAULT_LOCALE;
 }
 
 export function detectInitialLocale(browserLanguages = []) {
-    const stored = readStoredLocale();
-    if (supportedCodes.has(stored)) return stored;
+  const stored = readStoredLocale();
+  if (supportedCodes.has(stored)) return stored;
 
-    const candidates =
-        Array.isArray(browserLanguages) && browserLanguages.length > 0
-            ? browserLanguages
-            : typeof navigator !== 'undefined'
-              ? [navigator.language, ...(navigator.languages || [])]
-              : [];
+  const candidates =
+    Array.isArray(browserLanguages) && browserLanguages.length > 0
+      ? browserLanguages
+      : typeof navigator !== 'undefined'
+        ? [navigator.language, ...(navigator.languages || [])]
+        : [];
 
-    for (const candidate of candidates) {
-        const normalized = normalizeLocale(candidate);
-        if (supportedCodes.has(normalized) && normalized !== DEFAULT_LOCALE) return normalized;
-    }
+  for (const candidate of candidates) {
+    const normalized = normalizeLocale(candidate);
+    if (supportedCodes.has(normalized) && normalized !== DEFAULT_LOCALE) return normalized;
+  }
 
-    return DEFAULT_LOCALE;
+  return DEFAULT_LOCALE;
 }
 
 function lookupMessage(locale, key) {
-    return key.split('.').reduce((current, part) => {
-        if (!current || typeof current !== 'object') return undefined;
-        return current[part];
-    }, messages[locale]);
+  return key.split('.').reduce((current, part) => {
+    if (!current || typeof current !== 'object') return undefined;
+    return current[part];
+  }, loadedMessages.value[locale]);
 }
 
 function interpolate(template, params = {}) {
-    if (typeof template !== 'string') return template;
-    return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
+  if (typeof template !== 'string') return template;
+  return template.replace(/\{(\w+)\}/g, (_, name) => String(params[name] ?? `{${name}}`));
 }
 
 export function createI18n(options = {}) {
-    const locale = ref(normalizeLocale(options.initialLocale || detectInitialLocale()));
+  const initial = normalizeLocale(options.initialLocale || detectInitialLocale());
+  const locale = ref(initial);
+  if (initial !== DEFAULT_LOCALE && !loadedMessages.value[initial]) {
+    void ensureLocaleLoaded(initial);
+  }
 
-    const translate = (key, params = {}, forcedLocale) => {
-        const targetLocale = normalizeLocale(forcedLocale || locale.value);
-        const resolved = lookupMessage(targetLocale, key) ?? lookupMessage(DEFAULT_LOCALE, key);
-        return resolved === undefined ? key : interpolate(resolved, params);
-    };
+  const translate = (key, params = {}, forcedLocale) => {
+    const targetLocale = normalizeLocale(forcedLocale || locale.value);
+    const resolved = lookupMessage(targetLocale, key) ?? lookupMessage(DEFAULT_LOCALE, key);
+    return resolved === undefined ? key : interpolate(resolved, params);
+  };
 
-    const set = (nextLocale) => {
-        const normalized = normalizeLocale(nextLocale);
-        locale.value = normalized;
-        writeStoredLocale(normalized);
-        if (typeof document !== 'undefined') {
-            document.documentElement.lang = normalized;
-        }
-    };
+  const set = (nextLocale) => {
+    const normalized = normalizeLocale(nextLocale);
+    if (!loadedMessages.value[normalized]) {
+      void ensureLocaleLoaded(normalized);
+    }
+    locale.value = normalized;
+    writeStoredLocale(normalized);
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = normalized;
+    }
+  };
 
-    const instance = {
-        locale,
-        supportedLocales: SUPPORTED_LOCALES,
-        t: translate,
-        setLocale: set,
-        install(app) {
-            app.provide(I18N_KEY, instance);
-            app.config.globalProperties.$t = translate;
-            app.config.globalProperties.$locale = readonly(locale);
-            if (typeof document !== 'undefined') {
-                document.documentElement.lang = locale.value;
-            }
-        },
-    };
+  const instance = {
+    locale,
+    supportedLocales: SUPPORTED_LOCALES,
+    t: translate,
+    setLocale: set,
+    install(app) {
+      app.provide(I18N_KEY, instance);
+      app.config.globalProperties.$t = translate;
+      app.config.globalProperties.$locale = readonly(locale);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = locale.value;
+      }
+    },
+  };
 
-    return instance;
+  return instance;
 }
 
 export const i18n = createI18n();
 
 export function t(key, params = {}, forcedLocale) {
-    return i18n.t(key, params, forcedLocale);
+  return i18n.t(key, params, forcedLocale);
 }
 
 export function setLocale(locale) {
-    i18n.setLocale(locale);
+  i18n.setLocale(locale);
 }
 
 export function useI18n() {
-    const instance = inject(I18N_KEY, i18n);
-    return {
-        locale: instance.locale,
-        supportedLocales: instance.supportedLocales,
-        t: instance.t,
-        setLocale: instance.setLocale,
-        currentLocaleLabel: computed(
-            () =>
-                SUPPORTED_LOCALES.find((item) => item.code === instance.locale.value)?.label ||
-                instance.locale.value
-        ),
-    };
+  const instance = inject(I18N_KEY, i18n);
+  return {
+    locale: instance.locale,
+    supportedLocales: instance.supportedLocales,
+    t: instance.t,
+    setLocale: instance.setLocale,
+    currentLocaleLabel: computed(
+      () => SUPPORTED_LOCALES.find((item) => item.code === instance.locale.value)?.label || instance.locale.value,
+    ),
+  };
 }

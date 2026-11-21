@@ -1,212 +1,200 @@
 <script setup>
-    import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-    import { MoreHorizontal } from '@lucide/vue';
-    import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
-    import { t } from '@/i18n/index.js';
+import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { MoreHorizontal } from '@lucide/vue';
+import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
+import { t } from '@/i18n/index.js';
 
-    const props = defineProps({
-        teleportToBody: {
-            type: Boolean,
-            default: true,
-        },
-        menuWidthClass: {
-            type: String,
-            default: 'w-36',
-        },
-    });
+const props = defineProps({
+  teleportToBody: {
+    type: Boolean,
+    default: true,
+  },
+  menuWidthClass: {
+    type: String,
+    default: 'w-36',
+  },
+});
 
-    const isOpen = ref(false);
-    const triggerRef = ref(null);
-    const menuRef = ref(null);
-    const menuStyle = ref({});
-    const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
+const isOpen = ref(false);
+const triggerRef = ref(null);
+const menuRef = ref(null);
+const menuStyle = ref({});
+const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
 
-    const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(
-        ', '
-    );
+const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(', ');
 
-    function updatePosition() {
-        if (!props.teleportToBody || !triggerRef.value) {
-            menuStyle.value = {};
-            return;
-        }
+function updatePosition() {
+  if (!props.teleportToBody || !triggerRef.value) {
+    menuStyle.value = {};
+    return;
+  }
 
-        const buttonRect = triggerRef.value.getBoundingClientRect();
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        const viewportPadding = 8;
-        const gap = 8;
+  const buttonRect = triggerRef.value.getBoundingClientRect();
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const viewportPadding = 8;
+  const gap = 8;
 
-        const menuWidth = menuRef.value?.offsetWidth || 144;
-        const menuHeight = menuRef.value?.offsetHeight || 200;
+  const menuWidth = menuRef.value?.offsetWidth || 144;
+  const menuHeight = menuRef.value?.offsetHeight || 200;
 
-        const spaceBelow = viewportHeight - buttonRect.bottom - viewportPadding;
-        const spaceAbove = buttonRect.top - viewportPadding;
-        const openUpward = spaceBelow < menuHeight + gap && spaceAbove > spaceBelow;
+  const spaceBelow = viewportHeight - buttonRect.bottom - viewportPadding;
+  const spaceAbove = buttonRect.top - viewportPadding;
+  const openUpward = spaceBelow < menuHeight + gap && spaceAbove > spaceBelow;
 
-        const idealLeft = buttonRect.right - menuWidth;
-        const maxLeft = Math.max(viewportPadding, viewportWidth - menuWidth - viewportPadding);
-        const left = Math.min(Math.max(viewportPadding, idealLeft), maxLeft);
+  const idealLeft = buttonRect.right - menuWidth;
+  const maxLeft = Math.max(viewportPadding, viewportWidth - menuWidth - viewportPadding);
+  const left = Math.min(Math.max(viewportPadding, idealLeft), maxLeft);
 
-        const isInsideModal = Boolean(
-            triggerRef.value.closest('[role="dialog"][aria-modal="true"]')
-        );
+  const isInsideModal = Boolean(triggerRef.value.closest('[role="dialog"][aria-modal="true"]'));
 
-        const availableHeight = openUpward
-            ? Math.max(80, spaceAbove - gap)
-            : Math.max(80, spaceBelow - gap);
+  const availableHeight = openUpward ? Math.max(80, spaceAbove - gap) : Math.max(80, spaceBelow - gap);
 
-        menuStyle.value = {
-            left: `${left}px`,
-            maxHeight: `${availableHeight}px`,
-            zIndex: isInsideModal ? 'var(--z-modal-popover)' : 'var(--z-popover)',
-            ...(openUpward
-                ? { bottom: `${viewportHeight - buttonRect.top + gap}px` }
-                : { top: `${buttonRect.bottom + gap}px` }),
-        };
+  menuStyle.value = {
+    left: `${left}px`,
+    maxHeight: `${availableHeight}px`,
+    zIndex: isInsideModal ? 'var(--z-modal-popover)' : 'var(--z-popover)',
+    ...(openUpward
+      ? { bottom: `${viewportHeight - buttonRect.top + gap}px` }
+      : { top: `${buttonRect.bottom + gap}px` }),
+  };
+}
+
+function getFocusableItems() {
+  return menuRef.value ? Array.from(menuRef.value.querySelectorAll(FOCUSABLE)) : [];
+}
+
+async function openMenu() {
+  isOpen.value = true;
+  updatePosition();
+  await nextTick();
+  updatePosition();
+  const [firstItem] = getFocusableItems();
+  firstItem?.focus();
+}
+
+function toggleMenu() {
+  if (isOpen.value) {
+    closeMenu({ restoreFocus: true });
+  } else {
+    openMenu();
+  }
+}
+
+function closeMenu(options = {}) {
+  const { restoreFocus = false } = options;
+  isOpen.value = false;
+  if (restoreFocus) {
+    triggerRef.value?.querySelector('button')?.focus();
+  }
+}
+
+function handleClickOutside(event) {
+  const isClickInTrigger = triggerRef.value && triggerRef.value.contains(event.target);
+  const isClickInMenu = menuRef.value && menuRef.value.contains(event.target);
+
+  if (!isClickInTrigger && !isClickInMenu) {
+    closeMenu();
+  }
+}
+
+function handleTriggerKeydown(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    toggleMenu();
+    return;
+  }
+
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    if (!isOpen.value) {
+      openMenu();
+      return;
     }
 
-    function getFocusableItems() {
-        return menuRef.value ? Array.from(menuRef.value.querySelectorAll(FOCUSABLE)) : [];
-    }
+    const [firstItem] = getFocusableItems();
+    firstItem?.focus();
+  }
+}
 
-    async function openMenu() {
-        isOpen.value = true;
-        updatePosition();
-        await nextTick();
-        updatePosition();
-        const [firstItem] = getFocusableItems();
-        firstItem?.focus();
-    }
+function handleMenuKeydown(event) {
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeMenu({ restoreFocus: true });
+  }
+}
 
-    function toggleMenu() {
-        if (isOpen.value) {
-            closeMenu({ restoreFocus: true });
-        } else {
-            openMenu();
-        }
-    }
+usePopoverGuard({
+  isOpen,
+  popoverRef: menuRef,
+  onClose: () => closeMenu(),
+  onReposition: updatePosition,
+});
 
-    function closeMenu(options = {}) {
-        const { restoreFocus = false } = options;
-        isOpen.value = false;
-        if (restoreFocus) {
-            triggerRef.value?.querySelector('button')?.focus();
-        }
-    }
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
 
-    function handleClickOutside(event) {
-        const isClickInTrigger = triggerRef.value && triggerRef.value.contains(event.target);
-        const isClickInMenu = menuRef.value && menuRef.value.contains(event.target);
-
-        if (!isClickInTrigger && !isClickInMenu) {
-            closeMenu();
-        }
-    }
-
-    function handleTriggerKeydown(event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            toggleMenu();
-            return;
-        }
-
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-            if (!isOpen.value) {
-                openMenu();
-                return;
-            }
-
-            const [firstItem] = getFocusableItems();
-            firstItem?.focus();
-        }
-    }
-
-    function handleMenuKeydown(event) {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            closeMenu({ restoreFocus: true });
-        }
-    }
-
-    usePopoverGuard({
-        isOpen,
-        popoverRef: menuRef,
-        onClose: () => closeMenu(),
-        onReposition: updatePosition,
-    });
-
-    onMounted(() => {
-        document.addEventListener('click', handleClickOutside);
-    });
-
-    onUnmounted(() => {
-        document.removeEventListener('click', handleClickOutside);
-    });
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <template>
-    <div ref="triggerRef" class="relative shrink-0">
-        <button
-            @click="toggleMenu"
-            @keydown="handleTriggerKeydown"
-            :aria-expanded="isOpen"
-            aria-haspopup="menu"
-            :aria-label="t('actions.bulkActions')"
-            :aria-controls="menuId"
-            class="group p-2 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+  <div ref="triggerRef" class="relative shrink-0">
+    <button
+      :aria-controls="menuId"
+      :aria-expanded="isOpen"
+      :aria-label="t('actions.bulkActions')"
+      aria-haspopup="menu"
+      class="group p-2 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+      @click="toggleMenu"
+      @keydown="handleTriggerKeydown"
+    >
+      <MoreHorizontal class="h-4 w-4" />
+    </button>
+
+    <Transition name="slide-fade-sm">
+      <div
+        v-if="!teleportToBody && isOpen"
+        :id="menuId"
+        ref="menuRef"
+        :class="['popover-surface absolute right-0 mt-2 p-1 rounded-md z-10', menuWidthClass]"
+        role="menu"
+        @keydown="handleMenuKeydown"
+      >
+        <slot :close="closeMenu" name="menu" />
+      </div>
+    </Transition>
+
+    <Teleport v-if="teleportToBody" to="body">
+      <Transition name="slide-fade-sm">
+        <div
+          v-if="isOpen"
+          :id="menuId"
+          ref="menuRef"
+          :class="['popover-surface fixed overflow-y-auto p-1 rounded-md', menuWidthClass]"
+          :style="menuStyle"
+          role="menu"
+          @keydown="handleMenuKeydown"
+          @click.stop
         >
-            <MoreHorizontal class="h-4 w-4" />
-        </button>
-
-        <Transition name="slide-fade-sm">
-            <div
-                v-if="!teleportToBody && isOpen"
-                ref="menuRef"
-                :id="menuId"
-                role="menu"
-                @keydown="handleMenuKeydown"
-                :class="[
-                    'popover-surface absolute right-0 mt-2 p-1 rounded-md z-10',
-                    menuWidthClass,
-                ]"
-            >
-                <slot name="menu" :close="closeMenu" />
-            </div>
-        </Transition>
-
-        <Teleport v-if="teleportToBody" to="body">
-            <Transition name="slide-fade-sm">
-                <div
-                    v-if="isOpen"
-                    ref="menuRef"
-                    :id="menuId"
-                    role="menu"
-                    :class="[
-                        'popover-surface fixed overflow-y-auto p-1 rounded-md',
-                        menuWidthClass,
-                    ]"
-                    :style="menuStyle"
-                    @click.stop
-                    @keydown="handleMenuKeydown"
-                >
-                    <slot name="menu" :close="closeMenu" />
-                </div>
-            </Transition>
-        </Teleport>
-    </div>
+          <slot :close="closeMenu" name="menu" />
+        </div>
+      </Transition>
+    </Teleport>
+  </div>
 </template>
 
 <style scoped>
-    .slide-fade-sm-enter-active,
-    .slide-fade-sm-leave-active {
-        transition: all 0.2s ease-out;
-    }
+.slide-fade-sm-enter-active,
+.slide-fade-sm-leave-active {
+  transition: all 0.2s ease-out;
+}
 
-    .slide-fade-sm-enter-from,
-    .slide-fade-sm-leave-to {
-        transform: translateY(-10px);
-        opacity: 0;
-    }
+.slide-fade-sm-enter-from,
+.slide-fade-sm-leave-to {
+  transform: translateY(-10px);
+  opacity: 0;
+}
 </style>

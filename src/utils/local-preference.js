@@ -13,11 +13,11 @@
 
 /** localStorage 是否可用（隐私模式下光是访问它就可能抛错） */
 export function canUseLocalStorage() {
-    try {
-        return typeof localStorage !== 'undefined' && localStorage !== null;
-    } catch {
-        return false;
-    }
+  try {
+    return typeof localStorage !== 'undefined' && localStorage !== null;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -27,16 +27,16 @@ export function canUseLocalStorage() {
  * @param {unknown} fallback 不存在 / 损坏 / 不合法时的返回值
  */
 export function readPreference(key, validate, fallback) {
-    try {
-        if (!canUseLocalStorage()) return fallback;
-        const raw = localStorage.getItem(key);
-        if (raw === null) return fallback;
-        const normalized = validate(JSON.parse(raw));
-        return normalized === undefined ? fallback : normalized;
-    } catch (error) {
-        console.warn(`[LocalPreference] Failed to read "${key}":`, error);
-        return fallback;
-    }
+  try {
+    if (!canUseLocalStorage()) return fallback;
+    const raw = localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const normalized = validate(JSON.parse(raw));
+    return normalized === undefined ? fallback : normalized;
+  } catch (error) {
+    console.warn(`[LocalPreference] Failed to read "${key}":`, error);
+    return fallback;
+  }
 }
 
 /**
@@ -44,15 +44,15 @@ export function readPreference(key, validate, fallback) {
  * @returns {boolean} 是否真正落盘
  */
 export function writePreference(key, value) {
-    try {
-        if (!canUseLocalStorage()) return false;
-        const serialized = JSON.stringify(value);
-        localStorage.setItem(key, serialized);
-        return localStorage.getItem(key) === serialized;
-    } catch (error) {
-        console.warn(`[LocalPreference] Failed to write "${key}":`, error);
-        return false;
-    }
+  try {
+    if (!canUseLocalStorage()) return false;
+    const serialized = JSON.stringify(value);
+    localStorage.setItem(key, serialized);
+    return localStorage.getItem(key) === serialized;
+  } catch (error) {
+    console.warn(`[LocalPreference] Failed to write "${key}":`, error);
+    return false;
+  }
 }
 
 /**
@@ -61,15 +61,15 @@ export function writePreference(key, value) {
  * @returns {boolean} 是否真正落盘
  */
 export function writeRawPreference(key, value) {
-    try {
-        if (!canUseLocalStorage()) return false;
-        const serialized = String(value);
-        localStorage.setItem(key, serialized);
-        return localStorage.getItem(key) === serialized;
-    } catch (error) {
-        console.warn(`[LocalPreference] Failed to write "${key}":`, error);
-        return false;
-    }
+  try {
+    if (!canUseLocalStorage()) return false;
+    const serialized = String(value);
+    localStorage.setItem(key, serialized);
+    return localStorage.getItem(key) === serialized;
+  } catch (error) {
+    console.warn(`[LocalPreference] Failed to write "${key}":`, error);
+    return false;
+  }
 }
 
 /**
@@ -77,13 +77,13 @@ export function writeRawPreference(key, value) {
  * @returns {string|null}
  */
 export function readRawPreference(key) {
-    try {
-        if (!canUseLocalStorage()) return null;
-        return localStorage.getItem(key);
-    } catch (error) {
-        console.warn(`[LocalPreference] Failed to read "${key}":`, error);
-        return null;
-    }
+  try {
+    if (!canUseLocalStorage()) return null;
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn(`[LocalPreference] Failed to read "${key}":`, error);
+    return null;
+  }
 }
 
 /**
@@ -91,12 +91,12 @@ export function readRawPreference(key) {
  * @returns {boolean} key 是否确实已不存在
  */
 export function removePreference(key) {
-    try {
-        if (!canUseLocalStorage()) return false;
-        localStorage.removeItem(key);
-        return localStorage.getItem(key) === null;
-    } catch (error) {
-        console.warn(`[LocalPreference] Failed to remove "${key}":`, error);
-        return false;
-    }
+  try {
+    if (!canUseLocalStorage()) return false;
+    localStorage.removeItem(key);
+    return localStorage.getItem(key) === null;
+  } catch (error) {
+    console.warn(`[LocalPreference] Failed to remove "${key}":`, error);
+    return false;
+  }
 }

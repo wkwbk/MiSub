@@ -32,105 +32,103 @@ let cspBlockedCalls = 0;
 
 /** 精确模拟 CSP 对 Vue 运行时编译（new Function("Vue", code)）的拦截 */
 function installCspGuard() {
-    cspBlockedCalls = 0;
-    globalThis.Function = new Proxy(REAL_FUNCTION, {
-        construct(target, args) {
-            if (args[0] === 'Vue') {
-                cspBlockedCalls += 1;
-                throw new EvalError('call to Function() blocked by CSP');
-            }
-            return Reflect.construct(target, args, target);
-        },
-        apply(target, thisArg, args) {
-            if (args[0] === 'Vue') {
-                cspBlockedCalls += 1;
-                throw new EvalError('call to Function() blocked by CSP');
-            }
-            return Reflect.apply(target, thisArg, args);
-        },
-    });
+  cspBlockedCalls = 0;
+  globalThis.Function = new Proxy(REAL_FUNCTION, {
+    construct(target, args) {
+      if (args[0] === 'Vue') {
+        cspBlockedCalls += 1;
+        throw new EvalError('call to Function() blocked by CSP');
+      }
+      return Reflect.construct(target, args, target);
+    },
+    apply(target, thisArg, args) {
+      if (args[0] === 'Vue') {
+        cspBlockedCalls += 1;
+        throw new EvalError('call to Function() blocked by CSP');
+      }
+      return Reflect.apply(target, thisArg, args);
+    },
+  });
 }
 
 function collectSourceFiles(dir, files = []) {
-    for (const entry of readdirSync(dir)) {
-        const full = path.join(dir, entry);
-        if (statSync(full).isDirectory()) {
-            collectSourceFiles(full, files);
-        } else if (/\.(vue|js)$/.test(entry)) {
-            files.push(full);
-        }
+  for (const entry of readdirSync(dir)) {
+    const full = path.join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      collectSourceFiles(full, files);
+    } else if (/\.(vue|js)$/.test(entry)) {
+      files.push(full);
     }
-    return files;
+  }
+  return files;
 }
 
 describe('严格 CSP 下的首页渲染（runtime template regression）', () => {
-    beforeEach(() => {
-        installCspGuard();
+  beforeEach(() => {
+    installCspGuard();
+  });
+
+  afterEach(() => {
+    globalThis.Function = REAL_FUNCTION;
+    vi.resetModules();
+  });
+
+  it('已登录用户访问 / 时不得触发运行时模板编译', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+
+    const { useSessionStore } = await import('@/stores/session.js');
+    const session = useSessionStore();
+    session.sessionState = 'loggedIn';
+
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { render: () => null } },
+        { path: '/dashboard', component: { render: () => null } },
+      ],
     });
+    await router.push('/');
+    await router.isReady();
 
-    afterEach(() => {
-        globalThis.Function = REAL_FUNCTION;
-        vi.resetModules();
-    });
+    const HomeView = (await import('@/views/HomeView.vue')).default;
+    const wrapper = mount(HomeView, { global: { plugins: [pinia, router] } });
 
-    it('已登录用户访问 / 时不得触发运行时模板编译', async () => {
-        const pinia = createPinia();
-        setActivePinia(pinia);
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
-        const { useSessionStore } = await import('@/stores/session.js');
-        const session = useSessionStore();
-        session.sessionState = 'loggedIn';
+    // 关键断言：CSP 未拦截任何运行时编译
+    expect(cspBlockedCalls).toBe(0);
+    expect(wrapper.html()).toContain('<div');
+    wrapper.unmount();
+  });
 
-        const router = createRouter({
-            history: createMemoryHistory(),
-            routes: [
-                { path: '/', component: { render: () => null } },
-                { path: '/dashboard', component: { render: () => null } },
-            ],
-        });
-        await router.push('/');
-        await router.isReady();
-
-        const HomeView = (await import('@/views/HomeView.vue')).default;
-        const wrapper = mount(HomeView, { global: { plugins: [pinia, router] } });
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // 关键断言：CSP 未拦截任何运行时编译
-        expect(cspBlockedCalls).toBe(0);
-        expect(wrapper.html()).toContain('<div');
-        wrapper.unmount();
-    });
-
-    it('生产源码中不存在运行时模板字符串', () => {
-        const offenders = [];
-        for (const file of collectSourceFiles(path.join(ROOT, 'src'))) {
-            const lines = readFileSync(file, 'utf8').split('\n');
-            for (const line of lines) {
-                const trimmed = line.trim();
-                // 跳过注释行：说明性注释中允许保留缺陷原始写法
-                if (
-                    trimmed.startsWith('//') ||
-                    trimmed.startsWith('*') ||
-                    trimmed.startsWith('/*') ||
-                    trimmed.startsWith('<!--')
-                ) {
-                    continue;
-                }
-                if (/template:\s*['"`]\s*</.test(line)) {
-                    offenders.push(`${path.relative(ROOT, file)}: ${trimmed}`);
-                    break;
-                }
-            }
+  it('生产源码中不存在运行时模板字符串', () => {
+    const offenders = [];
+    for (const file of collectSourceFiles(path.join(ROOT, 'src'))) {
+      const lines = readFileSync(file, 'utf8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // 跳过注释行：说明性注释中允许保留缺陷原始写法
+        if (
+          trimmed.startsWith('//') ||
+          trimmed.startsWith('*') ||
+          trimmed.startsWith('/*') ||
+          trimmed.startsWith('<!--')
+        ) {
+          continue;
         }
-        expect(offenders).toEqual([]);
-    });
+        if (/template:\s*['"`]\s*</.test(line)) {
+          offenders.push(`${path.relative(ROOT, file)}: ${trimmed}`);
+          break;
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
 
-    it('vuedraggable 不得从 UMD 构建引入（会打包 Vue 运行时编译器）', () => {
-        const config = readFileSync(path.join(ROOT, 'vite.config.js'), 'utf8');
-        expect(config).toMatch(/vuedraggable/);
-        expect(config).toMatch(
-            /vuedraggable['"]?\s*:\s*['"][^'"]*src[^'"]*['"]|find:\s*\/\^vuedraggable\$/
-        );
-    });
+  it('vuedraggable 不得从 UMD 构建引入（会打包 Vue 运行时编译器）', () => {
+    const config = readFileSync(path.join(ROOT, 'vite.config.js'), 'utf8');
+    expect(config).toMatch(/vuedraggable/);
+    expect(config).toMatch(/vuedraggable['"]?\s*:\s*['"][^'"]*src[^'"]*['"]|find:\s*\/\^vuedraggable\$/);
+  });
 });

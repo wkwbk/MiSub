@@ -3,141 +3,138 @@ import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createEnv({ settings = {}, subscriptions = [], profiles = [] } = {}) {
-    return {
-        MISUB_DB: createMemoryD1({
-            worker_settings_v1: {
-                externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
-                ...settings,
-            },
-            misub_subscriptions_v1: subscriptions,
-            misub_profiles_v1: profiles,
-        }),
-        COOKIE_SECRET: 'stable-cookie-secret',
-        ADMIN_PASSWORD: 'secret-password',
-    };
+  return {
+    MISUB_DB: createMemoryD1({
+      worker_settings_v1: {
+        externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
+        ...settings,
+      },
+      misub_subscriptions_v1: subscriptions,
+      misub_profiles_v1: profiles,
+    }),
+    COOKIE_SECRET: 'stable-cookie-secret',
+    ADMIN_PASSWORD: 'secret-password',
+  };
 }
 
 function createRequest(path, { method = 'GET', body } = {}) {
-    return new Request(`https://example.com/api/ext/v1${path}`, {
-        method,
-        headers: {
-            Authorization: 'Bearer misub_ok',
-            'Content-Type': 'application/json',
-        },
-        body: body ? JSON.stringify(body) : undefined,
-    });
+  return new Request(`https://example.com/api/ext/v1${path}`, {
+    method,
+    headers: {
+      Authorization: 'Bearer misub_ok',
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
 }
 
 describe('external manual nodes handler', () => {
-    it('lists only manual nodes on /manual-nodes and exposes inferred protocol', async () => {
-        const env = createEnv({
-            subscriptions: [
-                { id: 'sub-1', name: 'Airport A', url: 'https://example.com/sub-a', enabled: true },
-                {
-                    id: 'node-1',
-                    name: 'HK 01',
-                    url: 'vless://uuid@example.com:443#HK01',
-                    enabled: true,
-                },
-                {
-                    id: 'node-2',
-                    name: 'SG 01',
-                    url: 'trojan://password@example.com:443#SG01',
-                    enabled: false,
-                },
-            ],
-        });
-
-        const response = await handleApiRequest(createRequest('/manual-nodes?protocol=vless'), env);
-        const body = await response.json();
-
-        expect(response.status).toBe(200);
-        expect(body.data).toHaveLength(1);
-        expect(body.data[0]).toMatchObject({
-            id: 'node-1',
-            type: 'manual_node',
-            protocol: 'vless',
-        });
+  it('lists only manual nodes on /manual-nodes and exposes inferred protocol', async () => {
+    const env = createEnv({
+      subscriptions: [
+        { id: 'sub-1', name: 'Airport A', url: 'https://example.com/sub-a', enabled: true },
+        {
+          id: 'node-1',
+          name: 'HK 01',
+          url: 'vless://uuid@example.com:443#HK01',
+          enabled: true,
+        },
+        {
+          id: 'node-2',
+          name: 'SG 01',
+          url: 'trojan://password@example.com:443#SG01',
+          enabled: false,
+        },
+      ],
     });
 
-    it('creates a manual node and rejects http subscription urls on manual-node endpoints', async () => {
-        const env = createEnv();
+    const response = await handleApiRequest(createRequest('/manual-nodes?protocol=vless'), env);
+    const body = await response.json();
 
-        const created = await handleApiRequest(
-            createRequest('/manual-nodes', {
-                method: 'POST',
-                body: { name: 'HK 01', url: 'vless://uuid@example.com:443#HK01', tags: ['HK'] },
-            }),
-            env
-        );
-        const createdBody = await created.json();
+    expect(response.status).toBe(200);
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      id: 'node-1',
+      type: 'manual_node',
+      protocol: 'vless',
+    });
+  });
 
-        expect(created.status).toBe(201);
-        expect(createdBody.data).toMatchObject({
-            type: 'manual_node',
-            protocol: 'vless',
-            tags: ['HK'],
-        });
-        expect(createdBody.data).not.toHaveProperty('group');
+  it('creates a manual node and rejects http subscription urls on manual-node endpoints', async () => {
+    const env = createEnv();
 
-        const invalid = await handleApiRequest(
-            createRequest('/manual-nodes', {
-                method: 'POST',
-                body: { name: 'Bad Sub', url: 'https://example.com/sub-a' },
-            }),
-            env
-        );
-        const invalidBody = await invalid.json();
+    const created = await handleApiRequest(
+      createRequest('/manual-nodes', {
+        method: 'POST',
+        body: { name: 'HK 01', url: 'vless://uuid@example.com:443#HK01', tags: ['HK'] },
+      }),
+      env,
+    );
+    const createdBody = await created.json();
 
-        expect(invalid.status).toBe(400);
-        expect(invalidBody.error.code).toBe('invalid_manual_node_url');
+    expect(created.status).toBe(201);
+    expect(createdBody.data).toMatchObject({
+      type: 'manual_node',
+      protocol: 'vless',
+      tags: ['HK'],
+    });
+    expect(createdBody.data).not.toHaveProperty('group');
+
+    const invalid = await handleApiRequest(
+      createRequest('/manual-nodes', {
+        method: 'POST',
+        body: { name: 'Bad Sub', url: 'https://example.com/sub-a' },
+      }),
+      env,
+    );
+    const invalidBody = await invalid.json();
+
+    expect(invalid.status).toBe(400);
+    expect(invalidBody.error.code).toBe('invalid_manual_node_url');
+  });
+
+  it('deletes manual nodes and removes them from profile manual node references', async () => {
+    const env = createEnv({
+      subscriptions: [
+        {
+          id: 'node-1',
+          name: 'HK 01',
+          url: 'vless://uuid@example.com:443#HK01',
+          enabled: true,
+        },
+        {
+          id: 'node-2',
+          name: 'SG 01',
+          url: 'trojan://password@example.com:443#SG01',
+          enabled: true,
+        },
+      ],
+      profiles: [
+        { id: 'profile-1', name: 'Main', subscriptions: [], manualNodes: ['node-1'] },
+        {
+          id: 'profile-2',
+          name: 'Backup',
+          subscriptions: [],
+          manualNodes: ['node-1', 'node-2'],
+        },
+      ],
     });
 
-    it('deletes manual nodes and removes them from profile manual node references', async () => {
-        const env = createEnv({
-            subscriptions: [
-                {
-                    id: 'node-1',
-                    name: 'HK 01',
-                    url: 'vless://uuid@example.com:443#HK01',
-                    enabled: true,
-                },
-                {
-                    id: 'node-2',
-                    name: 'SG 01',
-                    url: 'trojan://password@example.com:443#SG01',
-                    enabled: true,
-                },
-            ],
-            profiles: [
-                { id: 'profile-1', name: 'Main', subscriptions: [], manualNodes: ['node-1'] },
-                {
-                    id: 'profile-2',
-                    name: 'Backup',
-                    subscriptions: [],
-                    manualNodes: ['node-1', 'node-2'],
-                },
-            ],
-        });
+    const response = await handleApiRequest(createRequest('/manual-nodes/node-1', { method: 'DELETE' }), env);
+    const body = await response.json();
 
-        const response = await handleApiRequest(
-            createRequest('/manual-nodes/node-1', { method: 'DELETE' }),
-            env
-        );
-        const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.data.removedFromProfiles).toEqual(['profile-1', 'profile-2']);
 
-        expect(response.status).toBe(200);
-        expect(body.data.removedFromProfiles).toEqual(['profile-1', 'profile-2']);
-
-        const profilesResponse = await handleApiRequest(createRequest('/profiles'), env);
-        const profilesBody = await profilesResponse.json();
-        expect(profilesBody.data).toEqual([
-            expect.objectContaining({ id: 'profile-1', manualNodeIds: [], subscriptionIds: [] }),
-            expect.objectContaining({
-                id: 'profile-2',
-                manualNodeIds: ['node-2'],
-                subscriptionIds: [],
-            }),
-        ]);
-    });
+    const profilesResponse = await handleApiRequest(createRequest('/profiles'), env);
+    const profilesBody = await profilesResponse.json();
+    expect(profilesBody.data).toEqual([
+      expect.objectContaining({ id: 'profile-1', manualNodeIds: [], subscriptionIds: [] }),
+      expect.objectContaining({
+        id: 'profile-2',
+        manualNodeIds: ['node-2'],
+        subscriptionIds: [],
+      }),
+    ]);
+  });
 });

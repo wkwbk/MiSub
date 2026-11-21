@@ -1,0 +1,22 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "worker": true,
+    "node": true
+  },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-useless-escape": "warn",
+    "no-control-regex": "warn",
+    "unicorn/no-useless-fallback-in-spread": "warn",
+    "unicorn/prefer-string-starts-ends-with": "warn",
+    "unicorn/no-useless-spread": "warn",
+    "oxc/only-used-in-recursion": "warn"
+  },
+  "ignorePatterns": ["dist/**", "dev-dist/**", "node_modules/**", "public/**", "coverage/**"]
+}

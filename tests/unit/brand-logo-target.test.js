@@ -15,69 +15,69 @@ import Header from '@/components/layout/Header.vue';
 import NavBar from '@/components/layout/NavBar.vue';
 
 function makeRouter() {
-    return createRouter({
-        history: createMemoryHistory(),
-        routes: [
-            { path: '/', component: { render: () => null } },
-            { path: '/dashboard', component: { render: () => null } },
-            { path: '/dashboard/nodes', component: { render: () => null } },
-            { path: '/explore', component: { render: () => null } },
-            { path: '/login', component: { render: () => null } },
-        ],
-    });
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/', component: { render: () => null } },
+      { path: '/dashboard', component: { render: () => null } },
+      { path: '/dashboard/nodes', component: { render: () => null } },
+      { path: '/explore', component: { render: () => null } },
+      { path: '/login', component: { render: () => null } },
+    ],
+  });
 }
 
 async function mountWithPlugins(component, options = {}) {
-    const pinia = createPinia();
-    setActivePinia(pinia);
-    const router = makeRouter();
-    await router.push('/dashboard/nodes');
-    await router.isReady();
-    const wrapper = mount(component, {
-        global: {
-            plugins: [pinia, router],
-            stubs: { NavActionGroup: true },
-            ...(options.global || {}),
-        },
-        ...options,
-    });
-    return wrapper;
+  const pinia = createPinia();
+  setActivePinia(pinia);
+  const router = makeRouter();
+  await router.push('/dashboard/nodes');
+  await router.isReady();
+  const wrapper = mount(component, {
+    global: {
+      plugins: [pinia, router],
+      stubs: { NavActionGroup: true },
+      ...options.global,
+    },
+    ...options,
+  });
+  return wrapper;
 }
 
 describe('品牌 LOGO 跳转目标', () => {
-    beforeEach(() => {
-        setActivePinia(createPinia());
-    });
+  beforeEach(() => {
+    setActivePinia(createPinia());
+  });
 
-    it('BrandLogo 默认指向首页 /', async () => {
-        const wrapper = await mountWithPlugins(BrandLogo);
-        expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/');
-        wrapper.unmount();
-    });
+  it('BrandLogo 默认指向首页 /', async () => {
+    const wrapper = await mountWithPlugins(BrandLogo);
+    expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/');
+    wrapper.unmount();
+  });
 
-    it('BrandLogo 支持自定义跳转目标', async () => {
-        const wrapper = await mountWithPlugins(BrandLogo, { props: { to: '/dashboard' } });
-        expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/dashboard');
-        wrapper.unmount();
-    });
+  it('BrandLogo 支持自定义跳转目标', async () => {
+    const wrapper = await mountWithPlugins(BrandLogo, { props: { to: '/dashboard' } });
+    expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/dashboard');
+    wrapper.unmount();
+  });
 
-    it('NavBar（仅登录后可见）中 LOGO 指向 /dashboard', async () => {
-        const wrapper = await mountWithPlugins(NavBar, { props: { isLoggedIn: true } });
-        const logo = wrapper.find('.nav-brand-wrap');
-        expect(logo.exists()).toBe(true);
-        expect(logo.attributes('href')).toBe('/dashboard');
-        wrapper.unmount();
-    });
+  it('NavBar（仅登录后可见）中 LOGO 指向 /dashboard', async () => {
+    const wrapper = await mountWithPlugins(NavBar, { props: { isLoggedIn: true } });
+    const logo = wrapper.find('.nav-brand-wrap');
+    expect(logo.exists()).toBe(true);
+    expect(logo.attributes('href')).toBe('/dashboard');
+    wrapper.unmount();
+  });
 
-    it('Header 已登录时 LOGO 指向 /dashboard', async () => {
-        const wrapper = await mountWithPlugins(Header, { props: { isLoggedIn: true } });
-        expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/dashboard');
-        wrapper.unmount();
-    });
+  it('Header 已登录时 LOGO 指向 /dashboard', async () => {
+    const wrapper = await mountWithPlugins(Header, { props: { isLoggedIn: true } });
+    expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/dashboard');
+    wrapper.unmount();
+  });
 
-    it('Header 未登录时 LOGO 指向 /', async () => {
-        const wrapper = await mountWithPlugins(Header, { props: { isLoggedIn: false } });
-        expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/');
-        wrapper.unmount();
-    });
+  it('Header 未登录时 LOGO 指向 /', async () => {
+    const wrapper = await mountWithPlugins(Header, { props: { isLoggedIn: false } });
+    expect(wrapper.find('.nav-brand-wrap').attributes('href')).toBe('/');
+    wrapper.unmount();
+  });
 });

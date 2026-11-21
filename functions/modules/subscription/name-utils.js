@@ -5,7 +5,7 @@
  * @returns {string}
  */
 export function getUniqueName(baseName, usedNames) {
-    const count = (usedNames.get(baseName) || 0) + 1;
-    usedNames.set(baseName, count);
-    return count === 1 ? baseName : `${baseName}_${count - 1}`;
+  const count = (usedNames.get(baseName) || 0) + 1;
+  usedNames.set(baseName, count);
+  return count === 1 ? baseName : `${baseName}_${count - 1}`;
 }

@@ -1,167 +1,154 @@
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
-import StatCards from '@/components/features/Dashboard/StatCards.vue';
+import StatCards from '@/components/dashboard/StatCards.vue';
 import RightPanel from '@/components/profiles/RightPanel.vue';
 import { createI18n } from '@/i18n/index.js';
 
 const routerLinkStub = {
-    props: ['to'],
-    template: '<a :href="typeof to === \'string\' ? to : to?.path"><slot /></a>',
+  props: ['to'],
+  template: '<a :href="typeof to === \'string\' ? to : to?.path"><slot /></a>',
 };
 
 function mountRightPanel(props, locale = 'zh-CN') {
-    return mount(RightPanel, {
-        props,
-        global: {
-            plugins: [createPinia(), createI18n({ initialLocale: locale })],
-            stubs: {
-                RouterLink: routerLinkStub,
-            },
-        },
-    });
+  return mount(RightPanel, {
+    props,
+    global: {
+      plugins: [createPinia(), createI18n({ initialLocale: locale })],
+      stubs: {
+        RouterLink: routerLinkStub,
+      },
+    },
+  });
 }
 
 describe('dashboard UI components', () => {
-    it('emits navigation intent from clickable stat cards and marks zero-node state as warning', async () => {
-        const wrapper = mount(StatCards, {
-            props: {
-                formattedTotalRemainingTraffic: '0 B',
-                trafficStats: { used: '90 GB', total: '100 GB', percentage: 90 },
-                manualNodesCount: 4,
-                enabledManualNodesCount: 2,
-                activeSubscriptionsCount: 1,
-                subscriptionsCount: 2,
-                totalNodesCount: 0,
-                activeProfilesCount: 0,
-            },
-            global: {
-                plugins: [createI18n({ initialLocale: 'zh-CN' })],
-            },
-        });
-
-        const nodeCard = wrapper.find('[data-testid="stat-card-nodes"]');
-        expect(nodeCard.text()).toContain('2 / 4');
-        expect(nodeCard.text()).toContain('共 2 个节点');
-
-        await nodeCard.trigger('click');
-        expect(wrapper.emitted('navigate')?.[0]).toEqual(['/dashboard/nodes', {}]);
-
-        await wrapper.find('[data-testid="stat-card-traffic"]').trigger('click');
-        expect(wrapper.emitted('navigate')?.[1]).toEqual([
-            '/dashboard/groups',
-            { status: 'low-traffic' },
-        ]);
-
-        const subCard = wrapper.find('[data-testid="stat-card-subscriptions"]');
-        expect(subCard.text()).toContain('需要刷新节点');
-        await subCard.trigger('click');
-        expect(wrapper.emitted('navigate')?.[2]).toEqual([
-            '/dashboard/groups',
-            { status: 'zero-nodes' },
-        ]);
-
-        await wrapper.find('[data-testid="stat-card-profiles"]').trigger('click');
-        expect(wrapper.emitted('navigate')?.[3]).toEqual([
-            '/dashboard/subscriptions',
-            { focus: 'profiles' },
-        ]);
+  it('emits navigation intent from clickable stat cards and marks zero-node state as warning', async () => {
+    const wrapper = mount(StatCards, {
+      props: {
+        formattedTotalRemainingTraffic: '0 B',
+        trafficStats: { used: '90 GB', total: '100 GB', percentage: 90 },
+        manualNodesCount: 4,
+        enabledManualNodesCount: 2,
+        activeSubscriptionsCount: 1,
+        subscriptionsCount: 2,
+        totalNodesCount: 0,
+        activeProfilesCount: 0,
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+      },
     });
 
-    it('shows a setup checklist in right panel when tokens or profiles are missing', () => {
-        const wrapper = mountRightPanel({
-            config: { mytoken: 'auto', profileToken: '' },
-            profiles: [],
-        });
+    const nodeCard = wrapper.find('[data-testid="stat-card-nodes"]');
+    expect(nodeCard.text()).toContain('2 / 4');
+    expect(nodeCard.text()).toContain('共 2 个节点');
 
-        expect(wrapper.text()).toContain('生成链接还需几步');
-        expect(wrapper.text()).toContain('固定主 Token');
-        expect(wrapper.text()).toContain('创建组合订阅');
-        expect(wrapper.find('input').attributes('disabled')).toBeDefined();
+    await nodeCard.trigger('click');
+    expect(wrapper.emitted('navigate')?.[0]).toEqual(['/dashboard/nodes', {}]);
+
+    await wrapper.find('[data-testid="stat-card-traffic"]').trigger('click');
+    expect(wrapper.emitted('navigate')?.[1]).toEqual(['/dashboard/groups', { status: 'low-traffic' }]);
+
+    const subCard = wrapper.find('[data-testid="stat-card-subscriptions"]');
+    expect(subCard.text()).toContain('需要刷新节点');
+    await subCard.trigger('click');
+    expect(wrapper.emitted('navigate')?.[2]).toEqual(['/dashboard/groups', { status: 'zero-nodes' }]);
+
+    await wrapper.find('[data-testid="stat-card-profiles"]').trigger('click');
+    expect(wrapper.emitted('navigate')?.[3]).toEqual(['/dashboard/subscriptions', { focus: 'profiles' }]);
+  });
+
+  it('shows a setup checklist in right panel when tokens or profiles are missing', () => {
+    const wrapper = mountRightPanel({
+      config: { mytoken: 'auto', profileToken: '' },
+      profiles: [],
     });
 
-    it('keeps generated link actions enabled when fixed token and profile exist', () => {
-        const wrapper = mountRightPanel({
-            config: { mytoken: 'stable-token', profileToken: 'share-token' },
-            profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
-        });
+    expect(wrapper.text()).toContain('生成链接还需几步');
+    expect(wrapper.text()).toContain('固定主 Token');
+    expect(wrapper.text()).toContain('创建组合订阅');
+    expect(wrapper.find('input').attributes('disabled')).toBeDefined();
+  });
 
-        expect(wrapper.text()).not.toContain('生成链接还需几步');
-        expect(wrapper.find('input').attributes('disabled')).toBeUndefined();
-        expect(wrapper.find('input').element.value).toContain('/stable-token');
+  it('keeps generated link actions enabled when fixed token and profile exist', () => {
+    const wrapper = mountRightPanel({
+      config: { mytoken: 'stable-token', profileToken: 'share-token' },
+      profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
-    it('generates a native sing-box link instead of a base64 link', async () => {
-        const wrapper = mountRightPanel({
-            config: { mytoken: 'stable-token', profileToken: 'share-token' },
-            profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
-        });
+    expect(wrapper.text()).not.toContain('生成链接还需几步');
+    expect(wrapper.find('input').attributes('disabled')).toBeUndefined();
+    expect(wrapper.find('input').element.value).toContain('/stable-token');
+  });
 
-        const singBoxButton = wrapper
-            .findAll('button')
-            .find((button) => button.text() === 'Sing-Box');
-        expect(singBoxButton).toBeTruthy();
-        await singBoxButton.trigger('click');
-
-        expect(wrapper.find('input').element.value).toBe(
-            `${window.location.origin}/stable-token?singbox`
-        );
-        expect(wrapper.find('input').element.value).not.toContain('?base64');
+  it('generates a native sing-box link instead of a base64 link', async () => {
+    const wrapper = mountRightPanel({
+      config: { mytoken: 'stable-token', profileToken: 'share-token' },
+      profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
-    it('does not generate copyable subscription links for invalid token characters', () => {
-        const wrapper = mountRightPanel({
-            config: { mytoken: ':', profileToken: 'share-token' },
-            profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
-        });
+    const singBoxButton = wrapper.findAll('button').find((button) => button.text() === 'Sing-Box');
+    expect(singBoxButton).toBeTruthy();
+    await singBoxButton.trigger('click');
 
-        const input = wrapper.find('input');
-        expect(wrapper.text()).toContain('固定主 Token');
-        expect(input.attributes('disabled')).toBeDefined();
-        expect(input.element.value).toBe('请先在“设置”中配置固定的 主 Token');
-        expect(input.element.value).not.toContain('https://sub.dmorz.com/:');
+    expect(wrapper.find('input').element.value).toBe(`${window.location.origin}/stable-token?singbox`);
+    expect(wrapper.find('input').element.value).not.toContain('?base64');
+  });
+
+  it('does not generate copyable subscription links for invalid token characters', () => {
+    const wrapper = mountRightPanel({
+      config: { mytoken: ':', profileToken: 'share-token' },
+      profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
-    it('renders stat cards and generated-link panel in English without leaking i18n keys', () => {
-        const statCards = mount(StatCards, {
-            props: {
-                formattedTotalRemainingTraffic: '155.89 TB',
-                trafficStats: { used: '1 TB', total: '2 TB', percentage: 50 },
-                manualNodesCount: 5,
-                enabledManualNodesCount: 3,
-                activeSubscriptionsCount: 1,
-                subscriptionsCount: 1,
-                totalNodesCount: 12,
-                activeProfilesCount: 1,
-            },
-            global: {
-                plugins: [createI18n({ initialLocale: 'en-US' })],
-            },
-        });
+    const input = wrapper.find('input');
+    expect(wrapper.text()).toContain('固定主 Token');
+    expect(input.attributes('disabled')).toBeDefined();
+    expect(input.element.value).toBe('请先在“设置”中配置固定的 主 Token');
+    expect(input.element.value).not.toContain('https://libk.top/:');
+  });
 
-        expect(statCards.text()).toContain('Remaining traffic');
-        expect(statCards.text()).toContain('Manual nodes');
-        expect(statCards.text()).toContain('3 nodes');
-        expect(statCards.text()).toContain('Active sources');
-        expect(statCards.text()).toContain('Running · 12 nodes');
-        expect(statCards.text()).toContain('Profiles');
-        expect(statCards.text()).not.toContain('dashboard.');
-        expect(statCards.text()).not.toContain('DASHBOARD.');
-
-        const rightPanel = mountRightPanel(
-            {
-                config: { mytoken: 'auto', profileToken: '' },
-                profiles: [],
-            },
-            'en-US'
-        );
-
-        expect(rightPanel.text()).toContain('Generate subscription links');
-        expect(rightPanel.text()).toContain('A few steps remain before links are ready');
-        expect(rightPanel.text()).toContain('Set fixed main token');
-        expect(rightPanel.text()).toContain('Create a profile');
-        expect(rightPanel.text()).toContain('Universal');
-        expect(rightPanel.text()).not.toContain('生成订阅链接');
-        expect(rightPanel.text()).not.toContain('dashboard.');
+  it('renders stat cards and generated-link panel in English without leaking i18n keys', () => {
+    const statCards = mount(StatCards, {
+      props: {
+        formattedTotalRemainingTraffic: '155.89 TB',
+        trafficStats: { used: '1 TB', total: '2 TB', percentage: 50 },
+        manualNodesCount: 5,
+        enabledManualNodesCount: 3,
+        activeSubscriptionsCount: 1,
+        subscriptionsCount: 1,
+        totalNodesCount: 12,
+        activeProfilesCount: 1,
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'en-US' })],
+      },
     });
+
+    expect(statCards.text()).toContain('Remaining traffic');
+    expect(statCards.text()).toContain('Manual nodes');
+    expect(statCards.text()).toContain('3 nodes');
+    expect(statCards.text()).toContain('Active sources');
+    expect(statCards.text()).toContain('Running · 12 nodes');
+    expect(statCards.text()).toContain('Profiles');
+    expect(statCards.text()).not.toContain('dashboard.');
+    expect(statCards.text()).not.toContain('DASHBOARD.');
+
+    const rightPanel = mountRightPanel(
+      {
+        config: { mytoken: 'auto', profileToken: '' },
+        profiles: [],
+      },
+      'en-US',
+    );
+
+    expect(rightPanel.text()).toContain('Generate subscription links');
+    expect(rightPanel.text()).toContain('A few steps remain before links are ready');
+    expect(rightPanel.text()).toContain('Set fixed main token');
+    expect(rightPanel.text()).toContain('Create a profile');
+    expect(rightPanel.text()).toContain('Universal');
+    expect(rightPanel.text()).not.toContain('生成订阅链接');
+    expect(rightPanel.text()).not.toContain('dashboard.');
+  });
 });

@@ -26,8 +26,8 @@ export const MAX_DISMISSED_HEALTH_ITEMS = 100;
 
 /** 单个 id 规范化：非字符串或空白一律视为无效 */
 function normalizeId(id) {
-    if (typeof id !== 'string') return '';
-    return id.trim();
+  if (typeof id !== 'string') return '';
+  return id.trim();
 }
 
 /**
@@ -39,16 +39,16 @@ function normalizeId(id) {
  * @returns {string[]} 规范化后的新数组
  */
 export function normalizeDismissedHealthItemIds(value) {
-    if (!Array.isArray(value)) return [];
-    const seen = new Set();
-    const result = [];
-    for (const entry of value) {
-        const id = normalizeId(entry);
-        if (!id || seen.has(id)) continue;
-        seen.add(id);
-        result.push(id);
-    }
-    return result;
+  if (!Array.isArray(value)) return [];
+  const seen = new Set();
+  const result = [];
+  for (const entry of value) {
+    const id = normalizeId(entry);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    result.push(id);
+  }
+  return result;
 }
 
 /**
@@ -57,9 +57,9 @@ export function normalizeDismissedHealthItemIds(value) {
  * @param {string} id
  */
 export function isHealthItemDismissed(ids, id) {
-    const key = normalizeId(id);
-    if (!key) return false;
-    return normalizeDismissedHealthItemIds(ids).includes(key);
+  const key = normalizeId(id);
+  if (!key) return false;
+  return normalizeDismissedHealthItemIds(ids).includes(key);
 }
 
 /**
@@ -72,10 +72,10 @@ export function isHealthItemDismissed(ids, id) {
  *          调用方若要判断「有没有真的变化」，用 isHealthItemDismissed 先判）
  */
 export function addDismissedHealthItem(ids, id) {
-    const current = normalizeDismissedHealthItemIds(ids);
-    const key = normalizeId(id);
-    if (!key || current.includes(key)) return current;
-    return [...current, key].slice(-MAX_DISMISSED_HEALTH_ITEMS);
+  const current = normalizeDismissedHealthItemIds(ids);
+  const key = normalizeId(id);
+  if (!key || current.includes(key)) return current;
+  return [...current, key].slice(-MAX_DISMISSED_HEALTH_ITEMS);
 }
 
 /**
@@ -85,9 +85,9 @@ export function addDismissedHealthItem(ids, id) {
  * @returns {Array} 保留的条目
  */
 export function filterDismissedHealthItems(items, ids) {
-    if (!Array.isArray(items)) return [];
-    const dismissed = new Set(normalizeDismissedHealthItemIds(ids));
-    return items.filter((item) => !dismissed.has(item?.id));
+  if (!Array.isArray(items)) return [];
+  const dismissed = new Set(normalizeDismissedHealthItemIds(ids));
+  return items.filter((item) => !dismissed.has(item?.id));
 }
 
 /**
@@ -99,7 +99,7 @@ export function filterDismissedHealthItems(items, ids) {
  * @returns {string[]}
  */
 export function readLegacyDismissedHealthItemIds() {
-    return readPreference(LEGACY_DISMISSED_HEALTH_ITEMS_KEY, normalizeDismissedHealthItemIds, []);
+  return readPreference(LEGACY_DISMISSED_HEALTH_ITEMS_KEY, normalizeDismissedHealthItemIds, []);
 }
 
 /**
@@ -107,5 +107,5 @@ export function readLegacyDismissedHealthItemIds() {
  * @returns {boolean} 是否清除成功（存储被禁用时为 false）
  */
 export function clearLegacyDismissedHealthItemIds() {
-    return removePreference(LEGACY_DISMISSED_HEALTH_ITEMS_KEY);
+  return removePreference(LEGACY_DISMISSED_HEALTH_ITEMS_KEY);
 }

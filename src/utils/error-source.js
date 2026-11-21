@@ -22,17 +22,17 @@ const URL_IN_STACK = /https?:\/\/[^\s)]+/g;
 const OPAQUE_ERROR_MESSAGE = 'Script error.';
 
 function resolveOrigin(origin) {
-    if (origin) return origin;
-    if (typeof window !== 'undefined' && window.location) return window.location.origin;
-    return null;
+  if (origin) return origin;
+  if (typeof window !== 'undefined' && window.location) return window.location.origin;
+  return null;
 }
 
 function safeOrigin(url, fallbackOrigin) {
-    try {
-        return new URL(url, fallbackOrigin).origin;
-    } catch (error) {
-        return null;
-    }
+  try {
+    return new URL(url, fallbackOrigin).origin;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -42,23 +42,23 @@ function safeOrigin(url, fallbackOrigin) {
  * @returns {boolean} true 表示应当作为应用错误处理
  */
 export function isAppScriptError(info = {}, origin) {
-    const base = resolveOrigin(origin);
-    const filename = String(info.filename || '').trim();
+  const base = resolveOrigin(origin);
+  const filename = String(info.filename || '').trim();
 
-    if (!filename) {
-        // 无 filename：跨域脚本错误会被浏览器抹平为 "Script error."，属第三方噪音；
-        // 其他情况可能是本站行内脚本，保守保留。
-        return String(info.message || '').trim() !== OPAQUE_ERROR_MESSAGE;
-    }
+  if (!filename) {
+    // 无 filename：跨域脚本错误会被浏览器抹平为 "Script error."，属第三方噪音；
+    // 其他情况可能是本站行内脚本，保守保留。
+    return String(info.message || '').trim() !== OPAQUE_ERROR_MESSAGE;
+  }
 
-    if (EXTENSION_PROTOCOL.test(filename) || INJECTED_SCRIPT.test(filename)) {
-        return false;
-    }
+  if (EXTENSION_PROTOCOL.test(filename) || INJECTED_SCRIPT.test(filename)) {
+    return false;
+  }
 
-    const scriptOrigin = safeOrigin(filename, base);
-    if (!scriptOrigin || !base) return false;
+  const scriptOrigin = safeOrigin(filename, base);
+  if (!scriptOrigin || !base) return false;
 
-    return scriptOrigin === base;
+  return scriptOrigin === base;
 }
 
 /**
@@ -68,21 +68,21 @@ export function isAppScriptError(info = {}, origin) {
  * @returns {boolean} true 表示属于第三方/扩展噪音，应当忽略
  */
 export function isForeignRejection(reason, origin) {
-    if (!reason) return false;
+  if (!reason) return false;
 
-    const base = resolveOrigin(origin);
-    const message = String(reason.message || '').trim();
-    if (message === OPAQUE_ERROR_MESSAGE) return true;
+  const base = resolveOrigin(origin);
+  const message = String(reason.message || '').trim();
+  if (message === OPAQUE_ERROR_MESSAGE) return true;
 
-    const stack = String(reason.stack || '');
-    // 缺少栈信息时无法判断来源，保守上报
-    if (!stack) return false;
+  const stack = String(reason.stack || '');
+  // 缺少栈信息时无法判断来源，保守上报
+  if (!stack) return false;
 
-    if (EXTENSION_IN_STACK.test(stack) || INJECTED_IN_STACK.test(stack)) return true;
+  if (EXTENSION_IN_STACK.test(stack) || INJECTED_IN_STACK.test(stack)) return true;
 
-    const urls = stack.match(URL_IN_STACK);
-    if (!urls || !urls.length) return false;
+  const urls = stack.match(URL_IN_STACK);
+  if (!urls || !urls.length) return false;
 
-    // 栈中出现的所有脚本位置都不属于本站 → 第三方噪音
-    return urls.every((url) => safeOrigin(url, base) !== base);
+  // 栈中出现的所有脚本位置都不属于本站 → 第三方噪音
+  return urls.every((url) => safeOrigin(url, base) !== base);
 }

@@ -8,128 +8,127 @@ import { useDataStore } from '@/stores/useDataStore.js';
 const toastMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/http.js', () => ({
-    APIError: class APIError extends Error {},
-    api: {
-        post: vi.fn(async () => ({
-            success: true,
-            nodes: [
-                {
-                    id: 'node-1',
-                    name: 'Demo HK',
-                    url: 'vless://demo@example.com:443#Demo',
-                    type: 'vless',
-                    server: 'example.com',
-                    port: 443,
-                    region: 'Hong Kong',
-                },
-            ],
-            stats: {
-                protocols: { vless: 1 },
-                regions: { 'Hong Kong': 1 },
-            },
-        })),
-    },
+  APIError: class APIError extends Error {},
+  api: {
+    post: vi.fn(async () => ({
+      success: true,
+      nodes: [
+        {
+          id: 'node-1',
+          name: 'Demo HK',
+          url: 'vless://demo@example.com:443#Demo',
+          type: 'vless',
+          server: 'example.com',
+          port: 443,
+          region: 'Hong Kong',
+        },
+      ],
+      stats: {
+        protocols: { vless: 1 },
+        regions: { 'Hong Kong': 1 },
+      },
+    })),
+  },
 }));
 
 vi.mock('@/stores/toast.js', () => ({
-    useToastStore: () => ({
-        showToast: toastMock,
-    }),
+  useToastStore: () => ({
+    showToast: toastMock,
+  }),
 }));
 
 const expectNoChineseOrKeys = (text) => {
-    expect(text).not.toMatch(/[\u4e00-\u9fff]/);
-    expect(text).not.toMatch(/\b(nodePreview|common|actions)\./);
+  expect(text).not.toMatch(/[\u4e00-\u9fff]/);
+  expect(text).not.toMatch(/\b(nodePreview|common|actions)\./);
 };
 
 describe('NodePreviewModal English translations', () => {
-    beforeEach(() => {
-        toastMock.mockClear();
+  beforeEach(() => {
+    toastMock.mockClear();
+  });
+
+  it('renders profile preview header and picking actions in English', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+
+    const wrapper = mount(NodePreviewModal, {
+      props: {
+        show: true,
+        profileId: 'profile-1',
+        profileName: 'CMSS',
+      },
+      global: {
+        plugins: [pinia, createI18n({ initialLocale: 'en-US' })],
+        stubs: {
+          Teleport: true,
+          NodeFilters: true,
+          NodeList: true,
+          NodeCard: true,
+          NodePagination: true,
+        },
+      },
     });
 
-    it('renders profile preview header and picking actions in English', async () => {
-        const pinia = createPinia();
-        setActivePinia(pinia);
+    await flushPromises();
 
-        const wrapper = mount(NodePreviewModal, {
-            props: {
-                show: true,
-                profileId: 'profile-1',
-                profileName: 'CMSS',
-            },
-            global: {
-                plugins: [pinia, createI18n({ initialLocale: 'en-US' })],
-                stubs: {
-                    Teleport: true,
-                    NodeFilters: true,
-                    NodeList: true,
-                    NodeCard: true,
-                    NodePagination: true,
-                },
-            },
-        });
+    expect(wrapper.text()).toContain('CMSS');
+    expect(wrapper.text()).toContain('Profile node overview');
+    expect(wrapper.text()).toContain('Pick nodes');
+    expect(wrapper.text()).toContain('Nodes total');
+    expect(wrapper.text()).toContain('Protocol types');
+    expect(wrapper.text()).toContain('Regions');
+    expect(wrapper.text()).toContain('Total Pages');
+    expectNoChineseOrKeys(wrapper.text());
 
-        await flushPromises();
+    await wrapper.find('button').trigger('click');
 
-        expect(wrapper.text()).toContain('CMSS');
-        expect(wrapper.text()).toContain('Profile node overview');
-        expect(wrapper.text()).toContain('Pick nodes');
-        expect(wrapper.text()).toContain('Nodes total');
-        expect(wrapper.text()).toContain('Protocol types');
-        expect(wrapper.text()).toContain('Regions');
-        expect(wrapper.text()).toContain('Total Pages');
-        expectNoChineseOrKeys(wrapper.text());
+    expect(wrapper.text()).toContain('Exit picking');
+    expect(wrapper.text()).toContain('Picking mode');
+    expect(wrapper.text()).toContain('Selected');
+    expect(wrapper.text()).toContain('Select all');
+    expect(wrapper.text()).toContain('Clear');
+    expect(wrapper.text()).toContain('Save selection');
+    expectNoChineseOrKeys(wrapper.text());
+  });
 
-        await wrapper.find('button').trigger('click');
+  it('saves selected preview nodes as manual nodes without using a missing store action', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const dataStore = useDataStore();
 
-        expect(wrapper.text()).toContain('Exit picking');
-        expect(wrapper.text()).toContain('Picking mode');
-        expect(wrapper.text()).toContain('Selected');
-        expect(wrapper.text()).toContain('Select all');
-        expect(wrapper.text()).toContain('Clear');
-        expect(wrapper.text()).toContain('Save selection');
-        expectNoChineseOrKeys(wrapper.text());
+    const wrapper = mount(NodePreviewModal, {
+      props: {
+        show: true,
+        profileId: 'profile-1',
+        profileName: 'CMSS',
+      },
+      global: {
+        plugins: [pinia, createI18n({ initialLocale: 'en-US' })],
+        stubs: {
+          Teleport: true,
+          NodeFilters: true,
+          NodeList: true,
+          NodeCard: true,
+          NodePagination: true,
+        },
+      },
     });
 
-    it('saves selected preview nodes as manual nodes without using a missing store action', async () => {
-        const pinia = createPinia();
-        setActivePinia(pinia);
-        const dataStore = useDataStore();
+    await flushPromises();
 
-        const wrapper = mount(NodePreviewModal, {
-            props: {
-                show: true,
-                profileId: 'profile-1',
-                profileName: 'CMSS',
-            },
-            global: {
-                plugins: [pinia, createI18n({ initialLocale: 'en-US' })],
-                stubs: {
-                    Teleport: true,
-                    NodeFilters: true,
-                    NodeList: true,
-                    NodeCard: true,
-                    NodePagination: true,
-                },
-            },
-        });
+    const findButton = (label) => wrapper.findAll('button').find((button) => button.text().includes(label));
+    await findButton('Pick nodes').trigger('click');
+    await findButton('Select all').trigger('click');
+    await findButton('Save selection').trigger('click');
+    await flushPromises();
 
-        await flushPromises();
-
-        const findButton = (label) =>
-            wrapper.findAll('button').find((button) => button.text().includes(label));
-        await findButton('Pick nodes').trigger('click');
-        await findButton('Select all').trigger('click');
-        await findButton('Save selection').trigger('click');
-        await flushPromises();
-
-        expect(dataStore.subscriptions).toHaveLength(1);
-        expect(dataStore.subscriptions[0]).toMatchObject({
-            name: 'Demo HK',
-            url: 'vless://demo@example.com:443#Demo',
-            enabled: true,
-        });
-        expect(toastMock).toHaveBeenCalledWith(expect.stringContaining('1'), 'success');
-        expect(wrapper.text()).not.toContain('Picking mode');
+    expect(dataStore.subscriptions).toHaveLength(1);
+    expect(dataStore.subscriptions[0]).toMatchObject({
+      name: 'Demo HK',
+      url: 'vless://demo@example.com:443#Demo',
+      enabled: true,
     });
+    expect(toastMock).toHaveBeenCalledWith(expect.stringContaining('1'), 'success');
+    expect(wrapper.text()).not.toContain('Picking mode');
+  });
 });
