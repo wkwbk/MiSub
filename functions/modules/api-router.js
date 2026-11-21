@@ -28,7 +28,7 @@ import {
   handleSettingsSave,
   handleUpdatePassword,
 } from './api-handler.js';
-import { handleRuleTemplatesRequest } from './rule-template-handler.js';
+import { handleRuleTemplatesRequest } from './handlers/rule-template-handler.js';
 import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription-handler.js';
 import {
   handleBackupExport,
@@ -38,7 +38,7 @@ import {
   handleWebdavBackupStatus,
   handleWebdavBackupTest,
   handleWebdavRestore,
-} from './webdav-backup-handler.js';
+} from './handlers/webdav-backup-handler.js';
 import {
   handleDebugSubscriptionRequest,
   handleExportDataRequest,
@@ -62,7 +62,7 @@ import {
   handleGuestbookPost,
 } from './handlers/guestbook-handler.js';
 import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js'; // [NEW] Import handler
-import { handleParseSubscription } from './parse-subscription-handler.js';
+import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';

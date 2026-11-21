@@ -27,7 +27,7 @@ function createSettings(overrides = {}) {
         sort: false,
         list: false,
       },
-      ...(overrides.subconverter || {}),
+      ...overrides.subconverter,
     },
     ...overrides,
   };

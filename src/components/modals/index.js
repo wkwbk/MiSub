@@ -4,7 +4,6 @@
  */
 
 // 导入主模态框组件
-export { default as Login } from '@/components/modals/Login.vue';
 export { default as SettingsModal } from '@/components/modals/SettingsModal.vue';
 export { default as ProfileModal } from '@/components/modals/ProfileModal.vue';
 export { default as BulkImportModal } from '@/components/modals/BulkImportModal.vue';
@@ -26,7 +25,6 @@ export { useNodePreview } from '@/composables/useNodePreview.js';
 // 组件列表
 export const ModalComponents = {
   // 通用模态框
-  Login,
   SettingsModal,
   ProfileModal,
   BulkImportModal,

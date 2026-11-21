@@ -49,9 +49,9 @@ function mountWithStore(component, options = {}) {
       plugins: [pinia],
       stubs: {
         teleport: true,
-        ...(options.global?.stubs || {}),
+        ...options.global?.stubs,
       },
-      ...(options.global || {}),
+      ...options.global,
     },
   });
 }

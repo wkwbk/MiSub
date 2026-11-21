@@ -220,8 +220,6 @@ describe('SubscriptionPanel UX', () => {
       isSorting: true,
     });
 
-    const draggableComp = wrapper.findComponent({ name: 'draggable' });
-    const targetComp = draggableComp.exists() ? draggableComp : wrapper.find('.grid.gap-4');
     // Directly trigger via the stubbed draggable wrapper
     await wrapper.findAllComponents({ props: ['modelValue'] })[0]?.vm?.$emit('end', {
       oldIndex: 0,

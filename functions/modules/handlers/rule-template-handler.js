@@ -1,5 +1,5 @@
-import { StorageFactory } from '../storage-adapter.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+import { StorageFactory } from '../../storage-adapter.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
 export const STORAGE_KEY_RULE_TEMPLATES = 'misub_rule_templates_v1';
 const MAX_TEMPLATE_COUNT = 50;

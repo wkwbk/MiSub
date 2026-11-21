@@ -15,7 +15,7 @@ import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '@/utils/login-
 import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js'; // Lazy load components
 
 // Lazy load components
-const Login = defineAsyncComponent(() => import('@/components/modals/Login.vue'));
+const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 
 const route = useRoute();

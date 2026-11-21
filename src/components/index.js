@@ -68,7 +68,7 @@ export const ComponentMap = {
 
   // 模态框组件
   Modals: {
-    Login: () => import('@/components/modals/Login.vue'),
+    Login: () => import('@/views/LoginView.vue'),
     SettingsModal: () => import('@/components/modals/SettingsModal.vue'),
     ProfileModal: () => import('@/components/modals/ProfileModal.vue'),
     BulkImportModal: () => import('@/components/modals/BulkImportModal.vue'),

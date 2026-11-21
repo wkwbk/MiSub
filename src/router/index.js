@@ -106,7 +106,7 @@ const routes = [
     {
         path: '/login',
         name: 'Login',
-        component: () => import('@/components/modals/Login.vue'),
+        component: () => import('@/views/LoginView.vue'),
         meta: { titleKey: 'pageTitles.login', isPublic: false }
     },
     */

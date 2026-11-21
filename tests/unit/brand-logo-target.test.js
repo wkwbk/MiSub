@@ -37,7 +37,7 @@ async function mountWithPlugins(component, options = {}) {
     global: {
       plugins: [pinia, router],
       stubs: { NavActionGroup: true },
-      ...(options.global || {}),
+      ...options.global,
     },
     ...options,
   });

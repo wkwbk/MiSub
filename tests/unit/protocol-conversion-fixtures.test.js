@@ -7,7 +7,7 @@ import { extractValidNodes } from '../../functions/utils/node-parser.js';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
 
 const stripGeneratedFields = (proxy) => {
-  const { metadata, ...rest } = proxy;
+  const { metadata: _metadata, ...rest } = proxy;
   return rest;
 };
 

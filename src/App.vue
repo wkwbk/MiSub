@@ -20,7 +20,7 @@ import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import { readSessionPreference } from '@/utils/session-preference.js'; // Lazy components
 
 // Lazy components
-const Login = defineAsyncComponent(() => import('@/components/modals/Login.vue'));
+const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
 const Footer = defineAsyncComponent(() => import('@/components/layout/Footer.vue'));

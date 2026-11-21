@@ -12,13 +12,13 @@ const mountRenderer = (options) =>
     ...options,
     global: {
       plugins: [createPinia()],
-      ...(options.global || {}),
+      ...options.global,
     },
   });
 
 describe('CustomPublicRenderer iframe mode', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'warn').mockImplementation((message, ...args) => {
+    vi.spyOn(console, 'warn').mockImplementation((message) => {
       if (String(message).includes('Teleport target')) return;
       return undefined;
     });

@@ -6,7 +6,7 @@
 
 import { SettingsCache, StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
-import { performWebdavBackup } from './webdav-backup-handler.js';
+import { performWebdavBackup } from './handlers/webdav-backup-handler.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;

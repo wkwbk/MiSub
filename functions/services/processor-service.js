@@ -15,7 +15,7 @@ import {
 } from '../modules/subscription/template-pipeline.js';
 import { getBuiltinTemplate } from '../modules/subscription/builtin-template-registry.js';
 import { fetchTransformTemplate } from '../modules/subscription/transform-template-cache.js';
-import { resolveRuleTemplateSource } from '../modules/rule-template-handler.js';
+import { resolveRuleTemplateSource } from '../modules/handlers/rule-template-handler.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
 import * as yaml from 'js-yaml';
 import { urlsToClashProxies } from '../utils/url-to-clash.js';

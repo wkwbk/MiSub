@@ -44,7 +44,7 @@ ss://new@server2.com:8388`;
     bulkImport.handleBulkImport(importText, '');
 
     // 应该只添加了新节点，已存在的被跳过
-    const allNodes = dataStore.subscriptions.filter((s) => /^ss:\/\//.test(s.url));
+    const allNodes = dataStore.subscriptions.filter((s) => s.url.startsWith('ss://'));
     const urls = allNodes.map((n) => n.url);
 
     // 不应该重复添加 existing@server1.com
@@ -63,7 +63,7 @@ NewNode = ss, server3.com, 8388, encrypt-method=aes-256-gcm, password=newpass`;
     bulkImport.handleBulkImport(importText, '');
 
     // server1.com:443 已存在，不应重复添加
-    const allNodes = dataStore.subscriptions.filter((s) => s.url && /^ss:\/\//.test(s.url));
+    const allNodes = dataStore.subscriptions.filter((s) => s.url && s.url.startsWith('ss://'));
     const server1Nodes = allNodes.filter((n) => n.url.includes('server1.com') && n.url.includes('443'));
 
     // 应该只有一个 server1.com:443

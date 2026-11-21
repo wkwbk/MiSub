@@ -7,11 +7,11 @@
  * - WebDAV credentials and runtime secrets are never written into backup payloads.
  */
 
-import { utf8ToBase64 } from '../../shared/base64.js';
-import { SettingsCache, StorageFactory } from '../storage-adapter.js';
-import { STORAGE_KEY_SETTINGS } from './config.js';
+import { utf8ToBase64 } from '../../../shared/base64.js';
+import { SettingsCache, StorageFactory } from '../../storage-adapter.js';
+import { STORAGE_KEY_SETTINGS } from '../config.js';
 import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
 export const BACKUP_TYPE = 'misub-backup';
 export const BACKUP_VERSION = 1;

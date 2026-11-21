@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
-import Login from '@/components/modals/Login.vue';
+import Login from '@/views/LoginView.vue';
 import { createI18n } from '@/i18n/index.js';
 
 describe('Login password input autofocus', () => {
