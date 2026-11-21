@@ -22,6 +22,7 @@ import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './con
 import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
+import { syncTelegramPushBot } from './handlers/telegram/client.js';
 
 function normalizeProfile(profile = {}) {
   const normalized = { ...profile };
@@ -396,12 +397,35 @@ export async function handleSettingsSave(request, env) {
     // 否则会漏掉必要的缓存失效。
     const preferencesOnly = request.headers.get('x-misub-save-scope') === 'preferences';
 
+    let telegramSync = null;
+
     if (!preferencesOnly) {
       // 清除节点缓存（设置变更可能影响节点处理逻辑）
       try {
         await clearAllNodeCaches(storageAdapter);
       } catch (cacheError) {
         console.warn('[API] Failed to clear node caches:', cacheError.message);
+      }
+
+      const oldPush = oldSettings.telegram_push_config || {};
+      const newPush = finalSettings.telegram_push_config || {};
+      const pushConfigChanged =
+        Boolean(oldPush.enabled) !== Boolean(newPush.enabled) ||
+        String(oldPush.bot_token || '').trim() !== String(newPush.bot_token || '').trim() ||
+        String(oldPush.webhook_secret || '').trim() !== String(newPush.webhook_secret || '').trim();
+
+      if (pushConfigChanged && newPush.enabled && String(newPush.bot_token || '').trim()) {
+        try {
+          const origin = new URL(request.url).origin;
+          telegramSync = await syncTelegramPushBot(newPush, origin);
+        } catch (syncError) {
+          console.warn('[API] Failed to sync Telegram Push Bot:', syncError?.message || syncError);
+          telegramSync = {
+            attempted: true,
+            success: false,
+            error: syncError?.message || 'Telegram sync failed',
+          };
+        }
       }
 
       const message = `⚙️ *MiSub 设置更新* ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
@@ -412,6 +436,7 @@ export async function handleSettingsSave(request, env) {
       success: true,
       message: '设置已保存',
       data: redactSettingsForResponse(finalSettings),
+      ...(telegramSync ? { telegramSync } : {}),
     });
   } catch {
     return createErrorResponse('保存设置失败', 500);

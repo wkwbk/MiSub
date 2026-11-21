@@ -1176,15 +1176,23 @@ export default {
       'Only enable this when you explicitly need to allow any Telegram user. When enabled, an empty allowlist no longer blocks requests.',
     telegramWebhookUrlHint: 'Telegram sends updates to this address.',
     telegramSetWebhookLink: 'setWebhook link',
-    telegramSetWebhookHint: 'Open it in a browser after copying. {ok:true} means setup succeeded.',
+    telegramSetWebhookHint:
+      'Saving settings automatically syncs the command menu and webhook. You can also copy and open this link manually ({ok:true} means success).',
     telegramSetWebhookEmpty: 'Enter `Push Bot Token` and a valid `Webhook Secret` to generate the setWebhook link.',
+    telegramSyncBot: 'Sync Bot menu & webhook',
+    telegramSyncing: 'Syncing...',
+    telegramSyncSuccess: 'Bot command menu and webhook synced.',
+    telegramSyncCommandsOnlySuccess: 'Bot command menu synced (webhook requires an HTTPS origin and valid secret).',
+    telegramSyncFailed: 'Bot sync failed',
+    savedTelegramSyncFailed: 'Settings saved, but Telegram Bot menu/webhook sync failed. Please retry manually.',
     telegramSetupSteps: 'Setup steps',
     telegramUsageGuide: 'Usage guide',
     telegramSetupStep1: 'Create a separate Push Bot in BotFather and enter the `Push Bot Token` above.',
     telegramSetupStep2:
       'Generate a random string containing only letters, numbers, underscores, or hyphens, then enter it as `Webhook Secret`.',
     telegramSetupStep3: 'Enter allowed Telegram user IDs. If empty, the backend rejects all requests.',
-    telegramSetupStep4: 'Copy the generated `setWebhook` link above and open it once.',
+    telegramSetupStep4:
+      'Click "Save Changes" to automatically register the command menu and webhook (or use "Sync Bot menu & webhook" above anytime).',
     telegramUsageCommands: 'Common commands: `/start`, `/help`, `/menu`, `/list`, `/stats`, `/bind`, `/unbind`.',
     telegramUsageImport: 'You can also send node links or subscription links directly to the bot for import.',
     telegramUsageIsolation:

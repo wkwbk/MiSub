@@ -181,6 +181,11 @@ export async function handleApiRequest(request, env, context = null) {
     return await handleTestNotificationRequest(request, env);
   }
 
+  if (path === '/telegram/setup') {
+    const { handleTelegramSetupRequest } = await import('./handlers/telegram/client.js');
+    return await handleTelegramSetupRequest(request, env);
+  }
+
   switch (path) {
     case '/misubs':
       return await handleMisubsSave(request, env, context);

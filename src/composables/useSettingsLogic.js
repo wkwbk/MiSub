@@ -150,7 +150,11 @@ export function useSettingsLogic() {
 
       const result = await saveSettings(settingsToSave);
       if (result.success) {
-        showToast(t('settings.savedReloading'), 'success');
+        if (result.telegramSync?.attempted && !result.telegramSync.success) {
+          showToast(t('settings.savedTelegramSyncFailed'), 'warning');
+        } else {
+          showToast(t('settings.savedReloading'), 'success');
+        }
         clearReloadTimer();
         restartCountdown.value = 3;
         reloadTimer = setInterval(() => {

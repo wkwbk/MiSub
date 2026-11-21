@@ -79,6 +79,8 @@ const showSetupGuide = ref(false);
 const showUsageGuide = ref(false);
 const isTesting = ref(false);
 const testResult = ref(null);
+const isSyncingBot = ref(false);
+const syncBotResult = ref(null);
 
 async function copyText(value, key) {
   if (!value) return;
@@ -127,6 +129,48 @@ async function testNotification() {
     };
   } finally {
     isTesting.value = false;
+  }
+}
+
+async function syncPushBot() {
+  const botToken = telegramPushConfig.value.bot_token?.trim();
+  if (!botToken) return;
+
+  isSyncingBot.value = true;
+  syncBotResult.value = null;
+
+  try {
+    const response = await fetch('/api/telegram/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        botToken,
+        webhookSecret: webhookSecret.value,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      const webhookSkipped = Boolean(data.webhook?.skipped);
+      syncBotResult.value = {
+        success: true,
+        message: webhookSkipped ? t('settings.telegramSyncCommandsOnlySuccess') : t('settings.telegramSyncSuccess'),
+        detail: data,
+      };
+    } else {
+      syncBotResult.value = {
+        success: false,
+        message: data.error || t('settings.telegramSyncFailed'),
+        detail: data,
+      };
+    }
+  } catch (error) {
+    syncBotResult.value = {
+      success: false,
+      message: error.message || t('settings.telegramRequestFailed'),
+    };
+  } finally {
+    isSyncingBot.value = false;
   }
 }
 </script>
@@ -340,6 +384,39 @@ async function testNotification() {
           <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
           <span>{{ t('settings.telegramSetWebhookEmpty') }}</span>
         </p>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <button
+            :disabled="isSyncingBot || !telegramPushConfig.bot_token?.trim()"
+            class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            type="button"
+            @click="syncPushBot"
+          >
+            <Loader2 v-if="isSyncingBot" class="animate-spin h-4 w-4 text-fg-subtle" />
+            <span>{{ isSyncingBot ? t('settings.telegramSyncing') : t('settings.telegramSyncBot') }}</span>
+          </button>
+
+          <div
+            v-if="syncBotResult"
+            :class="syncBotResult.success ? 'text-emerald-400' : 'text-red-400'"
+            class="text-xs flex items-center gap-2 flex-wrap"
+          >
+            <span
+              :class="syncBotResult.success ? 'bg-emerald-500' : 'bg-red-500'"
+              class="h-1.5 w-1.5 rounded-full shrink-0"
+            ></span>
+            <span>{{ syncBotResult.message }}</span>
+            <details
+              v-if="syncBotResult.detail && !syncBotResult.success"
+              class="w-full mt-1 text-xs font-mono bg-inset border border-line p-2 rounded-md max-h-32 overflow-auto"
+            >
+              <summary class="cursor-pointer text-fg-subtle">
+                {{ t('settings.telegramDetails') }}
+              </summary>
+              <pre>{{ JSON.stringify(syncBotResult.detail, null, 2) }}</pre>
+            </details>
+          </div>
+        </div>
 
         <div class="flex flex-wrap gap-2.5">
           <button
