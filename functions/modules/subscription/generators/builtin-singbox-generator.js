@@ -3,8 +3,8 @@
  * 将节点 URL 列表转换为基础可用的 sing-box JSON 配置。
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
-import { getUniqueName } from './name-utils.js';
+import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
+import { getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
@@ -13,8 +13,8 @@ import {
   getSingboxDnsRuleSet,
   POLICY_GROUPS,
   pruneProxyGroups,
-} from './builtin-rules-provider.js';
-import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from './safe-dns.js';
+} from '../builtin-rules-provider.js';
+import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
 
 function cleanControlChars(str) {
   if (typeof str !== 'string') return str;

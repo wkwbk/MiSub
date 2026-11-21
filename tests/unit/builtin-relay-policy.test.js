@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
-import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/builtin-surge-generator.js';
-import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/builtin-loon-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
-import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/builtin-quanx-generator.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
+import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/generators/builtin-surge-generator.js';
+import { generateBuiltinLoonConfig } from '../../functions/modules/subscription/generators/builtin-loon-generator.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
+import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/generators/builtin-quanx-generator.js';
 
 const RELAY_NODE_LIST = [
   'trojan://pass@hk.example.com:443?sni=hk.example.com#香港入口-HK-01',

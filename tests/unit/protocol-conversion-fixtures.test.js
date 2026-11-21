@@ -4,7 +4,7 @@ import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
 import { extractValidNodes } from '../../functions/utils/node-parser.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
 
 const stripGeneratedFields = (proxy) => {
   const { metadata: _metadata, ...rest } = proxy;

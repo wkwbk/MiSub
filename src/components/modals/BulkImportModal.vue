@@ -11,7 +11,7 @@ import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import { api } from '@/lib/http.js';
 import { generateNodeId } from '@/utils/id.js';
-import { readFilesAsText } from '@/utils/importFile.js';
+import { readFilesAsText } from '@/utils/import-file.js';
 import { buildAutoTagName } from '@/utils/auto-tag-name.js';
 import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
 import { cleanNodeUrl } from '@/lib/utils.js';

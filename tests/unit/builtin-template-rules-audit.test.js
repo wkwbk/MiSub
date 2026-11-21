@@ -9,7 +9,7 @@ import {
   REMOTE_SOURCES,
 } from '../../functions/modules/subscription/builtin-rules-provider.js';
 import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/builtin-singbox-generator.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
 import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
 import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.js';
 import * as yaml from 'js-yaml';

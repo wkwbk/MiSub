@@ -27,7 +27,7 @@ vi.mock('@/lib/api.js', () => ({
   batchUpdateNodes: vi.fn(),
 }));
 
-vi.mock('@/utils/errorHandler.js', () => ({
+vi.mock('@/utils/error-handler.js', () => ({
   handleError: vi.fn(),
 }));
 

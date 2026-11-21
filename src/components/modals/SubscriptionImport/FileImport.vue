@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n/index.js';
  */
 import { computed, ref } from 'vue';
 import { CloudUpload, Loader2 } from '@lucide/vue';
-import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/importFile.js';
+import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/import-file.js';
 
 const { t } = useI18n();
 

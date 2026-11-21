@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
 import { extractValidNodes } from '../../functions/utils/node-parser.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/builtin-clash-generator.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
 
 const realmProxyYaml = `
 proxies:

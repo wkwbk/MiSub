@@ -3,15 +3,15 @@
  * 输出格式对齐项目中的 Quantumult X parser，确保可解析回节点 URL。
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
-import { getUniqueName } from './name-utils.js';
+import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
+import { getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   getBuiltinRules,
   POLICY_GROUPS,
   pruneProxyGroups,
-} from './builtin-rules-provider.js';
+} from '../builtin-rules-provider.js';
 
 const ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
 

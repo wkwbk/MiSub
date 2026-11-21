@@ -10,15 +10,15 @@
  * 5. 完善的 [General] 与 [Rule] 规则
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
-import { getUniqueName } from './name-utils.js';
+import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
+import { getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   getBuiltinRules,
   POLICY_GROUPS,
   pruneProxyGroups,
-} from './builtin-rules-provider.js';
+} from '../builtin-rules-provider.js';
 
 /**
  * 清理控制字符

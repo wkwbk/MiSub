@@ -4,10 +4,10 @@
  * 支持 dialer-proxy、reality-opts 等特殊参数
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
-import { getUniqueName } from './name-utils.js';
-import { isMetaCore } from './user-agent-utils.js';
-import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from './safe-dns.js';
+import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
+import { getUniqueName } from '../name-utils.js';
+import { isMetaCore } from '../user-agent-utils.js';
+import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
@@ -15,7 +15,7 @@ import {
   getRemoteProviderDefinitions,
   POLICY_GROUPS,
   pruneProxyGroups,
-} from './builtin-rules-provider.js';
+} from '../builtin-rules-provider.js';
 import * as yaml from 'js-yaml';
 
 /**

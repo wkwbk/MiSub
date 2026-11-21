@@ -15,7 +15,7 @@ vi.mock('@/lib/http.js', () => ({
 vi.mock('@/router', () => ({
   default: { push: vi.fn() },
 }));
-vi.mock('@/utils/errorHandler.js', () => ({
+vi.mock('@/utils/error-handler.js', () => ({
   handleError: vi.fn(),
 }));
 

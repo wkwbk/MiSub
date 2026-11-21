@@ -5,7 +5,7 @@ import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 import { generateNodeId, generateSubscriptionId } from '@/utils/id.js';
 import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@/constants/nodeProtocols.js';
 import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
-import { parseSurgeConfig } from '@/utils/protocolConverter.js';
+import { parseSurgeConfig } from '@/utils/protocol-converter.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
 

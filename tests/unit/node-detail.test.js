@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNodeDetail } from '../../src/utils/nodeDetail.js';
+import { parseNodeDetail } from '../../src/utils/node-detail.js';
 
 describe('parseNodeDetail', () => {
   it('parses VLESS Reality link into structured sections, YAML, and JSON', () => {

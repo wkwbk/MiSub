@@ -7,14 +7,14 @@
  * 注意：Surge 不支持 VLESS 协议，VLESS 节点会被跳过
  */
 
-import { urlsToClashProxies } from '../../utils/url-to-clash.js';
-import { getUniqueName } from './name-utils.js';
+import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
+import { getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   getBuiltinRules,
   POLICY_GROUPS,
-} from './builtin-rules-provider.js';
+} from '../builtin-rules-provider.js';
 
 /**
  * 清理字符串中的控制字符（保留换行和制表符）

@@ -26,7 +26,7 @@ import { describe, expect, it } from 'vitest';
 import { messages } from '@/i18n/messages.js';
 import { setLocale, t } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
-import { ErrorHandler } from '@/utils/errorHandler.js';
+import { ErrorHandler } from '@/utils/error-handler.js';
 
 const handler = new ErrorHandler();
 

@@ -1,9 +1,9 @@
-import { generateBuiltinClashConfig } from './builtin-clash-generator.js';
-import { generateBuiltinSurgeConfig } from './builtin-surge-generator.js';
-import { generateBuiltinLoonConfig } from './builtin-loon-generator.js';
-import { generateBuiltinQuanxConfig } from './builtin-quanx-generator.js';
-import { generateBuiltinSingboxConfig } from './builtin-singbox-generator.js';
-import { generateBuiltinEgernConfig } from './builtin-egern-generator.js';
+import { generateBuiltinClashConfig } from './generators/builtin-clash-generator.js';
+import { generateBuiltinSurgeConfig } from './generators/builtin-surge-generator.js';
+import { generateBuiltinLoonConfig } from './generators/builtin-loon-generator.js';
+import { generateBuiltinQuanxConfig } from './generators/builtin-quanx-generator.js';
+import { generateBuiltinSingboxConfig } from './generators/builtin-singbox-generator.js';
+import { generateBuiltinEgernConfig } from './generators/builtin-egern-generator.js';
 
 export function transformBuiltinSubscription(nodeList, targetFormat, options = {}) {
   const normalized = (targetFormat || '').toLowerCase();

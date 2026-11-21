@@ -1,5 +1,5 @@
-import { getBuiltinTemplate } from './builtin-template-registry.js';
-import { renderEgernFromIniTemplate } from './template-pipeline.js';
+import { getBuiltinTemplate } from '../builtin-template-registry.js';
+import { renderEgernFromIniTemplate } from '../template-pipeline.js';
 
 export function generateBuiltinEgernConfig(nodeList, options = {}) {
   const templateEntry = getBuiltinTemplate('clash_misub_minimal') || getBuiltinTemplate('clash_acl4ssr_lite');

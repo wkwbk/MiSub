@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '@/utils/errorHandler.js';
+import { ErrorHandler } from '@/utils/error-handler.js';
 import { messages } from '@/i18n/messages.js';
 import { setLocale } from '@/i18n/index.js';
 
@@ -86,7 +86,7 @@ describe('errorHandler ↔ 服务端错误消息契约', () => {
   });
 
   it('客户端侧不该出现「服务端标识符」的本地化版本', () => {
-    const clientSource = ['src/utils/errorHandler.js']
+    const clientSource = ['src/utils/error-handler.js']
       .map((rel) => readFileSync(path.resolve(__dirname, '../..', rel), 'utf8'))
       .join('\n');
 

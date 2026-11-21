@@ -4,7 +4,7 @@ import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
 import { useToastStore } from '@/stores/toast.js';
 import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
-import { handleError } from '@/utils/errorHandler.js';
+import { handleError } from '@/utils/error-handler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
 import { useListPagination } from '@/composables/useListPagination.js';

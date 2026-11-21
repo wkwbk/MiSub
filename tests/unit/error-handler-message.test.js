@@ -8,7 +8,7 @@
  * 而真实原因是发版后旧页面请求了已删除的资源，检查网络永远解决不了。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '@/utils/errorHandler.js';
+import { ErrorHandler } from '@/utils/error-handler.js';
 import { messages } from '@/i18n/messages.js';
 import { setLocale } from '@/i18n/index.js';
 

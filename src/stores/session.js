@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import router from '@/router';
 import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api';
 import { api } from '@/lib/http.js';
-import { handleError } from '@/utils/errorHandler.js';
+import { handleError } from '@/utils/error-handler.js';
 import { useDataStore } from '@/stores/useDataStore';
 import { t } from '@/i18n/index.js';
 import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
