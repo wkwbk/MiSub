@@ -39,6 +39,38 @@ const handleCardClick = (node) => {
     emit('toggle-select', node.url);
   }
 };
+
+const getProtocolDot = (protocol) => {
+  switch (String(protocol || '').toLowerCase()) {
+    case 'vless':
+      return 'bg-sky-500';
+    case 'hysteria2':
+    case 'hy2':
+      return 'bg-purple-500';
+    case 'hysteria':
+    case 'hy':
+      return 'bg-fuchsia-500';
+    case 'tuic':
+      return 'bg-cyan-500';
+    case 'trojan':
+      return 'bg-red-500';
+    case 'ssr':
+      return 'bg-rose-500';
+    case 'ss':
+      return 'bg-amber-500';
+    case 'vmess':
+      return 'bg-emerald-500';
+    case 'socks5':
+    case 'socks':
+      return 'bg-lime-500';
+    case 'snell':
+      return 'bg-indigo-500';
+    case 'anytls':
+      return 'bg-zinc-400';
+    default:
+      return 'bg-zinc-500';
+  }
+};
 </script>
 
 <template>
@@ -53,11 +85,11 @@ const handleCardClick = (node) => {
             ? 'border-line-strong bg-active cursor-pointer'
             : ['border-line bg-inset hover:bg-hover hover:border-line-strong', selectionMode ? 'cursor-pointer' : '']
         "
-        class="flex items-center justify-between rounded-md border p-3.5 transition-colors duration-150"
+        class="flex items-center justify-between gap-2 rounded-md border p-3 transition-colors duration-150"
         @click="handleCardClick(node)"
       >
         <!-- 左侧：图标与信息 -->
-        <div class="flex items-center gap-3 flex-1 min-w-0">
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
           <!-- Selection Checkbox -->
           <div v-if="selectionMode" class="flex-shrink-0">
             <div
@@ -68,18 +100,28 @@ const handleCardClick = (node) => {
             </div>
           </div>
 
-          <div class="flex flex-col min-w-0">
-            <h4 class="truncate text-xs font-semibold text-fg mb-1">
+          <div class="flex flex-col min-w-0 flex-1">
+            <h4 :title="parseNodeInfo(node).name" class="truncate text-xs font-semibold text-fg mb-1.5">
               {{ parseNodeInfo(node).name }}
             </h4>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 min-w-0">
               <span
-                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm uppercase border border-line bg-surface text-fg-muted"
+                class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
               >
+                <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
                 {{ parseNodeInfo(node).protocol }}
               </span>
-              <span class="truncate text-[11px] text-fg-subtle font-mono">
-                {{ parseNodeInfo(node).server.split('.').slice(-2).join('.') }}:{{ parseNodeInfo(node).port }}
+              <span
+                v-if="parseNodeInfo(node).region"
+                class="inline-flex h-5 max-w-[84px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-[10px] font-medium leading-none text-fg-muted"
+              >
+                <span class="truncate">{{ parseNodeInfo(node).region }}</span>
+              </span>
+              <span
+                :title="`${parseNodeInfo(node).server}:${parseNodeInfo(node).port}`"
+                class="min-w-0 flex-1 truncate text-[11px] text-fg-subtle font-mono"
+              >
+                {{ parseNodeInfo(node).server }}:{{ parseNodeInfo(node).port }}
               </span>
             </div>
             <NodeClientBadges :url="node.url" class="mt-1.5" compact />
@@ -137,35 +179,39 @@ const handleCardClick = (node) => {
 
         <div class="flex flex-col h-full">
           <!-- 节点名称和协议标签 -->
-          <div class="flex items-start justify-between gap-3 mb-3">
+          <div class="flex items-start justify-between gap-3 mb-2.5">
             <div class="min-w-0 flex-1">
-              <h4 class="text-sm font-semibold text-fg truncate">
-                {{ parseNodeInfo(node).name }}
-              </h4>
-              <div class="flex flex-wrap gap-1.5 mt-2">
+              <div class="flex items-center gap-1.5 mb-2 overflow-hidden">
                 <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-line bg-surface text-fg-muted"
+                  class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
                 >
+                  <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
                   {{ parseNodeInfo(node).protocol }}
                 </span>
                 <span
-                  class="inline-flex items-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-line bg-surface text-fg-muted"
+                  :title="parseNodeInfo(node).region || 'UNKNOWN'"
+                  class="inline-flex h-5 max-w-[120px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-[10px] font-medium leading-none text-fg-muted"
                 >
-                  {{ parseNodeInfo(node).region || 'UNKNOWN' }}
+                  <span class="truncate">{{ parseNodeInfo(node).region || 'UNKNOWN' }}</span>
                 </span>
               </div>
+              <h4 :title="parseNodeInfo(node).name" class="text-sm font-semibold text-fg truncate">
+                {{ parseNodeInfo(node).name }}
+              </h4>
             </div>
           </div>
 
           <!-- 客户端兼容性 -->
-          <NodeClientBadges :url="node.url" class="mb-3" />
+          <NodeClientBadges :url="node.url" class="mb-3" compact />
 
           <!-- 服务器信息 -->
-          <div class="mt-auto pt-3 border-t border-line">
-            <div class="flex items-center justify-between">
-              <div class="min-w-0">
-                <div class="text-[10px] text-fg-subtle mb-0.5 font-medium uppercase tracking-wider">Endpoint</div>
-                <div class="text-xs font-mono text-fg-muted truncate">
+          <div class="mt-auto pt-2.5 border-t border-line">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <div
+                  :title="`${parseNodeInfo(node).server}:${parseNodeInfo(node).port}`"
+                  class="text-xs font-mono text-fg-subtle truncate"
+                >
                   {{ parseNodeInfo(node).server }}:{{ parseNodeInfo(node).port }}
                 </div>
               </div>

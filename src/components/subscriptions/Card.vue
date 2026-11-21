@@ -252,7 +252,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
     <div class="relative z-10 flex flex-col h-full">
       <!-- Header -->
       <div class="flex items-center justify-between gap-2">
-        <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+        <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
           <!-- Selection Checkbox -->
           <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
             <div
@@ -265,33 +265,33 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
 
           <span
             :class="protocolStyle.style"
-            class="inline-flex items-center gap-1.5 shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider"
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border px-2 text-[10px] font-mono leading-none uppercase tracking-wider"
           >
-            <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full"></span>
+            <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
             {{ protocolStyle.text }}
           </span>
 
           <!-- Tags -->
           <div
             v-if="subTags.length > 0"
-            class="flex flex-wrap items-center gap-1.5"
+            class="flex min-w-0 items-center gap-1.5 overflow-hidden"
             data-testid="subscription-card-tags"
           >
             <button
               v-for="tag in visibleTags"
               :key="tag"
               :title="tag"
-              class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+              class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
               data-testid="subscription-tag-badge"
               type="button"
               @click.stop="emit('filter-tag', tag)"
             >
-              {{ tag }}
+              <span class="truncate">{{ tag }}</span>
             </button>
             <span
               v-if="overflowCount > 0"
               :title="subTags.join(', ')"
-              class="shrink-0 rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-fg-subtle"
+              class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
             >
               +{{ overflowCount }}
             </span>
@@ -300,9 +300,9 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           <span
             v-if="expiryInfo"
             :class="expiryInfo.style"
-            class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono"
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none"
           >
-            <span :class="expiryInfo.dot" class="h-1.5 w-1.5 rounded-full"></span>
+            <span :class="expiryInfo.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
             {{ expiryInfo.daysRemaining }}
           </span>
         </div>
@@ -433,7 +433,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
       <!-- Traffic & Node Count -->
       <div
         v-if="trafficInfo"
-        class="grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5"
+        class="mb-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5"
       >
         <div class="space-y-1.5">
           <div class="flex items-end justify-between text-xs">
@@ -463,7 +463,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
       </div>
       <div
         v-else
-        class="flex items-center justify-between gap-2 rounded-md border border-line/70 bg-transparent px-3 py-2 text-xs"
+        class="mb-2.5 flex items-center justify-between gap-2 rounded-md border border-line/70 bg-transparent px-3 py-2 text-xs"
       >
         <span class="text-fg-subtle">{{ t('subscriptions.noTrafficData') }}</span>
         <span class="font-mono font-semibold text-fg">
@@ -478,7 +478,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
       <!-- Footer Actions -->
       <div
         :class="{ 'pointer-events-none': isSelectionMode }"
-        class="mt-2.5 flex items-center justify-between gap-3 border-t border-line pt-2.5"
+        class="mt-auto flex items-center justify-between gap-3 border-t border-line pt-2.5"
       >
         <Switch
           v-model="misub.enabled"

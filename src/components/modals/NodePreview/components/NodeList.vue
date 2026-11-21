@@ -39,6 +39,38 @@ const handleRowClick = (node) => {
     emit('toggle-select', node.url);
   }
 };
+
+const getProtocolDot = (protocol) => {
+  switch (String(protocol || '').toLowerCase()) {
+    case 'vless':
+      return 'bg-sky-500';
+    case 'hysteria2':
+    case 'hy2':
+      return 'bg-purple-500';
+    case 'hysteria':
+    case 'hy':
+      return 'bg-fuchsia-500';
+    case 'tuic':
+      return 'bg-cyan-500';
+    case 'trojan':
+      return 'bg-red-500';
+    case 'ssr':
+      return 'bg-rose-500';
+    case 'ss':
+      return 'bg-amber-500';
+    case 'vmess':
+      return 'bg-emerald-500';
+    case 'socks5':
+    case 'socks':
+      return 'bg-lime-500';
+    case 'snell':
+      return 'bg-indigo-500';
+    case 'anytls':
+      return 'bg-zinc-400';
+    default:
+      return 'bg-zinc-500';
+  }
+};
 </script>
 
 <template>
@@ -60,13 +92,13 @@ const handleRowClick = (node) => {
               <div class="col-span-3 hidden sm:block">
                 {{ t('nodePreview.columnServer') }}
               </div>
-              <div class="col-span-2 hidden md:block text-center">
+              <div class="col-span-1 hidden md:block text-center">
                 {{ t('nodePreview.columnPort') }}
               </div>
               <div class="col-span-1 hidden sm:block text-center">
                 {{ t('nodePreview.columnType') }}
               </div>
-              <div class="col-span-1 hidden sm:block text-center">
+              <div class="col-span-2 hidden sm:block text-center">
                 {{ t('nodePreview.columnRegion') }}
               </div>
               <div class="col-span-1 text-center">
@@ -87,7 +119,7 @@ const handleRowClick = (node) => {
               class="group border-b last:border-b-0 border-line odd:bg-inset even:bg-surface/60 hover:bg-hover transition-colors"
               @click="handleRowClick(node)"
             >
-              <div class="grid min-h-[3.25rem] grid-cols-12 gap-2 px-4 py-2.5 items-center">
+              <div class="grid min-h-[3rem] grid-cols-12 gap-2 px-4 py-2 items-center">
                 <!-- Checkbox (Selection Mode Only) -->
                 <div v-if="selectionMode" class="col-span-1 flex justify-center">
                   <div
@@ -101,51 +133,43 @@ const handleRowClick = (node) => {
                 </div>
 
                 <!-- 节点名称 -->
-                <div :class="selectionMode ? 'col-span-3' : 'col-span-4'">
-                  <span
-                    :title="parseNodeInfo(node).name"
-                    class="text-xs font-medium text-fg block overflow-hidden"
-                    style="text-overflow: ellipsis; white-space: nowrap"
-                  >
+                <div :class="selectionMode ? 'col-span-3' : 'col-span-4'" class="min-w-0">
+                  <span :title="parseNodeInfo(node).name" class="block truncate text-xs font-medium text-fg">
                     {{ parseNodeInfo(node).name }}
                   </span>
                 </div>
 
                 <!-- 服务器 (桌面端) -->
-                <div class="col-span-3 hidden sm:block">
-                  <span
-                    :title="parseNodeInfo(node).server"
-                    class="text-xs text-fg-subtle font-mono block overflow-hidden"
-                    style="text-overflow: ellipsis; white-space: nowrap"
-                  >
+                <div class="col-span-3 hidden min-w-0 sm:block">
+                  <span :title="parseNodeInfo(node).server" class="block truncate font-mono text-xs text-fg-subtle">
                     {{ parseNodeInfo(node).server }}
                   </span>
                 </div>
 
                 <!-- 端口 (桌面端) -->
-                <div class="col-span-2 hidden md:block text-center">
-                  <span class="text-xs text-fg-subtle font-mono block" style="min-width: 50px">
+                <div class="col-span-1 hidden md:block text-center">
+                  <span class="block truncate font-mono text-xs text-fg-subtle">
                     {{ parseNodeInfo(node).port }}
                   </span>
                 </div>
 
                 <!-- 类型 (桌面端) -->
-                <div class="col-span-1 hidden sm:block flex justify-center">
+                <div class="col-span-1 hidden sm:flex justify-center">
                   <span
-                    class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-mono font-medium uppercase border border-line text-fg-muted"
-                    style="min-width: 60px"
+                    class="inline-flex h-5 max-w-full items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
                   >
-                    {{ parseNodeInfo(node).protocol }}
+                    <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
+                    <span class="truncate">{{ parseNodeInfo(node).protocol }}</span>
                   </span>
                 </div>
 
                 <!-- 地区 (桌面端) -->
-                <div class="col-span-1 hidden sm:block flex justify-center">
+                <div class="col-span-2 hidden sm:flex justify-center">
                   <span
-                    class="inline-flex items-center justify-center px-2 py-0.5 rounded-sm text-[10px] font-medium border border-line text-fg-muted"
-                    style="min-width: 60px"
+                    :title="parseNodeInfo(node).region"
+                    class="inline-flex h-5 max-w-full items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted"
                   >
-                    {{ parseNodeInfo(node).region }}
+                    <span class="truncate">{{ parseNodeInfo(node).region }}</span>
                   </span>
                 </div>
 

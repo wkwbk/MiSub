@@ -64,11 +64,11 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         'cursor-pointer': isSelectionMode,
       },
     ]"
-    class="group flex flex-col rounded-md border p-4 hover:-translate-y-1 hover:z-10 transition-all duration-200"
+    class="group flex h-full flex-col rounded-md border p-3.5 hover:-translate-y-0.5 hover:z-10 transition-all duration-200"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
-    <div class="flex items-center justify-between gap-3">
-      <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
         <!-- Selection Checkbox -->
         <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
           <div
@@ -80,28 +80,32 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         </div>
 
         <span
-          class="shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
         >
           {{ t('profiles.badge') }}
         </span>
 
         <!-- Tags -->
-        <div v-if="profileTags.length > 0" class="flex flex-wrap items-center gap-1.5" data-testid="profile-card-tags">
+        <div
+          v-if="profileTags.length > 0"
+          class="flex min-w-0 items-center gap-1.5 overflow-hidden"
+          data-testid="profile-card-tags"
+        >
           <button
             v-for="tag in visibleTags"
             :key="tag"
             :title="tag"
-            class="max-w-[96px] sm:max-w-[110px] shrink-0 truncate rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+            class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
             data-testid="profile-tag-badge"
             type="button"
             @click.stop="emit('filter-tag', tag)"
           >
-            {{ tag }}
+            <span class="truncate">{{ tag }}</span>
           </button>
           <span
             v-if="overflowCount > 0"
             :title="profileTags.join(', ')"
-            class="shrink-0 rounded-md border border-line bg-transparent px-1.5 py-0.5 text-[10px] font-mono text-fg-subtle"
+            class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
           >
             +{{ overflowCount }}
           </span>
@@ -109,16 +113,16 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
         <span
           v-if="!isEnabled"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-zinc-500"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-zinc-500 shrink-0"></span>
           {{ t('profiles.disabled') }}
         </span>
         <span
           v-else-if="isPublic"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
         >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
           {{ t('profiles.public') }}
         </span>
       </div>
@@ -189,7 +193,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
     <div
       :class="{ 'pointer-events-none': isSelectionMode }"
-      class="mt-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5 text-xs"
+      class="mt-2.5 mb-3 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5 text-xs"
     >
       <div class="flex items-center justify-between gap-3 text-fg-muted">
         <span class="shrink-0">{{ t('profiles.enabledStatus') }}</span>
@@ -211,7 +215,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
     <div
       :class="{ 'pointer-events-none': isSelectionMode }"
-      class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"
+      class="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line pt-2.5"
     >
       <div class="flex items-center gap-2 sm:gap-4">
         <button
