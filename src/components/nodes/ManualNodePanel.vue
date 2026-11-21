@@ -20,6 +20,10 @@ const props = defineProps({
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
   isPingingAll: { type: Boolean, default: false },
+  nodeInspectMap: { type: Object, default: () => ({}) },
+  isInspectingNodes: { type: Boolean, default: false },
+  stackByIp: { type: Boolean, default: true },
+  pingMode: { type: String, default: 'local' },
   compactGrid: { type: Boolean, default: false },
 });
 
@@ -43,6 +47,10 @@ const emit = defineEmits([
   'batch-delete-nodes',
   'ping',
   'ping-all',
+  'ping-group',
+  'inspect-all',
+  'toggle-stack-by-ip',
+  'update:pingMode',
   'sort-by-latency',
   'manage-tags',
 ]);
@@ -142,12 +150,15 @@ const handleDeleteAll = () => emit('deleteAll');
     <NodeActions
       :active-tag-filters="activeTagFilters"
       :filtered-nodes-count="filteredNodes.length"
+      :is-inspecting-nodes="isInspectingNodes"
       :is-pinging-all="isPingingAll"
       :is-selection-mode="isSelectionMode"
       :is-sorting="isSorting"
       :manual-node-tags="tags"
       :manual-nodes-count="manualNodes.length"
+      :ping-mode="pingMode"
       :search-term="localSearchTerm"
+      :stack-by-ip="stackByIp"
       @add="handleAdd"
       @deduplicate="handleDeduplicate"
       @import="handleImport"
@@ -158,6 +169,9 @@ const handleDeleteAll = () => emit('deleteAll');
       @delete-all="handleDeleteAll"
       @toggle-selection-mode="toggleSelectionMode"
       @ping-all="emit('ping-all')"
+      @inspect-all="emit('inspect-all')"
+      @toggle-stack-by-ip="emit('toggle-stack-by-ip')"
+      @update:ping-mode="emit('update:pingMode', $event)"
       @sort-by-latency="emit('sort-by-latency')"
       @manage-tags="emit('manage-tags')"
     />
@@ -188,16 +202,19 @@ const handleDeleteAll = () => emit('deleteAll');
       :items-per-page="itemsPerPage"
       :local-search-term="localSearchTerm"
       :manual-nodes="manualNodes"
+      :node-inspect-map="nodeInspectMap"
       :paginated-nodes="paginatedNodes"
       :ping-results="pingResults"
       :pinging-nodes="pingingNodes"
       :search-page="currentSearchPage"
       :search-total-pages="totalSearchPages"
       :selected-node-ids="selectedNodeIds"
+      :stack-by-ip="stackByIp"
       @delete="handleDelete"
       @detail="handleDetail"
       @edit="handleEdit"
       @ping="emit('ping', $event)"
+      @ping-group="emit('ping-group', $event)"
       @update:items-per-page="emit('update:itemsPerPage', $event)"
       @toggle-select="toggleNodeSelection"
       @sort-end="handleSortEnd"
@@ -207,6 +224,10 @@ const handleDeleteAll = () => emit('deleteAll');
       @toggle-sort="handleToggleSort"
     />
 
-    <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
+    <NodeDetailModal
+      v-model:show="showDetailModal"
+      :inspect-info="detailNode ? nodeInspectMap[detailNode.id] : null"
+      :node="detailNode"
+    />
   </div>
 </template>

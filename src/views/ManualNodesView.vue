@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
+import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
@@ -67,6 +67,13 @@ const {
   batchUpdateTags,
   batchDeleteNodes,
   manualNodesPerPage,
+  nodeInspectMap,
+  isInspectingNodes,
+  stackByIp,
+  toggleStackByIp,
+  pingMode,
+  setPingMode,
+  inspectNodes,
   pingResults,
   pingingNodes,
   isPingingAll,
@@ -74,6 +81,16 @@ const {
   pingAllNodes,
   sortNodesByLatency,
 } = useManualNodes(markDirty);
+
+watch(
+  () => manualNodes.value.map((n) => `${n.id}:${n.url}`).join('|'),
+  () => {
+    if (manualNodes.value.length > 0) {
+      inspectNodes(manualNodes.value, { silent: true });
+    }
+  },
+  { immediate: true },
+);
 
 const handleSearchTermUpdate = (val) => {
   searchTerm.value = val;
@@ -166,14 +183,18 @@ const handleTagReorder = (newOrder) => {
     <ManualNodePanel
       :active-tag-filters="activeTagFilters"
       :current-page="manualNodesCurrentPage"
+      :is-inspecting-nodes="isInspectingNodes"
       :is-pinging-all="isPingingAll"
       :is-sorting="isSortingNodes"
       :items-per-page="manualNodesPerPage"
       :manual-nodes="manualNodes"
+      :node-inspect-map="nodeInspectMap"
       :paginated-manual-nodes="paginatedManualNodes"
+      :ping-mode="pingMode"
       :ping-results="pingResults"
       :pinging-nodes="pingingNodes"
       :search-term="searchTerm"
+      :stack-by-ip="stackByIp"
       :tags="manualNodeTags"
       :total-pages="manualNodesTotalPages"
       @add="handleAddNode"
@@ -181,9 +202,13 @@ const handleTagReorder = (newOrder) => {
       @delete="handleDeleteNodeWithCleanup"
       @edit="(id) => handleEditNode(manualNodes.find((n) => n.id === id))"
       @import="showSubscriptionImportModal = true"
+      @inspect-all="inspectNodes(manualNodes, { force: true })"
       @ping="pingNodeId"
+      @ping-group="pingAllNodes"
       @reorder="reorderManualNodes"
+      @toggle-stack-by-ip="toggleStackByIp"
       @update:items-per-page="(val) => (manualNodesPerPage = val)"
+      @update:ping-mode="setPingMode"
       @change-page="changeManualNodesPage"
       @update:search-term="handleSearchTermUpdate"
       @toggle-sort="isSortingNodes = !isSortingNodes"

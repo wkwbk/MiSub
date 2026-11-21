@@ -53,6 +53,7 @@ import {
   handleHealthCheckRequest,
   handleNodeCountRequest as handleLegacyNodeCountRequest,
 } from './handlers/node-handler.js';
+import { handleNodeInspectRequest, handleNodeTcpingRequest } from './handlers/node-inspect-handler.js';
 import { handleClientRequest } from './handlers/client-handler.js';
 import { handleErrorReportRequest } from './handlers/error-report-handler.js';
 import {
@@ -248,6 +249,12 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/nodes/health':
       return await handleHealthCheckRequest(request, env);
+
+    case '/nodes/inspect':
+      return await handleNodeInspectRequest(request, env);
+
+    case '/nodes/tcping':
+      return await handleNodeTcpingRequest(request, env);
 
     case '/nodes/clean':
       return await handleCleanNodesRequest(request, env);

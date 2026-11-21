@@ -1,21 +1,45 @@
 import { t } from '@/i18n/index.js';
+import { isUdpOnlyProtocol, tcpingNodes } from '@/utils/tcping.js';
+
+export { isUdpOnlyProtocol, tcpingNodes };
 
 /**
- * 纯前端的代理节点连通性测试工具
- * 利用浏览器的 Fetch API 发送无 CORS 请求触发目标端口 TLS 握手或 TCP 连接。
+ * 代理节点连通性测试工具
+ * 1. 本地浏览器模式（pingNode）：利用浏览器的 Fetch API 发送 no-cors 请求触发目标端口 TCP/TLS 握手耗时
+ * 2. 服务端 TCPing 模式（tcpingNodes）：利用 Cloudflare Workers `cloudflare:sockets` 探测 TCP 端口连通性
  */
 
+function formatHostForUrl(host) {
+  const cleaned = String(host || '')
+    .trim()
+    .replace(/^\[|\]$/g, '');
+  if (!cleaned) return '';
+  return cleaned.includes(':') ? `[${cleaned}]` : cleaned;
+}
+
 /**
- * 测试单个节点的 TCP 连通性
+ * 测试单个节点的本地浏览器 HTTP/TLS 握手延迟
  * @param {string} host 节点服务器 IP 或域名
  * @param {number|string} port 节点端口
  * @param {number} timeoutMs 超时时间（毫秒）
- * @returns {Promise<{status: 'ok'|'timeout'|'error', latency: number, message?: string}>}
+ * @param {{ url?: string }} options
+ * @returns {Promise<{status: 'ok'|'timeout'|'error'|'unsupported', latency: number, mode: 'local', message?: string}>}
  */
-export async function pingNode(host, port, timeoutMs = 3000) {
+export async function pingNode(host, port, timeoutMs = 3000, options = {}) {
   if (!host || !port) {
-    return { status: 'error', latency: -1, message: t('utils.invalidAddressOrPort') };
+    return { status: 'error', latency: -1, mode: 'local', message: t('utils.invalidAddressOrPort') };
   }
+
+  if (options?.url && isUdpOnlyProtocol(options.url)) {
+    return {
+      status: 'unsupported',
+      latency: -1,
+      mode: 'local',
+      message: t('manualNodes.udpPingUnsupported'),
+    };
+  }
+
+  const formattedHost = formatHostForUrl(host);
 
   return new Promise((resolve) => {
     const start = performance.now();
@@ -23,17 +47,16 @@ export async function pingNode(host, port, timeoutMs = 3000) {
 
     const timeoutId = setTimeout(() => {
       controller.abort();
-      resolve({ status: 'timeout', latency: timeoutMs });
+      resolve({ status: 'timeout', latency: timeoutMs, mode: 'local' });
     }, timeoutMs);
 
     // 如果我们在 HTTPS 环境下，浏览器强迫阻止发送 http:// 请求（Mixed Content Blocked），
     // 且此拦截不触发正常网络请求耗时。所以必须统一使用 https:// 探测。
-    // 即便对方是不是 TLS, 也会强制握手(耗时1-2个 RTT)。
-    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const protocol = typeof window !== 'undefined' && window.location?.protocol === 'https:' ? 'https:' : 'http:';
 
     // 规避浏览器缓存
     const cacheBuster = Date.now() + Math.random().toString(36).substring(7);
-    const testUrl = `${protocol}//${host}:${port}/__ping_${cacheBuster}`;
+    const testUrl = `${protocol}//${formattedHost}:${port}/__ping_${cacheBuster}`;
 
     fetch(testUrl, {
       mode: 'no-cors',
@@ -42,23 +65,19 @@ export async function pingNode(host, port, timeoutMs = 3000) {
       signal: controller.signal,
     })
       .then(() => {
-        // 如果节点碰巧是一个 HTTP(S) 服务器并且响应了，请求会成功 (opaque)
         clearTimeout(timeoutId);
         const latency = Math.round(performance.now() - start);
-        resolve({ status: 'ok', latency });
+        resolve({ status: 'ok', latency, mode: 'local' });
       })
       .catch((err) => {
         clearTimeout(timeoutId);
         if (err.name === 'AbortError') {
-          resolve({ status: 'timeout', latency: timeoutMs });
+          resolve({ status: 'timeout', latency: timeoutMs, mode: 'local' });
         } else {
           // Fetch failed 意味着端口拒绝连接，或者 TLS 握手失败/被主动断开（如 Vmess/SS 服务器收到不合规请求）
           // 这个拒绝的耗时代表了我们到对方的真实 TCP(或加TLS) 的 RTT
           const latency = Math.round(performance.now() - start);
-
-          // 极短时间(往往<10ms)出错可能是因为 DNS 解析失败、本地网络断开或者遭到浏览器扩展拦截
-          // 我们仍然将其视为 reachable，但标记一下
-          resolve({ status: 'ok', latency });
+          resolve({ status: 'ok', latency, mode: 'local' });
         }
       });
   });

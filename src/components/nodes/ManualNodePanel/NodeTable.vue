@@ -2,6 +2,7 @@
 import { computed, nextTick, ref } from 'vue';
 import draggable from 'vuedraggable';
 import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
+import ManualNodeStackCard from '@/components/nodes/ManualNodeStackCard.vue';
 import PanelPagination from '@/components/shared/PanelPagination.vue';
 import SortingBanner from '@/components/shared/SortingBanner.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
@@ -9,6 +10,7 @@ import { useI18n } from '@/i18n/index.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
+import { groupNodesByIp } from '@/utils/node-stack.js';
 
 const { t } = useI18n();
 
@@ -28,6 +30,8 @@ const props = defineProps({
   itemsPerPage: { type: Number, default: DEFAULT_LIST_PAGE_SIZE },
   pingResults: { type: Object, default: () => ({}) },
   pingingNodes: { type: Object, default: () => new Set() },
+  nodeInspectMap: { type: Object, default: () => ({}) },
+  stackByIp: { type: Boolean, default: true },
   compactGrid: { type: Boolean, default: false },
 });
 
@@ -42,9 +46,12 @@ const emit = defineEmits([
   'update:itemsPerPage',
   'toggle-tag-filter',
   'ping',
+  'ping-group',
   'clear-search',
   'toggle-sort',
 ]);
+
+const displayItems = computed(() => groupNodesByIp(props.paginatedNodes, props.nodeInspectMap, props.stackByIp));
 
 const draggableModel = computed({
   get: () => props.draggableManualNodes,
@@ -119,6 +126,7 @@ const handleDragEnd = (evt) => {
         <template #item="{ element: node }">
           <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
             <ManualNodeCard
+              :inspect-info="nodeInspectMap[node.id]"
               :is-pinging="pingingNodes.has(node.id)"
               :is-selected="selectedNodeIds.has(node.id)"
               :is-selection-mode="isSelectionMode"
@@ -145,26 +153,44 @@ const handleDragEnd = (evt) => {
       "
       class="grid gap-4"
     >
-      <div
-        v-for="(node, index) in paginatedNodes"
-        :key="node.id"
-        :style="{ '--delay-index': Math.min(index, 20) }"
-        class="list-item-animation"
-      >
-        <ManualNodeCard
-          :is-pinging="pingingNodes.has(node.id)"
-          :is-selected="selectedNodeIds.has(node.id)"
+      <template v-for="(item, index) in displayItems" :key="item.key">
+        <ManualNodeStackCard
+          v-if="item.type === 'stack'"
+          :info="item.info"
+          :inspect-map="nodeInspectMap"
+          :ip="item.ip"
           :is-selection-mode="isSelectionMode"
-          :node="node"
-          :ping-result="pingResults[node.id]"
-          @delete="emit('delete', node.id)"
-          @detail="emit('detail', node)"
-          @edit="emit('edit', node.id)"
-          @ping="emit('ping', node.id)"
-          @toggle-select="emit('toggle-select', node.id)"
+          :nodes="item.nodes"
+          :ping-results="pingResults"
+          :pinging-nodes="pingingNodes"
+          :selected-node-ids="selectedNodeIds"
+          :style="{ '--delay-index': Math.min(index, 20) }"
+          class="list-item-animation"
+          @delete="emit('delete', $event)"
+          @detail="emit('detail', $event)"
+          @edit="emit('edit', $event)"
+          @ping="emit('ping', $event)"
+          @ping-group="emit('ping-group', $event)"
+          @toggle-select="emit('toggle-select', $event)"
           @filter-tag="emit('toggle-tag-filter', $event)"
         />
-      </div>
+        <div v-else :style="{ '--delay-index': Math.min(index, 20) }" class="list-item-animation">
+          <ManualNodeCard
+            :inspect-info="nodeInspectMap[item.node.id]"
+            :is-pinging="pingingNodes.has(item.node.id)"
+            :is-selected="selectedNodeIds.has(item.node.id)"
+            :is-selection-mode="isSelectionMode"
+            :node="item.node"
+            :ping-result="pingResults[item.node.id]"
+            @delete="emit('delete', item.node.id)"
+            @detail="emit('detail', item.node)"
+            @edit="emit('edit', item.node.id)"
+            @ping="emit('ping', item.node.id)"
+            @toggle-select="emit('toggle-select', item.node.id)"
+            @filter-tag="emit('toggle-tag-filter', $event)"
+          />
+        </div>
+      </template>
     </div>
 
     <PanelPagination

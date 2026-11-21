@@ -16,6 +16,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  inspectInfo: {
+    type: Object,
+    default: null,
+  },
   zIndex: {
     type: [String, Number],
     default: 'var(--z-modal-popover)',
@@ -31,8 +35,49 @@ const copiedKey = ref('');
 
 const detail = computed(() => parseNodeDetail(props.node));
 
+const networkItems = computed(() => {
+  const info = props.inspectInfo;
+  if (!info) return [];
+  const items = [];
+  if (info.ip) {
+    items.push({ key: 'network.ip', label: t('manualNodes.resolvedIp'), display: info.ip, copyable: true });
+  }
+  if (info.isRelay) {
+    items.push({
+      key: 'network.country',
+      label: 'Region',
+      display: `${t('manualNodes.badgeRelay')} (${info.country || 'CN'})`,
+      copyable: false,
+    });
+  } else if (info.countryCode) {
+    items.push({
+      key: 'network.country',
+      label: 'Region',
+      display: `${info.flag ? `${info.flag} ` : ''}${info.country || info.countryCode} (${info.countryCode})`,
+      copyable: false,
+    });
+  }
+  if (info.networkType && info.networkType !== 'unknown') {
+    const typeText =
+      info.networkType === 'cdn'
+        ? `${t('manualNodes.badgeCdn')}${info.cdnProvider && info.cdnProvider !== 'CDN' ? ` (${info.cdnProvider})` : ''}`
+        : info.networkType === 'relay'
+          ? t('manualNodes.badgeRelay')
+          : t('manualNodes.badgeDirect');
+    items.push({ key: 'network.type', label: 'Route', display: typeText, copyable: false });
+  }
+  if (info.asn) {
+    items.push({ key: 'network.asn', label: 'ASN', display: info.asn, copyable: true });
+  }
+  if (info.org) {
+    items.push({ key: 'network.org', label: 'ISP / Org', display: info.org, copyable: false });
+  }
+  return items;
+});
+
 const sectionTitleMap = {
   basic: 'nodeDetail.sectionBasic',
+  network: 'nodeDetail.sectionNetwork',
   auth: 'nodeDetail.sectionAuth',
   transport: 'nodeDetail.sectionTransport',
   security: 'nodeDetail.sectionSecurity',
@@ -144,6 +189,41 @@ const closeModal = () => {
 
         <!-- Structured Tab -->
         <div v-if="activeTab === 'structured'" class="space-y-4">
+          <section v-if="networkItems.length > 0">
+            <h4 class="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-fg-muted">
+              {{ t('nodeDetail.sectionNetwork') }}
+            </h4>
+            <div class="modal-section-card rounded-md overflow-hidden">
+              <div class="modal-row-list">
+                <div
+                  v-for="item in networkItems"
+                  :key="item.key"
+                  class="modal-row-hover flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors"
+                >
+                  <span class="shrink-0 font-medium text-fg-muted pt-0.5 min-w-[110px] sm:min-w-[140px]">
+                    {{ item.label }}
+                  </span>
+                  <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                    <span class="break-all text-right font-mono text-fg">
+                      {{ item.display }}
+                    </span>
+                    <button
+                      v-if="item.copyable"
+                      :aria-label="t('actions.copy')"
+                      :title="t('actions.copy')"
+                      class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+                      type="button"
+                      @click="copyText(item.display, item.key)"
+                    >
+                      <Check v-if="copiedKey === item.key" class="h-3 w-3 text-emerald-400" />
+                      <Copy v-else class="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section v-for="section in detail.sections" :key="section.id">
             <h4 class="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-fg-muted">
               {{ t(sectionTitleMap[section.id] || section.id) }}

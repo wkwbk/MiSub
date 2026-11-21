@@ -16,6 +16,8 @@ export const API_ENDPOINTS = {
   // 订阅相关
   SUB_NODES: '/api/subscription_nodes',
   NODE_COUNT: '/api/node_count',
+  NODES_INSPECT: '/api/nodes/inspect',
+  NODES_TCPING: '/api/nodes/tcping',
   FETCH_EXTERNAL: '/api/fetch_external_url',
   BATCH_UPDATE: '/api/batch_update_nodes',
   DEBUG_SUB: '/api/debug_subscription',

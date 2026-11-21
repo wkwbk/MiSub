@@ -105,7 +105,14 @@ export const D1_INDEX_STATEMENTS = [
 
 const D1_CACHE_KEYS = new Set(['misub_webdav_backup_lock', 'misub_restore_snapshot_latest', 'cron_last_execution']);
 
-const D1_CACHE_PREFIXES = ['node_cache_', 'github_release_', 'tmp_external_nodes:', 'tg_push_rate:', 'misub_test_'];
+const D1_CACHE_PREFIXES = [
+  'node_cache_',
+  'node_inspect_',
+  'github_release_',
+  'tmp_external_nodes:',
+  'tg_push_rate:',
+  'misub_test_',
+];
 
 const D1_LEGACY_LOG_KEYS = new Set([
   'misub_error_reports',
@@ -183,6 +190,10 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
   if (keyStr.startsWith('node_cache_')) {
     const ts = parseTimestampMs(parsed?.timestamp) || now;
     return ts + NODE_CACHE_CLEANUP_AGE_MS;
+  }
+  if (keyStr.startsWith('node_inspect_')) {
+    const exp = parseTimestampMs(parsed?.expiresAt);
+    return exp > 0 ? exp : now + 6 * 60 * 60 * 1000;
   }
   if (keyStr.startsWith('misub_test_')) {
     return now + 5 * 60 * 1000;

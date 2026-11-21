@@ -6,6 +6,11 @@ import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast.js';
 import { cleanNodeUrl, extractHostAndPort, extractNodeName } from '@/lib/utils.js';
 import { pingNode } from '@/utils/ping.js';
+import { isUdpOnlyProtocol, tcpingNodes } from '@/utils/tcping.js';
+import { api } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
+import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 import { filterManualNodes, isManualNodeEntry } from '@/composables/manual-nodes/filters.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import { buildDedupPlan as buildDedupPlanCore } from '@/composables/manual-nodes/dedup.js';
@@ -321,7 +326,130 @@ export function useManualNodes(markDirty) {
     markDirty();
   }
 
-  // --- 连通性测试 (Ping) ---
+  // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别 / 同IP堆叠） ---
+  const INSPECT_CACHE_KEY = 'misub_node_inspect_cache_v1';
+  const INSPECT_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+  const STACK_PREF_KEY = 'misub_manual_nodes_stack_by_ip';
+  const PING_MODE_PREF_KEY = 'misub_manual_nodes_ping_mode';
+
+  const nodeInspectMap = ref({});
+  const isInspectingNodes = ref(false);
+  const stackByIp = ref(readRawPreference(STACK_PREF_KEY) !== 'false');
+  const pingMode = ref(readRawPreference(PING_MODE_PREF_KEY) === 'tcping' ? 'tcping' : 'local');
+
+  function setStackByIp(value) {
+    const next = Boolean(value);
+    stackByIp.value = next;
+    writeRawPreference(STACK_PREF_KEY, next ? 'true' : 'false');
+  }
+
+  function toggleStackByIp() {
+    setStackByIp(!stackByIp.value);
+  }
+
+  function setPingMode(mode) {
+    const next = mode === 'tcping' ? 'tcping' : 'local';
+    pingMode.value = next;
+    writeRawPreference(PING_MODE_PREF_KEY, next);
+  }
+
+  function readInspectSessionCache() {
+    try {
+      const raw = readSessionPreference(INSPECT_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return {};
+      const now = Date.now();
+      const valid = {};
+      for (const [url, entry] of Object.entries(parsed)) {
+        if (entry && entry.data && (!entry.expiresAt || entry.expiresAt > now)) {
+          valid[url] = entry;
+        }
+      }
+      return valid;
+    } catch {
+      return {};
+    }
+  }
+
+  function writeInspectSessionCache(cacheObj) {
+    try {
+      writeSessionPreference(INSPECT_CACHE_KEY, JSON.stringify(cacheObj));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }
+
+  async function inspectNodes(targetNodes = manualNodes.value, { force = false, silent = false } = {}) {
+    const list = (Array.isArray(targetNodes) ? targetNodes : []).filter((n) => n && n.id && n.url);
+    if (list.length === 0) return;
+
+    const sessionCache = force ? {} : readInspectSessionCache();
+    const nextMap = { ...nodeInspectMap.value };
+    const toQuery = [];
+
+    for (const node of list) {
+      if (!force && nextMap[node.id] && nextMap[node.id].__url === node.url) {
+        continue;
+      }
+      const cached = !force ? sessionCache[node.url] : null;
+      if (cached?.data) {
+        nextMap[node.id] = { ...cached.data, id: node.id, __url: node.url };
+      } else {
+        toQuery.push({ id: node.id, url: node.url });
+      }
+    }
+
+    nodeInspectMap.value = nextMap;
+
+    if (toQuery.length === 0) {
+      if (!silent) {
+        showToast(t('manualNodes.inspectCompleted', { count: list.length }), 'success');
+      }
+      return;
+    }
+
+    if (isInspectingNodes.value) return;
+    isInspectingNodes.value = true;
+
+    try {
+      const CHUNK_SIZE = 100;
+      const updatedMap = { ...nodeInspectMap.value };
+      const cacheToSave = readInspectSessionCache();
+      const expiresAt = Date.now() + INSPECT_CACHE_TTL_MS;
+
+      for (let i = 0; i < toQuery.length; i += CHUNK_SIZE) {
+        const chunk = toQuery.slice(i, i + CHUNK_SIZE);
+        const resp = await api.post(API_ENDPOINTS.NODES_INSPECT, {
+          nodes: chunk,
+          forceRefresh: force,
+        });
+        const chunkResults = resp?.results || {};
+        for (const item of chunk) {
+          const info = chunkResults[item.id];
+          if (info) {
+            updatedMap[item.id] = { ...info, __url: item.url };
+            cacheToSave[item.url] = { data: info, expiresAt };
+          }
+        }
+      }
+
+      nodeInspectMap.value = updatedMap;
+      writeInspectSessionCache(cacheToSave);
+
+      if (!silent) {
+        showToast(t('manualNodes.inspectCompleted', { count: toQuery.length }), 'success');
+      }
+    } catch (error) {
+      if (!silent) {
+        showToast(error?.message || t('manualNodes.inspectFailed'), 'error');
+      }
+    } finally {
+      isInspectingNodes.value = false;
+    }
+  }
+
+  // --- 连通性测试 (Ping / TCPing) ---
   const pingResults = ref({});
   const pingingNodes = ref(new Set());
   const isPingingAll = ref(false);
@@ -333,55 +461,164 @@ export function useManualNodes(markDirty) {
 
     const { host, port } = extractHostAndPort(node.url);
     if (!host || !port) {
-      pingResults.value[nodeId] = {
-        status: 'error',
-        latency: -1,
-        message: t('manualNodes.parseAddressFailed'),
+      pingResults.value = {
+        ...pingResults.value,
+        [nodeId]: {
+          status: 'error',
+          latency: -1,
+          mode: pingMode.value,
+          message: t('manualNodes.parseAddressFailed'),
+        },
+      };
+      return;
+    }
+
+    if (typeof isUdpOnlyProtocol === 'function' && isUdpOnlyProtocol(node.url)) {
+      pingResults.value = {
+        ...pingResults.value,
+        [nodeId]: {
+          status: 'unsupported',
+          latency: -1,
+          mode: pingMode.value,
+          message: t('manualNodes.udpPingUnsupported'),
+        },
       };
       return;
     }
 
     pingingNodes.value.add(nodeId);
-    pingResults.value = { ...pingResults.value, [nodeId]: { status: 'loading', latency: 0 } };
+    pingResults.value = { ...pingResults.value, [nodeId]: { status: 'loading', latency: 0, mode: pingMode.value } };
 
     try {
-      const result = await pingNode(host, port, 3000);
-      pingResults.value = { ...pingResults.value, [nodeId]: result };
+      if (pingMode.value === 'tcping') {
+        const inspectHost = nodeInspectMap.value[nodeId]?.ip || host;
+        const { results, unsupported } = await tcpingNodes([{ id: nodeId, host: inspectHost, port }], 3000);
+        if (unsupported) {
+          // 自动回退到本地 Ping
+          const fallback = await pingNode(host, port, 3000, { url: node.url });
+          pingResults.value = { ...pingResults.value, [nodeId]: fallback };
+        } else {
+          pingResults.value = {
+            ...pingResults.value,
+            [nodeId]: results[nodeId] || { status: 'error', latency: -1, mode: 'tcping' },
+          };
+        }
+      } else {
+        const result = await pingNode(host, port, 3000, { url: node.url });
+        pingResults.value = { ...pingResults.value, [nodeId]: result };
+      }
     } catch {
       pingResults.value = {
         ...pingResults.value,
-        [nodeId]: { status: 'error', latency: -1 },
+        [nodeId]: { status: 'error', latency: -1, mode: pingMode.value },
       };
     } finally {
       pingingNodes.value.delete(nodeId);
     }
   }
 
-  async function pingAllNodes() {
+  async function pingAllNodes(targetIds = null) {
     if (isPingingAll.value) return;
-    const nodesToTest = enabledManualNodes.value.map((n) => n.id);
+    const nodesToTest = Array.isArray(targetIds)
+      ? targetIds.filter((id) => manualNodes.value.some((n) => n.id === id))
+      : enabledManualNodes.value.map((n) => n.id);
     if (nodesToTest.length === 0) return;
 
     isPingingAll.value = true;
     showToast(t('manualNodes.pingStarted', { count: nodesToTest.length }), 'info');
 
     try {
-      const CONCURRENCY = 10;
-      let currentIndex = 0;
-
-      const workers = Array(Math.min(CONCURRENCY, nodesToTest.length))
-        .fill(null)
-        .map(async () => {
-          while (currentIndex < nodesToTest.length) {
-            const idx = currentIndex++;
-            const nodeId = nodesToTest[idx];
-            await pingNodeId(nodeId);
+      if (pingMode.value === 'tcping') {
+        const batchTargets = [];
+        const loadingUpdates = {};
+        for (const nodeId of nodesToTest) {
+          const node = manualNodes.value.find((n) => n.id === nodeId);
+          if (!node) continue;
+          const { host, port } = extractHostAndPort(node.url);
+          if (!host || !port) {
+            loadingUpdates[nodeId] = {
+              status: 'error',
+              latency: -1,
+              mode: 'tcping',
+              message: t('manualNodes.parseAddressFailed'),
+            };
+          } else if (typeof isUdpOnlyProtocol === 'function' && isUdpOnlyProtocol(node.url)) {
+            loadingUpdates[nodeId] = {
+              status: 'unsupported',
+              latency: -1,
+              mode: 'tcping',
+              message: t('manualNodes.udpPingUnsupported'),
+            };
+          } else {
+            pingingNodes.value.add(nodeId);
+            loadingUpdates[nodeId] = { status: 'loading', latency: 0, mode: 'tcping' };
+            batchTargets.push({ id: nodeId, host: nodeInspectMap.value[nodeId]?.ip || host, port });
           }
-        });
+        }
+        pingResults.value = { ...pingResults.value, ...loadingUpdates };
 
-      await Promise.allSettled(workers);
+        let fallbackToLocal = false;
+        const CHUNK_SIZE = 20;
+        for (let i = 0; i < batchTargets.length; i += CHUNK_SIZE) {
+          const chunk = batchTargets.slice(i, i + CHUNK_SIZE);
+          try {
+            const { results, unsupported } = await tcpingNodes(chunk, 3000);
+            if (unsupported) {
+              fallbackToLocal = true;
+              chunk.forEach((item) => pingingNodes.value.delete(item.id));
+              break;
+            }
+            const nextResults = { ...pingResults.value };
+            for (const item of chunk) {
+              nextResults[item.id] = results[item.id] || { status: 'error', latency: -1, mode: 'tcping' };
+              pingingNodes.value.delete(item.id);
+            }
+            pingResults.value = nextResults;
+          } catch {
+            const nextResults = { ...pingResults.value };
+            for (const item of chunk) {
+              nextResults[item.id] = { status: 'error', latency: -1, mode: 'tcping' };
+              pingingNodes.value.delete(item.id);
+            }
+            pingResults.value = nextResults;
+          }
+        }
+
+        if (fallbackToLocal) {
+          batchTargets.forEach((item) => pingingNodes.value.delete(item.id));
+          setPingMode('local');
+          showToast(t('manualNodes.tcpingUnsupportedFallback'), 'warning');
+          const CONCURRENCY = 10;
+          let currentIndex = 0;
+          const workers = Array(Math.min(CONCURRENCY, nodesToTest.length))
+            .fill(null)
+            .map(async () => {
+              while (currentIndex < nodesToTest.length) {
+                const idx = currentIndex++;
+                await pingNodeId(nodesToTest[idx]);
+              }
+            });
+          await Promise.allSettled(workers);
+        }
+      } else {
+        const CONCURRENCY = 10;
+        let currentIndex = 0;
+
+        const workers = Array(Math.min(CONCURRENCY, nodesToTest.length))
+          .fill(null)
+          .map(async () => {
+            while (currentIndex < nodesToTest.length) {
+              const idx = currentIndex++;
+              const nodeId = nodesToTest[idx];
+              await pingNodeId(nodeId);
+            }
+          });
+
+        await Promise.allSettled(workers);
+      }
       showToast(t('manualNodes.pingCompleted', { count: nodesToTest.length }), 'success');
     } finally {
+      nodesToTest.forEach((id) => pingingNodes.value.delete(id));
       isPingingAll.value = false;
     }
   }
@@ -414,6 +651,14 @@ export function useManualNodes(markDirty) {
     batchUpdateTags,
     batchDeleteNodes,
     manualNodesPerPage,
+    nodeInspectMap,
+    isInspectingNodes,
+    stackByIp,
+    setStackByIp,
+    toggleStackByIp,
+    pingMode,
+    setPingMode,
+    inspectNodes,
     pingResults,
     pingingNodes,
     isPingingAll,

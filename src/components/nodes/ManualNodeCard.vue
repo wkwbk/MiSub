@@ -17,6 +17,10 @@ const props = defineProps({
   isSelected: Boolean,
   pingResult: Object,
   isPinging: Boolean,
+  inspectInfo: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(['delete', 'edit', 'detail', 'toggle-select', 'filter-tag', 'ping']);
@@ -57,6 +61,62 @@ const getProtocol = (url) => {
 
 const protocol = computed(() => getProtocol(props.node.url));
 const hostAndPort = computed(() => extractHostAndPort(props.node.url));
+
+const countryBadge = computed(() => {
+  const info = props.inspectInfo;
+  if (!info) return null;
+  if (info.isRelay) {
+    return {
+      text: t('manualNodes.badgeRelay'),
+      title: `${info.country || 'CN'} · ${info.asn || ''} ${info.org || ''}`.trim(),
+      className: 'border-amber-500/40 bg-amber-500/10 text-amber-500',
+    };
+  }
+  if (info.countryCode) {
+    return {
+      text: `${info.flag ? `${info.flag} ` : ''}${info.countryCode}`,
+      title: `${info.country || info.countryCode}${info.asn ? ` · ${info.asn}` : ''}${info.org ? ` (${info.org})` : ''}`,
+      className: 'border-line bg-transparent text-fg-muted',
+    };
+  }
+  return null;
+});
+
+const networkBadge = computed(() => {
+  const info = props.inspectInfo;
+  if (!info || !info.networkType || info.networkType === 'unknown' || info.isRelay) return null;
+  if (info.networkType === 'cdn') {
+    const provider = info.cdnProvider && info.cdnProvider !== 'CDN' ? info.cdnProvider : '';
+    return {
+      text: provider === 'Cloudflare' ? 'CF CDN' : t('manualNodes.badgeCdn'),
+      title: provider ? `CDN (${provider})${info.asn ? ` · ${info.asn}` : ''}` : 'CDN',
+      className: 'border-sky-500/40 bg-sky-500/10 text-sky-400',
+    };
+  }
+  if (info.networkType === 'direct') {
+    return {
+      text: t('manualNodes.badgeDirect'),
+      title: `${t('manualNodes.badgeDirect')}${info.asn ? ` · ${info.asn}` : ''}${info.org ? ` (${info.org})` : ''}`,
+      className: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-500',
+    };
+  }
+  return null;
+});
+
+const resolvedIpText = computed(() => {
+  const info = props.inspectInfo;
+  if (!info || !info.ip || !info.isDomain) return '';
+  return info.ip;
+});
+
+const pingTooltip = computed(() => {
+  const r = props.pingResult;
+  if (!r) return '';
+  if (r.message) return r.message;
+  const modeLabel = r.mode === 'tcping' ? t('manualNodes.pingModeTcping') : t('manualNodes.pingModeLocal');
+  if (r.status === 'ok') return `${modeLabel}: ${r.latency}ms`;
+  return `${modeLabel}: ${t('manualNodes.connectivityFailed')}`;
+});
 
 const protocolStyle = computed(() => {
   const p = protocol.value;
@@ -132,6 +192,28 @@ const copyToClipboard = async (text) => {
           {{ protocolStyle.text }}
         </div>
 
+        <!-- Country / Relay Badge -->
+        <span
+          v-if="countryBadge"
+          :class="countryBadge.className"
+          :title="countryBadge.title"
+          class="inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none"
+          data-testid="manual-node-country-badge"
+        >
+          {{ countryBadge.text }}
+        </span>
+
+        <!-- CDN / Direct Badge -->
+        <span
+          v-if="networkBadge"
+          :class="networkBadge.className"
+          :title="networkBadge.title"
+          class="inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-medium leading-none"
+          data-testid="manual-node-network-badge"
+        >
+          {{ networkBadge.text }}
+        </span>
+
         <!-- Tag Badges -->
         <div
           v-for="tag in visibleTags"
@@ -155,10 +237,7 @@ const copyToClipboard = async (text) => {
       <!-- Right: Ping Result Badge -->
       <div
         v-if="pingResult"
-        :title="
-          pingResult.message ||
-          (pingResult.status === 'ok' ? t('manualNodes.connectivityOk') : t('manualNodes.connectivityFailed'))
-        "
+        :title="pingTooltip"
         class="flex shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 py-0.5 text-[10px] font-mono text-fg-muted"
       >
         <span
@@ -166,12 +245,14 @@ const copyToClipboard = async (text) => {
             'bg-emerald-500': pingResult.status === 'ok' && pingResult.latency < 300,
             'bg-amber-500': pingResult.status === 'ok' && pingResult.latency >= 300,
             'bg-red-500': pingResult.status === 'error' || pingResult.status === 'timeout',
+            'bg-zinc-400': pingResult.status === 'unsupported',
             'bg-sky-500 animate-pulse': pingResult.status === 'loading',
           }"
           class="h-1.5 w-1.5 rounded-full shrink-0"
         ></span>
         <span v-if="pingResult.status === 'loading'">{{ t('manualNodes.pinging') }}</span>
         <span v-else-if="pingResult.status === 'ok'">{{ pingResult.latency }}ms</span>
+        <span v-else-if="pingResult.status === 'unsupported'">UDP</span>
         <span v-else>{{ t('manualNodes.unreachable') }}</span>
       </div>
     </div>
@@ -194,12 +275,24 @@ const copyToClipboard = async (text) => {
       <div class="min-w-0 flex-1">
         <span
           v-if="hostAndPort.host"
-          :title="`${hostAndPort.host}:${hostAndPort.port || ''}`"
+          :title="
+            resolvedIpText
+              ? `${hostAndPort.host}:${hostAndPort.port || ''} (${t('manualNodes.resolvedIp')}: ${resolvedIpText})`
+              : `${hostAndPort.host}:${hostAndPort.port || ''}`
+          "
           class="block truncate font-mono text-xs text-fg-subtle"
         >
           {{ hostAndPort.host }}:{{ hostAndPort.port || 'N/A' }}
         </span>
         <span v-else class="text-xs font-mono text-fg-subtle">-</span>
+        <span
+          v-if="resolvedIpText"
+          :title="`${t('manualNodes.resolvedIp')}: ${resolvedIpText}`"
+          class="mt-0.5 block truncate font-mono text-[10px] text-fg-subtle/80"
+          data-testid="manual-node-resolved-ip"
+        >
+          → {{ resolvedIpText }}
+        </span>
       </div>
 
       <div
