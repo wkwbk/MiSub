@@ -6,6 +6,7 @@ import { getItemTags } from '@/utils/tags.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   node: {
@@ -92,12 +93,8 @@ const protocolStyle = computed(() => {
 });
 
 const copyToClipboard = async (text) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    showToast(t('notices.copied'), 'success');
-  } catch {
-    showToast(t('notices.copyFailed'), 'error');
-  }
+  const copied = await copyTextToClipboard(text);
+  showToast(copied ? t('notices.copied') : t('notices.copyFailed'), copied ? 'success' : 'error');
 };
 </script>
 

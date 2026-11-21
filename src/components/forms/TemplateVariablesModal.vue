@@ -3,6 +3,7 @@ import { computed, onUnmounted, ref } from 'vue';
 import { Braces, Check, Copy } from '@lucide/vue';
 import Modal from '@/components/forms/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 defineProps({
   show: {
@@ -92,16 +93,13 @@ const templateVariableGroups = computed(() => [
 ]);
 
 async function copyVariable(variableKey) {
-  try {
-    await navigator.clipboard?.writeText(variableKey);
-    copiedKey.value = variableKey;
-    if (copyTimer) clearTimeout(copyTimer);
-    copyTimer = setTimeout(() => {
-      copiedKey.value = '';
-    }, 1500);
-  } catch {
-    // ignore clipboard failure
-  }
+  const copied = await copyTextToClipboard(variableKey);
+  if (!copied) return;
+  copiedKey.value = variableKey;
+  if (copyTimer) clearTimeout(copyTimer);
+  copyTimer = setTimeout(() => {
+    copiedKey.value = '';
+  }, 1500);
 }
 
 onUnmounted(() => {

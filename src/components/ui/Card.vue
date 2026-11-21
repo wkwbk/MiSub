@@ -22,6 +22,7 @@ import { TIMING } from '@/constants/timing.js';
 import { useToastStore } from '@/stores/toast.js';
 import Switch from '@/components/ui/Switch.vue';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   misub: {
@@ -55,14 +56,14 @@ const { showToast } = useToastStore();
 const copiedUrl = ref(false);
 const copySubscriptionUrl = async () => {
   if (!props.misub?.url) return;
-  try {
-    await navigator.clipboard.writeText(props.misub.url);
+  const copied = await copyTextToClipboard(props.misub.url);
+  if (copied) {
     copiedUrl.value = true;
     showToast(t('notices.copied'), 'success');
     setTimeout(() => {
       copiedUrl.value = false;
     }, 1500);
-  } catch {
+  } else {
     showToast(t('notices.copyFailed'), 'error');
   }
 };

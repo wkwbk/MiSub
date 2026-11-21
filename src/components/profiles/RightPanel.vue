@@ -4,6 +4,7 @@ import { Check, Copy, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   config: Object,
@@ -99,12 +100,16 @@ const subLink = computed(() => {
   return `${baseUrl}?${formatKey}`;
 });
 
-const copyToClipboard = () => {
+const copyToClipboard = async () => {
   if (!isLinkValid.value) {
     showToast(t('notices.linkInvalid'), 'error');
     return;
   }
-  navigator.clipboard.writeText(subLink.value);
+  const isCopied = await copyTextToClipboard(subLink.value);
+  if (!isCopied) {
+    showToast(t('notices.copyFailed'), 'error');
+    return;
+  }
   showToast(t('notices.copied'), 'success');
   copied.value = true;
   clearTimeout(copyTimeout);

@@ -130,7 +130,7 @@ export const useDataStore = defineStore('data', () => {
 
     try {
       const sanitizedSubs = subscriptions.value.map((sub) => {
-        const { isUpdating, ...rest } = sub;
+        const { isUpdating: _isUpdating, ...rest } = sub;
         return hydrateItemTags(rest);
       });
 
@@ -176,7 +176,7 @@ export const useDataStore = defineStore('data', () => {
       // Update cache with the most recent merged data
       dataCache.set({
         misubs: subscriptions.value.map((s) => {
-          const { isUpdating, ...rest } = s;
+          const { isUpdating: _isUpdating, ...rest } = s;
           return rest;
         }),
         profiles: profiles.value,
@@ -287,8 +287,8 @@ export const useDataStore = defineStore('data', () => {
     dataCache.set({
       ...cachedData,
       config: {
-        ...(cachedData.config || {}),
-        ...(nextConfig || {}),
+        ...cachedData.config,
+        ...nextConfig,
       },
     });
   }

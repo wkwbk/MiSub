@@ -110,7 +110,7 @@ export function useSettingsLogic() {
         showToast(t('settings.loadFailedWithMessage', { message: result.error }), 'error');
         settings.value = normalizeSettingsObject(DEFAULT_SETTINGS);
       }
-    } catch (error) {
+    } catch {
       showToast(t('settings.loadFailed'), 'error');
       settings.value = normalizeSettingsObject(DEFAULT_SETTINGS);
     } finally {
@@ -198,7 +198,7 @@ export function useSettingsLogic() {
       } else {
         showToast(t('settings.resetFailedWithMessage', { message: result.error }), 'error');
       }
-    } catch (error) {
+    } catch {
       showToast(t('settings.resetRequestFailed'), 'error');
     } finally {
       isLoading.value = false;

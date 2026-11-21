@@ -30,7 +30,7 @@ function resolveOrigin(origin) {
 function safeOrigin(url, fallbackOrigin) {
   try {
     return new URL(url, fallbackOrigin).origin;
-  } catch (error) {
+  } catch {
     return null;
   }
 }

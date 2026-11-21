@@ -75,7 +75,6 @@ function parseQuantumultXVmess(line) {
     let name = '';
     let server = '';
     let port = '';
-    let method = 'auto';
     let id = '';
     let aid = '0';
     let extra = [];
@@ -87,17 +86,15 @@ function parseQuantumultXVmess(line) {
       name = decodeURIComponent(kv.get('tag') || '');
       server = serverPort.server;
       port = serverPort.port;
-      method = decodeURIComponent(kv.get('method') || 'auto');
       id = decodeURIComponent(kv.get('password') || '');
       aid = decodeURIComponent(kv.get('alterid') || '0');
       extra = params.slice(1);
     } else {
       if (params.length < 6) return null;
-      const [rawName, rawServer, rawPort, rawMethod, rawId, rawAid, ...rest] = params;
+      const [rawName, rawServer, rawPort, _rawMethod, rawId, rawAid, ...rest] = params;
       name = decodeURIComponent(rawName || '');
       server = decodeURIComponent(rawServer || '');
       port = decodeURIComponent(rawPort || '');
-      method = decodeURIComponent(rawMethod || '');
       id = decodeURIComponent(rawId || '');
       aid = rawAid ? decodeURIComponent(rawAid) : '0';
       extra = rest;
@@ -166,7 +163,7 @@ function parseQuantumultXVmess(line) {
       protocol: 'vmess',
       source: 'quantumultx',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -219,7 +216,7 @@ function parseQuantumultXSS(line) {
       protocol: 'ss',
       source: 'quantumultx',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -267,7 +264,7 @@ function parseQuantumultXTrojan(line) {
       protocol: 'trojan',
       source: 'quantumultx',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -591,7 +588,7 @@ function parseQuantumultXHTTP(line) {
       protocol: scheme,
       source: 'quantumultx',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

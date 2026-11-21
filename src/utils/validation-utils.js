@@ -92,7 +92,7 @@ export function validatePasswordStrength(password) {
   }
 
   // 包含特殊字符
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     score += 1;
   } else {
     suggestions.push(t('validation.includeSpecial'));
@@ -118,7 +118,6 @@ export function validatePasswordStrength(password) {
  */
 export function validateForm(formData, rules) {
   const errors = {};
-  const isValid = true;
 
   for (const [field, fieldRules] of Object.entries(rules)) {
     const value = formData[field];

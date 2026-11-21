@@ -22,7 +22,7 @@ const params = computed({
     ...props.modelValue,
     prefer: {
       protocolOrder: [],
-      ...(props.modelValue?.prefer || {}),
+      ...props.modelValue?.prefer,
     },
   }),
   set: (val) => emit('update:modelValue', val),
@@ -47,7 +47,7 @@ const toggleProtocol = (protocol) => {
 
   updateValue({
     prefer: {
-      ...(params.value.prefer || {}),
+      ...params.value.prefer,
       protocolOrder: Array.from(current),
     },
   });

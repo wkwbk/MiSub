@@ -234,11 +234,6 @@ useScrollLock(() => props.show);
 
 .modal-inner-enter-active,
 .modal-inner-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.modal-inner-enter-active,
-.modal-inner-leave-active {
   transition: all 0.25s ease;
 }
 

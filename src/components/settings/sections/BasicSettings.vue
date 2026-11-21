@@ -63,13 +63,13 @@ const RESERVED_PATHS = [
 ];
 
 const getPathSegment = (value) => value.replace(/^\/+/, '').split('/')[0].toLowerCase();
-const hasInvalidTokenChars = (value) => /[\s\/?#]/.test(value);
+const hasInvalidTokenChars = (value) => /[\s/?#]/.test(value);
 
 const customLoginPathError = computed(() => {
   const value = props.settings.customLoginPath;
   if (!value) return '';
 
-  if (/[^a-zA-Z0-9-_\/]/.test(value)) {
+  if (/[^a-zA-Z0-9-_/]/.test(value)) {
     return t('settings.reservedPathChars');
   }
 
@@ -112,7 +112,7 @@ watch(
     if (!val) return;
 
     // 仅允许字母、数字、下划线、中划线和斜杠
-    const sanitized = val.replace(/[^a-zA-Z0-9-_\/]/g, '');
+    const sanitized = val.replace(/[^a-zA-Z0-9-_/]/g, '');
 
     if (sanitized !== val) {
       props.settings.customLoginPath = sanitized;

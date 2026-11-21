@@ -6,6 +6,8 @@
  * 拆成独立文件是为了让新增逻辑不污染 node-parser.js 的主流程。
  */
 
+import { utf8ToBase64 } from '../../../shared/base64.js';
+
 const V2RAYN_SCHEME = /^v2rayn:\/\/([a-z0-9+.-]+)\/(.+)$/i;
 
 const V2RAYN_PROTOCOL_ALIAS = {
@@ -250,13 +252,13 @@ function v2rayNToUri(tag, cfg) {
       tls: (cfg.StreamSecurity || cfg.streamSecurity || '').toLowerCase() === 'tls' ? 'tls' : '',
       sni: sni || '',
     };
-    return `vmess://${btoa(unescape(encodeURIComponent(JSON.stringify(vmessObj))))}`;
+    return `vmess://${utf8ToBase64(JSON.stringify(vmessObj))}`;
   }
 
   if (protocol === 'ss') {
     const method = cfg.Method || cfg.method || '';
     if (!method || !password) return null;
-    const userInfo = btoa(unescape(encodeURIComponent(`${method}:${password}`)));
+    const userInfo = utf8ToBase64(`${method}:${password}`);
     return `ss://${userInfo}@${host}:${port}#${encodeURIComponent(name)}`;
   }
 

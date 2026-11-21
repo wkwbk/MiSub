@@ -1,7 +1,8 @@
 import { serializeXhttpExtra } from '../../shared/xhttp-extra.js';
+import { utf8ToBase64 } from '../../shared/base64.js';
 
 function base64Encode(str) {
-  return btoa(unescape(encodeURIComponent(str)));
+  return utf8ToBase64(str);
 }
 
 function base64UrlSafeEncode(str) {

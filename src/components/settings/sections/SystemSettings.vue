@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input.vue';
 import Switch from '@/components/ui/Switch.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   settings: {
@@ -68,12 +69,11 @@ const handleCopyExternalApiToken = async (settings) => {
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(token);
-    showToast(t('systemSettings.externalApiTokenCopied'), 'success');
-  } catch (error) {
-    showToast(t('systemSettings.copyFailedManual'), 'error');
-  }
+  const copied = await copyTextToClipboard(token);
+  showToast(
+    copied ? t('systemSettings.externalApiTokenCopied') : t('systemSettings.copyFailedManual'),
+    copied ? 'success' : 'error',
+  );
 };
 
 const handleUpdatePassword = async () => {

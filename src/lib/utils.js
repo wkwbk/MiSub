@@ -121,7 +121,7 @@ export function extractNodeName(url) {
         if (url.startsWith('http')) return new URL(url).hostname;
         return '';
     }
-  } catch (e) {
+  } catch {
     return url.substring(0, 50);
   }
 }

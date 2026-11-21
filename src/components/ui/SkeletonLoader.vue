@@ -91,36 +91,6 @@ defineProps({
 </template>
 
 <style scoped>
-/* 骨架屏动画 */
-.skeleton-shimmer {
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton-shimmer::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  animation: shimmer 2s infinite;
-}
-
-.dark .skeleton-shimmer::after {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-}
-
-@keyframes shimmer {
-  0% {
-    left: -100%;
-  }
-  100% {
-    left: 100%;
-  }
-}
-
 /* 交错动画 */
 .animate-pulse {
   animation-delay: calc(var(--delay-index) * 100ms);

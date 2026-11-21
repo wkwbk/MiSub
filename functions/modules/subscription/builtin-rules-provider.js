@@ -124,7 +124,10 @@ export function pruneProxyGroups(proxyGroups, proxies) {
     FALLBACK_GROUP,
     MANUAL_SELECT_GROUP,
     DNS_PROXY_GROUP,
-    ...['DIRECT', 'REJECT', 'REJECT-DROP', 'ANY'], // 各平台通用保留字
+    'DIRECT',
+    'REJECT',
+    'REJECT-DROP',
+    'ANY', // 各平台通用保留字
   ]);
 
   return proxyGroups.map((group) => {

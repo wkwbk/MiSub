@@ -276,34 +276,11 @@ const navigate = (path, query = {}) => {
   transform: translateY(0);
 }
 
-@keyframes ping-slow {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(1.5);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(2);
-  }
-}
-
-.animate-ping-slow {
-  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .stat-card {
     opacity: 1;
     transform: none;
     transition: none;
-  }
-
-  .animate-ping-slow {
-    animation: none;
   }
 }
 </style>

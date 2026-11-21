@@ -2,6 +2,7 @@
  * Telegram Bot 只读查询类命令处理器
  */
 
+import { utf8ToBase64 } from '../../../../shared/base64.js';
 import { escapeHtml } from '../../utils.js';
 import { createRequestCache, getCachedProfiles, getCachedSettings, } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
@@ -675,7 +676,7 @@ export async function handleExportCommand(chatId, userId, args, env) {
       default:
         // Base64 格式
         const urls = userNodes.map((n) => n.url).join('\n');
-        content = btoa(unescape(encodeURIComponent(urls)));
+        content = utf8ToBase64(urls);
         formatName = 'Base64';
         break;
     }

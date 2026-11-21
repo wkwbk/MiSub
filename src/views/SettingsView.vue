@@ -134,12 +134,6 @@ watch(isLoading, (loading, wasLoading) => {
   }
 });
 
-watch(isLoading, (loading, wasLoading) => {
-  if (wasLoading && !loading && resolveSettingsFocusTab(route.query?.focus)) {
-    applyFocusFromQuery();
-  }
-});
-
 // A deep link can arrive while the view is already mounted (e.g. navigating
 // from the dashboard twice), so react to query changes too.
 watch(

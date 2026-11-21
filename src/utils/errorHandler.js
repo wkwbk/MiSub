@@ -251,7 +251,7 @@ class ErrorHandler {
 
       await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...(monitoringHeaders || {}) },
+        headers: { 'Content-Type': 'application/json', ...monitoringHeaders },
         body,
         keepalive: true,
       });

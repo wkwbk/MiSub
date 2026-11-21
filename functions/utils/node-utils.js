@@ -4,6 +4,7 @@
  */
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
+import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
 import { extractNodeRegion } from '../modules/utils/geo-utils.js';
 import { extractNodeMetadata } from '../modules/utils/metadata-extractor.js';
 
@@ -57,14 +58,14 @@ function normalizeBase64(input) {
 }
 
 function base64UrlSafeEncodeUtf8(str) {
-  return btoa(unescape(encodeURIComponent(str)))
+  return utf8ToBase64(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/g, '');
 }
 
 function base64UrlSafeDecodeUtf8(str) {
-  return decodeURIComponent(escape(atob(normalizeBase64(str))));
+  return base64ToUtf8(normalizeBase64(str));
 }
 
 function updateSsrRemarks(link, updater) {
@@ -136,7 +137,7 @@ export function prependNodeName(link, prefix) {
         nodeConfig.ps = originalPs ? `${prefix} - ${originalPs}` : prefix;
       }
       const newJsonString = JSON.stringify(nodeConfig);
-      const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+      const newBase64Part = utf8ToBase64(newJsonString);
       return 'vmess://' + newBase64Part;
     } catch (e) {
       console.error('为 vmess 节点添加名称前缀失败，将回退到通用方法。', e);
@@ -189,7 +190,7 @@ export function addFlagEmoji(link) {
         if (updatedPs === nodeConfig.ps) return link;
         nodeConfig.ps = updatedPs;
         const newJsonString = JSON.stringify(nodeConfig);
-        const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+        const newBase64Part = utf8ToBase64(newJsonString);
         return 'vmess://' + newBase64Part;
       }
       return link;
@@ -276,7 +277,7 @@ export function removeFlagEmoji(link) {
       if (nodeConfig.ps) {
         nodeConfig.ps = stripFlagEmoji(nodeConfig.ps);
         const newJsonString = JSON.stringify(nodeConfig);
-        const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+        const newBase64Part = utf8ToBase64(newJsonString);
         return 'vmess://' + newBase64Part;
       }
       return link;
@@ -425,7 +426,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
     // YAML Flow Style Unquoted Scalars cannot start with:
     // [, ], {, }, ,, :, -, ?, !, #, &, *, %, >, |, @
     // We replace them with full-width equivalents or '★' for *
-    const unsafeStartRegex = /^([*&!\[\]\{\},:?#%|>@\-])/;
+    const unsafeStartRegex = /^([*&![\]{},:?#%|>@-])/;
     if (unsafeStartRegex.test(name)) {
       return name
         .replace(/^[*]/, '★')
@@ -467,7 +468,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
         if (newPs !== nodeConfig.ps) {
           nodeConfig.ps = newPs;
           const newJsonString = JSON.stringify(nodeConfig);
-          const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+          const newBase64Part = utf8ToBase64(newJsonString);
           return 'vmess://' + newBase64Part;
         }
       }

@@ -47,7 +47,7 @@ const emit = defineEmits(['logout']);
 
 <template>
   <header
-    class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
+    class="app-nav-bar ios-fixed-header sticky top-0 z-50 bg-white/75 dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
   >
     <div class="ios-status-overlay"></div>
 

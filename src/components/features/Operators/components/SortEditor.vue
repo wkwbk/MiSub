@@ -109,7 +109,7 @@ const updateKeyField = (index, field, value) => {
     if (!current) return keys;
     let next = { ...current, [field]: value };
     if (field === 'key' && current.key !== value) {
-      const rowStash = { ...(nextStashed[index] || {}) };
+      const rowStash = { ...nextStashed[index] };
       if (CUSTOM_ORDER_KEYS.has(current.key) && Array.isArray(current.customOrder)) {
         rowStash[current.key] = [...current.customOrder];
       }

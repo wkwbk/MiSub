@@ -84,7 +84,7 @@ function parseSurgeAnytls(line) {
 
     const name = parts[1].trim();
     const params = parts[2].split(',').map((p) => p.trim());
-    const [protocol, server, port, ...options] = params;
+    const [_protocol, server, port, ...options] = params;
 
     if (!server || !port) return null;
 
@@ -116,7 +116,7 @@ function parseSurgeAnytls(line) {
       protocol: 'anytls',
       source: 'surge',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -218,7 +218,7 @@ function parseSurgeSS(line) {
     if (!parts) return null;
 
     const params = parts[2].split(',').map((p) => p.trim());
-    const [protocol, server, port, method, password] = params;
+    const [_protocol, server, port, method, password] = params;
 
     if (!server || !port || !method || !password) return null;
 
@@ -231,7 +231,7 @@ function parseSurgeSS(line) {
       protocol: 'ss',
       source: 'surge',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -245,7 +245,7 @@ function parseSurgeTrojan(line) {
     if (!parts) return null;
 
     const params = parts[2].split(',').map((p) => p.trim());
-    const [protocol, server, port, ...options] = params;
+    const [_protocol, server, port, ...options] = params;
 
     if (!server || !port) return null;
     let password = '';
@@ -273,7 +273,7 @@ function parseSurgeTrojan(line) {
       protocol: 'trojan',
       source: 'surge',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -302,7 +302,7 @@ function parseSurgeHTTP(line) {
       protocol: protocol,
       source: 'surge',
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }

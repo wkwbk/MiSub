@@ -8,6 +8,7 @@ import PublicCoresSection from '@/components/public/PublicCoresSection.vue';
 import PublicLinksSection from '@/components/public/PublicLinksSection.vue';
 import { AlertTriangle, ArrowRight } from '@lucide/vue';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -132,29 +133,11 @@ const copyLink = async (profile) => {
   const identifier = profile.customId || profile.id;
   const link = `${window.location.origin}/${token}/${identifier}`;
 
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    try {
-      await navigator.clipboard.writeText(link);
-      showToast(t('publicProfiles.linkCopied'), 'success');
-    } catch (e) {
-      showToast(t('publicProfiles.copyFailedManual'), 'error');
-    }
-  } else {
-    const textArea = document.createElement('textarea');
-    textArea.value = link;
-    textArea.style.position = 'fixed';
-    textArea.style.left = '-9999px';
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    try {
-      document.execCommand('copy');
-      showToast(t('publicProfiles.linkCopied'), 'success');
-    } catch (err) {
-      showToast(t('publicProfiles.copyFailedManual'), 'error');
-    }
-    document.body.removeChild(textArea);
-  }
+  const copied = await copyTextToClipboard(link);
+  showToast(
+    copied ? t('publicProfiles.linkCopied') : t('publicProfiles.copyFailedManual'),
+    copied ? 'success' : 'error',
+  );
 };
 
 const clients = ref([]);
@@ -738,32 +721,3 @@ onUnmounted(() => {
     />
   </div>
 </template>
-
-<style scoped>
-/* Entrance Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-
-.delay-100 {
-  animation-delay: 100ms;
-}
-.delay-200 {
-  animation-delay: 200ms;
-}
-.delay-300 {
-  animation-delay: 300ms;
-}
-</style>

@@ -108,7 +108,7 @@ export function parseVlessUrl(url) {
                 }
               }
             }
-            xhttpOpts.headers = { ...mergedHeaders, ...(xhttpOpts.headers || {}) };
+            xhttpOpts.headers = { ...mergedHeaders, ...xhttpOpts.headers };
           }
         } catch (e) {
           // extra 非法时不能让整个订阅转换失败。

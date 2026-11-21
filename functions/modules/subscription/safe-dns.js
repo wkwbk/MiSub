@@ -67,7 +67,7 @@ function resolverHost(value) {
     const parsed = new URL(candidate);
     const host = parsed.hostname.replace(/^\[|\]$/g, '');
     if (!DNS_HOST_PATTERN.test(parsed.hostname)) return '';
-    if (host === 'localhost' || host === '::1' || /^127\./.test(host) || /^0\./.test(host)) return '';
+    if (host === 'localhost' || host === '::1' || host.startsWith('127.') || host.startsWith('0.')) return '';
     return raw;
   } catch {
     return '';

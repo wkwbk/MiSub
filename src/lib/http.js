@@ -34,7 +34,7 @@ const parseJson = async (response) => {
   if (!text) return null;
   try {
     return JSON.parse(text);
-  } catch (e) {
+  } catch {
     return text;
   }
 };

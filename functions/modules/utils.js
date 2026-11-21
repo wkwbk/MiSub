@@ -3,6 +3,7 @@
  * 包含各种通用的辅助函数
  */
 
+import { utf8ToBase64 } from '../../shared/base64.js';
 import { ensureD1Schema } from '../storage-adapter.js';
 
 /**
@@ -373,7 +374,7 @@ export function prependNodeName(link, prefix) {
         nodeConfig.ps = originalPs ? `${prefix} - ${originalPs}` : prefix;
       }
       const newJsonString = JSON.stringify(nodeConfig);
-      const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+      const newBase64Part = utf8ToBase64(newJsonString);
       return 'vmess://' + newBase64Part;
     } catch (e) {
       console.error('为 vmess 节点添加名称前缀失败，将回退到通用方法。', e);

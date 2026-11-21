@@ -3,6 +3,7 @@
  * @author MiSub Team
  */
 
+import { utf8ToBase64 } from '../../shared/base64.js';
 import { parseNodeList } from '../modules/utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
@@ -701,7 +702,7 @@ function applyManualNodeName(nodeUrl, customName) {
         nodeConfig.ps = customName;
 
         const newJsonString = JSON.stringify(nodeConfig);
-        const newBase64Part = btoa(unescape(encodeURIComponent(newJsonString)));
+        const newBase64Part = utf8ToBase64(newJsonString);
         return 'vmess://' + newBase64Part;
       }
     } catch (e) {

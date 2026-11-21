@@ -435,9 +435,3 @@ const updateOperatorParams = (index, params) => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.group:hover .hover-action {
-  opacity: 1;
-}
-</style>

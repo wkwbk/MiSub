@@ -4,6 +4,7 @@ import { computed, markRaw } from 'vue';
 import { Box, Code2, Link2, Monitor, Send, Zap } from '@lucide/vue';
 import Modal from '@/components/forms/Modal.vue';
 import { useToastStore } from '@/stores/toast';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const { t } = useI18n();
 
@@ -72,42 +73,13 @@ const copyToClipboard = async (format) => {
   }
 
   const link = `${baseUrl.value}${format}`;
-
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(link);
-      showToast(t('copyLink.copied'), 'success');
-      close();
-    } else {
-      fallbackCopy(link);
-    }
-  } catch (err) {
-    fallbackCopy(link);
-  }
-};
-
-const fallbackCopy = (link) => {
-  const textArea = document.createElement('textarea');
-  textArea.value = link;
-  textArea.style.position = 'fixed';
-  textArea.style.left = '-9999px';
-  textArea.style.top = '0';
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try {
-    const successful = document.execCommand('copy');
-    if (successful) {
-      showToast(t('copyLink.copied'), 'success');
-      close();
-    } else {
-      showToast(t('copyLink.copyFailed'), 'error');
-    }
-  } catch (err) {
+  const copied = await copyTextToClipboard(link);
+  if (copied) {
+    showToast(t('copyLink.copied'), 'success');
+    close();
+  } else {
     showToast(t('copyLink.copyFailed'), 'error');
   }
-  document.body.removeChild(textArea);
 };
 </script>
 

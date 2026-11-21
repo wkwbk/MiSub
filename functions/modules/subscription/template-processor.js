@@ -124,7 +124,7 @@ function dedupeGroupsByName(model) {
     existing.members = Array.from(new Set([...(existing.members || []), ...(group.members || []).filter(Boolean)]));
     existing.filters = Array.from(new Set([...(existing.filters || []), ...(group.filters || []).filter(Boolean)]));
     existing.options = {
-      ...(existing.options || {}),
+      ...existing.options,
       ...(typeof group.options === 'object' && group.options !== null ? group.options : {}),
     };
 

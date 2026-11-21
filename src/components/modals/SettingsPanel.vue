@@ -65,5 +65,3 @@ defineExpose({
     />
   </div>
 </template>
-
-<style scoped></style>

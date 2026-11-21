@@ -3,6 +3,8 @@
  * 用于检测 SS 2022 节点的密钥长度是否与加密方式匹配
  */
 
+import { utf8ToBase64 } from '../../../shared/base64.js';
+
 /**
  * SS 2022 加密方式与密钥长度映射表
  */
@@ -174,7 +176,7 @@ export function fixSS2022Node(nodeUrl) {
 
     // 构建新的配置
     const newConfig = `${validation.details.suggestedCipher}:${password}`;
-    const newBase64 = btoa(unescape(encodeURIComponent(newConfig)));
+    const newBase64 = utf8ToBase64(newConfig);
     const fixedUrl = `ss://${newBase64}${serverPart}`;
 
     return {

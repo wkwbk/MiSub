@@ -244,7 +244,7 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
   if (metadataByUrl.size > 0) {
     records = records.map((record) => ({
       ...record,
-      ...(metadataByUrl.get(record.url) || {}),
+      ...metadataByUrl.get(record.url),
     }));
   }
 

@@ -8,6 +8,7 @@ import { confirmAction } from '@/composables/useConfirm.js';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   settings: {
@@ -156,13 +157,12 @@ const restoreRemoteFile = async (file) => {
 };
 
 const copyCronHint = async () => {
-  try {
-    const text = `${window.location.origin}/cron`;
-    await navigator.clipboard.writeText(text);
-    showToast(t('settings.webdavCronCopied'), 'success');
-  } catch {
-    showToast(t('settings.webdavCronCopyFailed'), 'error');
-  }
+  const text = `${window.location.origin}/cron`;
+  const copied = await copyTextToClipboard(text);
+  showToast(
+    copied ? t('settings.webdavCronCopied') : t('settings.webdavCronCopyFailed'),
+    copied ? 'success' : 'error',
+  );
 };
 
 ensureConfig();

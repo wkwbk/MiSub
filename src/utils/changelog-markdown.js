@@ -17,7 +17,7 @@ function formatInlineMarkdown(rawText) {
     codeTokens.push(
       `<code class="px-1.5 py-0.5 mx-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-mono text-[11px]">${code}</code>`,
     );
-    return `\u0000CODE${index}\u0000`;
+    return `%%MISUB_CODE_${index}%%`;
   });
 
   const formatted = withPlaceholders
@@ -28,7 +28,7 @@ function formatInlineMarkdown(rawText) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong class="font-semibold text-zinc-900 dark:text-zinc-100">$1</strong>')
     .replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, '$1<em>$2</em>');
 
-  return formatted.replace(/\u0000CODE(\d+)\u0000/g, (_, idx) => codeTokens[Number(idx)] || '');
+  return formatted.replace(/%%MISUB_CODE_(\d+)%%/g, (_, idx) => codeTokens[Number(idx)] || '');
 }
 
 /**

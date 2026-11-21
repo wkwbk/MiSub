@@ -152,7 +152,7 @@ async function fetchIpGeolocation(clientIp) {
     try {
       const response = await fetch(provider.buildUrl(clientIp), {
         cf: { timeout: 3000 },
-        ...(provider.requestInit || {}),
+        ...provider.requestInit,
       });
       if (!response.ok) continue;
       const body = provider.read ? await provider.read(response) : await response.json();

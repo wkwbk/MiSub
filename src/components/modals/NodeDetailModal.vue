@@ -5,6 +5,7 @@ import Modal from '@/components/forms/Modal.vue';
 import { parseNodeDetail } from '@/utils/nodeDetail.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
   show: {
@@ -50,8 +51,8 @@ watch(
 
 const copyText = async (text, key) => {
   if (!text) return;
-  try {
-    await navigator.clipboard.writeText(String(text));
+  const copied = await copyTextToClipboard(text);
+  if (copied) {
     copiedKey.value = key;
     showToast(t('notices.copied'), 'success');
     setTimeout(() => {
@@ -59,7 +60,7 @@ const copyText = async (text, key) => {
         copiedKey.value = '';
       }
     }, 1500);
-  } catch {
+  } else {
     showToast(t('notices.copyFailed'), 'error');
   }
 };

@@ -2,6 +2,7 @@
  * Telegram Bot 变更与导入类命令处理器
  */
 
+import { base64ToUtf8 } from '../../../../shared/base64.js';
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { createJsonResponse, escapeHtml, generateId } from '../../utils.js';
 import { extractValidNodes } from '../../utils/node-parser.js';
@@ -393,7 +394,7 @@ export async function handleImportCommand(chatId, userId, args, env) {
 
         // 尝试 Base64 解码
         try {
-          const decoded = decodeURIComponent(escape(atob(content.trim())));
+          const decoded = base64ToUtf8(content.trim());
           nodeUrls = extractNodeUrls(decoded);
         } catch {
           // 直接尝试提取
@@ -406,7 +407,7 @@ export async function handleImportCommand(chatId, userId, args, env) {
     } else {
       // 尝试 Base64 解码
       try {
-        const decoded = decodeURIComponent(escape(atob(input)));
+        const decoded = base64ToUtf8(input);
         nodeUrls = extractNodeUrls(decoded);
       } catch {
         // 直接尝试提取

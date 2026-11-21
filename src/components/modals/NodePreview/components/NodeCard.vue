@@ -200,20 +200,3 @@ const handleCardClick = (node) => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.animate-scale-in {
-  animation: scaleIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-</style>

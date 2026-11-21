@@ -48,7 +48,7 @@ function handleNavClick(event, path) {
 <template>
   <header
     :aria-label="t('nav.top')"
-    class="app-nav-bar md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 w-full bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
+    class="app-nav-bar md:hidden sticky top-0 z-50 flex items-center justify-between px-4 h-14 w-full bg-white/75 dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
   >
     <BrandLogo :icon-size="28" text-size-class="text-lg" to="/dashboard" />
 
@@ -65,7 +65,7 @@ function handleNavClick(event, path) {
 
   <header
     :aria-label="t('nav.main')"
-    class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
+    class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/75 dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
   >
     <div class="max-w-7xl mx-auto px-4 md:px-5 lg:px-8 h-14 flex items-center justify-between">
       <div class="shrink-0 pr-2 lg:pr-5">

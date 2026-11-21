@@ -409,15 +409,6 @@ const isCustomPageFullWidth = computed(() => {
 </template>
 
 <style>
-:root {
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.ios-content-offset {
-  padding-top: calc(var(--safe-top));
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.15s ease;

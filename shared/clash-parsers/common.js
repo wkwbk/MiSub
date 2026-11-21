@@ -1,6 +1,7 @@
 /**
  * Clash 协议解析公共工具函数
  */
+import { base64ToUtf8 } from '../base64.js';
 
 const VIRTUAL_INFO_NODE_PASSWORD = '00000000-0000-0000-0000-000000000000';
 
@@ -58,9 +59,7 @@ export function extractName(url) {
  */
 export function base64Decode(str) {
   try {
-    let normalized = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (normalized.length % 4) normalized += '=';
-    return decodeURIComponent(escape(atob(normalized)));
+    return base64ToUtf8(str);
   } catch {
     // 回退到纯 atob
     try {

@@ -216,7 +216,6 @@ function handleItemsPerPageChange(value) {
 }
 
 .remove-arrow {
-  -moz-appearance: textfield;
   appearance: textfield;
 }
 </style>

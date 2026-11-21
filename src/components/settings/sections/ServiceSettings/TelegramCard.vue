@@ -5,6 +5,7 @@ import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const { t } = useI18n();
 
@@ -75,33 +76,17 @@ const testResult = ref(null);
 async function copyText(value, key) {
   if (!value) return;
 
-  try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(value);
-    } else {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.setAttribute('readonly', '');
-      textarea.style.position = 'fixed';
-      textarea.style.left = '-9999px';
-      textarea.style.top = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    }
+  const copied = await copyTextToClipboard(value);
+  copyStatus.value = {
+    key,
+    message: copied ? t('settings.copiedShort') : t('settings.copyFailedManualSelect'),
+  };
 
-    copyStatus.value = { key, message: t('settings.copiedShort') };
-  } catch (error) {
-    console.error('[TelegramCard] Copy failed:', error);
-    copyStatus.value = { key, message: t('settings.copyFailedManualSelect') };
-  } finally {
-    window.setTimeout(() => {
-      if (copyStatus.value?.key === key) {
-        copyStatus.value = null;
-      }
-    }, 2500);
-  }
+  window.setTimeout(() => {
+    if (copyStatus.value?.key === key) {
+      copyStatus.value = null;
+    }
+  }, 2500);
 }
 
 async function testNotification() {

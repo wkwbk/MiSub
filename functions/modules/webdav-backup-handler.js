@@ -7,6 +7,7 @@
  * - WebDAV credentials and runtime secrets are never written into backup payloads.
  */
 
+import { utf8ToBase64 } from '../../shared/base64.js';
 import { SettingsCache, StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
@@ -49,7 +50,7 @@ function normalizeScope(scope) {
 }
 
 function normalizeWebdavConfig(settings = {}) {
-  return { ...DEFAULT_WEBDAV_CONFIG, ...(settings.webdavBackup || {}) };
+  return { ...DEFAULT_WEBDAV_CONFIG, ...settings.webdavBackup };
 }
 
 function sanitizeRuntimeSecrets(settings = {}) {
@@ -300,7 +301,7 @@ function normalizeWebdavHref(endpoint, href) {
 function toBasicAuth(username, password) {
   const raw = `${username || ''}:${password || ''}`;
   if (typeof btoa === 'function') {
-    return btoa(unescape(encodeURIComponent(raw)));
+    return utf8ToBase64(raw);
   }
   return Buffer.from(raw, 'utf8').toString('base64');
 }
@@ -424,7 +425,7 @@ export async function handleWebdavBackupTest(request, env) {
     });
     const config = {
       ...normalizeWebdavConfig(settings),
-      ...(body?.webdavBackup || body || {}),
+      ...(body?.webdavBackup || body),
     };
     assertSafeWebdavConfig(config);
     await ensureRemoteDirectory(config);

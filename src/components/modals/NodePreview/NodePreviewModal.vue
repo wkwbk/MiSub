@@ -8,6 +8,7 @@ import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 import Modal from '@/components/forms/Modal.vue';
 import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';
 import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
@@ -355,20 +356,8 @@ const loadNodes = async () => {
 
 // 复制节点链接
 const copyNodeUrl = async (node, nodeId) => {
-  try {
-    await navigator.clipboard.writeText(node.url);
-    copiedNodeId.value = nodeId;
-    setTimeout(() => {
-      copiedNodeId.value = '';
-    }, 2000);
-  } catch (err) {
-    // 降级方案
-    const textArea = document.createElement('textarea');
-    textArea.value = node.url;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
+  const copied = await copyTextToClipboard(node.url);
+  if (copied) {
     copiedNodeId.value = nodeId;
     setTimeout(() => {
       copiedNodeId.value = '';
@@ -508,7 +497,7 @@ const parseNodeInfo = (node) => {
     if (isDev) {
       console.debug('[Preview] URL parse failed, falling back to regex:', e);
     }
-    const match = node.url.match(/@([^:\/]+):(\d+)/);
+    const match = node.url.match(/@([^:/]+):(\d+)/);
     if (match) {
       result.server = match[1];
       result.port = match[2];
@@ -767,5 +756,3 @@ const goToPage = (page) => {
 
   <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
 </template>
-
-<style scoped></style>

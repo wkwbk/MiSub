@@ -42,7 +42,7 @@ export function createStorageCache(keyBase, ttlMs) {
     try {
       sessionStorage.removeItem(DATA_KEY);
       sessionStorage.removeItem(TS_KEY);
-    } catch (e) {
+    } catch {
       // Ignore
     }
   }

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Clock, Copy } from '@lucide/vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const { t } = useI18n();
 
@@ -36,7 +37,7 @@ const cronHeaderCommand = computed(() => {
 // 复制 Cron URL
 function copyCronUrl() {
   if (cronUrl.value) {
-    navigator.clipboard.writeText(cronUrl.value);
+    copyTextToClipboard(cronUrl.value);
   }
 }
 </script>

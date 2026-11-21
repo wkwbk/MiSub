@@ -68,46 +68,11 @@ function normalizeBase64(input) {
   return s;
 }
 
-function base64UrlEncode(text) {
-  return base64Encode(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
-}
-
-function getSchemePayload(url, prefixLen) {
-  const rest = String(url || '').slice(prefixLen);
-  const cut = rest.search(/[?#]/);
-  return (cut === -1 ? rest : rest.slice(0, cut)).trim();
-}
-
-function splitSchemeQueryAndFragment(url, prefixLen) {
-  const rest = String(url || '').slice(prefixLen);
-  const hashIdx = rest.indexOf('#');
-  const queryIdx = rest.indexOf('?');
-  const queryActive = queryIdx !== -1 && (hashIdx === -1 || queryIdx < hashIdx);
-  let payloadEnd = -1;
-  if (hashIdx !== -1) payloadEnd = hashIdx;
-  if (queryActive) payloadEnd = payloadEnd === -1 ? queryIdx : Math.min(payloadEnd, queryIdx);
-  const payload = (payloadEnd === -1 ? rest : rest.slice(0, payloadEnd)).trim();
-  const query = queryActive ? rest.slice(queryIdx, hashIdx === -1 ? undefined : hashIdx) : '';
-  return { payload, query, hasFragment: hashIdx !== -1 };
-}
-
-function base64Decode(base64) {
-  const binary = atob(normalizeBase64(base64));
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new TextDecoder('utf-8').decode(bytes);
-}
-
 function base64Encode(text) {
   const bytes = new TextEncoder().encode(String(text));
   let binary = '';
   for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
-}
-
-function getProtocol(url) {
-  const m = String(url || '').match(/^([a-zA-Z0-9+.-]+):\/\//);
-  return m ? m[1].toLowerCase() : 'unknown';
 }
 
 /**
@@ -117,35 +82,6 @@ function normalizeProtocol(proto) {
   const p = String(proto || 'unknown').toLowerCase();
   if (p === 'hy' || p === 'hy2' || p === 'hysteria') return 'hysteria2';
   return p;
-}
-
-function getFragment(url) {
-  const idx = String(url || '').lastIndexOf('#');
-  if (idx === -1) return '';
-  return safeDecodeURI(url.slice(idx + 1)).trim();
-}
-
-function setFragment(url, name) {
-  const s = String(url || '');
-  const idx = s.lastIndexOf('#');
-  const base = idx === -1 ? s : s.slice(0, idx);
-  return `${base}#${encodeURIComponent(String(name || ''))}`;
-}
-
-function parseHostPort(hostPort) {
-  const s = String(hostPort || '').trim();
-  if (!s) return { server: '', port: '' };
-  if (s.startsWith('[') && s.includes(']')) {
-    const end = s.indexOf(']');
-    const host = s.slice(1, end);
-    const rest = s.slice(end + 1);
-    return { server: host, port: rest.startsWith(':') ? rest.slice(1) : '' };
-  }
-  const lastColon = s.lastIndexOf(':');
-  if (lastColon === -1) return { server: s, port: '' };
-  const host = s.slice(0, lastColon);
-  if (host.includes(':')) return { server: s, port: '' };
-  return { server: host, port: s.slice(lastColon + 1) };
 }
 
 // ============ 节点解析 ============
@@ -390,36 +326,6 @@ export function applyRegexRename(name, rules, record = null) {
   }
 
   return result.trim();
-}
-
-function safeTitle(value) {
-  const text = String(value || '');
-  return text ? text.charAt(0).toUpperCase() + text.slice(1) : '';
-}
-
-function safeContains(value, keyword) {
-  return String(value || '')
-    .toLowerCase()
-    .includes(String(keyword || '').toLowerCase());
-}
-
-function safeMatch(value, pattern, flags = 'i') {
-  try {
-    return new RegExp(pattern, flags).test(String(value || ''));
-  } catch {
-    return false;
-  }
-}
-
-function safeFallback(...values) {
-  for (const value of values) {
-    if (value !== null && value !== undefined && String(value).trim() !== '') return value;
-  }
-  return '';
-}
-
-function safePick(condition, truthyValue, falsyValue = '') {
-  return condition ? truthyValue : falsyValue;
 }
 
 function safeRegionAlias(regionValue) {

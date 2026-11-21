@@ -8,6 +8,8 @@
  * 返回链接数组；无法识别的出站跳过。
  */
 
+import { utf8ToBase64 } from '../../../shared/base64.js';
+
 function toArray(value) {
   if (value === undefined || value === null) return [];
   return Array.isArray(value) ? value : [value];
@@ -15,7 +17,7 @@ function toArray(value) {
 
 function b64url(input) {
   const str = typeof input === 'string' ? input : JSON.stringify(input);
-  return btoa(unescape(encodeURIComponent(str)))
+  return utf8ToBase64(str)
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
@@ -103,7 +105,7 @@ export function singboxOutboundToUrl(ob) {
     case 'shadowsocks': {
       const method = ob.method || 'aes-256-gcm';
       const pwd = ob.password || '';
-      const userinfo = btoa(unescape(encodeURIComponent(`${method}:${pwd}`))).replace(/=+$/, '');
+      const userinfo = utf8ToBase64(`${method}:${pwd}`).replace(/=+$/, '');
       return `ss://${userinfo}@${server}:${port}${hash}`;
     }
     case 'hysteria2':
