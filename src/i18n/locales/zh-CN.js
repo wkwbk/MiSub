@@ -265,6 +265,8 @@ export default {
     badgeCdn: 'CDN',
     resolvedIp: '解析 IP',
     stackCount: '{count} 个节点',
+    stackViewAll: '查看全部',
+    stackMoreNodes: '个更多节点',
     stackExpand: '展开 {count} 个节点',
     stackCollapse: '收起',
     stackPingGroup: '检测此 IP 节点',

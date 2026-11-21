@@ -200,23 +200,23 @@ const closeModal = () => {
                   :key="item.key"
                   class="modal-row-hover flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors"
                 >
-                  <span class="shrink-0 font-medium text-fg-muted pt-0.5 min-w-[110px] sm:min-w-[140px]">
+                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[110px] sm:min-w-[140px]">
                     {{ item.label }}
                   </span>
-                  <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
-                    <span class="break-all text-right font-mono text-fg">
+                  <div class="flex min-w-0 flex-1 items-start justify-end gap-1.5">
+                    <span class="break-all text-right font-mono leading-5 text-fg">
                       {{ item.display }}
                     </span>
                     <button
                       v-if="item.copyable"
                       :aria-label="t('actions.copy')"
                       :title="t('actions.copy')"
-                      class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
                       type="button"
                       @click="copyText(item.display, item.key)"
                     >
-                      <Check v-if="copiedKey === item.key" class="h-3 w-3 text-emerald-400" />
-                      <Copy v-else class="h-3 w-3" />
+                      <Check v-if="copiedKey === item.key" class="h-3.5 w-3.5 text-emerald-400" />
+                      <Copy v-else class="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>
@@ -235,10 +235,10 @@ const closeModal = () => {
                   :key="item.key"
                   class="modal-row-hover flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors"
                 >
-                  <span class="shrink-0 font-medium text-fg-muted pt-0.5 min-w-[110px] sm:min-w-[140px]">
+                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[110px] sm:min-w-[140px]">
                     {{ item.label }}
                   </span>
-                  <div class="flex min-w-0 flex-1 items-start justify-end gap-2">
+                  <div class="flex min-w-0 flex-1 items-start justify-end gap-1.5">
                     <span
                       v-if="item.kind === 'boolean'"
                       :class="
@@ -250,19 +250,19 @@ const closeModal = () => {
                     >
                       {{ item.display }}
                     </span>
-                    <span v-else class="break-all text-right font-mono text-fg">
+                    <span v-else class="break-all text-right font-mono leading-5 text-fg">
                       {{ item.display }}
                     </span>
                     <button
                       v-if="item.copyable"
                       :aria-label="t('actions.copy')"
                       :title="t('actions.copy')"
-                      class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+                      class="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
                       type="button"
                       @click="copyText(item.display, item.key)"
                     >
-                      <Check v-if="copiedKey === item.key" class="h-3 w-3 text-emerald-400" />
-                      <Copy v-else class="h-3 w-3" />
+                      <Check v-if="copiedKey === item.key" class="h-3.5 w-3.5 text-emerald-400" />
+                      <Copy v-else class="h-3.5 w-3.5" />
                     </button>
                   </div>
                 </div>

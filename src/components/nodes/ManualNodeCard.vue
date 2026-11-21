@@ -73,8 +73,9 @@ const countryBadge = computed(() => {
     };
   }
   if (info.countryCode) {
+    const label = info.country && info.country !== info.countryCode ? info.country : info.countryCode;
     return {
-      text: `${info.flag ? `${info.flag} ` : ''}${info.countryCode}`,
+      text: info.flag && label !== info.countryCode ? `${info.flag} ${label}` : label,
       title: `${info.country || info.countryCode}${info.asn ? ` · ${info.asn}` : ''}${info.org ? ` (${info.org})` : ''}`,
       className: 'border-line bg-transparent text-fg-muted',
     };

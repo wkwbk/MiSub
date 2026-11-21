@@ -264,6 +264,8 @@ export default {
     badgeCdn: 'CDN',
     resolvedIp: 'Resolved IP',
     stackCount: '{count} nodes',
+    stackViewAll: 'View all',
+    stackMoreNodes: 'more',
     stackExpand: 'Expand {count} nodes',
     stackCollapse: 'Collapse',
     stackPingGroup: 'Ping nodes on this IP',
