@@ -1,4 +1,4 @@
-import { NODE_PROTOCOL_PREFIXES } from '@/constants/nodeProtocols.js';
+import { NODE_PROTOCOL_PREFIXES } from '@/constants/node-protocols.js';
 import { t } from '@/i18n/index.js';
 
 /**

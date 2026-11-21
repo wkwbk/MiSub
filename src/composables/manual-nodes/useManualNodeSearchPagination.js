@@ -1,6 +1,6 @@
 import { computed, ref, watch } from 'vue';
 import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize } from '@/constants/pagination.js';
-import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manualNodeCountryAliases.js';
+import { MANUAL_NODE_COUNTRY_ALIAS_MAP } from '@/constants/manual-node-country-aliases.js';
 import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
 
 export function useManualNodeSearchPagination(options) {
