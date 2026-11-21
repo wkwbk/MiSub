@@ -82,7 +82,8 @@ export async function handleMisubRequest(context) {
 
   const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
   context.storage = storageAdapter;
-  const settingsData = await storageAdapter.get(STORAGE_KEY_SETTINGS);
+  const settingsData =
+    context.settings !== undefined ? context.settings : await storageAdapter.get(STORAGE_KEY_SETTINGS);
   const settings = settingsData || {};
 
   // 关键：我们在这里定义了 `config`，后续都应该使用它
@@ -104,13 +105,15 @@ export async function handleMisubRequest(context) {
 
   console.log(`[MiSub Logic] isBrowser: ${isBrowser}, Disguise: ${config.disguise?.enabled}`);
 
-  const isAuthenticated = await authMiddleware(request, env);
-
-  if (config.disguise?.enabled && isBrowser && !url.searchParams.has('callback_token') && !isAuthenticated) {
-    // [Smart Camouflage]
-    // If disguise is enabled and it's a browser request (not a known client),
-    // show the disguise page unless the user is authenticated.
-    return createDisguiseResponse(config.disguise, request.url);
+  // 仅当伪装已开启且为浏览器请求（非回调）时才校验管理员会话，避免代理客户端拉取订阅时触发额外鉴权与 D1 读取
+  if (config.disguise?.enabled && isBrowser && !url.searchParams.has('callback_token')) {
+    const isAuthenticated = await authMiddleware(request, env);
+    if (!isAuthenticated) {
+      // [Smart Camouflage]
+      // If disguise is enabled and it's a browser request (not a known client),
+      // show the disguise page unless the user is authenticated.
+      return createDisguiseResponse(config.disguise, request.url);
+    }
   }
 
   context.url = url; // [核心修复] 将 url 挂载到 context，确保后续服务能获取到 debug 参数
@@ -229,40 +232,47 @@ export async function handleMisubRequest(context) {
           });
         }
 
-        // 3. Add sub-profiles in order defined by profile (嵌套组合订阅)
+        // 3. Add sub-profiles in order defined by profile (嵌套组合订阅，并发解析并保持顺序)
         const profileSubProfileIds = profile.subProfiles || [];
         if (Array.isArray(profileSubProfileIds) && profileSubProfileIds.length > 0) {
-          for (const subProfileId of profileSubProfileIds) {
-            if (!subProfileId || subProfileId === profile.id || subProfileId === profile.customId) {
-              continue;
-            }
-            try {
-              const subResult = await handleProfileMode(
-                request,
-                env,
-                subProfileId,
-                userAgentHeader,
-                true,
-                shouldSkipCertificateVerify,
-                1,
-                new Set([profile.id, profile.customId].filter(Boolean)),
-              );
-              if (subResult.success && Array.isArray(subResult.nodes)) {
-                subResult.nodes.forEach((node) => {
-                  targetMisubs.push({
-                    id: `nested-${subProfileId}-${node.url}`,
-                    name: node.name,
-                    url: node.url,
-                    tags: [subResult.profileName || '组合订阅'],
-                    isFromSubProfile: true,
-                    enabled: true,
-                  });
-                });
+          const validSubProfileIds = profileSubProfileIds.filter(
+            (subProfileId) => subProfileId && subProfileId !== profile.id && subProfileId !== profile.customId,
+          );
+          const visitedBase = [profile.id, profile.customId].filter(Boolean);
+          const nestedResults = await Promise.all(
+            validSubProfileIds.map(async (subProfileId) => {
+              try {
+                const subResult = await handleProfileMode(
+                  request,
+                  env,
+                  subProfileId,
+                  userAgentHeader,
+                  true,
+                  shouldSkipCertificateVerify,
+                  1,
+                  new Set(visitedBase),
+                );
+                return { subProfileId, subResult };
+              } catch (err) {
+                console.error(`[MainHandler] Failed to resolve sub-profile ${subProfileId}:`, err);
+                return { subProfileId, subResult: null };
               }
-            } catch (err) {
-              console.error(`[MainHandler] Failed to resolve sub-profile ${subProfileId}:`, err);
+            }),
+          );
+          nestedResults.forEach(({ subProfileId, subResult }) => {
+            if (subResult?.success && Array.isArray(subResult.nodes)) {
+              subResult.nodes.forEach((node) => {
+                targetMisubs.push({
+                  id: `nested-${subProfileId}-${node.url}`,
+                  name: node.name,
+                  url: node.url,
+                  tags: [subResult.profileName || '组合订阅'],
+                  isFromSubProfile: true,
+                  enabled: true,
+                });
+              });
             }
-          }
+          });
         }
       }
       // [新增] 增加订阅组下载计数

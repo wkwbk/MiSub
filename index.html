@@ -13,12 +13,19 @@
     <meta content="基于 Cloudflare 的订阅转换和管理工具" name="description"/>
     <meta content="#f7f8f8" name="theme-color"/>
     <meta content="#08090a" media="(prefers-color-scheme: dark)" name="theme-color"/>
-    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <!-- Google Fonts: Inter & JetBrains Mono (非阻塞加载，避免网络受限时阻塞首屏渲染) -->
     <link href="https://fonts.googleapis.com" rel="preconnect">
     <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
     <link
             href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+            media="print"
+            onload="this.media='all'"
             rel="stylesheet">
+    <noscript>
+        <link
+                href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+                rel="stylesheet">
+    </noscript>
     <meta content="telephone=no" name="format-detection"/>
 </head>
 

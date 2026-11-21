@@ -99,6 +99,23 @@ export async function verifySignedToken(key, token) {
   }
 }
 
+const requestAuthDiagnosticCache = new WeakMap();
+
+async function getCachedAuthSessionDiagnostic(request, env) {
+  if (request && typeof request === 'object') {
+    const cached = requestAuthDiagnosticCache.get(request);
+    if (cached && cached.env === env) {
+      return cached.diagnostic;
+    }
+  }
+
+  const diagnostic = await getAuthSessionDiagnostic(request, env);
+  if (request && typeof request === 'object') {
+    requestAuthDiagnosticCache.set(request, { env, diagnostic });
+  }
+  return diagnostic;
+}
+
 /**
  * 获取认证会话调试信息（不包含敏感值）
  * @param {Request} request
@@ -126,12 +143,7 @@ export async function getAuthSessionDiagnostic(request, env) {
     shouldRenew: false,
   };
 
-  const secret = await getCookieSecret(env);
-  if (!secret) {
-    result.reason = 'no_secret';
-    return result;
-  }
-
+  // 先检查 Cookie，无会话 Cookie 时直接早退，避免触发 D1 查询与密钥读取
   const cookieHeader = request.headers.get('Cookie') || '';
   result.cookieHeaderPresent = cookieHeader.length > 0;
 
@@ -167,6 +179,12 @@ export async function getAuthSessionDiagnostic(request, env) {
 
   if (!token) {
     result.reason = 'empty_token';
+    return result;
+  }
+
+  const secret = await getCookieSecret(env);
+  if (!secret) {
+    result.reason = 'no_secret';
     return result;
   }
 
@@ -211,7 +229,7 @@ export async function getAuthSessionDiagnostic(request, env) {
  * @returns {Promise<Response>}
  */
 export async function renewAuthSession(request, env, response, diagnostic = null) {
-  const authDiagnostic = diagnostic || (await getAuthSessionDiagnostic(request, env));
+  const authDiagnostic = diagnostic || (await getCachedAuthSessionDiagnostic(request, env));
   if (!authDiagnostic?.isAuthenticated || !authDiagnostic.shouldRenew) {
     return response;
   }
@@ -290,7 +308,7 @@ export async function getLoginPasswordDiagnostic(request, env) {
 export async function authMiddleware(request, env) {
   const logMeta = buildRequestMeta(request, env);
   try {
-    const diagnostic = await getAuthSessionDiagnostic(request, env);
+    const diagnostic = await getCachedAuthSessionDiagnostic(request, env);
     return diagnostic.isAuthenticated;
   } catch (e) {
     console.error('[Auth] 鉴权失败', { ...logMeta, error: e?.message });

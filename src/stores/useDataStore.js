@@ -39,13 +39,6 @@ export const useDataStore = defineStore('data', () => {
   const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
   const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
 
-  // --- Internal: Snapshot for rollback/diffing ---
-  let lastSavedData = {
-    subscriptions: [],
-    profiles: [],
-    ruleTemplates: [],
-  };
-
   // --- Actions ---
 
   // Data Hydration (avoid re-fetching if passed from outside)
@@ -62,7 +55,6 @@ export const useDataStore = defineStore('data', () => {
       ruleTemplates.value = data.ruleTemplates || [];
       settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
 
-      updateSnapshot();
       lastUpdated.value = new Date();
       dataCache.set(data);
       return true;
@@ -159,8 +151,6 @@ export const useDataStore = defineStore('data', () => {
         if (result.data.profiles) profiles.value = result.data.profiles;
       }
 
-      updateSnapshot();
-
       showToast(t('store.dataSaved'), 'success');
       lastUpdated.value = new Date();
       clearDirty();
@@ -242,7 +232,6 @@ export const useDataStore = defineStore('data', () => {
   async function fetchRuleTemplates() {
     const result = await api.get('/api/rule_templates');
     ruleTemplates.value = Array.isArray(result?.data) ? result.data : [];
-    lastSavedData.ruleTemplates = JSON.parse(JSON.stringify(ruleTemplates.value));
     return ruleTemplates.value;
   }
 
@@ -254,7 +243,6 @@ export const useDataStore = defineStore('data', () => {
         throw new Error(result.message || t('store.saveRuleTemplatesFailed'));
       }
       ruleTemplates.value = Array.isArray(result.data) ? result.data : [];
-      lastSavedData.ruleTemplates = JSON.parse(JSON.stringify(ruleTemplates.value));
       showToast(t('store.ruleTemplatesSaved'), 'success');
       return ruleTemplates.value;
     } catch (error) {
@@ -267,14 +255,6 @@ export const useDataStore = defineStore('data', () => {
   }
 
   // --- Helpers ---
-
-  function updateSnapshot() {
-    lastSavedData = {
-      subscriptions: JSON.parse(JSON.stringify(subscriptions.value)),
-      profiles: JSON.parse(JSON.stringify(profiles.value)),
-      ruleTemplates: JSON.parse(JSON.stringify(ruleTemplates.value)),
-    };
-  }
 
   function clearCachedData() {
     dataCache.clear();

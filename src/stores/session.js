@@ -1,4 +1,4 @@
-import { ref } from 'vue';
+import { ref, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
 import router from '@/router';
 import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api';
@@ -10,7 +10,7 @@ import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 export const useSessionStore = defineStore('session', () => {
   const sessionState = ref('loading'); // loading, loggedIn, loggedOut
-  const initialData = ref(null);
+  const initialData = shallowRef(null);
   const subscriptionConfig = ref({}); // [NEW] Added subscriptionConfig
   const securityWarning = ref(null);
   const defaultPublicConfig = Object.freeze({

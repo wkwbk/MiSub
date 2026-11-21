@@ -277,7 +277,7 @@ describe('protocolConverter', () => {
 
         const result = convertClashProxyToUrl(proxy);
         expect(result).toContain('sni=apple.com');
-        expect(result).toContain('allowInsecure=1');
+        expect(result).toContain('insecure=1');
       });
     });
 

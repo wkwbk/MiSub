@@ -21,7 +21,7 @@ const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 const route = useRoute();
 const router = useRouter();
 const sessionStore = useSessionStore();
-const { publicConfig, initialData } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
+const { publicConfig } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
 
 const activeComponent = ref(null);
 const componentProps = ref({});

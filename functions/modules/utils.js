@@ -142,12 +142,18 @@ async function safeD1Put(db, key, value) {
 }
 
 let fallbackCookieSecret = null;
+let cookieSecretCache = new WeakMap();
+const COOKIE_SECRET_CACHE_TTL_MS = 5 * 60 * 1000;
 
 function getFallbackCookieSecret() {
   if (!fallbackCookieSecret) {
     fallbackCookieSecret = crypto.randomUUID();
   }
   return fallbackCookieSecret;
+}
+
+export function clearCookieSecretCache() {
+  cookieSecretCache = new WeakMap();
 }
 
 /**
@@ -161,17 +167,33 @@ export async function getCookieSecret(env) {
   const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
 
   if (db) {
+    const now = Date.now();
+    const cached = cookieSecretCache.get(db);
+    if (cached && now - cached.timestamp < COOKIE_SECRET_CACHE_TTL_MS) {
+      return cached.secret;
+    }
+
     const storedSecret = await safeD1Get(db, 'SYSTEM_COOKIE_SECRET');
-    if (storedSecret) return storedSecret;
+    if (storedSecret) {
+      cookieSecretCache.set(db, { secret: storedSecret, timestamp: now });
+      return storedSecret;
+    }
 
     if (runtimeCookieSecret) {
-      await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
+      const saved = await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
+      if (saved) {
+        cookieSecretCache.set(db, { secret: runtimeCookieSecret, timestamp: now });
+      }
       return runtimeCookieSecret;
     }
 
     const newSecret = crypto.randomUUID();
     const saved = await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', newSecret);
-    return saved ? newSecret : getFallbackCookieSecret();
+    if (saved) {
+      cookieSecretCache.set(db, { secret: newSecret, timestamp: now });
+      return newSecret;
+    }
+    return getFallbackCookieSecret();
   }
 
   if (runtimeCookieSecret) return runtimeCookieSecret;

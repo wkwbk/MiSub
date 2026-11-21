@@ -18,8 +18,8 @@ import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
-import { normalizePublicLinksConfig } from '../../src/constants/default-public-links.js';
-import { normalizePublicCoresConfig } from '../../src/constants/default-public-cores.js';
+import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
+import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js'; /**
  * 处理订阅和配置保存API
  * @param {Object} request - HTTP请求对象

@@ -186,13 +186,14 @@ export async function onRequest(context) {
   const url = new URL(request.url);
 
   try {
+    const isPublicAssetRequest =
+      ['GET', 'HEAD'].includes(request.method) &&
+      (/^\/(assets|icons)\/./.test(url.pathname) ||
+        (/\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname) && !url.pathname.startsWith('/api/')));
+
     const handleRequest = async () => {
       // 优化：纯静态公共资产（如 /assets/ 打包产物与 /icons/ 图标）直通，跳过异步读取 D1 设置
-      const isPublicAsset =
-        /^\/(assets|icons)\/./.test(url.pathname) ||
-        (/\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname) && !url.pathname.startsWith('/api/'));
-
-      if (isPublicAsset && ['GET', 'HEAD'].includes(request.method)) {
+      if (isPublicAssetRequest) {
         const assetResponse = await fetchStaticAsset(request, env, next);
         if (assetResponse.status === 200 || assetResponse.status === 304) {
           return applyCacheHeadersToAssetResponse(assetResponse, url.pathname);
@@ -200,6 +201,7 @@ export async function onRequest(context) {
       }
 
       const settings = (await SettingsCache.get(env)) || {};
+      context.settings = settings;
       const config = migrateConfigSettings({ ...defaultSettings, ...settings });
 
       if (request.headers.get(INTERNAL_SPA_FETCH_HEADER) === '1') {
@@ -390,8 +392,10 @@ export async function onRequest(context) {
 
     // Sliding session renewal: refresh active sessions after seven days.
     // Login and logout manage the cookie themselves and must not be renewed here.
+    // Static public assets must also skip session renewal to avoid D1/crypto overhead
+    // and prevent attaching Set-Cookie onto public, immutable CDN-cached responses.
     const isAuthCookieManagementRoute = url.pathname === '/api/login' || url.pathname === '/api/logout';
-    if (isAuthCookieManagementRoute || request.method === 'OPTIONS') {
+    if (isPublicAssetRequest || isAuthCookieManagementRoute || request.method === 'OPTIONS') {
       return response;
     }
     return await renewAuthSession(request, env, response);

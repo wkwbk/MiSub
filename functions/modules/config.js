@@ -3,8 +3,8 @@
  * Includes constants, logical storage keys, and default settings for the worker.
  */
 
-import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../src/constants/default-public-links.js';
-import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../src/constants/default-public-cores.js';
+import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../shared/default-public-links.js';
+import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../shared/default-public-cores.js';
 
 // D1 settings table logical key
 export const STORAGE_KEY_SETTINGS = 'worker_settings_v1';
