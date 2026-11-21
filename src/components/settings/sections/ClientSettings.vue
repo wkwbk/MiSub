@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, Loader2, Monitor, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { api } from '@/lib/http.js';
 import SectionHeader from '@/components/settings/SectionHeader.vue';

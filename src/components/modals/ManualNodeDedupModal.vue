@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({

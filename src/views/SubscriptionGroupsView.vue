@@ -7,7 +7,7 @@ import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
 import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImport.js';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { useToastStore } from '@/stores/toast.js';

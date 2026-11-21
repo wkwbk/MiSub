@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
 import { useI18n } from '@/i18n/index.js';
 

@@ -3,7 +3,7 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
 import { Compass, LayoutGrid, LayoutPanelTop, LogOut, MessageSquare, Settings } from '@lucide/vue';
-import ThemeToggle from '@/components/features/ThemeToggle.vue';
+import ThemeToggle from '@/components/layout/ThemeToggle.vue';
 import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
 import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher.vue';

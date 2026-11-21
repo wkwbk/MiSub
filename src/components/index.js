@@ -11,9 +11,6 @@ export * from '@/components/shared';
 // 导出布局组件
 export * from '@/components/layout';
 
-// 导出功能组件
-export * from '@/components/features';
-
 // 导出UI组件
 export * from '@/components/ui';
 
@@ -43,8 +40,8 @@ export const ComponentMap = {
 
   // 功能组件
   Features: {
-    Dashboard: () => import('@/components/features/Dashboard/Dashboard.vue'),
-    ThemeToggle: () => import('@/components/features/ThemeToggle.vue'),
+    Dashboard: () => import('@/components/dashboard/Dashboard.vue'),
+    ThemeToggle: () => import('@/components/layout/ThemeToggle.vue'),
   },
 
   // UI组件
@@ -62,7 +59,7 @@ export const ComponentMap = {
 
   // 表单组件
   Forms: {
-    Modal: () => import('@/components/forms/Modal.vue'),
+    Modal: () => import('@/components/ui/Modal.vue'),
     SmartSearch: () => import('@/components/forms/SmartSearch.vue'),
   },
 

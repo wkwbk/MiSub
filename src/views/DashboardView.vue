@@ -11,7 +11,7 @@ import { useRouter } from 'vue-router';
 import { useProfiles } from '@/composables/useProfiles.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { formatBytes } from '@shared/format-utils.js';
-import StatCards from '@/components/features/Dashboard/StatCards.vue';
+import StatCards from '@/components/dashboard/StatCards.vue';
 import {
   addDismissedHealthItem,
   clearLegacyDismissedHealthItemIds,

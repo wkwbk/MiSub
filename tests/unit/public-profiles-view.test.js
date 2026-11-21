@@ -22,7 +22,7 @@ vi.mock('@/stores/toast.js', () => ({
 vi.mock('@/components/modals/NodePreview/NodePreviewModal.vue', () => ({
   default: { template: '<div />' },
 }));
-vi.mock('@/components/features/AnnouncementCard.vue', () => ({
+vi.mock('@/components/public/AnnouncementCard.vue', () => ({
   default: { template: '<div />' },
 }));
 vi.mock('@/components/modals/GuestbookModal.vue', () => ({

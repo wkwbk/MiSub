@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+import OperatorChain from '@/components/operators/OperatorChain.vue';
 import { createI18n } from '@/i18n/index.js';
 
 const englishGlobal = () => ({

@@ -23,9 +23,9 @@ import RightPanel from '@/components/profiles/RightPanel.vue';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
 import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
-import DashboardHeader from '@/components/features/Dashboard/DashboardHeader.vue';
+import DashboardHeader from '@/components/dashboard/DashboardHeader.vue';
 import SavePrompt from '@/components/ui/SavePrompt.vue';
 
 const isDev = import.meta.env.DEV;

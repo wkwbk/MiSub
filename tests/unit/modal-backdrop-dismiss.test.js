@@ -2,7 +2,7 @@ import { nextTick } from 'vue';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mount } from '@vue/test-utils';
 import FormModal from '@/components/shared/FormModal.vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 

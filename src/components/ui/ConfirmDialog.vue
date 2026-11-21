@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, onUnmounted } from 'vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { setConfirmHost, settleConfirm, useConfirmState } from '@/composables/useConfirm.js';
 

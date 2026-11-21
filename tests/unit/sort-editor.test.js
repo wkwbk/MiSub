@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import SortEditor from '../../src/components/features/Operators/components/SortEditor.vue';
+import SortEditor from '../../src/components/operators/components/SortEditor.vue';
 import { createI18n } from '../../src/i18n/index.js';
 
 const mountSortEditor = (modelValue = { keys: [] }, locale = 'zh-CN', { controlled = false } = {}) => {

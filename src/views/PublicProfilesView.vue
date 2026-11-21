@@ -13,7 +13,7 @@ import { copyTextToClipboard } from '@/utils/clipboard.js';
 const isDev = import.meta.env.DEV;
 
 const NodePreviewModal = defineAsyncComponent(() => import('@/components/modals/NodePreview/NodePreviewModal.vue'));
-const AnnouncementCard = defineAsyncComponent(() => import('@/components/features/AnnouncementCard.vue'));
+const AnnouncementCard = defineAsyncComponent(() => import('@/components/public/AnnouncementCard.vue'));
 const GuestbookModal = defineAsyncComponent(() => import('@/components/modals/GuestbookModal.vue'));
 const QuickImportModal = defineAsyncComponent(() => import('@/components/modals/QuickImportModal.vue'));
 const CustomPublicRenderer = defineAsyncComponent(() => import('@/components/public/CustomPublicRenderer.vue'));

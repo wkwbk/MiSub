@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Input from '@/components/ui/Input.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';

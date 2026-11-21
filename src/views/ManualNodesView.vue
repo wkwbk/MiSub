@@ -6,7 +6,7 @@ import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useNodeForms } from '@/composables/useNodeForms.js';
 import { useToastStore } from '@/stores/toast.js';
 import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
 import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
 import SubscriptionImportModal from '@/components/modals/SubscriptionImportModal.vue';

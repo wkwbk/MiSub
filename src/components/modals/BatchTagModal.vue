@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Tag } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import { useI18n } from '@/i18n/index.js';
 

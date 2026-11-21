@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { Layers } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
 import FileImport from '@/components/modals/SubscriptionImport/FileImport.vue';

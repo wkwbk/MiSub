@@ -9,7 +9,7 @@ import { useI18n } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';
 import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
 import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';

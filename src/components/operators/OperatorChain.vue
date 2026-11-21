@@ -14,10 +14,10 @@ import {
   Zap,
 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import FilterEditor from '@/components/features/Operators/components/FilterEditor.vue';
-import RenameEditor from '@/components/features/Operators/components/RenameEditor.vue';
-import SortEditor from '@/components/features/Operators/components/SortEditor.vue';
-import DedupEditor from '@/components/features/Operators/components/DedupEditor.vue';
+import FilterEditor from '@/components/operators/components/FilterEditor.vue';
+import RenameEditor from '@/components/operators/components/RenameEditor.vue';
+import SortEditor from '@/components/operators/components/SortEditor.vue';
+import DedupEditor from '@/components/operators/components/DedupEditor.vue';
 import Input from '@/components/ui/Input.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 

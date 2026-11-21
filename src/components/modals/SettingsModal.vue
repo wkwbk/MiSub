@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useI18n } from '@/i18n/index.js';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import SettingsPanel from '@/components/modals/SettingsPanel.vue';
 
 const { t } = useI18n();

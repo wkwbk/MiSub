@@ -5,7 +5,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useProfiles } from '@/composables/useProfiles.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { storeToRefs } from 'pinia';
 import { useManualNodes } from '@/composables/useManualNodes.js';

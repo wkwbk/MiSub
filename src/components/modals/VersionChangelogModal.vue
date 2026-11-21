@@ -3,7 +3,7 @@ import { useI18n } from '@/i18n/index.js';
 import { computed } from 'vue';
 import { ExternalLink } from '@lucide/vue';
 import { useVersionStore } from '@/stores/version';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { renderChangelogMarkdown } from '@/utils/changelog-markdown.js';
 
 const { t } = useI18n();

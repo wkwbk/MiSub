@@ -7,7 +7,7 @@ import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+import OperatorChain from '@/components/operators/OperatorChain.vue';
 import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
 import { useI18n } from '@/i18n/index.js';
 

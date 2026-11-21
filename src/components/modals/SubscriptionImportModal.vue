@@ -2,7 +2,7 @@
 import { useI18n } from '@/i18n/index.js';
 import { ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { handleError } from '@/utils/error-handler.js';
 import { generateNodeId } from '@/utils/id.js';
 import { api, APIError } from '@/lib/http.js';

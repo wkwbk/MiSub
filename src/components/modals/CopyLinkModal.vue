@@ -2,7 +2,7 @@
 import { useI18n } from '@/i18n/index.js';
 import { computed, markRaw } from 'vue';
 import { Box, Code2, Link2, Monitor, Send, Zap } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/toast';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 

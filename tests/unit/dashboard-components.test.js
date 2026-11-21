@@ -1,7 +1,7 @@
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { describe, expect, it } from 'vitest';
-import StatCards from '@/components/features/Dashboard/StatCards.vue';
+import StatCards from '@/components/dashboard/StatCards.vue';
 import RightPanel from '@/components/profiles/RightPanel.vue';
 import { createI18n } from '@/i18n/index.js';
 

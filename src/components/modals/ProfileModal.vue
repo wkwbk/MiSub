@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { Folder } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
 import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';

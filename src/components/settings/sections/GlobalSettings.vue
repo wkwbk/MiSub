@@ -1,7 +1,7 @@
 <script setup>
 import { watch } from 'vue';
 import { List, Map, SlidersHorizontal } from '@lucide/vue';
-import OperatorChain from '@/components/features/Operators/OperatorChain.vue';
+import OperatorChain from '@/components/operators/OperatorChain.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';

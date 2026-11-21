@@ -24,7 +24,7 @@ const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
 const Footer = defineAsyncComponent(() => import('@/components/layout/Footer.vue'));
-const Dashboard = defineAsyncComponent(() => import('@/components/features/Dashboard/Dashboard.vue'));
+const Dashboard = defineAsyncComponent(() => import('@/components/dashboard/Dashboard.vue'));
 const Header = defineAsyncComponent(() => import('@/components/layout/Header.vue'));
 const SavePrompt = defineAsyncComponent(() => import('@/components/ui/SavePrompt.vue'));
 const ScrollToTop = defineAsyncComponent(() => import('@/components/ui/ScrollToTop.vue'));

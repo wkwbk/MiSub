@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onUnmounted, ref } from 'vue';
 import { Braces, Check, Copy } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 

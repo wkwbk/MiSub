@@ -1,7 +1,7 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
 import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/toast';
 import { getClientInfo } from '@/lib/utils';
 import { api } from '@/lib/http.js';

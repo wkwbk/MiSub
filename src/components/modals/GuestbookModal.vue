@@ -2,7 +2,7 @@
 import { ref, watch } from 'vue';
 import { Check, RefreshCw } from '@lucide/vue';
 import { api } from '@/lib/http.js';
-import Modal from '@/components/forms/Modal.vue';
+import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useI18n } from '@/i18n/index.js';
