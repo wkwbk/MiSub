@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 const clearAllNodeCaches = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
 }));
 
@@ -87,7 +85,6 @@ describe('handleTelegramWebhook', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    getStorageType.mockResolvedValue('d1');
     clearAllNodeCaches.mockResolvedValue({ cleared: 1, failed: 0 });
     global.fetch = vi.fn(async () => new Response(JSON.stringify({ ok: true }), { status: 200 }));
   });

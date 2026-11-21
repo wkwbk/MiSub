@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { parseXhttpExtra, serializeXhttpExtra } from '../../shared/xhttp-extra.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
+import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
 
 // packet-up 模式下 extra 可用的完整字段集；同时覆盖下行非安全字段。
 const FULL_EXTRA = {

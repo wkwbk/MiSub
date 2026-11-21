@@ -90,7 +90,6 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
       {{ label }}
     </label>
     <div class="relative group">
-      <!-- Icon Slot/Prop -->
       <div
         v-if="hasIcon"
         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-fg-subtle group-focus-within:text-fg-muted transition-colors"
@@ -102,7 +101,6 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
         </slot>
       </div>
 
-      <!-- Prefix Slot/Prop -->
       <div
         v-else-if="hasPrefix"
         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-fg-subtle"

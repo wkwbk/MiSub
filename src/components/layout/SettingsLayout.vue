@@ -1,5 +1,4 @@
 <script setup>
-// SettingsLayout.vue
 // 统一的设置界面布局容器，供独立设置页与悬浮模态框复用：
 // - 独立页面：桌面端采用分栏吸顶侧边栏卡片 + 主内容卡片流；移动端采用顶部吸顶单行导航栏 + 避让底部主导航的悬浮保存栏
 // - 悬浮模态框：适配弹窗内滚动容器的紧凑分栏布局
@@ -23,7 +22,6 @@ defineProps({
         : 'w-full flex flex-col md:flex-row md:items-start md:gap-4 relative'
     "
   >
-    <!-- Sidebar / Mobile Sticky Top Bar -->
     <aside
       :class="
         inModal
@@ -43,14 +41,11 @@ defineProps({
       </div>
     </aside>
 
-    <!-- Main Content Area -->
     <main :class="inModal ? 'min-h-[480px]' : ''" class="flex-1 flex flex-col min-w-0 w-full relative">
-      <!-- Content -->
       <div :class="inModal ? 'p-4 md:p-6' : '[contain:layout_style]'" class="flex-1">
         <slot></slot>
       </div>
 
-      <!-- Sticky / Floating Footer Area -->
       <!-- 独立设置页使用 Teleport 挂载到 body，避免路由过渡动画（route-fade）的 transform 临时接管 fixed 定位基准导致按钮位置跳动 -->
       <Teleport :disabled="inModal" to="body">
         <div

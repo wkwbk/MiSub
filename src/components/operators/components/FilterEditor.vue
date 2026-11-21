@@ -13,7 +13,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const { t } = useI18n();
 
-// Local working copy with defaults
 const params = computed({
   get: () => ({
     include: { enabled: false, rules: [], ...props.modelValue.include },
@@ -81,9 +80,7 @@ const toggleValue = (type, value) => {
 
 <template>
   <div class="space-y-5">
-    <!-- Protocol & Region Filter Layer -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Protocol -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
@@ -124,7 +121,6 @@ const toggleValue = (type, value) => {
         </div>
       </div>
 
-      <!-- Region -->
       <div class="space-y-2">
         <div class="flex items-center justify-between">
           <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
@@ -166,7 +162,6 @@ const toggleValue = (type, value) => {
       </div>
     </div>
 
-    <!-- Name Rules (Include/Exclude) -->
     <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
       <div class="flex items-center justify-between">
         <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">

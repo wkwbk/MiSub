@@ -38,10 +38,6 @@ async function fetchLatestReleaseFromApi(repo, githubToken) {
   });
 }
 
-/**
- * Fallback when GitHub REST API is rate-limited (403/429) and no cached data exists:
- * resolve the latest release tag via github.com redirect without consuming REST API quota.
- */
 async function fetchLatestReleaseViaRedirect(repo) {
   try {
     const releaseUrl = `https://github.com/${repo}/releases/latest`;
@@ -91,10 +87,6 @@ async function safePutReleaseCache(storage, cacheKey, data) {
   }
 }
 
-/**
- * Handle proxied GitHub release requests with caching
- * GET /api/github/release?repo=owner/repo
- */
 export async function handleGithubReleaseRequest(request, env) {
   const url = new URL(request.url);
   const repo = url.searchParams.get('repo');
@@ -104,12 +96,11 @@ export async function handleGithubReleaseRequest(request, env) {
   }
 
   const CACHE_KEY = `github_release_${repo}`;
-  const CACHE_TTL_MS = 24 * 3600 * 1000; // 24 hours
+  const CACHE_TTL_MS = 24 * 3600 * 1000;
 
   try {
     const storage = StorageFactory.createAdapter(env);
 
-    // Try to get from cache
     const cachedWrapper = await storage.get(CACHE_KEY);
 
     if (cachedWrapper && cachedWrapper.timestamp) {
@@ -126,9 +117,7 @@ export async function handleGithubReleaseRequest(request, env) {
     const response = await fetchLatestReleaseFromApi(repo, githubToken);
 
     if (!response.ok) {
-      // Handle rate limit or not found
       if (response.status === 403 || response.status === 429) {
-        // return cached stale data if available
         if (cachedWrapper?.data) {
           return createJsonResponse(cachedWrapper.data, 200, {
             'X-Cache-Status': 'STALE',
@@ -136,7 +125,6 @@ export async function handleGithubReleaseRequest(request, env) {
           });
         }
 
-        // Try non-API redirect fallback so client versions still resolve & cache without GITHUB_TOKEN
         const fallbackData = await fetchLatestReleaseViaRedirect(repo);
         if (fallbackData) {
           await safePutReleaseCache(storage, CACHE_KEY, fallbackData);
@@ -146,15 +134,12 @@ export async function handleGithubReleaseRequest(request, env) {
           });
         }
 
-        // No cache or fallback available, return empty data instead of error
-        // to prevent frontend errors
         console.warn(`[GitHub Proxy] Rate limited for ${repo}, no cache available`);
         return createJsonResponse({ tag_name: null, rate_limited: true }, 200, {
           'X-Cache-Status': 'RATE_LIMITED',
-          'Cache-Control': 'public, max-age=300', // Retry after 5 min
+          'Cache-Control': 'public, max-age=300',
         });
       }
-      // For other errors (404, etc.), also return gracefully
       if (response.status === 404) {
         return createJsonResponse({ tag_name: null, not_found: true }, 200, {
           'X-Cache-Status': 'NOT_FOUND',
@@ -166,7 +151,6 @@ export async function handleGithubReleaseRequest(request, env) {
 
     const data = await response.json();
 
-    // Extract only needed fields
     const simplifiedData = {
       tag_name: data.tag_name,
       html_url: data.html_url,

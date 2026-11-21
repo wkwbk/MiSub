@@ -9,19 +9,12 @@ const putProfile = vi.fn();
 const deleteSubscriptionById = vi.fn();
 const deleteProfileById = vi.fn();
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
-const settingsCacheGet = vi.fn();
 const clearAllNodeCaches = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
     resolveKV: () => ({}),
-  },
-  SettingsCache: {
-    get: (...args) => settingsCacheGet(...args),
-    clear: vi.fn(),
   },
   STORAGE_TYPES: {
     KV: 'kv',
@@ -76,12 +69,7 @@ describe('api-handler storage helper usage', () => {
     deleteSubscriptionById.mockReset();
     deleteProfileById.mockReset();
     createAdapter.mockReset();
-    getStorageType.mockReset();
-    settingsCacheGet.mockReset();
     clearAllNodeCaches.mockReset();
-
-    getStorageType.mockResolvedValue('d1');
-    settingsCacheGet.mockResolvedValue({});
     clearAllNodeCaches.mockResolvedValue({ cleared: 0, failed: 0, skipped: 0 });
     createAdapter.mockReturnValue({
       getAllSubscriptions,

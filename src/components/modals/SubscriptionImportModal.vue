@@ -31,7 +31,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show']);
 
-const activeTab = ref('url'); // 'url' | 'file'
+const activeTab = ref('url');
 const subscriptionUrl = ref('');
 const isLoading = ref(false);
 const errorMessage = ref('');
@@ -296,7 +296,6 @@ const importSubscription = async () => {
           </button>
         </div>
 
-        <!-- Tag Input -->
         <div class="relative">
           <label class="text-xs font-semibold text-fg-muted mb-1.5 block">
             {{ t('importNodes.targetTags') }}

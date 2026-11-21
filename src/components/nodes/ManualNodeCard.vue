@@ -154,11 +154,8 @@ const copyToClipboard = async (text) => {
     class="group relative flex flex-col justify-between rounded-md border p-3 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 min-h-[96px]"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
-    <!-- Top Row: Badges (Protocol & Tags) + Ping Result Badge -->
     <div class="flex items-center justify-between gap-2">
-      <!-- Left Badges -->
       <div class="flex items-center gap-1.5 min-w-0 overflow-hidden">
-        <!-- Selection Checkbox -->
         <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
           <div
             :class="isSelected ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong bg-transparent'"
@@ -168,7 +165,6 @@ const copyToClipboard = async (text) => {
           </div>
         </div>
 
-        <!-- Protocol Badge -->
         <button
           class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-protocol-badge"
@@ -179,7 +175,6 @@ const copyToClipboard = async (text) => {
           {{ protocolStyle.text }}
         </button>
 
-        <!-- Country / Relay Badge -->
         <button
           v-if="countryBadge"
           :class="countryBadge.className"
@@ -196,7 +191,6 @@ const copyToClipboard = async (text) => {
           {{ countryBadge.text }}
         </button>
 
-        <!-- CDN / Direct Badge -->
         <button
           v-if="networkBadge"
           :class="networkBadge.className"
@@ -209,7 +203,6 @@ const copyToClipboard = async (text) => {
           {{ networkBadge.text }}
         </button>
 
-        <!-- Tag Badges -->
         <div
           v-for="tag in visibleTags"
           :key="tag"
@@ -229,7 +222,6 @@ const copyToClipboard = async (text) => {
         </span>
       </div>
 
-      <!-- Right: Ping Result Badge -->
       <div
         v-if="pingResult"
         :title="pingTooltip"
@@ -252,7 +244,6 @@ const copyToClipboard = async (text) => {
       </div>
     </div>
 
-    <!-- Middle Row: Node Name -->
     <div class="my-1.5 min-w-0">
       <h4
         :title="node.name || t('manualNodes.unnamed')"
@@ -262,10 +253,8 @@ const copyToClipboard = async (text) => {
       </h4>
     </div>
 
-    <!-- Client Compatibility Row -->
     <NodeClientBadges :url="node.url" class="mb-2" compact />
 
-    <!-- Bottom Row: Endpoint (Host:Port) + Quick Actions -->
     <div class="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2">
       <div class="min-w-0 flex-1">
         <span

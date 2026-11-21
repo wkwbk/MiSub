@@ -16,8 +16,6 @@ const CACHE_CONFIG = {
   BACKGROUND_REFRESH_TIMEOUT: 25000, // 后台刷新超时：25 秒
 };
 
-// A truncated upstream response can still contain a few valid nodes. Protect
-// a previously healthy large cache from being replaced by that partial result.
 const SHRINK_PROTECTION_MIN_CACHED_NODES = 10;
 const SHRINK_PROTECTION_MAX_RATIO = 0.3;
 

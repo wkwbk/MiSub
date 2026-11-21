@@ -339,7 +339,6 @@ const displayTagName = (item, name) =>
           </button>
         </div>
 
-        <!-- Custom Order Editor Section -->
         <div
           v-if="item.key === 'region' || item.key === 'protocol' || item.key === 'regex'"
           class="mt-0.5 p-2 bg-inset rounded-md border border-line space-y-2"
@@ -370,7 +369,6 @@ const displayTagName = (item, name) =>
             </button>
           </div>
 
-          <!-- Regex Input Row -->
           <div v-if="item.key === 'regex'" class="space-y-1">
             <div class="flex items-center gap-1.5">
               <input
@@ -399,7 +397,6 @@ const displayTagName = (item, name) =>
             </p>
           </div>
 
-          <!-- Drag and Drop Tags List -->
           <draggable
             :model-value="getTagsList(item)"
             animation="200"

@@ -15,7 +15,7 @@ import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImpo
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
-import { inferAirportRootDomain } from '@/utils/airport-domain.js';
+import { inferAirportRootDomain } from '@shared/airport-domain.js';
 import { rememberDomainName } from '@/utils/domain-name-memory.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
@@ -62,7 +62,7 @@ const { t } = useI18n();
 const uiStore = useUIStore();
 const dataStore = useDataStore();
 const { settings, isDirty, isLoading } = storeToRefs(dataStore);
-const { clearDirty } = dataStore; // Don't destructure markDirty directly
+const { clearDirty } = dataStore;
 if (isDev) {
   console.debug('Dashboard: setup running');
 }
@@ -71,15 +71,12 @@ const saveState = ref('idle');
 const isDiscarding = ref(false);
 let cancelModalPrefetch = () => {};
 
-// Wrapper for markDirty to also reset saveState
 const markDirty = () => {
   dataStore.markDirty();
   saveState.value = 'idle';
 };
 
 // --- 將狀態和邏輯委託給 Composables ---
-// Composables now use global store, so we don't pass refs
-// --- UI State ---
 const isSortingSubs = ref(false);
 const isSortingNodes = ref(false);
 const isSortingProfiles = ref(false);
@@ -106,7 +103,6 @@ const handleQRCode = (id, type = 'subscription') => {
       }
       const token = settings.value.profileToken;
       const baseUrl = window.location.origin;
-      // Using similar logic to useProfiles copy link
       const idToUse = profile.customId || profile.id;
       qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;
       qrCodeTitle.value = profile.name || t('profiles.qrCodeTitle');
@@ -248,9 +244,6 @@ const {
   changeProfilesPage,
 } = useProfiles(markDirty);
 
-// --- UI State ---
-
-// --- New Form Logic Composables ---
 const {
   showModal: showSubModal,
   isNew: isNewSubscription,
@@ -283,7 +276,6 @@ const { showModal: showSubBulkImportModal, handleSubscriptionBulkImport } = useS
 // 使用备份 composable
 const { exportBackup, importBackup } = useBackupLogic();
 
-// --- UI State ---
 const showDeleteSubsModal = ref(false);
 const showDeleteNodesModal = ref(false);
 const showSubscriptionImportModal = ref(false);
@@ -291,12 +283,12 @@ const showLogModal = ref(false);
 const logProfileName = ref('');
 const showBatchDeleteModal = ref(false);
 const batchDeleteIds = ref([]);
-const batchDeleteType = ref('node'); // 'node' | 'subscription' | 'profile'
+const batchDeleteType = ref('node');
 const showDedupModal = ref(false);
 const dedupPlan = ref(null);
 const showBatchTagModal = ref(false);
 const batchTagIds = ref([]);
-const batchTagType = ref('node'); // 'node' | 'subscription' | 'profile'
+const batchTagType = ref('node');
 const showNodeTagManagementModal = ref(false);
 const showProfileTagManagementModal = ref(false);
 
@@ -594,9 +586,7 @@ const handleApplyDetectedName = (subscriptionId, name) => {
   if (!target) return;
   const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
   if (!subscription) return;
-  // useSubscriptions.updateSubscription requires the complete subscription object.
   updateSubscription({ ...subscription, name: target });
-  // Persist the confirmed name by airport root domain, matching the groups page.
   const domain = inferAirportRootDomain(subscription.url);
   if (domain) rememberDomainName(domain, target);
   showToast(t('subscriptions.nameApplied', { name: target }), 'success');
@@ -645,7 +635,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     <SkeletonLoader type="dashboard" />
   </div>
   <div v-else class="w-full">
-    <!-- Header -->
     <DashboardHeader
       :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
       @open-log="
@@ -663,9 +652,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
       @save="handleSave"
     />
 
-    <!-- Main Grid -->
     <div class="grid grid-cols-1 gap-4 items-start lg:grid-cols-3">
-      <!-- Left Column: Persistent Link Generator -->
       <div class="space-y-4 lg:col-span-1 lg:sticky lg:top-[4.5rem]">
         <RightPanel
           :compact="true"
@@ -681,9 +668,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
         />
       </div>
 
-      <!-- Right Column: Tabbed Management Panels -->
       <div class="space-y-4 lg:col-span-2">
-        <!-- Classic Layout Module Tabs -->
         <div
           class="flex items-center gap-1 rounded-md border border-line bg-surface p-1 overflow-x-auto"
           data-testid="classic-dashboard-tabs"
@@ -719,7 +704,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           </button>
         </div>
 
-        <!-- Subscription Panel -->
         <SubscriptionPanel
           v-if="activeTab === 'subscriptions'"
           :active-tag-filters="subscriptionTagFilters"
@@ -756,7 +740,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @batch-delete-subscriptions="(ids) => handleBatchDeleteRequest(ids, 'subscription')"
         />
 
-        <!-- Manual Node Panel -->
         <ManualNodePanel
           v-else-if="activeTab === 'nodes'"
           :active-tag-filters="activeTagFilters"
@@ -805,7 +788,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @sort-by-latency="handleSortByLatency"
         />
 
-        <!-- Profile Panel -->
         <ProfilePanel
           v-else
           :active-tag-filters="profileTagFilters"
@@ -967,7 +949,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     @update:show="showSubscriptionImportModal = $event"
   />
 
-  <!-- Node preview modal -->
   <NodePreviewModal
     :profile-id="previewProfileId"
     :profile-name="previewProfileName"

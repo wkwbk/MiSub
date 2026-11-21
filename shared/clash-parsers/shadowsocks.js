@@ -50,7 +50,6 @@ function parseSsPlugin(pluginStr) {
  */
 export function parseSsUrl(url) {
   try {
-    // ss://base64(method:password)@server:port#name
     // 或 ss://base64(method:password@server:port)#name
     // [SIP002] 格式支持插件：ss://userInfo@server:port?plugin=xxx#name
     let body = url.substring(5); // 去掉 ss://
@@ -158,9 +157,6 @@ export function parseSsUrl(url) {
       }
     }
 
-    // UDP
-    // proxy.udp = true;
-
     return proxy;
   } catch (e) {
     console.error('解析 SS URL 失败:', e);
@@ -178,7 +174,6 @@ export function parseSsrUrl(url) {
     const b64 = url.substring(6);
     const decoded = base64Decode(b64);
 
-    // server:port:protocol:method:obfs:password_base64/?params
     const mainParts = decoded.split(':');
     if (mainParts.length < 6) return null;
 
@@ -206,7 +201,7 @@ export function parseSsrUrl(url) {
     };
 
     if (passwordEndIndex !== -1) {
-      const paramsStr = passwordPart.substring(passwordEndIndex + 2); // skip /?
+      const paramsStr = passwordPart.substring(passwordEndIndex + 2);
       const params = new URLSearchParams(paramsStr);
 
       if (params.get('obfsparam')) proxy['obfs-param'] = base64Decode(params.get('obfsparam'));

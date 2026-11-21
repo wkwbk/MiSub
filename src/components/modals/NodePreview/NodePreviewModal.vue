@@ -81,7 +81,6 @@ const openNodeDetail = (node) => {
   showDetailModal.value = true;
 };
 
-// [New] Selection Mode State
 const pickingMode = ref(false);
 const selectedUrls = ref(new Set());
 
@@ -114,12 +113,8 @@ const handleSaveSelection = async () => {
   try {
     const urls = Array.from(selectedUrls.value);
 
-    // Add nodes to data store as manual nodes
-    // You can also add logic here to associate them specifically with props.profileId
-    // For now, we'll use bulk import logic to create manual nodes
     const nodeByUrl = new Map(allNodes.value.map((n) => [n.url, n]));
     const nodesToAdd = urls.map((url) => {
-      // Try to find full node object from allNodes
       const originalNode = nodeByUrl.get(url);
       return {
         name: (originalNode?.name || 'Pick').split('#')[0].trim(),
@@ -130,7 +125,6 @@ const handleSaveSelection = async () => {
 
     addNodesFromBulk(nodesToAdd);
 
-    // Add nodes to the manual list. Profile association remains an explicit follow-up action.
     showToast(t('nodePreview.extractedToManual', { count: urls.length }), 'success');
 
     pickingMode.value = false;

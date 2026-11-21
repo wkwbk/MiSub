@@ -1,8 +1,5 @@
 import { getCurrentInstance, onUnmounted, ref } from 'vue';
 
-/**
- * Tracks route navigation progress and delayed slow-load state for lazy-loaded views.
- */
 export function useRouteLoading(router, options = {}) {
   const showDelayMs = options.showDelayMs ?? 80;
   const slowThresholdMs = options.slowThresholdMs ?? 150;
@@ -59,7 +56,6 @@ export function useRouteLoading(router, options = {}) {
   };
 
   const start = (targetPath) => {
-    // Re-clicking the same in-flight target should NOT reset the progress bar or timers.
     if (pendingPath.value && pendingPath.value === targetPath) {
       return;
     }
@@ -72,7 +68,6 @@ export function useRouteLoading(router, options = {}) {
     showSlowIndicator.value = false;
 
     if (alreadyVisible) {
-      // Smoothly continue from current progress instead of jumping backwards to 18%.
       beginVisibleProgress(token);
     } else {
       progress.value = 0;

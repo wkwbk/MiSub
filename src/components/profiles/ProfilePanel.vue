@@ -282,7 +282,6 @@ const draggableProfiles = computed({
           </div>
         </div>
 
-        <!-- Tag Filter Bar -->
         <div v-if="availableTags.length > 0 || currentTagFilters.length > 0" class="mt-3">
           <TagFilterBar
             :active-filters="currentTagFilters"

@@ -10,10 +10,6 @@ export const DATA_KEYS = {
   SUBSCRIPTIONS: 'misub_subscriptions_v1',
   PROFILES: 'misub_profiles_v1',
   SETTINGS: 'worker_settings_v1',
-  LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX: 'misub_profile_download_count_',
-  LEGACY_GUESTBOOK_KEY: 'misub_guestbook_v1',
-  LEGACY_GUESTBOOK_INDEX_KEY: 'misub_guestbook_v1_index',
-  LEGACY_GUESTBOOK_ITEM_PREFIX: 'misub_guestbook_v1:item:',
 };
 
 export const KEY_VALUE_TABLES = new Set(['settings', 'cache']);
@@ -114,15 +110,6 @@ const D1_CACHE_PREFIXES = [
   'misub_test_',
 ];
 
-const D1_LEGACY_LOG_KEYS = new Set([
-  'misub_error_reports',
-  'misub_system_logs',
-  'misub_system_logs_index',
-  'misub_system_logs:index',
-]);
-
-const D1_LEGACY_LOG_PREFIXES = ['misub_system_logs:'];
-
 export const D1_KNOWN_SETTINGS_KEYS = new Set([
   'misub_dns_templates_v1',
   'misub_rule_templates_v1',
@@ -135,10 +122,6 @@ export const D1_KNOWN_SETTINGS_KEYS = new Set([
 
 export function isCacheKey(keyStr) {
   return D1_CACHE_KEYS.has(keyStr) || D1_CACHE_PREFIXES.some((prefix) => keyStr.startsWith(prefix));
-}
-
-export function isLegacyLogKey(keyStr) {
-  return D1_LEGACY_LOG_KEYS.has(keyStr) || D1_LEGACY_LOG_PREFIXES.some((prefix) => keyStr.startsWith(prefix));
 }
 
 export function isNoSuchTableError(error) {
@@ -211,7 +194,6 @@ export async function ensureD1Schema(d1Db) {
     try {
       await d1Db.prepare(alterSql).run();
     } catch {
-      // Column already exists
     }
   }
 
@@ -225,14 +207,12 @@ export async function ensureD1Schema(d1Db) {
       )
       .run();
   } catch {
-    // Ignore on lightweight test mocks without json_extract
   }
 
   for (const indexSql of D1_INDEX_STATEMENTS) {
     try {
       await d1Db.prepare(indexSql).run();
     } catch {
-      // Ignore index creation error on non-SQLite mocks
     }
   }
 

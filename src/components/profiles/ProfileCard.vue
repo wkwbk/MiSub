@@ -69,7 +69,6 @@ const isPublic = computed(() => props.profile?.isPublic === true);
   >
     <div class="flex items-center justify-between gap-2">
       <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
-        <!-- Selection Checkbox -->
         <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
           <div
             :class="isSelected ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong bg-transparent'"
@@ -85,7 +84,6 @@ const isPublic = computed(() => props.profile?.isPublic === true);
           {{ t('profiles.badge') }}
         </span>
 
-        <!-- Tags -->
         <div
           v-if="profileTags.length > 0"
           class="flex min-w-0 items-center gap-1.5 overflow-hidden"

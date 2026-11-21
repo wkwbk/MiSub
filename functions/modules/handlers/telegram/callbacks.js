@@ -319,10 +319,8 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           let targetList = [];
 
           if (type === 'sub') {
-            // Must match handleListCommand's filtering logic for 'sub'
             targetList = fullList.filter((n) => /^https?:\/\//i.test(n.url || ''));
           } else {
-            // Must match handleListCommand's filtering logic for 'node'
             targetList = fullList.filter((n) => !/^https?:\/\//i.test(n.url || ''));
           }
 
@@ -351,8 +349,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const boundProfileId = getUserBoundProfileId(config, userId);
           const boundProfile = boundProfileId ? profiles.find((p) => p.id === boundProfileId) : null;
 
-          // Note: Manual nodes use 'id', subscriptions might not have 'id' in the same way or logic might differ.
-          // Subscriptions usually have 'id' too.
           let isInProfile = false;
           if (boundProfile) {
             if (type === 'sub') {
@@ -420,7 +416,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const idx = parseInt(data.replace('link_node_', ''));
           const storageAdapter = await getStorageAdapter(env);
 
-          // MUST Use filtered list to match index
           const allNodes = await getUserNodes(userId, env);
           const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
@@ -450,7 +445,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const idx = parseInt(data.replace('unlink_node_', ''));
           const storageAdapter = await getStorageAdapter(env);
 
-          // MUST Use filtered list to match index
           const allNodes = await getUserNodes(userId, env);
           const userNodes = allNodes.filter((n) => !/^https?:\/\//i.test(n.url || ''));
 
@@ -476,7 +470,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const idx = parseInt(data.replace('link_sub_', ''));
           const storageAdapter = await getStorageAdapter(env);
 
-          // MUST Use filtered list
           const allNodes = await getUserNodes(userId, env);
           const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
@@ -505,7 +498,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const idx = parseInt(data.replace('unlink_sub_', ''));
           const storageAdapter = await getStorageAdapter(env);
 
-          // MUST Use filtered list
           const allNodes = await getUserNodes(userId, env);
           const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
@@ -528,7 +520,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           }
         } else if (data.startsWith('copy_sub_')) {
           const idx = parseInt(data.replace('copy_sub_', ''));
-          // MUST Use filtered list
           const allNodes = await getUserNodes(userId, env);
           const subs = allNodes.filter((n) => /^https?:\/\//i.test(n.url || ''));
 
@@ -563,11 +554,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
             await answerCallbackQuery(callbackQuery.id, isEnabled ? '已禁用' : '已启用', env);
 
             if (isSub) {
-              // Find original subscription record to update
-              // Since targetList is filtered, we need to find the item in the original storage
               const originalSubs = await storageAdapter.getAllSubscriptions();
-              // Match by ID if possible, or some unique property.
-              // Subscription objects usually have IDs.
               const subToUpdate = originalSubs.find((s) => s.id === targetItem.id);
 
               if (subToUpdate) {
@@ -576,16 +563,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                 await handleListCommand(chatId, userId, env, 0, 'sub');
               }
             } else {
-              // Valid for manual nodes - use command which likely handles ID or index?
-              // handleDisableCommand takes index. Is it filtered index?
-              // Let's check handleDisableCommand.
-              // If handleDisableCommand expects ALL nodes index, we have a problem.
-              // But typically commands work on displayed lists?
-              // If user types /disable 1, what does it disable?
-              // If it disables filtered list item, we are good.
-              // If it disables global list item, we are misaligned.
 
-              // If handleDisableCommand uses `getUserNodes` without filtering, we need to map `idx` back to `allNodes` index.
               const allNodes = await getUserNodes(userId, env);
               const realIdx = allNodes.findIndex((n) => n.id === targetItem.id);
 
@@ -601,7 +579,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
             await answerCallbackQuery(callbackQuery.id, '对象不存在', env, true);
           }
         } else if (data.startsWith('confirm_delete_')) {
-          // Handles: confirm_delete_node_{idx}, confirm_delete_sub_{idx}, confirm_delete_{idx}
           let type = 'node';
           let idxStr = '';
           if (data.startsWith('confirm_delete_sub_')) {
@@ -627,7 +604,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
             reply_markup: confirmKeyboard,
           });
         } else if (data.startsWith('do_delete_')) {
-          // Handles: do_delete_node_{idx}, do_delete_sub_{idx}, do_delete_{idx}
           let type = 'node';
           let idxStr = '';
           if (data.startsWith('do_delete_sub_')) {
@@ -641,7 +617,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           }
           const idx = parseInt(idxStr);
 
-          // Need to map filtered index to real storage index/ID
           const allNodes = await getUserNodes(userId, env);
           let targetItem = null;
 
@@ -655,7 +630,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           if (targetItem) {
             if (type === 'sub') {
-              // Create separate handleDeleteSub logic or direct DB manipulation safely
               const storageAdapter = await getStorageAdapter(env);
               const originalSubs = await storageAdapter.getAllSubscriptions();
               const realIdx = originalSubs.findIndex((s) => s.id === targetItem.id);
@@ -671,7 +645,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                 await answerCallbackQuery(callbackQuery.id, '对象不存在或已删除', env, true);
               }
             } else {
-              // For nodes, find real index in ALL nodes for command
               const realIdx = allNodes.findIndex((n) => n.id === targetItem.id);
               if (realIdx !== -1) {
                 await answerCallbackQuery(callbackQuery.id, '正在删除...', env);
@@ -682,7 +655,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
             await answerCallbackQuery(callbackQuery.id, '对象不存在', env, true);
           }
         } else if (data.startsWith('prompt_rename_')) {
-          // Handles: prompt_rename_node_{idx}, prompt_rename_sub_{idx}, prompt_rename_{idx}
           let type = 'node';
           let idxStr = '';
           if (data.startsWith('prompt_rename_sub_')) {

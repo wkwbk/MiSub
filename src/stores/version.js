@@ -7,7 +7,6 @@ import { readRawPreference, writeRawPreference } from '@/utils/local-preference.
 import packageJson from '../../package.json';
 
 export const useVersionStore = defineStore('version', () => {
-  // --- State ---
   const currentVersion = ref(packageJson.version);
   const latestRelease = ref(null);
   const showModal = ref(false);
@@ -20,7 +19,6 @@ export const useVersionStore = defineStore('version', () => {
 - **兼容性清理与工具统一**：移除过时的 \`document.execCommand('copy')\` 与 \`escape/unescape\` Base64 兼容代码，统一为现代 Clipboard API 与 \`TextEncoder/TextDecoder\` UTF-8 Base64 工具；清理全局与组件死 CSS 及孤立模块。
 - **架构与代码规范升级**：重组前后端模块目录（收拢 \`external-api/\`、\`handlers/\`、\`subscription/generators/\`，拍平前端组件目录并统一 \`kebab-case\` 命名），引入 \`oxlint\` 并将全仓库静态检查警告清零。`;
 
-  // --- Getters ---
   const hasUpdate = computed(() => {
     if (!latestRelease.value?.tag_name) return false;
     return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
@@ -31,7 +29,6 @@ export const useVersionStore = defineStore('version', () => {
     return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
   });
 
-  // --- Helpers ---
   function normalizeVersion(version) {
     return String(version || '')
       .trim()
@@ -59,7 +56,6 @@ export const useVersionStore = defineStore('version', () => {
     return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
   }
 
-  // --- Actions ---
   async function checkVersion(suppressModal = false) {
     try {
       const release = await fetchGithubLatestRelease(upstreamRepo);

@@ -5,8 +5,7 @@ const STORAGE_KEY_CLIENTS = 'misub_clients_v1';
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
 async function getStorageAdapter(env) {
-  const storageType = await StorageFactory.getStorageType(env);
-  return StorageFactory.createAdapter(env, storageType);
+  return StorageFactory.createAdapter(env);
 }
 
 const DEFAULT_CLIENTS = [
@@ -182,11 +181,6 @@ const DEFAULT_CLIENTS = [
   },
 ];
 
-/**
- * Handle client management requests
- * @param {Request} request
- * @param {Object} env
- */
 export async function handleClientRequest(request, env) {
   const url = new URL(request.url);
   const path = url.pathname;

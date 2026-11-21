@@ -43,7 +43,6 @@ export const useThemeStore = defineStore('theme', () => {
         const root = document.documentElement;
         root.classList.add('theme-switching');
         applyTheme(nextTheme);
-        // Force synchronous style flush while transitions are suppressed
         void root.offsetHeight;
         const clearSwitching = () => root.classList.remove('theme-switching');
         if (typeof requestAnimationFrame === 'function') {
@@ -67,7 +66,6 @@ export const useThemeStore = defineStore('theme', () => {
       await nextTick();
     });
 
-    // Diagonal wipe: dark sweeps left-to-right, light sweeps right-to-left
     const clipPathKeyframes =
       nextTheme === 'dark'
         ? ['polygon(0% 0%, 0% 0%, -12% 100%, -12% 100%)', 'polygon(0% 0%, 112% 0%, 100% 100%, -12% 100%)']

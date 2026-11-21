@@ -21,7 +21,6 @@ const props = defineProps({
     type: Function,
     required: true,
   },
-  // [New] Selection Mode Props
   selectionMode: {
     type: Boolean,
     default: false,
@@ -90,7 +89,6 @@ const getProtocolDot = (protocol) => {
       >
         <!-- 左侧：图标与信息 -->
         <div class="flex items-center gap-2.5 flex-1 min-w-0">
-          <!-- Selection Checkbox -->
           <div v-if="selectionMode" class="flex-shrink-0">
             <div
               :class="selectedUrls.has(node.url) ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong'"
@@ -167,7 +165,6 @@ const getProtocolDot = (protocol) => {
         class="relative rounded-md border p-4 group transition-colors duration-150 shadow-none"
         @click="handleCardClick(node)"
       >
-        <!-- Selection Badge -->
         <div v-if="selectionMode" class="absolute top-4 right-4">
           <div
             :class="selectedUrls.has(node.url) ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong'"

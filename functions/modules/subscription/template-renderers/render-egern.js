@@ -1,11 +1,6 @@
 import * as yaml from 'js-yaml';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 
-/**
- * Sanitize string: trim and remove carriage returns/newlines which break YAML indentation
- * @param {any} val
- * @returns {string}
- */
 function s(val) {
   if (val === undefined || val === null) return '';
   return String(val)
@@ -238,7 +233,6 @@ function mapProxy(proxy) {
     },
   };
 
-  // TCP Fast Open
   if (proxy.tfo) {
     Object.values(mapped)[0].tcp_fast_open = true;
   }

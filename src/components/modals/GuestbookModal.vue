@@ -25,7 +25,7 @@ const emit = defineEmits(['close']);
 const form = ref({
   nickname: '',
   content: '',
-  type: 'general', // general, feature, bug
+  type: 'general',
   captcha: '',
 });
 
@@ -46,7 +46,6 @@ const generateCaptcha = () => {
   let num1 = Math.floor(Math.random() * 20) + 1;
   let num2 = Math.floor(Math.random() * 20) + 1;
 
-  // Ensure positive result for subtraction
   if (operator === '-' && num1 < num2) {
     [num1, num2] = [num2, num1];
   }
@@ -60,7 +59,6 @@ const generateCaptcha = () => {
   form.value.captcha = '';
 };
 
-// Reset form when modal opens
 const resetForm = () => {
   form.value = { nickname: '', content: '', type: 'general', captcha: '' };
   showSuccess.value = false;

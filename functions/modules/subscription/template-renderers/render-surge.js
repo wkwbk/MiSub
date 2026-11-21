@@ -101,15 +101,7 @@ function buildProxyLine(proxy) {
     if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) extras.push('skip-cert-verify=true');
     return `${name} = tuic, ${server}, ${port}, ${extras.join(', ')}`;
   }
-  // if (type === 'wireguard') {
-  //     const extras = [];
-  //     if (proxy['private-key']) extras.push(`private-key=${proxy['private-key']}`);
-  //     if (proxy['public-key']) extras.push(`peer-public-key=${proxy['public-key']}`);
-  //     if (proxy.reserved) {
-  //         const reserved = Array.isArray(proxy.reserved) ? proxy.reserved.join('/') : proxy.reserved;
-  //         extras.push(`client-id=${reserved}`);
   //     }
-  //     return `${name} = wireguard, ${server}, ${port}${extras.length ? `, ${extras.join(', ')}` : ''}`;
   // }
   if (type === 'wireguard') {
     if (!proxy['private-key'] || !proxy['public-key'] || (!proxy.ip && !proxy.ipv6)) {
@@ -141,7 +133,6 @@ function buildProxyLine(proxy) {
   return null;
 }
 
-// builtin-surge-generator.js implement
 function getWireGuardSectionName(name) {
   const safeName = String(name || 'WireGuard').replace(/[^a-zA-Z0-9_\u4e00-\u9fa5-]/g, '_');
 
@@ -161,7 +152,6 @@ function buildWireGuardSection(proxy) {
 
   const lines = [`[WireGuard ${sectionName}]`, `private-key = ${proxy['private-key']}`];
 
-  // IPv4
   if (proxy.ip) {
     const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !String(ip).includes(':')) : proxy.ip;
 
@@ -170,7 +160,6 @@ function buildWireGuardSection(proxy) {
     }
   }
 
-  // IPv6
   if (proxy.ipv6) {
     const ipv6 = Array.isArray(proxy.ipv6) ? proxy.ipv6.find(Boolean) : proxy.ipv6;
 
@@ -188,12 +177,10 @@ function buildWireGuardSection(proxy) {
     }
   }
 
-  // MTU
   if (proxy.mtu) {
     lines.push(`mtu = ${proxy.mtu}`);
   }
 
-  // Peer
   const peerParts = [];
 
   peerParts.push(`public-key = ${proxy['public-key']}`);
@@ -229,7 +216,6 @@ function buildWireGuardSection(proxy) {
     peerParts.push(`keepalive = ${proxy['persistent-keepalive']}`);
   }
 
-  // Cloudflare WARP reserved → Surge client-id
   if (proxy.reserved) {
     const clientId = Array.isArray(proxy.reserved) ? proxy.reserved.join('/') : proxy.reserved;
 
@@ -294,7 +280,6 @@ export function renderSurgeFromTemplateModel(model, options = {}) {
       ? normalizedModel.proxies
       : urlsToClashProxies(proxyUrls);
 
-  // const proxyLines = proxies.map(buildProxyLine).filter(Boolean);
   const proxyLines = proxies.map(buildProxyLine).filter(Boolean);
 
   const wireguardSections = proxies

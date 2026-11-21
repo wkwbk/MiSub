@@ -423,9 +423,7 @@ export function sanitizeNodeForYaml(nodeUrl) {
   // 针对不同协议提取和替换名称
   const sanitizeName = (name) => {
     if (!name) return name;
-    // YAML Flow Style Unquoted Scalars cannot start with:
     // [, ], {, }, ,, :, -, ?, !, #, &, *, %, >, |, @
-    // We replace them with full-width equivalents or '★' for *
     const unsafeStartRegex = /^([*&![\]{},:?#%|>@-])/;
     if (unsafeStartRegex.test(name)) {
       return name

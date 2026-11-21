@@ -354,7 +354,6 @@ function normalizeBase64(input) {
     try {
       s = decodeURIComponent(s);
     } catch {
-      // keep raw when decode fails
     }
   }
   s = s.replace(/-/g, '+').replace(/_/g, '/');
@@ -586,9 +585,8 @@ export function parseNodeInfo(nodeUrl) {
         }
       }
     } else if (protocol === 'ss') {
-      // ss://base64(user:pass@host:port)#name
       // 或者 ss://base64(user:pass)@host:port#name
-      let body = nodeUrl.substring(5); // remove ss://
+      let body = nodeUrl.substring(5);
       const hIndex = body.indexOf('#');
       if (hIndex !== -1) body = body.substring(0, hIndex);
       const qIndex = body.indexOf('?');

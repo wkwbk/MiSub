@@ -39,7 +39,7 @@ export async function handlePublicPreviewRequest(request, env) {
     }
 
     // 验证是否为公开订阅组
-    const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+    const storageAdapter = StorageFactory.createAdapter(env);
     const profile = await storageAdapter.getProfileById(profileId);
 
     if (!profile || !profile.enabled || !profile.isPublic) {
@@ -101,8 +101,6 @@ export async function handleSubscriptionNodesRequest(request, env) {
     let result;
     switch (mode) {
       case 'profile':
-        // [Modified] Default applyTransform to true for profile preview if not specified
-        // This ensures preview matches the final output ("What You See Is What You Get")
         result = await handleProfileMode(
           request,
           env,

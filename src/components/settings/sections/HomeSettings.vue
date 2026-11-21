@@ -21,7 +21,6 @@ defineProps({
 
 <template>
   <div v-if="settings" class="space-y-4">
-    <!-- {{ t('settings.homeHeroTitle') }} -->
     <section class="rounded-lg border border-line bg-surface p-6">
       <SectionHeader :description="t('settings.homeHeroDesc')" :title="t('settings.homeHeroTitle')">
         <template #icon>
@@ -53,19 +52,14 @@ defineProps({
       </div>
     </section>
 
-    <!-- Client Management -->
     <ClientSettings />
 
-    <!-- Public Cores Management -->
     <PublicCoresSettings :settings="settings" />
 
-    <!-- Public Links Management -->
     <PublicLinksSettings :settings="settings" />
 
-    <!-- Announcement Settings -->
     <AnnouncementSettings :settings="settings" />
 
-    <!-- Guestbook Management -->
     <GuestbookManagement :settings="settings" />
   </div>
 </template>

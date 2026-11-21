@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
-import { SettingsCache } from '../../functions/storage-adapter.js';
+import { clearSettingsCache } from '../../functions/storage-adapter.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 describe('API route access boundaries', () => {
   beforeEach(() => {
-    SettingsCache.clear();
+    clearSettingsCache();
   });
 
   it('keeps documented public read endpoints reachable without an admin session', async () => {
@@ -42,7 +42,7 @@ describe('API route access boundaries', () => {
       }),
     };
 
-    SettingsCache.clear();
+    clearSettingsCache();
     const response = await handleApiRequest(
       new Request('https://example.com/api/public_config', {
         headers: { 'X-MiSub-Path': '/admin-login' },

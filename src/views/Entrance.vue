@@ -1,7 +1,5 @@
 <template>
   <div class="entrance-container">
-    <!-- If access is allowed (Login), the component renders differently via the component map or state -->
-    <!-- Actually, we redirect or render component based on check -->
     <component :is="activeComponent" v-bind="componentProps" />
   </div>
 </template>
@@ -12,16 +10,15 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
 import { storeToRefs } from 'pinia';
 import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '@/utils/login-path.js';
-import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js'; // Lazy load components
+import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 
-// Lazy load components
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 
 const route = useRoute();
 const router = useRouter();
 const sessionStore = useSessionStore();
-const { publicConfig } = storeToRefs(sessionStore); // Ensure publicConfig contains settings or we need to access settings differently
+const { publicConfig } = storeToRefs(sessionStore);
 
 const activeComponent = ref(null);
 const componentProps = ref({});
@@ -30,7 +27,6 @@ onMounted(async () => {
   checkPath();
 });
 
-// Watch for path changes if component is reused
 watch(
   () => route.path,
   () => {
@@ -38,13 +34,10 @@ watch(
   },
 );
 
-// Watch for config loaded
 watch(publicConfig, () => {
   checkPath();
 });
 
-// Watch for session state changes (loading -> loggedIn/loggedOut)
-// so we re-check once publicConfig is actually fetched
 watch(
   () => sessionStore.sessionState,
   () => {

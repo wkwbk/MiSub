@@ -1,12 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
   STORAGE_TYPES: { D1: 'd1' },
 }));
@@ -53,7 +51,6 @@ describe('handleMisubRequest regression coverage', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    getStorageType.mockResolvedValue('kv');
   });
 
   afterEach(() => {

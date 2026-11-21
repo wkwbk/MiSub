@@ -11,8 +11,6 @@ import { extractName, parseHostPort, parseQueryParams } from './common.js';
  */
 export function parseHysteria2Url(url) {
   try {
-    // hysteria2://password@server:port?params#name
-    // hy2://password@server:port?params#name
     const prefixLen = url.startsWith('hysteria2://') ? 12 : 6;
     const body = url.substring(prefixLen);
 
@@ -55,12 +53,10 @@ export function parseHysteria2Url(url) {
       proxy.sni = sniParam;
     }
 
-    // Skip cert verify
     if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') {
       proxy['skip-cert-verify'] = true;
     }
 
-    // [Hysteria2] handshake timeout
     const handshakeTimeout = params.get('handshake-timeout');
     if (handshakeTimeout) {
       proxy['handshake-timeout'] = parseInt(handshakeTimeout, 10);
@@ -70,7 +66,6 @@ export function parseHysteria2Url(url) {
     const pinParam = params.get('pinSHA256') || params.get('hpkp') || params.get('fingerprint');
     if (pinParam) proxy.fingerprint = pinParam;
 
-    // Obfs
     if (params.get('obfs')) {
       proxy.obfs = params.get('obfs');
       if (params.get('obfs-password')) {
@@ -132,7 +127,6 @@ export function parseHysteria2Url(url) {
  */
 export function parseTuicUrl(url) {
   try {
-    // tuic://token@server:port?sni=xxx&alpn=xxx#name
     const body = url.substring(7); // 去掉 tuic://
 
     const atIndex = body.lastIndexOf('@');
@@ -179,19 +173,16 @@ export function parseTuicUrl(url) {
       password,
     };
 
-    // SNI
     const sni = params.get('sni');
     if (sni) {
       proxy.servername = sni;
       proxy.sni = sni;
     }
 
-    // ALPN
     if (params.get('alpn')) {
       proxy.alpn = params.get('alpn').split(',');
     }
 
-    // Skip cert verify
     if (params.get('allowInsecure') === '1' || params.get('insecure') === '1' || params.get('allow_insecure') === '1') {
       proxy['skip-cert-verify'] = true;
     }
@@ -203,14 +194,11 @@ export function parseTuicUrl(url) {
       proxy['congestion-controller'] = congestionControl;
     }
 
-    // UDP Relay Mode
     const udpRelayMode = params.get('udp_relay_mode') || params.get('udp-relay-mode');
     if (udpRelayMode) {
       proxy['udp-relay-mode'] = udpRelayMode;
     }
 
-    // sing-box extension: UDP over stream. Conflicts with udp-relay-mode in sing-box,
-    // but preserve both input fields so target renderers can decide how to emit them.
     const udpOverStream = params.get('udp_over_stream') || params.get('udp-over-stream');
     if (udpOverStream === '1' || udpOverStream === 'true') {
       proxy['udp-over-stream'] = true;
@@ -290,7 +278,6 @@ export function parseTuicUrl(url) {
  */
 export function parseWireguardUrl(url) {
   try {
-    // wireguard://privatekey@server:port?params#name
     const body = url.substring('wireguard://'.length);
 
     const atIndex = body.indexOf('@');
@@ -346,13 +333,11 @@ export function parseWireguardUrl(url) {
       if (ipv6) proxy.ipv6 = ipv6;
     }
 
-    // Allowed IPs
     const allowedIPs = params.get('allowedips') || params.get('allowed-ips');
     if (allowedIPs) {
       proxy['allowed-ips'] = allowedIPs.split(',').map((a) => a.trim());
     }
 
-    // Reserved (Cloudflare WARP)
     const reserved = params.get('reserved');
     if (reserved) {
       const reservedArr = reserved.split(',').map((n) => parseInt(n.trim()));
@@ -361,25 +346,21 @@ export function parseWireguardUrl(url) {
       }
     }
 
-    // MTU
     const mtu = params.get('mtu');
     if (mtu) {
       proxy.mtu = parseInt(mtu);
     }
 
-    // DNS
     const dns = params.get('dns');
     if (dns) {
       proxy.dns = dns.split(',').map((d) => d.trim());
     }
 
-    // Keepalive
     const keepalive = params.get('keepalive');
     if (keepalive) {
       proxy['persistent-keepalive'] = parseInt(keepalive);
     }
 
-    // Preshared Key
     const presharedKey = params.get('presharedkey') || params.get('preshared-key');
     if (presharedKey) {
       proxy['preshared-key'] = presharedKey;

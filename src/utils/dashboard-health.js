@@ -195,11 +195,6 @@ export function getDashboardHealthItems({
   return items;
 }
 
-/**
- * Resolve an item's i18n keys into display copy using the given translator.
- * Falls back to the raw key when a translation is missing, which keeps
- * incomplete locales from rendering blank cards.
- */
 export function resolveHealthItemCopy(item, t) {
   if (!item || typeof t !== 'function') return item;
 

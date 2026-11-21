@@ -18,14 +18,14 @@
  *   - node-parser.js: 节点解析工具
  */
 
-import { handleMisubRequest } from './modules/subscription-handler.js';
+import { handleMisubRequest } from './modules/subscription/main-handler.js';
 import { handleApiRequest } from './modules/api-router.js';
-import { createJsonResponse, migrateConfigSettings } from './modules/utils.js';
+import { createJsonResponse, migrateConfigSettings, normalizeLoginPath } from './modules/utils.js';
 import { corsMiddleware, csrfOriginMiddleware, securityHeadersMiddleware } from './middleware/cors.js';
 import { handleDisguiseRequest } from './modules/handlers/disguise-handler.js';
 import { createDisguiseResponse } from './modules/disguise-page.js'; // 静态导入核心依赖以优化冷加载
-import { SettingsCache } from './storage-adapter.js';
-import { DEFAULT_SETTINGS as defaultSettings } from './modules/config.js';
+import { StorageFactory } from './storage-adapter.js';
+import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
 import { authMiddleware, renewAuthSession } from './modules/auth-middleware.js';
 
@@ -96,12 +96,6 @@ function applyCacheHeadersToAssetResponse(response, pathname) {
 
 const INTERNAL_SPA_FETCH_HEADER = 'x-misub-internal-spa-fetch';
 const INTERNAL_ORIGIN_ASSET_FETCH_HEADER = 'x-misub-origin-asset-fetch';
-
-function normalizeLoginPath(customLoginPath) {
-  if (typeof customLoginPath !== 'string') return '/login';
-  const normalized = customLoginPath.trim().replace(/^\/+/g, '');
-  return normalized ? `/${normalized}` : '/login';
-}
 
 async function fetchHostedAssetViaOrigin(request, assetPath) {
   const assetUrl = new URL(assetPath, request.url);
@@ -200,7 +194,8 @@ export async function onRequest(context) {
         }
       }
 
-      const settings = (await SettingsCache.get(env)) || {};
+      const storageAdapter = StorageFactory.createAdapter(env);
+      const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
       context.settings = settings;
       const config = migrateConfigSettings({ ...defaultSettings, ...settings });
 
@@ -270,10 +265,6 @@ export async function onRequest(context) {
         // 静态文件处理
         const isStaticAsset = /^\/(assets|@vite|src)\/./.test(url.pathname) || /\.\w+$/.test(url.pathname);
 
-        if (!isStaticAsset) {
-          // 已提前读取过 settings
-        }
-
         const customLoginPath = normalizeLoginPath(settings?.customLoginPath);
         const defaultLoginPath = '/login';
         const hasCustomLoginPath = customLoginPath !== defaultLoginPath;
@@ -304,14 +295,6 @@ export async function onRequest(context) {
           url.pathname !== customLoginPath &&
           !url.pathname.startsWith('/explore');
 
-        // Route protection for SPA pages
-        // If accessing a protected route without auth, redirect to login
-        // [Fix] Exclude /explore from auth check
-        // [Fix] Skip auth check on localhost to avoid port 8787/5173 sync issues during dev
-        // [Fix #400] When custom login path is set, accessing /login should NOT
-        // redirect to the custom path (that would expose the hidden admin URL).
-        // Instead return 404 so the custom path stays concealed.
-
         if (isProtectedSpaRoute && !isLocalhost) {
           const isAuthenticated = await authMiddleware(request, env);
           if (!isAuthenticated) {
@@ -319,10 +302,7 @@ export async function onRequest(context) {
           }
         }
 
-        // [Smart Disguise] Check if we need to disguise the SPA/Root
-        // Only applies to non-static assets
         if ((url.pathname === '/' || isSpaRoute) && !isStaticAsset) {
-          // Pass settings to avoid double fetch
           const disguiseResponse = await handleDisguiseRequest(context, settings);
           if (disguiseResponse) {
             return disguiseResponse;
@@ -330,26 +310,11 @@ export async function onRequest(context) {
         }
 
         if (!isStaticAsset && !isSpaRoute && url.pathname !== '/') {
-          // 如果是浏览器请求且看起来像是一个页面访问，优先尝试返回 SPA
-          // fix: 解决经典模式下可能的路由冲突
-          const acceptHeader = request.headers.get('Accept') || '';
-          if (acceptHeader.includes('text/html')) {
-            // 既然它不是静态资源，也不是已知的SPA路由，但请求的是HTML
-            // 我们可以选择:
-            // 1. 仍然尝试作为订阅处理 (如果用户在浏览器直接访问 shortlink)
-            // 2. 返回 next() 让前端处理 404
-            // 这里保持现有逻辑，但添加注释备忘。
-            // 既然目前通过 ui.js 强制跳转回 / 解决了经典模式的问题，
-            // 这里我们可以保留对短链接的支持。
-            // return next();
-          }
           return await handleMisubRequest(context);
         }
 
-        // Continue to static assets or root
         let response = await fetchStaticAsset(request, env, next);
 
-        // [Fix] SPA Fallback: If asset not found (404) and it's an SPA route OR it's an HTML request, serve index.html
         const acceptHeader = request.headers.get('Accept') || '';
         const fetchMode = request.headers.get('Sec-Fetch-Mode') || '';
         const fetchDest = request.headers.get('Sec-Fetch-Dest') || '';
@@ -390,10 +355,6 @@ export async function onRequest(context) {
       corsOptions,
     );
 
-    // Sliding session renewal: refresh active sessions after seven days.
-    // Login and logout manage the cookie themselves and must not be renewed here.
-    // Static public assets must also skip session renewal to avoid D1/crypto overhead
-    // and prevent attaching Set-Cookie onto public, immutable CDN-cached responses.
     const isAuthCookieManagementRoute = url.pathname === '/api/login' || url.pathname === '/api/logout';
     if (isPublicAssetRequest || isAuthCookieManagementRoute || request.method === 'OPTIONS') {
       return response;
@@ -411,25 +372,3 @@ export async function onRequest(context) {
     );
   }
 }
-
-/**
- * 调试信息导出 (仅开发环境)
- */
-export const debugInfo = {
-  version: '2.0.0-modular-v2',
-  modules: [
-    'utils',
-    'auth-middleware',
-    'notifications',
-    'subscription',
-    'subscription-handler',
-    'api-handler',
-    'api-router',
-    'handlers/subscription-handler',
-    'handlers/node-handler',
-    'handlers/debug-handler',
-    'utils/geo-utils',
-    'utils/node-parser',
-  ],
-  architecture: 'modular-refactor-v2-domain-split',
-};

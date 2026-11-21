@@ -17,9 +17,8 @@ import NavBar from '@/components/layout/NavBar.vue';
 import { useI18n } from '@/i18n/index.js';
 import { COMMON_DASHBOARD_ROUTE_LOADERS, configureAuthGuard, translateRouteTitle } from '@/router/index.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
-import { readSessionPreference } from '@/utils/session-preference.js'; // Lazy components
+import { readSessionPreference } from '@/utils/session-preference.js';
 
-// Lazy components
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
@@ -131,7 +130,6 @@ const isModernSettingsPage = computed(
   () => isLoggedIn.value && layoutMode.value === 'modern' && route.name === 'Settings',
 );
 
-// Determine which login component to show (Custom Path -> NotFound, else -> Login)
 const loginComponent = computed(() => {
   const rawPath = sessionStore.publicConfig?.customLoginPath;
   const normalizedPath = rawPath && typeof rawPath === 'string' ? rawPath.trim().replace(/^\/+/, '') : '';
@@ -191,7 +189,6 @@ watch(
       try {
         await versionStore.checkVersion(false);
       } catch {
-        // Non-blocking version check.
       }
     }
   },
@@ -253,7 +250,6 @@ const isCustomPageFullWidth = computed(() => {
       :show-slow-indicator="showSlowIndicator"
     />
 
-    <!-- Navigation -->
     <NavBar v-if="showModernNavBar" :is-logged-in="true" :pending-path="pendingPath" @logout="logout" />
     <Header
       v-else-if="showLegacyHeader"
@@ -287,13 +283,10 @@ const isCustomPageFullWidth = computed(() => {
         role="status"
       >
         <div class="relative flex items-center justify-center mb-6">
-          <!-- Track Ring -->
           <div class="w-12 h-12 rounded-full border border-line"></div>
-          <!-- Spinning Hairline Arc -->
           <div
             class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-fg animate-spin"
           ></div>
-          <!-- Centered Brand Glyph -->
           <div class="absolute inset-0 flex items-center justify-center text-fg-subtle">
             <Globe class="w-5 h-5" stroke-width="1.75" />
           </div>
@@ -309,7 +302,6 @@ const isCustomPageFullWidth = computed(() => {
       </div>
 
       <template v-else-if="isLoggedIn">
-        <!-- Security Banner -->
         <div v-if="isDefaultPassword" class="mb-4 px-4 py-3 bg-surface text-fg rounded-md border border-line">
           <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div class="flex items-center gap-2.5">
@@ -376,7 +368,6 @@ const isCustomPageFullWidth = computed(() => {
         <Dashboard v-else />
       </template>
 
-      <!-- PUBLIC ROUTE VIEW (Not logged in, but isPublic) -->
       <template v-else-if="isPublicRoute">
         <router-view v-slot="{ Component, route: currentRoute }">
           <RouteErrorBoundary :reset-key="currentRoute.fullPath">
@@ -387,7 +378,6 @@ const isCustomPageFullWidth = computed(() => {
         </router-view>
       </template>
 
-      <!-- LOGIN VIEW (Not logged in, not public) -->
       <template v-else>
         <component :is="loginComponent" :login="login" />
       </template>
@@ -452,7 +442,6 @@ const isCustomPageFullWidth = computed(() => {
   opacity: 0;
 }
 
-/* iOS Specific Padding for Fixed Header */
 @supports (-webkit-touch-callout: none) {
   .ios-header-padding {
     padding-top: calc(env(safe-area-inset-top, 0px) + 80px) !important;

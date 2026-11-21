@@ -261,7 +261,6 @@ function parseSurgeTrojan(line) {
     });
 
     if (!password) {
-      // as fallback
       password = options[0];
     }
 

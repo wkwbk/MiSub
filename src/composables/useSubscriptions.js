@@ -1,4 +1,3 @@
-// FILE: src/composables/useSubscriptions.js
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
@@ -28,7 +27,6 @@ export function useSubscriptions(markDirty) {
   const dataStore = useDataStore();
   const { subscriptions: allSubscriptions } = storeToRefs(dataStore);
 
-  // Filtered computed property: Only http/https links are "Subscriptions"
   const subscriptions = computed(() => {
     return (allSubscriptions.value || []).filter((sub) => sub.url && /^https?:\/\//.test(sub.url));
   });
@@ -153,7 +151,7 @@ export function useSubscriptions(markDirty) {
   const enabledSubscriptions = computed(() => subscriptions.value.filter((s) => s.enabled));
 
   const totalRemainingTraffic = computed(() => {
-    const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024; // 10 PB in bytes
+    const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024;
     return subscriptions.value.reduce((acc, sub) => {
       if (sub.excludeTraffic) return acc;
       if (

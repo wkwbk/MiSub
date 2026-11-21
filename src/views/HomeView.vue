@@ -2,9 +2,8 @@
 import { computed, defineAsyncComponent, h, watchEffect } from 'vue';
 import { useSessionStore } from '@/stores/session';
 import { storeToRefs } from 'pinia';
-import { useRoute, useRouter } from 'vue-router'; // Lazy load components
+import { useRoute, useRouter } from 'vue-router';
 
-// Lazy load components
 const PublicProfilesView = defineAsyncComponent(() => import('@/views/PublicProfilesView.vue'));
 const NotFoundView = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 

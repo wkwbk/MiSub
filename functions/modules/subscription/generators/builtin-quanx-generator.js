@@ -4,7 +4,7 @@
  */
 
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
-import { getUniqueName } from '../name-utils.js';
+import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
@@ -15,17 +15,9 @@ import {
 
 const ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
 
-function cleanControlChars(str) {
-  if (typeof str !== 'string') return str;
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-}
-
 function sanitizeNodeName(name) {
   if (!name) return 'Untitled';
   let safe = cleanControlChars(name);
-  // QuanX lines are comma-separated and uses = for key-value.
-  // Semicolons and quotes can also be problematic in some versions.
   safe = safe.replace(/,/g, ' ').replace(/=/g, '-').replace(/;/g, ' ').replace(/["']/g, '');
   safe = safe.replace(/\s+/g, ' ').trim();
   return safe || 'Untitled';
@@ -169,8 +161,6 @@ function buildQxLine(proxy) {
   }
 
   if (type === 'hysteria2' || type === 'hy2') {
-    // Quantumult X rejects the Hysteria2 server syntax emitted by MiSub; omit it
-    // from full QuanX configs rather than breaking the entire subscription import.
     return null;
   }
 

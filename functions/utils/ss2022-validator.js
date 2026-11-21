@@ -34,7 +34,6 @@ export function validateSS2022Node(nodeUrl) {
 
     if (atIndex === -1) {
       // 检查是否为 SIP002 格式 (纯 Base64)
-      // ss://base64string
       // 如果长度足够且是有效 Base64，可能就是 SIP002
       const possibleBase64 = nodeUrl.substring(5, hashIndex !== -1 ? hashIndex : undefined);
       if (/^[A-Za-z0-9+/=-_]+$/.test(possibleBase64)) {

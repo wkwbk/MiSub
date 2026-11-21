@@ -36,7 +36,6 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue']);
 const { t } = useI18n();
 
-// Migration Logic
 const canMigrate = computed(() => {
   return props.modelValue.length === 0 && props.legacyData && props.legacyData.enabled;
 });
@@ -46,7 +45,6 @@ const migrateFromLegacy = () => {
   const config = props.legacyData;
   const ops = [];
 
-  // 1. Filter
   const filter = config.filter;
   if (
     filter &&
@@ -65,7 +63,6 @@ const migrateFromLegacy = () => {
     });
   }
 
-  // 2. Rename (Regex)
   const regex = config.rename?.regex;
   if (regex?.enabled && regex.rules?.length > 0) {
     ops.push({
@@ -76,7 +73,6 @@ const migrateFromLegacy = () => {
     });
   }
 
-  // 3. Rename (Template)
   const template = config.rename?.template;
   if (template?.enabled) {
     ops.push({
@@ -93,7 +89,6 @@ const migrateFromLegacy = () => {
     });
   }
 
-  // 4. Script Rename
   const renameScript = config.rename?.script;
   if (renameScript?.enabled && renameScript.expression) {
     ops.push({
@@ -106,7 +101,6 @@ const migrateFromLegacy = () => {
     });
   }
 
-  // 5. Dedup
   const dedup = config.dedup;
   if (dedup?.enabled) {
     ops.push({
@@ -117,7 +111,6 @@ const migrateFromLegacy = () => {
     });
   }
 
-  // 6. Sort
   const sort = config.sort;
   if (sort?.enabled && sort.keys?.length > 0) {
     ops.push({
@@ -131,7 +124,6 @@ const migrateFromLegacy = () => {
   emit('update:modelValue', ops);
 };
 
-// Track which operator is expanded
 const expandedIndex = ref(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
 
 const toggleExpand = (index) => {
@@ -147,7 +139,6 @@ const addOperator = (type) => {
   };
   const newList = [...props.modelValue, newOp];
   emit('update:modelValue', newList);
-  // Auto expand new operator
   expandedIndex.value = newList.length - 1;
 };
 
@@ -233,7 +224,6 @@ const updateOperatorParams = (index, params) => {
 
 <template>
   <div class="space-y-4">
-    <!-- Migration Suggestion Card -->
     <div v-if="canMigrate" class="group relative mb-6 overflow-hidden rounded-md border border-line bg-transparent p-4">
       <div class="relative z-10 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
@@ -285,7 +275,6 @@ const updateOperatorParams = (index, params) => {
           !isOperatorEnabled(op) && 'opacity-60 grayscale-[0.5]',
         ]"
       >
-        <!-- Compact Header -->
         <div class="cursor-pointer select-none p-3 hover:bg-hover" @click="toggleExpand(index)">
           <div class="flex items-start justify-between gap-3 sm:items-center">
             <div class="flex items-center gap-3 min-w-0">
@@ -369,7 +358,6 @@ const updateOperatorParams = (index, params) => {
           </div>
         </div>
 
-        <!-- Collapsible Content -->
         <transition
           enter-active-class="transition-[max-height,opacity] duration-300 ease-out"
           enter-from-class="max-h-0 opacity-0"
@@ -427,7 +415,6 @@ const updateOperatorParams = (index, params) => {
       </div>
     </div>
 
-    <!-- Add Control (Segmented Style) -->
     <div class="pt-4">
       <div class="grid grid-cols-2 gap-1.5 rounded-md border border-line bg-inset p-1 sm:inline-flex sm:flex-wrap">
         <button

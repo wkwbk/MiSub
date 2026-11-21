@@ -236,7 +236,6 @@ export function setNodeName(url, protocol, newName) {
       const newBase64 = base64EncodeUtf8(newJson);
       return 'vmess://' + newBase64;
     } else {
-      // VLESS / Trojan / SS / Shadowsocks / Hysteria2 / Snell
       // 处理 # 后缀即可
       const hashIndex = url.lastIndexOf('#');
       const baseUrl = hashIndex !== -1 ? url.substring(0, hashIndex) : url;
@@ -751,7 +750,6 @@ export function applyNodeTransformPipeline(nodeUrls, transformConfig = {}) {
   if (cfg.filter.include.enabled && cfg.filter.include.rules.length > 0) {
     records = records.filter((r) => matchesRegexRules(r.name, cfg.filter.include.rules));
   }
-  // ... (rest of the pipe remains similar but simplified)
 
   if (cfg.filter.exclude.enabled && cfg.filter.exclude.rules.length > 0) {
     records = records.filter((r) => !matchesRegexRules(r.name, cfg.filter.exclude.rules));
@@ -843,10 +841,6 @@ export function applyNodeTransformPipeline(nodeUrls, transformConfig = {}) {
       arr.push(r);
       groupBuckets.set(gk, arr);
     }
-
-    // [Modified] Remove forced sorting to preserve original node order
-    // Users can enable explicit sorting if they want deterministic ordering
-    // arr.sort((a, b) => { ... });
 
     const nextIndex = new Map();
     for (const [gk, arr] of groupBuckets.entries()) {

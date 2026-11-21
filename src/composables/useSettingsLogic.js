@@ -1,8 +1,8 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
-import { normalizePublicLinksConfig } from '@/constants/default-public-links.js';
-import { normalizePublicCoresConfig } from '@/constants/default-public-cores.js';
+import { normalizePublicLinksConfig } from '@shared/default-public-links.js';
+import { normalizePublicCoresConfig } from '@shared/default-public-cores.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';

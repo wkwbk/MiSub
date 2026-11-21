@@ -151,7 +151,6 @@ const closeModal = () => {
 
     <template #body>
       <div class="space-y-5">
-        <!-- View Switch Tabs -->
         <div v-if="detail.parsed" class="modal-inset-surface inline-flex items-center gap-0.5 rounded-md p-1">
           <button
             :class="activeTab === 'structured' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
@@ -179,7 +178,6 @@ const closeModal = () => {
           </button>
         </div>
 
-        <!-- Unsupported protocol notice -->
         <div
           v-if="!detail.parsed"
           class="rounded-md border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-300"
@@ -187,7 +185,6 @@ const closeModal = () => {
           {{ t('nodeDetail.unsupportedNotice') }}
         </div>
 
-        <!-- Structured Tab -->
         <div v-if="activeTab === 'structured'" class="space-y-4">
           <section v-if="networkItems.length > 0">
             <h4 class="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-fg-muted">
@@ -270,7 +267,6 @@ const closeModal = () => {
             </div>
           </section>
 
-          <!-- Raw URL Block -->
           <section v-if="detail.rawUrl">
             <div class="mb-1.5 flex items-center justify-between px-1">
               <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">
@@ -294,7 +290,6 @@ const closeModal = () => {
           </section>
         </div>
 
-        <!-- YAML Tab -->
         <div v-else-if="activeTab === 'yaml'">
           <div class="mb-1.5 flex items-center justify-between px-1">
             <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">Clash Proxy YAML</h4>
@@ -315,7 +310,6 @@ const closeModal = () => {
           </div>
         </div>
 
-        <!-- JSON Tab -->
         <div v-else-if="activeTab === 'json'">
           <div class="mb-1.5 flex items-center justify-between px-1">
             <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">JSON</h4>

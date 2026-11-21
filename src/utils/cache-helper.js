@@ -1,8 +1,3 @@
-/**
- * Simple SessionStorage Cache Helper
- *
- * Provides basic get/set/clear operations with Time-To-Live (TTL) support.
- */
 
 const isDev = import.meta.env.DEV;
 
@@ -17,7 +12,7 @@ export function createStorageCache(keyBase, ttlMs) {
 
       const age = Date.now() - parseInt(timestamp, 10);
       if (age > ttlMs) {
-        clear(); // Auto expire
+        clear();
         return null;
       }
 
@@ -43,7 +38,6 @@ export function createStorageCache(keyBase, ttlMs) {
       sessionStorage.removeItem(DATA_KEY);
       sessionStorage.removeItem(TS_KEY);
     } catch {
-      // Ignore
     }
   }
 

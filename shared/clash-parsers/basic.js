@@ -11,7 +11,6 @@ import { extractName, parseHostPort, parseQueryParams } from './common.js';
  */
 export function parseHttpsUrl(url, isTls = true) {
   try {
-    // https://username:password@server:port?params#name
     const body = url.substring(isTls ? 8 : 7);
     const atIndex = body.indexOf('@');
     let userInfo = '';
@@ -80,7 +79,6 @@ export function parseHttpsUrl(url, isTls = true) {
  */
 export function parseSocks5Url(url) {
   try {
-    // socks5://username:password@server:port?tls=1#name
     const body = url.substring(9);
     const atIndex = body.indexOf('@');
     if (atIndex === -1) return null;

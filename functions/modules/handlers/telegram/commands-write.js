@@ -740,7 +740,7 @@ export async function handleNodeInput(chatId, text, userId, env, requestCache = 
 
     // 1. 尝试提取节点链接 (SS, VLESS 等)
     let nodeUrls = extractNodeUrls(text);
-    let importType = 'node'; // node | subscription
+    let importType = 'node';
 
     // 2. 提取订阅链接（支持一条消息里多行/多个订阅链接）
     const subscriptionUrls = extractSubscriptionUrls(text).filter((url) => !nodeUrls.includes(url));
@@ -817,7 +817,6 @@ export async function handleNodeInput(chatId, text, userId, env, requestCache = 
 
     await storageAdapter.putAllSubscriptions(allSubscriptions);
 
-    // [Verification] Read-Your-Writes Check
     try {
       const verifySubs = await storageAdapter.getAllSubscriptions();
       const isVerified = addedNodes.every((added) => verifySubs.some((s) => s.id === added.id));

@@ -150,7 +150,6 @@ function parseVMessFeatures(rawUrl) {
       const security = tlsVal === 'tls' || tlsVal === '1' || tlsVal === 'true' ? 'tls' : 'none';
       return { transport, security };
     } catch {
-      // fallback below
     }
   }
 

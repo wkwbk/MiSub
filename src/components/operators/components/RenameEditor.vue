@@ -86,7 +86,6 @@ const applyPresetRegex = (rule) => {
 
 <template>
   <div class="space-y-6">
-    <!-- Regex Rename -->
     <div class="space-y-3">
       <div class="flex items-center justify-between">
         <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
@@ -193,7 +192,6 @@ const applyPresetRegex = (rule) => {
       </div>
     </div>
 
-    <!-- Template Rename -->
     <div class="space-y-3 pt-4 border-t border-line">
       <div class="flex items-center justify-between">
         <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{

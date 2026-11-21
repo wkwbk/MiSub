@@ -13,8 +13,8 @@ import { StorageFactory } from '../storage-adapter.js';
 const DOH_ENDPOINT = 'https://cloudflare-dns.com/dns-query';
 const IP_API_BATCH_ENDPOINT = 'http://ip-api.com/batch?fields=status,message,query,countryCode,country,as,org,isp';
 
-export const DNS_CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-export const IP_GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const DNS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+export const IP_GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const DNS_CACHE_PREFIX = 'node_inspect_dns:';
 const IP_CACHE_PREFIX = 'node_inspect_ip:';
@@ -24,7 +24,6 @@ const CDN_CAPABLE_TRANSPORTS = new Set(['ws', 'grpc', 'h2', 'http', 'xhttp', 'ht
 
 // 主流 CDN IPv4 CIDR 段（重点覆盖 Cloudflare / Fastly / Gcore / Akamai 常见优选段）
 const CDN_IPV4_CIDRS = [
-  // Cloudflare
   { cidr: '173.245.48.0/20', provider: 'Cloudflare' },
   { cidr: '103.21.244.0/22', provider: 'Cloudflare' },
   { cidr: '103.22.200.0/22', provider: 'Cloudflare' },
@@ -40,18 +39,14 @@ const CDN_IPV4_CIDRS = [
   { cidr: '104.24.0.0/14', provider: 'Cloudflare' },
   { cidr: '172.64.0.0/13', provider: 'Cloudflare' },
   { cidr: '131.0.72.0/22', provider: 'Cloudflare' },
-  // Fastly
   { cidr: '151.101.0.0/16', provider: 'Fastly' },
   { cidr: '199.232.0.0/16', provider: 'Fastly' },
   { cidr: '23.235.32.0/20', provider: 'Fastly' },
   { cidr: '43.249.72.0/22', provider: 'Fastly' },
   { cidr: '103.244.50.0/24', provider: 'Fastly' },
-  // Gcore
   { cidr: '92.223.64.0/18', provider: 'Gcore' },
   { cidr: '5.188.32.0/20', provider: 'Gcore' },
-  // BunnyCDN
   { cidr: '89.187.160.0/19', provider: 'BunnyCDN' },
-  // CDN77
   { cidr: '185.152.64.0/22', provider: 'CDN77' },
 ];
 
@@ -225,7 +220,6 @@ export function detectCdnByCidr(ip) {
     }
   } else if (isIPv6(cleaned)) {
     const lower = cleaned.toLowerCase();
-    // Cloudflare IPv6: 2606:4700::/32, 2400:cb00::/32, 2803:f800::/32, 2405:b500::/32, 2405:8100::/32, 2a06:98c0::/29, 2c0f:f248::/32
     if (
       lower.startsWith('2606:4700:') ||
       lower.startsWith('2400:cb00:') ||
@@ -237,7 +231,6 @@ export function detectCdnByCidr(ip) {
     ) {
       return 'Cloudflare';
     }
-    // Fastly IPv6: 2a04:4e40::/32, 2a04:4e42::/32
     if (lower.startsWith('2a04:4e40:') || lower.startsWith('2a04:4e42:')) {
       return 'Fastly';
     }
@@ -411,7 +404,6 @@ export async function resolveDomainViaDoH(domain, fetchFn = fetch) {
         return { ip: ips[0], ips, recordType };
       }
     } catch {
-      // ignore and try fallback
     } finally {
       clearTimeout(timer);
     }
@@ -481,7 +473,6 @@ async function writeCacheSafe(storageAdapter, key, payload) {
   try {
     await storageAdapter.put(key, payload);
   } catch {
-    // Cache write failure is non-fatal
   }
 }
 
@@ -661,7 +652,7 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
       flag,
       asn: geo?.asn || '',
       org: geo?.org || geo?.isp || '',
-      networkType, // 'cdn' | 'relay' | 'direct' | 'unknown'
+      networkType,
       cdnProvider,
       isRelay,
     };

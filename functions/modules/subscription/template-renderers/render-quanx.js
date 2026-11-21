@@ -101,8 +101,6 @@ function buildProxyLine(proxy) {
     return `http=${server}:${port}, username=${proxy.username || ''}, password=${proxy.password || ''}${extras.length ? `, ${extras.join(', ')}` : ''}, tag=${name}`;
   }
   if (type === 'hysteria2' || type === 'hy2') {
-    // Quantumult X rejects the Hysteria2 server syntax emitted by MiSub; omit it
-    // from rendered QuanX templates rather than breaking the entire import.
     return null;
   }
   if (type === 'tuic') {
@@ -170,8 +168,6 @@ function buildPolicyLine(group) {
     return `available=${group.name}, ${members}`;
   }
   if (type === 'load-balance') {
-    // Quantumult X round-robin/load-balance isn't natively identical, but 'available' or 'static' is usually the fallback.
-    // Or we can just fallback to static
     return `static=${group.name}, ${members}`;
   }
   return `static=${group.name}, ${members}`;
@@ -180,7 +176,7 @@ function buildPolicyLine(group) {
 function buildRuleLine(rule) {
   const type = String(rule.type || '').toUpperCase();
   if (!type) return null;
-  if (type === 'RULE-SET') return null; // Remote rules moved to filter_remote
+  if (type === 'RULE-SET') return null;
   if (type === 'MATCH' || type === 'FINAL') return `FINAL,${rule.policy}`;
   if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
   return `${type},${rule.value},${rule.policy}`;
@@ -206,7 +202,6 @@ export function renderQuanxFromTemplateModel(model, options = {}) {
       ? normalizedModel.proxies
       : urlsToClashProxies(proxyUrls);
 
-  // Extraction of remote rules for Quantumult X
   const remoteRules = normalizedModel.rules.filter(
     (r) => String(r.type).toUpperCase() === 'RULE-SET' && r.value.startsWith('http'),
   );

@@ -98,9 +98,6 @@ export const DEFAULT_PUBLIC_CORES_CONFIG = {
   items: DEFAULT_PUBLIC_CORES,
 };
 
-/**
- * Normalize tags input (array or comma-separated string) into a clean string array.
- */
 export function normalizeCoreTags(tags) {
   if (Array.isArray(tags)) {
     return tags.map((tag) => String(tag || '').trim()).filter(Boolean);
@@ -114,10 +111,6 @@ export function normalizeCoreTags(tags) {
   return [];
 }
 
-/**
- * Resolve an icon URL for a core item.
- * If no icon is provided, falls back to Google 128px favicon service by domain.
- */
 export function resolvePublicCoreIcon(core) {
   const rawIcon = String(core?.icon || '').trim();
   if (rawIcon) return rawIcon;
@@ -127,7 +120,6 @@ export function resolvePublicCoreIcon(core) {
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
     }
   } catch {
-    // Ignore invalid URL
   }
   return '';
 }

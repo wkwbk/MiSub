@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addFlagEmoji, fixNodeUrlEncoding, prependNodeName } from '../../functions/utils/node-utils.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
+import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
 import { cleanNodeUrl, cleanNodeUrlsText } from '../../src/lib/utils.js';
 

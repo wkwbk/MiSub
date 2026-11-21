@@ -132,8 +132,6 @@ export function formatUrl(url, maxLength = 50) {
 export function clashFix(content) {
   if (!content || !content.includes('wireguard')) return content;
 
-  // WireGuard-specific formatting can be added here if needed.
-  // Do not inject remote-dns-resolve.
   return content;
 }
 

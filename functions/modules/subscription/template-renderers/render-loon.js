@@ -120,25 +120,14 @@ function buildProxyLine(proxy) {
     // Loon TUIC 语法: Name = tuic, Server, Port, Password, UUID, key=value, ...
     return `${name} = tuic, ${server}, ${port}, ${proxy.password || ''}, ${proxy.uuid || ''}, ${extras.join(', ')}`;
   }
-  // if (type === 'wireguard') {
-  //     const extras = [proxy['private-key'] || ''];
-  //     if (proxy['public-key']) extras.push(`public-key=${proxy['public-key']}`);
-  //     if (proxy.ip) {
-  //         const ip = Array.isArray(proxy.ip) ? proxy.ip[0] : proxy.ip;
-  //         extras.push(`self-ip=${ip}`);
   //     }
-  //     if (proxy.reserved) {
-  //         const reserved = Array.isArray(proxy.reserved) ? proxy.reserved.join('/') : proxy.reserved;
-  //         extras.push(`client-id=${reserved}`);
   //     }
-  //     return `${name} = wireguard, ${server}, ${port}, ${extras.join(', ')}`;
   // }
   if (type === 'wireguard') {
     if (!proxy['private-key'] || !proxy['public-key']) {
       return null;
     }
     const extras = [];
-    // IPv4
     if (proxy.ip) {
       const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !String(ip).includes(':')) : proxy.ip;
 
@@ -147,7 +136,6 @@ function buildProxyLine(proxy) {
       }
     }
 
-    // IPv6
     if (proxy.ipv6) {
       const ipv6 = Array.isArray(proxy.ipv6) ? proxy.ipv6.find(Boolean) : proxy.ipv6;
 
@@ -156,15 +144,12 @@ function buildProxyLine(proxy) {
       }
     }
 
-    // Private Key
     extras.push(`private-key="${proxy['private-key']}"`);
 
-    // MTU
     if (proxy.mtu) {
       extras.push(`mtu=${proxy.mtu}`);
     }
 
-    // DNS
     if (proxy.dns) {
       const dnsList = Array.isArray(proxy.dns) ? proxy.dns.filter(Boolean) : [proxy.dns];
 
@@ -180,7 +165,6 @@ function buildProxyLine(proxy) {
       }
     }
 
-    // Peer
     const peer = [];
 
     peer.push(`public-key="${proxy['public-key']}"`);
@@ -264,13 +248,6 @@ function buildGroupLine(group) {
   return `${group.name} = select, ${members}`;
 }
 
-// function buildRuleLine(rule) {
-//     const type = String(rule.type || '').toUpperCase();
-//     if (!type) return null;
-//     if (type === 'RULE-SET') return `RULE-SET,${rule.value},${rule.policy}`;
-//     if (type === 'MATCH' || type === 'FINAL') return `FINAL,${rule.policy}`;
-//     if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
-//     return `${type},${rule.value},${rule.policy}`;
 // }
 function buildRuleLine(rule) {
   const type = String(rule.type || '').toUpperCase();
@@ -344,7 +321,6 @@ export function renderLoonFromTemplateModel(model, options = {}) {
     ...ruleLines,
     '',
     '[Remote Rule]',
-    // ...normalizedModel.rules.map(buildRuleLine).filter(Boolean),
     ...remoteRuleLines,
     '',
   ].join('\n');

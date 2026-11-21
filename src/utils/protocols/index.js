@@ -1,4 +1,4 @@
-export { convertClashProxyToUrl } from '@/utils/protocols/clash.js';
+export { convertClashProxyToUrl } from '@shared/clash-to-url.js';
 export { validateGeneratedUrl } from '@/utils/protocols/validator.js';
 export { batchConvertClashProxies } from '@/utils/protocols/batch.js';
 

@@ -14,7 +14,7 @@ import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
-} from '@/constants/default-public-cores.js';
+} from '@shared/default-public-cores.js';
 
 const props = defineProps({
   settings: {
@@ -132,7 +132,6 @@ const persistPublicCoresSilently = async () => {
       { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
     );
   } catch {
-    // Silent background persistence; user can still save via main Save button
   }
 };
 
@@ -367,7 +366,6 @@ const executeReset = async () => {
     </SectionHeader>
 
     <div v-if="publicCoresConfig.enabled" class="space-y-4">
-      <!-- Category Filter Tabs -->
       <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
         <button
           v-for="tab in categoryTabs"
@@ -491,7 +489,6 @@ const executeReset = async () => {
       </div>
     </div>
 
-    <!-- Add / Edit Core Modal -->
     <Modal
       v-model:show="showEditModal"
       :title="isNew ? t('publicCores.addModalTitle') : t('publicCores.editModalTitle')"
@@ -499,7 +496,6 @@ const executeReset = async () => {
     >
       <template #body>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-          <!-- Left Column: Icon -->
           <div class="md:col-span-5 lg:col-span-4">
             <div class="bg-transparent rounded-md p-6 flex flex-col items-center gap-6 h-full border border-line">
               <div class="text-center space-y-3 w-full">
@@ -571,7 +567,6 @@ const executeReset = async () => {
             </div>
           </div>
 
-          <!-- Right Column: Form Details -->
           <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-5">
             <div>
               <label class="block text-xs font-medium text-fg-muted">
@@ -675,7 +670,6 @@ const executeReset = async () => {
       </template>
     </Modal>
 
-    <!-- Reset Confirmation Modal -->
     <Modal
       v-model:show="showResetConfirm"
       :cancelText="t('actions.cancel')"
@@ -699,7 +693,6 @@ const executeReset = async () => {
       </template>
     </Modal>
 
-    <!-- Delete Confirmation Modal -->
     <Modal
       v-model:show="showDeleteConfirm"
       :cancelText="t('actions.cancel')"

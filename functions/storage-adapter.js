@@ -18,7 +18,6 @@ import {
   ensureD1Schema,
   ID_DATA_TABLES,
   isCacheKey,
-  isLegacyLogKey,
   isManualNodeRecord,
   isNoSuchTableError,
   isSchemaMismatchError,
@@ -30,6 +29,13 @@ import { invalidateD1CollectionCache, readCachedD1Collection } from './storage/d
 import { NoopStorageAdapter } from './storage/noop-adapter.js';
 
 export { ensureD1Schema, isManualNodeRecord, STORAGE_TYPES };
+
+let settingsCaches = new WeakMap();
+const SETTINGS_CACHE_TTL_MS = 10 * 1000;
+
+export function clearSettingsCache() {
+  settingsCaches = new WeakMap();
+}
 
 function stableStringify(value) {
   if (value === null || typeof value !== 'object') {
@@ -77,12 +83,20 @@ class D1StorageAdapter {
     }
   }
 
-  async get(key, type = 'json') {
+  async get(key, type = 'json', options = {}) {
     if (key === DATA_KEYS.SUBSCRIPTIONS) {
       return await this.getAllSubscriptions();
     }
     if (key === DATA_KEYS.PROFILES) {
       return await this.getAllProfiles();
+    }
+
+    const useSettingsCache = key === DATA_KEYS.SETTINGS && type === 'json' && !options?.fresh;
+    if (useSettingsCache) {
+      const cached = settingsCaches.get(this.db);
+      if (cached && Date.now() - cached.timestamp < SETTINGS_CACHE_TTL_MS) {
+        return structuredClone(cached.data);
+      }
     }
 
     try {
@@ -99,11 +113,17 @@ class D1StorageAdapter {
       if (type !== 'json') {
         return result.data;
       }
+      let parsed;
       try {
-        return JSON.parse(result.data);
+        parsed = JSON.parse(result.data);
       } catch {
-        return result.data;
+        parsed = result.data;
       }
+      if (useSettingsCache && parsed && typeof parsed === 'object') {
+        settingsCaches.set(this.db, { data: parsed, timestamp: Date.now() });
+        return structuredClone(parsed);
+      }
+      return parsed;
     } catch (error) {
       if (isSchemaMismatchError(error)) {
         return null;
@@ -161,6 +181,9 @@ class D1StorageAdapter {
         }
       });
 
+      if (key === DATA_KEYS.SETTINGS) {
+        settingsCaches.delete(this.db);
+      }
       if (ID_DATA_TABLES.has(table)) {
         invalidateD1CollectionCache(this.db, table);
       }
@@ -198,6 +221,9 @@ class D1StorageAdapter {
 
       await this.db.prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue).run();
 
+      if (key === DATA_KEYS.SETTINGS) {
+        settingsCaches.delete(this.db);
+      }
       if (ID_DATA_TABLES.has(table)) {
         invalidateD1CollectionCache(this.db, table);
       }
@@ -299,22 +325,17 @@ class D1StorageAdapter {
   }
 
   /**
-   * 仅读取远程机场订阅（subscriptions 表，不扫描 nodes 表）
+   * 仅读取远程机场订阅（subscriptions 表）
    */
   async getRemoteSubscriptions() {
-    const rows = await this._readTableRows('subscriptions');
-    return rows.filter((item) => !isManualNodeRecord(item));
+    return this._readTableRows('subscriptions');
   }
 
   /**
-   * 仅读取手动节点（nodes 表；若历史未迁移完则兼容读取 subscriptions 表中的节点）
+   * 仅读取手动节点（nodes 表，不扫描 subscriptions 表）
    */
   async getManualNodes() {
-    const [nodeRows, subRows] = await Promise.all([this._readTableRows('nodes'), this._readTableRows('subscriptions')]);
-    const deduped = new Map();
-    subRows.filter(isManualNodeRecord).forEach((item) => deduped.set(item.id, item));
-    nodeRows.forEach((item) => deduped.set(item.id, item));
-    return Array.from(deduped.values()).sort((a, b) => (a.sortIndex || 0) - (b.sortIndex || 0));
+    return this._readTableRows('nodes');
   }
 
   async getSubscriptionById(id) {
@@ -358,23 +379,7 @@ class D1StorageAdapter {
       const result = await this._withSchemaRetry(() =>
         this.db.prepare('SELECT data FROM profiles WHERE id = ? OR custom_id = ? LIMIT 1').bind(target, target).first(),
       );
-      if (result?.data) {
-        return JSON.parse(result.data);
-      }
-
-      // 兼容尚未回填 custom_id 列的极少数存量行（仅检查 custom_id IS NULL 的行）
-      const unindexed = await this.db.prepare('SELECT id, data FROM profiles WHERE custom_id IS NULL').all();
-      for (const row of unindexed?.results || []) {
-        if (!row?.data) continue;
-        const parsed = JSON.parse(row.data);
-        if (parsed?.id === target || parsed?.customId === target) {
-          if (parsed?.customId) {
-            await this.putProfile(parsed);
-          }
-          return parsed;
-        }
-      }
-      return null;
+      return result?.data ? JSON.parse(result.data) : null;
     } catch (error) {
       if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to get profile ${idOrCustomId}:`, error);
@@ -417,7 +422,6 @@ class D1StorageAdapter {
         return Number(updatedRow.downloadCount);
       }
     } catch {
-      // Fallback for lightweight mocks or un-migrated rows
     }
 
     const existing = await this.getProfileById(target);
@@ -568,12 +572,6 @@ class D1StorageAdapter {
     } catch (error) {
       if (!isSchemaMismatchError(error)) throw error;
     }
-    // 顺手清理可能尚未移除的旧版 logs 表访问日志行
-    try {
-      await this.db.prepare("DELETE FROM logs WHERE key LIKE 'misub_system_logs%'").run();
-    } catch {
-      // Ignore when legacy logs table does not exist
-    }
     return true;
   }
 
@@ -693,7 +691,6 @@ class D1StorageAdapter {
         await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id).run();
         invalidateD1CollectionCache(this.db, otherTable);
       } catch {
-        // Ignore when otherTable is not initialized yet
       }
     }
 
@@ -746,7 +743,6 @@ class D1StorageAdapter {
         customId = typeof parsed?.customId === 'string' ? parsed.customId.trim() : '';
       }
     } catch {
-      // Best-effort lookup for customId before deletion
     }
 
     const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
@@ -754,10 +750,7 @@ class D1StorageAdapter {
 
     const idsToClean = new Set([id, customId].filter(Boolean));
     await Promise.all(
-      Array.from(idsToClean).flatMap((pid) => [
-        this.delete(`node_cache_profile_${pid}`).catch(() => undefined),
-        this.delete(`${DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX}${pid}`).catch(() => undefined),
-      ]),
+      Array.from(idsToClean).map((pid) => this.delete(`node_cache_profile_${pid}`).catch(() => undefined)),
     );
 
     return Boolean(result?.success);
@@ -805,15 +798,6 @@ class D1StorageAdapter {
       nodeHits.forEach((item) => {
         if (item?.id) foundMap.set(item.id, item);
       });
-
-      // 兼容尚未迁移完的历史手动节点（仍留在 subscriptions 表中的情况）
-      const missingNodeIds = uniqueNodeIds.filter((id) => !foundMap.has(id));
-      if (missingNodeIds.length > 0) {
-        const legacyNodeHits = await this._queryByIdsChunked('subscriptions', missingNodeIds);
-        legacyNodeHits.forEach((item) => {
-          if (item?.id) foundMap.set(item.id, item);
-        });
-      }
 
       return Array.from(foundMap.values());
     } catch (error) {
@@ -1014,12 +998,7 @@ class D1StorageAdapter {
       const customId = typeof item?.customId === 'string' ? item.customId.trim() : '';
       const idsToClean = new Set([item.id, customId].filter(Boolean));
       for (const pid of idsToClean) {
-        statements.push(
-          this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`),
-          this.db
-            .prepare('DELETE FROM settings WHERE key = ?')
-            .bind(`${DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX}${pid}`),
-        );
+        statements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`));
       }
     }
 
@@ -1028,57 +1007,14 @@ class D1StorageAdapter {
     return true;
   }
 
-  async _migrateLegacyLogRow(key, rawValue, now, stats) {
-    if (key === 'misub_system_logs:index' || key === 'misub_system_logs_index') {
-      return;
-    }
-    try {
-      const parsed = typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue;
-      if (!Array.isArray(parsed)) return;
-
-      if (key === 'misub_error_reports') {
-        for (const report of parsed) {
-          if (report && typeof report === 'object') {
-            await this.insertErrorReport(report, 100);
-            stats.migratedErrorReports += 1;
-          }
-        }
-      } else if (key === 'misub_system_logs' || key.startsWith('misub_system_logs:')) {
-        const fresh = parsed.filter(
-          (entry) =>
-            entry &&
-            typeof entry === 'object' &&
-            now - (parseTimestampMs(entry.timestamp) || 0) <= ACCESS_LOG_MAX_AGE_MS,
-        );
-        if (fresh.length > 0) {
-          await this.insertAccessLogs(fresh, {
-            maxAgeMs: ACCESS_LOG_MAX_AGE_MS,
-            maxEntries: 200,
-          });
-          stats.migratedLogs += fresh.length;
-        }
-      }
-    } catch {
-      // Ignore malformed legacy log payload
-    }
-  }
-
   /**
-   * 定期维护与自动归位任务：
-   * 1. 确保八张表结构及索引列（profiles.custom_id / cache.expires_at）均已就绪；
-   * 2. 将历史留在 subscriptions 表中的手动节点自动搬入 nodes 表；
-   * 3. 将历史留在 settings / logs 表中的留言、下载计数、访问日志、错误上报自动归位并移除旧 logs 表；
-   * 4. 利用 cache.expires_at 索引零大字段读取清理过期缓存，并仅按 key 清理孤儿节点缓存。
+   * 定期维护任务：
+   * 1. 确保八张表结构及索引就绪；
+   * 2. 利用 cache.expires_at 索引批量清理过期缓存，并仅按 key 清理孤儿节点缓存；
+   * 3. 修剪过期的访问日志。
    */
   async cleanupMaintenance({ now = Date.now() } = {}) {
     const stats = {
-      migratedNodes: 0,
-      migratedGuestbook: 0,
-      mergedDownloadCounts: 0,
-      migratedLogs: 0,
-      migratedErrorReports: 0,
-      removedSettingsClutter: 0,
-      removedOrphanCounts: 0,
       removedExpiredCache: 0,
     };
 
@@ -1086,39 +1022,6 @@ class D1StorageAdapter {
       await ensureD1Schema(this.db);
     } catch {
       return stats;
-    }
-
-    // 1. 将 subscriptions 表里的手动节点自动归位到 nodes 表（批量提交）
-    try {
-      const subRows = await this.db.prepare('SELECT id, data FROM subscriptions').all();
-      const migrationStatements = [];
-      for (const row of subRows?.results || []) {
-        if (!row?.data) continue;
-        let parsed = null;
-        try {
-          parsed = JSON.parse(row.data);
-        } catch {
-          continue;
-        }
-        if (parsed?.id && isManualNodeRecord(parsed)) {
-          migrationStatements.push(
-            this.db
-              .prepare('INSERT OR REPLACE INTO nodes (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)')
-              .bind(parsed.id, row.data),
-            this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(row.id ?? parsed.id),
-          );
-          stats.migratedNodes += 1;
-        }
-      }
-      if (migrationStatements.length > 0) {
-        await this._runBatchOrSequential(migrationStatements);
-        invalidateD1CollectionCache(this.db, 'subscriptions');
-        invalidateD1CollectionCache(this.db, 'nodes');
-      }
-    } catch (error) {
-      if (!isNoSuchTableError(error)) {
-        console.warn('[D1 Maintenance] Failed to migrate manual nodes:', error?.message);
-      }
     }
 
     const [profiles, allSubAndNodes] = await Promise.all([
@@ -1132,105 +1035,7 @@ class D1StorageAdapter {
     });
     const validSubIds = new Set(allSubAndNodes.map((s) => s?.id).filter(Boolean));
 
-    // 2. 整理 settings 表中的历史留言、下载计数、日志与旧缓存
-    try {
-      const settingsRows = await this.db.prepare('SELECT key, value FROM settings').all();
-      for (const row of settingsRows?.results || []) {
-        const key = String(row?.key || '');
-        if (!key) continue;
-
-        if (key.startsWith(DATA_KEYS.LEGACY_GUESTBOOK_ITEM_PREFIX)) {
-          try {
-            const msg = JSON.parse(row.value);
-            if (msg?.id) {
-              await this.db
-                .prepare('INSERT OR IGNORE INTO guestbook (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)')
-                .bind(msg.id, JSON.stringify(msg))
-                .run();
-              stats.migratedGuestbook += 1;
-            }
-          } catch {}
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          invalidateD1CollectionCache(this.db, 'guestbook');
-          continue;
-        }
-
-        if (key === DATA_KEYS.LEGACY_GUESTBOOK_KEY) {
-          try {
-            const list = JSON.parse(row.value);
-            if (Array.isArray(list)) {
-              for (const msg of list) {
-                if (msg?.id) {
-                  await this.db
-                    .prepare('INSERT OR IGNORE INTO guestbook (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)')
-                    .bind(msg.id, JSON.stringify(msg))
-                    .run();
-                  stats.migratedGuestbook += 1;
-                }
-              }
-            }
-          } catch {}
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          invalidateD1CollectionCache(this.db, 'guestbook');
-          continue;
-        }
-
-        if (key === DATA_KEYS.LEGACY_GUESTBOOK_INDEX_KEY) {
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          stats.removedSettingsClutter += 1;
-          continue;
-        }
-
-        if (key.startsWith(DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX)) {
-          const targetId = key.slice(DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX.length);
-          const matchedProfile = targetId ? profileByIdentifier.get(targetId) : null;
-          if (matchedProfile) {
-            const countVal = Number(row.value) || 0;
-            if (countVal > (Number(matchedProfile.downloadCount) || 0)) {
-              matchedProfile.downloadCount = countVal;
-              await this.putProfile(matchedProfile);
-            }
-            stats.mergedDownloadCounts += 1;
-          } else {
-            stats.removedOrphanCounts += 1;
-          }
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          continue;
-        }
-
-        if (isLegacyLogKey(key)) {
-          await this._migrateLegacyLogRow(key, row.value, now, stats);
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          continue;
-        }
-
-        if (isCacheKey(key)) {
-          await this.db.prepare('DELETE FROM settings WHERE key = ?').bind(key).run();
-          stats.removedSettingsClutter += 1;
-        }
-      }
-    } catch (error) {
-      if (!isNoSuchTableError(error)) {
-        console.warn('[D1 Maintenance] Failed to clean settings clutter:', error?.message);
-      }
-    }
-
-    // 3. 将过渡期遗留的旧版 logs 键值表迁移到 access_logs / error_reports 行级表并销毁旧表
-    try {
-      const legacyLogRows = await this.db.prepare('SELECT key, value FROM logs').all();
-      for (const row of legacyLogRows?.results || []) {
-        const key = String(row?.key || '');
-        if (!key) continue;
-        await this._migrateLegacyLogRow(key, row.value, now, stats);
-      }
-      await this.db.prepare('DROP TABLE IF EXISTS logs').run();
-    } catch (error) {
-      if (!isNoSuchTableError(error)) {
-        console.warn('[D1 Maintenance] Failed to migrate legacy logs table:', error?.message);
-      }
-    }
-
-    // 4. 清理 cache 表：先用 expires_at 索引直接批量删除过期行（无需读取大体积 value）
+    // 清理 cache 表：先用 expires_at 索引直接批量删除过期行（无需读取大体积 value）
     try {
       const expiredResult = await this.db
         .prepare('DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= ?')
@@ -1238,7 +1043,7 @@ class D1StorageAdapter {
         .run();
       stats.removedExpiredCache += expiredResult?.meta?.changes ?? expiredResult?.changes ?? 0;
 
-      // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填旧行过期时间
+      // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填过期时间
       const nullExpRows = await this.db.prepare('SELECT key FROM cache WHERE expires_at IS NULL').all();
       const cacheCleanupStatements = [];
       for (const row of nullExpRows?.results || []) {
@@ -1266,7 +1071,6 @@ class D1StorageAdapter {
           continue;
         }
 
-        // 若属于应带过期时间的旧版历史行（expires_at 尚未写入），按需读取单行回填或清理
         const needsBackfill =
           key.startsWith('tmp_external_nodes:') ||
           key.startsWith('tg_push_rate:') ||
@@ -1296,14 +1100,13 @@ class D1StorageAdapter {
       }
     }
 
-    // 5. 定期修剪 access_logs 与 error_reports 过期/超量数据
+    // 定期修剪 access_logs 过期数据
     try {
       await this.db
         .prepare('DELETE FROM access_logs WHERE timestamp < ?')
         .bind(now - ACCESS_LOG_MAX_AGE_MS)
         .run();
     } catch {
-      // Ignore when table is empty or mock doesn't support it
     }
 
     return stats;
@@ -1317,11 +1120,7 @@ class D1StorageAdapter {
     if (isCacheKey(keyStr)) {
       return { table: 'cache', queryField: 'key', queryValue: keyStr };
     }
-    if (
-      D1_KNOWN_SETTINGS_KEYS.has(keyStr) ||
-      keyStr.startsWith(DATA_KEYS.LEGACY_PROFILE_DOWNLOAD_COUNT_PREFIX) ||
-      isLegacyLogKey(keyStr)
-    ) {
+    if (D1_KNOWN_SETTINGS_KEYS.has(keyStr)) {
       return { table: 'settings', queryField: 'key', queryValue: keyStr };
     }
     console.warn(`[D1 Storage] Unknown key format: ${key}, treating as settings key`);
@@ -1336,41 +1135,6 @@ class D1StorageAdapter {
   }
 }
 
-let settingsCaches = new WeakMap();
-const SETTINGS_CACHE_TTL_MS = 10 * 1000;
-
-export class SettingsCache {
-  static async get(env) {
-    const db = env?.MISUB_DB;
-    if (!db) {
-      return null;
-    }
-
-    const now = Date.now();
-    const cached = settingsCaches.get(db);
-    if (cached && now - cached.timestamp < SETTINGS_CACHE_TTL_MS) {
-      return cached.data;
-    }
-
-    try {
-      const d1Adapter = new D1StorageAdapter(db);
-      const settings = await d1Adapter.get(DATA_KEYS.SETTINGS);
-      if (settings) {
-        settingsCaches.set(db, { data: settings, timestamp: now });
-        return settings;
-      }
-    } catch (error) {
-      console.error('[Storage Cache] Failed to read settings from D1:', error);
-    }
-
-    return null;
-  }
-
-  static clear() {
-    settingsCaches = new WeakMap();
-  }
-}
-
 export class StorageFactory {
   static createAdapter(env) {
     if (!env?.MISUB_DB) {
@@ -1378,9 +1142,5 @@ export class StorageFactory {
       return new NoopStorageAdapter();
     }
     return new D1StorageAdapter(env.MISUB_DB);
-  }
-
-  static async getStorageType() {
-    return STORAGE_TYPES.D1;
   }
 }

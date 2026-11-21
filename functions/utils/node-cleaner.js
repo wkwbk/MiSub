@@ -93,7 +93,6 @@ export function fixNodeUrlEncoding(nodeUrl, options = {}) {
 
       // 修复 query params (参数)
       // 简单处理：hysteria2 特殊 fix
-      /* ... kept simplified ... */
 
       return urlObj.toString();
     } catch {
@@ -155,23 +154,7 @@ export function fixSSEncoding(nodeUrl, options = {}) {
   return `ss://${normalizedBeforeHash}#${normalizedHash}`;
 }
 
-/**
- * ArrayBuffer -> Base64
- */
-export function encodeArrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = '';
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-}
-
-// --- Rule Helpers (Exported) ---
+export { encodeArrayBufferToBase64 } from '../../shared/base64.js';
 
 /**
  * 将多行规则文本解析为规则对象

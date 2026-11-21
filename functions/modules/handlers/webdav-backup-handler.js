@@ -1,14 +1,6 @@
-/**
- * WebDAV backup / restore handler for MiSub.
- *
- * Design notes:
- * - Backup is domain-level, not D1 whole-database mirroring.
- * - Restore only touches known MiSub business keys/collections.
- * - WebDAV credentials and runtime secrets are never written into backup payloads.
- */
 
 import { utf8ToBase64 } from '../../../shared/base64.js';
-import { SettingsCache, StorageFactory } from '../../storage-adapter.js';
+import { StorageFactory } from '../../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from '../config.js';
 import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
@@ -80,10 +72,9 @@ export function sanitizeSettingsForRestore(settings = {}) {
 }
 
 async function getStorage(env) {
-  const storageType = await StorageFactory.getStorageType(env);
   return {
-    storageType,
-    storageAdapter: StorageFactory.createAdapter(env, storageType),
+    storageType: 'd1',
+    storageAdapter: StorageFactory.createAdapter(env),
   };
 }
 
@@ -138,7 +129,6 @@ export function normalizeBackupPayload(raw) {
     throw new Error('无效的备份文件格式');
   }
 
-  // New unified format.
   if (raw.type === BACKUP_TYPE && raw.data && typeof raw.data === 'object') {
     return {
       ...raw,
@@ -152,7 +142,6 @@ export function normalizeBackupPayload(raw) {
     };
   }
 
-  // Legacy local export format: { subscriptions, manualNodes, profiles }.
   if (Array.isArray(raw.subscriptions)) {
     return {
       version: BACKUP_VERSION,
@@ -241,14 +230,13 @@ export async function restoreBackupPayload(env, rawPayload, options = {}) {
   );
 
   if (scope === BACKUP_SCOPES.DATA_AND_SETTINGS && payload.data.settings) {
-    const currentSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+    const currentSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
     const restoredSettings = sanitizeSettingsForRestore(payload.data.settings);
     const finalSettings = {
       ...restoredSettings,
       webdavBackup: currentSettings.webdavBackup,
     };
     await storageAdapter.put(STORAGE_KEY_SETTINGS, finalSettings);
-    SettingsCache.clear();
   }
 
   return {
@@ -285,8 +273,6 @@ function normalizeWebdavHref(endpoint, href) {
   const endpointUrl = new URL(endpoint);
   const hrefUrl = new URL(String(href || '').replace(/&amp;/gi, '&'), `${endpointUrl.origin}/`);
 
-  // A PROPFIND response can contain absolute URLs. Never turn a URL from a
-  // different origin into a path that will later be fetched with credentials.
   if (hrefUrl.origin !== endpointUrl.origin) return null;
 
   const endpointPath = endpointUrl.pathname.replace(/\/+$/, '');
@@ -338,8 +324,6 @@ async function ensureRemoteDirectory(config) {
 }
 
 export function formatBackupFilename(template = DEFAULT_WEBDAV_CONFIG.filenameTemplate, now = new Date()) {
-  // Keep backup names stable at UTC+8 regardless of the Worker/runtime
-  // timezone (Cloudflare Workers normally exposes UTC).
   const utcPlus8 = new Date(now.getTime() + BACKUP_TIMEZONE_OFFSET_MS);
   const datetime = utcPlus8.toISOString().slice(0, 19).replace(/[:T]/g, '-');
   const date = utcPlus8.toISOString().slice(0, 10);
@@ -349,10 +333,9 @@ export function formatBackupFilename(template = DEFAULT_WEBDAV_CONFIG.filenameTe
 
 async function updateBackupStatus(env, patch) {
   const { storageAdapter } = await getStorage(env);
-  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
   const webdavBackup = { ...normalizeWebdavConfig(settings), ...patch };
   await storageAdapter.put(STORAGE_KEY_SETTINGS, { ...settings, webdavBackup });
-  SettingsCache.clear();
   return webdavBackup;
 }
 

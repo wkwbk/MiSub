@@ -7,7 +7,7 @@ import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
-} from '@/constants/default-public-cores.js';
+} from '@shared/default-public-cores.js';
 
 const props = defineProps({
   publicCores: {
@@ -150,7 +150,6 @@ watch(
         </div>
       </div>
 
-      <!-- Core Category Tabs -->
       <div v-if="availableCoreCategories.length > 2" class="flex flex-wrap items-center justify-center gap-2 mb-8">
         <button
           v-for="tab in availableCoreCategories"

@@ -149,7 +149,6 @@ export async function handleListCommand(
       else emptyMsg += '直接发送 ss/vless 等链接即可添加节点';
 
       if (messageId) {
-        // Add back button even for empty list
         const keyboard = {
           inline_keyboard: [[{ text: '🔙 返回菜单', callback_data: 'cmd_menu' }]],
         };
@@ -227,11 +226,6 @@ export async function handleListCommand(
         callback_data: `list_page_${typePrefix}${currentPage - 1}`,
       }); // ⬅️
     }
-
-    // Add Back button in the middle or separate row?
-    // Let's put pagination < > on one row, and Back on another or same?
-    // Standard: <  Page  >
-    // Row 2: Back
 
     navButtons.push({ text: `${currentPage + 1}/${totalPages}`, callback_data: 'noop' });
 

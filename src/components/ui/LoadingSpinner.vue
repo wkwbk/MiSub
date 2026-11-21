@@ -4,17 +4,17 @@ import { Loader2 } from '@lucide/vue';
 defineProps({
   type: {
     type: String,
-    default: 'spinner', // spinner, dots, pulse, wave
+    default: 'spinner',
     validator: (value) => ['spinner', 'dots', 'pulse', 'wave', 'skeleton'].includes(value),
   },
   size: {
     type: String,
-    default: 'md', // sm, md, lg, xl
+    default: 'md',
     validator: (value) => ['sm', 'md', 'lg', 'xl'].includes(value),
   },
   color: {
     type: String,
-    default: 'indigo', // indigo, blue, green, purple
+    default: 'indigo',
   },
   message: {
     type: String,

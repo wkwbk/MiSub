@@ -21,7 +21,7 @@ const { t } = useI18n();
 // === 可视化规则编辑器 ===
 const isAdvancedMode = ref(false);
 const isRuleExpanded = ref(false); // 折叠状态
-const ruleMode = ref('exclude'); // 'exclude' | 'keep'
+const ruleMode = ref('exclude');
 const customKeyword = ref('');
 
 // 预设标签

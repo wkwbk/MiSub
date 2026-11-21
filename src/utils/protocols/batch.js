@@ -1,4 +1,4 @@
-import { convertClashProxyToUrl } from '@/utils/protocols/clash.js';
+import { convertClashProxyToUrl } from '@shared/clash-to-url.js';
 import { validateGeneratedUrl } from '@/utils/protocols/validator.js';
 
 /**

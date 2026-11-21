@@ -15,7 +15,7 @@ import {
 } from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
 import { getItemTags } from '@/utils/tags.js';
-import { inferAirportRootDomain } from '@/utils/airport-domain.js';
+import { inferAirportRootDomain } from '@shared/airport-domain.js';
 import { lookupDomainName } from '@/utils/domain-name-memory.js';
 import { api } from '@/lib/http.js';
 import { TIMING } from '@/constants/timing.js';
@@ -155,7 +155,7 @@ const protocolStyle = computed(() => {
 
 const trafficInfo = computed(() => {
   const info = props.misub.userInfo;
-  const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024; // 10 PB
+  const REASONABLE_TRAFFIC_LIMIT_BYTES = 10 * 1024 * 1024 * 1024 * 1024 * 1024;
   if (
     !info ||
     info.total === undefined ||
@@ -250,10 +250,8 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
     <div class="relative z-10 flex flex-col h-full">
-      <!-- Header -->
       <div class="flex items-center justify-between gap-2">
         <div class="flex min-w-0 items-center gap-1.5 overflow-hidden">
-          <!-- Selection Checkbox -->
           <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
             <div
               :class="isSelected ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong bg-transparent'"
@@ -271,7 +269,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
             {{ protocolStyle.text }}
           </span>
 
-          <!-- Tags -->
           <div
             v-if="subTags.length > 0"
             class="flex min-w-0 items-center gap-1.5 overflow-hidden"
@@ -307,7 +304,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           </span>
         </div>
 
-        <!-- Action Buttons (Always visible, subtle at rest) -->
         <div
           v-if="!isSelectionMode"
           class="shrink-0 flex items-center gap-0.5 opacity-100 md:opacity-65 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity duration-200"
@@ -405,7 +401,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </template>
       </div>
 
-      <!-- URL Display (compact inline bar with 1-click copy) -->
       <div
         :class="{ 'pointer-events-none': isSelectionMode }"
         class="mt-2.5 mb-2.5 flex items-center gap-1.5 rounded-md border border-line/70 bg-transparent px-2.5 py-1.5 transition-colors hover:border-line-strong"
@@ -430,7 +425,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </button>
       </div>
 
-      <!-- Traffic & Node Count -->
       <div
         v-if="trafficInfo"
         class="mb-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5"
@@ -475,7 +469,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </span>
       </div>
 
-      <!-- Footer Actions -->
       <div
         :class="{ 'pointer-events-none': isSelectionMode }"
         class="mt-auto flex items-center justify-between gap-3 border-t border-line pt-2.5"
@@ -502,7 +495,6 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </div>
       </div>
 
-      <!-- Notes / Website -->
       <div
         v-if="hasFooterMeta"
         class="mt-3 flex items-center gap-1 truncate text-[10px] text-fg-muted"

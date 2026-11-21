@@ -1,11 +1,7 @@
-/**
- * Default settings constants.
- * @author MiSub Team
- */
 
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
-import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@/constants/default-public-links.js';
-import { DEFAULT_PUBLIC_CORES_CONFIG } from '@/constants/default-public-cores.js';
+import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@shared/default-public-links.js';
+import { DEFAULT_PUBLIC_CORES_CONFIG } from '@shared/default-public-cores.js';
 
 export const DEFAULT_SETTINGS = {
   FileName: 'MiSub',

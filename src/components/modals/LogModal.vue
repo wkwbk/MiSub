@@ -26,12 +26,9 @@ const isLoading = ref(false);
 const isClearing = ref(false);
 const expandedLogId = ref(null);
 
-// Pagination State
 const currentPage = ref(1);
 const pageSize = 20;
 
-// Pagination Computed Properties
-// Pagination Computed Properties
 const filteredLogs = computed(() => {
   if (!props.filterProfileName) return logs.value;
   return logs.value.filter((log) => log.profileName === props.filterProfileName);
@@ -48,10 +45,8 @@ const fetchLogs = async () => {
   if (isLoading.value) return;
   isLoading.value = true;
   try {
-    // Cache busting with explicit timestamp
     const data = await api.get(`/api/logs?t=${Date.now()}`);
     logs.value = data.data || [];
-    // Reset to first page on refresh
     currentPage.value = 1;
   } catch (e) {
     showToast(t('logs.fetchFailed'), 'error');
@@ -100,7 +95,6 @@ const toggleExpand = (id) => {
 
 const logListScrollRef = ref(null);
 
-// Pagination Controls
 const scrollLogListToStart = () => {
   nextTick(() => {
     scrollToPaginationStart(logListScrollRef.value);
@@ -121,8 +115,6 @@ const prevPage = () => {
   }
 };
 
-// Reset pagination when modal opens or closes?
-// Maybe just watch 'show'
 watch(
   () => props.show,
   (newVal) => {
@@ -209,7 +201,6 @@ watch(
                 </div>
 
                 <div class="flex flex-col gap-1 text-xs text-fg-muted">
-                  <!-- Compact Info Rows -->
                   <div class="flex justify-between items-center">
                     <div class="flex items-center gap-1.5">
                       <span
@@ -238,7 +229,6 @@ watch(
                   </div>
                 </div>
 
-                <!-- Expandable Details -->
                 <div
                   v-show="expandedLogId === log.id"
                   class="mt-3 pt-3 border-t border-line text-xs space-y-1.5 animate-fadeIn"
@@ -281,7 +271,6 @@ watch(
           </ul>
         </div>
 
-        <!-- Pagination Footer -->
         <div
           v-if="filteredLogs.length > 0"
           class="pt-4 mt-2 border-t border-line flex justify-between items-center shrink-0"

@@ -4,6 +4,7 @@
  */
 
 import { StorageFactory } from '../storage-adapter.js';
+import { encodeArrayBufferToBase64 } from '../../shared/base64.js';
 import {
   createErrorResponse,
   createJsonResponse,
@@ -29,7 +30,7 @@ import {
   handleUpdatePassword,
 } from './api-handler.js';
 import { handleRuleTemplatesRequest } from './handlers/rule-template-handler.js';
-import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription-handler.js';
+import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription/preview-handler.js';
 import {
   handleBackupExport,
   handleBackupRestore,
@@ -62,7 +63,7 @@ import {
   handleGuestbookManageGet,
   handleGuestbookPost,
 } from './handlers/guestbook-handler.js';
-import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js'; // [NEW] Import handler
+import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
@@ -125,17 +126,14 @@ export async function handleApiRequest(request, env, context = null) {
     return await handleTelegramWebhook(request, env);
   }
 
-  // Error report endpoint (public)
   if (path === '/system/error_report') {
     return await handleErrorReportRequest(request, env);
   }
 
-  // Public GET access for clients
   if (path.startsWith('/clients') && request.method === 'GET') {
     return await handleClientRequest(request, env);
   }
 
-  // Special handling for /data to return 200 OK for unauthenticated requests
   if (path === '/data') {
     if (!(await authMiddleware(request, env))) {
       return createJsonResponse({
@@ -147,7 +145,6 @@ export async function handleApiRequest(request, env, context = null) {
     return await handleDataRequest(env, context || { env });
   }
 
-  // [New] GitHub Proxy Route (Public)
   if (path === '/github/release') {
     return await handleGithubReleaseRequest(request, env);
   }
@@ -188,7 +185,6 @@ export async function handleApiRequest(request, env, context = null) {
     return createJsonResponse({ error: 'Unauthorized' }, 401);
   }
 
-  // Auth-only route for client management (POST, DELETE, etc.)
   if (path.startsWith('/clients')) {
     return await handleClientRequest(request, env);
   }
@@ -519,7 +515,6 @@ export async function handleExternalFetchRequest(request, _env) {
     // 检查内容类型和大小
     const contentLength = response.headers.get('content-length');
     if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) {
-      // 10MB limit
       return createErrorResponse('Content too large (max 10MB limit)', 413);
     }
 
@@ -528,7 +523,6 @@ export async function handleExternalFetchRequest(request, _env) {
     // 读取响应体并生成 Base64 兜底内容
     const buffer = await response.arrayBuffer();
     if (buffer.byteLength > 10 * 1024 * 1024) {
-      // 10MB limit
       return createErrorResponse('Response content too large (max 10MB limit)', 413);
     }
 
@@ -578,22 +572,6 @@ export async function handleExternalFetchRequest(request, _env) {
 
     return createErrorResponse(errorMessage, 500);
   }
-}
-
-/**
- * ArrayBuffer -> Base64 ??
- */
-function encodeArrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = '';
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
 }
 
 /**

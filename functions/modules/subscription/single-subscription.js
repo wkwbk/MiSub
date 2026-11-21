@@ -13,7 +13,7 @@ import { fetchSubscriptionNodes } from './node-fetcher.js';
  * @returns {Promise<Object>} 处理结果
  */
 export async function handleSingleSubscriptionMode(request, env, subscriptionId, userAgent, skipCertVerify = false) {
-  const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+  const storageAdapter = StorageFactory.createAdapter(env);
 
   // 查找订阅
   const subscription = await storageAdapter.getSubscriptionById(subscriptionId);

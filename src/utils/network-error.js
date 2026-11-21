@@ -15,8 +15,8 @@ import { isChunkLoadError } from '@/utils/chunk-reload.js';
  */
 const NETWORK_ERROR_PATTERNS = [
   'failed to fetch', // Chrome / Edge：fetch 网络层失败
-  'fetch failed', // Node 18+ undici
-  'networkerror', // Firefox：NetworkError when attempting to fetch resource.
+  'fetch failed',
+  'networkerror',
   'network request failed',
   'load failed', // Safari：fetch 失败只说 Load failed
   'net::err_', // Chromium 网络层错误码，如 net::ERR_INTERNET_DISCONNECTED

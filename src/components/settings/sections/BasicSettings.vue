@@ -17,7 +17,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  // id of the field the dashboard deep-linked to, so we can highlight it.
   highlightedFocusId: {
     type: String,
     default: '',
@@ -660,7 +659,6 @@ const handleCustomProfileIntervalBlur = () => {
 </template>
 
 <style scoped>
-/* Toggle Switch CSS */
 
 .animate-fade-in-down {
   animation: fadeInDown 0.3s ease-out;

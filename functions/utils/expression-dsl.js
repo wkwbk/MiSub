@@ -1,8 +1,3 @@
-/**
- * Restricted expression DSL for MiSub node transformations.
- * This intentionally avoids eval/new Function and supports only declarative
- * templates, field comparisons and a small helper call grammar.
- */
 
 const IDENTIFIER_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 const STRING_RE = /^(?:'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)")$/;

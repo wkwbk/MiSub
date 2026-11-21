@@ -90,7 +90,6 @@ const typeConfig = computed(() => {
       class="group relative overflow-hidden transition-[color,background-color,border-color,box-shadow] duration-200 rounded-md border border-line bg-surface"
     >
       <div class="relative p-4 sm:p-5 z-10 flex flex-col gap-2">
-        <!-- Header Area -->
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-2 min-w-0">
             <span :class="typeConfig.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
@@ -109,7 +108,6 @@ const typeConfig = computed(() => {
           </button>
         </div>
 
-        <!-- Content Area -->
         <div
           class="prose prose-sm max-w-none text-xs text-fg-muted leading-relaxed dark:prose-invert pl-3.5"
           v-html="sanitizedContent"

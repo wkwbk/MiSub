@@ -1,6 +1,5 @@
 import { t } from '@/i18n/index.js';
 //
-// src/lib/utils.js
 //
 const isDev = import.meta.env.DEV;
 
@@ -282,19 +281,16 @@ export function getClientInfo(userAgent) {
     };
 
   // === Sing-Box 衍生客户端 (需优先于通用 Sing-Box) ===
-  // NekoBox
   if (ua.includes('nekobox'))
     return {
       name: 'NekoBox',
       className: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
     };
-  // Nekoray
   if (ua.includes('nekoray'))
     return {
       name: 'Nekoray',
       className: 'bg-fuchsia-50 text-fuchsia-600 dark:bg-fuchsia-900/20 dark:text-fuchsia-300',
     };
-  // Hiddify
   if (ua.includes('hiddify'))
     return {
       name: 'Hiddify',
@@ -302,13 +298,11 @@ export function getClientInfo(userAgent) {
     };
 
   // === Clash 具体变种 (按特异性排序) ===
-  // ClashX Pro
   if (ua.includes('clashx pro'))
     return {
       name: 'ClashX Pro',
       className: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300',
     };
-  // ClashX
   if (ua.includes('clashx'))
     return {
       name: 'ClashX',
@@ -326,7 +320,6 @@ export function getClientInfo(userAgent) {
       name: 'Clash Verge',
       className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
     };
-  // Nyanpasu
   if (ua.includes('nyanpasu'))
     return {
       name: 'Nyanpasu',

@@ -17,8 +17,7 @@ let recentReportFingerprints = new Map();
 let persistedReportTimestamps = [];
 
 async function getStorageAdapter(env) {
-  const storageType = await StorageFactory.getStorageType(env);
-  return StorageFactory.createAdapter(env, storageType);
+  return StorageFactory.createAdapter(env);
 }
 
 function safeString(value, limit) {

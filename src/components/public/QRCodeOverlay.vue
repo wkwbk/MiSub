@@ -36,7 +36,6 @@ useScrollLock(() => props.isExpanded);
         @click.self="handleBackdropClick"
       >
         <div class="modal-surface relative rounded-lg p-6 max-w-sm w-full mx-4 transform transition-all" @click.stop>
-          <!-- Close Button -->
           <button
             :aria-label="t('common.close')"
             class="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-md border border-transparent text-fg-subtle hover:border-line-strong hover:text-fg hover:bg-hover transition-colors"

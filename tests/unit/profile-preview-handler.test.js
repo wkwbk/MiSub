@@ -1,13 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 const fetchSubscriptionNodes = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
 }));
 
@@ -18,7 +16,6 @@ vi.mock('../../functions/modules/subscription/node-fetcher.js', () => ({
 describe('handleProfileMode preview transforms', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getStorageType.mockResolvedValue('d1');
   });
 
   it('applies profile operator-chain renaming in preview results', async () => {

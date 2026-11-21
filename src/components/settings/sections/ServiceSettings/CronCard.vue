@@ -17,7 +17,6 @@ const props = defineProps({
 // 折叠状态
 const showCronGuide = ref(false);
 
-// Cron URL
 const cronUrl = computed(() => {
   const secret = props.settings.cronSecret;
   if (!secret) {
@@ -43,7 +42,6 @@ function copyCronUrl() {
 </script>
 
 <template>
-  <!-- {{ t('settings.cronTitle') }} -->
   <section class="rounded-lg border border-line bg-surface p-6">
     <SectionHeader :description="t('settings.cronDesc')" :title="t('settings.cronTitle')">
       <template #icon>

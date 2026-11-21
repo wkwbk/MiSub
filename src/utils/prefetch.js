@@ -8,10 +8,6 @@ const isTestEnv = () => {
   }
 };
 
-/**
- * Trigger a dynamic import loader once and swallow network errors silently.
- * Safe to call repeatedly (e.g. on mouseenter/focus).
- */
 export function prefetchLoader(loader) {
   if (typeof loader !== 'function' || prefetchedLoaders.has(loader)) {
     return;
@@ -19,7 +15,6 @@ export function prefetchLoader(loader) {
   prefetchedLoaders.add(loader);
   try {
     Promise.resolve(loader()).catch(() => {
-      // Allow retry if a transient network error occurred
       prefetchedLoaders.delete(loader);
     });
   } catch {
@@ -27,10 +22,6 @@ export function prefetchLoader(loader) {
   }
 }
 
-/**
- * Schedule background prefetching of lazy component/route loaders during browser idle time.
- * Skipped in test environments to avoid unexpected async module fetches during unit tests.
- */
 export function scheduleIdlePrefetch(loaders, options = {}) {
   if (typeof window === 'undefined' || isTestEnv()) {
     return () => {};

@@ -139,74 +139,25 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     expect(db.tables.cache.has('node_cache_subscription_sub-1')).toBe(false);
   });
 
-  it('cleanupMaintenance migrates manual nodes, guestbook, download counts, and legacy logs into 8-table schema', async () => {
+  it('cleanupMaintenance removes expired and orphan cache entries and backfills missing expires_at', async () => {
     const now = 1_800_000_000_000;
     const db = createMemoryD1({
       misub_profiles_v1: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
       worker_settings_v1: { FileName: 'MiSub' },
     });
 
-    db.tables.subscriptions.set(
-      'legacy-node-1',
-      JSON.stringify({
-        id: 'legacy-node-1',
-        name: 'Legacy Node',
-        url: 'tuic://token@example.com:443#Legacy',
-      }),
-    );
-    db.tables.subscriptions.set(
-      'remote-sub-1',
-      JSON.stringify({
-        id: 'remote-sub-1',
-        name: 'Airport',
-        url: 'https://airport.example.com/sub',
-      }),
-    );
-
-    db.tables.settings.set('misub_guestbook_v1_index', JSON.stringify(['g-1']));
-    db.tables.settings.set(
-      'misub_guestbook_v1:item:g-1',
-      JSON.stringify({ id: 'g-1', nickname: 'Bob', content: 'Hi' }),
-    );
-    db.tables.settings.set('misub_profile_download_count_active-profile', '12');
-    db.tables.settings.set('misub_profile_download_count_deleted-profile', '2');
-    db.tables.settings.set('node_cache_profile_legacy', JSON.stringify({ nodes: 'old' }));
-    db.tables.settings.set('misub_system_logs:2026-11-15', JSON.stringify([{ id: 'l1', timestamp: now - 5000 }]));
-
-    // 模拟过渡期遗留的旧 logs 键值表
-    db.tables.logs.set(
-      'misub_error_reports',
-      JSON.stringify([{ id: 'err-1', message: 'Legacy crash', receivedAt: now - 3000 }]),
-    );
-
-    // 模拟已带 expires_at 的过期缓存行 + 未回填 expires_at 的新鲜缓存行
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
     await adapter.put('tg_push_rate:u1:min', { count: 1, expiresAt: now - 1000 });
+    db.tables.cache.set('node_cache_profile_deleted-profile', JSON.stringify({ nodes: 'orphan' }));
+    db.cacheExpiresAt.set('node_cache_profile_deleted-profile', null);
     db.tables.cache.set('github_release_fresh/repo', JSON.stringify({ data: {}, timestamp: now - 1000 }));
     db.cacheExpiresAt.set('github_release_fresh/repo', null);
 
     const stats = await adapter.cleanupMaintenance({ now });
 
     expect(stats).toEqual({
-      migratedNodes: 1,
-      migratedGuestbook: 1,
-      mergedDownloadCounts: 1,
-      migratedLogs: 1,
-      migratedErrorReports: 1,
-      removedSettingsClutter: 2,
-      removedOrphanCounts: 1,
-      removedExpiredCache: 1,
+      removedExpiredCache: 2,
     });
-
-    expect(Array.from(db.tables.subscriptions.keys())).toEqual(['remote-sub-1']);
-    expect(Array.from(db.tables.nodes.keys())).toEqual(['legacy-node-1']);
-    expect(Array.from(db.tables.guestbook.keys())).toEqual(['g-1']);
-    expect((await adapter.getProfileById('active-profile')).downloadCount).toBe(12);
-    expect(db.tables.access_logs.has('l1')).toBe(true);
-    expect(db.tables.error_reports.has('err-1')).toBe(true);
-    expect(db.tables.logs.size).toBe(0);
-
-    expect(Array.from(db.tables.settings.keys())).toEqual(['main']);
     expect(Array.from(db.tables.cache.keys())).toEqual(['github_release_fresh/repo']);
     expect(db.cacheExpiresAt.get('github_release_fresh/repo')).toBeGreaterThan(now);
   });

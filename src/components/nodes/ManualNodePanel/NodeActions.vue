@@ -286,7 +286,6 @@ const searchModel = computed({
       </div>
     </div>
 
-    <!-- Mobile Tag Filter Chips -->
     <div
       v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
       class="mt-3 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar md:hidden"
@@ -300,7 +299,6 @@ const searchModel = computed({
       />
     </div>
 
-    <!-- Desktop Tag Filter Chips -->
     <div
       v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
       class="hidden md:flex items-center gap-1.5 mt-3"
@@ -313,14 +311,12 @@ const searchModel = computed({
       />
     </div>
 
-    <!-- Dynamic Attribute Filter Chips (Protocol / Network / Country) -->
     <div
       v-if="hasAttrOptions || hasActiveAttrFilters"
       class="mt-2.5 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar"
       data-testid="manual-node-attr-filters"
       @wheel="handleAttrWheel"
     >
-      <!-- Protocols -->
       <button
         v-for="item in attributeOptions.protocols"
         :key="`proto-${item.value}`"
@@ -347,7 +343,6 @@ const searchModel = computed({
         class="mx-0.5 h-4 w-px shrink-0 bg-line"
       ></span>
 
-      <!-- Network Type (Direct / CDN / Relay) -->
       <button
         v-for="item in attributeOptions.networks"
         :key="`net-${item.value}`"
@@ -379,7 +374,6 @@ const searchModel = computed({
         class="mx-0.5 h-4 w-px shrink-0 bg-line"
       ></span>
 
-      <!-- Countries -->
       <button
         v-for="item in attributeOptions.countries"
         :key="`country-${item.value}`"
@@ -397,7 +391,6 @@ const searchModel = computed({
         <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
       </button>
 
-      <!-- Clear Attribute Filters -->
       <button
         v-if="hasActiveAttrFilters"
         class="inline-flex items-center gap-1 px-2.5 py-1 text-xs leading-4 font-medium rounded-md border border-transparent text-fg-subtle transition-colors hover:bg-hover hover:text-fg shrink-0 whitespace-nowrap cursor-pointer"

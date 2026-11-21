@@ -6,7 +6,7 @@ import {
 } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
 import { parseNodeList } from '../../functions/utils/node-parser.js';
 import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
+import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';
 
 const MIHOMO_MIERU_YAML = `proxies:

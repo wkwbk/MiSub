@@ -121,7 +121,7 @@ export async function handleProfileMode(
     };
   }
 
-  const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+  const storageAdapter = StorageFactory.createAdapter(env);
 
   const profile = await storageAdapter.getProfileById(profileId);
   const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;

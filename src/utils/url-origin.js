@@ -1,6 +1,3 @@
-/**
- * URL origin helpers used by browser-level error recovery.
- */
 
 export function isSameOriginUrl(value, origin, baseUrl = origin) {
   if (!origin || value === undefined || value === null || value === '') return false;

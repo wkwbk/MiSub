@@ -220,7 +220,6 @@ function buildOutbound(proxy) {
     if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
     const congestionControl = proxy['congestion-control'] || proxy['congestion-controller'] || proxy.congestion;
     if (congestionControl) outbound.congestion_control = congestionControl;
-    // sing-box TUIC schema has no udp_relay_mode field.
     if (proxy['udp-over-stream'] !== undefined) outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
     if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {
       outbound.zero_rtt_handshake = Boolean(proxy['zero-rtt-handshake'] ?? proxy['reduce-rtt']);

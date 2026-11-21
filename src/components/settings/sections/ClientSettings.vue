@@ -238,8 +238,6 @@ const handleSave = async () => {
     if (data.success) {
       showToast(t('settings.clientSaveSuccess'), 'success');
       showEditModal.value = false;
-      // Update local list (server returns full list or we refetch)
-      // API handler currently returns full list
       clients.value = data.data;
     } else {
       showToast(data.message || t('settings.clientSaveFailed'), 'error');
@@ -313,7 +311,6 @@ onMounted(fetchClients);
       </div>
 
       <div v-else class="space-y-4">
-        <!-- Platform Filter Tabs -->
         <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
           <button
             v-for="tab in platformTabs"
@@ -421,7 +418,6 @@ onMounted(fetchClients);
       <template #body>
         <div class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
-            <!-- Left Column: Visual Identity (30-40%) -->
             <div class="md:col-span-5 lg:col-span-4">
               <div class="bg-transparent rounded-md p-6 flex flex-col items-center gap-8 h-full border border-line">
                 <div class="text-center space-y-3 w-full">
@@ -503,9 +499,7 @@ onMounted(fetchClients);
               </div>
             </div>
 
-            <!-- Right Column: Form Details (60-70%) -->
             <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-6">
-              <!-- Basic Info -->
               <div class="space-y-4">
                 <div>
                   <label class="block text-xs font-medium text-fg-muted"
@@ -531,7 +525,6 @@ onMounted(fetchClients);
                 </div>
               </div>
 
-              <!-- Platforms Grid -->
               <div>
                 <label class="block text-xs font-medium text-fg-muted mb-2">{{ t('settings.clientPlatforms') }}</label>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
@@ -555,7 +548,6 @@ onMounted(fetchClients);
                 </div>
               </div>
 
-              <!-- Links -->
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
                 <div>
                   <label class="block text-xs font-medium text-fg-muted">{{ t('settings.clientDownloadUrl') }}</label>
@@ -623,7 +615,6 @@ onMounted(fetchClients);
       </template>
     </Modal>
 
-    <!-- Reset Confirmation Modal -->
     <Modal
       v-model:show="showResetConfirm"
       :cancelText="t('actions.cancel')"
@@ -647,7 +638,6 @@ onMounted(fetchClients);
       </template>
     </Modal>
 
-    <!-- Delete Confirmation Modal -->
     <Modal
       v-model:show="showDeleteConfirm"
       :cancelText="t('actions.cancel')"

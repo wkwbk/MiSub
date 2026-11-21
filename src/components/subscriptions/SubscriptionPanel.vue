@@ -410,7 +410,6 @@ watch(totalPages, (nextTotal) => {
         </div>
       </div>
 
-      <!-- Tag Filter Bar (Multi-select Intersection) -->
       <div v-if="availableTags.length > 0 || currentTagFilters.length > 0" class="mt-3">
         <TagFilterBar
           :active-filters="currentTagFilters"

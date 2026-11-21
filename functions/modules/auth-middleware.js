@@ -78,18 +78,15 @@ export async function verifySignedToken(key, token) {
     const keyData = encoder.encode(key);
     const dataToVerify = encoder.encode(data);
 
-    // Convert hex to Uint8Array
     const sigBytes = new Uint8Array(signatureHex.length / 2);
     for (let i = 0; i < signatureHex.length; i += 2) {
       sigBytes[i / 2] = parseInt(signatureHex.substring(i, i + 2), 16);
     }
 
-    // Import key for verification
     const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, [
       'verify',
     ]);
 
-    // Use native timing-safe verification
     const isValid = await crypto.subtle.verify('HMAC', cryptoKey, sigBytes, dataToVerify);
 
     return isValid ? data : null;
@@ -219,15 +216,6 @@ export async function getAuthSessionDiagnostic(request, env) {
   return result;
 }
 
-/**
- * Renew an authenticated browser session once it reaches the renewal threshold.
- * The original token timestamp is replaced, making SESSION_DURATION an idle timeout.
- * @param {Request} request
- * @param {Object} env
- * @param {Response} response
- * @param {Object|null} diagnostic Optional diagnostic from a prior auth check
- * @returns {Promise<Response>}
- */
 export async function renewAuthSession(request, env, response, diagnostic = null) {
   const authDiagnostic = diagnostic || (await getCachedAuthSessionDiagnostic(request, env));
   if (!authDiagnostic?.isAuthenticated || !authDiagnostic.shouldRenew) {

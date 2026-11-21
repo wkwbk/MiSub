@@ -177,7 +177,7 @@ app.use(i18n);
 const toastStore = useToastStore(pinia);
 setToastHandler(toastStore.showToast);
 configureErrorMonitoring({ endpoint: import.meta.env.VITE_ERROR_REPORT_URL });
-app.use(router); // Use Router
+app.use(router);
 ensureLocaleLoaded(i18n.locale.value)
   .catch(() => undefined)
   .finally(() => {

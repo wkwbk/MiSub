@@ -5,7 +5,7 @@
 
 import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
-import { handleSubscriptionNodesRequest } from '../subscription-handler.js';
+import { handleSubscriptionNodesRequest } from '../subscription/preview-handler.js';
 import { debugTgNotification } from '../../services/notification-service.js';
 import { calculateProtocolStats, calculateRegionStats, } from '../../utils/node-parser.js';
 import { redactSensitiveObject, redactUrl, safeFetchPublicUrl, validatePublicFetchUrl, } from '../security-utils.js';
@@ -113,8 +113,8 @@ export async function handleSystemInfoRequest(request, env) {
   }
 
   try {
-    const storageType = await StorageFactory.getStorageType(env);
-    const storageAdapter = StorageFactory.createAdapter(env, storageType);
+    const storageType = 'd1';
+    const storageAdapter = StorageFactory.createAdapter(env);
 
     // 获取基本统计信息
     const [allSubscriptions, allProfiles] = await Promise.all([
@@ -175,8 +175,8 @@ export async function handleStorageTestRequest(request, env) {
   }
 
   try {
-    const storageType = await StorageFactory.getStorageType(env);
-    const storageAdapter = StorageFactory.createAdapter(env, storageType);
+    const storageType = 'd1';
+    const storageAdapter = StorageFactory.createAdapter(env);
 
     const testKey = `misub_test_${Date.now()}`;
     const testValue = {
@@ -233,7 +233,7 @@ export async function handleStorageTestRequest(request, env) {
     return createJsonResponse(
       {
         error: `存储测试失败: ${e.message}`,
-        storageType: await StorageFactory.getStorageType(env),
+        storageType: 'd1',
       },
       500,
     );
@@ -255,12 +255,12 @@ export async function handleExportDataRequest(request, env) {
     const requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
     const { includeSubscriptions = true, includeProfiles = true, includeSettings = false } = requestData;
 
-    const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+    const storageAdapter = StorageFactory.createAdapter(env);
     const exportData = {
       exportInfo: {
         timestamp: new Date().toISOString(),
         version: '2.0.0',
-        storageType: await StorageFactory.getStorageType(env),
+        storageType: 'd1',
       },
       data: {},
     };

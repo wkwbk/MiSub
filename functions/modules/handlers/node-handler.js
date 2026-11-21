@@ -53,7 +53,7 @@ function detectSubscriptionBodyError(text) {
 
 async function resolveNodeCountFetchCfOptions(env) {
   try {
-    const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+    const storageAdapter = StorageFactory.createAdapter(env);
     const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;
     if (settings?.builtinSkipCertVerify === true) {
       return { cf: { insecureSkipVerify: true } };
@@ -379,7 +379,7 @@ export async function handleNodeCountRequest(request, env) {
 
       // 只有在至少获取到一个有效信息时，才更新数据库
       if (result.count > 0) {
-        const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+        const storageAdapter = StorageFactory.createAdapter(env);
         const originalSubs = (await storageAdapter.getAllSubscriptions()) || [];
         const subToUpdate = originalSubs.find((s) => s.url === subUrl);
 
@@ -389,9 +389,6 @@ export async function handleNodeCountRequest(request, env) {
             Number(subToUpdate.nodeCount) || 0,
           );
 
-          // This endpoint is also called automatically while loading a subscription
-          // group. A truncated Base64 prefix may still parse as one node, so preserve
-          // the last healthy count instead of destroying the shrink-protection baseline.
           if (isSuspiciousNodeCountDrop(knownNodeCount, result.count)) {
             console.warn(
               `[Node Count] Rejecting suspicious node-count drop for ${subUrl} (${knownNodeCount} known -> ${result.count} fetched)`,
@@ -461,7 +458,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
       );
     }
 
-    const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+    const storageAdapter = StorageFactory.createAdapter(env);
     const allSubscriptions = (await storageAdapter.getAllSubscriptions()) || [];
     const subscriptionMap = new Map();
     for (const sub of allSubscriptions) {
@@ -623,7 +620,7 @@ export async function handleCleanNodesRequest(request, env) {
 
     if (profileId) {
       // 清理指定订阅组的节点
-      const { handleSubscriptionNodesRequest } = await import('../subscription-handler.js');
+      const { handleSubscriptionNodesRequest } = await import('../subscription/preview-handler.js');
       const previewResult = await handleSubscriptionNodesRequest(request, env);
 
       if (!previewResult.success) {

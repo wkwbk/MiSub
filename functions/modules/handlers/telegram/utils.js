@@ -114,7 +114,6 @@ export async function downloadTelegramFile(message, config) {
   const token = config.bot_token;
   if (!token) throw new Error('未配置 Bot Token');
 
-  // 1. getFile
   const fileRes = await fetch(
     `https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(doc.file_id)}`,
   );

@@ -6,8 +6,6 @@ import { useI18n } from '@/i18n/index.js';
 const toastStore = useToastStore();
 const { t } = useI18n();
 
-// Screen readers announce each toast on insertion. Errors are assertive so
-// they interrupt; everything else is polite and waits for a pause.
 const getToastRole = (type) => (type === 'error' ? 'alert' : 'status');
 const getToastAriaLive = (type) => (type === 'error' ? 'assertive' : 'polite');
 

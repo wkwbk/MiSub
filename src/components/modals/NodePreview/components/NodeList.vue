@@ -21,7 +21,6 @@ const props = defineProps({
     type: Function,
     required: true,
   },
-  // [New] Selection Mode Props
   selectionMode: {
     type: Boolean,
     default: false,
@@ -120,7 +119,6 @@ const getProtocolDot = (protocol) => {
               @click="handleRowClick(node)"
             >
               <div class="grid min-h-[3rem] grid-cols-12 gap-2 px-4 py-2 items-center">
-                <!-- Checkbox (Selection Mode Only) -->
                 <div v-if="selectionMode" class="col-span-1 flex justify-center">
                   <div
                     :class="

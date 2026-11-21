@@ -108,7 +108,7 @@ export async function checkAndNotify(sub, settings, _env) {
 export async function handleCronTrigger(env) {
   const { StorageFactory } = await import('../storage-adapter.js');
 
-  const storageAdapter = await StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+  const storageAdapter = StorageFactory.createAdapter(env);
   const originalSubs = await loadSubscriptionsForCron(storageAdapter);
   const allSubs = JSON.parse(JSON.stringify(originalSubs));
   const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;

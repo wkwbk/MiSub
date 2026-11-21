@@ -27,7 +27,6 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
   <div
     class="group relative flex h-full flex-col rounded-md border border-line bg-surface p-5 transition-all duration-200 hover:-translate-y-1 hover:z-10"
   >
-    <!-- Header: Title & QR Toggle -->
     <div class="flex items-start justify-between mb-3">
       <div class="flex items-center gap-2.5 min-w-0">
         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
@@ -36,7 +35,6 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
         </h3>
       </div>
 
-      <!-- QR Toggle (Small Top Right) -->
       <button
         :aria-label="t('actions.showQrCode')"
         :class="{
@@ -50,7 +48,6 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
       </button>
     </div>
 
-    <!-- Tags -->
     <div
       v-if="profileTags.length > 0"
       class="mb-2.5 flex flex-wrap items-center gap-1.5"
@@ -66,16 +63,13 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
       </span>
     </div>
 
-    <!-- Body: Description -->
     <div class="flex-1 mb-5">
       <p class="text-fg-subtle text-xs leading-relaxed line-clamp-3">
         {{ profile.description || t('public.noDescription') }}
       </p>
     </div>
 
-    <!-- Footer: Action Bar -->
     <div class="mt-auto pt-4 border-t border-line flex items-center gap-2">
-      <!-- Primary Action: Import -->
       <button
         :aria-label="t('public.quickImportSubscription')"
         class="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent hover:opacity-90 px-4 py-2 text-xs font-medium text-accent-fg transition-colors shadow-none"
@@ -85,7 +79,6 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
         {{ t('public.quickImport') }}
       </button>
 
-      <!-- Secondary Actions -->
       <button
         :aria-label="t('public.previewNodes')"
         :title="t('public.previewNodes')"

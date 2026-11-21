@@ -40,7 +40,7 @@ const toggle = () => {
 </template>
 
 <style scoped>
-/* Optional: Add active press effect */
+
 .tap-effect:active .after {
   width: 24px;
 }

@@ -53,8 +53,6 @@ const ACL4SSR_ROOT_PROVIDER_FILES = new Set([
 
 const ACL4SSR_IPCIDR_PROVIDER_FILES = new Set(['amazonip', 'chinacompanyip', 'chinaip', 'chinaipv6', 'netflixip']);
 
-// ACL4SSR root list files that should stay as text providers because their YAML provider is missing
-// or does not preserve the effective raw .list rule coverage.
 const ACL4SSR_ROOT_LIST_ONLY_FILES = new Set([
   'localareanetwork',
   'banad',
@@ -141,7 +139,6 @@ function getRuleProviderBehavior(providerUrl) {
         ?.replace(/\.(yaml|yml|list|txt|conf)$/i, '') || '';
     if (ACL4SSR_IPCIDR_PROVIDER_FILES.has(fileName.toLowerCase())) return 'ipcidr';
   } catch {
-    // ignore invalid provider url shapes and keep default behavior
   }
   return 'classical';
 }
@@ -191,7 +188,6 @@ export function renderClashFromTemplateModel(model) {
         nameHint = fileName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
       }
     } catch {
-      // ignore invalid provider url shapes and keep fallback name
     }
 
     const providerName = `${nameHint}_${providerCounter++}`;

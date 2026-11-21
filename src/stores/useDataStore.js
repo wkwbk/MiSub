@@ -12,7 +12,6 @@ import { getItemTags, hydrateItemTags, normalizeTagList } from '@/utils/tags.js'
 
 const isDev = import.meta.env.DEV;
 
-// Initialize Cache
 const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
 
 export const useDataStore = defineStore('data', () => {
@@ -20,28 +19,21 @@ export const useDataStore = defineStore('data', () => {
   const settingsStore = useSettingsStore();
   const editorStore = useEditorStore();
 
-  // --- State ---
   const subscriptions = ref([]);
   const profiles = ref([]);
   const ruleTemplates = ref([]);
   const settings = computed(() => settingsStore.config);
 
-  // Store Status
   const isLoading = ref(false);
   const saveState = ref('idle');
   const lastUpdated = ref(null);
   const hasDataLoaded = computed(() => !!lastUpdated.value);
 
-  // Derived Dirty State (from Editor)
   const isDirty = computed(() => editorStore.isDirty);
 
-  // --- Getters ---
   const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
   const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
 
-  // --- Actions ---
-
-  // Data Hydration (avoid re-fetching if passed from outside)
   function hydrateFromData(data) {
     if (!data) return false;
 
@@ -69,7 +61,6 @@ export const useDataStore = defineStore('data', () => {
   async function fetchData(forceRefresh = false) {
     if (fetchDataPromise) return fetchDataPromise;
 
-    // Effective Cache Check
     if (hasDataLoaded.value && !forceRefresh) return true;
 
     if (!forceRefresh) {
@@ -89,7 +80,7 @@ export const useDataStore = defineStore('data', () => {
           throw new Error(data.error);
         }
 
-        hydrateFromData(data); // Re-use hydration logic
+        hydrateFromData(data);
         pruneInvalidReferences(); // 数据拉取后执行自愈
         clearDirty();
         return true;
@@ -145,7 +136,6 @@ export const useDataStore = defineStore('data', () => {
         throw new Error(result.message || t('store.saveFailed'));
       }
 
-      // Update local state with backend response (Source of Truth)
       if (result.data) {
         if (result.data.misubs) subscriptions.value = result.data.misubs;
         if (result.data.profiles) profiles.value = result.data.profiles;
@@ -156,14 +146,12 @@ export const useDataStore = defineStore('data', () => {
       clearDirty();
       saveState.value = 'success';
 
-      // Auto reset idle state
       setTimeout(() => {
         if (saveState.value === 'success') {
           saveState.value = 'idle';
         }
       }, 2000);
 
-      // Update cache with the most recent merged data
       dataCache.set({
         misubs: subscriptions.value.map((s) => {
           const { isUpdating: _isUpdating, ...rest } = s;
@@ -254,8 +242,6 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // --- Helpers ---
-
   function clearCachedData() {
     dataCache.clear();
   }
@@ -273,7 +259,6 @@ export const useDataStore = defineStore('data', () => {
     });
   }
 
-  // --- Proxy Actions (Mutators) ---
   function addSubscription(subscription) {
     subscriptions.value.unshift(subscription);
     markDirty();
@@ -434,7 +419,6 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  // --- Dirty State Proxies ---
   function markDirty() {
     if (saveState.value === 'success') {
       saveState.value = 'idle';
@@ -447,7 +431,6 @@ export const useDataStore = defineStore('data', () => {
   }
 
   return {
-    // State
     subscriptions,
     profiles,
     ruleTemplates,
@@ -458,11 +441,9 @@ export const useDataStore = defineStore('data', () => {
     hasDataLoaded,
     isDirty,
 
-    // Getters
     activeSubscriptions,
     activeProfiles,
 
-    // Actions
     fetchData,
     saveData,
     saveSettings,
@@ -471,7 +452,6 @@ export const useDataStore = defineStore('data', () => {
     hydrateFromData,
     clearCachedData,
 
-    // Helpers
     addSubscription,
     overwriteSubscriptions,
     removeSubscription,

@@ -15,7 +15,7 @@ import { resolveRequestContext } from './request-context.js';
 import { resolveNodeListWithCache } from './cache-manager.js';
 import { ProcessorService } from '../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from './access-logger.js';
-import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js'; // [Added] Import centralized util
+import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js';
 import { authMiddleware } from '../auth-middleware.js';
 import { handleProfileMode } from './profile-handler.js';
 
@@ -80,7 +80,7 @@ export async function handleMisubRequest(context) {
   console.log(`\n[MiSub Request] ${request.method} ${maskSensitiveLogValue(url.pathname)}${url.search ? ' ?…' : ''}`);
   console.log(`[MiSub UA] ${userAgentHeader}`);
 
-  const storageAdapter = StorageFactory.createAdapter(env, await StorageFactory.getStorageType(env));
+  const storageAdapter = StorageFactory.createAdapter(env);
   context.storage = storageAdapter;
   const settingsData =
     context.settings !== undefined ? context.settings : await storageAdapter.get(STORAGE_KEY_SETTINGS);
@@ -95,10 +95,10 @@ export async function handleMisubRequest(context) {
   const urlInclude = url.searchParams.get('include');
   const urlExclude = url.searchParams.get('exclude');
   const urlRename = url.searchParams.get('rename');
-  const urlEmoji = url.searchParams.get('emoji'); // true/false
-  const urlUdp = url.searchParams.get('udp'); // true/false
-  const urlTfo = url.searchParams.get('tfo'); // true/false
-  const urlScv = url.searchParams.get('scv'); // true/false (skip-cert-verify)
+  const urlEmoji = url.searchParams.get('emoji');
+  const urlUdp = url.searchParams.get('udp');
+  const urlTfo = url.searchParams.get('tfo');
+  const urlScv = url.searchParams.get('scv');
   const urlList = url.searchParams.get('list') === 'true';
 
   const isBrowser = isBrowserAgent(userAgentHeader);
@@ -109,9 +109,6 @@ export async function handleMisubRequest(context) {
   if (config.disguise?.enabled && isBrowser && !url.searchParams.has('callback_token')) {
     const isAuthenticated = await authMiddleware(request, env);
     if (!isAuthenticated) {
-      // [Smart Camouflage]
-      // If disguise is enabled and it's a browser request (not a known client),
-      // show the disguise page unless the user is authenticated.
       return createDisguiseResponse(config.disguise, request.url);
     }
   }
@@ -126,10 +123,8 @@ export async function handleMisubRequest(context) {
 
   let targetMisubs;
   let subName = config.FileName;
-  let isProfileExpired = false; // Moved declaration here
+  let isProfileExpired = false;
 
-  // Use a valid, non-routable Shadowsocks URL so clients can display the
-  // expiration notice as a node instead of dropping a comment line.
   const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已到期')}`;
 
   let currentProfile = null;
@@ -166,7 +161,6 @@ export async function handleMisubRequest(context) {
     initEngineFlags(currentProfile);
     const profile = currentProfile;
     if (profile && profile.enabled) {
-      // Check if the profile has an expiration date and if it's expired
       if (profile.expiresAt) {
         const expiryDate = new Date(profile.expiresAt);
         const now = new Date();
@@ -176,7 +170,7 @@ export async function handleMisubRequest(context) {
       }
 
       if (isProfileExpired) {
-        subName = profile.name; // Still use profile name for filename
+        subName = profile.name;
         targetMisubs = [
           {
             id: 'expired-node',
@@ -184,7 +178,7 @@ export async function handleMisubRequest(context) {
             name: '您的订阅已到期',
             isExpiredNode: true,
           },
-        ]; // Set expired node as the only targetMisub
+        ];
       } else {
         subName = profile.name;
         targetMisubs = [];
@@ -204,7 +198,6 @@ export async function handleMisubRequest(context) {
         }
         const misubMap = new Map(relatedSubs.map((item) => [item.id, item]));
 
-        // 1. Add subscriptions in order defined by profile
         const profileSubIds = profile.subscriptions || [];
         if (Array.isArray(profileSubIds)) {
           profileSubIds.forEach((item) => {
@@ -221,7 +214,6 @@ export async function handleMisubRequest(context) {
           });
         }
 
-        // 2. Add manual nodes in order defined by profile
         const profileNodeIds = profile.manualNodes || [];
         if (Array.isArray(profileNodeIds)) {
           profileNodeIds.forEach((id) => {
@@ -310,21 +302,11 @@ export async function handleMisubRequest(context) {
   const updateIntervalHours = resolveProfileUpdateInterval(currentProfile, config);
   const updateIntervalSeconds = (updateIntervalHours || 24) * 3600;
 
-  // [Access Log] Record access log and stats if enabled
-  if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
-    // [Log Deduplication]
-    // Removed the premature LogService.addLog here.
-    // We will pass the log metadata to generateCombinedNodeList (or log manually for cache hits)
-    // to ensure we have the correct stats and avoid duplicates.
-  }
-
   let prependedContentForSubconverter = '';
 
   if (isProfileExpired) {
-    // Use the flag set earlier
-    prependedContentForSubconverter = ''; // Expired node is now in targetMisubs
+    prependedContentForSubconverter = '';
   } else {
-    // Otherwise, add traffic and expiration info nodes if enabled.
     if (config.enableTrafficNode !== false) {
       const totalUserInfo = mergeSubscriptionUserInfo(context, targetMisubs);
       const profileExpireTimestamp = currentProfile?.expiresAt
@@ -395,7 +377,6 @@ export async function handleMisubRequest(context) {
     // 传递 context 对象以获取请求信息用于日志记录
     context.startTime = Date.now();
 
-    // Prepare log metadata to pass down
     const clientIp =
       request.headers.get('CF-Connecting-IP') ||
       request.headers.get('X-Real-IP') ||
@@ -503,7 +484,7 @@ export async function handleMisubRequest(context) {
 
     const freshNodes = await generateCombinedNodeList(
       context, // 传入完整 context
-      { ...config, enableAccessLog: false }, // [Deferred Logging] Disable service-side logging, we will log manually in handler
+      { ...config, enableAccessLog: false },
       userAgentHeader,
       targetMisubs,
       prependedContentForSubconverter,
@@ -578,8 +559,6 @@ export async function handleMisubRequest(context) {
   const nodeCount = isProfileExpired ? 0 : countSubscriptionNodes(combinedNodeList, prependedContentForSubconverter);
   const nodeCountText = `<b>节点数:</b> <code>${nodeCount}</code>`;
 
-  // [Support] External Subconverter Logic
-  // 1. If 'nodes' format requested, return plain text nodes (DataSource for external converters)
   if (targetFormat === 'nodes') {
     const contentToReturn = isProfileExpired ? DEFAULT_EXPIRED_NODE + '\n' : combinedNodeList;
     const userInfoHeader = buildUserInfoHeaderFromSubscriptions(context, targetMisubs, currentProfile?.expiresAt);
@@ -601,7 +580,6 @@ export async function handleMisubRequest(context) {
     });
   }
 
-  // 2. If external mode active, build the redirect URL and return 302
   if (isExternalMode && targetFormat !== 'base64') {
     if (
       shouldRenderClashYamlProfileTemplateLocally({
@@ -682,7 +660,6 @@ export async function handleMisubRequest(context) {
       subName,
     });
 
-    // [Access Log] Send notification for external redirection
     if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
       const clientIp =
         request.headers.get('CF-Connecting-IP') ||
@@ -743,7 +720,6 @@ export async function handleMisubRequest(context) {
       headers[key] = value;
     });
 
-    // [Deferred Logging] Log Success for Base64 (Direct Return)
     if (!url.searchParams.has('callback_token') && !shouldSkipLogging) {
       // 发送 Telegram 通知（独立于访问日志开关，只需配置 BotToken 和 ChatID）
       const clientIp =
@@ -846,8 +822,6 @@ export async function handleMisubRequest(context) {
         }
       }
 
-      // [RFC 6266 / RFC 5987] Standardized Content-Disposition
-      // filename: ASCII-only fallback, filename*: UTF-8 encoded
       const asciiSubName = subName.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '\\"');
       const encodedSubName = encodeURIComponent(subName)
         .replace(/'/g, '%27')

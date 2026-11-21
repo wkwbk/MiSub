@@ -36,7 +36,7 @@ export async function getNodesWithMapping(userId, env) {
   const permission = checkUserPermission(userId, config);
 
   const userNodes = [];
-  const indexMapping = []; // userIndex -> allIndex
+  const indexMapping = [];
 
   allSubscriptions.forEach((sub, allIndex) => {
     if (permission.allowed || (sub.source === 'telegram' && sub.telegram_user_id === userId)) {

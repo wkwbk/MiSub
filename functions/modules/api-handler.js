@@ -3,12 +3,13 @@
  * 处理各种API请求
  */
 
-import { SettingsCache, STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
+import { STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
 import {
   createErrorResponse,
   createJsonResponse,
   isUsingDefaultPassword,
   JSON_BODY_LIMITS,
+  normalizeLoginPath,
   readJsonWithLimit,
   setAdminPassword,
 } from './utils.js';
@@ -27,12 +28,6 @@ import { listRuleTemplates } from './handlers/rule-template-handler.js'; /**
  * @returns {Promise<Response>} HTTP响应
  */
 import { applyPatch } from './patch-utils.js';
-
-function normalizeLoginPath(customLoginPath) {
-  if (typeof customLoginPath !== 'string') return '/login';
-  const normalized = customLoginPath.trim().replace(/^\/+/, '');
-  return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
-}
 
 function normalizeProfile(profile = {}) {
   const normalized = { ...profile };
@@ -181,16 +176,16 @@ export async function handleDataRequest(env, context = null) {
       console.error('[API Error /data] D1 binding missing (MISUB_DB)');
     }
     const storageAdapter = StorageFactory.createAdapter(env);
-    const cachedSettings = await SettingsCache.get(env);
-    const [misubs, rawProfiles, settings, ruleTemplates] = await Promise.all([
+    const [misubs, rawProfiles, rawSettings, ruleTemplates] = await Promise.all([
       storageAdapter.getAllSubscriptions(),
       storageAdapter.getAllProfiles(),
-      Promise.resolve(cachedSettings || {}).then((res) => res || {}),
+      storageAdapter.get(STORAGE_KEY_SETTINGS),
       listRuleTemplates(storageAdapter).catch((error) => {
         console.warn('[API /data] Failed to load custom rule templates:', error?.message || error);
         return [];
       }),
     ]);
+    const settings = rawSettings || {};
     const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
     const config = {
       ...defaultSettings,
@@ -216,8 +211,6 @@ export async function handleDataRequest(env, context = null) {
     return createErrorResponse(e, 500);
   }
 }
-
-// ... (existing imports)
 
 /**
  * 处理订阅和配置保存API
@@ -318,7 +311,6 @@ export async function handleMisubsSave(request, env, context = null) {
         sortIndex: index,
       }));
 
-      // [Fix] Sync sortIndex back to diff for correct row-level persistence
       if (diff?.profiles) {
         const profileMap = new Map(finalProfiles.map((p) => [p.id, p]));
         if (diff.profiles.added)
@@ -340,7 +332,6 @@ export async function handleMisubsSave(request, env, context = null) {
         sortIndex: index,
       }));
 
-      // [Fix] Sync sortIndex back to diff for correct row-level persistence
       if (diff?.subscriptions) {
         const subMap = new Map(finalMisubs.map((s) => [s.id, s]));
         if (diff.subscriptions.added)
@@ -475,7 +466,8 @@ function redactSettingsForResponse(settings = {}) {
 
 export async function handleSettingsGet(env) {
   try {
-    const settings = (await SettingsCache.get(env)) || {};
+    const storageAdapter = await getStorageAdapter(env);
+    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
     return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }));
   } catch (e) {
     if (isStorageUnavailableError(e)) {
@@ -569,7 +561,7 @@ export async function handleSettingsSave(request, env) {
     }
 
     const storageAdapter = await getStorageAdapter(env);
-    const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+    const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
     if (newSettings.webdavBackup && oldSettings.webdavBackup) {
       const incomingPassword = newSettings.webdavBackup.password;
       if (incomingPassword === '' || incomingPassword == null) {
@@ -592,7 +584,6 @@ export async function handleSettingsSave(request, env) {
       );
     }
     await storageAdapter.put(STORAGE_KEY_SETTINGS, finalSettings);
-    SettingsCache.clear();
 
     // 纯界面偏好的保存（客户端用 X-MiSub-Save-Scope: preferences 声明，
     // 目前只有「忽略的待处理项」走这条路）不需要让整站节点缓存失效，
@@ -637,9 +628,6 @@ export async function handleSettingsReset(env) {
 
     await storageAdapter.delete(STORAGE_KEY_SETTINGS);
 
-    // 清除内存缓存
-    SettingsCache.clear();
-
     return createJsonResponse({
       success: true,
       message: '设置已恢复出厂状态',
@@ -659,11 +647,11 @@ export async function handleSettingsReset(env) {
 export async function handlePublicProfilesRequest(env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
-    const cachedSettings = await SettingsCache.get(env);
-    const [profiles, settings] = await Promise.all([
+    const [profiles, rawSettings] = await Promise.all([
       storageAdapter.getAllProfiles(),
-      Promise.resolve(cachedSettings || {}).then((res) => res || {}),
+      storageAdapter.get(STORAGE_KEY_SETTINGS),
     ]);
+    const settings = rawSettings || {};
 
     const profileToken = settings.profileToken || 'profiles';
     const defaultLocale = settings.defaultLocale || 'zh-CN';
@@ -680,14 +668,12 @@ export async function handlePublicProfilesRequest(env) {
         }
       : null;
 
-    // Hero Configuration
     const hero = {
       title1: settings.heroTitle1 || '发现',
       title2: settings.heroTitle2 || '优质订阅',
       description: settings.heroDescription || '浏览并获取由管理员分享的精选订阅组合，一键导入到您的客户端。',
     };
 
-    // Guestbook Config (Safe subset)
     const guestbook = {
       enabled: settings.guestbook?.enabled,
       requireAudit: settings.guestbook?.requireAudit,
@@ -709,7 +695,6 @@ export async function handlePublicProfilesRequest(env) {
         manualNodeCount: (p.manualNodes || []).length,
       }));
 
-    // Custom Page Config
     const customPage = {
       enabled: settings.customPage?.enabled || false,
       type: settings.customPage?.type || 'html',
@@ -756,7 +741,6 @@ export async function handlePublicConfig(request, env) {
     const storageAdapter = await getStorageAdapter(env);
     const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
 
-    // Merge with default settings to ensure enablePublicPage exists
     const mergedSettings = { ...defaultSettings, ...settings };
     const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);
     let isLoginPath = configuredLoginPath === '/login';
@@ -768,7 +752,6 @@ export async function handlePublicConfig(request, env) {
         isLoginPath = new URL(sourcePath, request.url).pathname === configuredLoginPath;
       }
     } catch {
-      // Keep the safe default when the browser sends an invalid/missing path.
     }
 
     return createJsonResponse({

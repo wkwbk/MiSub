@@ -10,7 +10,7 @@ import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { needsServerParsing, useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
-import { parseSurgeConfig } from '@/utils/protocol-converter.js';
+import { parseSurgeConfig } from '@/utils/protocols/index.js';
 import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/import-file.js';
 import { buildAutoTagName } from '@/utils/auto-tag-name.js';
 import { normalizeTagList } from '@/utils/tags.js';

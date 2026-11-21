@@ -2,7 +2,7 @@
 defineProps({
   type: {
     type: String,
-    default: 'card', // card, list, dashboard
+    default: 'card',
     validator: (value) => ['card', 'list', 'dashboard'].includes(value),
   },
   count: {

@@ -5,12 +5,10 @@ import {
 } from '../../functions/services/subscription-service.js';
 
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
 }));
 
@@ -218,7 +216,6 @@ describe('handleSingleSubscriptionMode preview fallback', () => {
       getSubscriptionById: vi.fn().mockResolvedValue({ ...SUB }),
       get: vi.fn((key) => storage.get(key)),
     });
-    getStorageType.mockResolvedValue('kv');
 
     vi.stubGlobal(
       'fetch',

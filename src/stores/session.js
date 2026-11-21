@@ -9,9 +9,9 @@ import { t } from '@/i18n/index.js';
 import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 export const useSessionStore = defineStore('session', () => {
-  const sessionState = ref('loading'); // loading, loggedIn, loggedOut
+  const sessionState = ref('loading');
   const initialData = shallowRef(null);
-  const subscriptionConfig = ref({}); // [NEW] Added subscriptionConfig
+  const subscriptionConfig = ref({});
   const securityWarning = ref(null);
   const defaultPublicConfig = Object.freeze({
     enablePublicPage: true,
@@ -36,19 +36,16 @@ export const useSessionStore = defineStore('session', () => {
   const publicConfig = ref({
     ...defaultPublicConfig,
     customPage: { ...defaultPublicConfig.customPage },
-  }); // Default true until fetched
+  });
   const hasLoadedPublicConfig = ref(false);
 
   async function checkSession() {
-    // Parallel fetch of initial data (auth check) and public config
     const [dataResult, pConfigResult] = await Promise.all([fetchInitialData(), fetchPublicConfig()]);
 
-    // Update public config
     if (pConfigResult.success) {
       publicConfig.value = pConfigResult.data;
       hasLoadedPublicConfig.value = true;
     } else if (!hasLoadedPublicConfig.value) {
-      // Fail closed on the first load; preserve a known-good config on later retries.
       publicConfig.value = {
         ...disabledPublicConfig,
         customPage: { ...disabledPublicConfig.customPage },
@@ -67,11 +64,9 @@ export const useSessionStore = defineStore('session', () => {
 
       sessionState.value = 'loggedIn';
     } else {
-      // Auth failed or other error
       if (dataResult.errorType === 'auth') {
         sessionState.value = 'loggedOut';
       } else {
-        // Network or other error, still show logged out
         console.error('Session check failed:', dataResult.error);
         handleError(
           new Error(dataResult.error || t('settings.sessionCheckFailed')),

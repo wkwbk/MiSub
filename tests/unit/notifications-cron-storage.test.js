@@ -4,12 +4,10 @@ const getAllSubscriptions = vi.fn();
 const get = vi.fn();
 const putAllSubscriptions = vi.fn();
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
 }));
 
@@ -29,9 +27,6 @@ describe('notifications cron storage helper usage', () => {
     get.mockReset();
     putAllSubscriptions.mockReset();
     createAdapter.mockReset();
-    getStorageType.mockReset();
-
-    getStorageType.mockResolvedValue('d1');
     createAdapter.mockReturnValue({
       type: 'd1',
       getAllSubscriptions,

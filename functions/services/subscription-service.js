@@ -3,7 +3,7 @@
  * @author MiSub Team
  */
 
-import { utf8ToBase64 } from '../../shared/base64.js';
+import { encodeArrayBufferToBase64, utf8ToBase64 } from '../../shared/base64.js';
 import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
@@ -299,7 +299,6 @@ export async function generateCombinedNodeList(
         manualProcessedLines.push(...transformed);
       }
     } catch {
-      // Ignore
     }
   }
 
@@ -426,8 +425,6 @@ export async function generateCombinedNodeList(
           `[Subscription] Rejecting suspicious node-count drop for ${sub.id || sub.url} (${knownNodeCount} known -> ${upstreamRealNodeCount} fetched)`,
         );
         if (cachedNodes.length > 0) return cachedNodes.join('\n');
-        // Do not write nodeCount=0 here: this response is suspicious,
-        // not evidence that the subscription has no usable nodes.
         return '';
       }
       if (cacheEnabled && realNodes.length === 0) {
@@ -563,7 +560,6 @@ export async function generateCombinedNodeList(
     const successCount = processedSubContents.filter((c) => c.length > 0).length;
     const failCount = httpSubs.length - successCount;
 
-    // [Stats Export] Populate generation stats to context for use by handler (deferred logging)
     if (context) {
       context.generationStats = {
         totalNodes,
@@ -584,7 +580,6 @@ export async function generateCombinedNodeList(
       let clientIp = 'Unknown';
       let geoInfo = {};
       if (context && context.logMetadata) {
-        // Use metadata passed from handler if available
         clientIp = context.logMetadata.clientIp || clientIp;
         geoInfo = context.logMetadata.geoInfo || geoInfo;
       } else if (context && context.request) {
@@ -610,7 +605,6 @@ export async function generateCombinedNodeList(
         geoInfo,
         userAgent: userAgent || 'Unknown',
         status: failCount === 0 ? 'success' : successCount > 0 ? 'partial' : 'error',
-        // Include metadata from handler (format, token, type, etc.)
         ...(context && context.logMetadata
           ? {
               format: context.logMetadata.format,
@@ -718,20 +712,4 @@ function applyManualNodeName(nodeUrl, customName) {
   } catch {
     return nodeUrl;
   }
-}
-
-/**
- * ArrayBuffer -> Base64 ??
- */
-function encodeArrayBufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  const chunkSize = 0x8000;
-  let binary = '';
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
 }

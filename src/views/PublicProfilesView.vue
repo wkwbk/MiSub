@@ -271,7 +271,6 @@ const handleQuickImport = (profile) => {
   showQuickImportModal.value = true;
 };
 
-// QR Code in Card
 const expandedQRCards = ref(new Set());
 const qrCanvasRefs = ref({});
 
@@ -405,7 +404,6 @@ onUnmounted(() => {
       :profiles="publicProfiles"
     >
       <template #hero>
-        <!-- Default Hero for Placeholder -->
         <div class="relative pt-10 pb-10 lg:pt-16 lg:pb-14 z-10 overflow-visible">
           <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
             <h1 class="text-4xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[1.1] mb-8 break-words">
@@ -469,14 +467,11 @@ onUnmounted(() => {
 
     <!-- 默认布局模式 -->
     <template v-else>
-      <!-- Hero Section (Left Aligned & Open) -->
       <div class="relative pt-10 pb-8 lg:pt-14 lg:pb-10 z-10 overflow-visible">
         <div
           class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative"
         >
-          <!-- Left Content: Text (Wider column for no-wrap) -->
           <div class="text-left relative z-10 lg:col-span-12 xl:col-span-12">
-            <!-- Badge -->
             <div
               class="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-line bg-transparent mb-6 shadow-none"
             >
@@ -511,14 +506,10 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Content Section -->
       <div class="relative z-10 pt-4">
-        <!-- Subscription Section -->
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <!-- Announcement Section -->
           <AnnouncementCard v-if="announcement && announcement.enabled" :announcement="announcement" class="mb-10" />
 
-          <!-- Loading State -->
           <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div
               v-for="i in 6"
@@ -535,7 +526,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- Error State -->
           <div v-else-if="error" class="text-center py-16 bg-transparent rounded-md border border-line">
             <div
               class="inline-flex items-center justify-center w-12 h-12 rounded-md border border-line bg-transparent mb-4"
@@ -561,7 +551,6 @@ onUnmounted(() => {
             {{ t('publicProfiles.empty') }}
           </div>
 
-          <!-- Profile Grid -->
           <div v-else-if="publicProfiles.length > 0">
             <ProfileGrid
               :is-qr-expanded="isQRExpanded"
@@ -577,7 +566,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Clients Section (Visually Separated) -->
         <div class="mt-16 pt-12 pb-2 border-t border-line bg-transparent">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-8 relative">
@@ -594,7 +582,6 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Platform Filter Tabs -->
             <div
               v-if="!error && availableClientPlatforms.length > 2"
               class="flex flex-wrap items-center justify-center gap-2 mb-8"
@@ -687,7 +674,6 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Proxy Cores Section -->
         <PublicCoresSection
           v-if="!error"
           :format-release-updated-label="formatReleaseUpdatedLabel"
@@ -695,12 +681,10 @@ onUnmounted(() => {
           :public-cores="config.publicCores"
         />
 
-        <!-- Public Links Section -->
         <PublicLinksSection v-if="!error" :public-links="config.publicLinks" />
       </div>
     </template>
 
-    <!-- Modals -->
     <NodePreviewModal
       v-if="showPreviewModal"
       :profile-id="previewProfileId"

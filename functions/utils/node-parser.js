@@ -8,7 +8,7 @@ import { extractNodeRegion, parseNodeInfo } from './geo-utils.js';
 // [注意] node-parser.js 在 functions/modules/utils/，而 node-utils.js 在 functions/utils/
 // 所以需要向上两级找到 functions/utils/
 import { fixNodeUrlEncoding } from './node-utils.js';
-import { convertClashProxyToUrl } from './clash-to-url.js';
+import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
 import { extractSingboxNodes } from './singbox-to-url.js';
 import { fixSS2022Node, validateSS2022Node } from './ss2022-validator.js';
 import { extractNodeMetadata } from './metadata-extractor.js';
@@ -306,7 +306,7 @@ export function parseNodeList(content, options = {}) {
         // 2.1 提取加密算法
         let method = '';
         try {
-          let body = fixedUrl.substring(5); // remove ss://
+          let body = fixedUrl.substring(5);
           const hashIndex = body.indexOf('#');
           if (hashIndex !== -1) body = body.substring(0, hashIndex);
 
@@ -315,7 +315,6 @@ export function parseNodeList(content, options = {}) {
           if (atIndex !== -1 && !body.includes('://')) {
             // 排除 SIP002 base64 整体编码可能包含 @
             // 明文格式通常不常见用于订阅，多见于手动配置
-            // userInfo = method:password
             const userInfo = body.substring(0, atIndex);
             // 还要考虑是否是 Base64 编码的 userInfo
             // 尝试简单判断: 包含 : 可能是明文，否则可能是 Base64
@@ -370,8 +369,6 @@ export function parseNodeList(content, options = {}) {
 
         const validation = validateSS2022Node(fixedUrl);
 
-        // ... (rest of SS2022 validation)
-
         if (!validation.valid && validation.details?.suggestedCipher) {
           // 尝试自动修复
           const fixResult = fixSS2022Node(fixedUrl);
@@ -401,7 +398,6 @@ export function parseNodeList(content, options = {}) {
       }
 
       // 3. 添加 Emoji (已移至 applyNodeTransformPipeline 统一处理，遵循配置)
-      // fixedUrl = addFlagEmoji(fixedUrl);
 
       // 4. 解析信息
       const nodeInfo = parseNodeInfo(fixedUrl);
@@ -412,7 +408,6 @@ export function parseNodeList(content, options = {}) {
       if (nodeInfo.protocol === 'vless') {
         // VLESS 链接格式:
         // 1. 标准: vless://uuid@host:port
-        // 2. Base64: vless://base64(uuid@host:port)
         let id = null;
 
         // 尝试标准格式 vless://uuid@host:port 优先
@@ -465,7 +460,6 @@ export function parseNodeList(content, options = {}) {
         if (fixedUrl.startsWith('vmess://')) {
           try {
             const base64Part = fixedUrl.substring(8);
-            // Use robust Base64 decoding (URL safe + padding)
             let safeBody = base64Part.replace(/-/g, '+').replace(/_/g, '/');
             while (safeBody.length % 4) {
               safeBody += '=';

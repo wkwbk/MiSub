@@ -25,7 +25,6 @@ export function useProfiles(markDirty) {
   const settingsStore = useSettingsStore();
   const { profiles } = storeToRefs(dataStore);
 
-  /* Pagination setup */
   const isNewProfile = ref(false);
   const editingProfile = ref(null);
   const showProfileModal = ref(false);

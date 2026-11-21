@@ -12,10 +12,6 @@ const MAX_TCPING_TARGETS = 30;
 const DEFAULT_TCPING_TIMEOUT_MS = 3000;
 const MAX_TCPING_TIMEOUT_MS = 8000;
 
-/**
- * POST /api/nodes/inspect
- * Body: { nodes: [{ id, url }], forceRefresh?: boolean }
- */
 export async function handleNodeInspectRequest(request, env) {
   if (request.method !== 'POST') {
     return createErrorResponse('Method Not Allowed', 405);
@@ -106,16 +102,11 @@ async function probeTcpOnce(connectFn, host, port, timeoutMs) {
       try {
         await socket.close();
       } catch {
-        // ignore close errors
       }
     }
   }
 }
 
-/**
- * POST /api/nodes/tcping
- * Body: { targets: [{ id, host, port }], timeoutMs?: number }
- */
 export async function handleNodeTcpingRequest(request, _env, options = {}) {
   if (request.method !== 'POST') {
     return createErrorResponse('Method Not Allowed', 405);

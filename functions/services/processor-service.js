@@ -1,7 +1,3 @@
-/**
- * MiSub Core Processing Service
- * Handles the logic of: Profile Resolving -> Node Fetching -> Transformation Pipeline -> Response Rendering
- */
 
 import { generateCombinedNodeList } from './subscription-service.js';
 import { transformBuiltinSubscription } from '../modules/subscription/transformer-factory.js';
@@ -101,7 +97,6 @@ function normalizeYamlChainConfigs(config) {
     .filter((declaration) => declaration && typeof declaration === 'object' && !Array.isArray(declaration))
     .map((declaration) => ({
       ...declaration,
-      // Long names are the documented YAML form; short names mirror the unified model.
       group: declaration.group ?? declaration['landing-group'],
       entry: declaration.entry ?? declaration['entry-group'],
       prefix: declaration.prefix ?? declaration['clone-prefix'],
@@ -154,17 +149,10 @@ export function renderClashYamlProfileTemplate(templateText, nodeList, options =
 }
 
 export class ProcessorService {
-  /**
-   * Generate nodes based on target format and configuration
-   * @param {Object} context
-   * @param {Object} config
-   * @param {Object} params
-   */
   static async processNodes(context, config, params) {
     const { userAgent, targetMisubs, prependedContent, generationSettings, isDebugToken, shouldSkipCertVerify } =
       params;
 
-    // 1. Fetch and combine nodes
     const combinedNodeList = await generateCombinedNodeList(
       context,
       { ...config, enableAccessLog: false },
@@ -179,10 +167,6 @@ export class ProcessorService {
     return combinedNodeList;
   }
 
-  /**
-   * Render the combined node list into the final format
-   * @param {Object} options
-   */
   static async renderOutput(options) {
     const {
       targetFormat,
@@ -196,7 +180,6 @@ export class ProcessorService {
       userInfoHeader,
     } = options || {};
 
-    // Check for Base64 (simplest case)
     if (targetFormat === 'base64') {
       return {
         content: base64EncodeUtf8(combinedNodeList),
@@ -205,14 +188,12 @@ export class ProcessorService {
       };
     }
 
-    // Handle built-in generation with optional templates
     const builtinProxyContent = transformBuiltinSubscription(combinedNodeList, targetFormat, {
       ...builtinOptions,
       managedConfigUrl,
     });
 
     if (!builtinProxyContent) {
-      // Fallback to raw Base64 if generator fails
       return {
         content: base64EncodeUtf8(combinedNodeList),
         contentType: 'text/plain; charset=utf-8',
@@ -289,7 +270,6 @@ export class ProcessorService {
       }
     }
 
-    // Set proper content type for built-in formats if not set by template
     if (contentType === 'text/plain; charset=utf-8') {
       if (targetFormat === 'clash' || targetFormat === 'egern') contentType = 'application/x-yaml; charset=utf-8';
       else if (targetFormat === 'singbox' || targetFormat === 'sing-box')

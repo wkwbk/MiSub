@@ -40,7 +40,6 @@ describe('handleNodeCountRequest error body handling', () => {
       settings: { builtinSkipCertVerify: false },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
-    vi.spyOn(StorageFactory, 'getStorageType').mockResolvedValue('kv');
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
     vi.stubGlobal(
@@ -83,7 +82,6 @@ describe('handleNodeCountRequest error body handling', () => {
       settings: { builtinSkipCertVerify: false },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
-    vi.spyOn(StorageFactory, 'getStorageType').mockResolvedValue('kv');
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
     const fetchSpy = vi.fn(async () => new Response('trojan://pass@example.com:443#HK', { status: 200 }));
@@ -110,7 +108,6 @@ describe('handleNodeCountRequest error body handling', () => {
       settings: { builtinSkipCertVerify: true },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
-    vi.spyOn(StorageFactory, 'getStorageType').mockResolvedValue('kv');
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
     const fetchSpy = vi.fn(async () => new Response('trojan://pass@example.com:443#HK', { status: 200 }));
@@ -144,7 +141,6 @@ describe('handleNodeCountRequest error body handling', () => {
         },
       ],
     });
-    vi.spyOn(StorageFactory, 'getStorageType').mockResolvedValue('kv');
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
     vi.stubGlobal(

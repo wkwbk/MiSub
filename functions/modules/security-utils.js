@@ -254,17 +254,15 @@ function isBlockedIpv6(hostname) {
   if (hextets.every((part) => part === 0)) return true;
   if (hextets.slice(0, 7).every((part) => part === 0) && hextets[7] === 1) return true;
 
-  // IANA special-purpose / non-global ranges. Public fetch should only allow
-  // global IPv6 literals; GitHub allowlisted hostnames cover needed DNS use.
-  if ((first & 0xfe00) === 0xfc00) return true; // fc00::/7 unique local
-  if ((first & 0xffc0) === 0xfe80) return true; // fe80::/10 link-local
-  if ((first & 0xffc0) === 0xfec0) return true; // fec0::/10 site-local (deprecated)
-  if ((first & 0xff00) === 0xff00) return true; // ff00::/8 multicast
-  if ((first & 0xffc0) === 0x0000) return true; // ::/10 incl. compatible/unspecified/loopback family
-  if (first === 0x0064 && second === 0xff9b) return true; // 64:ff9b::/96 NAT64 well-known prefix
-  if (first === 0x2001) return true; // 2001::/16 contains Teredo/docs/benchmark/special-use ranges
-  if (first === 0x2002) return true; // 2002::/16 6to4 may embed private IPv4
-  if (first === 0x3fff) return true; // 3fff::/20 documentation range (coarse block)
+  if ((first & 0xfe00) === 0xfc00) return true;
+  if ((first & 0xffc0) === 0xfe80) return true;
+  if ((first & 0xffc0) === 0xfec0) return true;
+  if ((first & 0xff00) === 0xff00) return true;
+  if ((first & 0xffc0) === 0x0000) return true;
+  if (first === 0x0064 && second === 0xff9b) return true;
+  if (first === 0x2001) return true;
+  if (first === 0x2002) return true;
+  if (first === 0x3fff) return true;
 
   const mapped = parseEmbeddedIpv4(hextets);
   return mapped ? isBlockedIpv4(mapped) : false;

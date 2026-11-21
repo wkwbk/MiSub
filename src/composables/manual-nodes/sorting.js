@@ -35,11 +35,10 @@ export function buildAutoSortedSubscriptions(allSubscriptions, manualNodes) {
     const effectiveIndexA = indexA === -1 ? Infinity : indexA;
     const effectiveIndexB = indexB === -1 ? Infinity : indexB;
 
-    // Primary Sort: First Tag
     const tagA = getPrimaryTag(a);
     const tagB = getPrimaryTag(b);
     if (tagA !== tagB) {
-      if (!tagA) return 1; // Untagged last
+      if (!tagA) return 1;
       if (!tagB) return -1;
       return tagA.localeCompare(tagB, 'zh-CN');
     }

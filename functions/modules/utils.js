@@ -7,6 +7,17 @@ import { utf8ToBase64 } from '../../shared/base64.js';
 import { ensureD1Schema } from '../storage-adapter.js';
 
 /**
+ * 规范化自定义登录路径，确保始终以单个前导斜杠开头；无效时回退为 '/login'
+ * @param {string} customLoginPath
+ * @returns {string}
+ */
+export function normalizeLoginPath(customLoginPath) {
+  if (typeof customLoginPath !== 'string') return '/login';
+  const normalized = customLoginPath.trim().replace(/^\/+/, '');
+  return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
+}
+
+/**
  * 计算数据的简单哈希值，用于检测变更
  * @param {any} data - 要计算哈希的数据
  * @returns {string} - 数据的哈希值
@@ -213,12 +224,6 @@ export class AdminPasswordMissingError extends Error {
   }
 }
 
-/**
- * Check whether the instance already has initialized auth state or persisted user data in D1.
- * Storage read errors propagate so callers fail closed instead of falling back to defaults.
- * @param {Object} env
- * @returns {Promise<boolean>}
- */
 export async function hasInitializedInstanceState(env) {
   const db = getD1(env);
   if (!db) return false;
@@ -243,11 +248,6 @@ export async function hasInitializedInstanceState(env) {
   return false;
 }
 
-/**
- * Record that this instance has been initialized with a non-default admin password.
- * @param {Object} env
- * @returns {Promise<boolean>}
- */
 export async function markAuthInitialized(env) {
   const db = getD1(env);
   if (!db) return false;

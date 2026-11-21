@@ -1,5 +1,4 @@
 //
-// src/lib/api.js
 //
 
 import { api, APIError } from '@/lib/http.js';

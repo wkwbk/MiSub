@@ -2,12 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleMisubRequest, resolveProfileUpdateInterval } from '../../functions/modules/subscription/main-handler.js';
 
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
     resolveKV: (env) => env?.MISUB_KV || null,
   },
   STORAGE_TYPES: { KV: 'kv', D1: 'd1' },
@@ -37,7 +35,6 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    getStorageType.mockResolvedValue('kv');
   });
 
   afterEach(() => {

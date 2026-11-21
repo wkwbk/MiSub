@@ -17,14 +17,13 @@ export function translateRouteTitle(route, t) {
   return route?.meta?.title ? String(route.meta.title) : '';
 }
 
-// Lazy load views for better performance
 const DashboardView = () => import('@/views/DashboardView.vue');
 const SubscriptionGroupsView = () => import('@/views/SubscriptionGroupsView.vue');
 const ManualNodesView = () => import('@/views/ManualNodesView.vue');
 const MySubscriptionsView = () => import('@/views/MySubscriptionsView.vue');
 const SettingsView = () => import('@/views/SettingsView.vue');
 
-const HomeView = () => import('@/views/HomeView.vue'); // [NEW] Wrapper View
+const HomeView = () => import('@/views/HomeView.vue');
 
 const ROUTE_PREFETCH_LOADERS = {
   '/dashboard': DashboardView,
@@ -59,10 +58,10 @@ export function configureAuthGuard(resolver) {
 
 const routes = [
   {
-    path: '/', // Root path is HomeView (Smart Wrapper)
+    path: '/',
     name: 'Home',
     component: HomeView,
-    meta: { titleKey: 'pageTitles.home', isPublic: true }, // Publicly accessible, view handles content
+    meta: { titleKey: 'pageTitles.home', isPublic: true },
   },
   {
     path: '/explore',
@@ -100,22 +99,11 @@ const routes = [
     component: SettingsView,
     meta: { titleKey: 'pageTitles.settings', requiresAuth: true },
   },
-  /*
-    // [REMOVED] Static /login route.
-    // Handled dynamically by Catch-All route (Entrance.vue) to support Custom Login Path.
-    {
-        path: '/login',
-        name: 'Login',
-        component: () => import('@/views/LoginView.vue'),
-        meta: { titleKey: 'pageTitles.login', isPublic: false }
-    },
-    */
   {
-    // Catch-all route for Custom Login Path or 404
     path: '/:pathMatch(.*)*',
     name: 'Entrance',
     component: () => import('@/views/Entrance.vue'),
-    meta: { title: 'MiSub', isPublic: true }, // Public, so Entrance.vue can decide what to render
+    meta: { title: 'MiSub', isPublic: true },
   },
 ];
 
@@ -142,7 +130,6 @@ router.onError((error) => {
   }
 });
 
-// Navigation guard
 router.beforeEach((to) => {
   if (typeof document !== 'undefined') {
     const title = translateRouteTitle(to, t);

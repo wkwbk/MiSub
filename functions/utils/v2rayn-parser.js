@@ -103,7 +103,6 @@ function sha256Hex(bytes) {
   return [h0, h1, h2, h3, h4, h5, h6, h7].map((x) => x.toString(16).padStart(8, '0')).join('');
 }
 
-/** base64 / base64url -> Uint8Array */
 function base64ToBytes(input) {
   let s = String(input)
     .replace(/[^A-Za-z0-9+/=_-]/g, '')

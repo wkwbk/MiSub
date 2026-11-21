@@ -114,8 +114,6 @@ const applyTemplate = async (tpl) => {
     props.settings.customPage.content = parsed.html;
     props.settings.customPage.css = parsed.css;
 
-    // Custom public page HTML is sanitized. Keep legacy config fields compatible, but do not
-    // re-enable external stylesheet or script capabilities automatically.
     props.settings.customPage.allowExternalStylesheets = false;
     props.settings.customPage.allowScripts = false;
   }

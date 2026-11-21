@@ -26,7 +26,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'import', 'files-imported']);
 
-const activeTab = ref('text'); // 'text' | 'file'
+const activeTab = ref('text');
 const importText = ref('');
 const selectedTags = ref([]);
 

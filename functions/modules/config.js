@@ -1,21 +1,14 @@
-/**
- * Unified config file.
- * Includes constants, logical storage keys, and default settings for the worker.
- */
 
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../shared/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../shared/default-public-cores.js';
 
-// D1 settings table logical key
 export const STORAGE_KEY_SETTINGS = 'worker_settings_v1';
 
-// Auth
 export const COOKIE_NAME = 'auth_session';
-export const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 days
-export const SESSION_RENEW_THRESHOLD = 7 * 24 * 60 * 60 * 1000; // renew after 7 days of activity
+export const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
+export const SESSION_RENEW_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
 export const DEFAULT_SUBCONVERTER_BACKEND = 'subapi.cmliussss.net';
 
-// Default settings
 export const DEFAULT_SETTINGS = {
   FileName: 'MiSub',
   mytoken: 'auto',
@@ -172,9 +165,7 @@ export const DEFAULT_SETTINGS = {
   },
 };
 
-// System constants
 export const SYSTEM_CONSTANTS = {
   VERSION: '2.8.0',
-  // Use v2rayN UA to fetch subscriptions reliably.
   FETCHER_USER_AGENT: 'v2rayN/7.23',
 };

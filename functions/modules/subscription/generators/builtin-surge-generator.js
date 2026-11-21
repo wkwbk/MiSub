@@ -8,25 +8,13 @@
  */
 
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
-import { getUniqueName } from '../name-utils.js';
+import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   getBuiltinRules,
   POLICY_GROUPS,
 } from '../builtin-rules-provider.js';
-
-/**
- * 清理字符串中的控制字符（保留换行和制表符）
- * @param {string} str - 输入字符串
- * @returns {string} 清理后的字符串
- */
-function cleanControlChars(str) {
-  if (typeof str !== 'string') return str;
-  // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-}
 
 /**
  * 安全化节点名称，移除或转义可能破坏 Surge INI 格式的字符
@@ -121,9 +109,7 @@ function clashProxyToSurgeResult(proxy) {
     if (proxy.cipher && proxy.cipher !== 'auto') {
       parts.push(`encrypt-method=${proxy.cipher}`);
     }
-    // TLS
     if (proxy.tls) parts.push('tls=true');
-    // WebSocket
     if (proxy.network === 'ws') {
       parts.push('ws=true');
       const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -142,7 +128,6 @@ function clashProxyToSurgeResult(proxy) {
     parts.push(server);
     parts.push(String(port));
     parts.push(`password=${surgeQuote(proxy.password || '')}`);
-    // WebSocket
     if (proxy.network === 'ws') {
       parts.push('ws=true');
       const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
@@ -212,7 +197,6 @@ function clashProxyToSurgeResult(proxy) {
     if (proxy.version) parts.push(`version=${proxy.version}`);
     // 连接复用（Snell V4 可选）
     if (proxy.reuse !== undefined) parts.push(`reuse=${proxy.reuse}`);
-    // TCP Fast Open
     if (proxy.tfo !== undefined) parts.push(`tfo=${proxy.tfo}`);
     const obfsOpts = proxy['obfs-opts'];
     if (obfsOpts) {
@@ -274,7 +258,6 @@ function clashProxyToSurgeResult(proxy) {
     if (proxy['shadow-tls-version']) parts.push(`shadow-tls-version=${proxy['shadow-tls-version']}`);
   }
 
-  // TCP Fast Open
   if (proxy.tfo) {
     // 大多数协议在 Surge 中支持 tfo=true
     // 注意：Snell 已经在上面单独处理过了，这里加一个判断避免重复
@@ -299,7 +282,6 @@ function buildWireGuardResult(name, proxy) {
   // [Proxy] 行
   const proxyLine = `${name} = wireguard, section-name = ${sectionName}`;
 
-  // [WireGuard SectionName] section
   const wgLines = [`[WireGuard ${sectionName}]`];
 
   if (proxy['private-key']) {
@@ -307,12 +289,6 @@ function buildWireGuardResult(name, proxy) {
   }
 
   // self-ip（本地隧道地址）
-  // if (proxy.ip) {
-  //     const ips = Array.isArray(proxy.ip) ? proxy.ip : [proxy.ip];
-  //     const ipv4 = ips.find(ip => !ip.includes(':'));
-  //     const ipv6 = ips.find(ip => ip.includes(':'));
-  //     if (ipv4) wgLines.push(`self-ip = ${ipv4}`);
-  //     if (ipv6) wgLines.push(`self-ip-v6 = ${ipv6}`);
   // }
   if (proxy.ip) {
     const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !ip.includes(':')) : proxy.ip;
@@ -338,7 +314,6 @@ function buildWireGuardResult(name, proxy) {
     wgLines.push('dns-server = 8.8.8.8, 1.1.1.1');
   }
 
-  // MTU
   if (proxy.mtu) {
     wgLines.push(`mtu = ${proxy.mtu}`);
   }
@@ -348,24 +323,19 @@ function buildWireGuardResult(name, proxy) {
   if (proxy['public-key']) {
     peerParts.push(`public-key = ${proxy['public-key']}`);
   }
-  // allowed-ips
   const allowedIps = proxy['allowed-ips']
     ? Array.isArray(proxy['allowed-ips'])
       ? proxy['allowed-ips'].join(', ')
       : proxy['allowed-ips']
     : '0.0.0.0/0, ::/0';
   peerParts.push(`allowed-ips = "${allowedIps}"`);
-  // endpoint
   peerParts.push(`endpoint = ${proxy.server}:${proxy.port}`);
-  // preshared-key
   if (proxy['preshared-key']) {
     peerParts.push(`preshared-key = ${proxy['preshared-key']}`);
   }
-  // keepalive
   if (proxy['persistent-keepalive']) {
     peerParts.push(`keepalive = ${proxy['persistent-keepalive']}`);
   }
-  // client-id (Cloudflare WARP reserved)
   if (proxy.reserved) {
     const reserved = Array.isArray(proxy.reserved) ? proxy.reserved.join('/') : proxy.reserved;
     peerParts.push(`client-id = ${reserved}`);
@@ -519,7 +489,6 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
 
   sections.push(`[Proxy Group]\n${proxyGroupLines.join('\n')}`);
 
-  // Surge [Rule]
   const builtinRuleLines = getBuiltinRules(levelKey, 'surge');
   const ruleLines = [
     '# 基础分流',

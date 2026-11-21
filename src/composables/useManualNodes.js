@@ -1,4 +1,3 @@
-// FILE: src/composables/useManualNodes.js
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
@@ -34,7 +33,6 @@ export function useManualNodes(markDirty) {
   const settingsStore = useSettingsStore();
   const { subscriptions: allSubscriptions } = storeToRefs(dataStore);
 
-  // Manual Nodes are items in subscriptions that are NOT http/https
   const manualNodes = computed(() => {
     return (allSubscriptions.value || []).filter(isManualNodeEntry);
   });
@@ -45,7 +43,7 @@ export function useManualNodes(markDirty) {
 
   // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别，本机 localStorage 24h 缓存） ---
   const INSPECT_CACHE_KEY = 'misub_node_inspect_cache_v1';
-  const INSPECT_CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+  const INSPECT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
   const PING_MODE_PREF_KEY = 'misub_manual_nodes_ping_mode';
 
   const nodeInspectMap = ref({});
@@ -404,7 +402,6 @@ export function useManualNodes(markDirty) {
     try {
       writeRawPreference(INSPECT_CACHE_KEY, JSON.stringify(cacheObj));
     } catch {
-      // Ignore storage quota errors
     }
   }
 

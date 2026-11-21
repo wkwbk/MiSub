@@ -148,7 +148,6 @@ async function performTrafficCheck(env) {
  * 清理订阅缓存
  */
 async function clearSubscriptionCache() {
-  // No-op
 }
 
 /**

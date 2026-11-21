@@ -1,6 +1,5 @@
 <template>
   <div class="not-found-container font-sans text-fg">
-    <!-- Content Card -->
     <div class="relative z-10 border border-line bg-surface rounded-md p-10 max-w-lg w-[90%] text-center shadow-none">
       <div class="font-mono font-bold text-7xl text-fg mb-4">404</div>
 

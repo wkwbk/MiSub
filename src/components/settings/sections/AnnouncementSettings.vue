@@ -21,7 +21,7 @@ const defaultAnnouncement = {
   enabled: false,
   title: '',
   content: '',
-  type: 'info', // info, warning, success
+  type: 'info',
   dismissible: true,
   updatedAt: null,
 };
@@ -178,7 +178,6 @@ const handleContentUpdate = () => {
 </template>
 
 <style scoped>
-/* Toggle Switch CSS - Reused */
 
 .animate-fade-in-down {
   animation: fadeInDown 0.3s ease-out;

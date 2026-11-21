@@ -21,7 +21,7 @@ const { t } = useI18n();
 
 const messages = ref([]);
 const loading = ref(false);
-const filterStatus = ref('all'); // all, pending, approved, replied
+const filterStatus = ref('all');
 const replyingId = ref(null);
 const replyContent = ref('');
 
@@ -81,7 +81,6 @@ const handleAction = async (action, id, payload = {}) => {
 
     if (data.success) {
       showToast(t('settings.guestbookActionSuccess'), 'success');
-      // Update local state
       if (action === 'delete') {
         messages.value = messages.value.filter((m) => m.id !== id);
       } else {
@@ -90,7 +89,6 @@ const handleAction = async (action, id, payload = {}) => {
           messages.value[index] = data.data;
         }
       }
-      // Clear reply state if replying
       if (action === 'reply') {
         replyingId.value = null;
         replyContent.value = '';
@@ -184,7 +182,6 @@ onMounted(() => {
 
     <!-- {{ t('settings.guestbookTitle') }}区域 -->
     <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-line">
-      <!-- Toolbar -->
       <div class="pb-4 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">
           <h3 class="text-sm font-semibold text-fg">
@@ -218,7 +215,6 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- List -->
       <div class="divide-y divide-line-subtle">
         <div v-if="loading" class="py-8 text-center text-xs text-fg-subtle">
           {{ t('settings.guestbookLoading') }}
@@ -247,7 +243,6 @@ onMounted(() => {
             {{ msg.content }}
           </div>
 
-          <!-- Reply Display -->
           <div v-if="msg.reply && replyingId !== msg.id" class="mb-3 pl-4 border-l-2 border-line py-1">
             <div class="text-xs text-fg-muted font-medium mb-0.5 flex justify-between">
               <span>{{ t('settings.guestbookAdminReply') }}</span>
@@ -256,7 +251,6 @@ onMounted(() => {
             <div class="text-xs text-fg-muted leading-relaxed">{{ msg.reply }}</div>
           </div>
 
-          <!-- Reply Input -->
           <div v-if="replyingId === msg.id" class="mb-3 pl-4 border-l-2 border-line">
             <Textarea
               v-model="replyContent"
@@ -280,7 +274,6 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- Actions -->
           <div class="flex items-center gap-4 text-xs">
             <button
               v-if="!msg.isVisible"

@@ -104,7 +104,6 @@ const dismissedHealthItemsCount = computed(() => allHealthItems.value.length - d
 
 const hasHealthItems = computed(() => dashboardHealthItems.value.length > 0);
 
-// How many health items to render before the "show more" toggle kicks in.
 const HEALTH_ITEMS_COLLAPSED_COUNT = 4;
 const showAllHealthItems = ref(false);
 const visibleHealthItems = computed(() =>
@@ -158,7 +157,6 @@ const handleStatNavigate = (path, query = {}) => {
   router.push({ path, query });
 };
 
-// --- Bulk Import Logic ---
 const { showModal: showBulkImportModal, handleBulkImport } = useBulkImportLogic({
   addSubscriptionsFromBulk,
   addNodesFromBulk,
@@ -170,37 +168,27 @@ const openBulkImportModal = () => {
 
 const BulkImportModal = defineAsyncComponent(loadBulkImportModal);
 
-// --- Profile Modal Logic ---
 const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } = useProfiles(markDirty);
 
 const ProfileModal = defineAsyncComponent(loadProfileModal);
 
-// --- Log Modal Logic ---
 const showLogModal = ref(false);
 const LogModal = defineAsyncComponent(loadLogModal);
 
-// Kept below the `showLogModal` declaration on purpose: this handler closes
-// over it, so co-locating them keeps the dependency obvious and immune to a
-// future refactor that might call it during setup.
 //
-// Only the PRIMARY button routes here. `item.action` is the *secondary*
-// action key and must not be consulted: an item can carry both (e.g. the
 // error card links to the filtered list AND offers "打开日志"), and reading
-// `action` here used to short-circuit the primary navigation entirely.
 const handleHealthAction = (item) => {
   if (item.actionRoute) {
     router.push({ path: item.actionRoute, query: item.actionQuery || {} });
   }
 };
 
-// Secondary buttons dispatch the item's own action key instead of navigating.
 const handleHealthSecondaryAction = (item) => {
   if (item.action === 'openLog') {
     showLogModal.value = true;
   }
 };
 
-// --- Health item dismissal ---
 // 隐藏某个待处理项只是记一条偏好，底层问题不动，所以「全部恢复」能把它放回来。
 // 这份偏好现在存在设置里并同步到服务端（跨设备生效），
 // 写入失败必须明确告知用户，否则表现为「点了没反应」且没有任何提示。
@@ -273,7 +261,6 @@ onUnmounted(() => {
   cancelModalPrefetch();
 });
 
-// --- QRCode Modal Logic ---
 const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');

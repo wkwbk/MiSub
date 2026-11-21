@@ -12,7 +12,6 @@ import { extractName, parseHostPort, parseQueryParams } from './common.js';
  */
 export function parseVlessUrl(url) {
   try {
-    // vless://uuid@server:port?params#name
     const body = url.substring(8); // 去掉 vless://
     const atIndex = body.indexOf('@');
     if (atIndex === -1) return null;
@@ -86,7 +85,6 @@ export function parseVlessUrl(url) {
         };
       }
 
-      // XHTTP mode
       if (params.get('mode')) {
         xhttpOpts.mode = params.get('mode');
       }
@@ -181,17 +179,14 @@ export function parseVlessUrl(url) {
       proxy.sni = params.get('peer');
     }
 
-    // Fingerprint
     if (params.get('fp')) {
       proxy['client-fingerprint'] = params.get('fp');
     }
 
-    // Flow (XTLS)
     if (params.get('flow')) {
       proxy.flow = params.get('flow');
     }
 
-    // ALPN
     if (params.get('alpn')) {
       proxy.alpn = params.get('alpn').split(',');
     }
@@ -223,7 +218,6 @@ export function parseVlessUrl(url) {
  */
 export function parseTrojanUrl(url) {
   try {
-    // trojan://password@server:port?params#name
     const body = url.substring(9); // 去掉 trojan://
     const atIndex = body.indexOf('@');
     if (atIndex === -1) return null;
@@ -292,12 +286,10 @@ export function parseTrojanUrl(url) {
       proxy.sni = params.get('peer');
     }
 
-    // Fingerprint
     if (params.get('fp')) {
       proxy['client-fingerprint'] = params.get('fp');
     }
 
-    // Skip cert verify
     if (params.get('allowInsecure') === '1') {
       proxy['skip-cert-verify'] = true;
     }
@@ -340,7 +332,6 @@ export function parseTrojanUrl(url) {
  */
 export function parseVmessUrl(url) {
   try {
-    // vmess://base64(json)
     const base64Part = url.substring(8);
 
     // 标准化 Base64
@@ -387,7 +378,7 @@ export function parseVmessUrl(url) {
     // gRPC 配置
     if (network === 'grpc') {
       const grpcOpts = {};
-      if (config.path) grpcOpts['grpc-service-name'] = config.path; // vmess json sometimes use path for serviceName
+      if (config.path) grpcOpts['grpc-service-name'] = config.path;
       if (config.host) grpcOpts['grpc-service-name'] = config.host;
       if (Object.keys(grpcOpts).length > 0) {
         proxy['grpc-opts'] = grpcOpts;
@@ -426,7 +417,6 @@ export function parseVmessUrl(url) {
       }
     }
 
-    // TLS
     if (config.tls === 'tls' || config.tls === 'reality') {
       proxy.tls = true;
       if (config.sni) proxy.servername = config.sni;
@@ -436,9 +426,6 @@ export function parseVmessUrl(url) {
           .split(',')
           .map((s) => s.trim());
     }
-
-    // UDP
-    // proxy.udp = true;
 
     return proxy;
   } catch (e) {

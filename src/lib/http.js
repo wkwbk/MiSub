@@ -1,7 +1,3 @@
-/**
- * Shared HTTP helpers for API requests.
- * Centralizes JSON handling, credentials, and error normalization.
- */
 
 export class APIError extends Error {
   constructor(message, status = 500, data = null) {

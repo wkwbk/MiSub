@@ -4,7 +4,7 @@ import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 function parseIniSections(templateText) {
   const lines = String(templateText || '').split(/\r?\n/);
   const sections = new Map();
-  let currentSection = 'custom'; // Default to custom if no section headers are found
+  let currentSection = 'custom';
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -76,7 +76,6 @@ function parseAclRuleSetLine(line) {
   const policy = parts[0];
   let source = parts.slice(1).join(',');
 
-  // Clean up protocol prefixes like clash-classic:, surge:, etc.
   source = source.replace(/^(clash-classic|surge|quanx|loon|sing-box|singbox):/i, '');
 
   if (source.startsWith('[]')) {

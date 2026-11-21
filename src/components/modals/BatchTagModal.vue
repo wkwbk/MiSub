@@ -16,7 +16,7 @@ const props = defineProps({
 const emit = defineEmits(['update:show', 'confirm']);
 const { t } = useI18n();
 
-const mode = ref('append'); // 'append' | 'replace' | 'remove' | 'clear'
+const mode = ref('append');
 const selectedTags = ref([]);
 
 const modes = computed(() => [

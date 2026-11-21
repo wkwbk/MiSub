@@ -59,7 +59,6 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
 
 <template>
   <div class="space-y-4">
-    <!-- Node Prefix Settings -->
     <section class="rounded-lg border border-line bg-surface p-6">
       <SectionHeader
         :description="t('settings.globalNodeSettingsDesc')"
@@ -128,7 +127,6 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
       </div>
     </section>
 
-    <!-- Region Overrides -->
     <section class="rounded-lg border border-line bg-surface p-6">
       <SectionHeader
         :description="t('settings.regionOverridesDesc')"
@@ -183,7 +181,6 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
       </div>
     </section>
 
-    <!-- Unified Operator Chain -->
     <section class="rounded-lg border border-line bg-surface p-6">
       <SectionHeader
         :description="t('settings.globalDefaultOperatorsDesc')"

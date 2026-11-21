@@ -1,10 +1,5 @@
-/**
- * Request-triggered scheduled tasks for Cloudflare Pages deployments.
- * Pages has no native Cron, so this runner performs cheap due checks when
- * subscription/admin/cron requests happen, then executes heavy work in waitUntil.
- */
 
-import { SettingsCache, StorageFactory } from '../storage-adapter.js';
+import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './handlers/webdav-backup-handler.js';
 
@@ -34,8 +29,7 @@ function intervalMs(interval) {
 }
 
 async function getStorage(env) {
-  const storageType = await StorageFactory.getStorageType(env);
-  return StorageFactory.createAdapter(env, storageType);
+  return StorageFactory.createAdapter(env);
 }
 
 export async function maybeRunScheduledTasks(context = {}, options = {}) {
@@ -60,7 +54,7 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     }
   }
 
-  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
+  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
   const config = settings.webdavBackup || {};
 
   if (!config.enabled || !config.autoBackup) {
@@ -80,7 +74,6 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     },
   };
   await storageAdapter.put(STORAGE_KEY_SETTINGS, updatedSettings);
-  SettingsCache.clear();
 
   const lastBackupAt = parseTime(config.lastBackupAt);
   if (!options.forceRun && lastBackupAt && now - lastBackupAt < intervalMs(config.interval)) {

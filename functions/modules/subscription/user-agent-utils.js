@@ -1,7 +1,3 @@
-/**
- * User-Agent Utility Functions
- * Handles browser detection and target format determination based on User-Agent strings.
- */
 
 /**
  * 判断是否为浏览器请求（用于伪装/公开页逻辑）
@@ -11,12 +7,10 @@
  */
 export function isBrowserAgent(userAgent) {
   if (!userAgent) return false;
-  // Common browser keywords - must contain Mozilla and not be a common bot
   const isBrowser =
     /Mozilla/i.test(userAgent) &&
     /Chrome|Safari|Edge|Opera|Firefox|Via|UCBrowser|Quark|MQQBrowser|Konqueror/i.test(userAgent);
 
-  // Common proxy client and bot keywords to exclude
   const isProxyOrBot =
     /clash|flclash|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|mihomo\.party|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|surfboard|hiddify|egern|yuetu|月兔|dio|dart|flutter|http-client|okhttp|axios|postman|curl|wget|go-http-client|python|java/i.test(
       userAgent,
@@ -36,7 +30,6 @@ export function isHiddifyAgent(userAgent) {
 }
 
 export function determineTargetFormat(userAgent, searchParams) {
-  // 1. Check URL parameters first
   let targetFormat = searchParams.get('target');
   if (!targetFormat) {
     const supportedFormats = [
@@ -53,7 +46,6 @@ export function determineTargetFormat(userAgent, searchParams) {
     ];
     for (const format of supportedFormats) {
       if (searchParams.has(format)) {
-        // Normalize v2ray/trojan to base64 as they share the output format
         targetFormat = format === 'v2ray' || format === 'trojan' ? 'base64' : format;
         break;
       }
@@ -76,16 +68,12 @@ export function determineTargetFormat(userAgent, searchParams) {
     return targetFormat;
   }
 
-  // 2. Check User-Agent
   const ua = (userAgent || '').toLowerCase();
 
-  // --- Surge Specific Handling ---
-  // Extract version accurately (e.g., "Surge/4.0", "Surge Mac/3.0", "Surge-Mac/5.0")
   if (ua.includes('surge')) {
     const surgeMatch = ua.match(/surge(?:\s*-?\s*mac)?\/(\d+)/);
     if (surgeMatch) {
       const version = parseInt(surgeMatch[1], 10);
-      // Subconverter primarily supports &ver=2, 3, 4. For versions >= 4, use 4.
       // iOS Surge特别处理：优先使用最新兼容版本
       const iosSurgeVer = ua.includes('surge/') && !ua.includes('mac') ? 4 : Math.max(2, version);
       return `surge&ver=${iosSurgeVer}`;
@@ -94,13 +82,11 @@ export function determineTargetFormat(userAgent, searchParams) {
     return ua.includes('surge/') && !ua.includes('mac') ? 'surge&ver=4' : 'surge&ver=4';
   }
 
-  // Mapping array to ensure priority order
   const uaMapping = [
     // Hiddify UA 通常同时包含 ClashMeta / sing-box，必须优先匹配客户端本身。
     // 通用订阅默认使用 sing-box JSON；如需 Clash 可显式传入 target=clash。
     ['hiddify', 'singbox'],
 
-    // Mihomo/Meta Core Clients -> Clash
     ['flclash', 'clash'],
     ['flyclash', 'clash'],
     ['butterfly', 'clash'],
@@ -113,7 +99,6 @@ export function determineTargetFormat(userAgent, searchParams) {
     ['clash party', 'clash'],
     ['meta', 'clash'],
 
-    // Other Clients
     ['stash', 'clash'],
     ['nekoray', 'clash'],
     ['nekobox', 'clash'],
@@ -126,7 +111,6 @@ export function determineTargetFormat(userAgent, searchParams) {
     ['sing-box', 'singbox'],
     ['singbox', 'singbox'],
     // Shadowrocket / 小火箭 prefers raw base64 subscription content for adaptive links.
-    // Explicit URL params such as ?clash=1 or ?target=surge still override this mapping.
     ['shadowrocket', 'base64'],
     ['v2rayn', 'base64'],
     ['v2rayng', 'base64'],
@@ -136,7 +120,6 @@ export function determineTargetFormat(userAgent, searchParams) {
     ['quantumult-x', 'quanx'],
     ['quantumult', 'quanx'],
 
-    // Fallback for generic clash
     ['clash', 'clash'],
   ];
 
@@ -146,7 +129,6 @@ export function determineTargetFormat(userAgent, searchParams) {
     }
   }
 
-  // 3. Default fallback
   return 'base64';
 }
 

@@ -57,7 +57,6 @@ export function parseSubscriptionProfileTitle(headers) {
     try {
       if (typeof headers.get === 'function') return headers.get(name) || '';
     } catch {
-      /* ignore */
     }
     const lower = name.toLowerCase();
     for (const key of Object.keys(headers || {})) {
@@ -95,7 +94,6 @@ export function parseSubscriptionProfileTitle(headers) {
       try {
         return decodeURIComponent(utf8[1].trim()).trim();
       } catch {
-        /* ignore */
       }
     }
     const plain = disposition.match(/filename\s*=\s*"?([^";]+)"?/i);

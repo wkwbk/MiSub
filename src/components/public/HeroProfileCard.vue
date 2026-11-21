@@ -25,10 +25,8 @@ const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', '
 
 <template>
   <div class="relative w-full">
-    <!-- Main Card Content -->
     <div class="relative bg-surface rounded-md p-6 lg:p-8 border border-line">
       <div class="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
-        <!-- 1. Brand / Header Column -->
         <div class="flex-shrink-0 flex flex-col items-center lg:items-start text-center lg:text-left space-y-2.5">
           <div
             class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-fg-muted"
@@ -58,7 +56,6 @@ const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', '
           </div>
         </div>
 
-        <!-- 2. Description Column (Middle) -->
         <div
           class="flex-1 border-t lg:border-t-0 lg:border-l border-line pt-5 lg:pt-0 lg:pl-10 w-full lg:w-auto text-center lg:text-left"
         >
@@ -67,7 +64,6 @@ const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', '
           </p>
         </div>
 
-        <!-- 3. Action Column (Right) -->
         <div class="flex-shrink-0 w-full lg:w-auto flex flex-col gap-2.5 min-w-[200px]">
           <button
             class="group flex w-full items-center justify-center rounded-md bg-accent hover:opacity-90 px-5 py-2.5 text-xs font-medium text-accent-fg transition-colors shadow-none"

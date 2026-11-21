@@ -4,7 +4,7 @@
  */
 
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
-import { getUniqueName } from '../name-utils.js';
+import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
@@ -15,12 +15,6 @@ import {
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
-
-function cleanControlChars(str) {
-  if (typeof str !== 'string') return str;
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-}
 
 function sanitizeName(name) {
   if (!name) return 'Untitled';
@@ -162,7 +156,6 @@ function buildOutbound(proxy) {
 
     const congestionControl = proxy['congestion-controller'] || proxy['congestion-control'] || proxy.congestion;
     if (congestionControl) outbound.congestion_control = congestionControl;
-    // sing-box TUIC schema has no udp_relay_mode field; do not emit Clash-only option.
     if (proxy['udp-over-stream'] !== undefined) outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
     if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {
       outbound.zero_rtt_handshake = Boolean(proxy['zero-rtt-handshake'] ?? proxy['reduce-rtt']);

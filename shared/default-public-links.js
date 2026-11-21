@@ -248,10 +248,6 @@ export const DEFAULT_PUBLIC_LINKS_CONFIG = {
   items: DEFAULT_PUBLIC_LINKS,
 };
 
-/**
- * Resolve an HD icon URL for a link item.
- * If no icon is provided, falls back to Google 128px favicon service by domain.
- */
 export function resolvePublicLinkIcon(link) {
   const rawIcon = String(link?.icon || '').trim();
   if (rawIcon) return rawIcon;
@@ -261,7 +257,6 @@ export function resolvePublicLinkIcon(link) {
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
     }
   } catch {
-    // Ignore invalid URL
   }
   return '';
 }

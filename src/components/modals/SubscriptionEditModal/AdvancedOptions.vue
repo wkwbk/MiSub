@@ -15,7 +15,6 @@ const props = defineProps({
 </script>
 
 <template>
-  <!-- User-Agent -->
   <div>
     <label class="block text-xs font-medium text-fg-muted" for="sub-edit-ua">
       {{ t('subscriptions.uaLabel') }}

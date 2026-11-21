@@ -5,7 +5,7 @@
  */
 
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
-import { getUniqueName } from '../name-utils.js';
+import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import { isMetaCore } from '../user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import {
@@ -17,18 +17,6 @@ import {
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
 import * as yaml from 'js-yaml';
-
-/**
- * 清理字符串中的控制字符（保留换行和制表符）
- * @param {string} str - 输入字符串
- * @returns {string} 清理后的字符串
- */
-function cleanControlChars(str) {
-  if (typeof str !== 'string') return str;
-  // 移除控制字符，但保留换行(\n)、回车(\r)、制表符(\t)
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-}
 
 /**
  * 递归清理对象中所有字符串的控制字符

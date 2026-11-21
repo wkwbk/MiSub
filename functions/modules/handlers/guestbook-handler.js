@@ -61,7 +61,7 @@ export async function handleGuestbookGet(env) {
         nickname: msg.nickname,
         content: msg.content,
         type: msg.type || 'general',
-        status: msg.status, // approved, replied
+        status: msg.status,
         createdAt: msg.createdAt,
         reply: msg.reply,
         replyAt: msg.replyAt,
@@ -114,7 +114,7 @@ export async function handleGuestbookPost(request, env) {
       id: crypto.randomUUID(),
       nickname: finalNickname,
       content: content.trim(),
-      type: type || 'general', // general, feature, bug
+      type: type || 'general',
       createdAt: new Date().toISOString(),
       status: 'pending',
       isVisible: !guestbookConfig.requireAudit, // 如果不需要审核，则默认可见
@@ -179,7 +179,7 @@ export async function handleGuestbookManageGet(env) {
 export async function handleGuestbookManageAction(request, env) {
   try {
     const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
-    const { action, id, replyContent } = body; // action: 'reply' | 'delete' | 'toggle' | 'update_status'
+    const { action, id, replyContent } = body;
 
     const storageAdapter = await getStorageAdapter(env);
     const messages = await loadGuestbookMessages(storageAdapter);

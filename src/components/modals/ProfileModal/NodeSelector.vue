@@ -85,7 +85,6 @@ const orderedSelectedNodes = computed({
         </button>
       </div>
     </div>
-    <!-- Tag Filter Bar -->
     <div class="flex items-center h-8">
       <TagFilterBar
         :active-filters="activeTagFilters"

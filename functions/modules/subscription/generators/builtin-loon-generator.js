@@ -11,7 +11,7 @@
  */
 
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
-import { getUniqueName } from '../name-utils.js';
+import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
@@ -19,15 +19,6 @@ import {
   POLICY_GROUPS,
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
-
-/**
- * 清理控制字符
- */
-function cleanControlChars(str) {
-  if (typeof str !== 'string') return str;
-  // oxlint-disable-next-line no-control-regex
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-}
 
 /**
  * 安全化节点名称
@@ -239,7 +230,6 @@ function clashProxyToLoonResult(proxy) {
     return null;
   }
 
-  // TCP Fast Open
   if (proxy.tfo) {
     // Loon 大部分节点使用 fast-open=true
     // 注意：Snell 在上面已经处理过 tfo= 了，这里避免冲突

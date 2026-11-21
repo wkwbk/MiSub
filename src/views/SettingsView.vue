@@ -70,9 +70,7 @@ function handleActiveTabUpdate(nextTab) {
   }
 }
 
-// --- Dashboard deep-link focus (?focus=mytoken / profileToken) ---
 // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
-// this the query was ignored and the user had to hunt for the field.
 const highlightedFocusId = ref('');
 let highlightTimer = null;
 
@@ -87,8 +85,6 @@ function applyFocusFromQuery() {
   const anchorId = resolveSettingsFocusAnchor(focus);
   if (!anchorId) return true;
 
-  // Highlight immediately so the state is authoritative; scrolling needs
-  // the tab's DOM to exist, so that part waits for the next tick.
   highlightedFocusId.value = anchorId;
   clearTimeout(highlightTimer);
   highlightTimer = setTimeout(() => {
@@ -134,8 +130,6 @@ watch(isLoading, (loading, wasLoading) => {
   }
 });
 
-// A deep link can arrive while the view is already mounted (e.g. navigating
-// from the dashboard twice), so react to query changes too.
 watch(
   () => route.query.focus,
   () => {

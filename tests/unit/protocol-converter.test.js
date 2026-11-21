@@ -11,7 +11,7 @@ import {
   parseLoonConfig,
   parseQuantumultXConfig,
   parseSurgeConfig,
-} from '@/utils/protocol-converter.js'; // 创建mock crypto.randomUUID (在Node环境下可能不存在)
+} from '@/utils/protocols/index.js'; // 创建mock crypto.randomUUID (在Node环境下可能不存在)
 
 // 创建mock crypto.randomUUID (在Node环境下可能不存在)
 vi.stubGlobal('crypto', {

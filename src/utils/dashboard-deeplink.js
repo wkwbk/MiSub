@@ -1,19 +1,4 @@
-/**
- * Shared handling for the `?status=` / `?focus=` deep-link params that the
- * dashboard's health cards and setup checklist attach to their action buttons.
- *
- * Why this exists: those buttons used to navigate with `?status=error` /
- * `?focus=mytoken` but no downstream view read the query, so every action
- * degraded into a bare navigation that landed on an unfiltered page.
- *
- * The helpers here are deliberately pure so both the views and the tests can
- * share one definition of the contract.
- */
 
-/**
- * Subscription status filters keyed by the `?status=` value emitted from the
- * dashboard. Mirrors the ids in `getDashboardHealthItems`.
- */
 export const SUBSCRIPTION_STATUS_FILTERS = {
   missing: 'all',
   disabled: 'disabled',
@@ -23,11 +8,6 @@ export const SUBSCRIPTION_STATUS_FILTERS = {
   'zero-nodes': 'zero-nodes',
 };
 
-/**
- * Normalise an unknown `?status=` value into a known subscription filter id.
- * Returns `null` when the value is absent or unrecognised, so callers can fall
- * back to their default (unfiltered) behaviour.
- */
 export function resolveSubscriptionStatusFilter(status) {
   if (typeof status !== 'string') return null;
   const key = status.trim().toLowerCase();
@@ -37,12 +17,6 @@ export function resolveSubscriptionStatusFilter(status) {
     : null;
 }
 
-/**
- * True when the given subscription matches the active status filter.
- * `all` (and any unknown value) matches everything.
- *
- * `now` is injectable so time-dependent filters stay deterministic in tests.
- */
 export function matchesSubscriptionStatus(sub, filter, now = Date.now()) {
   if (!filter || filter === 'all') return true;
   if (!sub) return false;
@@ -63,10 +37,6 @@ export function matchesSubscriptionStatus(sub, filter, now = Date.now()) {
   }
 }
 
-/**
- * Mirrors the traffic classification used by `dashboard-health.js` so the
- * dashboard badge and the filtered list agree on what "expired"/"low" means.
- */
 export function getSubscriptionTrafficState(sub, now = Date.now()) {
   const info = sub?.userInfo;
   if (!sub?.enabled || !info) return null;
@@ -80,21 +50,10 @@ export function getSubscriptionTrafficState(sub, now = Date.now()) {
   return null;
 }
 
-/**
- * Known settings tab ids in navigation order.
- */
 export const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'service', 'system'];
 
-/**
- * Session-scoped storage key for remembering the active settings tab across
- * refreshes, auto-reloads after saving, and modal re-opens.
- */
 export const SETTINGS_ACTIVE_TAB_STORAGE_KEY = 'misub:settings-active-tab';
 
-/**
- * Normalise a `?tab=` query param or stored preference into a known settings
- * tab id. Returns `null` when absent or unknown.
- */
 export function resolveSettingsTab(tab) {
   if (typeof tab !== 'string') return null;
   const raw = tab.trim().toLowerCase();
@@ -103,18 +62,11 @@ export function resolveSettingsTab(tab) {
   return SETTINGS_TAB_IDS.includes(normalized) ? normalized : null;
 }
 
-/**
- * Settings tab ids keyed by the `?focus=` value emitted from the dashboard.
- * Lookups are case-insensitive, so keys are stored lowercased.
- */
 export const SETTINGS_FOCUS_TABS = {
   mytoken: 'basic',
   profiletoken: 'basic',
 };
 
-/**
- * Anchor ids for the settings inputs the dashboard wants to highlight.
- */
 export const SETTINGS_FOCUS_ANCHORS = {
   mytoken: 'setting-mytoken',
   profiletoken: 'setting-profileToken',
@@ -137,20 +89,11 @@ export function resolveSettingsFocusAnchor(focus) {
   return SETTINGS_FOCUS_ANCHORS[key] || null;
 }
 
-/**
- * Profile list "focus" values. `profiles` means "scroll the user to the profile
- * section", which this project expresses by switching the subscriptions page
- * into its profile view.
- */
 export function resolveProfileFocus(focus) {
   if (typeof focus !== 'string') return null;
   return focus.trim().toLowerCase() === 'profiles' ? 'profiles' : null;
 }
 
-/**
- * Count how many subscriptions match a filter — used for the "filtered" hint
- * the list shows so a deep-linked user understands why the list is short.
- */
 export function countSubscriptionsByStatus(subscriptions = [], filter) {
   return subscriptions.filter((sub) => matchesSubscriptionStatus(sub, filter)).length;
 }

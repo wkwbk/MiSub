@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
 import { urlToClashProxy } from '../../shared/url-to-clash.js';
 import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { convertClashProxyToUrl } from '../../functions/utils/clash-to-url.js';
+import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
 import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
 
 describe('VLESS / Reality support-x25519mlkem768 特性支持', () => {

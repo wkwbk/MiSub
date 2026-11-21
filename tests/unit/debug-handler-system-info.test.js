@@ -4,12 +4,10 @@ const getAllSubscriptions = vi.fn();
 const getAllProfiles = vi.fn();
 const get = vi.fn();
 const createAdapter = vi.fn();
-const getStorageType = vi.fn();
 
 vi.mock('../../functions/storage-adapter.js', () => ({
   StorageFactory: {
     createAdapter: (...args) => createAdapter(...args),
-    getStorageType: (...args) => getStorageType(...args),
   },
 }));
 
@@ -18,7 +16,7 @@ vi.mock('../../functions/modules/utils.js', () => ({
   createErrorResponse: (data, status = 500) => new Response(JSON.stringify({ error: String(data) }), { status }),
 }));
 
-vi.mock('../../functions/modules/subscription-handler.js', () => ({
+vi.mock('../../functions/modules/subscription/main-handler.js', () => ({
   handleSubscriptionNodesRequest: vi.fn(),
 }));
 
@@ -38,9 +36,6 @@ describe('handleSystemInfoRequest', () => {
     getAllProfiles.mockReset();
     get.mockReset();
     createAdapter.mockReset();
-    getStorageType.mockReset();
-
-    getStorageType.mockResolvedValue('d1');
     createAdapter.mockReturnValue({
       getAllSubscriptions,
       getAllProfiles,

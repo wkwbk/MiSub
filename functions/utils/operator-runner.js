@@ -1,7 +1,3 @@
-/**
- * MiSub Operator Runner
- * Implements Sub-Store like operators for node transformation.
- */
 
 import * as NodeUtils from './node-transformer.js';
 import { matchesDslCondition, renderDslTemplate } from './expression-dsl.js';
@@ -36,9 +32,6 @@ function normalizeRules(rules) {
   return normalized;
 }
 
-/**
- * Filter Operator
- */
 function opFilter(nodes, params) {
   if (!params) return nodes;
   const { include, exclude, protocols, regions } = params;
@@ -81,7 +74,6 @@ function opFilter(nodes, params) {
     result = result.filter((r) => allowed.has(r.protocol.toLowerCase()));
   }
   if (regions?.enabled && Array.isArray(regions.values)) {
-    // Ensure region info is present
     result = result.map((r) => NodeUtils.ensureRegionInfo(r, true));
     const allowed = new Set(regions.values);
     result = result.filter((r) => allowed.has(r.regionZh) || allowed.has(r.region));
@@ -89,9 +81,6 @@ function opFilter(nodes, params) {
   return result;
 }
 
-/**
- * Rename Operator
- */
 function opRename(nodes, params) {
   if (!params) return nodes;
   const { regex, template } = params;
@@ -179,9 +168,6 @@ function opRename(nodes, params) {
   return result;
 }
 
-/**
- * Script Operator (The heart of Sub-Store)
- */
 async function opScript(nodes, params = {}, context) {
   const dsl = Array.isArray(params.dsl) ? params.dsl : params.action ? [params] : [];
 
@@ -224,15 +210,11 @@ async function opScript(nodes, params = {}, context) {
   return result;
 }
 
-/**
- * Main Entry Point for Operator Chain
- */
 export async function runOperatorChain(nodeUrls, operators, context = {}) {
   if (!Array.isArray(operators) || operators.length === 0) {
     return nodeUrls;
   }
 
-  // 1. Convert URLs to Records
   let records = NodeUtils.nodeUrlsToRecords(nodeUrls, {
     needServerPort: true,
     ensureRegion: false,
@@ -262,7 +244,6 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
 
   const enrichedContext = { ...context, ...platform };
 
-  // 2. Run Operators sequentially
   for (const op of operators) {
     const { type, params, enabled } = op;
     if (enabled === false) continue;
@@ -306,6 +287,5 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
     }
   }
 
-  // 3. Convert Records back to URLs
   return NodeUtils.recordsToNodeUrls(records);
 }

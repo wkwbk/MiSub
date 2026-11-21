@@ -149,7 +149,6 @@ watch(
     </div>
   </div>
 
-  <!-- Profile Tags -->
   <div class="mt-4">
     <label class="block text-xs font-medium text-fg-muted mb-1.5">
       {{ t('profiles.tagsLabel') }}
@@ -157,7 +156,6 @@ watch(
     <TagInput v-model="localProfile.tags" :placeholder="t('profiles.tagsPlaceholder')" :suggestions="profileTags" />
   </div>
 
-  <!-- Public Display & Description -->
   <div class="bg-transparent rounded-md p-4 border border-line mt-4">
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center">
@@ -195,7 +193,6 @@ watch(
     </div>
   </div>
 
-  <!-- Advanced Settings Toggle -->
   <div class="border-t border-line pt-4 mt-6">
     <button
       class="flex items-center text-xs font-semibold text-fg-muted hover:text-fg transition-colors focus-visible:outline-hidden"

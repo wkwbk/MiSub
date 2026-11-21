@@ -6,7 +6,7 @@ import {
   normalizePublicLinksConfig,
   PUBLIC_LINK_CATEGORIES,
   resolvePublicLinkIcon,
-} from '@/constants/default-public-links.js';
+} from '@shared/default-public-links.js';
 
 const props = defineProps({
   publicLinks: {
@@ -71,7 +71,6 @@ const getLinkHostname = (rawUrl) => {
         </div>
       </div>
 
-      <!-- Category Tabs -->
       <div v-if="availableLinkCategories.length > 2" class="flex flex-wrap items-center justify-center gap-2 mb-8">
         <button
           v-for="tab in availableLinkCategories"

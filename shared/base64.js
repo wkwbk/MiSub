@@ -47,3 +47,20 @@ export function base64ToUtf8(str) {
   const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
   return textDecoder.decode(bytes);
 }
+
+/**
+ * 将 ArrayBuffer / Uint8Array 编码为标准 Base64
+ * @param {ArrayBuffer|ArrayBufferView} buffer
+ * @returns {string}
+ */
+export function encodeArrayBufferToBase64(buffer) {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = '';
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return btoa(binary);
+}

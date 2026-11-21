@@ -31,9 +31,6 @@ function formatInlineMarkdown(rawText) {
   return formatted.replace(/%%MISUB_CODE_(\d+)%%/g, (_, idx) => codeTokens[Number(idx)] || '');
 }
 
-/**
- * Render lightweight changelog markdown (headings, lists, bold, inline code, links) into sanitized HTML.
- */
 export function renderChangelogMarkdown(markdown) {
   const source = String(markdown || '').trim();
   if (!source) return '';

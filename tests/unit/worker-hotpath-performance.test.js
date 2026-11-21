@@ -8,7 +8,8 @@ import {
 } from '../../functions/modules/auth-middleware.js';
 import { clearCookieSecretCache, getCookieSecret } from '../../functions/modules/utils.js';
 import { SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.js';
-import { SettingsCache } from '../../functions/storage-adapter.js';
+import { clearSettingsCache, StorageFactory } from '../../functions/storage-adapter.js';
+import { STORAGE_KEY_SETTINGS } from '../../functions/modules/config.js';
 
 function createCountingD1(initialSettings = {}) {
   const settingsMap = new Map(Object.entries(initialSettings));
@@ -64,7 +65,7 @@ function createMockRequest(url, { method = 'GET', headers = {} } = {}) {
 describe('worker hot-path D1 and auth performance guards', () => {
   it('skips D1 and session renewal completely for static public assets even with mature auth cookie', async () => {
     clearCookieSecretCache();
-    SettingsCache.clear();
+    clearSettingsCache();
 
     const secret = 'test-static-secret';
     const db = createCountingD1({ SYSTEM_COOKIE_SECRET: secret });
@@ -152,5 +153,32 @@ describe('worker hot-path D1 and auth performance guards', () => {
     } finally {
       verifySpy.mockRestore();
     }
+  });
+
+  it('caches settings inside D1StorageAdapter, supports fresh bypass, and auto-invalidates on put', async () => {
+    clearSettingsCache();
+    const db = createCountingD1({ main: { FileName: 'MiSub-V1' } });
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+
+    const first = await adapter.get(STORAGE_KEY_SETTINGS);
+    const second = await adapter.get(STORAGE_KEY_SETTINGS);
+    expect(first).toEqual({ FileName: 'MiSub-V1' });
+    expect(second).toEqual({ FileName: 'MiSub-V1' });
+    expect(db.queries).toHaveLength(1);
+
+    // Mutating returned object must not pollute cache
+    first.FileName = 'Mutated';
+    const third = await adapter.get(STORAGE_KEY_SETTINGS);
+    expect(third.FileName).toBe('MiSub-V1');
+    expect(db.queries).toHaveLength(1);
+
+    // Explicit fresh read bypasses cache
+    await adapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true });
+    expect(db.queries).toHaveLength(2);
+
+    // Writing settings automatically invalidates cache
+    await adapter.put(STORAGE_KEY_SETTINGS, { FileName: 'MiSub-V2' });
+    const afterPut = await adapter.get(STORAGE_KEY_SETTINGS);
+    expect(afterPut).toEqual({ FileName: 'MiSub-V2' });
   });
 });
