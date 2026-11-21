@@ -359,7 +359,7 @@ defineExpose({
 }
 
 .drag-drop-item-wrapper.drag-over {
-  @apply bg-gray-50 dark:bg-gray-700;
+  @apply bg-hover;
 }
 
 .drag-drop-item-wrapper.ghost {
@@ -399,19 +399,6 @@ defineExpose({
 }
 
 .drag-drop-footer {
-  @apply text-sm text-fg-subtle dark:text-gray-400;
-}
-
-/* 暗黑模式下的拖拽状态 */
-.dark .drag-drop-item-wrapper.drag-over {
-  @apply bg-gray-700;
-}
-
-.dark .drag-drop-item-wrapper.chosen {
-  @apply bg-active border-line-strong;
-}
-
-.dark .drag-handle {
-  @apply text-gray-500;
+  @apply text-sm text-fg-subtle;
 }
 </style>

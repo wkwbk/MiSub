@@ -288,21 +288,21 @@ const isCustomPageFullWidth = computed(() => {
       >
         <div class="relative flex items-center justify-center mb-6">
           <!-- Track Ring -->
-          <div class="w-12 h-12 rounded-full border border-zinc-200 dark:border-zinc-800"></div>
+          <div class="w-12 h-12 rounded-full border border-line"></div>
           <!-- Spinning Hairline Arc -->
           <div
-            class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-zinc-900 dark:border-t-zinc-100 animate-spin"
+            class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-fg animate-spin"
           ></div>
           <!-- Centered Brand Glyph -->
-          <div class="absolute inset-0 flex items-center justify-center text-zinc-400 dark:text-zinc-500">
+          <div class="absolute inset-0 flex items-center justify-center text-fg-subtle">
             <Globe class="w-5 h-5" stroke-width="1.75" />
           </div>
         </div>
         <div class="flex flex-col items-center gap-1.5">
-          <span class="font-display font-semibold tracking-tight text-sm text-zinc-900 dark:text-zinc-100">
+          <span class="font-display font-semibold tracking-tight text-sm text-fg">
             MiSub
           </span>
-          <span class="text-xs font-mono text-zinc-400 dark:text-zinc-500">
+          <span class="text-xs font-mono text-fg-subtle">
             {{ t('common.loading') }}
           </span>
         </div>

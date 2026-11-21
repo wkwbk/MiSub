@@ -437,7 +437,7 @@ watch(
             <input
               v-model="settings.subconverter.defaultBackend"
               :aria-label="t('settings.transformCustomBackend')"
-              class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-xs font-mono text-fg focus:border-line-strong focus-visible:ring-1 focus-visible:ring-zinc-500"
+              class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-xs font-mono text-fg focus:border-line-strong focus-visible:ring-1 focus-visible:ring-line-strong"
               placeholder="subapi.cmliussss.net"
               type="text"
             />

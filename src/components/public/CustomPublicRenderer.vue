@@ -255,11 +255,11 @@ watch(
           <button
             :aria-label="themeStore.theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')"
             :title="themeStore.theme === 'dark' ? t('common.switchToLight') : t('common.switchToDark')"
-            class="theme-toggle-btn p-2 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#171717] shadow-none transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            class="theme-toggle-btn p-2 rounded-md border border-line bg-surface shadow-none transition-colors hover:bg-hover text-fg"
             @click="themeStore.toggleTheme"
           >
-            <Sun v-if="themeStore.theme === 'dark'" class="w-4 h-4 text-zinc-200" />
-            <Moon v-else class="w-4 h-4 text-zinc-700" />
+            <Sun v-if="themeStore.theme === 'dark'" class="w-4 h-4" />
+            <Moon v-else class="w-4 h-4" />
           </button>
         </Teleport>
       </template>

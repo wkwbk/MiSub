@@ -66,7 +66,7 @@ function copyCronUrl() {
         <input
           v-model="settings.cronSecret"
           :placeholder="t('settings.cronSecretPlaceholder')"
-          class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg transition-colors"
+          class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
           type="text"
         />
         <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
@@ -84,13 +84,13 @@ function copyCronUrl() {
             <input
               :aria-label="t('settings.cronCompatibleUrl')"
               :value="cronUrl"
-              class="flex-1 block w-full px-3 py-2 bg-inset border border-line rounded-l-md text-fg font-mono text-xs"
+              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-fg font-mono text-xs"
               readonly
               type="text"
             />
             <button
               :aria-label="t('actions.copy')"
-              class="inline-flex items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg focus-visible:outline-hidden"
+              class="inline-flex shrink-0 items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
               type="button"
               @click="copyCronUrl"
             >

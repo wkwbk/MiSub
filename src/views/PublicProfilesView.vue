@@ -335,7 +335,7 @@ const getPlatformStyle = (p) => {
       'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
     ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
   };
-  return map[p] || 'bg-gray-100 text-gray-800 border border-line';
+  return map[p] || 'bg-elevated-card text-fg-muted border border-line';
 };
 
 onMounted(async () => {
@@ -578,7 +578,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Clients Section (Visually Separated) -->
-        <div class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent">
+        <div class="mt-16 pt-12 pb-2 border-t border-line bg-transparent">
           <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-8 relative">
               <div class="relative inline-flex flex-col items-center">

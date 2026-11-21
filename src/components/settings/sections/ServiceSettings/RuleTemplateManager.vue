@@ -177,7 +177,7 @@ defineExpose({
         </button>
       </div>
 
-      <div v-if="selectedTemplate" class="space-y-4 lg:pl-6 lg:border-l lg:border-zinc-800/80">
+      <div v-if="selectedTemplate" class="space-y-4 lg:pl-6 lg:border-l lg:border-line">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="block">
             <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted">{{

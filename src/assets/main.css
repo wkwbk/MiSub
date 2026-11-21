@@ -85,6 +85,10 @@
     --scrollbar-thumb: rgba(0, 0, 0, 0.16);
     --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
+    /* Frosted Glass Chrome Tokens (Light Default) */
+    --surface-glass: rgba(255, 255, 255, 0.72);
+    --surface-glass-nav: rgba(255, 255, 255, 0.8);
+
     /* Danger Hover Accents (Light) */
     --hover-danger-bg-light: #fee2e2;
     --hover-danger-border-light: #fca5a5;
@@ -153,6 +157,10 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
     --scrollbar-thumb: rgba(255, 255, 255, 0.16);
     --scrollbar-thumb-hover: rgba(255, 255, 255, 0.28);
+
+    /* Frosted Glass Chrome Tokens (Dark) */
+    --surface-glass: rgba(14, 14, 14, 0.75);
+    --surface-glass-nav: rgba(14, 14, 14, 0.85);
 }
 
 @layer base {
@@ -230,8 +238,20 @@
     select:disabled {
         cursor: not-allowed;
     }
+
+    button,
+    input[type='text'],
+    input[type='number'],
+    input[type='password'],
+    input[type='email'],
+    input[type='search'],
+    select,
+    textarea {
+        border-radius: var(--misub-radius-md);
+    }
 }
 
+@layer components {
 .stat-card {
     cursor: pointer;
 }
@@ -427,17 +447,6 @@
     border-radius: var(--misub-radius-lg);
 }
 
-button,
-input[type='text'],
-input[type='number'],
-input[type='password'],
-input[type='email'],
-input[type='search'],
-select,
-textarea {
-    border-radius: var(--misub-radius-md);
-}
-
 .app-nav-bar {
     border-radius: 0 !important;
     backdrop-filter: blur(8px);
@@ -450,7 +459,7 @@ textarea {
     bottom: 0;
     min-height: calc(4rem + max(env(safe-area-inset-bottom, 0px), 12px));
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
-    background: rgba(255, 255, 255, 0.8);
+    background: var(--surface-glass-nav);
     backdrop-filter: blur(8px);
     border-top: 1px solid var(--line);
     box-shadow: 0 -8px 24px rgba(17, 24, 39, 0.06);
@@ -464,7 +473,6 @@ textarea {
 }
 
 .dark .mobile-nav-glass {
-    background: rgba(14, 14, 14, 0.85);
     border-top: 1px solid var(--border-modal-divider);
     box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.45);
 }
@@ -491,24 +499,17 @@ textarea {
         left: 0;
         right: 0;
         z-index: var(--z-nav);
-        background: rgba(255, 255, 255, 0.72) !important;
+        background: var(--surface-glass) !important;
         backdrop-filter: blur(8px);
         transition: background-color 0.2s ease;
         min-height: calc(env(safe-area-inset-top, 0px) + 80px);
     }
 
-    .dark .ios-fixed-header {
-        background: rgba(14, 14, 14, 0.75) !important;
-    }
-
     .ios-status-overlay {
-        background: rgba(255, 255, 255, 0.72);
+        background: var(--surface-glass);
         backdrop-filter: blur(8px);
     }
-
-    .dark .ios-status-overlay {
-        background: rgba(14, 14, 14, 0.75);
-    }
+}
 }
 
 /* ============================================

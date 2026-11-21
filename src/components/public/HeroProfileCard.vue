@@ -50,7 +50,7 @@ const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', '
                 v-for="tag in profileTags"
                 :key="tag"
                 :title="tag"
-                class="max-w-[140px] truncate rounded-md border border-line bg-zinc-50 dark:bg-transparent px-2 py-0.5 text-[11px] font-medium text-fg-muted"
+                class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-2 py-0.5 text-[11px] font-medium text-fg-muted"
               >
                 {{ tag }}
               </span>

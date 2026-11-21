@@ -82,9 +82,7 @@ useScrollLock(() => props.isExpanded);
 
 <style scoped>
 .qr-overlay-enter-active .bg-white,
-.qr-overlay-leave-active .bg-white,
-.qr-overlay-enter-active .dark\:bg-gray-800,
-.qr-overlay-leave-active .dark\:bg-gray-800 {
+.qr-overlay-leave-active .bg-white {
   transition:
     transform 0.3s ease,
     opacity 0.3s ease;

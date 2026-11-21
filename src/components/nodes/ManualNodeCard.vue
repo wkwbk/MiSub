@@ -211,7 +211,7 @@ const copyToClipboard = async (text) => {
           :class="{ 'animate-pulse text-fg': isPinging }"
           :disabled="isPinging"
           :title="t('actions.ping')"
-          class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-zinc-800 hover:bg-hover hover:text-fg"
+          class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
           @click.stop="emit('ping')"
         >
           <Zap class="h-3.5 w-3.5" />

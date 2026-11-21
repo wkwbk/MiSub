@@ -89,7 +89,7 @@ const handleContentUpdate = () => {
           <input
             v-model="announcement.title"
             :placeholder="t('settings.announcementTitlePlaceholder')"
-            class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong sm:text-sm text-fg transition-colors"
+            class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong sm:text-sm text-fg transition-colors"
             type="text"
             @input="handleContentUpdate"
           />

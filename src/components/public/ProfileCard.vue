@@ -40,7 +40,7 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
       <button
         :aria-label="t('actions.showQrCode')"
         :class="{
-          'bg-accent text-accent-fg border-zinc-900 dark:border-zinc-100': isQrExpanded,
+          'bg-accent text-accent-fg border-accent': isQrExpanded,
         }"
         :title="t('actions.showQrCode')"
         class="rounded-md border border-line p-1.5 text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
@@ -60,7 +60,7 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
         v-for="tag in profileTags"
         :key="tag"
         :title="tag"
-        class="max-w-[140px] truncate rounded-md border border-line bg-zinc-50 dark:bg-transparent px-1.5 py-0.5 text-[10px] font-medium text-fg-muted"
+        class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-1.5 py-0.5 text-[10px] font-medium text-fg-muted"
       >
         {{ tag }}
       </span>

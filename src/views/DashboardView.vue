@@ -312,7 +312,7 @@ const handleQRCode = (url, title) => {
             </div>
             <p class="mt-2 text-xs sm:text-sm text-fg-muted flex flex-wrap items-center gap-x-2 gap-y-1">
               <span>{{ t('dashboard.subtitle') }}</span>
-              <span class="hidden sm:inline text-zinc-700">|</span>
+              <span class="hidden sm:inline text-fg-subtle">|</span>
               <span class="w-full sm:w-auto text-xs sm:text-sm"
                 >{{ t('dashboard.lastUpdate') }}:
                 <span class="font-mono text-fg-muted">{{ lastUpdatedTime }}</span></span
@@ -476,7 +476,7 @@ const handleQRCode = (url, title) => {
             <button
               v-if="dismissedHealthItemsCount > 0"
               :disabled="isUpdatingHealthDismissal"
-              class="mt-3 justify-self-start text-xs font-mono font-medium text-fg-muted underline decoration-zinc-700 underline-offset-4 hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="mt-3 justify-self-start text-xs font-mono font-medium text-fg-muted underline decoration-line-strong underline-offset-4 hover:text-fg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               data-testid="health-items-restore"
               type="button"
               @click="restoreDismissedHealthItems"
@@ -498,7 +498,7 @@ const handleQRCode = (url, title) => {
               {{ t('dashboard.guide.title') }}
             </h3>
             <div
-              class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-line-subtle border border-line rounded-md overflow-hidden md:[&>*:nth-child(n+3)]:border-t md:[&>*:nth-child(n+3)]:border-zinc-800"
+              class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-line-subtle border border-line rounded-md overflow-hidden md:[&>*:nth-child(n+3)]:border-t md:[&>*:nth-child(n+3)]:border-line-subtle"
             >
               <div class="p-4 bg-transparent">
                 <h4 class="text-sm font-mono font-medium text-fg mb-1.5">

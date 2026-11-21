@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onUnmounted, ref } from 'vue';
-import { Check, Copy, QrCode } from '@lucide/vue';
+import { ArrowRight, Check, Copy, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
@@ -155,11 +155,10 @@ onUnmounted(() => {
               <span class="block font-medium text-fg">{{ task.title }}</span>
               <span class="mt-0.5 block text-[11px] leading-snug text-fg-muted">{{ task.description }}</span>
             </span>
-            <span
+            <ArrowRight
               aria-hidden="true"
-              class="shrink-0 font-mono text-fg-subtle transition-transform group-hover/task:translate-x-0.5 group-hover/task:text-fg"
-              >→</span
-            >
+              class="h-4 w-4 shrink-0 text-fg-subtle transition-all group-hover/task:translate-x-0.5 group-hover/task:text-fg"
+            />
           </router-link>
         </div>
       </div>

@@ -365,7 +365,7 @@ const handlePageChange = (page) => {
         <div class="flex space-x-1">
           <button
             :disabled="currentPage <= 1"
-            class="px-3 py-2 text-sm border border-line-strong rounded-l-md bg-surface hover:bg-hover disabled:opacity-50"
+            class="px-3 py-2 text-sm border border-line-strong rounded-l-md rounded-r-none bg-surface hover:bg-hover disabled:opacity-50"
             @click="handlePageChange(currentPage - 1)"
           >
             {{ t('common.prevPage') }}
@@ -385,7 +385,7 @@ const handlePageChange = (page) => {
 
           <button
             :disabled="currentPage >= totalPages"
-            class="px-3 py-2 text-sm border border-line-strong rounded-r-md bg-surface hover:bg-hover disabled:opacity-50"
+            class="px-3 py-2 text-sm border border-line-strong rounded-r-md rounded-l-none bg-surface hover:bg-hover disabled:opacity-50"
             @click="handlePageChange(currentPage + 1)"
           >
             {{ t('common.nextPage') }}

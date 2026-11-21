@@ -280,7 +280,7 @@ const handleCustomProfileIntervalBlur = () => {
             id="setting-mytoken"
             v-model="settings.mytoken"
             :class="{
-              'ring-1 ring-zinc-400 rounded-md': highlightedFocusId === 'setting-mytoken',
+              'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-mytoken',
             }"
             :error="myTokenError"
             :label="t('settings.customToken')"
@@ -292,7 +292,7 @@ const handleCustomProfileIntervalBlur = () => {
             id="setting-profileToken"
             v-model="settings.profileToken"
             :class="{
-              'ring-1 ring-zinc-400 rounded-md': highlightedFocusId === 'setting-profileToken',
+              'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-profileToken',
             }"
             :error="profileTokenError"
             :label="t('settings.profileToken')"
@@ -571,7 +571,7 @@ const handleCustomProfileIntervalBlur = () => {
                 <label class="flex items-center cursor-pointer group">
                   <input
                     v-model="disguiseConfig.pageType"
-                    class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
+                    class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
                     type="radio"
                     value="default"
                   />
@@ -585,7 +585,7 @@ const handleCustomProfileIntervalBlur = () => {
                 <label class="flex items-center cursor-pointer group">
                   <input
                     v-model="disguiseConfig.pageType"
-                    class="h-4 w-4 text-fg focus-visible:ring-zinc-500 border-line-strong bg-elevated-card"
+                    class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
                     type="radio"
                     value="redirect"
                   />

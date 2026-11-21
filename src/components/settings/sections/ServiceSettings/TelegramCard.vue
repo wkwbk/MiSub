@@ -139,7 +139,7 @@ async function testNotification() {
             <label class="block text-xs font-medium text-fg-muted mb-1.5">Bot Token</label>
             <input
               v-model="settings.BotToken"
-              class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg transition-colors"
+              class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
               placeholder="123456:ABC-DEF..."
               type="text"
             />
@@ -151,7 +151,7 @@ async function testNotification() {
             <label class="block text-xs font-medium text-fg-muted mb-1.5">Chat ID</label>
             <input
               v-model="settings.ChatID"
-              class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg transition-colors"
+              class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
               placeholder="123456789"
               type="text"
             />
@@ -216,7 +216,7 @@ async function testNotification() {
             <label class="block text-xs font-medium text-fg-muted">Push Bot Token</label>
             <input
               v-model="telegramPushConfig.bot_token"
-              class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg"
+              class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="123456:ABC-DEF..."
               type="text"
             />
@@ -230,7 +230,7 @@ async function testNotification() {
             <input
               v-model="telegramPushConfig.webhook_secret"
               :aria-label="t('settings.telegramWebhookSecret')"
-              class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-zinc-500 focus:border-line-strong text-sm font-mono text-fg"
+              class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="random_secret-token"
               type="text"
             />
@@ -281,12 +281,12 @@ async function testNotification() {
           <div class="mt-1.5 flex rounded-md shadow-none">
             <input
               :value="webhookUrl"
-              class="flex-1 block w-full px-3 py-2 bg-inset border border-line rounded-l-md text-xs font-mono text-fg"
+              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg"
               readonly
               type="text"
             />
             <button
-              class="inline-flex items-center px-4 py-2 border border-l-0 border-line rounded-r-md bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg focus-visible:outline-hidden"
+              class="inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
               type="button"
               @click="copyText(webhookUrl, 'webhook')"
             >
@@ -304,12 +304,12 @@ async function testNotification() {
             <input
               :aria-label="t('settings.telegramPublicAccess')"
               :value="setWebhookUrl"
-              class="flex-1 block w-full px-3 py-2 bg-inset border border-line rounded-l-md text-xs font-mono text-fg"
+              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg"
               readonly
               type="text"
             />
             <button
-              class="inline-flex items-center px-4 py-2 border border-l-0 border-line rounded-r-md bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg focus-visible:outline-hidden"
+              class="inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
               type="button"
               @click="copyText(setWebhookUrl, 'setWebhook')"
             >

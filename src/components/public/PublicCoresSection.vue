@@ -133,7 +133,7 @@ watch(
 <template>
   <div
     v-if="enabledPublicCores.length > 0"
-    class="mt-16 pt-12 pb-2 border-t border-zinc-200/80 dark:border-zinc-800/45 bg-transparent"
+    class="mt-16 pt-12 pb-2 border-t border-line bg-transparent"
   >
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-8 relative">
