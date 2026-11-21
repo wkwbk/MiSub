@@ -422,7 +422,7 @@ watch(totalPages, (nextTotal) => {
 
       <div
         v-if="statusFilter"
-        class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-line-strong bg-zinc-900/70 px-3 py-2 text-xs text-fg"
+        class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-line-strong bg-elevated-card px-3 py-2 text-xs text-fg"
         data-testid="subscription-status-filter-banner"
       >
         <div class="flex items-center gap-2">
@@ -430,7 +430,7 @@ watch(totalPages, (nextTotal) => {
           <span class="font-mono text-fg-muted">{{ visibleCount }}/{{ subscriptions.length }}</span>
         </div>
         <button
-          class="rounded border border-line-strong px-2 py-0.5 text-xs text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+          class="rounded border border-line-strong px-2 py-0.5 text-xs text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="clear-subscription-status-filter"
           type="button"
           @click="emit('clearStatusFilter')"
@@ -533,7 +533,7 @@ watch(totalPages, (nextTotal) => {
       <div class="mt-3 flex items-center justify-center gap-2">
         <button
           v-if="searchQuery"
-          class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+          class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="clear-subscription-search"
           type="button"
           @click="searchModel = ''"
@@ -542,7 +542,7 @@ watch(totalPages, (nextTotal) => {
         </button>
         <button
           v-if="currentTagFilters.length > 0"
-          class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+          class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="clear-subscription-tag-filter"
           type="button"
           @click="setTagFilters([])"

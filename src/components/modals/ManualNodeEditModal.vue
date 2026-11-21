@@ -266,7 +266,7 @@ const protocolColorMap = {
               <div v-if="suggestedName && !editingNode.name" class="mt-1.5 flex items-center gap-1.5">
                 <span class="text-xs text-fg-subtle">{{ t('manualNodes.suggestion') }}</span>
                 <button
-                  class="text-xs text-fg hover:text-white font-medium flex items-center gap-1 hover:underline"
+                  class="text-xs text-fg-muted hover:text-fg font-medium flex items-center gap-1 hover:underline transition-colors"
                   @click="applySuggestedName"
                 >
                   {{ suggestedName }}

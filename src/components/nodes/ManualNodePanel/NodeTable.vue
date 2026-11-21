@@ -86,7 +86,7 @@ const handleDragEnd = (evt) => {
         {{ t('manualNodes.noSearchResult', { keyword: localSearchTerm }) }}
       </p>
       <button
-        class="mt-3 inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+        class="mt-3 inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
         data-testid="clear-manual-node-search"
         type="button"
         @click="emit('clear-search')"

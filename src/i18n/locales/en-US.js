@@ -228,7 +228,7 @@ export default {
     emptyDesc: 'Add links or nodes.',
     selectedCount: '{count} selected',
     bulkActionsLabel: 'Batch:',
-    batchTag: 'Set tags...',
+    batchTag: 'Set tags',
     connectivityOk: 'OK',
     connectivityFailed: 'Failed',
     pinging: 'Testing',

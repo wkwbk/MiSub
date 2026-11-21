@@ -9,6 +9,7 @@ import {
   Filter,
   PauseCircle,
   PenLine,
+  PlayCircle,
   Plus,
   X,
   Zap,
@@ -201,10 +202,12 @@ const moveOperator = (event, index, direction) => {
   else if (expandedIndex.value === newIndex) expandedIndex.value = index;
 };
 
+const isOperatorEnabled = (op) => op?.enabled !== false;
+
 const toggleOperator = (event, index) => {
   event.stopPropagation();
   const newList = [...props.modelValue];
-  newList[index] = { ...newList[index], enabled: !newList[index].enabled };
+  newList[index] = { ...newList[index], enabled: !isOperatorEnabled(newList[index]) };
   emit('update:modelValue', newList);
 };
 
@@ -279,7 +282,7 @@ const updateOperatorParams = (index, params) => {
         :class="[
           'group overflow-hidden rounded-md border bg-transparent transition-colors',
           expandedIndex === index ? 'border-line-strong' : 'border-line hover:border-line-strong',
-          !op.enabled && 'opacity-60 grayscale-[0.5]',
+          !isOperatorEnabled(op) && 'opacity-60 grayscale-[0.5]',
         ]"
       >
         <!-- Compact Header -->
@@ -302,13 +305,13 @@ const updateOperatorParams = (index, params) => {
                     {{ operatorLabel(op.type) }}
                   </h4>
                   <span
-                    v-if="!op.enabled"
+                    v-if="!isOperatorEnabled(op)"
                     class="rounded-md border border-line bg-transparent px-1.5 py-0.5 font-mono text-[10px] text-fg-subtle"
                     >{{ t('operators.paused') }}</span
                   >
                 </div>
                 <p class="mt-1 text-[11px] text-fg-subtle sm:hidden">
-                  {{ op.enabled ? t('operators.enabled') : t('operators.disabled') }}
+                  {{ isOperatorEnabled(op) ? t('operators.enabled') : t('operators.disabled') }}
                 </p>
               </div>
             </div>
@@ -332,15 +335,19 @@ const updateOperatorParams = (index, params) => {
                   <ChevronDown class="h-4 w-4" />
                 </button>
                 <button
+                  :aria-label="isOperatorEnabled(op) ? t('operators.paused') : t('operators.enabled')"
                   :class="
-                    op.enabled
+                    isOperatorEnabled(op)
                       ? 'text-fg-muted hover:bg-hover hover:text-amber-400'
-                      : 'text-fg-subtle hover:bg-hover hover:text-fg'
+                      : 'text-fg-muted hover:bg-hover hover:text-emerald-400'
                   "
-                  class="rounded-md p-1"
+                  :title="isOperatorEnabled(op) ? t('operators.paused') : t('operators.enabled')"
+                  class="rounded-md p-1 transition-colors"
+                  type="button"
                   @click="(e) => toggleOperator(e, index)"
                 >
-                  <PauseCircle class="h-4 w-4" />
+                  <PauseCircle v-if="isOperatorEnabled(op)" class="h-4 w-4" />
+                  <PlayCircle v-else class="h-4 w-4" />
                 </button>
                 <button
                   class="rounded-md p-1 text-fg-muted hover:bg-red-950/40 hover:text-red-400"

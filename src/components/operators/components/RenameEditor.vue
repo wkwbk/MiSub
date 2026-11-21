@@ -115,14 +115,14 @@ const applyPresetRegex = (rule) => {
           </div>
           <button
             v-if="props.modelValue.regex?.enabled"
-            class="text-[10px] text-fg font-semibold ml-1 hover:text-white"
+            class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
             @click="addRule"
           >
             + {{ t('operators.addItem') }}
           </button>
           <button
             :class="[
-              'text-[10px] font-medium transition-colors ml-2',
+              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
               props.modelValue.regex?.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -201,7 +201,7 @@ const applyPresetRegex = (rule) => {
         }}</label>
         <button
           :class="[
-            'text-[10px] font-medium transition-colors',
+            'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
             props.modelValue.template?.enabled ? 'text-fg' : 'text-fg-subtle',
           ]"
           @click="updateTemplate({ enabled: !props.modelValue.template?.enabled })"

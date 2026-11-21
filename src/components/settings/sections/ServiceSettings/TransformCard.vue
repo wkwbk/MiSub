@@ -247,7 +247,7 @@ watch(
         </div>
         <div class="flex shrink-0 items-center justify-end gap-2">
           <button
-            class="inline-flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-2.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white"
+            class="inline-flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-2.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
             data-testid="restore-engine-settings"
             type="button"
             @click="
@@ -308,7 +308,7 @@ watch(
               v-if="!isExternalEngine"
               :class="
                 isCustomTemplateMode
-                  ? 'bg-active text-fg hover:bg-zinc-700'
+                  ? 'bg-active text-fg hover:bg-hover'
                   : 'text-fg-muted hover:bg-hover hover:text-fg'
               "
               class="inline-flex h-6 items-center gap-1 rounded px-1.5 text-xs font-medium transition-colors"

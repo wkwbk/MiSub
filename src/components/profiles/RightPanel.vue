@@ -258,7 +258,7 @@ onUnmounted(() => {
           <span v-if="!isLinkValid">
             {{ t('dashboard.linkCard.fixedTokenHint', { name: requiredToken.name }) }}
             <router-link
-              class="font-medium text-fg underline decoration-zinc-600 underline-offset-4 hover:text-white"
+              class="font-medium text-fg underline decoration-line-strong underline-offset-4 transition-colors hover:text-fg-muted"
               to="/dashboard/settings"
               >{{ t('dashboard.linkCard.settingsLink') }}</router-link
             >

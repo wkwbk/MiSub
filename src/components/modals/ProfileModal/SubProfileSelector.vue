@@ -90,14 +90,14 @@ const handleSelectAllValid = () => {
       </h4>
       <div class="space-x-2 shrink-0 whitespace-nowrap">
         <button
-          class="text-xs text-fg-muted hover:text-white hover:underline"
+          class="text-xs text-fg-muted hover:text-fg hover:underline transition-colors"
           type="button"
           @click="handleSelectAllValid"
         >
           {{ t('profileModal.selectAll') }}
         </button>
         <button
-          class="text-xs text-fg-muted hover:text-white hover:underline"
+          class="text-xs text-fg-muted hover:text-fg hover:underline transition-colors"
           type="button"
           @click="emit('deselect-all')"
         >

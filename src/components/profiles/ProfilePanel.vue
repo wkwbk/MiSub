@@ -369,7 +369,7 @@ const draggableProfiles = computed({
         <div class="mt-3 flex items-center justify-center gap-2">
           <button
             v-if="searchQuery"
-            class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+            class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
             type="button"
             @click="searchModel = ''"
           >
@@ -377,7 +377,7 @@ const draggableProfiles = computed({
           </button>
           <button
             v-if="currentTagFilters.length > 0"
-            class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-white cursor-pointer"
+            class="inline-flex items-center justify-center rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:border-line-strong hover:bg-hover hover:text-fg cursor-pointer"
             type="button"
             @click="setTagFilters([])"
           >

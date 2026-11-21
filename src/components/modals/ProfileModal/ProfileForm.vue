@@ -198,7 +198,7 @@ watch(
   <!-- Advanced Settings Toggle -->
   <div class="border-t border-line pt-4 mt-6">
     <button
-      class="flex items-center text-xs font-semibold text-fg hover:text-white focus-visible:outline-hidden"
+      class="flex items-center text-xs font-semibold text-fg-muted hover:text-fg transition-colors focus-visible:outline-hidden"
       type="button"
       @click="emit('toggle-advanced')"
     >

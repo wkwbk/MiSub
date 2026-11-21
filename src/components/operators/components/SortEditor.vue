@@ -273,7 +273,10 @@ const displayTagName = (item, name) =>
       <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
         t('operators.sortWeights')
       }}</label>
-      <button class="text-[10px] text-fg font-semibold hover:text-white" @click="addKey">
+      <button
+        class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+        @click="addKey"
+      >
         + {{ t('operators.addCondition') }}
       </button>
     </div>
@@ -351,7 +354,7 @@ const displayTagName = (item, name) =>
             </span>
             <button
               v-if="item.key === 'region' || item.key === 'protocol'"
-              class="text-fg-muted hover:text-white font-semibold"
+              class="rounded px-1.5 py-0.5 font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
               type="button"
               @click="resetToDefaultOrder(idx, item.key)"
             >

@@ -229,7 +229,7 @@ export default {
     emptyDesc: '添加分享链接或单个节点。',
     selectedCount: '已选 {count}',
     bulkActionsLabel: '批量操作:',
-    batchTag: '设置标签...',
+    batchTag: '设置标签',
     connectivityOk: '连通正常',
     connectivityFailed: '连通失败',
     pinging: '检测中',

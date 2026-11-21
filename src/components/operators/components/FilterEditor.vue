@@ -91,7 +91,7 @@ const toggleValue = (type, value) => {
           }}</label>
           <button
             :class="[
-              'text-[10px] font-medium transition-colors',
+              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
               params.protocols.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -132,7 +132,7 @@ const toggleValue = (type, value) => {
           }}</label>
           <button
             :class="[
-              'text-[10px] font-medium transition-colors',
+              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
               params.regions.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -172,16 +172,19 @@ const toggleValue = (type, value) => {
         <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">
           {{ t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex') }}
         </label>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
           <button
             v-if="params[type].enabled"
-            class="text-[10px] text-fg font-semibold hover:text-white"
+            class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
             @click="addRule(type)"
           >
             + {{ t('operators.add') }}
           </button>
           <button
-            :class="['text-[10px] font-medium', params[type].enabled ? 'text-fg' : 'text-fg-subtle']"
+            :class="[
+              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+              params[type].enabled ? 'text-fg' : 'text-fg-subtle',
+            ]"
             @click="updateParam(type, { ...params[type], enabled: !params[type].enabled })"
           >
             {{ statusLabel(params[type].enabled) }}

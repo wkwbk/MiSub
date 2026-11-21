@@ -382,7 +382,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
             <span class="truncate">{{ effectiveDetectedName }}</span>
             <button
               :title="t('subscriptions.applyDetectedName')"
-              class="shrink-0 font-medium text-fg hover:text-white underline underline-offset-2"
+              class="shrink-0 font-medium text-fg hover:text-fg-muted underline underline-offset-2 transition-colors"
               type="button"
               @click.stop="emit('applyDetectedName', effectiveDetectedName)"
             >
@@ -513,7 +513,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           v-if="websiteUrl"
           :href="websiteUrl"
           :title="t('subscriptions.visitWebsite')"
-          class="flex items-center gap-0.5 font-mono text-fg hover:text-white underline underline-offset-2 transition-colors cursor-pointer"
+          class="flex items-center gap-0.5 font-mono text-fg hover:text-fg-muted underline underline-offset-2 transition-colors cursor-pointer"
           data-testid="subscription-website-link"
           rel="noopener noreferrer"
           target="_blank"

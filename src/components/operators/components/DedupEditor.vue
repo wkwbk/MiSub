@@ -35,8 +35,6 @@ const updateValue = (patch) => {
   };
 };
 
-const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
-
 const toggleProtocol = (protocol) => {
   const current = new Set(params.value.prefer?.protocolOrder || []);
   if (current.has(protocol)) {
@@ -58,7 +56,7 @@ const toggleProtocol = (protocol) => {
   <div class="space-y-4">
     <div class="grid gap-4 md:grid-cols-2">
       <div class="space-y-2">
-        <label class="text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+        <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
           t('operators.dedupMode')
         }}</label>
         <Select
@@ -74,31 +72,44 @@ const toggleProtocol = (protocol) => {
         </p>
       </div>
 
-      <div class="space-y-2 rounded-md border border-line bg-transparent p-3">
-        <div class="flex items-center justify-between gap-3">
-          <div>
-            <p class="text-sm font-medium text-fg">
-              {{ t('operators.includeProtocolDedup') }}
-            </p>
-            <p class="text-[10px] text-fg-subtle">
-              {{ t('operators.includeProtocolDedupHint') }}
-            </p>
-          </div>
+      <div class="space-y-2">
+        <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+          t('operators.includeProtocolDedup')
+        }}</label>
+        <div class="grid h-9 grid-cols-2 gap-1 rounded-md border border-line bg-inset p-1">
           <button
             :class="
-              params.includeProtocol ? 'bg-accent text-accent-fg' : 'border border-line bg-transparent text-fg-muted'
+              params.includeProtocol
+                ? 'bg-accent text-accent-fg font-semibold'
+                : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
-            @click="updateValue({ includeProtocol: !params.includeProtocol })"
+            class="rounded px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
+            type="button"
+            @click="updateValue({ includeProtocol: true })"
           >
-            {{ statusLabel(params.includeProtocol) }}
+            {{ t('operators.statusOn') }}
+          </button>
+          <button
+            :class="
+              !params.includeProtocol
+                ? 'bg-accent text-accent-fg font-semibold'
+                : 'text-fg-muted hover:bg-hover hover:text-fg'
+            "
+            class="rounded px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
+            type="button"
+            @click="updateValue({ includeProtocol: false })"
+          >
+            {{ t('operators.statusOff') }}
           </button>
         </div>
+        <p class="text-[10px] text-fg-subtle">
+          {{ t('operators.includeProtocolDedupHint') }}
+        </p>
       </div>
     </div>
 
     <div class="space-y-2">
-      <label class="text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+      <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
         t('operators.preferredProtocols')
       }}</label>
       <div class="flex flex-wrap gap-2 rounded-md border border-line bg-transparent p-3">

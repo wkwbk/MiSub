@@ -335,13 +335,13 @@ const isCustomPageFullWidth = computed(() => {
                   })
                 }}
               </p>
-              <p class="text-xs sm:text-sm text-zinc-400 font-mono">
+              <p class="text-xs sm:text-sm text-fg-muted font-mono">
                 {{ t('notices.currentVersion', { version: currentVersion }) }}
               </p>
               <a
                 v-if="versionReleaseInfo.html_url"
                 :href="versionReleaseInfo.html_url"
-                class="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-medium text-zinc-200 underline decoration-zinc-600 underline-offset-4 hover:text-white"
+                class="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-medium text-fg underline decoration-line-strong underline-offset-4 hover:text-fg-muted transition-colors"
                 rel="noopener noreferrer"
                 target="_blank"
               >
@@ -349,7 +349,7 @@ const isCustomPageFullWidth = computed(() => {
               </a>
             </div>
             <button
-              class="rounded-md border border-zinc-800 bg-transparent px-2.5 py-1 text-xs font-medium text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100 transition-colors"
+              class="rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
               @click="showUpdateNotice = false"
             >
               {{ t('actions.gotIt') }}

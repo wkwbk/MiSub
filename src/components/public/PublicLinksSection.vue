@@ -141,7 +141,7 @@ const getLinkHostname = (rawUrl) => {
 
             <a
               :href="link.url"
-              class="font-mono text-xs font-semibold text-fg hover:text-white flex items-center gap-1 group/link shrink-0"
+              class="font-mono text-xs font-semibold text-fg-muted hover:text-fg transition-colors flex items-center gap-1 group/link shrink-0"
               rel="noopener noreferrer"
               target="_blank"
             >
