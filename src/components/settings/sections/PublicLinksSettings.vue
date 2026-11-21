@@ -123,12 +123,19 @@ const normalizeWebsiteUrl = (rawUrl) => {
 
 const persistPublicLinksSilently = async () => {
   try {
-    await api.post(
+    const res = await api.post(
       '/api/settings',
       { publicLinks: props.settings.publicLinks },
       { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
     );
-  } catch {
+    if (res?.success === false) {
+      showToast(res.message || t('settings.saveFailed'), 'error');
+      return false;
+    }
+    return true;
+  } catch (error) {
+    showToast(error?.message || t('settings.saveFailed'), 'error');
+    return false;
   }
 };
 

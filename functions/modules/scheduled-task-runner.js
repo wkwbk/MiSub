@@ -80,7 +80,7 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     return { skipped: true, reason: 'not-due' };
   }
 
-  const lock = await storageAdapter.get(LOCK_KEY).catch(() => null);
+  const lock = await storageAdapter.get(LOCK_KEY, 'json', { fresh: true }).catch(() => null);
   if (lock?.expiresAt && parseTime(lock.expiresAt) > now) {
     return { skipped: true, reason: 'locked' };
   }

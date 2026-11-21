@@ -80,19 +80,14 @@ export function parseHttpsUrl(url, isTls = true) {
 export function parseSocks5Url(url) {
   try {
     const body = url.substring(9);
-    const atIndex = body.indexOf('@');
-    if (atIndex === -1) return null;
+    const hashIdx = body.indexOf('#');
+    const bodyNoHash = hashIdx !== -1 ? body.substring(0, hashIdx) : body;
+    const queryIdx = bodyNoHash.indexOf('?');
+    const mainPart = queryIdx !== -1 ? bodyNoHash.substring(0, queryIdx) : bodyNoHash;
 
-    let userInfo = body.substring(0, atIndex);
-    let serverPart = body.substring(atIndex + 1);
-
-    const queryIndex = serverPart.indexOf('?');
-    const hashIndex = serverPart.indexOf('#');
-    if (queryIndex !== -1) {
-      serverPart = serverPart.substring(0, queryIndex);
-    } else if (hashIndex !== -1) {
-      serverPart = serverPart.substring(0, hashIndex);
-    }
+    const atIndex = mainPart.lastIndexOf('@');
+    const userInfo = atIndex !== -1 ? mainPart.substring(0, atIndex) : '';
+    const serverPart = atIndex !== -1 ? mainPart.substring(atIndex + 1) : mainPart;
 
     const { server, port } = parseHostPort(serverPart);
     const params = parseQueryParams(url);

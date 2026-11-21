@@ -227,7 +227,12 @@ export function useManualNodes(markDirty) {
       return;
     }
 
-    plan.removeNodes.forEach((node) => dataStore.removeSubscription(node.id));
+    plan.removeNodes.forEach((node) => {
+      dataStore.removeSubscription(node.id);
+      if (typeof dataStore.removeManualNodeFromProfiles === 'function') {
+        dataStore.removeManualNodeFromProfiles(node.id);
+      }
+    });
     showToast(t('manualNodes.removedDuplicates', { count: plan.removeNodes.length }), 'success');
     markDirty();
     manualNodesCurrentPage.value = 1;

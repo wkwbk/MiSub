@@ -60,7 +60,13 @@ const handleConfirm = () => {
 </script>
 
 <template>
-  <Modal :show="show" size="lg" @confirm="handleConfirm" @update:show="emit('update:show', $event)">
+  <Modal
+    :confirm-disabled="mode !== 'clear' && selectedTags.length === 0"
+    :show="show"
+    size="lg"
+    @confirm="handleConfirm"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex items-center gap-2">
         <Tag class="h-4 w-4 text-fg-subtle" />

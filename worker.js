@@ -5,6 +5,7 @@
 
 import { onRequest } from './functions/[[path]].js';
 import { handleCronTrigger } from './functions/modules/notifications.js';
+import { maybeRunScheduledTasks } from './functions/modules/scheduled-task-runner.js';
 
 export function createWorkerContext(request, env, ctx = {}) {
   return {
@@ -41,7 +42,16 @@ export default {
    */
   async scheduled(event, env, ctx) {
     const task = Promise.resolve()
-      .then(() => handleCronTrigger(env))
+      .then(async () => {
+        await handleCronTrigger(env);
+        await maybeRunScheduledTasks(
+          {
+            env,
+            waitUntil: typeof ctx?.waitUntil === 'function' ? ctx.waitUntil.bind(ctx) : () => {},
+          },
+          { source: 'cron' },
+        );
+      })
       .catch((error) => {
         console.error(`[Worker Scheduled] Cron execution failed (${event?.cron || 'unknown'}):`, error);
       });

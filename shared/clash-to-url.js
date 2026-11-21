@@ -166,6 +166,11 @@ export function convertClashProxyToUrl(proxy) {
       const sni = proxy.servername ?? proxy.sni;
       if (sni !== undefined) params.push(`sni=${encodeURIComponent(sni)}`);
       if (proxy['client-fingerprint']) params.push(`fp=${encodeURIComponent(proxy['client-fingerprint'])}`);
+      if (Array.isArray(proxy.alpn) && proxy.alpn.length > 0) {
+        params.push(`alpn=${encodeURIComponent(proxy.alpn.join(','))}`);
+      } else if (typeof proxy.alpn === 'string' && proxy.alpn) {
+        params.push(`alpn=${encodeURIComponent(proxy.alpn)}`);
+      }
       if (proxy['dialer-proxy']) params.push(`dp=${encodeURIComponent(proxy['dialer-proxy'])}`);
       if (proxy.skipCertVerify || proxy['skip-cert-verify']) params.push('allowInsecure=1');
       const realityOpts = proxy['reality-opts'];
@@ -253,6 +258,12 @@ export function convertClashProxyToUrl(proxy) {
       const sniVal = proxy.servername !== undefined ? proxy.servername : proxy.sni;
       if (sniVal !== undefined) params.push(`sni=${encodeURIComponent(sniVal)}`);
       if (proxy['client-fingerprint']) params.push(`fp=${encodeURIComponent(proxy['client-fingerprint'])}`);
+      if (proxy['skip-cert-verify']) params.push('allowInsecure=1');
+      if (Array.isArray(proxy.alpn) && proxy.alpn.length > 0) {
+        params.push(`alpn=${encodeURIComponent(proxy.alpn.join(','))}`);
+      } else if (typeof proxy.alpn === 'string' && proxy.alpn) {
+        params.push(`alpn=${encodeURIComponent(proxy.alpn)}`);
+      }
       if (proxy['dialer-proxy']) params.push(`dp=${encodeURIComponent(proxy['dialer-proxy'])}`);
       return `vless://${uuid}@${uriServer}:${port}?${params.join('&')}#${encodeURIComponent(name)}`;
     }

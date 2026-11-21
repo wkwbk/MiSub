@@ -56,17 +56,6 @@ export async function corsMiddleware(request, next, options = {}) {
     }
     const response = new Response(null, { status: 204 });
 
-    // 设置允许的源
-    if (allowOriginValue) {
-      response.headers.set('Access-Control-Allow-Origin', allowOriginValue);
-      if (shouldSetVary) {
-        response.headers.append('Vary', 'Origin');
-      }
-      if (allowCredentials && allowOriginValue !== '*') {
-        response.headers.set('Access-Control-Allow-Credentials', 'true');
-      }
-    }
-
     response.headers.set('Access-Control-Allow-Methods', methods.join(', '));
     response.headers.set('Access-Control-Allow-Headers', headers.join(', '));
     response.headers.set('Access-Control-Max-Age', maxAge.toString());

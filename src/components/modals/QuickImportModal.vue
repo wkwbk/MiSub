@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
+import { utf8ToBase64 } from '@shared/base64.js';
 import { X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -87,7 +88,7 @@ const generateDeepLink = (client) => {
     .replace('{url_singbox}', encodeURIComponent(singboxSubUrl))
     .replace('{url}', encodeURIComponent(subUrl))
     .replace('{name}', encodeURIComponent(props.profile?.name || t('quickImport.defaultName')))
-    .replace('{url_base64}', btoa(subUrl))
+    .replace('{url_base64}', utf8ToBase64(subUrl))
     .replace('{url_encoded}', encodeURIComponent(subUrl));
 };
 

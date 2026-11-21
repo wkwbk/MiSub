@@ -126,7 +126,7 @@ watch(
 </script>
 
 <template>
-  <Modal :confirm-disabled="true" :show="show" class="log-modal" size="4xl" @update:show="emit('update:show', $event)">
+  <Modal :show="show" :show-confirm="false" class="log-modal" size="4xl" @update:show="emit('update:show', $event)">
     <template #title>
       <div class="flex justify-between items-center w-full gap-2">
         <div class="flex items-center gap-2 min-w-0">

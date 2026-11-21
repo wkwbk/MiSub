@@ -290,7 +290,7 @@ export function parseTrojanUrl(url) {
       proxy['client-fingerprint'] = params.get('fp');
     }
 
-    if (params.get('allowInsecure') === '1') {
+    if (params.get('allowInsecure') === '1' || params.get('insecure') === '1') {
       proxy['skip-cert-verify'] = true;
     }
 
@@ -379,7 +379,7 @@ export function parseVmessUrl(url) {
     if (network === 'grpc') {
       const grpcOpts = {};
       if (config.path) grpcOpts['grpc-service-name'] = config.path;
-      if (config.host) grpcOpts['grpc-service-name'] = config.host;
+      else if (config.host) grpcOpts['grpc-service-name'] = config.host;
       if (Object.keys(grpcOpts).length > 0) {
         proxy['grpc-opts'] = grpcOpts;
       }

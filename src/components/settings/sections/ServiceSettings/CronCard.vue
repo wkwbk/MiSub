@@ -3,9 +3,11 @@ import { computed, ref } from 'vue';
 import { Clock, Copy } from '@lucide/vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { useI18n } from '@/i18n/index.js';
+import { useToastStore } from '@/stores/toast.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const { t } = useI18n();
+const { showToast } = useToastStore();
 
 const props = defineProps({
   settings: {
@@ -34,10 +36,10 @@ const cronHeaderCommand = computed(() => {
 });
 
 // 复制 Cron URL
-function copyCronUrl() {
-  if (cronUrl.value) {
-    copyTextToClipboard(cronUrl.value);
-  }
+async function copyCronUrl() {
+  if (!cronUrl.value) return;
+  const ok = await copyTextToClipboard(cronUrl.value);
+  showToast(ok ? t('common.copied') : t('common.copyFailed'), ok ? 'success' : 'error');
 }
 </script>
 

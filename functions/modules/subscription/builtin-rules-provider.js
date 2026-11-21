@@ -607,6 +607,7 @@ export function translateRuleLine(line, format) {
 
     case 'surge':
     case 'loon':
+      if (type === 'MATCH') return null;
       return line;
 
     case 'quanx':

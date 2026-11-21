@@ -156,14 +156,22 @@ export async function setCache(storageAdapter, cacheKey, nodes, sources = []) {
 export function triggerBackgroundRefresh(context, refreshFn) {
   if (context && typeof context.waitUntil === 'function') {
     // 使用 waitUntil 在响应后继续执行
+    let timeoutId;
     const refreshPromise = Promise.race([
       refreshFn(),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Background refresh timeout')), CACHE_CONFIG.BACKGROUND_REFRESH_TIMEOUT),
-      ),
-    ]).catch((error) => {
-      console.warn('[Cache] Background refresh failed:', error.message);
-    });
+      new Promise((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Background refresh timeout')),
+          CACHE_CONFIG.BACKGROUND_REFRESH_TIMEOUT,
+        );
+      }),
+    ])
+      .catch((error) => {
+        console.warn('[Cache] Background refresh failed:', error.message);
+      })
+      .finally(() => {
+        if (timeoutId !== undefined) clearTimeout(timeoutId);
+      });
 
     context.waitUntil(refreshPromise);
   } else {

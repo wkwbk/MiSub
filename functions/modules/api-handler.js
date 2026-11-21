@@ -428,7 +428,7 @@ export async function handleSettingsSave(request, env) {
         }
       }
 
-      const message = `⚙️ *MiSub 设置更新* ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
+      const message = `⚙️ <b>MiSub 设置更新</b> ⚙️\n\n您的 MiSub 应用设置已成功更新。`;
       await sendTgNotification(finalSettings, message);
     }
 
@@ -438,8 +438,8 @@ export async function handleSettingsSave(request, env) {
       data: redactSettingsForResponse(finalSettings),
       ...(telegramSync ? { telegramSync } : {}),
     });
-  } catch {
-    return createErrorResponse('保存设置失败', 500);
+  } catch (error) {
+    return createErrorResponse(error?.status ? error.message : '保存设置失败', error?.status || 500);
   }
 }
 
@@ -621,6 +621,6 @@ export async function handleUpdatePassword(request, env) {
     return createJsonResponse({ success: true, message: '密码已更新' });
   } catch (e) {
     console.error('[API Error /settings/password]', e);
-    return createErrorResponse('Failed to update password', 500);
+    return createErrorResponse(e?.status ? e.message : 'Failed to update password', e?.status || 500);
   }
 }

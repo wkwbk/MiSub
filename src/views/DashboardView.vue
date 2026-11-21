@@ -34,8 +34,8 @@ const { t } = useI18n();
 const { showToast } = useToastStore();
 
 const dataStore = useDataStore();
-const { settings, profiles, isLoading, lastUpdated } = storeToRefs(dataStore);
-const { activeProfiles, markDirty } = dataStore;
+const { settings, profiles, activeProfiles, isLoading, lastUpdated } = storeToRefs(dataStore);
+const { markDirty } = dataStore;
 
 const {
   totalRemainingTraffic: trafficVal,
@@ -57,7 +57,7 @@ const totalNodesCount = computed(() => {
 const subscriptionsCount = computed(() => (subscriptions.value || []).length);
 const manualNodesCount = computed(() => (manualNodes.value || []).length);
 const enabledManualNodesCount = computed(() => (manualNodes.value || []).filter((node) => node.enabled).length);
-const activeProfilesCount = computed(() => (activeProfiles || []).length);
+const activeProfilesCount = computed(() => (activeProfiles.value || []).length);
 
 const lastUpdatedTime = computed(() => {
   if (!lastUpdated.value) return t('dashboard.never');

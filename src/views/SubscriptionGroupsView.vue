@@ -233,7 +233,7 @@ const visibleSubscriptions = computed(() =>
     <SubscriptionPanel
       :active-tag-filters="activeTagFilters"
       :current-page="subscriptionsCurrentPage"
-      :filtered-count="filteredSubscriptions.length"
+      :filtered-count="activeStatusFilter ? undefined : filteredSubscriptions.length"
       :is-refreshing="isRefreshing"
       :is-sorting="isSortingSubs"
       :items-per-page="subscriptionsPerPage"

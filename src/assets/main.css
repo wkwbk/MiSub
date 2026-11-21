@@ -243,21 +243,6 @@
     cursor: pointer;
 }
 
-@keyframes wave {
-    0%,
-    40%,
-    100% {
-        transform: scaleY(0.4);
-    }
-    20% {
-        transform: scaleY(1);
-    }
-}
-
-.animate-wave {
-    animation: wave 1.2s ease-in-out infinite;
-}
-
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -423,10 +408,6 @@
     border-radius: var(--misub-radius-md);
 }
 
-.misub-radius-lg {
-    border-radius: var(--misub-radius-lg);
-}
-
 .panel-pagination-shell {
     border-radius: var(--misub-radius-lg);
 }
@@ -571,8 +552,7 @@
 }
 
 html:not(.dark) .hover\:bg-red-950\/40:not(:disabled):hover,
-html:not(.dark) .hover\:bg-red-950\/30:not(:disabled):hover,
-html:not(.dark) .hover\:bg-red-950\/50:not(:disabled):hover {
+html:not(.dark) .hover\:bg-red-950\/30:not(:disabled):hover {
     background-color: var(--hover-danger-bg-light);
 }
 

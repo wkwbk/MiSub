@@ -149,7 +149,7 @@ export function isIPv6(value) {
   if (!value || typeof value !== 'string') return false;
   const cleaned = value.trim().replace(/^\[|\]$/g, '');
   if (!cleaned.includes(':')) return false;
-  return /^[0-9a-f:]+$/i.test(cleaned) && cleaned.length >= 2 && cleaned.length <= 45;
+  return /^[0-9a-f:.]+$/i.test(cleaned) && cleaned.length >= 2 && cleaned.length <= 45;
 }
 
 export function isIpAddress(value) {
@@ -195,16 +195,25 @@ export function isPrivateOrReservedIp(ip) {
     return privateCidrs.some((cidr) => isIpInCidr(cleaned, cidr));
   }
   if (isIPv6(cleaned)) {
-    return (
-      cleaned === '::' ||
-      cleaned === '::1' ||
-      cleaned.startsWith('fc') ||
-      cleaned.startsWith('fd') ||
-      cleaned.startsWith('fe80:') ||
-      cleaned.startsWith('::ffff:127.') ||
-      cleaned.startsWith('::ffff:10.') ||
-      cleaned.startsWith('::ffff:192.168.')
-    );
+    if (cleaned === '::' || cleaned === '::1') return true;
+    // 未压缩全零或回环 (如 0:0:0:0:0:0:0:1 / 0000:...:0001)
+    if (/^(0+:){6,7}0*[01]?$/.test(cleaned)) return true;
+    // ULA (fc00::/7)、链路本地 (fe80::/10)、多播 (ff00::/8)
+    if (/^(fc|fd|fe[89ab]|ff)/i.test(cleaned)) return true;
+    // IPv4-mapped IPv6 点分十进制形式 (::ffff:127.0.0.1)
+    const mappedV4Match = cleaned.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/);
+    if (mappedV4Match) {
+      return isPrivateOrReservedIp(mappedV4Match[1]);
+    }
+    // IPv4-mapped IPv6 十六进制形式 (::ffff:7f00:1 / ::ffff:a9fe:a9fe)
+    const mappedHexMatch = cleaned.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+    if (mappedHexMatch) {
+      const hi = parseInt(mappedHexMatch[1], 16);
+      const lo = parseInt(mappedHexMatch[2], 16);
+      const v4 = `${(hi >> 8) & 255}.${hi & 255}.${(lo >> 8) & 255}.${lo & 255}`;
+      return isPrivateOrReservedIp(v4);
+    }
+    return false;
   }
   return true;
 }

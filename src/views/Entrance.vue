@@ -58,7 +58,7 @@ function checkPath() {
   // customLoginPath 不再由公开 API 返回；后端只在当前 Referer 是实际登录路径时
   // 返回 isLoginPath=true。未知路径不会被误当成登录页。
   let rememberedPath = readSessionPreference('misub:login-path') || '';
-  const inferredPath = config.isLoginPath ? rememberedPath || currentPath : rememberedPath;
+  const inferredPath = config.isLoginPath ? currentPath : rememberedPath;
   const hasCustomPath = isValidCustomLoginPath(config.customLoginPath) || Boolean(inferredPath);
   const configuredPath = isValidCustomLoginPath(config.customLoginPath)
     ? '/' + config.customLoginPath.trim().replace(/^\/+/, '')

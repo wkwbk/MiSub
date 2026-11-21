@@ -390,7 +390,7 @@ export async function handleLogout(request) {
   const headers = new Headers({ 'Content-Type': 'application/json' });
   const isSecure = typeof request?.url === 'string' && request.url.startsWith('https');
   const secureFlag = isSecure ? 'Secure;' : '';
-  headers.append('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; ${secureFlag} SameSite=Strict; Max-Age=0`);
+  headers.append('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; ${secureFlag} SameSite=Lax; Max-Age=0`);
   return new Response(JSON.stringify({ success: true }), { headers });
 }
 

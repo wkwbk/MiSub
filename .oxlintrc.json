@@ -18,5 +18,5 @@
     "unicorn/no-useless-spread": "warn",
     "oxc/only-used-in-recursion": "warn"
   },
-  "ignorePatterns": ["dist/**", "dev-dist/**", "node_modules/**", "public/**", "coverage/**"]
+  "ignorePatterns": ["dist/**", "node_modules/**", "public/**", "coverage/**"]
 }

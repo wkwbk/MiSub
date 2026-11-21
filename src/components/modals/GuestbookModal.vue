@@ -109,7 +109,8 @@ const submitMessage = async () => {
     }
   } catch (e) {
     console.error('Submit guestbook error', e);
-    errorMsg.value = t('guestbook.networkError');
+    errorMsg.value = e?.data?.error || e?.data?.message || e?.message || t('guestbook.networkError');
+    generateCaptcha();
   } finally {
     submitting.value = false;
   }
