@@ -14,7 +14,6 @@ import { readSessionPreference, writeSessionPreference } from '@/utils/session-p
 
 // 全局错误处理
 if (typeof window !== 'undefined') {
-  console.debug('[MiSub] Error Handler Loaded (v2026-01-11-fix-link-error)');
   // 处理未捕获的Promise拒绝
   window.addEventListener('unhandledrejection', (event) => {
     const message = event.reason?.message || '';

@@ -1081,6 +1081,7 @@ class D1StorageAdapter {
           key.startsWith('tg_push_rate:') ||
           key === 'misub_webdav_backup_lock' ||
           key.startsWith('github_release_') ||
+          key.startsWith('appstore_release_') ||
           (key.startsWith('node_cache_') && !key.startsWith('node_cache_subscription_'));
 
         if (needsBackfill) {

@@ -431,9 +431,12 @@ export async function handleWebdavBackupTest(request, env) {
       if (e?.status === 413) throw e;
       return {};
     });
+    const savedConfig = normalizeWebdavConfig(settings);
+    const incoming = body?.webdavBackup || body || {};
     const config = {
-      ...normalizeWebdavConfig(settings),
-      ...(body?.webdavBackup || body),
+      ...savedConfig,
+      ...incoming,
+      password: incoming.password ? incoming.password : savedConfig.password,
     };
     assertSafeWebdavConfig(config);
     await ensureRemoteDirectory(config);

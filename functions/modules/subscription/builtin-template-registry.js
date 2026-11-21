@@ -125,7 +125,7 @@ custom_proxy_group=🚀 节点选择\`select\`[]♻️ 自动选择\`[]🔯 故�
 custom_proxy_group=☑️ 手动切换\`select\`.*
 custom_proxy_group=♻️ 自动选择\`url-test\`.*\`http://www.gstatic.com/generate_204\`300,,50
 custom_proxy_group=🔯 故障转移\`fallback\`.*\`http://www.gstatic.com/generate_204\`300,,50
-custom_proxy_group=🤖 AI 服务\`select\`[]🚀 节点选择\`[]🔯 故障转移\`[]🇺🇸 美国节点\`[]🌍 狮城节点
+custom_proxy_group=🤖 AI 服务\`select\`[]🚀 节点选择\`[]🔯 故障转移\`[]🇺🇸 美国节点\`[]🇸🇬 狮城节点
 custom_proxy_group=📲 电报消息\`select\`[]🚀 节点选择\`[]🇸🇬 狮城节点\`[]🇭🇰 香港节点
 custom_proxy_group=📹 油管视频\`select\`[]🚀 节点选择\`[]♻️ 自动选择
 custom_proxy_group=🎥 奈飞视频\`select\`[]🚀 节点选择\`[]♻️ 自动选择
@@ -150,11 +150,11 @@ ruleset=🌍 国外媒体,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/mast
 ruleset=🎯 全球直连,[]GEOIP,CN
 ruleset=🐟 漏网之鱼,[]FINAL
 
-custom_proxy_group=🚀 节点选择\`select\`[]♻️ 自动选择\`[]🔯 故障转移\`[]🇺🇲 美国节点\`[]🇸🇬 狮城节点\`[]☑️ 手动切换\`[]DIRECT
+custom_proxy_group=🚀 节点选择\`select\`[]♻️ 自动选择\`[]🔯 故障转移\`[]🇺🇸 美国节点\`[]🇸🇬 狮城节点\`[]☑️ 手动切换\`[]DIRECT
 custom_proxy_group=♻️ 自动选择\`url-test\`.*\`http://www.gstatic.com/generate_204\`300,,50
 custom_proxy_group=🔯 故障转移\`fallback\`.*\`http://www.gstatic.com/generate_204\`300,,50
 custom_proxy_group=☑️ 手动切换\`select\`.*
-custom_proxy_group=🤖 AI 核心服务\`select\`[]🔯 故障转移\`[]🇺🇲 美国节点\`[]🇸🇬 狮城节点\`[]🚀 节点选择
+custom_proxy_group=🤖 AI 核心服务\`select\`[]🔯 故障转移\`[]🇺🇸 美国节点\`[]🇸🇬 狮城节点\`[]🚀 节点选择
 custom_proxy_group=🌍 国外媒体\`select\`[]🚀 节点选择\`[]♻️ 自动选择\`[]DIRECT
 
 enable_rule_generator=true

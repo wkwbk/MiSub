@@ -157,7 +157,7 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
     const exp = parseTimestampMs(parsed?.expiresAt);
     return exp > 0 ? exp : now + 60 * 60 * 1000;
   }
-  if (keyStr.startsWith('github_release_')) {
+  if (keyStr.startsWith('github_release_') || keyStr.startsWith('appstore_release_')) {
     const ts = parseTimestampMs(parsed?.timestamp) || now;
     return ts + GITHUB_RELEASE_MAX_AGE_MS;
   }

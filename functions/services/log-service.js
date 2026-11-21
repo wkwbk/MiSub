@@ -11,6 +11,8 @@ const MAX_LOG_AGE_MS = MAX_LOG_AGE_DAYS * 24 * 60 * 60 * 1000;
 const SUCCESS_LOG_COOLDOWN_MS = 5 * 60 * 1000;
 const ERROR_LOG_COOLDOWN_MS = 60 * 1000;
 const MAX_PERSISTED_LOGS_PER_MINUTE = 12;
+const MAX_FLUSH_RETRIES = 3;
+let consecutiveFlushFailures = 0;
 
 export function anonymizeLogToken(value, type = 'token') {
   const text = String(value ?? '');
@@ -166,13 +168,19 @@ export const LogService = {
         maxAgeMs: MAX_LOG_AGE_MS,
         maxEntries: MAX_LOG_ENTRIES,
       });
+      consecutiveFlushFailures = 0;
     } catch (error) {
+      consecutiveFlushFailures += 1;
       console.error('[LogService] Failed to flush batch logs:', error);
-      // 写入失败时尝试把日志塞回队列前部
-      logBatch.unshift(...batchToFlush);
+      if (consecutiveFlushFailures < MAX_FLUSH_RETRIES) {
+        // 写入失败且未超过重试上限时，把日志塞回队列前部等待重试
+        logBatch.unshift(...batchToFlush);
+      } else {
+        console.warn(`[LogService] Dropping ${batchToFlush.length} logs after ${MAX_FLUSH_RETRIES} failed flush attempts.`);
+      }
     } finally {
-      // 检查是否有在刷盘期间新进来的日志
-      if (logBatch.length > 0) {
+      // 检查是否有在刷盘期间新进来的日志，且未触发连续失败上限
+      if (logBatch.length > 0 && consecutiveFlushFailures < MAX_FLUSH_RETRIES) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         await this._flush(env);
       } else {

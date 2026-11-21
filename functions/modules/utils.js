@@ -3,7 +3,6 @@
  * 包含各种通用的辅助函数
  */
 
-import { utf8ToBase64 } from '../../shared/base64.js';
 import { ensureD1Schema } from '../storage-adapter.js';
 
 /**

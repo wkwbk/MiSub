@@ -146,7 +146,9 @@ export const useDataStore = defineStore('data', () => {
       clearDirty();
       saveState.value = 'success';
 
-      setTimeout(() => {
+      clearSaveStateResetTimer();
+      saveStateResetTimer = setTimeout(() => {
+        saveStateResetTimer = null;
         if (saveState.value === 'success') {
           saveState.value = 'idle';
         }
@@ -419,7 +421,17 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  let saveStateResetTimer = null;
+
+  function clearSaveStateResetTimer() {
+    if (saveStateResetTimer !== null) {
+      clearTimeout(saveStateResetTimer);
+      saveStateResetTimer = null;
+    }
+  }
+
   function markDirty() {
+    clearSaveStateResetTimer();
     if (saveState.value === 'success') {
       saveState.value = 'idle';
     }

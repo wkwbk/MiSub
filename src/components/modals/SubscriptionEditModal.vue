@@ -41,7 +41,7 @@ const presetProtocols = [
   { label: 'VMess', pattern: 'proto:vmess' },
   { label: 'VLESS', pattern: 'proto:vless' },
   { label: 'Trojan', pattern: 'proto:trojan' },
-  { label: 'Hysteria', pattern: 'proto:hysteria' },
+  { label: 'Hysteria2', pattern: 'proto:hysteria2,hy2' },
 ];
 
 const presetKeywords = [

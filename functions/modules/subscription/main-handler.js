@@ -316,7 +316,8 @@ export async function handleMisubRequest(context) {
       const virtualNodes = [];
 
       const totalRemainingBytes = targetMisubs.reduce((acc, sub) => {
-        const userInfo = sub?.enabled ? getCurrentRequestUserInfo(context, sub) : null;
+        if (!sub?.enabled || sub?.excludeTraffic) return acc;
+        const userInfo = getCurrentRequestUserInfo(context, sub);
         if (userInfo && userInfo.total > 0) {
           const used = (userInfo.upload || 0) + (userInfo.download || 0);
           return acc + Math.max(0, userInfo.total - used);

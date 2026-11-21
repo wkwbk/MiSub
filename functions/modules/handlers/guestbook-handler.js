@@ -5,7 +5,7 @@
 
 import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
-import { sendTgNotification } from '../notifications.js';
+import { sendTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 
 /**
@@ -104,7 +104,12 @@ export async function handleGuestbookPost(request, env) {
       return createErrorResponse('留言内容过长（最大500字）', 400);
     }
 
-    let finalNickname = nickname ? nickname.trim() : '匿名用户';
+    const trimmedNickname = nickname ? nickname.trim() : '';
+    if (guestbookConfig.allowAnonymous === false && !trimmedNickname) {
+      return createErrorResponse('请填写昵称后再提交留言', 400);
+    }
+
+    let finalNickname = trimmedNickname || '匿名用户';
     if (finalNickname.length > 20) {
       finalNickname = finalNickname.substring(0, 20);
     }
@@ -128,11 +133,11 @@ export async function handleGuestbookPost(request, env) {
     // 发送通知给管理员
     try {
       const messageText =
-        `📝 *新留言提醒*\n\n` +
-        `*用户*: ${finalNickname}\n` +
-        `*类型*: ${newMessage.type}\n` +
-        `*内容*: ${newMessage.content}\n` +
-        `*状态*: ${newMessage.isVisible ? '🟢 已显示' : '🔴 待审核'}`;
+        `📝 <b>新留言提醒</b>\n\n` +
+        `<b>用户</b>: ${tgEscape(finalNickname)}\n` +
+        `<b>类型</b>: ${tgEscape(newMessage.type)}\n` +
+        `<b>内容</b>: ${tgEscape(newMessage.content)}\n` +
+        `<b>状态</b>: ${newMessage.isVisible ? '🟢 已显示' : '🔴 待审核'}`;
       await sendTgNotification(settings, messageText);
     } catch (notifyError) {
       console.warn('[Guestbook] Notification failed:', notifyError);

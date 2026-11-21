@@ -3,7 +3,7 @@ export const MANUAL_NODE_COUNTRY_ALIAS_MAP = {
   tw: ['台湾', '臺灣', 'tw'],
   sg: ['新加坡', '狮城', 'sg'],
   jp: ['日本', 'jp'],
-  us: ['美国', ' США', 'us', 'usa'],
+  us: ['美国', '美國', 'us', 'usa'],
   kr: ['韩国', '韓國', 'kr'],
   gb: ['英国', '英國', 'gb', 'uk'],
   de: ['德国', '德國', 'de'],

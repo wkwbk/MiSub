@@ -154,7 +154,14 @@ export function buildExternalSubconverterUrl({
     }
   }
 
-  const effectiveOptions = { ...globalSub.defaultOptions, ...profileSub.options };
+  const effectiveOptions = { ...globalSub.defaultOptions };
+  if (profileSub.options && typeof profileSub.options === 'object') {
+    for (const [k, v] of Object.entries(profileSub.options)) {
+      if (v !== null && v !== undefined) {
+        effectiveOptions[k] = v;
+      }
+    }
+  }
   const flagMap = {
     udp: 'udp',
     emoji: 'emoji',

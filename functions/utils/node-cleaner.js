@@ -3,6 +3,8 @@
  * 负责节点URL的解码、修复、重命名和过滤
  */
 
+import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
+
 /**
  * 修复节点URL编码问题（支持多种协议）
  * @param {string} nodeUrl
@@ -306,10 +308,10 @@ export function applyManualNodeName(nodeUrl, customName) {
   if (nodeUrl.startsWith('vmess://')) {
     try {
       const base64Part = nodeUrl.substring(8);
-      const jsonStr = atob(base64Part);
+      const jsonStr = base64ToUtf8(base64Part);
       const config = JSON.parse(jsonStr);
       config.ps = customName;
-      return 'vmess://' + btoa(JSON.stringify(config));
+      return 'vmess://' + utf8ToBase64(JSON.stringify(config));
     } catch {
       return nodeUrl;
     }

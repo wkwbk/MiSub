@@ -213,7 +213,11 @@ export async function applyTagOperation(
       }
       return true;
     });
-    await storageAdapter.putAllSubscriptions(remaining);
+    if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+      await storageAdapter.syncAllSubscriptions(remaining);
+    } else {
+      await storageAdapter.putAllSubscriptions(remaining);
+    }
   } else {
     if (changed === 0) return 0;
     await storageAdapter.putAllSubscriptions(allSubscriptions);

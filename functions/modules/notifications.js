@@ -278,6 +278,19 @@ export async function handleCronTrigger(env) {
     }
   }
 
+  const nodeCountChanges = [];
+  for (const sub of allSubs) {
+    if (sub.nodeCountChange) {
+      nodeCountChanges.push({
+        name: sub.name,
+        previous: sub.nodeCountChange.previous,
+        current: sub.nodeCountChange.current,
+        diff: sub.nodeCountChange.diff,
+      });
+      delete sub.nodeCountChange;
+    }
+  }
+
   if (changesMade) {
     await persistSubscriptionsForCron(storageAdapter, allSubs);
   }
@@ -296,19 +309,6 @@ export async function handleCronTrigger(env) {
   };
 
   console.info(`[Cron] Completed in ${duration}ms:`, summary.summary);
-
-  const nodeCountChanges = [];
-  for (const sub of allSubs) {
-    if (sub.nodeCountChange) {
-      nodeCountChanges.push({
-        name: sub.name,
-        previous: sub.nodeCountChange.previous,
-        current: sub.nodeCountChange.current,
-        diff: sub.nodeCountChange.diff,
-      });
-      delete sub.nodeCountChange;
-    }
-  }
 
   // 发送节点变化通知
   if (nodeCountChanges.length > 0 && settings.BotToken && settings.ChatID) {

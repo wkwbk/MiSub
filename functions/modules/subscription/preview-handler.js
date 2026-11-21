@@ -56,6 +56,7 @@ export async function handlePublicPreviewRequest(request, env) {
       profile?.settings?.transformBackendScv,
     );
     const result = await handleProfileMode(request, env, profile.id, userAgent, true, shouldSkipCertificateVerify);
+    if (result instanceof Response) return result;
 
     return createJsonResponse(result);
   } catch (e) {
@@ -125,6 +126,7 @@ export async function handleSubscriptionNodesRequest(request, env) {
         );
     }
 
+    if (result instanceof Response) return result;
     return createJsonResponse(result);
   } catch (e) {
     return createJsonResponse(

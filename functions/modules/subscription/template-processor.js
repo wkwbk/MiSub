@@ -155,10 +155,12 @@ function expandMagicPlaceholders(model) {
 
     const newMembers = [];
     group.members.forEach((member) => {
-      if (member === '<%regionStrategyChain%>') {
+      if (member === '<%regionStrategyChain%>' || member === '<%region_strategy_chain%>') {
         newMembers.push(...regionNames);
-      } else if (member === '<%protocolStrategyChain%>') {
+      } else if (member === '<%protocolStrategyChain%>' || member === '<%protocol_strategy_chain%>') {
         newMembers.push(...protocolNames);
+      } else if (member === '<%all_strategy_groups%>' || member === '<%primary_strategy_chain%>') {
+        newMembers.push(...regionNames, ...protocolNames);
       } else {
         newMembers.push(member);
       }

@@ -637,7 +637,11 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
               if (realIdx !== -1) {
                 const deletedName = originalSubs[realIdx].name;
                 originalSubs.splice(realIdx, 1);
-                await storageAdapter.putAllSubscriptions(originalSubs);
+                if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+                  await storageAdapter.syncAllSubscriptions(originalSubs);
+                } else {
+                  await storageAdapter.putAllSubscriptions(originalSubs);
+                }
                 await answerCallbackQuery(callbackQuery.id, '已删除', env);
                 await sendTelegramMessage(chatId, `🗑️ 已删除订阅: <b>${escapeHtml(deletedName)}</b>`, env);
                 await handleListCommand(chatId, userId, env, 0, 'sub');

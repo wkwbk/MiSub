@@ -171,7 +171,11 @@ export async function handleDeleteCommand(chatId, userId, args, env) {
       allSubscriptions.splice(idx, 1);
     }
 
-    await storageAdapter.putAllSubscriptions(allSubscriptions);
+    if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+      await storageAdapter.syncAllSubscriptions(allSubscriptions);
+    } else {
+      await storageAdapter.putAllSubscriptions(allSubscriptions);
+    }
 
     // 3. 清理订阅组中的引用
     try {
@@ -577,7 +581,11 @@ export async function handleDupCommand(chatId, userId, args, env) {
         allSubscriptions.splice(idx, 1);
       }
 
-      await storageAdapter.putAllSubscriptions(allSubscriptions);
+      if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+        await storageAdapter.syncAllSubscriptions(allSubscriptions);
+      } else {
+        await storageAdapter.putAllSubscriptions(allSubscriptions);
+      }
 
       await sendTelegramMessage(chatId, `✅ <b>去重完成</b>\n\n已删除 ${duplicates.length} 个重复节点`, env);
     } else {

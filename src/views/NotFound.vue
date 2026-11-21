@@ -23,26 +23,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
 import { ArrowLeft } from '@lucide/vue';
-import { useSessionStore } from '@/stores/session.js';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
-const sessionStore = useSessionStore();
-
-const normalizedCustomPath = computed(() => {
-  const raw = sessionStore.publicConfig?.customLoginPath;
-  if (!raw || typeof raw !== 'string') return '';
-  return raw.trim().replace(/^\/+/, '');
-});
-
-const hasCustomPath = computed(() => {
-  const normalized = normalizedCustomPath.value;
-  return normalized.length > 0 && normalized !== 'login';
-});
-
-const loginPath = computed(() => (hasCustomPath.value ? `/${normalizedCustomPath.value}` : '/login'));
 </script>
 
 <style scoped>

@@ -3,7 +3,7 @@
  * @author MiSub Team
  */
 
-import { encodeArrayBufferToBase64, utf8ToBase64 } from '../../shared/base64.js';
+import { utf8ToBase64 } from '../../shared/base64.js';
 import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
@@ -368,7 +368,7 @@ export async function generateCombinedNodeList(
       }
 
       if (sub.fetchProxy && typeof sub.fetchProxy === 'string' && sub.fetchProxy.trim()) {
-        requestUrl = buildFetchProxyUrl(sub.fetchProxy, sub.url, processedUserAgent);
+        requestUrl = buildFetchProxyUrl(sub.fetchProxy, requestUrl, processedUserAgent);
       }
       requestUrl = assertPublicNetworkUrl(requestUrl).toString();
 
@@ -396,7 +396,7 @@ export async function generateCombinedNodeList(
       text = await decodeBase64Content(text);
 
       // 使用统一的 node-parser 解析，确保与预览一致的过滤规则 (UUID校验, Hysteria1过滤, SS加密校验等)
-      const parsedObjects = parseNodeList(text);
+      const parsedObjects = parseNodeList(text, { plusAsSpace: Boolean(sub?.plusAsSpace) });
 
       let validNodes = parsedObjects.map((node) => node.url);
 

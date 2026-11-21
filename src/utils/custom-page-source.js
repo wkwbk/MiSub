@@ -42,8 +42,6 @@ export function parseCustomPageSource(content, css = '') {
     .filter(Boolean)
     .map(normalizeUrl);
 
-  const linkImports = [];
-
   const scriptNodes = Array.from(doc.querySelectorAll('script'));
   const scripts = scriptNodes.map((node) => ({
     src: node.getAttribute('src') ? normalizeUrl(node.getAttribute('src')) : '',
@@ -55,7 +53,7 @@ export function parseCustomPageSource(content, css = '') {
   doc.querySelectorAll('style, link[rel~="stylesheet"], meta, title').forEach((node) => node.remove());
 
   const body = doc.body;
-  const extractedCss = normalizeDocumentCss([...linkImports, ...styleBlocks, rawCss].filter(Boolean).join('\n\n'));
+  const extractedCss = normalizeDocumentCss([...styleBlocks, rawCss].filter(Boolean).join('\n\n'));
   const needsWrapper =
     hadFullDocument || body.attributes.length > 0 || /(^|[^\w-])(html|body|:root)(?=[^\w-]|$)/i.test(extractedCss);
   const html = needsWrapper ? wrapBodyContent(body) : body.innerHTML;
@@ -68,7 +66,7 @@ export function parseCustomPageSource(content, css = '') {
     stylesheets: stylesheetLinks,
     scripts,
     hadFullDocument,
-    extractedStyles: styleBlocks.length > 0 || linkImports.length > 0,
+    extractedStyles: styleBlocks.length > 0,
     strippedScripts,
   };
 }

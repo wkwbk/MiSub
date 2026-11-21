@@ -70,8 +70,15 @@ function opFilter(nodes, params) {
     }
   }
   if (protocols?.enabled && Array.isArray(protocols.values)) {
-    const allowed = new Set(protocols.values.map((p) => p.toLowerCase()));
-    result = result.filter((r) => allowed.has(r.protocol.toLowerCase()));
+    const normalizeProto = (p) => {
+      const lower = String(p || '').toLowerCase();
+      if (lower === 'hy2') return 'hysteria2';
+      if (lower === 'hy') return 'hysteria';
+      if (lower === 'socks5') return 'socks';
+      return lower;
+    };
+    const allowed = new Set(protocols.values.map(normalizeProto));
+    result = result.filter((r) => allowed.has(normalizeProto(r.protocol)));
   }
   if (regions?.enabled && Array.isArray(regions.values)) {
     result = result.map((r) => NodeUtils.ensureRegionInfo(r, true));

@@ -107,7 +107,10 @@ export function useSettingsLogic() {
           setLocale(settings.value.defaultLocale);
         }
       } else {
-        showToast(t('settings.loadFailedWithMessage', { message: result.error }), 'error');
+        showToast(
+          t('settings.loadFailedWithMessage', { message: result.error || result.message || t('settings.loadFailed') }),
+          'error',
+        );
         settings.value = normalizeSettingsObject(DEFAULT_SETTINGS);
       }
     } catch {
@@ -159,7 +162,7 @@ export function useSettingsLogic() {
         }, 1000);
         return true;
       } else {
-        throw new Error(result.error || t('settings.saveFailed'));
+        throw new Error(result.error || result.message || t('settings.saveFailed'));
       }
     } catch (error) {
       showToast(error.message, 'error');
@@ -196,7 +199,12 @@ export function useSettingsLogic() {
         showToast(t('settings.resetSuccess'), 'success');
         setTimeout(() => window.location.reload(), 1500);
       } else {
-        showToast(t('settings.resetFailedWithMessage', { message: result.error }), 'error');
+        showToast(
+          t('settings.resetFailedWithMessage', {
+            message: result.error || result.message || t('settings.resetRequestFailed'),
+          }),
+          'error',
+        );
       }
     } catch {
       showToast(t('settings.resetRequestFailed'), 'error');

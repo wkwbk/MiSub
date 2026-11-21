@@ -87,7 +87,6 @@ function buildOutbound(proxy) {
       server_port: serverPort,
       uuid: proxy.uuid || '',
       security: proxy.cipher || 'auto',
-      congestion_control: proxy['congestion-control'] || 'cubic',
       alter_id: Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0,
     };
 
@@ -272,7 +271,7 @@ function buildGroupOutbounds(groups) {
       outbound.interval = `${group.options?.interval || 300}s`;
     }
 
-    if (outbound.outbounds.length > 0) {
+    if (mappedType === 'selector' && outbound.outbounds.length > 0) {
       outbound.default = outbound.outbounds[0];
     }
 
