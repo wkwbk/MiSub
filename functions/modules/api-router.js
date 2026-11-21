@@ -59,7 +59,7 @@ import {
   handleGuestbookManageGet,
   handleGuestbookPost,
 } from './handlers/guestbook-handler.js';
-import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
+import { handleAppStoreReleaseRequest, handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
@@ -137,6 +137,10 @@ export async function handleApiRequest(request, env, context = null) {
 
   if (path === '/github/release') {
     return await handleGithubReleaseRequest(request, env);
+  }
+
+  if (path === '/appstore/release') {
+    return await handleAppStoreReleaseRequest(request, env);
   }
 
   // Logout 无需认证（cookie 过期时也需能正常登出）

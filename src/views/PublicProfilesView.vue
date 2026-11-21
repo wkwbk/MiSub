@@ -155,11 +155,37 @@ const fetchClients = async () => {
   }
 };
 
+const extractAppStoreInfo = (rawUrl) => {
+  if (!rawUrl) return null;
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.hostname !== 'apps.apple.com' && parsed.hostname !== 'itunes.apple.com') {
+      return null;
+    }
+    const idMatch = parsed.pathname.match(/\/id(\d+)/i);
+    if (!idMatch) return null;
+    const countryMatch = parsed.pathname.match(/^\/([a-z]{2})\//i);
+    return {
+      id: idMatch[1],
+      country: countryMatch ? countryMatch[1].toLowerCase() : 'us',
+    };
+  } catch {
+    return null;
+  }
+};
+
 const fetchClientVersions = async () => {
   clients.value.forEach(async (client) => {
-    if (!client.repo) return;
+    let endpoint = '';
+    if (client.repo) {
+      endpoint = `/api/github/release?repo=${client.repo}`;
+    } else {
+      const appStore = extractAppStoreInfo(client.url);
+      if (!appStore) return;
+      endpoint = `/api/appstore/release?id=${appStore.id}&country=${appStore.country}`;
+    }
     try {
-      const data = await api.get(`/api/github/release?repo=${client.repo}`);
+      const data = await api.get(endpoint);
       if (data) {
         if (data.tag_name) {
           client.version = data.tag_name;

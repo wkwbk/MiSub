@@ -39,6 +39,7 @@ const urlSchemeMap = {
   v2rayng: 'v2rayng://install-config?url={url}',
   shadowrocket: 'shadowrocket://add/sub://{url_base64}?remark={name}',
   hiddify: 'hiddify://import/{url}',
+  'sing-box': 'sing-box://import-remote-profile?url={url_singbox}#{name}',
   nekobox: 'nekobox://install-config?name={name}&type=SUBSCRIPTION&url={url}',
   stash: 'stash://install-config?url={url}&name={name}',
   loon: 'loon://import?sub={url}&name={name}',
@@ -76,12 +77,14 @@ const withQueryParam = (url, key, value) => {
 const generateDeepLink = (client) => {
   const subUrl = getSubscriptionUrl();
   const clashSubUrl = withQueryParam(subUrl, 'target', 'clash');
+  const singboxSubUrl = withQueryParam(subUrl, 'target', 'singbox');
   const scheme = urlSchemeMap[client.id];
 
   if (!scheme) return null;
 
   return scheme
     .replace('{url_clash}', encodeURIComponent(clashSubUrl))
+    .replace('{url_singbox}', encodeURIComponent(singboxSubUrl))
     .replace('{url}', encodeURIComponent(subUrl))
     .replace('{name}', encodeURIComponent(props.profile?.name || t('quickImport.defaultName')))
     .replace('{url_base64}', btoa(subUrl))

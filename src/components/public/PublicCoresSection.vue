@@ -90,19 +90,25 @@ const fetchCoreReleases = async (cores = []) => {
     fetchedCoreRepos.add(repo);
     try {
       const data = await api.get(`/api/github/release?repo=${repo}`);
-      if (data?.published_at) {
+      if (data?.tag_name || data?.published_at) {
         coreReleases.value = {
           ...coreReleases.value,
           [repo]: {
             version: data.tag_name || '',
-            publishedAt: data.published_at,
+            publishedAt: data.published_at || '',
           },
         };
       }
     } catch (e) {
-      console.warn(`Failed to fetch release date for ${core.name}`, e);
+      console.warn(`Failed to fetch release info for ${core.name}`, e);
     }
   });
+};
+
+const getCoreVersionLabel = (core) => {
+  const repo = extractGithubRepo(core);
+  const version = repo ? coreReleases.value[repo]?.version : '';
+  return version || getLinkHostname(core.url);
 };
 
 const getCoreUpdatedLabel = (core) => {
@@ -222,9 +228,10 @@ watch(
           <div class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-line">
             <div class="flex items-center gap-2 min-w-0">
               <span
+                :title="getCoreVersionLabel(core)"
                 class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md truncate max-w-[140px] shrink-0"
               >
-                {{ getLinkHostname(core.url) }}
+                {{ getCoreVersionLabel(core) }}
               </span>
               <span
                 v-if="getCoreUpdatedLabel(core)"

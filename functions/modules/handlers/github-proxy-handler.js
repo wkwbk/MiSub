@@ -170,3 +170,79 @@ export async function handleGithubReleaseRequest(request, env) {
     return createErrorResponse('Internal Server Error', 500);
   }
 }
+
+export async function handleAppStoreReleaseRequest(request, env) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id');
+  const rawCountry = url.searchParams.get('country') || 'us';
+
+  if (!id || !/^\d+$/.test(id)) {
+    return createErrorResponse('Invalid id parameter. Expected numeric App Store ID', 400);
+  }
+  if (!/^[a-zA-Z]{2}$/.test(rawCountry)) {
+    return createErrorResponse('Invalid country parameter. Expected 2-letter country code', 400);
+  }
+
+  const country = rawCountry.toLowerCase();
+  const CACHE_KEY = `appstore_release_${country}_${id}`;
+  const CACHE_TTL_MS = 24 * 3600 * 1000;
+
+  try {
+    const storage = StorageFactory.createAdapter(env);
+    const cachedWrapper = await storage.get(CACHE_KEY);
+
+    if (cachedWrapper && cachedWrapper.timestamp) {
+      const age = Date.now() - cachedWrapper.timestamp;
+      if (age < CACHE_TTL_MS) {
+        return createJsonResponse(cachedWrapper.data, 200, {
+          'X-Cache-Status': 'HIT',
+          'Cache-Control': 'public, max-age=86400',
+        });
+      }
+    }
+
+    const response = await fetch(`https://itunes.apple.com/lookup?id=${id}&country=${country}`, {
+      headers: { 'User-Agent': 'MiSub-Proxy/1.0' },
+      cf: {
+        cacheTtl: 86400,
+        cacheEverything: true,
+      },
+    });
+
+    if (!response.ok) {
+      if (cachedWrapper?.data) {
+        return createJsonResponse(cachedWrapper.data, 200, {
+          'X-Cache-Status': 'STALE',
+          'Cache-Control': 'public, max-age=60',
+        });
+      }
+      return createErrorResponse(`App Store API Error: ${response.statusText}`, response.status);
+    }
+
+    const data = await response.json();
+    const app = Array.isArray(data?.results) ? data.results[0] : null;
+    if (!app) {
+      return createJsonResponse({ tag_name: null, not_found: true }, 200, {
+        'X-Cache-Status': 'NOT_FOUND',
+        'Cache-Control': 'public, max-age=3600',
+      });
+    }
+
+    const simplifiedData = {
+      tag_name: app.version || null,
+      html_url: app.trackViewUrl || '',
+      published_at: app.currentVersionReleaseDate || null,
+      name: app.trackName || '',
+    };
+
+    await safePutReleaseCache(storage, CACHE_KEY, simplifiedData);
+
+    return createJsonResponse(simplifiedData, 200, {
+      'X-Cache-Status': 'MISS',
+      'Cache-Control': 'public, max-age=86400',
+    });
+  } catch (error) {
+    console.error(`[App Store Proxy] Error fetching ${country}/${id}:`, error);
+    return createErrorResponse('Internal Server Error', 500);
+  }
+}
