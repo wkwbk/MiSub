@@ -320,8 +320,8 @@ const handleCustomProfileIntervalBlur = () => {
       <div class="divide-y divide-line-subtle">
         <!-- 订阅自动更新间隔 -->
         <div class="py-5 first:pt-0 last:pb-0">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="space-y-1">
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
+            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
               <p class="text-sm font-medium text-fg">
                 {{ t('settings.autoUpdateInterval') }}
               </p>
@@ -329,7 +329,7 @@ const handleCustomProfileIntervalBlur = () => {
                 {{ t('settings.autoUpdateDesc') }}
               </p>
             </div>
-            <div class="flex min-w-0 flex-wrap items-center gap-3 sm:shrink-0">
+            <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
               <div
                 :class="[
                   'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
@@ -385,8 +385,8 @@ const handleCustomProfileIntervalBlur = () => {
 
         <!-- 客户端订阅更新周期 (Profile-Update-Interval) -->
         <div class="py-5 first:pt-0 last:pb-0">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div class="space-y-1">
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
+            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
               <p class="text-sm font-medium text-fg">
                 {{ t('settings.profileUpdateInterval') }}
               </p>
@@ -394,7 +394,7 @@ const handleCustomProfileIntervalBlur = () => {
                 {{ t('settings.profileUpdateIntervalDesc') }}
               </p>
             </div>
-            <div class="flex min-w-0 flex-wrap items-center gap-3 sm:shrink-0">
+            <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
               <div
                 :class="[
                   'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
@@ -465,9 +465,9 @@ const handleCustomProfileIntervalBlur = () => {
 
           <div
             v-if="settings.enableAccessLog"
-            class="pl-4 border-l-2 border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+            class="pl-4 border-l-2 border-line flex flex-col xl:flex-row xl:items-center justify-between gap-4"
           >
-            <div class="space-y-1">
+            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
               <p class="text-xs font-medium text-fg">
                 {{ t('settings.accessLogMode') }}
               </p>
@@ -501,8 +501,8 @@ const handleCustomProfileIntervalBlur = () => {
         </div>
 
         <!-- 合并到期时间策略 -->
-        <div class="py-5 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="space-y-1">
+        <div class="py-5 first:pt-0 last:pb-0 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+          <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
             <p class="text-sm font-medium text-fg">
               {{ t('settings.mergeExpireStrategyTitle') }}
             </p>
