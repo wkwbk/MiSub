@@ -69,8 +69,6 @@ const {
   manualNodesPerPage,
   nodeInspectMap,
   isInspectingNodes,
-  stackByIp,
-  toggleStackByIp,
   pingMode,
   setPingMode,
   inspectNodes,
@@ -194,7 +192,6 @@ const handleTagReorder = (newOrder) => {
       :ping-results="pingResults"
       :pinging-nodes="pingingNodes"
       :search-term="searchTerm"
-      :stack-by-ip="stackByIp"
       :tags="manualNodeTags"
       :total-pages="manualNodesTotalPages"
       @add="handleAddNode"
@@ -204,9 +201,7 @@ const handleTagReorder = (newOrder) => {
       @import="showSubscriptionImportModal = true"
       @inspect-all="inspectNodes(manualNodes, { force: true })"
       @ping="pingNodeId"
-      @ping-group="pingAllNodes"
       @reorder="reorderManualNodes"
-      @toggle-stack-by-ip="toggleStackByIp"
       @update:items-per-page="(val) => (manualNodesPerPage = val)"
       @update:ping-mode="setPingMode"
       @change-page="changeManualNodesPage"

@@ -326,26 +326,14 @@ export function useManualNodes(markDirty) {
     markDirty();
   }
 
-  // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别 / 同IP堆叠） ---
+  // --- 节点网络信息探测（IP解析 / 国家标签 / CDN与直连识别） ---
   const INSPECT_CACHE_KEY = 'misub_node_inspect_cache_v1';
   const INSPECT_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-  const STACK_PREF_KEY = 'misub_manual_nodes_stack_by_ip';
   const PING_MODE_PREF_KEY = 'misub_manual_nodes_ping_mode';
 
   const nodeInspectMap = ref({});
   const isInspectingNodes = ref(false);
-  const stackByIp = ref(readRawPreference(STACK_PREF_KEY) !== 'false');
   const pingMode = ref(readRawPreference(PING_MODE_PREF_KEY) === 'tcping' ? 'tcping' : 'local');
-
-  function setStackByIp(value) {
-    const next = Boolean(value);
-    stackByIp.value = next;
-    writeRawPreference(STACK_PREF_KEY, next ? 'true' : 'false');
-  }
-
-  function toggleStackByIp() {
-    setStackByIp(!stackByIp.value);
-  }
 
   function setPingMode(mode) {
     const next = mode === 'tcping' ? 'tcping' : 'local';
@@ -653,9 +641,6 @@ export function useManualNodes(markDirty) {
     manualNodesPerPage,
     nodeInspectMap,
     isInspectingNodes,
-    stackByIp,
-    setStackByIp,
-    toggleStackByIp,
     pingMode,
     setPingMode,
     inspectNodes,

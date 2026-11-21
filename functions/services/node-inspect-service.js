@@ -664,8 +664,6 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
       networkType, // 'cdn' | 'relay' | 'direct' | 'unknown'
       cdnProvider,
       isRelay,
-      // 同 IP 堆叠必须过滤掉 CDN IP
-      stackable: Boolean(resolvedIp) && networkType !== 'cdn',
     };
   }
 

@@ -141,7 +141,6 @@ describe('inspectNodes end-to-end with DoH, ip-api batch, and D1 cache', () => {
       flag: '🇯🇵',
       networkType: 'direct',
       isRelay: false,
-      stackable: true,
     });
 
     expect(first['n-cdn']).toMatchObject({
@@ -149,7 +148,6 @@ describe('inspectNodes end-to-end with DoH, ip-api batch, and D1 cache', () => {
       isDomain: true,
       networkType: 'cdn',
       cdnProvider: 'Cloudflare',
-      stackable: false,
     });
 
     expect(first['n-relay']).toMatchObject({
@@ -158,7 +156,6 @@ describe('inspectNodes end-to-end with DoH, ip-api batch, and D1 cache', () => {
       countryCode: 'CN',
       networkType: 'relay',
       isRelay: true,
-      stackable: true,
     });
 
     // Second call should hit D1 cache without calling fetch again

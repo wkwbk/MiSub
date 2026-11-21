@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Globe, Layers, Loader2, Plus, Search, X, Zap } from '@lucide/vue';
+import { Globe, Loader2, Plus, Search, X, Zap } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -44,10 +44,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  stackByIp: {
-    type: Boolean,
-    default: true,
-  },
   pingMode: {
     type: String,
     default: 'local',
@@ -66,7 +62,6 @@ const emit = defineEmits([
   'toggle-selection-mode',
   'ping-all',
   'inspect-all',
-  'toggle-stack-by-ip',
   'update:pingMode',
   'sort-by-latency',
   'manage-tags',
@@ -114,22 +109,6 @@ const searchModel = computed({
         data-testid="manual-node-toolbar-actions"
       >
         <button
-          :aria-pressed="stackByIp"
-          :class="
-            stackByIp
-              ? 'border-line-strong bg-active text-fg'
-              : 'border-line bg-transparent text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg'
-          "
-          :title="t('manualNodes.stackFilterNotice')"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors shadow-none"
-          data-testid="toggle-stack-by-ip-btn"
-          type="button"
-          @click="emit('toggle-stack-by-ip')"
-        >
-          <Layers aria-hidden="true" class="h-3.5 w-3.5" stroke-width="1.75" />
-          <span class="hidden sm:inline">{{ t('actions.stackByIp') }}</span>
-        </button>
-        <button
           :disabled="isInspectingNodes || manualNodesCount === 0"
           class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
           data-testid="inspect-all-nodes-btn"
@@ -158,7 +137,7 @@ const searchModel = computed({
           <Plus class="h-3.5 w-3.5 shrink-0" stroke-width="2" />
           {{ t('actions.add') }}
         </button>
-        <MoreActionsMenu menu-width-class="w-36">
+        <MoreActionsMenu menu-width-class="w-44">
           <template #menu="{ close }">
             <button
               :class="isSelectionMode ? 'text-fg font-semibold' : ''"
@@ -201,7 +180,7 @@ const searchModel = computed({
               {{ t('actions.autoSort') }}
             </button>
             <button
-              class="w-full text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
+              class="w-full whitespace-nowrap text-left px-3 py-2 rounded text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
               :title="t('manualNodes.pingModeSwitchHint')"
               @click="
                 emit('update:pingMode', pingMode === 'tcping' ? 'local' : 'tcping');
