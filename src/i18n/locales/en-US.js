@@ -62,7 +62,7 @@ export default {
     viewLogs: 'Logs',
     refreshAll: 'Refresh all',
     ping: 'Test',
-    pingAll: 'Test Latency (All)',
+    pingAll: 'Test Latency',
     inspectAll: 'Resolve IP',
     sortByLatency: 'Sort by Latency',
     copyLink: 'Copy link',

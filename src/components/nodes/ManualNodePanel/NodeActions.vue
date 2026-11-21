@@ -100,6 +100,14 @@ const networkLabel = (net) => {
   return net;
 };
 
+const handleAttrWheel = (e) => {
+  const el = e.currentTarget;
+  if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  }
+};
+
 const searchModel = computed({
   get: () => props.searchTerm,
   set: (val) => emit('update:searchTerm', val),
@@ -119,23 +127,9 @@ const searchModel = computed({
             >{{ manualNodesCount }}</span
           >
         </div>
-        <p class="mt-1 text-xs text-fg-muted">
+        <p :title="t('manualNodes.subtitle')" class="mt-1 truncate text-xs text-fg-muted">
           {{ t('manualNodes.subtitle') }}
         </p>
-
-        <!-- Mobile Tag Filter -->
-        <div
-          v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
-          class="mt-2 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto py-1 no-scrollbar md:hidden"
-          data-testid="manual-node-mobile-tags"
-        >
-          <TagFilterBar
-            :active-filters="activeTagFilters"
-            :tags="manualNodeTags"
-            test-id-prefix="manual-node-mobile-tag"
-            @update:active-filters="emit('set-tag-filters', $event)"
-          />
-        </div>
       </div>
       <div
         class="flex w-full min-w-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap lg:shrink-0"
@@ -292,6 +286,20 @@ const searchModel = computed({
       </div>
     </div>
 
+    <!-- Mobile Tag Filter Chips -->
+    <div
+      v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
+      class="mt-3 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar md:hidden"
+      data-testid="manual-node-mobile-tags"
+    >
+      <TagFilterBar
+        :active-filters="activeTagFilters"
+        :tags="manualNodeTags"
+        test-id-prefix="manual-node-mobile-tag"
+        @update:active-filters="emit('set-tag-filters', $event)"
+      />
+    </div>
+
     <!-- Desktop Tag Filter Chips -->
     <div
       v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
@@ -308,8 +316,9 @@ const searchModel = computed({
     <!-- Dynamic Attribute Filter Chips (Protocol / Network / Country) -->
     <div
       v-if="hasAttrOptions || hasActiveAttrFilters"
-      class="mt-2 flex flex-wrap items-center gap-1.5"
+      class="mt-2.5 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar"
       data-testid="manual-node-attr-filters"
+      @wheel="handleAttrWheel"
     >
       <!-- Protocols -->
       <button
@@ -335,7 +344,7 @@ const searchModel = computed({
           (attributeOptions.networks?.length > 0 || attributeOptions.countries?.length > 0)
         "
         aria-hidden="true"
-        class="mx-0.5 h-4 w-px bg-line"
+        class="mx-0.5 h-4 w-px shrink-0 bg-line"
       ></span>
 
       <!-- Network Type (Direct / CDN / Relay) -->
@@ -367,7 +376,7 @@ const searchModel = computed({
       <span
         v-if="attributeOptions.networks?.length > 0 && attributeOptions.countries?.length > 0"
         aria-hidden="true"
-        class="mx-0.5 h-4 w-px bg-line"
+        class="mx-0.5 h-4 w-px shrink-0 bg-line"
       ></span>
 
       <!-- Countries -->

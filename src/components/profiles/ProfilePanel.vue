@@ -181,7 +181,7 @@ const draggableProfiles = computed({
     <div class="list-item-animation mb-4" style="--delay-index: 0">
       <div class="min-w-0 rounded-md border border-line bg-surface p-4 shadow-none">
         <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="min-w-0">
+          <div class="min-w-0 flex-1">
             <div class="flex items-center gap-3 shrink-0">
               <h2 class="text-lg font-semibold text-fg">
                 {{ t('profiles.title') }}
@@ -191,11 +191,11 @@ const draggableProfiles = computed({
                 >{{ profiles.length }}</span
               >
             </div>
-            <p class="mt-1 text-xs text-fg-muted">
+            <p :title="t('profiles.subtitle')" class="mt-1 truncate text-xs text-fg-muted">
               {{ t('profiles.subtitle') }}
             </p>
           </div>
-          <div class="flex items-center gap-2 sm:w-auto justify-end sm:justify-start shrink-0">
+          <div class="flex items-center justify-end gap-2 sm:w-auto shrink-0">
             <button
               class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line-strong bg-active px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
               @click="handleAdd"

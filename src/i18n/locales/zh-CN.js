@@ -64,7 +64,7 @@ export default {
     viewLogs: '查看日志',
     refreshAll: '全部刷新',
     ping: '检测延迟',
-    pingAll: '全部检测延迟',
+    pingAll: '检测延迟',
     inspectAll: '解析 IP',
     sortByLatency: '按延迟排序',
     copyLink: '复制链接',

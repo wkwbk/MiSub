@@ -269,7 +269,7 @@ watch(totalPages, (nextTotal) => {
   <div>
     <div class="mb-4 min-w-0 rounded-md border border-line bg-surface p-4 shadow-none">
       <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <div class="flex min-w-0 flex-wrap items-center gap-3 shrink-0">
             <h2 class="text-lg font-semibold text-fg">
               {{ t('subscriptions.title') }}
@@ -301,11 +301,11 @@ watch(totalPages, (nextTotal) => {
               <span v-else-if="refreshTime">{{ t('subscriptions.lastRefreshed', { time: refreshTime }) }}</span>
             </span>
           </div>
-          <p class="mt-1 text-xs text-fg-muted">
+          <p :title="t('subscriptions.subtitle')" class="mt-1 truncate text-xs text-fg-muted">
             {{ t('subscriptions.subtitle') }}
           </p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 sm:w-auto justify-end sm:justify-start">
+        <div class="flex flex-wrap items-center justify-end gap-2 sm:w-auto lg:shrink-0">
           <button
             class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg shadow-none"
             @click="handleImport"

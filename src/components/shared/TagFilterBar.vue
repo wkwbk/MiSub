@@ -76,7 +76,7 @@ const handleWheel = (e) => {
           : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
       "
       :data-testid="`${testIdPrefix}-tab-all`"
-      class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+      class="px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
       type="button"
       @click="handleSelect(null)"
     >
@@ -91,7 +91,7 @@ const handleWheel = (e) => {
           : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
       "
       :data-testid="`${testIdPrefix}-tab-untagged`"
-      class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+      class="px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
       type="button"
       @click="handleSelect(UNTAGGED_KEY)"
     >
@@ -107,7 +107,7 @@ const handleWheel = (e) => {
           : 'bg-transparent text-fg-muted border-line hover:text-fg hover:bg-hover'
       "
       :data-testid="`${testIdPrefix}-tab-item`"
-      class="px-2.5 py-1 text-xs font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
+      class="px-2.5 py-1 text-xs leading-4 font-medium rounded-md transition-colors border shrink-0 whitespace-nowrap cursor-pointer"
       type="button"
       @click="handleSelect(tag)"
     >
