@@ -105,12 +105,12 @@ const D1_CACHE_PREFIXES = [
   'node_cache_',
   'node_inspect_',
   'github_release_',
+  'appstore_release_',
   'tg_push_rate:',
   'misub_test_',
 ];
 
 export const D1_KNOWN_SETTINGS_KEYS = new Set([
-  'misub_dns_templates_v1',
   'misub_rule_templates_v1',
   'misub_clients_v1',
   'misub_settings_v1',

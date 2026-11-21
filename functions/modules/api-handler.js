@@ -37,7 +37,7 @@ function normalizeProfile(profile = {}) {
   return normalized;
 }
 
-function isStorageUnavailableError(error) {
+export function isStorageUnavailableError(error) {
   const message = String(error?.message || error || '').toLowerCase();
   return (
     message.includes('d1 database not available') ||
@@ -319,7 +319,6 @@ export async function handleSettingsSave(request, env) {
       'test_notification',
       'misubs',
       'node_count',
-      'nodes',
       'fetch_external_url',
       'batch_update_nodes',
       'subscription_nodes',

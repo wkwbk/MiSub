@@ -1,4 +1,5 @@
 import { StorageFactory } from '../../storage-adapter.js';
+import { isStorageUnavailableError } from '../api-handler.js';
 import { createErrorResponse, createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
 const STORAGE_KEY_CLIENTS = 'misub_clients_v1';

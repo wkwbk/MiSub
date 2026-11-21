@@ -1,5 +1,4 @@
 import * as yaml from 'js-yaml';
-import { clashFix } from '../../../../shared/format-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
@@ -217,7 +216,11 @@ export function renderClashFromTemplateModel(model) {
       mode: normalizedModel.settings?.dnsMode,
       proxyGroup: DNS_PROXY_GROUP,
     }),
-    proxies: normalizedModel.proxies,
+    proxies: (normalizedModel.proxies || []).map((proxy) => {
+      if (!proxy || typeof proxy !== 'object' || !('metadata' in proxy)) return proxy;
+      const { metadata: _metadata, ...cleanProxy } = proxy;
+      return cleanProxy;
+    }),
     'proxy-groups': normalizedModel.groups
       .filter(
         (group) =>
@@ -248,13 +251,11 @@ export function renderClashFromTemplateModel(model) {
     },
   };
 
-  let yamlStr = yaml.dump(config, {
+  return yaml.dump(config, {
     indent: 2,
     lineWidth: -1,
     noRefs: true,
     quotingType: '"',
     forceQuotes: false,
   });
-  yamlStr = clashFix(yamlStr);
-  return yamlStr;
 }

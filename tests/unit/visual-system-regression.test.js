@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
-import FormModal from '@/components/shared/FormModal.vue';
+import Modal from '@/components/ui/Modal.vue';
 
 const readSource = async (path) => await import('node:fs/promises').then(({ readFile }) => readFile(path, 'utf8'));
 
@@ -66,10 +66,10 @@ describe('MiSub visual system regression', () => {
     expect(inputClasses).toContain('border-line');
     expect(inputClasses).toContain('focus:border-line-strong');
 
-    const modal = mount(FormModal, {
+    const modal = mount(Modal, {
       props: { show: true, title: '编辑订阅' },
       attachTo: document.body,
-      slots: { default: '<div>content</div>' },
+      slots: { body: '<div>content</div>' },
     });
     const html = document.body.innerHTML;
     expect(html).toContain('modal-surface');

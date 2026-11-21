@@ -5,13 +5,9 @@
 
 import { describe, expect, it, vi } from 'vitest';
 // 导入被测试模块
-import {
-  convertClashProxyToUrl,
-  parseClientConfig,
-  parseLoonConfig,
-  parseQuantumultXConfig,
-  parseSurgeConfig,
-} from '@/utils/protocols/index.js'; // 创建mock crypto.randomUUID (在Node环境下可能不存在)
+import { convertClashProxyToUrl } from '@shared/clash-to-url.js';
+import { parseSurgeConfig } from '@/utils/protocols/index.js';
+import { parseQuantumultXConfig } from '@/utils/protocols/quantumultx-parser.js';
 
 // 创建mock crypto.randomUUID (在Node环境下可能不存在)
 vi.stubGlobal('crypto', {
@@ -330,42 +326,6 @@ WG-Test = wireguard, 1.2.3.4, 51820, private-key=test-private, peer-public-key=t
     });
   });
 
-  describe('parseLoonConfig', () => {
-    it('应正确解析 Loon 常见代理配置', () => {
-      const config = `
-[Proxy]
-Test VMess = vmess, vmess.example.com, 443, uuid-1234, tls=true, transport=ws, host=example.com, path=/ws
-Test SS = Shadowsocks, 1.2.3.4, 8388, aes-128-gcm, password123
-Test Trojan = trojan, trojan.example.com, 443, secret, sni=example.com, skip-cert-verify=true
-Test VLESS = vless, vless.example.com, 443, uuid-vless, tls=true, transport=xhttp, host=example.org, path=/vless, mode=packet-up, reality=true, public-key=pubkey, short-id=abcd, sni=example.org, alpn=h3, fp=chrome
-Test HTTP = http, http.example.com, 8080, user, pass
-Test HY2 = hysteria2, hy2.example.com, 443, hy2pass, sni=hy2.example.com
-Test TUIC = tuic, tuic.example.com, 443, uuid-tuic, password=pass-tuic, sni=tuic.example.com
-Test WG = wireguard, wg.example.com, 51820, private-key-value, self-ip=172.16.0.2/32, public-key=peerpub, client-id=1/2/3
-Test Snell = snell, snell.example.com, 8443, psk-secret
-`;
-      const result = parseLoonConfig(config);
-
-      expect(result).toHaveLength(9);
-      expect(result[0].protocol).toBe('vmess');
-      expect(result[1].protocol).toBe('ss');
-      expect(result[2].protocol).toBe('trojan');
-      expect(result[3].protocol).toBe('vless');
-      expect(result[4].protocol).toBe('http');
-      expect(result[5].protocol).toBe('hysteria2');
-      expect(result[6].protocol).toBe('tuic');
-      expect(result[7].protocol).toBe('wireguard');
-      expect(result[8].protocol).toBe('snell');
-      expect(result[2].url).toContain('allowInsecure=1');
-      expect(result[3].url).toContain('security=reality');
-      expect(result[3].url).toContain('xhttp-host=example.org');
-      expect(result[3].url).toContain('xhttp-path=%2Fvless');
-      expect(result[3].url).toContain('pbk=pubkey');
-      expect(result[3].url).toContain('alpn=h3');
-      expect(result[3].url).toContain('fp=chrome');
-    });
-  });
-
   describe('parseQuantumultXConfig', () => {
     it('应正确解析空配置', () => {
       const result = parseQuantumultXConfig('');
@@ -460,40 +420,6 @@ anytls=Test AnyTLS, anytls.example.com, 443, password=anytls-pass, sni=example.c
       expect(result[0].url).toContain('anytls://anytls-pass@anytls.example.com:443');
       expect(result[0].url).toContain('sni=example.com');
       expect(result[0].url).toContain('allowInsecure=1');
-    });
-  });
-
-  describe('parseClientConfig', () => {
-    it('应自动识别 Surge / Loon / QX 配置', () => {
-      const surge = parseClientConfig('[Proxy]\nss=Test SS,1.2.3.4,8388,aes-256-gcm,password123');
-      const loon = parseClientConfig('[Proxy]\nTest SS = Shadowsocks, 1.2.3.4, 8388, aes-128-gcm, password123');
-      const quanx = parseClientConfig('[server_local]\nshadowsocks=Test SS, 1.2.3.4, 443, aes-128-gcm, password');
-      const surgeWireguard = parseClientConfig(
-        '[Proxy]\nWG-Test = wireguard, 1.2.3.4, 51820, private-key=test-private, peer-public-key=test-peer',
-      );
-
-      expect(surge.client).toBe('surge');
-      expect(loon.client).toBe('loon');
-      expect(quanx.client).toBe('quantumultx');
-      expect(surgeWireguard.client).toBe('surge');
-      expect(surge.nodes.length).toBeGreaterThan(0);
-      expect(loon.nodes.length).toBeGreaterThan(0);
-      expect(quanx.nodes.length).toBeGreaterThan(0);
-      expect(surgeWireguard.nodes.length).toBeGreaterThan(0);
-    });
-
-    it('应解析 Loon AnyTLS 配置', () => {
-      const loon = parseClientConfig(
-        '[Proxy]\nAnyTLS-HK = anytls, 156.239.232.67, 443, password123, sni=example.com, alpn=h2,h3, skip-cert-verify=true',
-      );
-
-      expect(loon.client).toBe('loon');
-      expect(loon.nodes).toHaveLength(1);
-      expect(loon.nodes[0].protocol).toBe('anytls');
-      expect(loon.nodes[0].url).toContain('anytls://password123@156.239.232.67:443');
-      expect(loon.nodes[0].url).toContain('sni=example.com');
-      expect(loon.nodes[0].url).toContain('alpn=h2');
-      expect(loon.nodes[0].url).toContain('allowInsecure=1');
     });
   });
 });

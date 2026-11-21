@@ -194,30 +194,6 @@ const handleConfirm = async () => {
 
   emit('confirm');
 };
-
-// 颜色映射到 Tailwind 类
-const colorMap = {
-  red: 'bg-red-500',
-  orange: 'bg-orange-500',
-  green: 'bg-green-500',
-  blue: 'bg-blue-500',
-};
-
-const protocolColorMap = {
-  slate: 'text-slate-500 dark:text-slate-400',
-  purple: 'text-purple-500 dark:text-purple-400',
-  fuchsia: 'text-fuchsia-500 dark:text-fuchsia-400',
-  rose: 'text-rose-500 dark:text-rose-400',
-  cyan: 'text-cyan-500 dark:text-cyan-400',
-  orange: 'text-orange-500 dark:text-orange-400',
-  teal: 'text-teal-500 dark:text-teal-400',
-  blue: 'text-blue-500 dark:text-blue-400',
-  red: 'text-red-500 dark:text-red-400',
-  lime: 'text-lime-500 dark:text-lime-400',
-  indigo: 'text-indigo-500 dark:text-indigo-400',
-  pink: 'text-pink-500 dark:text-pink-400',
-  green: 'text-green-500 dark:text-green-400',
-};
 </script>
 
 <template>

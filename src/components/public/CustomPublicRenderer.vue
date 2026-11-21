@@ -120,9 +120,10 @@ const renderedHtml = computed(() => {
   // 2. 组件占位符替换 (转换为 data-slot div)
   const placeholders = ['profiles', 'announcement', 'announcements', 'hero', 'guestbook', 'theme_toggle'];
   placeholders.forEach((p) => {
-    // 使用 gi 确保不区分大小写
+    // 使用 gi 确保不区分大小写，announcement 与 announcements 统一映射到 announcements 插槽
+    const slotName = p === 'announcement' ? 'announcements' : p;
     const regex = new RegExp(`{{\\s*${p}\\s*}}`, 'gi');
-    html = html.replace(regex, `<div data-slot="${p}"></div>`);
+    html = html.replace(regex, `<div data-slot="${slotName}"></div>`);
   });
 
   return sanitizeHtml(html);

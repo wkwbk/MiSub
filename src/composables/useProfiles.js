@@ -67,6 +67,9 @@ export function useProfiles(markDirty) {
     if (customOrder.includes(normalizedOld)) {
       const nextOrder = normalizeTagList(customOrder.map((tag) => (tag === normalizedOld ? normalizedNew : tag)));
       settingsStore.updateConfig({ profileTagOrder: nextOrder });
+      if (typeof dataStore.saveSettings === 'function') {
+        dataStore.saveSettings({ profileTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      }
     }
 
     if (activeTagFilters.value.includes(normalizedOld)) {
@@ -98,6 +101,9 @@ export function useProfiles(markDirty) {
     const nextOrder = customOrder.filter((tag) => tag !== normalized);
     if (nextOrder.length !== customOrder.length) {
       settingsStore.updateConfig({ profileTagOrder: nextOrder });
+      if (typeof dataStore.saveSettings === 'function') {
+        dataStore.saveSettings({ profileTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      }
     }
 
     if (activeTagFilters.value.includes(normalized)) {
@@ -108,7 +114,11 @@ export function useProfiles(markDirty) {
   }
 
   function reorderProfileTags(newOrder) {
-    settingsStore.updateConfig({ profileTagOrder: normalizeTagList(newOrder) });
+    const normalizedOrder = normalizeTagList(newOrder);
+    settingsStore.updateConfig({ profileTagOrder: normalizedOrder });
+    if (typeof dataStore.saveSettings === 'function') {
+      dataStore.saveSettings({ profileTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+    }
     markDirty();
   }
 

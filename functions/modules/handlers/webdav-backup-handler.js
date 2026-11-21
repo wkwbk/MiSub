@@ -364,6 +364,31 @@ export async function performWebdavBackup(env, options = {}) {
       throw new Error(`WebDAV 上传失败: HTTP ${response.status}`);
     }
 
+    const retentionCount = Math.floor(Number(config.retentionCount) || 0);
+    if (retentionCount > 0) {
+      try {
+        const remoteDir = String(config.remotePath || '/MiSub').replace(/\/+$/, '');
+        const listResponse = await webdavFetch(config, remoteDir || '/', {
+          method: 'PROPFIND',
+          headers: { Depth: '1' },
+        });
+        if (listResponse.ok) {
+          const xml = await listResponse.text();
+          const existingFiles = Array.from(xml.matchAll(/<[^:>]*:?href[^>]*>([^<]+)<\/[^:>]*:?href>/gi))
+            .map((match) => normalizeWebdavHref(config.endpoint, match[1]))
+            .filter((href) => href && href.endsWith('.json') && href.includes(BACKUP_FILENAME_PREFIX))
+            .map((href) => ({ path: href, name: href.split('/').filter(Boolean).pop() }))
+            .sort((a, b) => String(b.name).localeCompare(String(a.name)));
+          const staleFiles = existingFiles.slice(retentionCount);
+          for (const file of staleFiles) {
+            await webdavFetch(config, file.path, { method: 'DELETE' }).catch(() => {});
+          }
+        }
+      } catch (pruneError) {
+        console.warn('[WebDAV Backup] Failed to prune old backups:', pruneError?.message || pruneError);
+      }
+    }
+
     await updateBackupStatus(env, {
       lastBackupAt: payload.exportedAt,
       lastBackupStatus: 'success',

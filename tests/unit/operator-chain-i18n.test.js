@@ -70,7 +70,7 @@ describe('operator chain English translations', () => {
     expect(wrapper.text()).toContain('Start chained processing');
     expect(wrapper.text()).toContain('Filter nodes');
     expect(wrapper.text()).toContain('Regex rename');
-    expect(wrapper.text()).toContain('Script execution');
+    expect(wrapper.text()).not.toContain('Script execution');
     expect(wrapper.text()).toContain('Node sorting');
     expect(wrapper.text()).toContain('Smart deduplication');
     expectNoChineseOrKeys(wrapper.text());

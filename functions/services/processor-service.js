@@ -233,35 +233,38 @@ export class ProcessorService {
           managedConfigUrl,
           skipCertVerify: builtinOptions.skipCertVerify,
           enableUdp: builtinOptions.enableUdp,
+          enableTfo: builtinOptions.enableTfo,
+          addFlagEmoji: builtinOptions.addFlagEmoji,
+          regionOverrides: builtinOptions.regionOverrides,
           isMeta: builtinOptions.isMeta,
           customDnsOverride: builtinOptions.customDnsOverride || '',
           dnsMode: builtinOptions.dnsMode || 'clean',
         };
 
-        switch (targetFormat) {
-          case 'clash':
-            finalContent = renderClashFromIniTemplate(templateText, renderParams);
-            contentType = 'application/x-yaml; charset=utf-8';
-            break;
-          case 'singbox':
-          case 'sing-box':
-            finalContent = renderSingboxFromIniTemplate(templateText, renderParams);
-            contentType = 'application/json; charset=utf-8';
-            break;
-          case 'surge':
-          case 'surge&ver=4':
-            finalContent = renderSurgeFromIniTemplate(templateText, renderParams);
-            break;
-          case 'loon':
-            finalContent = renderLoonFromIniTemplate(templateText, renderParams);
-            break;
-          case 'quanx':
-            finalContent = renderQuanxFromIniTemplate(templateText, renderParams);
-            break;
-          case 'egern':
-            finalContent = renderEgernFromIniTemplate(templateText, renderParams);
-            contentType = 'application/x-yaml; charset=utf-8';
-            break;
+        if (targetFormat.startsWith('surge')) {
+          finalContent = renderSurgeFromIniTemplate(templateText, renderParams);
+        } else {
+          switch (targetFormat) {
+            case 'clash':
+              finalContent = renderClashFromIniTemplate(templateText, renderParams);
+              contentType = 'application/x-yaml; charset=utf-8';
+              break;
+            case 'singbox':
+            case 'sing-box':
+              finalContent = renderSingboxFromIniTemplate(templateText, renderParams);
+              contentType = 'application/json; charset=utf-8';
+              break;
+            case 'loon':
+              finalContent = renderLoonFromIniTemplate(templateText, renderParams);
+              break;
+            case 'quanx':
+              finalContent = renderQuanxFromIniTemplate(templateText, renderParams);
+              break;
+            case 'egern':
+              finalContent = renderEgernFromIniTemplate(templateText, renderParams);
+              contentType = 'application/x-yaml; charset=utf-8';
+              break;
+          }
         }
       } else if (templateText && targetFormat === 'clash' && isClashYamlProfileTemplate(templateText)) {
         finalContent = renderClashYamlProfileTemplate(templateText, combinedNodeList, builtinOptions);

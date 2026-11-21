@@ -97,13 +97,6 @@ export class NoopStorageAdapter {
   }
   async cleanupMaintenance() {
     return {
-      migratedNodes: 0,
-      migratedGuestbook: 0,
-      mergedDownloadCounts: 0,
-      migratedLogs: 0,
-      migratedErrorReports: 0,
-      removedSettingsClutter: 0,
-      removedOrphanCounts: 0,
       removedExpiredCache: 0,
     };
   }

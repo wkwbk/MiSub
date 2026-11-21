@@ -114,7 +114,7 @@ describe('API route access boundaries', () => {
         method: 'POST',
         body: JSON.stringify({ misubs: [], profiles: [] }),
       }),
-      new Request('https://example.com/api/system/export', {
+      new Request('https://example.com/api/backup/export', {
         method: 'POST',
         body: JSON.stringify({}),
       }),

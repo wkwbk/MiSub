@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import { fetchGithubLatestRelease } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -18,16 +18,6 @@ export const useVersionStore = defineStore('version', () => {
 - **UI 与交互优化**：优化仪表盘布局与移动端视图，统一手动节点卡片视图及节点/订阅/订阅组的分页控件；修复导航与按钮连点问题并预取懒加载弹窗，优化公开页图片与静态资源加载。
 - **兼容性清理与工具统一**：移除过时的 \`document.execCommand('copy')\` 与 \`escape/unescape\` Base64 兼容代码，统一为现代 Clipboard API 与 \`TextEncoder/TextDecoder\` UTF-8 Base64 工具；清理全局与组件死 CSS 及孤立模块。
 - **架构与代码规范升级**：重组前后端模块目录（收拢 \`external-api/\`、\`handlers/\`、\`subscription/generators/\`，拍平前端组件目录并统一 \`kebab-case\` 命名），引入 \`oxlint\` 并将全仓库静态检查警告清零。`;
-
-  const hasUpdate = computed(() => {
-    if (!latestRelease.value?.tag_name) return false;
-    return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
-  });
-
-  const isUpToDate = computed(() => {
-    if (!latestRelease.value?.tag_name) return true;
-    return compareVersions(latestRelease.value.tag_name, currentVersion.value) === 0;
-  });
 
   function normalizeVersion(version) {
     return String(version || '')
@@ -101,8 +91,6 @@ export const useVersionStore = defineStore('version', () => {
     localChangelog,
     showModal,
     showUpdateNotice,
-    hasUpdate,
-    isUpToDate,
     checkVersion,
     openModal,
     closeModal,

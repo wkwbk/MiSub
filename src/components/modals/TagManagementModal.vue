@@ -103,7 +103,7 @@ const isDraggable = computed(() => props.allowReorder && localTags.value.length 
 </script>
 
 <template>
-  <Modal :show="show" max-width="max-w-2xl" @close="handleClose">
+  <Modal :show="show" size="2xl" @update:show="(val) => !val && handleClose()">
     <template #title>
       <div class="flex items-center gap-2">
         <Tag class="h-4 w-4 text-fg-subtle" />

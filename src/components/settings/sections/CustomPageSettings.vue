@@ -305,7 +305,7 @@ const normalizeFullPageSource = () => {
           <div class="flex flex-wrap gap-2.5">
             <button
               v-for="tpl in templates"
-              :key="tpl.name"
+              :key="tpl.nameKey"
               class="px-3.5 py-1.5 bg-transparent border border-line rounded-md text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors shadow-none"
               data-testid="custom-page-template"
               @click="applyTemplate(tpl)"

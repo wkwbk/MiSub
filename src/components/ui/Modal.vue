@@ -6,6 +6,18 @@ import { useScrollLock } from '@/composables/useScrollLock.js';
 
 const props = defineProps({
   show: Boolean,
+  title: {
+    type: String,
+    default: '',
+  },
+  showCancel: {
+    type: Boolean,
+    default: true,
+  },
+  showConfirm: {
+    type: Boolean,
+    default: true,
+  },
   confirmKeyword: String,
   size: {
     type: String,
@@ -175,7 +187,7 @@ useScrollLock(() => props.show);
             <div :id="titleId" class="modal-chrome-header px-6 py-4 shrink-0">
               <slot name="title">
                 <h3 class="text-base font-semibold text-fg">
-                  {{ t('common.confirmAction') }}
+                  {{ title || t('common.confirmAction') }}
                 </h3>
               </slot>
             </div>
@@ -191,15 +203,20 @@ useScrollLock(() => props.show);
               </slot>
             </div>
 
-            <div class="modal-chrome-footer px-6 py-3.5 flex justify-end items-center gap-2.5 shrink-0">
+            <div
+              v-if="$slots.footer || showCancel || showConfirm"
+              class="modal-chrome-footer px-6 py-3.5 flex justify-end items-center gap-2.5 shrink-0"
+            >
               <slot name="footer">
                 <button
+                  v-if="showCancel"
                   class="px-4 py-2 bg-transparent hover:bg-hover border border-line hover:border-line-strong text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                   @click="emit('update:show', false)"
                 >
                   {{ cancelLabel }}
                 </button>
                 <button
+                  v-if="showConfirm"
                   :class="
                     confirmVariant === 'danger'
                       ? 'bg-transparent border border-red-500/40 text-red-500 dark:text-red-400 hover:bg-red-500/10'

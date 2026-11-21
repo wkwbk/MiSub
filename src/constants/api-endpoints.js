@@ -20,7 +20,6 @@ export const API_ENDPOINTS = {
   NODES_TCPING: '/api/nodes/tcping',
   FETCH_EXTERNAL: '/api/fetch_external_url',
   BATCH_UPDATE: '/api/batch_update_nodes',
-  DEBUG_SUB: '/api/debug_subscription',
 
   // 订阅访问
   SUB_BASE: '/sub',

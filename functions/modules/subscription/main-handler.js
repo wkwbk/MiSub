@@ -420,6 +420,9 @@ export async function handleMisubRequest(context) {
       if (profilePrefixSettings.manualNodePrefix && profilePrefixSettings.manualNodePrefix.trim() !== '') {
         effectivePrefixSettings.manualNodePrefix = profilePrefixSettings.manualNodePrefix;
       }
+      if (profilePrefixSettings.prependTagName !== null && profilePrefixSettings.prependTagName !== undefined) {
+        effectivePrefixSettings.prependTagName = profilePrefixSettings.prependTagName;
+      }
     }
 
     // nodeTransform 回退逻辑
@@ -590,6 +593,11 @@ export async function handleMisubRequest(context) {
     ) {
       try {
         const userInfoHeader = buildUserInfoHeaderFromSubscriptions(context, targetMisubs, currentProfile?.expiresAt);
+        const finalYamlSkipCertVerify =
+          urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
+        const finalYamlEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
+        const finalYamlAddFlagEmoji =
+          urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
         const builtinOptions = {
           ...resolveBuiltinRequestOptions({
             searchParams: url.searchParams,
@@ -597,12 +605,12 @@ export async function handleMisubRequest(context) {
           }),
           // 透传 emoji 开关到内置生成器（url-to-clash.js 读 options.addFlagEmoji）。
           // 漏传时 `undefined !== false` 恒为 true，导致无条件加国旗。
-          addFlagEmoji: resolveAddFlagEmoji(currentProfile, config),
+          addFlagEmoji: finalYamlAddFlagEmoji,
           fileName: subName,
           managedConfigUrl: buildManagedConfigUrl(request.url),
           interval: updateIntervalSeconds,
-          skipCertVerify: shouldSkipCertificateVerify,
-          enableUdp: shouldEnableUdp,
+          skipCertVerify: finalYamlSkipCertVerify,
+          enableUdp: finalYamlEnableUdp,
           enableTfo: urlTfo === 'true' || urlTfo === '1',
           ruleLevel,
           regionOverrides: Array.isArray(config.regionOverrides) ? config.regionOverrides : [],
@@ -760,6 +768,9 @@ export async function handleMisubRequest(context) {
   const finalEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
   const finalEnableTfo = urlTfo === 'true' || urlTfo === '1';
 
+  const finalAddFlagEmoji =
+    urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
+
   const builtinOptions = {
     ...resolveBuiltinRequestOptions({
       searchParams: url.searchParams,
@@ -767,7 +778,7 @@ export async function handleMisubRequest(context) {
     }),
     // 透传 emoji 开关到内置生成器（url-to-clash.js 读 options.addFlagEmoji）。
     // 漏传时 `undefined !== false` 恒为 true，导致无条件加国旗。
-    addFlagEmoji: resolveAddFlagEmoji(currentProfile, config),
+    addFlagEmoji: finalAddFlagEmoji,
     fileName: subName,
     managedConfigUrl: '',
     interval: updateIntervalSeconds,

@@ -141,7 +141,8 @@ export async function fetchNodeCount(subUrl, fetchProxy = '', plusAsSpace = fals
       return normalizeApiFailure(data, t('settings.updateNodeInfoFailed'));
     }
 
-    return { success: true, data }; // data 包含 { count, userInfo }
+    const unwrapped = data?.data && typeof data.data === 'object' ? data.data : data;
+    return { success: true, data: unwrapped }; // data 包含 { count, userInfo }
   } catch (error) {
     return handleApiError(error, 'fetchNodeCount');
   } finally {

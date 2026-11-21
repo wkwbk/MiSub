@@ -5,11 +5,6 @@ import {
   handleSubconverterTestRequest,
 } from '../../functions/modules/api-router.js';
 import {
-  handleDebugSubscriptionRequest,
-  handleExportDataRequest,
-  handlePreviewContentRequest,
-} from '../../functions/modules/handlers/debug-handler.js';
-import {
   createSignedToken,
   getAuthSessionDiagnostic,
   handleLogin,
@@ -59,10 +54,6 @@ function createAssets() {
   };
 }
 
-function stringifyResponseBody(body) {
-  return JSON.stringify(body);
-}
-
 describe('security hardening', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -85,10 +76,10 @@ describe('security hardening', () => {
     expect(body.error).toMatch(/too large|过大/i);
   });
 
-  it('rejects oversized public preview JSON bodies before outbound fetch', async () => {
+  it('rejects oversized external fetch JSON bodies before outbound fetch', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('should-not-fetch'));
-    const response = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const response = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -360,13 +351,13 @@ describe('security hardening', () => {
     expect(body.message).toContain('未返回有效转换结果');
   });
 
-  it('does not pass insecureSkipVerify when previewing external content', async () => {
+  it('does not pass insecureSkipVerify when fetching external content', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('dm1lc3M6Ly9leGFtcGxl', { status: 200 }));
 
-    const response = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const response = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -478,8 +469,8 @@ describe('security hardening', () => {
       }),
       {},
     );
-    const previewResponse = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const metadataResponse = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: 'http://169.254.169.254/latest/meta-data' }),
@@ -488,7 +479,7 @@ describe('security hardening', () => {
     );
 
     expect(externalResponse.status).toBe(400);
-    expect(previewResponse.status).toBe(400);
+    expect(metadataResponse.status).toBe(400);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -497,16 +488,16 @@ describe('security hardening', () => {
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('dm1lc3M6Ly9leGFtcGxl', { status: 200 }));
 
-    const rejected = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const rejected = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: 'https://sub.example/test' }),
       }),
       {},
     );
-    const accepted = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const accepted = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -536,8 +527,8 @@ describe('security hardening', () => {
     ];
 
     for (const url of blockedUrls) {
-      const response = await handlePreviewContentRequest(
-        new Request('https://example.com/api/preview/content', {
+      const response = await handleExternalFetchRequest(
+        new Request('https://example.com/api/fetch_external_url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url }),
@@ -558,8 +549,8 @@ describe('security hardening', () => {
       }),
     );
 
-    const response = await handlePreviewContentRequest(
-      new Request('https://example.com/api/preview/content', {
+    const response = await handleExternalFetchRequest(
+      new Request('https://example.com/api/fetch_external_url', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -571,78 +562,6 @@ describe('security hardening', () => {
 
     expect(response.status).toBe(400);
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it('redacts sensitive fields from exported settings and subscriptions', async () => {
-    const env = {
-      MISUB_DB: createMemoryD1({
-        misub_settings_v1: JSON.stringify({
-          mytoken: 'export-token-secret',
-          cronSecret: 'cron-secret-value',
-          BotToken: 'telegram-bot-token',
-          safeName: 'MiSub',
-        }),
-        misub_subscriptions_v1: JSON.stringify([
-          {
-            id: 'sub-1',
-            name: 'Airport',
-            url: 'https://airport.example/link/export-token-secret?token=secret-query',
-          },
-        ]),
-        misub_profiles_v1: JSON.stringify([]),
-      }),
-    };
-
-    const response = await handleExportDataRequest(
-      new Request('https://example.com/api/system/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          includeSubscriptions: true,
-          includeProfiles: true,
-          includeSettings: true,
-        }),
-      }),
-      env,
-    );
-    const body = await response.json();
-    const text = stringifyResponseBody(body);
-
-    expect(response.status).toBe(200);
-    expect(text).not.toContain('export-token-secret');
-    expect(text).not.toContain('cron-secret-value');
-    expect(text).not.toContain('telegram-bot-token');
-    expect(body.exportData.data.settings.safeName).toBe('MiSub');
-    expect(body.exportData.data.settings.mytoken).toBe('[REDACTED]');
-  });
-
-  it('redacts debug subscription result URLs and full raw result', async () => {
-    const env = {
-      MISUB_DB: createMemoryD1({
-        misub_subscriptions_v1: JSON.stringify([]),
-        misub_profiles_v1: JSON.stringify([]),
-      }),
-    };
-    const rawNode = 'trojan://debug-node-password@server.example:443?allowInsecure=1#Debug';
-    const encoded = btoa(rawNode);
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(encoded, { status: 200 }));
-
-    const response = await handleDebugSubscriptionRequest(
-      new Request('https://example.com/api/debug_subscription', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: 'https://airport.example/sub/debug-token-secret' }),
-      }),
-      env,
-    );
-    const body = await response.json();
-    const text = stringifyResponseBody(body);
-
-    expect(fetchSpy).toHaveBeenCalled();
-    expect(response.status).toBeLessThan(500);
-    expect(body.fullResult).toBeUndefined();
-    expect(text).not.toContain('debug-token-secret');
-    expect(text).not.toContain('debug-node-password@server.example');
   });
 
   it('serves /logo.png to unauthenticated requests even when disguise is enabled', async () => {

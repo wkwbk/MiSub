@@ -281,7 +281,6 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
     .filter((line) => line && !line.startsWith('#'));
 
   const proxyLines = [];
-  const proxyNames = [];
   const proxiesWithMetadata = [];
   const usedNames = new Map();
 
@@ -299,7 +298,6 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
     const line = clashProxyToLoonResult(clashProxy);
     if (line) {
       proxyLines.push(line);
-      proxyNames.push(uniqueName);
       proxiesWithMetadata.push(clashProxy);
     }
   }

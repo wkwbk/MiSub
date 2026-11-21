@@ -47,10 +47,5 @@ export const useToastStore = defineStore('toast', () => {
     }
   }
 
-  function hideToast() {
-    toasts.value = [];
-    queue.value = [];
-  }
-
-  return { toasts, showToast, removeToast, hideToast };
+  return { toasts, showToast, removeToast };
 });

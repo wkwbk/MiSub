@@ -8,6 +8,7 @@ import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
 import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher.vue';
 import { useUIStore } from '@/stores/ui.js';
+import { useSessionStore } from '@/stores/session.js';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({
@@ -48,13 +49,19 @@ const props = defineProps({
 const emit = defineEmits(['openSettings', 'toggleLayout', 'logout']);
 const route = useRoute();
 const uiStore = useUIStore();
+const sessionStore = useSessionStore();
 const { layoutMode } = storeToRefs(uiStore);
 const { t } = useI18n();
 const isLegacyLayout = computed(() => layoutMode.value === 'legacy');
 const layoutToggleLabel = computed(() =>
   isLegacyLayout.value ? t('actions.switchToModernLayout') : t('actions.switchToLegacyLayout'),
 );
-const showPublicFeedback = computed(() => !props.isLoggedIn && (route.name === 'Home' || route.name === 'Explore'));
+const showPublicFeedback = computed(
+  () =>
+    !props.isLoggedIn &&
+    sessionStore.publicConfig?.enablePublicPage !== false &&
+    (route.name === 'Home' || route.name === 'Explore'),
+);
 const canShowExplore = computed(() => props.showExplore);
 const isExploreActive = computed(() => route.path === '/explore');
 const exploreBtnClass = computed(() => {

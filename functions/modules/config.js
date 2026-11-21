@@ -18,7 +18,6 @@ export const DEFAULT_SETTINGS = {
   ruleLevel: 'std',
   builtinSkipCertVerify: false,
   builtinEnableUdp: true,
-  builtinLoonSkipCertVerify: false,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   NotifyThresholdDays: 3,
@@ -28,14 +27,6 @@ export const DEFAULT_SETTINGS = {
   enablePublicPage: true,
   storageType: 'd1',
   profileUpdateInterval: 24, // 客户端订阅默认更新间隔（小时），0 表示禁用注入 Profile-Update-Interval
-  // 新增：借鉴Sub-Store和miaomiaowu的功能
-  enableSubscriptionSync: true, // 启用订阅同步
-  subscriptionCacheExpireMinutes: 60, // 订阅缓存过期时间（分钟）
-  enableTrafficMonitor: true, // 启用流量监控
-  enableTemplateEngine: true, // 启用模板引擎
-  enableEnhancedLogging: true, // 启用增强日志
-  maxSubscriptionConcurrency: 3, // 最大订阅并发数
-  defaultUserAgent: 'clash-meta/2.5.0', // 默认User-Agent
   defaultPrefixSettings: {
     enableManualNodes: true,
     enableSubscriptions: true,

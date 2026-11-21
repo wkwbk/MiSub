@@ -16,6 +16,13 @@ const props = defineProps({
   },
 });
 
+const updatePushConfigField = (key, value) => {
+  telegramPushConfig.value = {
+    ...telegramPushConfig.value,
+    [key]: value,
+  };
+};
+
 const telegramPushConfig = computed({
   get() {
     return (
@@ -206,7 +213,10 @@ async function testNotification() {
           <Send class="h-4 w-4" />
         </template>
         <template #actions>
-          <Switch v-model="telegramPushConfig.enabled" />
+          <Switch
+            :model-value="telegramPushConfig.enabled"
+            @update:model-value="(val) => updatePushConfigField('enabled', val)"
+          />
         </template>
       </SectionHeader>
 
@@ -215,10 +225,11 @@ async function testNotification() {
           <div>
             <label class="block text-xs font-medium text-fg-muted">Push Bot Token</label>
             <input
-              v-model="telegramPushConfig.bot_token"
+              :value="telegramPushConfig.bot_token"
               class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="123456:ABC-DEF..."
               type="text"
+              @input="(e) => updatePushConfigField('bot_token', e.target.value)"
             />
             <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
               {{ t('settings.telegramPushTokenHint') }}
@@ -228,11 +239,12 @@ async function testNotification() {
           <div>
             <label class="block text-xs font-medium text-fg-muted">{{ t('settings.telegramWebhookSecret') }}</label>
             <input
-              v-model="telegramPushConfig.webhook_secret"
+              :value="telegramPushConfig.webhook_secret"
               :aria-label="t('settings.telegramWebhookSecret')"
               class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="random_secret-token"
               type="text"
+              @input="(e) => updatePushConfigField('webhook_secret', e.target.value)"
             />
             <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
               {{ t('settings.telegramWebhookSecretHint') }}
@@ -273,7 +285,10 @@ async function testNotification() {
               </p>
             </div>
           </div>
-          <Switch v-model="telegramPushConfig.allow_all_users" />
+          <Switch
+            :model-value="telegramPushConfig.allow_all_users"
+            @update:model-value="(val) => updatePushConfigField('allow_all_users', val)"
+          />
         </div>
 
         <div>

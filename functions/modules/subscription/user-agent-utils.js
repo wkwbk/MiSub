@@ -78,8 +78,8 @@ export function determineTargetFormat(userAgent, searchParams) {
       const iosSurgeVer = ua.includes('surge/') && !ua.includes('mac') ? 4 : Math.max(2, version);
       return `surge&ver=${iosSurgeVer}`;
     }
-    // 默认iOS Surge使用版本4
-    return ua.includes('surge/') && !ua.includes('mac') ? 'surge&ver=4' : 'surge&ver=4';
+    // 默认 Surge 使用版本 4
+    return 'surge&ver=4';
   }
 
   const uaMapping = [

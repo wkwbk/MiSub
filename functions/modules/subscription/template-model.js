@@ -18,6 +18,7 @@ export function createUnifiedTemplateModel(input = {}) {
       enableUdp: Boolean(input.settings?.enableUdp),
       customDnsOverride: input.settings?.customDnsOverride || '',
       dnsMode: input.settings?.dnsMode || 'clean',
+      regionOverrides: Array.isArray(input.settings?.regionOverrides) ? input.settings.regionOverrides : [],
     },
     extras: typeof input.extras === 'object' && input.extras !== null ? input.extras : {},
   };

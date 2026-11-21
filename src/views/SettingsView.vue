@@ -156,6 +156,10 @@ watch(
   },
 );
 
+const handleReloadNow = () => {
+  window.location.reload();
+};
+
 onUnmounted(() => {
   clearTimeout(highlightTimer);
 });
@@ -178,7 +182,7 @@ onUnmounted(() => {
       layout-class="h-full"
       @save="handleSave"
       @update:active-tab="handleActiveTabUpdate"
-      @reload-now="() => window.location.reload()"
+      @reload-now="handleReloadNow"
     />
   </div>
 </template>

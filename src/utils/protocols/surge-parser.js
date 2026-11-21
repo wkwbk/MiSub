@@ -217,6 +217,7 @@ function parseSurgeSS(line) {
     const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
     if (!parts) return null;
 
+    const name = parts[1].trim();
     const params = parts[2].split(',').map((p) => p.trim());
     const [_protocol, server, port, method, password] = params;
 
@@ -244,6 +245,7 @@ function parseSurgeTrojan(line) {
     const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
     if (!parts) return null;
 
+    const name = parts[1].trim();
     const params = parts[2].split(',').map((p) => p.trim());
     const [_protocol, server, port, ...options] = params;
 
@@ -285,6 +287,7 @@ function parseSurgeHTTP(line) {
     const parts = line.match(/^([^=]+?)\s*=\s*(.+)$/);
     if (!parts) return null;
 
+    const name = parts[1].trim();
     const params = parts[2].split(',').map((p) => p.trim());
     const [protocol, server, port] = params;
 

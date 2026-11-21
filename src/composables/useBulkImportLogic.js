@@ -9,8 +9,9 @@ import { parseSurgeConfig } from '@/utils/protocols/index.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
 
-const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS;
+const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS.filter((p) => p !== 'http' && p !== 'https');
 const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);
+const HTTP_PROXY_NODE_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
 export function needsServerParsing(text) {
   if (/^v2rayn:\/\//im.test(text)) return true;
@@ -106,13 +107,13 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         normalizedTags,
       );
 
-      if (/^https?:\/\//.test(line) && !BULK_IMPORT_NODE_REGEX.test(line)) {
+      if (/^https?:\/\//i.test(line) && !HTTP_PROXY_NODE_REGEX.test(line)) {
         if (!existingUrls.has(line)) {
           validSubs.push({ ...baseItem, id: generateSubscriptionId() });
         } else {
           duplicateCount++;
         }
-      } else if (BULK_IMPORT_NODE_REGEX.test(line)) {
+      } else if (BULK_IMPORT_NODE_REGEX.test(line) || HTTP_PROXY_NODE_REGEX.test(line)) {
         const alreadyParsed = validNodes.some((n) => n.url === line);
         if (!alreadyParsed) {
           if (!existingUrls.has(line)) {

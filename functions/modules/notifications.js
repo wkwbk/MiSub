@@ -6,8 +6,10 @@
 
 import { formatBytes } from '../../shared/format-utils.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
 // 导入核心通知服务及工具
 import {
+  debugTgNotification,
   sendEnhancedTgNotification as sendCoreEnhancedTg,
   sendTgNotification as sendCoreTg,
   tgEscape as coreTgEscape,
@@ -32,6 +34,32 @@ export async function sendTgNotification(settings, message) {
  */
 export async function sendEnhancedTgNotification(settings, type, clientIp, additionalData = '') {
   return sendCoreEnhancedTg(settings, type, clientIp, additionalData);
+}
+
+/**
+ * 测试 Telegram 通知
+ */
+export async function handleTestNotificationRequest(request) {
+  if (request.method !== 'POST') {
+    return createErrorResponse('Method Not Allowed', 405);
+  }
+
+  try {
+    const { botToken, chatId } = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+    const settings = { BotToken: botToken, ChatID: chatId };
+
+    const result = await debugTgNotification(
+      settings,
+      '🔔 <b>通知测试</b> 🔔\n\n这是来自 MiSub 的测试消息，用于验证您的配置是否正确。',
+    );
+
+    if (result.success) {
+      return createJsonResponse({ success: true, detail: result.response });
+    }
+    return createJsonResponse({ success: false, error: result.error, detail: result.response }, 400);
+  } catch (e) {
+    return createErrorResponse(e.message, e.status || 500);
+  }
 }
 
 async function loadSubscriptionsForCron(storageAdapter) {

@@ -824,7 +824,11 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     </div>
   </div>
 
-  <BulkImportModal v-model:show="showBulkImportModal" @import="(txt, tags) => handleBulkImport(txt, tags)" />
+  <BulkImportModal
+    v-model:show="showBulkImportModal"
+    @import="(txt, tags) => handleBulkImport(txt, tags)"
+    @files-imported="(nodes, tags) => addNodesFromBulk(nodes, tags)"
+  />
   <SubscriptionBulkImportModal
     v-model:show="showSubBulkImportModal"
     @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"

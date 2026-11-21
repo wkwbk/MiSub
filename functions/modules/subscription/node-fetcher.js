@@ -33,8 +33,7 @@ export async function fetchSubscriptionNodes(
   storageAdapter = null,
   subscription = null,
 ) {
-  // 自动检测调试 Token
-  const shouldDebug = debug || (url && url.includes('b0b422857bb46aba65da8234c84f38c6'));
+  const shouldDebug = Boolean(debug);
 
   /**
    * 上游拉取失败或无有效节点时，回退到保护性缓存（与订阅输出链路行为一致）。

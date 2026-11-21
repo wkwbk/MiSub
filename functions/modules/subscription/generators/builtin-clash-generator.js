@@ -100,9 +100,6 @@ function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
           proxies: chainNames,
         };
       }
-      if (group.name === '落地节点') {
-        return null;
-      }
       return group;
     })
     .filter(Boolean);

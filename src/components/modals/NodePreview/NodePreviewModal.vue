@@ -15,7 +15,6 @@ import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
 import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
 import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
-import { REGION_EMOJI } from '@shared/region-emoji.js';
 
 const isDev = import.meta.env.DEV;
 const { t } = useI18n();
@@ -197,7 +196,7 @@ const resetState = () => {
   protocolFilter.value = 'all';
   regionFilter.value = 'all';
   searchQuery.value = '';
-  showProcessed.value = false;
+  showProcessed.value = true;
   error.value = '';
   allNodes.value = [];
   protocolStats.value = {};
@@ -364,90 +363,6 @@ const getProtocolStyle = () => {
   return 'bg-transparent text-fg-muted border border-line font-mono';
 };
 
-// 获取地区 Emoji
-const getRegionEmoji = (region) => {
-  if (!region) return '🌐';
-  if (REGION_EMOJI[region]) return REGION_EMOJI[region];
-
-  // 英文代码别名。中文地区名以 geo-utils 的旗帜表为准，台湾固定为 🇨🇳。
-  const regionMap = {
-    HK: '🇭🇰',
-    'Hong Kong': '🇭🇰',
-    香港: '🇭🇰',
-    TW: '🇨🇳',
-    Taiwan: '🇨🇳',
-    台湾: '🇨🇳',
-    JP: '🇯🇵',
-    Japan: '🇯🇵',
-    日本: '🇯🇵',
-    US: '🇺🇸',
-    'United States': '🇺🇸',
-    美国: '🇺🇸',
-    SG: '🇸🇬',
-    Singapore: '🇸🇬',
-    新加坡: '🇸🇬',
-    KR: '🇰🇷',
-    Korea: '🇰🇷',
-    韩国: '🇰🇷',
-    UK: '🇬🇧',
-    'United Kingdom': '🇬🇧',
-    英国: '🇬🇧',
-    DE: '🇩🇪',
-    Germany: '🇩🇪',
-    德国: '🇩🇪',
-    FR: '🇫🇷',
-    France: '🇫🇷',
-    法国: '🇫🇷',
-    RU: '🇷🇺',
-    Russia: '🇷🇺',
-    俄罗斯: '🇷🇺',
-    CA: '🇨🇦',
-    Canada: '🇨🇦',
-    加拿大: '🇨🇦',
-    MO: '🇲🇴',
-    Macao: '🇲🇴',
-    澳门: '🇲🇴',
-    CN: '🇨🇳',
-    China: '🇨🇳',
-    中国: '🇨🇳',
-    IN: '🇮🇳',
-    India: '🇮🇳',
-    印度: '🇮🇳',
-    NL: '🇳🇱',
-    Netherlands: '🇳🇱',
-    荷兰: '🇳🇱',
-    AU: '🇦🇺',
-    Australia: '🇦🇺',
-    澳大利亚: '🇦🇺',
-    TH: '🇹🇭',
-    Thailand: '🇹🇭',
-    泰国: '🇹🇭',
-    VN: '🇻🇳',
-    Vietnam: '🇻🇳',
-    越南: '🇻🇳',
-    ID: '🇮🇩',
-    Indonesia: '🇮🇩',
-    印尼: '🇮🇩',
-    MY: '🇲🇾',
-    Malaysia: '🇲🇾',
-    马来西亚: '🇲🇾',
-    PH: '🇵🇭',
-    Philippines: '🇵🇭',
-    菲律宾: '🇵🇭',
-    TR: '🇹🇷',
-    Turkey: '🇹🇷',
-    土耳其: '🇹🇷',
-  };
-
-  if (regionMap[region]) return regionMap[region];
-
-  // 尝试在字符串中查找 Emoji
-  const emojiMatch = region.match(/(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
-  if (emojiMatch) return emojiMatch[0];
-
-  return '🌍';
-};
-
 // 解析节点信息
 const parseNodeInfo = (node) => {
   const result = {
@@ -535,7 +450,7 @@ const goToPage = (page) => {
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <button
-            v-if="profileId"
+            v-if="profileId && apiEndpoint !== '/api/public/preview'"
             :class="
               pickingMode
                 ? 'bg-active text-fg border-line-strong'

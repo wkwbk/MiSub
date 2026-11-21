@@ -39,13 +39,7 @@ import {
   handleWebdavBackupTest,
   handleWebdavRestore,
 } from './handlers/webdav-backup-handler.js';
-import {
-  handleDebugSubscriptionRequest,
-  handleExportDataRequest,
-  handlePreviewContentRequest,
-  handleSystemInfoRequest,
-  handleTestNotificationRequest,
-} from './handlers/debug-handler.js';
+import { handleTestNotificationRequest } from './notifications.js';
 import {
   handleBatchUpdateNodesRequest,
   handleNodeCountRequest as handleLegacyNodeCountRequest,
@@ -184,9 +178,6 @@ export async function handleApiRequest(request, env, context = null) {
   }
 
   if (path === '/test_notification') {
-    if (!(await authMiddleware(request, env))) {
-      return createJsonResponse({ error: 'Unauthorized' }, 401);
-    }
     return await handleTestNotificationRequest(request, env);
   }
 
@@ -251,18 +242,6 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/subscription_nodes':
       return await handleSubscriptionNodesRequest(request, env);
-
-    case '/debug_subscription':
-      return await handleDebugSubscriptionRequest(request, env);
-
-    case '/system/info':
-      return await handleSystemInfoRequest(request, env);
-
-    case '/system/export':
-      return await handleExportDataRequest(request, env);
-
-    case '/preview/content':
-      return await handlePreviewContentRequest(request, env);
 
     case '/parse_subscription':
       return await handleParseSubscription(request, env);
@@ -543,7 +522,7 @@ export async function handleExternalFetchRequest(request, _env) {
       errorType: errorDetails.type,
     });
 
-    return createErrorResponse(errorMessage, 500);
+    return createErrorResponse(errorMessage, error.status || 500);
   }
 }
 

@@ -47,7 +47,7 @@ const handleConfirm = async () => {
       </div>
     </template>
     <template #body>
-      <SettingsPanel ref="settingsPanelRef" :export-backup="props.exportBackup" :import-backup="props.importBackup" />
+      <SettingsPanel ref="settingsPanelRef" />
     </template>
   </Modal>
 </template>

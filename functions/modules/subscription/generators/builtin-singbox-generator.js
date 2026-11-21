@@ -303,9 +303,6 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
             proxies: chainTags,
           };
         }
-        if (group.name === '落地节点') {
-          return null;
-        }
         return group;
       })
       .filter(Boolean);

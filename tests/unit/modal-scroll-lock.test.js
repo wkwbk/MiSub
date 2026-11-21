@@ -1,7 +1,6 @@
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import FormModal from '@/components/shared/FormModal.vue';
 import Modal from '@/components/ui/Modal.vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 
@@ -68,7 +67,7 @@ describe('modal scroll lock', () => {
       }),
     );
     const secondModal = trackWrapper(
-      mount(FormModal, {
+      mount(Modal, {
         props: { show: true, title: 'Nested' },
         attachTo: document.body,
       }),

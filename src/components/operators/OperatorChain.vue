@@ -203,7 +203,7 @@ const toggleOperator = (event, index) => {
 };
 
 const operatorLabel = (type) => t(`operators.${type}`);
-const operatorTypes = ['filter', 'rename', 'script', 'sort', 'dedup'];
+const operatorTypes = ['filter', 'rename', 'sort', 'dedup'];
 
 const OPERATOR_ICONS = {
   filter: Filter,

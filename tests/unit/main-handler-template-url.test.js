@@ -10,11 +10,6 @@ import {
   resolveTemplateUrl,
   shouldRenderClashYamlProfileTemplateLocally,
 } from '../../functions/modules/subscription/main-handler.js';
-import {
-  normalizeTemplateTarget,
-  shouldApplyExternalTemplateForTarget,
-  TEMPLATE_COMPATIBILITY,
-} from '../../functions/modules/subscription/template-compatibility.js';
 
 describe('Main handler template url', () => {
   it('formats Telegram expiration with profile priority and merged fallback', () => {
@@ -92,15 +87,6 @@ describe('Main handler template url', () => {
     );
   });
 
-  it('should apply external templates only to compatible targets', () => {
-    expect(shouldApplyExternalTemplateForTarget('clash', 'https://example.com/preset.ini')).toBe(true);
-    expect(shouldApplyExternalTemplateForTarget('surge&ver=4', 'https://example.com/preset.ini')).toBe(true);
-    expect(shouldApplyExternalTemplateForTarget('loon', 'https://example.com/preset.ini')).toBe(true);
-    expect(shouldApplyExternalTemplateForTarget('quanx', 'https://example.com/preset.ini')).toBe(true);
-    expect(shouldApplyExternalTemplateForTarget('singbox', 'https://example.com/preset.ini')).toBe(true);
-    expect(shouldApplyExternalTemplateForTarget('clash', 'https://example.com/preset.yaml')).toBe(false);
-  });
-
   it('should forward remote YAML config URLs to external subconverter backends', () => {
     const externalUrl = buildExternalSubconverterUrl({
       backend: 'https://sub.example.com/sub',
@@ -161,15 +147,5 @@ describe('Main handler template url', () => {
         templateSource: resolveTemplateSource('https://example.com/subconverter.ini'),
       }),
     ).toBe(false);
-  });
-
-  it('should normalize template targets and expose compatibility table', () => {
-    expect(normalizeTemplateTarget('surge&ver=4')).toBe('surge');
-    expect(normalizeTemplateTarget('sing-box')).toBe('singbox');
-    expect(TEMPLATE_COMPATIBILITY.clash.allowExternalTemplate).toBe(true);
-    expect(TEMPLATE_COMPATIBILITY.surge.allowExternalTemplate).toBe(true);
-    expect(TEMPLATE_COMPATIBILITY.loon.allowExternalTemplate).toBe(true);
-    expect(TEMPLATE_COMPATIBILITY.quanx.allowExternalTemplate).toBe(true);
-    expect(TEMPLATE_COMPATIBILITY.singbox.allowExternalTemplate).toBe(true);
   });
 });

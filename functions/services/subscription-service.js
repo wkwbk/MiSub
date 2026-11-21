@@ -398,16 +398,7 @@ export async function generateCombinedNodeList(
       // 使用统一的 node-parser 解析，确保与预览一致的过滤规则 (UUID校验, Hysteria1过滤, SS加密校验等)
       const parsedObjects = parseNodeList(text);
 
-      let fallbackParsedObjects = parsedObjects;
-      if (parsedObjects.length === 0) {
-        const fallbackText = await decodeBase64Content(encodeArrayBufferToBase64(buffer));
-        const fallbackNodes = parseNodeList(fallbackText);
-        if (fallbackNodes.length > 0) {
-          fallbackParsedObjects = fallbackNodes;
-        }
-      }
-
-      let validNodes = fallbackParsedObjects.map((node) => node.url);
+      let validNodes = parsedObjects.map((node) => node.url);
 
       // [截断检测基线] 骤降保护必须基于"过滤前"的上游真实节点数：
       // 用户配置的 include/exclude 过滤与算子链造成的缩减是预期行为，

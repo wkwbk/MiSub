@@ -295,7 +295,7 @@ export async function onRequest(context) {
           url.pathname !== customLoginPath &&
           !url.pathname.startsWith('/explore');
 
-        if (isProtectedSpaRoute && !isLocalhost) {
+        if (isProtectedSpaRoute) {
           const isAuthenticated = await authMiddleware(request, env);
           if (!isAuthenticated) {
             return createDisguiseResponse(settings?.disguise, request.url);
@@ -326,14 +326,6 @@ export async function onRequest(context) {
 
           if (indexResponse.status === 200) {
             response = indexResponse;
-          } else if (isLocalhost) {
-            return new Response(`Redirecting to frontend dev server...`, {
-              status: 302,
-              headers: {
-                Location: `http://localhost:5173${url.pathname}${url.search}`,
-                'Content-Type': 'text/plain',
-              },
-            });
           }
         }
 

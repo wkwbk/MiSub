@@ -256,7 +256,6 @@ export async function handleNodeCountRequest(request, env) {
             if (info) {
               console.info('[NodeHandler] Successfully extracted traffic info from node response header (Fallback 1).');
               result.userInfo = info;
-              trafficRequestSucceeded = true;
             }
           }
 
@@ -277,7 +276,6 @@ export async function handleNodeCountRequest(request, env) {
             if (bodyInfo) {
               console.info('[NodeHandler] Successfully extracted traffic info from body fake nodes (Fallback 2).');
               result.userInfo = bodyInfo;
-              trafficRequestSucceeded = true;
             }
           }
 

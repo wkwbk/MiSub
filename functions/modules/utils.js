@@ -341,50 +341,6 @@ export async function setAdminPassword(env, newPassword) {
  * @param {string} prefix - 前缀文本
  * @returns {string} 添加前缀后的链接
  */
-export function prependNodeName(link, prefix) {
-  if (!prefix) return link;
-  const appendToFragment = (baseLink, namePrefix) => {
-    const hashIndex = baseLink.lastIndexOf('#');
-    const originalName = hashIndex !== -1 ? decodeURIComponent(baseLink.substring(hashIndex + 1)) : '';
-    const base = hashIndex !== -1 ? baseLink.substring(0, hashIndex) : baseLink;
-    if (originalName.startsWith(namePrefix)) {
-      return baseLink;
-    }
-    const newName = originalName ? `${namePrefix} - ${originalName}` : namePrefix;
-    return `${base}#${encodeURIComponent(newName)}`;
-  };
-  if (link.startsWith('vmess://')) {
-    try {
-      const base64Part = link.substring('vmess://'.length);
-      const binaryString = atob(base64Part);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const jsonString = new TextDecoder('utf-8').decode(bytes);
-      const nodeConfig = JSON.parse(jsonString);
-      const originalPs = nodeConfig.ps || '';
-      if (!originalPs.startsWith(prefix)) {
-        nodeConfig.ps = originalPs ? `${prefix} - ${originalPs}` : prefix;
-      }
-      const newJsonString = JSON.stringify(nodeConfig);
-      const newBase64Part = utf8ToBase64(newJsonString);
-      return 'vmess://' + newBase64Part;
-    } catch (e) {
-      console.error('为 vmess 节点添加名称前缀失败，将回退到通用方法。', e);
-      return appendToFragment(link, prefix);
-    }
-  }
-  return appendToFragment(link, prefix);
-}
-
-/**
- * 创建带超时的请求
- * @param {RequestInfo} input - 请求输入
- * @param {RequestInit} init - 请求初始化选项
- * @param {number} timeout - 超时时间（毫秒）
- * @returns {Promise<Response>} 响应
- */
 export function createTimeoutFetch(input, init = {}, timeout = 10000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -402,38 +358,6 @@ export function createTimeoutFetch(input, init = {}, timeout = 10000) {
   return fetchPromise.finally(() => {
     clearTimeout(timeoutId);
   });
-}
-
-/**
- * 通用日志函数
- * @param {string} level - 日志级别 (info, warn, error)
- * @param {string} message - 日志消息
- * @param {any} data - 附加数据
- */
-export function log(level, message, data = null) {
-  const timestamp = new Date().toISOString();
-  const logEntry = {
-    timestamp,
-    level,
-    message,
-    data,
-  };
-
-  switch (level) {
-    case 'info':
-      console.info(`[${timestamp}] ${message}`, data);
-      break;
-    case 'warn':
-      console.warn(`[${timestamp}] ${message}`, data);
-      break;
-    case 'error':
-      console.error(`[${timestamp}] ${message}`, data);
-      break;
-    default:
-      console.info(`[${timestamp}] ${message}`, data);
-  }
-
-  return logEntry;
 }
 
 /**
@@ -622,21 +546,6 @@ export function base64EncodeUtf8(str) {
     return btoa(binString);
   } catch (e) {
     console.error('[Utils] base64EncodeUtf8 failed:', e);
-    return '';
-  }
-}
-
-/**
- * 安全的 Base64 到 UTF-8 解码
- */
-export function base64DecodeUtf8(base64) {
-  if (!base64) return '';
-  try {
-    const binString = atob(base64.replace(/-/g, '+').replace(/_/g, '/'));
-    const bytes = Uint8Array.from(binString, (m) => m.charCodeAt(0));
-    return new TextDecoder().decode(bytes);
-  } catch (e) {
-    console.error('[Utils] base64DecodeUtf8 failed:', e);
     return '';
   }
 }

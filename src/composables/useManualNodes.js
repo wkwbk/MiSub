@@ -326,6 +326,9 @@ export function useManualNodes(markDirty) {
       settingsStore.updateConfig({
         manualNodeTagOrder: nextOrder,
       });
+      if (typeof dataStore.saveSettings === 'function') {
+        dataStore.saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      }
     }
 
     if (activeTagFilters.value.includes(normalizedOldName)) {
@@ -356,6 +359,9 @@ export function useManualNodes(markDirty) {
       settingsStore.updateConfig({
         manualNodeTagOrder: nextOrder,
       });
+      if (typeof dataStore.saveSettings === 'function') {
+        dataStore.saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      }
     }
 
     if (activeTagFilters.value.includes(normalizedTagName)) {
@@ -370,6 +376,11 @@ export function useManualNodes(markDirty) {
     settingsStore.updateConfig({
       manualNodeTagOrder: normalizedOrder,
     });
+    if (typeof dataStore.saveSettings === 'function') {
+      dataStore
+        .saveSettings({ manualNodeTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true })
+        .catch(() => {});
+    }
     markDirty();
   }
 

@@ -11,6 +11,7 @@ import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { DEFAULT_LIST_PAGE_SIZE, normalizeListPageSize } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 import {
@@ -22,6 +23,7 @@ import {
 } from '@/utils/tags.js';
 
 const { t } = useI18n();
+const dataStore = useDataStore();
 
 const props = defineProps({
   subscriptions: { type: Array, default: () => [] },
@@ -556,6 +558,7 @@ watch(totalPages, (nextTotal) => {
         :title="t('subscriptions.empty')"
         :total-count="0"
         icon="folder"
+        @refresh="dataStore.fetchData(true)"
       />
     </div>
   </div>

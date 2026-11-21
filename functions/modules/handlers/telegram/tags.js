@@ -220,7 +220,7 @@ export async function applyTagOperation(
   }
 
   // 清理节点缓存，避免前端读到旧数据
-  if (type === 'node') await clearAllNodeCaches(env);
+  if (type === 'node') await clearAllNodeCaches(storageAdapter);
 
   return changed;
 }

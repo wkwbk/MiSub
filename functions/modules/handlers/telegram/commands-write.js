@@ -705,7 +705,7 @@ export async function handleUnbindCommand(chatId, userId, env, requestCache = nu
     const config = settings.telegram_push_config || {};
 
     if (!getUserBoundProfileId(config, userId)) {
-      await sendTelegramMessage(chatId, '馃搵 褰撳墠鏈粦瀹氫换浣曡闃呯粍', env);
+      await sendTelegramMessage(chatId, '📋 当前未绑定任何订阅组', env);
       return;
     }
 

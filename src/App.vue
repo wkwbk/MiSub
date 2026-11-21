@@ -15,6 +15,7 @@ import { useVersionStore } from '@/stores/version';
 import { storeToRefs } from 'pinia';
 import NavBar from '@/components/layout/NavBar.vue';
 import { useI18n } from '@/i18n/index.js';
+import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { COMMON_DASHBOARD_ROUTE_LOADERS, configureAuthGuard, translateRouteTitle } from '@/router/index.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import { readSessionPreference } from '@/utils/session-preference.js';
@@ -177,6 +178,33 @@ watch(
   },
   { immediate: true },
 );
+
+const { startAutoUpdate, stopAutoUpdate, restartAutoUpdate } = useSubscriptions(() => dataStore.markDirty());
+
+watch(
+  [sessionState, layoutMode],
+  ([state, mode]) => {
+    if (state === 'loggedIn' && mode === 'modern') {
+      startAutoUpdate();
+    } else {
+      stopAutoUpdate();
+    }
+  },
+  { immediate: true },
+);
+
+watch(
+  () => dataStore.settings?.autoUpdateInterval,
+  (newInterval) => {
+    if (sessionState.value === 'loggedIn' && layoutMode.value === 'modern' && newInterval !== undefined) {
+      restartAutoUpdate(newInterval);
+    }
+  },
+);
+
+onUnmounted(() => {
+  stopAutoUpdate();
+});
 
 watch(
   sessionState,

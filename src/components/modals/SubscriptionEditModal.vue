@@ -282,16 +282,7 @@ watch(
   { immediate: true },
 );
 
-// === 高级模式相关（保留原有逻辑） ===
-const excludeRuleTextarea = ref(null);
-const excludeRuleHighlight = ref(null);
-
-const excludeRuleLines = computed(() => {
-  const text = props.editingSubscription?.exclude ?? '';
-  const lines = text.split('\n');
-  return lines.length ? lines : [''];
-});
-
+// === 高级模式相关 ===
 const excludeRuleState = computed(() => {
   const text = props.editingSubscription?.exclude ?? '';
   const rawLines = text.split('\n');
@@ -299,7 +290,6 @@ const excludeRuleState = computed(() => {
   const hasContent = lines.some((line) => line);
   const dividerIndex = lines.findIndex((line) => line === '---');
   const hasDivider = dividerIndex !== -1;
-  const hasKeepPrefix = lines.some((line) => line.toLowerCase().startsWith('keep:'));
 
   let tagKey = 'unset';
   if (hasContent) {
@@ -363,14 +353,6 @@ const excludeRuleState = computed(() => {
       .join('；'),
   };
 });
-
-const excludeRuleErrorLines = computed(() => new Set(excludeRuleState.value.errors.map((item) => item.line)));
-
-const syncExcludeRuleScroll = () => {
-  if (!excludeRuleTextarea.value || !excludeRuleHighlight.value) return;
-  excludeRuleHighlight.value.scrollTop = excludeRuleTextarea.value.scrollTop;
-  excludeRuleHighlight.value.scrollLeft = excludeRuleTextarea.value.scrollLeft;
-};
 
 const handleConfirm = () => {
   if (isAdvancedMode.value && excludeRuleState.value.errors.length > 0) {

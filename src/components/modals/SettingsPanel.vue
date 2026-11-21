@@ -43,6 +43,9 @@ defineExpose({
   isSaving,
   saveDisabled,
 });
+const handleReloadNow = () => {
+  window.location.reload();
+};
 </script>
 
 <template>
@@ -61,7 +64,7 @@ defineExpose({
       hide-footer
       in-modal
       @save="handleSave"
-      @reload-now="() => window.location.reload()"
+      @reload-now="handleReloadNow"
     />
   </div>
 </template>

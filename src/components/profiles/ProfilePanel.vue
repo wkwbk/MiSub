@@ -11,10 +11,12 @@ import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { collectTags, normalizeActiveTagFilters, toggleTagFilterValue } from '@/utils/tags.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const { t } = useI18n();
+const dataStore = useDataStore();
 
 const props = defineProps({
   profiles: {
@@ -398,7 +400,13 @@ const draggableProfiles = computed({
       />
     </div>
     <div v-else class="rounded-md border border-line bg-surface py-2">
-      <EmptyState :description="t('profiles.emptyDesc')" :title="t('profiles.empty')" :total-count="0" icon="folder" />
+      <EmptyState
+        :description="t('profiles.emptyDesc')"
+        :title="t('profiles.empty')"
+        :total-count="0"
+        icon="folder"
+        @refresh="dataStore.fetchData(true)"
+      />
     </div>
   </div>
 </template>

@@ -207,12 +207,6 @@ export function resolveSafeDnsConfig(raw, options = {}) {
       dns[key] = Boolean(override[key]);
       return;
     }
-    if (key === 'fake-ip-filter') {
-      if (Array.isArray(override[key]) && override[key].every((item) => typeof item === 'string')) {
-        dns[key] = [...override[key]];
-      }
-      return;
-    }
     if (typeof override[key] === 'string' || typeof override[key] === 'number') dns[key] = override[key];
   });
 

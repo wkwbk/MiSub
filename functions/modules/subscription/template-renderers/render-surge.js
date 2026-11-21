@@ -241,19 +241,19 @@ function buildProxyGroupLine(group) {
   const tolerance = group.options?.tolerance;
   if (type === 'url-test') {
     const base = filter
-      ? `${group.name} = url-test, policy-path=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
+      ? `${group.name} = url-test, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
       : `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
     return tolerance ? `${base}, tolerance=${tolerance}` : base;
   }
   if (type === 'fallback') {
     const base = filter
-      ? `${group.name} = fallback, policy-path=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
+      ? `${group.name} = fallback, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
       : `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
     return tolerance ? `${base}, tolerance=${tolerance}` : base;
   }
   if (type === 'load-balance') {
     return filter
-      ? `${group.name} = load-balance, policy-path=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
+      ? `${group.name} = load-balance, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
       : `${group.name} = load-balance, ${members}`;
   }
   return `${group.name} = select, ${members}`;

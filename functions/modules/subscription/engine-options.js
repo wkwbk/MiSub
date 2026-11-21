@@ -84,9 +84,6 @@ export function normalizeSubconverterBackend(input, fallback = DEFAULT_SUBCONVER
   }
 
   const externalUrl = assertPublicNetworkUrl(backend);
-  if (externalUrl.pathname === '/' || !externalUrl.pathname) {
-    externalUrl.pathname = '/sub';
-  }
   if (externalUrl.pathname !== '/sub') {
     externalUrl.pathname = '/sub';
   }

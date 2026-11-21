@@ -6,11 +6,13 @@ import PanelPagination from '@/components/shared/PanelPagination.vue';
 import SortingBanner from '@/components/shared/SortingBanner.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { useI18n } from '@/i18n/index.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const { t } = useI18n();
+const dataStore = useDataStore();
 
 const props = defineProps({
   manualNodes: { type: Array, default: () => [] },
@@ -211,6 +213,7 @@ const handleDragEnd = (evt) => {
       :title="t('manualNodes.empty')"
       :total-count="0"
       icon="node"
+      @refresh="dataStore.fetchData(true)"
     />
   </div>
 </template>

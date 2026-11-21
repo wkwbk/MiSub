@@ -336,7 +336,9 @@ export function applySmartModelOptimizations(model) {
     if (proxyNames.length > 0) {
       // 4. 识别地区分组并注入
       const nodeEntries = proxyNames.map((name) => ({ tag: name }));
-      const regions = groupNodeLinesByRegion(nodeEntries);
+      const regions = groupNodeLinesByRegion(nodeEntries, {
+        regionOverrides: Array.isArray(model.settings?.regionOverrides) ? model.settings.regionOverrides : [],
+      });
 
       // 注入地区自动选优组
       regions.forEach((region) => {

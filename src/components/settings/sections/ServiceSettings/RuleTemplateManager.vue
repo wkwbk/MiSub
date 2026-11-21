@@ -51,6 +51,14 @@ const isSaving = ref(false);
 const isLoading = ref(false);
 
 const selectedTemplate = computed(() => localTemplates.value.find((item) => item.id === selectedId.value) || null);
+const selectedTemplateId = computed({
+  get: () => selectedTemplate.value?.id || '',
+  set: (value) => {
+    if (!selectedTemplate.value) return;
+    selectedTemplate.value.id = value;
+    selectedId.value = value;
+  },
+});
 const hasTemplates = computed(() => localTemplates.value.length > 0);
 
 function cloneTemplates(items) {
@@ -193,7 +201,7 @@ defineExpose({
               t('settings.ruleTemplateId')
             }}</span>
             <input
-              v-model="selectedTemplate.id"
+              v-model="selectedTemplateId"
               class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-sm text-fg focus:border-line-strong focus:outline-hidden"
             />
           </label>

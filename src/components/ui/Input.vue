@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, useSlots } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -59,7 +59,8 @@ const updateValue = (event) => {
   emit('update:modelValue', event.target.value);
 };
 
-const hasIcon = computed(() => props.icon !== null);
+const slots = useSlots();
+const hasIcon = computed(() => props.icon !== null || Boolean(slots.icon));
 const hasPrefix = computed(() => props.prefix !== '');
 
 // 尺寸映射支持

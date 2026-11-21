@@ -42,6 +42,9 @@ export function useSubscriptions(markDirty) {
     if (dataStore.settings && typeof dataStore.settings === 'object') {
       dataStore.settings.subscriptionTagOrder = nextOrder;
     }
+    if (typeof dataStore.saveSettings === 'function') {
+      dataStore.saveSettings({ subscriptionTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+    }
   };
 
   const subscriptionTags = computed(() => {

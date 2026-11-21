@@ -267,16 +267,39 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
           records.sort(NodeUtils.makeComparator({ keys: params.keys }));
         }
         break;
-      case 'dedup':
+      case 'dedup': {
+        const mode = params?.mode === 'url' ? 'url' : 'serverPort';
         const includeProtocol = params?.includeProtocol !== false;
+        const protocolOrder = Array.isArray(params?.prefer?.protocolOrder)
+          ? params.prefer.protocolOrder.map((p) => String(p || '').toLowerCase())
+          : [];
+        const getProtocolRank = (protocol) => {
+          const idx = protocolOrder.indexOf(String(protocol || '').toLowerCase());
+          return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
+        };
         const seenNodes = new Map();
         for (const r of records) {
-          const hostPort = `${r.server}:${r.port}`;
-          const key = includeProtocol ? `${r.protocol}|${hostPort}` : hostPort;
+          const key =
+            mode === 'url'
+              ? String(r.url || '').split('#')[0]
+              : includeProtocol
+                ? `${r.protocol}|${r.server}:${r.port}`
+                : `${r.server}:${r.port}`;
           if (!seenNodes.has(key)) {
             seenNodes.set(key, r);
           } else {
             const existing = seenNodes.get(key);
+            if (protocolOrder.length > 0) {
+              const nextRank = getProtocolRank(r.protocol);
+              const existingRank = getProtocolRank(existing.protocol);
+              if (nextRank < existingRank) {
+                seenNodes.set(key, r);
+                continue;
+              }
+              if (nextRank > existingRank) {
+                continue;
+              }
+            }
             if ((r.name || '').length > (existing.name || '').length) {
               seenNodes.set(key, r);
             }
@@ -284,6 +307,7 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
         }
         records = Array.from(seenNodes.values());
         break;
+      }
     }
   }
 
