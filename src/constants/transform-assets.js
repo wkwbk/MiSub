@@ -154,10 +154,6 @@ export function getTransformAssetByUrl(url) {
   return TRANSFORM_ASSETS.configs.find((item) => item.url === url) || null;
 }
 
-export function isBuiltinTransformAssetUrl(url) {
-  return typeof url === 'string' && url.startsWith('builtin:');
-}
-
 /**
  * 把单个资产的 nameKey / descriptionKey 解析成当前语言的文案。
  *

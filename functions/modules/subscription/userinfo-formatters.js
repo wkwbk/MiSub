@@ -9,14 +9,6 @@ export function maskSensitiveLogValue(value) {
   return `${text.slice(0, 4)}…${text.slice(-4)} (${text.length})`;
 }
 
-export function buildTemplateProxyBlock(nodeList) {
-  return nodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
-    .join('\n');
-}
-
 export function extractProxySectionFromBuiltin(content, targetFormat) {
   if (typeof content !== 'string' || content.trim() === '') return '';
 

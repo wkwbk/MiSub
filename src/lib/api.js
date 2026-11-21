@@ -118,23 +118,6 @@ export async function login(password) {
 }
 
 // [核心修改] saveMisubs 现在接收并发送 profiles
-export async function saveMisubs(misubs, profiles) {
-  try {
-    // 数据预验证
-    if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
-      return {
-        success: false,
-        error: t('settings.dataFormatInvalid'),
-        errorType: 'validation',
-      };
-    }
-
-    return await api.post('/api/misubs', { misubs, profiles });
-  } catch (error) {
-    return handleApiError(error, 'saveMisubs');
-  }
-}
-
 export async function fetchNodeCount(subUrl, fetchProxy = '', plusAsSpace = false, userAgent = '') {
   let timeoutId;
   try {
@@ -271,16 +254,3 @@ export async function testSubconverterBackend(backend, target = 'clash') {
   }
 }
 
-/**
- * 测试订阅链接内容
- * @param {string} url - 订阅URL
- * @param {string} userAgent - User-Agent
- * @returns {Promise<Object>} - 测试结果
- */
-export async function testSubscription(url, userAgent) {
-  try {
-    return await api.post('/api/debug_subscription', { url, userAgent });
-  } catch (error) {
-    return handleApiError(error, 'testSubscription');
-  }
-}

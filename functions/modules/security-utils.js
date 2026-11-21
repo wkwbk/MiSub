@@ -156,16 +156,6 @@ export function validatePublicNetworkUrl(value) {
   return { ok: true, url };
 }
 
-export function assertPublicFetchUrl(inputUrl) {
-  const validation = validatePublicFetchUrl(inputUrl);
-  if (!validation.ok) {
-    const error = new Error(validation.error);
-    error.status = 400;
-    throw error;
-  }
-  return validation.url;
-}
-
 export function assertPublicNetworkUrl(inputUrl) {
   const validation = validatePublicNetworkUrl(inputUrl);
   if (!validation.ok) {

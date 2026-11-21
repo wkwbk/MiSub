@@ -194,23 +194,6 @@ export function getCacheConfig() {
 }
 
 /**
- * 清除指定缓存
- * @param {Object} storageAdapter - 存储适配器
- * @param {string} cacheKey - 缓存键
- * @returns {Promise<boolean>}
- */
-export async function clearCache(storageAdapter, cacheKey) {
-  try {
-    await storageAdapter.delete(cacheKey);
-
-    return true;
-  } catch (error) {
-    console.error('[Cache] Failed to clear cache:', error);
-    return false;
-  }
-}
-
-/**
  * 清除所有节点缓存
  * @param {Object} storageAdapter - 存储适配器
  * @returns {Promise<{cleared: number, failed: number}>}
@@ -254,31 +237,3 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
   }
 }
 
-/**
- * 使指定 Profile 或 Token 的缓存失效
- * @param {Object} storageAdapter - 存储适配器
- * @param {string[]} profileIds - Profile ID 列表
- * @param {string} token - Token（可选）
- * @returns {Promise<number>} 清除的缓存数量
- */
-export async function invalidateCaches(storageAdapter, profileIds = [], token = null) {
-  let clearedCount = 0;
-
-  // 清除 Profile 缓存
-  for (const profileId of profileIds) {
-    const cacheKey = generateCacheKey('profile', profileId);
-    if (await clearCache(storageAdapter, cacheKey)) {
-      clearedCount++;
-    }
-  }
-
-  // 清除 Token 缓存（主订阅）
-  if (token) {
-    const cacheKey = generateCacheKey('token', token);
-    if (await clearCache(storageAdapter, cacheKey)) {
-      clearedCount++;
-    }
-  }
-
-  return clearedCount;
-}

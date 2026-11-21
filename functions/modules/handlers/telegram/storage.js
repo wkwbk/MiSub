@@ -50,18 +50,6 @@ export async function getCachedProfiles(env, cache) {
   return cache.profiles;
 }
 
-export async function persistCachedSubscriptions(env, cache) {
-  if (cache.subscriptions === undefined) return;
-  const storageAdapter = await getCachedStorageAdapter(env, cache);
-  await storageAdapter.putAllSubscriptions(cache.subscriptions);
-}
-
-export async function persistCachedProfiles(env, cache) {
-  if (cache.profiles === undefined) return;
-  const storageAdapter = await getCachedStorageAdapter(env, cache);
-  await storageAdapter.putAllProfiles(cache.profiles);
-}
-
 export async function persistCachedSettings(env, cache) {
   if (cache.settings === undefined) return;
   const storageAdapter = await getCachedStorageAdapter(env, cache);

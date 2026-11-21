@@ -94,7 +94,7 @@ async function readBusinessData(storageAdapter) {
 
 export async function buildBackupPayload(env, options = {}) {
   const { storageAdapter, storageType } = await getStorage(env);
-  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || (await SettingsCache.get(env)) || {};
+  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
   const backupConfig = normalizeWebdavConfig(settings);
   const scope = normalizeScope(options.scope || backupConfig.backupScope);
   const businessData = await readBusinessData(storageAdapter);

@@ -17,34 +17,6 @@ export function normalizeLoginPath(customLoginPath) {
   return normalized && normalized !== 'login' ? `/${normalized}` : '/login';
 }
 
-/**
- * 计算数据的简单哈希值，用于检测变更
- * @param {any} data - 要计算哈希的数据
- * @returns {string} - 数据的哈希值
- */
-export function calculateDataHash(data) {
-  const jsonString = JSON.stringify(data, Object.keys(data).sort());
-  let hash = 0;
-  for (let i = 0; i < jsonString.length; i++) {
-    const char = jsonString.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // 转换为32位整数
-  }
-  return hash.toString();
-}
-
-/**
- * 检测数据是否发生变更
- * @param {any} oldData - 旧数据
- * @param {any} newData - 新数据
- * @returns {boolean} - 是否发生变更
- */
-export function hasDataChanged(oldData, newData) {
-  if (!oldData && !newData) return false;
-  if (!oldData || !newData) return true;
-  return calculateDataHash(oldData) !== calculateDataHash(newData);
-}
-
 function getD1(env) {
   const db = env?.MISUB_DB;
   return db && typeof db.prepare === 'function' ? db : null;
@@ -433,63 +405,6 @@ export function createTimeoutFetch(input, init = {}, timeout = 10000) {
 }
 
 /**
- * 带重试机制的请求函数
- * @param {RequestInfo} input - 请求输入
- * @param {RequestInit} init - 请求初始化选项
- * @param {Object} options - 选项
- * @param {number} options.maxRetries - 最大重试次数
- * @param {number} options.timeout - 每次请求超时时间
- * @param {number} options.baseDelay - 基础延迟时间
- * @returns {Promise<Response>} 响应
- */
-export async function retryFetch(input, init = {}, options = {}) {
-  const { maxRetries = 3, timeout = 10000, baseDelay = 1000 } = options;
-
-  let lastError;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await createTimeoutFetch(input, init, timeout);
-    } catch (error) {
-      lastError = error;
-
-      // 如果是最后一次尝试，直接抛出错误
-      if (attempt === maxRetries) {
-        throw error;
-      }
-
-      // 计算延迟时间（指数退避）
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.warn(
-        `[Retry] Request failed (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms:`,
-        error.message,
-      );
-
-      // 等待延迟
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  throw lastError;
-}
-
-/**
- * 安全的存储操作包装器
- * @param {Function} operation - 存储操作函数
- * @param {any} fallback - 操作失败时的默认返回值
- * @param {string} context - 操作上下文
- * @returns {Promise<any>} 操作结果
- */
-export async function safeStorageOperation(operation, fallback = null, context = '') {
-  try {
-    return await operation();
-  } catch (error) {
-    console.error(`[Storage] ${context} failed:`, error);
-    return fallback;
-  }
-}
-
-/**
  * 通用日志函数
  * @param {string} level - 日志级别 (info, warn, error)
  * @param {string} message - 日志消息
@@ -519,23 +434,6 @@ export function log(level, message, data = null) {
   }
 
   return logEntry;
-}
-
-/**
- * 获取回调令牌
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<string>} 回调令牌
- */
-export async function getCallbackToken(env) {
-  const secret = env.COOKIE_SECRET || 'default-callback-secret';
-  const encoder = new TextEncoder();
-  const keyData = encoder.encode(secret);
-  const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('callback-static-data'));
-  return Array.from(new Uint8Array(signature))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 16);
 }
 
 /**
@@ -607,27 +505,6 @@ export function createJsonResponse(data, status = 200, headers = {}) {
       ...headers,
     },
   });
-}
-
-/**
- * 获取用于外部回调的基础 URL
- * @param {Object} env - Cloudflare环境对象
- * @param {URL} requestUrl - 当前请求 URL
- * @returns {URL} - 规范化后的基础 URL
- */
-export function getPublicBaseUrl(env, requestUrl) {
-  const configured = (env?.MISUB_CALLBACK_URL || env?.MISUB_PUBLIC_URL || '').trim();
-  if (!configured) {
-    return new URL(requestUrl.origin);
-  }
-
-  const hasProtocol = /^https?:\/\//i.test(configured);
-  const normalized = hasProtocol ? configured : `https://${configured}`;
-  const baseUrl = new URL(normalized);
-  baseUrl.pathname = '';
-  baseUrl.search = '';
-  baseUrl.hash = '';
-  return baseUrl;
 }
 
 /**

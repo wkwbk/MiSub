@@ -32,12 +32,9 @@
     "@vitejs/plugin-vue": "^6.0.11",
     "@vue/test-utils": "^2.4.6",
     "happy-dom": "^21.0.4",
-    "miniflare": "^4.20260730.0",
     "oxlint": "^1.94.0",
-    "playwright": "^1.65.1",
     "prettier": "^3.10.1",
     "tailwindcss": "^4.3.5",
-    "terser": "^5.51.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "wrangler": "^4.162.0"

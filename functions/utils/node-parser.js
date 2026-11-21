@@ -531,28 +531,6 @@ export function calculateRegionStats(nodes) {
 }
 
 /**
- * 去除重复节点
- */
-export function removeDuplicateNodes(nodes) {
-  if (!Array.isArray(nodes)) return [];
-  const seen = new Set();
-  return nodes.filter((node) => {
-    const url = node.url || '';
-    if (seen.has(url)) return false;
-    seen.add(url);
-    return true;
-  });
-}
-
-/**
- * 格式化节点数量显示
- */
-export function formatNodeCount(count) {
-  if (typeof count !== 'number' || count < 0) return '0 个节点';
-  return `${count} 个节点`;
-}
-
-/**
  * 解析 Snell URL 为 Clash 代理对象
  * @param {string} url - Snell URL
  * @returns {Object|null} Clash 代理对象或 null

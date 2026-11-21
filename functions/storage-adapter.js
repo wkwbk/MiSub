@@ -970,8 +970,14 @@ class D1StorageAdapter {
       if (!item?.id) continue;
       nextIds.add(item.id);
       const existing = currentMap.get(item.id);
-      if (!existing || stableStringify(existing) !== stableStringify(item)) {
-        toUpsert.push(item);
+      const nextItem = existing
+        ? {
+            ...item,
+            downloadCount: Math.max(Number(existing.downloadCount) || 0, Number(item.downloadCount) || 0),
+          }
+        : item;
+      if (!existing || stableStringify(existing) !== stableStringify(nextItem)) {
+        toUpsert.push(nextItem);
       }
     }
 
@@ -1072,7 +1078,6 @@ class D1StorageAdapter {
         }
 
         const needsBackfill =
-          key.startsWith('tmp_external_nodes:') ||
           key.startsWith('tg_push_rate:') ||
           key === 'misub_webdav_backup_lock' ||
           key.startsWith('github_release_') ||

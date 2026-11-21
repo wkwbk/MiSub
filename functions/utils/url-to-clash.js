@@ -61,28 +61,3 @@ export function urlsToClashProxies(urls, options = {}) {
     })
     .filter((proxy) => proxy !== null && (isVirtualInfoProxy(proxy) || !isLocalProxyEndpoint(proxy)));
 }
-
-/**
- * 生成完整的 Clash 配置
- * @param {string[]} urls - 节点 URL 数组
- * @param {Object} options - 配置选项
- * @returns {string} Clash YAML 配置
- */
-export function generateClashConfig(urls, options = {}) {
-  const proxies = urlsToClashProxies(urls, options);
-
-  if (proxies.length === 0) {
-    return '';
-  }
-
-  // 构建 YAML（简化版，不使用 js-yaml 以减少依赖）
-  let yaml = 'proxies:\n';
-
-  for (const proxy of proxies) {
-    // [元数据清理] 移除内部元数据字段，避免污染 YAML
-    const { metadata: _metadata, ...rest } = proxy;
-    yaml += `  - ${JSON.stringify(rest)}\n`;
-  }
-
-  return yaml;
-}

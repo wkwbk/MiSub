@@ -131,15 +131,6 @@ function withProxy(value, proxyGroup) {
   return `${raw}#${proxyGroup}`;
 }
 
-function cloneResolverPolicy(policy) {
-  return {
-    mode: policy.mode,
-    domestic: [...policy.domestic],
-    foreign: [...policy.foreign],
-    polluted: [...policy.polluted],
-  };
-}
-
 export const DEFAULT_DNS_CONFIG = {
   enable: true,
   ipv6: false,
@@ -269,6 +260,3 @@ export function buildSingboxDnsConfig(raw, options = {}) {
   };
 }
 
-export function cloneDnsPolicy(raw, options = {}) {
-  return cloneResolverPolicy(resolveDnsPolicy(raw, options));
-}

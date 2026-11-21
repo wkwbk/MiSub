@@ -5,7 +5,6 @@
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
 import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
-import { extractNodeRegion } from './geo-utils.js';
 import { extractNodeMetadata } from './metadata-extractor.js';
 
 /**
@@ -145,13 +144,6 @@ export function prependNodeName(link, prefix) {
     }
   }
   return appendToFragment(link, prefix);
-}
-
-/**
- * [兼容导出] 从节点URL提取地区信息
- */
-export function extractRegionFromNodeName(nodeName) {
-  return extractNodeRegion(nodeName);
 }
 
 /**

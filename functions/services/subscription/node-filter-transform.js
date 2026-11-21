@@ -226,9 +226,7 @@ export function adaptLegacyTransform(config) {
       id: 'legacy-rename-script',
       type: 'script',
       enabled: true,
-      params: {
-        code: `return ($nodes) => { return $nodes.map(n => { n.name = (${renameScript.expression})(n.name, n); return n; }); }`,
-      },
+      params: { dsl: [{ action: 'rename', template: renameScript.expression }] },
     });
   }
 

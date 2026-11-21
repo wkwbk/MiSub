@@ -3,7 +3,6 @@
  * 处理所有API请求的路由分发
  */
 
-import { StorageFactory } from '../storage-adapter.js';
 import { encodeArrayBufferToBase64 } from '../../shared/base64.js';
 import {
   createErrorResponse,
@@ -44,14 +43,11 @@ import {
   handleDebugSubscriptionRequest,
   handleExportDataRequest,
   handlePreviewContentRequest,
-  handleStorageTestRequest,
   handleSystemInfoRequest,
   handleTestNotificationRequest,
 } from './handlers/debug-handler.js';
 import {
   handleBatchUpdateNodesRequest,
-  handleCleanNodesRequest,
-  handleHealthCheckRequest,
   handleNodeCountRequest as handleLegacyNodeCountRequest,
 } from './handlers/node-handler.js';
 import { handleNodeInspectRequest, handleNodeTcpingRequest } from './handlers/node-inspect-handler.js';
@@ -67,8 +63,6 @@ import { handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
-import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
-import { handleExternalNodesCallbackRequest } from '../services/external-nodes-callback-service.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';
 
 function isAuthDiagnosticsEnabled(env) {
@@ -84,10 +78,6 @@ function isAuthDiagnosticsEnabled(env) {
 export async function handleApiRequest(request, env, context = null) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/^\/api/, '');
-
-  if (path === '/external-nodes-callback') {
-    return handleExternalNodesCallbackRequest(request, env);
-  }
 
   if (path.startsWith('/ext/v1')) {
     return await handleExternalApiRequest(request, env);
@@ -243,17 +233,11 @@ export async function handleApiRequest(request, env, context = null) {
       }
     }
 
-    case '/nodes/health':
-      return await handleHealthCheckRequest(request, env);
-
     case '/nodes/inspect':
       return await handleNodeInspectRequest(request, env);
 
     case '/nodes/tcping':
       return await handleNodeTcpingRequest(request, env);
-
-    case '/nodes/clean':
-      return await handleCleanNodesRequest(request, env);
 
     case '/fetch_external_url':
       return await handleExternalFetchRequest(request, env);
@@ -269,9 +253,6 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/system/info':
       return await handleSystemInfoRequest(request, env);
-
-    case '/system/storage_test':
-      return await handleStorageTestRequest(request, env);
 
     case '/system/export':
       return await handleExportDataRequest(request, env);
@@ -327,18 +308,6 @@ export async function handleApiRequest(request, env, context = null) {
         return await handleGuestbookManageAction(request, env);
       }
       return createErrorResponse('Method Not Allowed', 405);
-
-    case '/cron/status':
-      if (!(await authMiddleware(request, env))) {
-        return createJsonResponse({ error: 'Unauthorized' }, 401);
-      }
-      return await handleCronStatusRequest(env);
-
-    case '/cron/trigger':
-      if (!(await authMiddleware(request, env))) {
-        return createJsonResponse({ error: 'Unauthorized' }, 401);
-      }
-      return await handleCronTriggerRequest(env);
 
     default:
       return createErrorResponse('API route not found', 404);
@@ -574,128 +543,3 @@ export async function handleExternalFetchRequest(request, _env) {
   }
 }
 
-/**
- * 处理 Cron 状态查询请求
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-async function handleCronStatusRequest(env) {
-  try {
-    // 检查是否启用Cron功能
-    const enableCron = env.ENABLE_CRON !== 'false';
-
-    // 获取Cron配置
-    const cronType = env.CRON_TYPE || 'hourly-subscription-sync';
-    const maxSyncCount = parseInt(env.CRON_MAX_SYNC_COUNT) || 50;
-    const syncTimeout = parseInt(env.CRON_SYNC_TIMEOUT) || 30000;
-    const enableParallel = env.CRON_ENABLE_PARALLEL !== 'false';
-
-    // 获取最近的Cron执行状态（如果有的话）
-    let lastExecution = null;
-    try {
-      const storageAdapter = StorageFactory.createAdapter(env);
-      if (storageAdapter.type !== 'noop') {
-        lastExecution = await storageAdapter.get('cron_last_execution');
-      }
-    } catch (error) {
-      console.warn('[Cron Status] Failed to fetch last execution:', error);
-    }
-
-    const statusData = {
-      enabled: enableCron,
-      config: {
-        type: cronType,
-        maxSyncCount,
-        syncTimeout,
-        enableParallel,
-      },
-      totalSubscriptions: lastExecution?.result?.totalSubscriptions || 0,
-      successfulSyncs: lastExecution?.result?.successfulSyncs || 0,
-      failedSyncs: lastExecution?.result?.failedSyncs || 0,
-      lastSync: lastExecution?.timestamp || null,
-      details: lastExecution?.result?.details || [],
-      lastExecution,
-      timestamp: new Date().toISOString(),
-    };
-
-    return createJsonResponse(statusData);
-  } catch (error) {
-    console.error('[Cron Status Error]', error);
-    return createErrorResponse(error, 500);
-  }
-}
-
-/**
- * 处理 Cron 手动触发请求
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-async function handleCronTriggerRequest(env) {
-  try {
-    // 检查是否启用Cron功能
-    const enableCron = env.ENABLE_CRON !== 'false';
-    if (!enableCron) {
-      return createJsonResponse(
-        {
-          success: false,
-          error: 'Cron functionality is disabled',
-        },
-        400,
-      );
-    }
-
-    // 获取Cron配置
-    const cronType = env.CRON_TYPE || 'hourly-subscription-sync';
-    const maxSyncCount = parseInt(env.CRON_MAX_SYNC_COUNT) || 50;
-    const syncTimeout = parseInt(env.CRON_SYNC_TIMEOUT) || 30000;
-    const enableParallel = env.CRON_ENABLE_PARALLEL !== 'false';
-
-    // 调用 _schedule.js 中的同步逻辑
-    const scheduleModule = await import('../_schedule.js');
-    const result = await scheduleModule.performSubscriptionSync(env, {
-      maxSyncCount,
-      syncTimeout,
-      enableParallel,
-    });
-
-    // 保存执行状态
-    try {
-      const storageAdapter = StorageFactory.createAdapter(env);
-      if (storageAdapter.type !== 'noop') {
-        const executionStatus = {
-          type: 'manual_trigger',
-          cronType,
-          timestamp: new Date().toISOString(),
-          result: {
-            totalSubscriptions: result.totalSubscriptions,
-            successfulSyncs: result.successfulSyncs,
-            failedSyncs: result.failedSyncs,
-          },
-        };
-        await storageAdapter.put('cron_last_execution', executionStatus);
-      }
-    } catch (error) {
-      console.warn('[Cron Trigger] Failed to save execution status:', error);
-    }
-
-    const scheduledTasks = await maybeRunScheduledTasks(
-      { env },
-      {
-        source: 'external-cron',
-        forceCheck: true,
-        awaitRun: true,
-      },
-    ).catch((error) => ({ success: false, error: error?.message || String(error) }));
-
-    return createJsonResponse({
-      success: true,
-      message: 'Cron triggered successfully',
-      result,
-      scheduledTasks,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[Cron Trigger Error]', error);
-    return createErrorResponse(error, 500);
-  }
-}

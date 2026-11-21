@@ -98,17 +98,3 @@ export function toExternalProfile(profile) {
   };
 }
 
-export function toInternalProfilePatch(payload = {}) {
-  const internal = {};
-  if ('name' in payload) internal.name = payload.name;
-  if ('description' in payload) internal.description = payload.description;
-  if ('tags' in payload) internal.tags = payload.tags;
-  if ('enabled' in payload) internal.enabled = payload.enabled;
-  if ('isPublic' in payload) internal.isPublic = payload.isPublic;
-  if ('customId' in payload) internal.customId = payload.customId;
-  if ('target' in payload) internal.target = payload.target;
-  if ('sortIndex' in payload) internal.sortIndex = payload.sortIndex;
-  if ('subscriptionIds' in payload) internal.subscriptions = payload.subscriptionIds;
-  if ('manualNodeIds' in payload) internal.manualNodes = payload.manualNodeIds;
-  return internal;
-}

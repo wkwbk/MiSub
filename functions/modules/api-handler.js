@@ -21,13 +21,7 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
-import { listRuleTemplates } from './handlers/rule-template-handler.js'; /**
- * 处理订阅和配置保存API
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-import { applyPatch } from './patch-utils.js';
+import { listRuleTemplates } from './handlers/rule-template-handler.js';
 
 function normalizeProfile(profile = {}) {
   const normalized = { ...profile };
@@ -59,109 +53,6 @@ function isStorageUnavailableError(error) {
  */
 async function getStorageAdapter(env) {
   return StorageFactory.createAdapter(env);
-}
-
-function isSimpleArrayDiff(diff) {
-  if (!diff || typeof diff !== 'object') return false;
-  const allowedKeys = ['added', 'updated', 'removed'];
-  if (!Object.keys(diff).every((key) => allowedKeys.includes(key))) return false;
-  return ['added', 'updated', 'removed'].every((key) => Array.isArray(diff[key] || []));
-}
-
-async function applyRowLevelDiff(storageAdapter, type, diff) {
-  const isProfile = type === 'profiles';
-  const putItem = isProfile
-    ? storageAdapter.putProfile?.bind(storageAdapter)
-    : storageAdapter.putSubscription?.bind(storageAdapter);
-  const deleteItem = isProfile
-    ? storageAdapter.deleteProfileById?.bind(storageAdapter)
-    : storageAdapter.deleteSubscriptionById?.bind(storageAdapter);
-
-  if (!putItem || !deleteItem || !isSimpleArrayDiff(diff)) {
-    return false;
-  }
-
-  const { added = [], updated = [], removed = [] } = diff;
-
-  let resolvedUpdates = updated;
-  if (isProfile && updated.length > 0 && typeof storageAdapter.getAllProfiles === 'function') {
-    const currentItems = await storageAdapter.getAllProfiles();
-    const currentMap = new Map(currentItems.map((item) => [item.id, item]));
-    resolvedUpdates = updated.map((item) => {
-      const existing = currentMap.get(item.id);
-      if (!existing) return item;
-      return {
-        ...item,
-        downloadCount: Math.max(Number(existing.downloadCount) || 0, Number(item.downloadCount) || 0),
-      };
-    });
-  }
-
-  await Promise.all([
-    ...added.map((item) => putItem(item)),
-    ...resolvedUpdates.map((item) => putItem(item)),
-    ...removed.map((id) => deleteItem(id)),
-  ]);
-
-  return true;
-}
-
-async function syncCollectionRowLevel(storageAdapter, type, finalItems) {
-  const isProfile = type === 'profiles';
-  const getAll = isProfile
-    ? storageAdapter.getAllProfiles?.bind(storageAdapter)
-    : storageAdapter.getAllSubscriptions?.bind(storageAdapter);
-  const putItem = isProfile
-    ? storageAdapter.putProfile?.bind(storageAdapter)
-    : storageAdapter.putSubscription?.bind(storageAdapter);
-  const deleteItem = isProfile
-    ? storageAdapter.deleteProfileById?.bind(storageAdapter)
-    : storageAdapter.deleteSubscriptionById?.bind(storageAdapter);
-
-  if (!getAll || !putItem || !deleteItem || !Array.isArray(finalItems)) {
-    return false;
-  }
-
-  const currentItems = await getAll();
-  const currentMap = new Map(currentItems.map((item) => [item.id, item]));
-  const finalMap = new Map(finalItems.map((item) => [item.id, item]));
-
-  const toPut = [];
-  const deletes = [];
-
-  for (const item of finalItems) {
-    const existing = currentMap.get(item.id);
-    const nextItem =
-      isProfile && existing
-        ? {
-            ...item,
-            downloadCount: Math.max(Number(existing.downloadCount) || 0, Number(item.downloadCount) || 0),
-          }
-        : item;
-    if (!existing || JSON.stringify(existing) !== JSON.stringify(nextItem)) {
-      toPut.push(nextItem);
-    }
-  }
-
-  for (const existing of currentItems) {
-    if (!finalMap.has(existing.id)) {
-      deletes.push(deleteItem(existing.id));
-    }
-  }
-
-  const putAll = isProfile
-    ? storageAdapter.putAllProfiles?.bind(storageAdapter)
-    : storageAdapter.putAllSubscriptions?.bind(storageAdapter);
-
-  const tasks = [...deletes];
-  if (toPut.length > 1 && putAll) {
-    tasks.unshift(putAll(toPut));
-  } else if (toPut.length > 0) {
-    tasks.unshift(...toPut.map((item) => putItem(item)));
-  }
-
-  await Promise.all(tasks);
-  return true;
 }
 
 /**
@@ -235,7 +126,7 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    const { misubs, profiles, diff } = requestData;
+    const { misubs, profiles } = requestData;
     const storageAdapter = await getStorageAdapter(env);
     if (!storageAdapter || storageAdapter.type === 'noop') {
       return createJsonResponse(
@@ -247,105 +138,37 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    let finalMisubs = misubs;
-    let finalProfiles = profiles;
-
-    // 步骤1.5: 检查是否为 Diff 模式
-    if (diff) {
-      console.info('[API] Processing Diff Patch...');
-      // 获取当前数据
-      const [currentMisubs, currentProfiles] = await Promise.all([
-        storageAdapter.getAllSubscriptions(),
-        storageAdapter.getAllProfiles(),
-      ]);
-
-      // 应用补丁
-      if (diff.subscriptions) {
-        finalMisubs = applyPatch(currentMisubs, diff.subscriptions);
-      } else {
-        finalMisubs = currentMisubs; // 无变动
-      }
-
-      if (diff.profiles) {
-        finalProfiles = applyPatch(currentProfiles, diff.profiles);
-      } else {
-        finalProfiles = currentProfiles; // 无变动
-      }
-
-      if (!Array.isArray(finalMisubs) || !Array.isArray(finalProfiles)) {
-        return createJsonResponse(
-          {
-            success: false,
-            message: '增量更新结果格式错误，请检查补丁数据',
-          },
-          400,
-        );
-      }
-    } else {
-      // 步骤2: 验证必需字段 (仅在非Diff模式下)
-      if (typeof misubs === 'undefined' || typeof profiles === 'undefined') {
-        return createJsonResponse(
-          {
-            success: false,
-            message: '请求体中缺少 misubs 或 profiles 字段',
-          },
-          400,
-        );
-      }
-
-      // 步骤3: 验证数据类型
-      if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
-        return createJsonResponse(
-          {
-            success: false,
-            message: 'misubs 和 profiles 必须是数组格式',
-          },
-          400,
-        );
-      }
+    // 步骤2: 验证必需字段
+    if (typeof misubs === 'undefined' || typeof profiles === 'undefined') {
+      return createJsonResponse(
+        {
+          success: false,
+          message: '请求体中缺少 misubs 或 profiles 字段',
+        },
+        400,
+      );
     }
 
-    if (Array.isArray(finalProfiles)) {
-      finalProfiles = finalProfiles.map((p, index) => ({
-        ...normalizeProfile(p),
-        sortIndex: index,
-      }));
-
-      if (diff?.profiles) {
-        const profileMap = new Map(finalProfiles.map((p) => [p.id, p]));
-        if (diff.profiles.added)
-          diff.profiles.added = diff.profiles.added.map((p) => ({
-            ...p,
-            sortIndex: profileMap.get(p.id)?.sortIndex,
-          }));
-        if (diff.profiles.updated)
-          diff.profiles.updated = diff.profiles.updated.map((p) => ({
-            ...p,
-            sortIndex: profileMap.get(p.id)?.sortIndex,
-          }));
-      }
+    // 步骤3: 验证数据类型
+    if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
+      return createJsonResponse(
+        {
+          success: false,
+          message: 'misubs 和 profiles 必须是数组格式',
+        },
+        400,
+      );
     }
 
-    if (Array.isArray(finalMisubs)) {
-      finalMisubs = finalMisubs.map((s, index) => ({
-        ...s,
-        sortIndex: index,
-      }));
+    const finalProfiles = profiles.map((p, index) => ({
+      ...normalizeProfile(p),
+      sortIndex: index,
+    }));
 
-      if (diff?.subscriptions) {
-        const subMap = new Map(finalMisubs.map((s) => [s.id, s]));
-        if (diff.subscriptions.added)
-          diff.subscriptions.added = diff.subscriptions.added.map((s) => ({
-            ...s,
-            sortIndex: subMap.get(s.id)?.sortIndex,
-          }));
-        if (diff.subscriptions.updated)
-          diff.subscriptions.updated = diff.subscriptions.updated.map((s) => ({
-            ...s,
-            sortIndex: subMap.get(s.id)?.sortIndex,
-          }));
-      }
-    }
+    const finalMisubs = misubs.map((s, index) => ({
+      ...s,
+      sortIndex: index,
+    }));
 
     // 步骤4: 获取设置（带错误处理）
     let settings;
@@ -379,33 +202,12 @@ export async function handleMisubsSave(request, env, context = null) {
       }
     }
 
-    // 步骤6: 保存数据到存储（使用存储适配器）
+    // 步骤6: 保存数据到存储（复用 D1StorageAdapter 行级差异同步）
     try {
-      if (diff) {
-        const [subsHandled, profilesHandled] = await Promise.all([
-          diff.subscriptions ? applyRowLevelDiff(storageAdapter, 'subscriptions', diff.subscriptions) : false,
-          diff.profiles ? applyRowLevelDiff(storageAdapter, 'profiles', diff.profiles) : false,
-        ]);
-
-        const saveTasks = [];
-        if (!subsHandled) saveTasks.push(storageAdapter.putAllSubscriptions(finalMisubs));
-        if (!profilesHandled) saveTasks.push(storageAdapter.putAllProfiles(finalProfiles));
-        if (saveTasks.length > 0) {
-          await Promise.all(saveTasks);
-        }
-      } else {
-        const [subsHandled, profilesHandled] = await Promise.all([
-          syncCollectionRowLevel(storageAdapter, 'subscriptions', finalMisubs),
-          syncCollectionRowLevel(storageAdapter, 'profiles', finalProfiles),
-        ]);
-
-        const saveTasks = [];
-        if (!subsHandled) saveTasks.push(storageAdapter.putAllSubscriptions(finalMisubs));
-        if (!profilesHandled) saveTasks.push(storageAdapter.putAllProfiles(finalProfiles));
-        if (saveTasks.length > 0) {
-          await Promise.all(saveTasks);
-        }
-      }
+      await Promise.all([
+        storageAdapter.syncAllSubscriptions(finalMisubs),
+        storageAdapter.syncAllProfiles(finalProfiles),
+      ]);
     } catch (storageError) {
       console.error('[API Error /misubs] Storage put failed:', storageError);
       return createJsonResponse(
@@ -434,7 +236,7 @@ export async function handleMisubsSave(request, env, context = null) {
     // 步骤7: 返回保存后的数据，确保前端能更新状态
     return createJsonResponse({
       success: true,
-      message: diff ? '增量更新已保存' : '订阅源及订阅组已保存',
+      message: '订阅源及订阅组已保存',
       data: {
         misubs: finalMisubs,
         profiles: finalProfiles,

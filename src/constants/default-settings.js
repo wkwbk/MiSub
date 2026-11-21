@@ -181,13 +181,6 @@ export const DEFAULT_SETTINGS = {
   },
 };
 
-export const DEFAULT_NODE_FORM = {
-  name: '',
-  url: '',
-  enabled: true,
-  fetchProxy: '',
-};
-
 export const DEFAULT_PROFILE_FORM = {
   name: '',
   customId: '',

@@ -47,70 +47,6 @@ export function isValidEmail(email) {
 }
 
 /**
- * 验证密码强度
- * @param {string} password - 密码
- * @returns {Object} 密码强度信息
- */
-export function validatePasswordStrength(password) {
-  if (!password) {
-    return {
-      score: 0,
-      message: t('validation.passwordRequired'),
-      suggestions: [t('validation.enterPassword')],
-    };
-  }
-
-  let score = 0;
-  const suggestions = [];
-
-  // 长度检查
-  if (password.length >= 8) {
-    score += 1;
-  } else {
-    suggestions.push(t('validation.passwordMinLength'));
-  }
-
-  // 包含小写字母
-  if (/[a-z]/.test(password)) {
-    score += 1;
-  } else {
-    suggestions.push(t('validation.includeLowercase'));
-  }
-
-  // 包含大写字母
-  if (/[A-Z]/.test(password)) {
-    score += 1;
-  } else {
-    suggestions.push(t('validation.includeUppercase'));
-  }
-
-  // 包含数字
-  if (/\d/.test(password)) {
-    score += 1;
-  } else {
-    suggestions.push(t('validation.includeNumber'));
-  }
-
-  // 包含特殊字符
-  if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
-    score += 1;
-  } else {
-    suggestions.push(t('validation.includeSpecial'));
-  }
-
-  let message = '';
-  if (score <= 2) {
-    message = t('validation.passwordWeak');
-  } else if (score <= 4) {
-    message = t('validation.passwordMedium');
-  } else {
-    message = t('validation.passwordStrong');
-  }
-
-  return { score, message, suggestions };
-}
-
-/**
  * 验证表单字段
  * @param {Object} formData - 表单数据
  * @param {Object} rules - 验证规则
@@ -180,27 +116,6 @@ export function validateForm(formData, rules) {
     isValid: Object.keys(errors).length === 0,
     errors,
   };
-}
-
-/**
- * 验证订阅配置
- * @param {Object} subscription - 订阅配置
- * @returns {Object} 验证结果
- */
-export function validateSubscription(subscription) {
-  const rules = {
-    name: {
-      required: t('validation.subscriptionNameRequired'),
-      minLength: 1,
-      maxLength: 100,
-    },
-    url: {
-      required: t('validation.subscriptionUrlRequired'),
-      type: 'url',
-    },
-  };
-
-  return validateForm(subscription, rules);
 }
 
 /**

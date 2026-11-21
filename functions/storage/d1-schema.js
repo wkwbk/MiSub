@@ -105,7 +105,6 @@ const D1_CACHE_PREFIXES = [
   'node_cache_',
   'node_inspect_',
   'github_release_',
-  'tmp_external_nodes:',
   'tg_push_rate:',
   'misub_test_',
 ];
@@ -154,11 +153,7 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
     }
   }
 
-  if (
-    keyStr.startsWith('tmp_external_nodes:') ||
-    keyStr.startsWith('tg_push_rate:') ||
-    keyStr === 'misub_webdav_backup_lock'
-  ) {
+  if (keyStr.startsWith('tg_push_rate:') || keyStr === 'misub_webdav_backup_lock') {
     const exp = parseTimestampMs(parsed?.expiresAt);
     return exp > 0 ? exp : now + 60 * 60 * 1000;
   }

@@ -449,52 +449,12 @@ export function extractNodeRegion(nodeName) {
 }
 
 /**
- * 获取所有支持的地区列表
- * @returns {string[]} 支持的地区名称数组
- */
-export function getSupportedRegions() {
-  return Object.keys(REGION_KEYWORDS);
-}
-
-/**
- * 获取指定地区的所有关键词
- * @param {string} region - 地区名称
- * @returns {string[]} 该地区的所有关键词，如地区不存在返回空数组
- */
-export function getRegionKeywords(region) {
-  return REGION_KEYWORDS[region] || [];
-}
-
-/**
  * [新增] 获取地区 Emoji
  * @param {string} region - 地区名称
  * @returns {string} 对应的 Emoji，如果未找到则返回空字符串
  */
 export function getRegionEmoji(region) {
   return REGION_EMOJI[region] || (region === '其他' || !region ? '🌍' : '');
-}
-
-/**
- * 检查节点名称是否包含指定地区
- * @param {string} nodeName - 节点名称
- * @param {string} region - 要检查的地区
- * @returns {boolean} 是否包含该地区
- */
-export function containsRegion(nodeName, region) {
-  if (!nodeName || !region || !REGION_KEYWORDS[region]) {
-    return false;
-  }
-
-  const normalizedNodeName = nodeName.toLowerCase();
-  const keywords = REGION_KEYWORDS[region];
-
-  for (const keyword of keywords) {
-    if (normalizedNodeName.includes(keyword.toLowerCase())) {
-      return true;
-    }
-  }
-
-  return false;
 }
 
 /**
