@@ -14,11 +14,11 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  // 本地更新日志 (v2.8.3)
-  const localChangelog = `✨ **节点详情与内核导航、正则置顶排序及中性色设计体系重构**
-- **节点详情与公开页增强**：新增节点详情弹窗与客户端协议兼容性徽章；公开页新增代理内核分区与后台管理设置，客户端卡片支持展示版本发布日期。
-- **排序与订阅生成修复**：新增正则置顶优先排序并优化排序项顺序；修复 \`addFlagEmoji\` 未透传至内置生成器导致的国旗前缀开关失效问题。
-- **纯中性色 UI 重构与细节打磨**：全站迁移至纯中性语义化设计 Token，统一边框、阴影、聚焦态与滚动条样式，清理 \`main.css\` 冗余规则，修复多行输入框圆角滚动条裁切并统一中文路由规则术语。`;
+  // 本地更新日志 (v2.8.4)
+  const localChangelog = `✨ **全站代码质量优化、目录架构重组与 UI/性能改进**
+- **UI 与交互优化**：优化仪表盘布局与移动端视图，统一手动节点卡片视图及节点/订阅/订阅组的分页控件；修复导航与按钮连点问题并预取懒加载弹窗，优化公开页图片与静态资源加载。
+- **兼容性清理与工具统一**：移除过时的 \`document.execCommand('copy')\` 与 \`escape/unescape\` Base64 兼容代码，统一为现代 Clipboard API 与 \`TextEncoder/TextDecoder\` UTF-8 Base64 工具；清理全局与组件死 CSS 及孤立模块。
+- **架构与代码规范升级**：重组前后端模块目录（收拢 \`external-api/\`、\`handlers/\`、\`subscription/generators/\`，拍平前端组件目录并统一 \`kebab-case\` 命名），引入 \`oxlint\` 并将全仓库静态检查警告清零。`;
 
   // --- Getters ---
   const hasUpdate = computed(() => {
