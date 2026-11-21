@@ -61,7 +61,7 @@ const hasProfileWarning = computed(() => props.activeProfilesCount === 0);
 const isVisible = ref(true);
 
 const cardBaseClass =
-  'stat-card group w-full text-left bg-surface p-4 sm:p-5 rounded-md border border-line transition-all duration-200 focus-visible:outline-hidden focus-visible:border-line-strong cursor-pointer';
+  'stat-card group flex flex-col w-full min-w-0 text-left bg-surface p-4 sm:p-5 rounded-md border border-line transition-all duration-200 focus-visible:outline-hidden focus-visible:border-line-strong cursor-pointer';
 const normalCardClass = 'border-line';
 const warningCardClass = 'border-line';
 
@@ -102,12 +102,22 @@ const navigate = (path, query = {}) => {
           class="h-1 transition-all duration-1000 ease-out"
         ></div>
       </div>
-      <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
+      <p class="text-xs mt-auto pt-2 flex min-w-0 items-center gap-1.5 text-fg-muted font-mono">
         <span
           :class="hasTrafficWarning ? 'bg-amber-500' : 'bg-emerald-500'"
           class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
         ></span>
-        <span>
+        <span
+          :title="
+            hasTrafficWarning
+              ? t('dashboard.trafficLow')
+              : t('dashboard.trafficUsed', {
+                  used: trafficStats.used,
+                  total: trafficStats.total,
+                })
+          "
+          class="truncate"
+        >
           {{
             hasTrafficWarning
               ? t('dashboard.trafficLow')
@@ -143,12 +153,23 @@ const navigate = (path, query = {}) => {
         {{ enabledManualNodesCount }}
         <span class="text-xs font-normal text-fg-subtle font-mono">/ {{ manualNodesCount }}</span>
       </p>
-      <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
+      <p class="text-xs mt-auto pt-2 flex min-w-0 items-center gap-1.5 text-fg-muted font-mono">
         <span
           :class="hasManualNodeWarning ? 'bg-amber-500' : manualNodesCount === 0 ? 'bg-zinc-500' : 'bg-emerald-500'"
           class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
         ></span>
-        <span>
+        <span
+          :title="
+            hasManualNodeWarning
+              ? t('dashboard.allManualNodesDisabled')
+              : manualNodesCount === 0
+                ? t('dashboard.noManualNodes')
+                : t('dashboard.enabledManualNodes', {
+                    count: enabledManualNodesCount,
+                  })
+          "
+          class="truncate"
+        >
           {{
             hasManualNodeWarning
               ? t('dashboard.allManualNodesDisabled')
@@ -194,12 +215,21 @@ const navigate = (path, query = {}) => {
         {{ activeSubscriptionsCount }}
         <span class="text-xs font-normal text-fg-subtle font-mono">/ {{ subscriptionsCount }}</span>
       </p>
-      <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
+      <p class="text-xs mt-auto pt-2 flex min-w-0 items-center gap-1.5 text-fg-muted font-mono">
         <span
           :class="hasSubscriptionWarning || hasNodeWarning ? 'bg-amber-500' : 'bg-emerald-500'"
           class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
         ></span>
-        <span>{{
+        <span
+          :title="
+            hasSubscriptionWarning
+              ? t('dashboard.needsEnableSubscriptions')
+              : hasNodeWarning
+                ? t('dashboard.needsRefreshNodes')
+                : t('dashboard.normalRunningWithNodes', { count: totalNodesCount })
+          "
+          class="truncate"
+        >{{
           hasSubscriptionWarning
             ? t('dashboard.needsEnableSubscriptions')
             : hasNodeWarning
@@ -231,12 +261,19 @@ const navigate = (path, query = {}) => {
       <p class="text-2xl font-semibold text-fg tracking-tight leading-none font-mono">
         {{ activeProfilesCount }}
       </p>
-      <p class="text-xs mt-2 flex items-center gap-1.5 text-fg-muted font-mono">
+      <p class="text-xs mt-auto pt-2 flex min-w-0 items-center gap-1.5 text-fg-muted font-mono">
         <span
           :class="hasProfileWarning ? 'bg-amber-500' : 'bg-emerald-500'"
           class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
         ></span>
-        <span>
+        <span
+          :title="
+            hasProfileWarning
+              ? t('dashboard.needsCreateProfile')
+              : t('dashboard.publishedProfiles', { count: activeProfilesCount })
+          "
+          class="truncate"
+        >
           {{
             hasProfileWarning
               ? t('dashboard.needsCreateProfile')
