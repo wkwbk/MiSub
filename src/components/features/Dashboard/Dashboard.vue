@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { FolderKanban, Layers, Server } from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -17,8 +17,8 @@ import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
 import { inferAirportRootDomain } from '@/utils/airport-domain.js';
 import { rememberDomainName } from '@/utils/domain-name-memory.js';
-import { useStickyColumns } from '@/composables/useStickyColumn.js'; // --- Component Imports ---
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
+import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
 import RightPanel from '@/components/profiles/RightPanel.vue';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
@@ -56,14 +56,12 @@ const TagManagementModal = defineAsyncComponent(() => import('@/components/modal
 const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const CopyLinkModal = defineAsyncComponent(loadCopyLinkModal);
 
-// --- 基礎 Props 和狀態 ---
-const props = defineProps({ data: Object });
+// --- 基础状态 ---
 const { showToast } = useToastStore();
 const { t } = useI18n();
 const uiStore = useUIStore();
 const dataStore = useDataStore();
-const { settings, isDirty, isLoading } = storeToRefs(dataStore); // Use store refs
-const config = settings; // Compatibility alias for template
+const { settings, isDirty, isLoading } = storeToRefs(dataStore);
 const { clearDirty } = dataStore; // Don't destructure markDirty directly
 if (isDev) {
   console.debug('Dashboard: setup running');
@@ -134,7 +132,6 @@ const {
   deleteSubscriptionTag,
   reorderSubscriptionTags,
   searchQuery: subscriptionSearchQuery,
-  filteredSubscriptions: filteredSubscriptionList,
   filteredCount: filteredSubscriptionCount,
   subscriptionsCurrentPage,
   subscriptionsPerPage,
@@ -172,7 +169,6 @@ const {
   deleteAllNodes,
   addNodesFromBulk,
   autoSortNodes,
-  deduplicateNodes,
   reorderManualNodes,
   activeTagFilters,
   setTagFilters,
@@ -208,7 +204,6 @@ const {
   isNewProfile,
   showProfileModal,
   showDeleteProfilesModal,
-  initializeProfiles,
   handleProfileToggle,
   handleAddProfile,
   handleEditProfile,
@@ -225,12 +220,6 @@ const {
   profilesTotalPages,
   paginatedProfiles,
   changeProfilesPage,
-  copyProfileLink,
-  copyClashLink,
-  cleanupSubscriptions,
-  cleanupNodes,
-  cleanupAllSubscriptions,
-  cleanupAllNodes,
 } = useProfiles(markDirty);
 
 // --- UI State ---
@@ -324,13 +313,8 @@ const CLASSIC_TAB_STORAGE_KEY = 'misub_classic_dashboard_tab';
 const VALID_CLASSIC_TABS = ['nodes', 'subscriptions', 'profiles'];
 
 const readInitialClassicTab = () => {
-  if (typeof window === 'undefined') return 'nodes';
-  try {
-    const saved = window.sessionStorage.getItem(CLASSIC_TAB_STORAGE_KEY);
-    return VALID_CLASSIC_TABS.includes(saved) ? saved : 'nodes';
-  } catch {
-    return 'nodes';
-  }
+  const saved = readSessionPreference(CLASSIC_TAB_STORAGE_KEY);
+  return VALID_CLASSIC_TABS.includes(saved) ? saved : 'nodes';
 };
 
 const activeTab = ref(readInitialClassicTab());
@@ -356,50 +340,11 @@ const classicTabs = computed(() => [
   },
 ]);
 
-const mainGridRef = ref(null);
-const leftColRef = ref(null);
-const rightColRef = ref(null);
-
-const { refreshStickyColumns, refreshStickyColumnsNow, reobserveStickyColumns } = useStickyColumns(mainGridRef, [
-  leftColRef,
-  rightColRef,
-]);
-
 const setActiveTab = (tabId) => {
   if (!VALID_CLASSIC_TABS.includes(tabId) || activeTab.value === tabId) return;
   activeTab.value = tabId;
-  if (typeof window !== 'undefined') {
-    try {
-      window.sessionStorage.setItem(CLASSIC_TAB_STORAGE_KEY, tabId);
-    } catch {
-      // ignore storage errors
-    }
-  }
-  nextTick(() => {
-    refreshStickyColumnsNow();
-  });
+  writeSessionPreference(CLASSIC_TAB_STORAGE_KEY, tabId);
 };
-
-const handleManualNodesPageChange = (page) => {
-  changeManualNodesPage(page);
-  nextTick(() => {
-    refreshStickyColumnsNow();
-  });
-};
-
-const handleProfilesPageChange = (page) => {
-  changeProfilesPage(page);
-  nextTick(() => {
-    refreshStickyColumnsNow();
-  });
-};
-
-watch([isLoading, mainGridRef], () => {
-  nextTick(() => {
-    reobserveStickyColumns();
-    refreshStickyColumns();
-  });
-});
 
 onMounted(() => {
   initializeState();
@@ -693,12 +638,12 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     />
 
     <!-- Main Grid -->
-    <div ref="mainGridRef" class="grid grid-cols-1 gap-4 items-start lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 items-start lg:grid-cols-3">
       <!-- Left Column: Persistent Link Generator -->
-      <div ref="leftColRef" class="space-y-4 lg:col-span-1">
+      <div class="space-y-4 lg:col-span-1 lg:sticky lg:top-[4.5rem]">
         <RightPanel
           :compact="true"
-          :config="config"
+          :config="settings"
           :profiles="profiles"
           @qrcode="
             (url, title) => {
@@ -711,7 +656,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
       </div>
 
       <!-- Right Column: Tabbed Management Panels -->
-      <div ref="rightColRef" class="space-y-4 lg:col-span-2">
+      <div class="space-y-4 lg:col-span-2">
         <!-- Classic Layout Module Tabs -->
         <div
           class="flex items-center gap-1 rounded-md border border-line bg-surface p-1 overflow-x-auto"
@@ -808,7 +753,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @import="showSubscriptionImportModal = true"
           @ping="pingNodeId"
           @reorder="reorderManualNodes"
-          @change-page="handleManualNodesPageChange"
+          @change-page="changeManualNodesPage"
           @update:items-per-page="(val) => (manualNodesPerPage = val)"
           @update:search-term="handleSearchTermUpdate"
           @toggle-sort="isSortingNodes = !isSortingNodes"
@@ -827,7 +772,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
         <ProfilePanel
           v-else
           :active-tag-filters="profileTagFilters"
-          :compact="false"
           :current-page="profilesCurrentPage"
           :filtered-count="filteredProfiles.length"
           :is-sorting="isSortingProfiles"
@@ -839,8 +783,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           :total-pages="profilesTotalPages"
           searchable
           @add="handleAddProfile"
-          @copyClashLink="copyClashLink"
-          @copyLink="copyProfileLink"
           @delete="handleDeleteProfile"
           @deleteAll="showDeleteProfilesModal = true"
           @edit="handleEditProfile"
@@ -852,7 +794,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @update-search="(query) => (profileSearchQuery = query)"
           @set-tag-filters="setProfileTagFilters"
           @manage-tags="showProfileTagManagementModal = true"
-          @change-page="handleProfilesPageChange"
+          @change-page="changeProfilesPage"
           @update:items-per-page="(val) => (profilesPerPage = val)"
           @open-copy="handleOpenCopy"
           @toggle-sort="isSortingProfiles = !isSortingProfiles"
@@ -1008,31 +950,3 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     :token="settings?.profileToken"
   />
 </template>
-
-<style scoped>
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: all 0.3s ease-out;
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(-20px);
-  opacity: 0;
-}
-
-.cursor-move {
-  cursor: move;
-}
-
-.slide-fade-sm-enter-active,
-.slide-fade-sm-leave-active {
-  transition: all 0.2s ease-out;
-}
-
-.slide-fade-sm-enter-from,
-.slide-fade-sm-leave-to {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-</style>

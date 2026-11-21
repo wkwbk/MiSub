@@ -39,15 +39,11 @@ export const ComponentMap = {
     Header: () => import('@/components/layout/Header.vue'),
     Footer: () => import('@/components/layout/Footer.vue'),
     AdaptiveGrid: () => import('@/components/layout/AdaptiveGrid.vue'),
-    DashboardSkeleton: () => import('@/components/layout/DashboardSkeleton.vue'),
   },
 
   // 功能组件
   Features: {
     Dashboard: () => import('@/components/features/Dashboard/Dashboard.vue'),
-    DashboardContainer: () => import('@/components/features/Dashboard/DashboardContainer.vue'),
-    SaveIndicator: () => import('@/components/features/Dashboard/SaveIndicator.vue'),
-    Overview: () => import('@/components/features/Dashboard/Overview.vue'),
     ThemeToggle: () => import('@/components/features/ThemeToggle.vue'),
   },
 

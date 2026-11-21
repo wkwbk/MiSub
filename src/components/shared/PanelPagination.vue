@@ -42,10 +42,6 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  compact: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 const emit = defineEmits(['change-page', 'update:itemsPerPage']);
@@ -108,16 +104,10 @@ function handleItemsPerPageChange(value) {
 <template>
   <div
     v-if="shouldShow && isPanelVariant"
-    :class="
-      compact
-        ? 'flex flex-col items-center justify-center gap-2'
-        : 'flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3'
-    "
-    class="panel-pagination-shell mt-3 sm:mt-4 px-3 py-2 sm:px-4 sm:py-2.5 bg-surface rounded-md border border-line transition-colors"
+    class="panel-pagination-shell mt-3 sm:mt-4 px-3 py-2 sm:px-4 sm:py-2.5 bg-surface rounded-md border border-line flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 transition-colors"
   >
     <div
-      :class="compact ? 'justify-center' : 'w-full sm:w-auto justify-between sm:justify-start'"
-      class="flex min-h-7 sm:min-h-8 shrink-0 items-center gap-2.5 sm:gap-4 text-xs font-mono text-fg-muted whitespace-nowrap"
+      class="w-full sm:w-auto flex min-h-7 sm:min-h-8 shrink-0 items-center justify-between sm:justify-start gap-2.5 sm:gap-4 text-xs font-mono text-fg-muted whitespace-nowrap"
     >
       <span v-if="showTotalItems">{{ t('pagination.totalItems', { total: totalItems }) }}</span>
       <div v-if="showItemsPerPage" class="flex items-center gap-1.5 sm:gap-2">
@@ -143,12 +133,7 @@ function handleItemsPerPageChange(value) {
 
     <div
       v-if="totalPages > 1"
-      :class="
-        compact
-          ? 'justify-center'
-          : 'w-full sm:w-auto justify-center sm:justify-end pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0'
-      "
-      class="flex shrink-0 items-center gap-1 sm:gap-1.5"
+      class="w-full sm:w-auto flex shrink-0 items-center justify-center sm:justify-end gap-1 sm:gap-1.5 pt-2 sm:pt-0 border-t border-line/60 sm:border-t-0"
     >
       <button
         :aria-label="t('common.firstPage')"

@@ -3,7 +3,6 @@ import { computed, onUnmounted, ref } from 'vue';
 import { Check, Copy, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/toast.js';
-import { useUIStore } from '@/stores/ui.js';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({
@@ -18,7 +17,6 @@ const props = defineProps({
 const emit = defineEmits(['qrcode']);
 
 const { showToast } = useToastStore();
-const uiStore = useUIStore();
 const { t } = useI18n();
 
 const copied = ref(false);

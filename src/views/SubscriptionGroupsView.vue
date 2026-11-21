@@ -3,7 +3,6 @@ import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } fr
 import { useRoute, useRouter } from 'vue-router';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
-import { useProfiles } from '@/composables/useProfiles.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
 import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImport.js';
@@ -66,8 +65,6 @@ const {
   lastRefreshAt,
 } = useSubscriptions(markDirty);
 
-const { cleanupSubscriptions, cleanupAllSubscriptions } = useProfiles(markDirty);
-
 const {
   showModal: showSubModal,
   isNew: isNewSubscription,
@@ -88,12 +85,10 @@ const openBulkImportModal = () => {
 
 const handleDeleteSubscriptionWithCleanup = (subId) => {
   deleteSubscription(subId);
-  cleanupSubscriptions(subId);
 };
 
 const handleDeleteAllSubscriptionsWithCleanup = () => {
   deleteAllSubscriptions();
-  cleanupAllSubscriptions();
   showDeleteSubsModal.value = false;
 };
 

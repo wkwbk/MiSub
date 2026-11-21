@@ -16,10 +16,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  compact: {
-    type: Boolean,
-    default: false,
-  },
   isSelectionMode: {
     type: Boolean,
     default: false,
@@ -71,7 +67,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
     class="group flex flex-col rounded-md border p-4 hover:-translate-y-1 hover:z-10 transition-all duration-200"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
-    <div :class="compact ? 'gap-2' : 'gap-3'" class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-3">
       <div class="flex min-w-0 flex-wrap items-center gap-1.5">
         <!-- Selection Checkbox -->
         <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
@@ -214,12 +210,11 @@ const isPublic = computed(() => props.profile?.isPublic === true);
     </div>
 
     <div
-      :class="[compact ? 'items-stretch' : '', { 'pointer-events-none': isSelectionMode }]"
+      :class="{ 'pointer-events-none': isSelectionMode }"
       class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3"
     >
-      <div :class="compact ? 'flex-1' : ''" class="flex items-center gap-2 sm:gap-4">
+      <div class="flex items-center gap-2 sm:gap-4">
         <button
-          :class="compact ? 'w-full justify-center' : ''"
           class="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-3.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-hover"
           @click="emit('open-copy')"
         >

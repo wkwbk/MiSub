@@ -1,5 +1,5 @@
 // FILE: src/composables/useManualNodes.js
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
@@ -50,18 +50,17 @@ export function useManualNodes(markDirty) {
     changePage: changeManualNodesPage,
   } = useListPagination(filteredManualNodes, {
     storageKey: 'manualNodesPPS',
+    resetDeps: [searchTerm, activeTagFilters],
   });
 
   const enabledManualNodes = computed(() => manualNodes.value.filter((n) => n.enabled));
 
   function setTagFilters(filters) {
     activeTagFilters.value = normalizeActiveTagFilters(filters);
-    manualNodesCurrentPage.value = 1;
   }
 
   function toggleTagFilter(tag) {
     activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
-    manualNodesCurrentPage.value = 1;
   }
 
   function batchUpdateTags(nodeIds, payload) {
@@ -101,10 +100,6 @@ export function useManualNodes(markDirty) {
     });
     dataStore.removeManualNodeFromProfiles(nodeIds);
 
-    if (paginatedManualNodes.value.length === 0 && manualNodesCurrentPage.value > 1) {
-      manualNodesCurrentPage.value--;
-    }
-
     markDirty();
     showToast(t('manualNodes.deletedCount', { count: nodeIds.length }), 'success');
   }
@@ -141,9 +136,6 @@ export function useManualNodes(markDirty) {
   function deleteNode(nodeId) {
     dataStore.removeSubscription(nodeId);
     dataStore.removeManualNodeFromProfiles(nodeId);
-    if (paginatedManualNodes.value.length === 0 && manualNodesCurrentPage.value > 1) {
-      manualNodesCurrentPage.value--;
-    }
     markDirty();
   }
 
@@ -189,11 +181,6 @@ export function useManualNodes(markDirty) {
     manualNodesCurrentPage.value = 1;
   }
 
-  function deduplicateNodes() {
-    const plan = buildDedupPlan();
-    applyDedupPlan(plan);
-  }
-
   function autoSortNodes() {
     const mergedList = buildAutoSortedSubscriptions(allSubscriptions.value || [], manualNodes.value);
     dataStore.overwriteSubscriptions(mergedList);
@@ -228,12 +215,6 @@ export function useManualNodes(markDirty) {
     markDirty();
     return true;
   }
-
-  watch(searchTerm, (newValue, oldValue) => {
-    if (newValue !== oldValue) {
-      manualNodesCurrentPage.value = 1;
-    }
-  });
 
   function reorderManualNodes(newOrder) {
     const currentManualNodes = manualNodes.value;
@@ -422,7 +403,6 @@ export function useManualNodes(markDirty) {
     addNodesFromBulk,
     autoSortNodes,
     sortNodesByLatency,
-    deduplicateNodes,
     buildDedupPlan,
     applyDedupPlan,
     reorderManualNodes,

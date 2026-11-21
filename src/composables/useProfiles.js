@@ -23,7 +23,7 @@ export function useProfiles(markDirty) {
   const { showToast } = useToastStore();
   const dataStore = useDataStore();
   const settingsStore = useSettingsStore();
-  const { profiles, settings } = storeToRefs(dataStore);
+  const { profiles } = storeToRefs(dataStore);
 
   /* Pagination setup */
   const isNewProfile = ref(false);
@@ -41,12 +41,10 @@ export function useProfiles(markDirty) {
 
   function setTagFilters(filters) {
     activeTagFilters.value = normalizeActiveTagFilters(filters);
-    profilesCurrentPage.value = 1;
   }
 
   function toggleTagFilter(tag) {
     activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
-    profilesCurrentPage.value = 1;
   }
 
   function renameProfileTag(oldName, newName) {
@@ -264,10 +262,6 @@ export function useProfiles(markDirty) {
       dataStore.removeProfile(id);
     });
 
-    if (paginatedProfiles.value.length === 0 && profilesCurrentPage.value > 1) {
-      profilesCurrentPage.value--;
-    }
-
     markDirty();
     showToast(t('profiles.deletedCount', { count: profileIds.length }), 'success');
   };
@@ -282,112 +276,6 @@ export function useProfiles(markDirty) {
     if (!Array.isArray(newOrder)) return;
     dataStore.overwriteProfiles(newOrder);
     markDirty();
-  };
-
-  const copyProfileLink = (profileId) => {
-    const token = settings.value?.profileToken;
-    if (!token || token === 'auto' || !token.trim()) {
-      showToast(t('profiles.fixedTokenRequired'), 'error');
-      return;
-    }
-    const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
-    if (!profile) return;
-    const identifier = profile.customId || profile.id;
-    const link = `${window.location.origin}/${token}/${identifier}`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(link)
-        .then(() => showToast(t('profiles.linkCopied'), 'success'))
-        .catch(() => showToast(t('publicProfiles.copyFailedManual'), 'error'));
-    } else {
-      const textArea = document.createElement('textarea');
-      textArea.value = link;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '0';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showToast(t('profiles.linkCopied'), 'success');
-        } else {
-          showToast(t('publicProfiles.copyFailedManual'), 'error');
-        }
-      } catch {
-        showToast(t('publicProfiles.copyFailedManual'), 'error');
-      }
-
-      document.body.removeChild(textArea);
-    }
-  };
-
-  const copyClashLink = (profileId) => {
-    const token = settings.value?.profileToken;
-    if (!token || token === 'auto' || !token.trim()) {
-      showToast(t('profiles.fixedTokenRequired'), 'error');
-      return;
-    }
-    const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
-    if (!profile) return;
-    const identifier = profile.customId || profile.id;
-    const link = `${window.location.origin}/${token}/${identifier}?target=clash&builtin=1`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(link)
-        .then(() => showToast(t('profiles.clashLinkCopied'), 'success'))
-        .catch(() => showToast(t('publicProfiles.copyFailedManual'), 'error'));
-    } else {
-      const textArea = document.createElement('textarea');
-      textArea.value = link;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-9999px';
-      textArea.style.top = '0';
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
-      try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-          showToast(t('profiles.clashLinkCopied'), 'success');
-        } else {
-          showToast(t('publicProfiles.copyFailedManual'), 'error');
-        }
-      } catch {
-        showToast(t('publicProfiles.copyFailedManual'), 'error');
-      }
-
-      document.body.removeChild(textArea);
-    }
-  };
-
-  const cleanupSubscriptions = (subId) => {
-    profiles.value.forEach((p) => {
-      p.subscriptions = p.subscriptions.filter((id) => id !== subId);
-    });
-  };
-
-  const cleanupNodes = (nodeId) => {
-    profiles.value.forEach((p) => {
-      p.manualNodes = p.manualNodes.filter((id) => id !== nodeId);
-    });
-  };
-
-  const cleanupAllSubscriptions = () => {
-    profiles.value.forEach((p) => {
-      p.subscriptions = [];
-    });
-  };
-
-  const cleanupAllNodes = () => {
-    profiles.value.forEach((p) => {
-      p.manualNodes = [];
-    });
   };
 
   return {
@@ -405,7 +293,6 @@ export function useProfiles(markDirty) {
     isNewProfile,
     showProfileModal,
     showDeleteProfilesModal,
-    initializeProfiles: () => {},
     handleProfileToggle,
     handleAddProfile,
     handleEditProfile,
@@ -415,12 +302,6 @@ export function useProfiles(markDirty) {
     batchUpdateProfileTags,
     batchDeleteProfiles,
     reorderProfiles,
-    copyProfileLink,
-    copyClashLink,
-    cleanupSubscriptions,
-    cleanupNodes,
-    cleanupAllSubscriptions,
-    cleanupAllNodes,
     profilesCurrentPage,
     profilesPerPage,
     profilesTotalPages,

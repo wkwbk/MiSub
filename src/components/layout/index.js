@@ -11,7 +11,6 @@ import NavActionGroup from '@/components/layout/NavActionGroup.vue';
 import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
 import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
 import AdaptiveGrid from '@/components/layout/AdaptiveGrid.vue';
-import DashboardSkeleton from '@/components/layout/DashboardSkeleton.vue';
 
 export {
   Header,
@@ -22,7 +21,6 @@ export {
   LoginEntryButton,
   ExternalRepoButton,
   AdaptiveGrid,
-  DashboardSkeleton,
 };
 
 export const LayoutComponents = {
@@ -34,7 +32,6 @@ export const LayoutComponents = {
   LoginEntryButton,
   ExternalRepoButton,
   AdaptiveGrid,
-  DashboardSkeleton,
 };
 
 export default LayoutComponents;

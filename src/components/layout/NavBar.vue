@@ -67,12 +67,12 @@ function handleNavClick(event, path) {
     :aria-label="t('nav.main')"
     class="app-nav-bar hidden md:block sticky top-0 z-50 w-full bg-white/85 dark:bg-[#0e0e0e]/85 supports-[backdrop-filter:blur(0px)]:bg-white/75 supports-[backdrop-filter:blur(0px)]:dark:bg-[#0e0e0e]/75 backdrop-blur-md border-b border-black/[0.08] dark:border-white/[0.09] transition-colors duration-200 shadow-none"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
-      <div class="shrink-0 pr-5">
+    <div class="max-w-7xl mx-auto px-4 md:px-5 lg:px-8 h-14 flex items-center justify-between">
+      <div class="shrink-0 pr-2 lg:pr-5">
         <BrandLogo :icon-size="28" text-size-class="text-lg" to="/dashboard" />
       </div>
 
-      <nav :aria-label="t('nav.main')" class="nav-tab-shell">
+      <nav :aria-label="t('nav.main')" class="nav-tab-shell min-w-0 flex items-center gap-0.5 md:gap-1 lg:gap-1.5 overflow-x-auto no-scrollbar">
         <router-link
           v-for="item in navItems"
           :key="item.path"
@@ -82,17 +82,17 @@ function handleNavClick(event, path) {
               : 'text-fg-muted border-transparent hover:text-fg hover:bg-hover'
           "
           :to="item.path"
-          class="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium border transition-colors duration-200"
+          class="relative inline-flex items-center gap-1.5 lg:gap-2 px-2.5 lg:px-3 py-1.5 rounded-md text-xs lg:text-sm font-medium border transition-colors duration-200 whitespace-nowrap shrink-0 select-none"
           @click="handleNavClick($event, item.path)"
           @focus="prefetchRoute(item.path)"
           @mouseenter="prefetchRoute(item.path)"
         >
           <component :is="item.icon" class="relative z-10 h-4 w-4 shrink-0" />
-          <span class="relative z-10">{{ t(item.key) }}</span>
+          <span class="relative z-10 whitespace-nowrap">{{ t(item.key) }}</span>
         </router-link>
       </nav>
 
-      <div class="flex items-center pl-5 ml-3 gap-2">
+      <div class="flex items-center pl-2 lg:pl-5 ml-1 lg:ml-3 gap-1.5 lg:gap-2 shrink-0">
         <NavActionGroup
           :hide-external-repo="hideBranding"
           :is-logged-in="isLoggedIn"

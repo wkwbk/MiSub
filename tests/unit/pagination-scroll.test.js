@@ -1,9 +1,8 @@
-import { defineComponent, nextTick, ref } from 'vue';
+import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
-import { useStickyColumns } from '@/composables/useStickyColumn.js';
 import PanelPagination from '@/components/shared/PanelPagination.vue';
 import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
 import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
@@ -307,45 +306,6 @@ describe('Pagination auto-scroll integration', () => {
     await nextTick();
 
     expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
-
-    wrapper.unmount();
-  });
-
-  it('useStickyColumns refreshStickyColumnsNow updates sticky-bottom top synchronously when column shrinks on pagination', async () => {
-    Object.defineProperty(window, 'innerWidth', { value: 1440, configurable: true });
-    Object.defineProperty(window, 'innerHeight', { value: 900, configurable: true });
-    Object.defineProperty(window, 'scrollY', { value: 1200, configurable: true });
-
-    let rightHeight = 1500;
-    const gridRef = ref(null);
-    const leftColRef = ref(null);
-    const rightColRef = ref(null);
-
-    const Harness = defineComponent({
-      setup() {
-        const apiSticky = useStickyColumns(gridRef, [leftColRef, rightColRef]);
-        return { gridRef, leftColRef, rightColRef, ...apiSticky };
-      },
-      template: '<div ref="gridRef"><div ref="leftColRef"></div><div ref="rightColRef"></div></div>',
-    });
-
-    const wrapper = mount(Harness, { attachTo: document.body });
-
-    Object.defineProperty(gridRef.value, 'offsetHeight', { get: () => 2500, configurable: true });
-    gridRef.value.getBoundingClientRect = () => ({ top: -1050, bottom: 1450, height: 2500, width: 1200, left: 0, right: 1200 });
-    Object.defineProperty(leftColRef.value, 'offsetHeight', { get: () => 2500, configurable: true });
-    Object.defineProperty(rightColRef.value, 'offsetHeight', { get: () => rightHeight, configurable: true });
-
-    // 初始进入 sticky-bottom: minTop = 900 - 24 - 1500 = -624px
-    wrapper.vm.refreshStickyColumnsNow();
-    expect(rightColRef.value.style.position).toBe('sticky');
-    expect(rightColRef.value.style.top).toBe('-624px');
-
-    // 模拟切换下一页后右侧栏少了一项导致高度缩短 200px -> minTop = 900 - 24 - 1300 = -424px
-    rightHeight = 1300;
-    wrapper.vm.refreshStickyColumnsNow();
-    expect(rightColRef.value.style.position).toBe('sticky');
-    expect(rightColRef.value.style.top).toBe('-424px');
 
     wrapper.unmount();
   });

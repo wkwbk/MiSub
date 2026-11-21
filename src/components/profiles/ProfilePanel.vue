@@ -43,10 +43,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  compact: {
-    type: Boolean,
-    default: false,
-  },
   searchable: { type: Boolean, default: false },
   searchQuery: { type: String, default: '' },
   filteredCount: { type: Number, default: undefined },
@@ -183,7 +179,7 @@ const draggableProfiles = computed({
 <template>
   <div>
     <div class="list-item-animation mb-4" style="--delay-index: 0">
-      <div :class="[compact ? 'p-3' : 'p-4']" class="min-w-0 rounded-md border border-line bg-surface shadow-none">
+      <div class="min-w-0 rounded-md border border-line bg-surface p-4 shadow-none">
         <div class="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div class="min-w-0">
             <div class="flex items-center gap-3 shrink-0">
@@ -319,7 +315,7 @@ const draggableProfiles = computed({
         button-test-id="profile-finish-sort"
         @finish="handleToggleSort"
       />
-      <div v-if="isSorting" :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'" class="grid gap-4">
+      <div v-if="isSorting" class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <draggable
           v-model="draggableProfiles"
           animation="300"
@@ -331,7 +327,6 @@ const draggableProfiles = computed({
           <template #item="{ element: profile }">
             <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
               <ProfileCard
-                :compact="compact"
                 :is-sorting="isSorting"
                 :profile="profile"
                 class="pointer-events-none select-none"
@@ -340,7 +335,7 @@ const draggableProfiles = computed({
           </template>
         </draggable>
       </div>
-      <div v-else :class="compact ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'" class="grid gap-4">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="(profile, index) in displayProfiles"
           :key="profile.id"
@@ -348,7 +343,6 @@ const draggableProfiles = computed({
           class="list-item-animation"
         >
           <ProfileCard
-            :compact="compact"
             :is-selected="selectedProfileIds.has(profile.id)"
             :is-selection-mode="isSelectionMode"
             :is-sorting="isSorting"
@@ -393,7 +387,6 @@ const draggableProfiles = computed({
       </div>
       <PanelPagination
         v-if="!isSorting && displayProfiles.length > 0"
-        :compact="compact"
         :current-page="currentPage"
         :items-per-page="itemsPerPage"
         :show-items-per-page="true"

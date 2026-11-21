@@ -19,7 +19,6 @@ import {
   normalizeTagName,
   removeTagFromList,
   renameTagInList,
-  toggleTagFilterValue,
 } from '@/utils/tags.js';
 
 const isDev = import.meta.env.DEV;
@@ -53,10 +52,6 @@ export function useSubscriptions(markDirty) {
 
   function setTagFilters(filters) {
     activeTagFilters.value = normalizeActiveTagFilters(filters);
-  }
-
-  function toggleTagFilter(tag) {
-    activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
   }
 
   function renameSubscriptionTag(oldName, newName) {
@@ -603,7 +598,6 @@ export function useSubscriptions(markDirty) {
     subscriptionTags,
     activeTagFilters,
     setTagFilters,
-    toggleTagFilter,
     renameSubscriptionTag,
     deleteSubscriptionTag,
     reorderSubscriptionTags,
