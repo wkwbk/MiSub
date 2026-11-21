@@ -31,6 +31,17 @@ import { NoopStorageAdapter } from './storage/noop-adapter.js';
 
 export { ensureD1Schema, isManualNodeRecord, STORAGE_TYPES };
 
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(',')}]`;
+  }
+  const keys = Object.keys(value).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+}
+
 /**
  * D1 存储适配器（八表职责分离与索引行级存储）
  */
@@ -636,14 +647,30 @@ class D1StorageAdapter {
   // ========== 订阅源与手动节点分表读写 ==========
 
   async updateSubscriptionById(id, updater) {
-    const existing = await this.getSubscriptionById(id);
+    let existing = null;
+    let sourceTable = null;
+    for (const table of ['subscriptions', 'nodes']) {
+      try {
+        const result = await this.db.prepare(`SELECT data FROM ${table} WHERE id = ?`).bind(id).first();
+        if (result) {
+          existing = JSON.parse(result.data);
+          sourceTable = table;
+          break;
+        }
+      } catch (error) {
+        if (!isNoSuchTableError(error)) {
+          console.error(`[D1] Failed to get ${table} item ${id}:`, error);
+        }
+      }
+    }
     if (!existing) return null;
     const updated = updater({ ...existing });
-    await this.putSubscription(updated);
+    const targetTable = isManualNodeRecord(updated) ? 'nodes' : 'subscriptions';
+    await this.putSubscription(updated, { skipOtherTableDelete: sourceTable === targetTable });
     return updated;
   }
 
-  async putSubscription(item) {
+  async putSubscription(item, { skipOtherTableDelete = false } = {}) {
     const isManual = isManualNodeRecord(item);
     const targetTable = isManual ? 'nodes' : 'subscriptions';
     const otherTable = isManual ? 'subscriptions' : 'nodes';
@@ -661,11 +688,13 @@ class D1StorageAdapter {
     });
     invalidateD1CollectionCache(this.db, targetTable);
 
-    try {
-      await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id).run();
-      invalidateD1CollectionCache(this.db, otherTable);
-    } catch {
-      // Ignore when otherTable is not initialized yet
+    if (!skipOtherTableDelete) {
+      try {
+        await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id).run();
+        invalidateD1CollectionCache(this.db, otherTable);
+      } catch {
+        // Ignore when otherTable is not initialized yet
+      }
     }
 
     return item;
@@ -869,8 +898,25 @@ class D1StorageAdapter {
 
   async syncAllSubscriptions(items) {
     if (!Array.isArray(items)) return false;
-    const current = await this.getAllSubscriptions();
-    const currentMap = new Map(current.filter((item) => item?.id).map((item) => [item.id, item]));
+    const [subRows, nodeRows] = await Promise.all([
+      this._readTableRows('subscriptions'),
+      this._readTableRows('nodes'),
+    ]);
+    const inSubscriptions = new Set();
+    const inNodes = new Set();
+    const currentMap = new Map();
+
+    for (const item of subRows) {
+      if (!item?.id) continue;
+      inSubscriptions.add(item.id);
+      currentMap.set(item.id, item);
+    }
+    for (const item of nodeRows) {
+      if (!item?.id) continue;
+      inNodes.add(item.id);
+      currentMap.set(item.id, item);
+    }
+
     const nextIds = new Set();
     const toUpsert = [];
 
@@ -878,19 +924,20 @@ class D1StorageAdapter {
       if (!item?.id) continue;
       nextIds.add(item.id);
       const existing = currentMap.get(item.id);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
-        toUpsert.push(item);
+      const isManual = isManualNodeRecord(item);
+      const needsMigration = isManual ? inSubscriptions.has(item.id) : inNodes.has(item.id);
+      if (!existing || needsMigration || stableStringify(existing) !== stableStringify(item)) {
+        toUpsert.push({ item, isManual, needsMigration });
       }
     }
 
-    const toDelete = current.filter((item) => item?.id && !nextIds.has(item.id));
+    const toDelete = Array.from(currentMap.values()).filter((item) => item?.id && !nextIds.has(item.id));
     if (toUpsert.length === 0 && toDelete.length === 0) {
       return true;
     }
 
     const statements = [];
-    for (const item of toUpsert) {
-      const isManual = isManualNodeRecord(item);
+    for (const { item, isManual, needsMigration } of toUpsert) {
       const targetTable = isManual ? 'nodes' : 'subscriptions';
       const otherTable = isManual ? 'subscriptions' : 'nodes';
       statements.push(
@@ -901,17 +948,25 @@ class D1StorageAdapter {
           )
           .bind(item.id, JSON.stringify(item)),
       );
-      statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id));
+      if (needsMigration) {
+        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id));
+      }
     }
 
     for (const item of toDelete) {
-      statements.push(
-        this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(item.id),
-        this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(item.id),
-        this.db
-          .prepare('DELETE FROM cache WHERE key = ?')
-          .bind(`node_cache_subscription_${encodeURIComponent(item.id)}`),
-      );
+      if (inSubscriptions.has(item.id)) {
+        statements.push(this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(item.id));
+      }
+      if (inNodes.has(item.id)) {
+        statements.push(this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(item.id));
+      }
+      if (!isManualNodeRecord(item)) {
+        statements.push(
+          this.db
+            .prepare('DELETE FROM cache WHERE key = ?')
+            .bind(`node_cache_subscription_${encodeURIComponent(item.id)}`),
+        );
+      }
     }
 
     await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
@@ -931,7 +986,7 @@ class D1StorageAdapter {
       if (!item?.id) continue;
       nextIds.add(item.id);
       const existing = currentMap.get(item.id);
-      if (!existing || JSON.stringify(existing) !== JSON.stringify(item)) {
+      if (!existing || stableStringify(existing) !== stableStringify(item)) {
         toUpsert.push(item);
       }
     }
@@ -1033,9 +1088,10 @@ class D1StorageAdapter {
       return stats;
     }
 
-    // 1. 将 subscriptions 表里的手动节点自动归位到 nodes 表
+    // 1. 将 subscriptions 表里的手动节点自动归位到 nodes 表（批量提交）
     try {
       const subRows = await this.db.prepare('SELECT id, data FROM subscriptions').all();
+      const migrationStatements = [];
       for (const row of subRows?.results || []) {
         if (!row?.data) continue;
         let parsed = null;
@@ -1045,18 +1101,17 @@ class D1StorageAdapter {
           continue;
         }
         if (parsed?.id && isManualNodeRecord(parsed)) {
-          await this.db
-            .prepare('INSERT OR REPLACE INTO nodes (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)')
-            .bind(parsed.id, row.data)
-            .run();
-          await this.db
-            .prepare('DELETE FROM subscriptions WHERE id = ?')
-            .bind(row.id ?? parsed.id)
-            .run();
+          migrationStatements.push(
+            this.db
+              .prepare('INSERT OR REPLACE INTO nodes (id, data, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)')
+              .bind(parsed.id, row.data),
+            this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(row.id ?? parsed.id),
+          );
           stats.migratedNodes += 1;
         }
       }
-      if (stats.migratedNodes > 0) {
+      if (migrationStatements.length > 0) {
+        await this._runBatchOrSequential(migrationStatements);
         invalidateD1CollectionCache(this.db, 'subscriptions');
         invalidateD1CollectionCache(this.db, 'nodes');
       }
@@ -1185,6 +1240,7 @@ class D1StorageAdapter {
 
       // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填旧行过期时间
       const nullExpRows = await this.db.prepare('SELECT key FROM cache WHERE expires_at IS NULL').all();
+      const cacheCleanupStatements = [];
       for (const row of nullExpRows?.results || []) {
         const key = String(row?.key || '');
         if (!key) continue;
@@ -1205,7 +1261,7 @@ class D1StorageAdapter {
         }
 
         if (shouldDelete) {
-          await this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key).run();
+          cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
           stats.removedExpiredCache += 1;
           continue;
         }
@@ -1222,12 +1278,17 @@ class D1StorageAdapter {
           const fullRow = await this.db.prepare('SELECT value FROM cache WHERE key = ?').bind(key).first();
           const computedExp = computeCacheExpiresAt(key, fullRow?.value, now);
           if (computedExp && computedExp <= now) {
-            await this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key).run();
+            cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
             stats.removedExpiredCache += 1;
           } else if (computedExp) {
-            await this.db.prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key).run();
+            cacheCleanupStatements.push(
+              this.db.prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key),
+            );
           }
         }
+      }
+      if (cacheCleanupStatements.length > 0) {
+        await this._runBatchOrSequential(cacheCleanupStatements);
       }
     } catch (error) {
       if (!isNoSuchTableError(error)) {

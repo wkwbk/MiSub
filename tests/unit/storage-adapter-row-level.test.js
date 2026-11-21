@@ -315,13 +315,25 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     await adapter.syncAllSubscriptions(currentSubs);
     expect(batchSpy).not.toHaveBeenCalled();
 
-    // Changing 1 item and removing 1 item should execute in a single batch
+    // Changing 1 item and removing 1 item should execute in a single batch without redundant cross-table deletes
     const nextSubs = currentSubs
       .filter((item) => item.id !== 'node-2')
       .map((item) => (item.id === 'sub-1' ? { ...item, name: 'Sub 1 Renamed' } : item));
     await adapter.syncAllSubscriptions(nextSubs);
     expect(batchSpy).toHaveBeenCalledTimes(1);
+    // 1 upsert for sub-1 + 1 delete from nodes for node-2 (no cross-table delete for sub-1 or subscriptions/cache for node-2)
+    expect(batchSpy.mock.calls[0][0]).toHaveLength(2);
     expect(db.tables.nodes.has('node-2')).toBe(false);
     expect((await adapter.getSubscriptionById('sub-1')).name).toBe('Sub 1 Renamed');
+
+    // Syncing items with identical content but different JSON key order should skip all writes
+    batchSpy.mockClear();
+    const reorderedSubs = (await adapter.getAllSubscriptions()).map((item) => ({
+      url: item.url,
+      name: item.name,
+      id: item.id,
+    }));
+    await adapter.syncAllSubscriptions(reorderedSubs);
+    expect(batchSpy).not.toHaveBeenCalled();
   });
 });
