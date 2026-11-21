@@ -108,6 +108,8 @@ const getLinkHostname = (rawUrl) => {
                 "
                 :alt="link.name"
                 :src="resolvePublicLinkIcon(link)"
+                loading="lazy"
+                decoding="async"
                 class="w-full h-full object-contain rounded-md p-1"
               />
               <span v-else>{{ link.icon || link.name?.slice(0, 1) || '🌐' }}</span>

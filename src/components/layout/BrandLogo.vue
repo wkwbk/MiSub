@@ -32,6 +32,7 @@ const logoFailed = ref(false);
         :width="iconSize"
         alt="MiSub"
         src="/logo.png"
+        decoding="async"
         @error="logoFailed = true"
       />
       <svg

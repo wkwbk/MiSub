@@ -208,6 +208,8 @@ onMounted(() => {
               v-if="client.icon && (client.icon.includes('/') || client.icon.startsWith('data:'))"
               :alt="client.name"
               :src="client.icon"
+              loading="lazy"
+              decoding="async"
               class="w-full h-full object-cover rounded-md p-1"
             />
             <span v-else>{{ client.icon }}</span>

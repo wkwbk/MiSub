@@ -60,7 +60,7 @@ const getLinkHostname = (rawUrl) => {
 };
 
 const extractGithubRepo = (item) => {
-  if (item?.repo && /^[\w\-\.]+\/[\w\-\.]+$/.test(item.repo)) {
+  if (item?.repo && /^[\w\-.]+\/[\w\-.]+$/.test(item.repo)) {
     return item.repo;
   }
   if (!item?.url) return null;
@@ -74,7 +74,7 @@ const extractGithubRepo = (item) => {
     const owner = parts[0];
     const repo = parts[1].replace(/\.git$/i, '');
     const slug = `${owner}/${repo}`;
-    return /^[\w\-\.]+\/[\w\-\.]+$/.test(slug) ? slug : null;
+    return /^[\w\-.]+\/[\w\-.]+$/.test(slug) ? slug : null;
   } catch {
     return null;
   }
@@ -119,7 +119,11 @@ watch(
   enabledPublicCores,
   (cores) => {
     if (cores.length > 0) {
-      fetchCoreReleases(cores);
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => fetchCoreReleases(cores), { timeout: 2000 });
+      } else {
+        setTimeout(() => fetchCoreReleases(cores), 300);
+      }
     }
   },
   { immediate: true },
@@ -183,6 +187,8 @@ watch(
                 "
                 :alt="core.name"
                 :src="resolvePublicCoreIcon(core)"
+                loading="lazy"
+                decoding="async"
                 class="w-full h-full object-contain rounded-md p-1"
               />
               <span v-else>{{ core.icon || core.name?.slice(0, 1) || '⚙️' }}</span>

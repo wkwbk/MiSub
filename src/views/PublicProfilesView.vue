@@ -358,7 +358,11 @@ const getPlatformStyle = (p) => {
 onMounted(async () => {
   fetchPublicProfiles();
   await fetchClients();
-  fetchClientVersions();
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(() => fetchClientVersions(), { timeout: 1500 });
+  } else {
+    setTimeout(fetchClientVersions, 200);
+  }
   if (typeof window !== 'undefined') {
     window.addEventListener('open-guestbook', handleGuestbookEvent);
   }
@@ -642,6 +646,8 @@ onUnmounted(() => {
                       v-if="client.icon && (client.icon.includes('/') || client.icon.startsWith('data:'))"
                       :alt="client.name"
                       :src="client.icon"
+                      loading="lazy"
+                      decoding="async"
                       class="w-full h-full object-cover rounded-md p-1"
                     />
                     <span v-else>{{ client.icon }}</span>

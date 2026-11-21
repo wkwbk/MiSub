@@ -66,6 +66,34 @@ function applyNoStoreToHtmlResponse(response) {
   });
 }
 
+function applyCacheHeadersToAssetResponse(response, pathname) {
+  if (!response || !response.headers || (response.status !== 200 && response.status !== 304)) {
+    return response;
+  }
+  const contentType = response.headers.get('Content-Type') || '';
+  if (contentType.includes('text/html')) {
+    return response;
+  }
+  const headers = new Headers(response.headers);
+  // Vite 产物（带 hash 的 JS/CSS/Assets）设置为永久不可变强缓存
+  if (pathname.startsWith('/assets/')) {
+    headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    headers.set('CDN-Cache-Control', 'public, max-age=31536000, immutable');
+  } else if (
+    pathname.startsWith('/icons/') ||
+    /\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(pathname)
+  ) {
+    // 静态图标及图片字体：浏览器与 CDN 强缓存 7 天，后台平滑重校验
+    headers.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    headers.set('CDN-Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 const INTERNAL_SPA_FETCH_HEADER = 'x-misub-internal-spa-fetch';
 const INTERNAL_ORIGIN_ASSET_FETCH_HEADER = 'x-misub-origin-asset-fetch';
 
@@ -159,6 +187,18 @@ export async function onRequest(context) {
 
   try {
     const handleRequest = async () => {
+      // 优化：纯静态公共资产（如 /assets/ 打包产物与 /icons/ 图标）直通，跳过异步读取 D1 设置
+      const isPublicAsset =
+        /^\/(assets|icons)\/./.test(url.pathname) ||
+        (/\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(url.pathname) && !url.pathname.startsWith('/api/'));
+
+      if (isPublicAsset && ['GET', 'HEAD'].includes(request.method)) {
+        const assetResponse = await fetchStaticAsset(request, env, next);
+        if (assetResponse.status === 200 || assetResponse.status === 304) {
+          return applyCacheHeadersToAssetResponse(assetResponse, url.pathname);
+        }
+      }
+
       const settings = (await SettingsCache.get(env)) || {};
       const config = migrateConfigSettings({ ...defaultSettings, ...settings });
 
@@ -328,6 +368,10 @@ export async function onRequest(context) {
               },
             });
           }
+        }
+
+        if (isStaticAsset && !isHtmlRequest) {
+          response = applyCacheHeadersToAssetResponse(response, url.pathname);
         }
 
         return applyNoStoreToHtmlResponse(response);
