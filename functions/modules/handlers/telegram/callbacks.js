@@ -338,7 +338,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           const profiles = await storageAdapter.getAllProfiles();
           const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           if (idx < 0 || idx >= targetList.length) {
             await answerCallbackQuery(callbackQuery.id, '对象不存在', env, true);
@@ -421,7 +421,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           const profiles = await storageAdapter.getAllProfiles();
           const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           const boundProfileId = getUserBoundProfileId(config, userId);
           if (idx >= 0 && idx < userNodes.length && boundProfileId) {
@@ -450,7 +450,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           const profiles = await storageAdapter.getAllProfiles();
           const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           const boundProfileId = getUserBoundProfileId(config, userId);
           if (idx >= 0 && idx < userNodes.length && boundProfileId) {
@@ -475,7 +475,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           const profiles = await storageAdapter.getAllProfiles();
           const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           const boundProfileId = getUserBoundProfileId(config, userId);
           if (idx >= 0 && idx < subs.length && boundProfileId) {
@@ -503,7 +503,7 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
 
           const profiles = await storageAdapter.getAllProfiles();
           const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           const boundProfileId = getUserBoundProfileId(config, userId);
           if (idx >= 0 && idx < subs.length && boundProfileId) {
@@ -684,13 +684,13 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           const cache = requestCache || createRequestCache();
           const profiles = await getCachedProfiles(env, cache);
           const settings = await getCachedSettings(env, cache);
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           const targetProfile = profiles.find((p) => p.id === profileId);
           if (targetProfile) {
             setUserBoundProfileId(config, userId, profileId);
-            config.auto_bind = true;
-            settings.telegram_push_config = config;
+            config.autoBind = true;
+            settings.telegramPushConfig = config;
             cache.settings = settings;
             await persistCachedSettings(env, cache);
 
@@ -709,10 +709,10 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
           // 解除绑定
           const cache = requestCache || createRequestCache();
           const settings = await getCachedSettings(env, cache);
-          const config = settings.telegram_push_config || {};
+          const config = settings.telegramPushConfig || {};
 
           setUserBoundProfileId(config, userId, '');
-          settings.telegram_push_config = config;
+          settings.telegramPushConfig = config;
           cache.settings = settings;
           await persistCachedSettings(env, cache);
 

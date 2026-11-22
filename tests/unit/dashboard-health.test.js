@@ -22,7 +22,7 @@ describe('dashboard health helpers', () => {
         { id: 's3', enabled: true, nodeCount: 4, lastError: 'fetch failed' },
       ],
       profiles: [{ id: 'p1', enabled: true }],
-      settings: { mytoken: '' },
+      settings: { myToken: '' },
       totalNodesCount: 4,
     });
 
@@ -49,7 +49,7 @@ describe('dashboard health helpers', () => {
         },
       ],
       profiles: [{ id: 'p1' }],
-      settings: { mytoken: 'stable-token' },
+      settings: { myToken: 'stable-token' },
       now: now * 1000,
     });
 
@@ -64,7 +64,7 @@ describe('dashboard health helpers', () => {
         { id: 'disabled', enabled: false, nodeCount: 2 },
       ],
       profiles: [{ id: 'profile', enabled: true }],
-      settings: { mytoken: '' },
+      settings: { myToken: '' },
       totalNodesCount: 3,
     });
 
@@ -88,7 +88,7 @@ describe('dashboard health helpers', () => {
     const items = getDashboardHealthItems({
       subscriptions: [{ id: 'failed', enabled: true, nodeCount: 1, lastError: 'timeout' }],
       profiles: [{ id: 'profile', enabled: true }],
-      settings: { mytoken: 'stable-token' },
+      settings: { myToken: 'stable-token' },
       totalNodesCount: 1,
     });
 
@@ -103,7 +103,7 @@ describe('dashboard health helpers', () => {
     const items = getDashboardHealthItems({
       subscriptions: [{ id: 'failed', enabled: true, nodeCount: 1, lastError: 'timeout' }],
       profiles: [{ id: 'profile', enabled: true }],
-      settings: { mytoken: 'stable-token' },
+      settings: { myToken: 'stable-token' },
       totalNodesCount: 1,
     });
 
@@ -149,7 +149,7 @@ describe('dashboard health helpers', () => {
         { id: 'off', enabled: false, nodeCount: 1 },
       ],
       profiles: [{ id: 'profile' }],
-      settings: { mytoken: '' },
+      settings: { myToken: '' },
       totalNodesCount: 9,
       now: now * 1000,
     });

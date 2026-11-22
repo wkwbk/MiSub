@@ -23,7 +23,7 @@ describe('API route access boundaries', () => {
   it('does not expose the custom login path through public configuration', async () => {
     const env = {
       MISUB_DB: createMemoryD1({
-        worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
+        main: JSON.stringify({ customLoginPath: 'admin-login' }),
       }),
     };
 
@@ -39,7 +39,7 @@ describe('API route access boundaries', () => {
   it('marks the current configured login path without returning the path', async () => {
     const env = {
       MISUB_DB: createMemoryD1({
-        worker_settings_v1: JSON.stringify({ customLoginPath: 'admin-login' }),
+        main: JSON.stringify({ customLoginPath: 'admin-login' }),
       }),
     };
 
@@ -61,7 +61,7 @@ describe('API route access boundaries', () => {
   it('exposes the configured default locale on the public profiles endpoint', async () => {
     const env = {
       MISUB_DB: createMemoryD1({
-        worker_settings_v1: JSON.stringify({ defaultLocale: 'en-US' }),
+        main: JSON.stringify({ defaultLocale: 'en-US' }),
       }),
     };
 
@@ -84,10 +84,10 @@ describe('API route access boundaries', () => {
   it('returns unauthenticated metadata for /api/data without exposing management data', async () => {
     const env = {
       MISUB_DB: createMemoryD1({
-        misub_subscriptions_v1: JSON.stringify([
+        subscriptions: JSON.stringify([
           { id: 'secret-sub', name: 'Private Sub', url: 'https://airport.example/sub' },
         ]),
-        misub_profiles_v1: JSON.stringify([{ id: 'secret-profile', name: 'Private Profile' }]),
+        profiles: JSON.stringify([{ id: 'secret-profile', name: 'Private Profile' }]),
       }),
       COOKIE_SECRET: 'stable-cookie-secret',
       ADMIN_PASSWORD: 'secret-password',

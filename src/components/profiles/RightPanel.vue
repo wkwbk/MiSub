@@ -38,7 +38,7 @@ const rawSubPath = computed(() =>
 );
 const effectiveSubPath = computed(() => normalizeSubPath(rawSubPath.value, 'sub'));
 const subPathReady = computed(() => isStableToken(effectiveSubPath.value) && !isReservedSubPath(effectiveSubPath.value));
-const mainTokenReady = computed(() => isStableToken(props.config?.mytoken));
+const mainTokenReady = computed(() => isStableToken(props.config?.myToken));
 
 const setupTasks = computed(() => {
   const tasks = [];
@@ -82,7 +82,7 @@ const requiredToken = computed(() => {
   return selectedId.value === 'default'
     ? {
         type: 'mytoken',
-        value: props.config?.mytoken,
+        value: props.config?.myToken,
         name: t('dashboard.linkCard.tokenNameMain'),
       }
     : {
@@ -102,7 +102,7 @@ const subLink = computed(() => {
   }
 
   const origin = window.location.origin;
-  const identifier = selectedId.value === 'default' ? props.config.mytoken : selectedId.value;
+  const identifier = selectedId.value === 'default' ? props.config.myToken : selectedId.value;
   const baseUrl = `${origin}/${effectiveSubPath.value}/${identifier}`;
 
   if (selectedFormat.value === 'universal') {

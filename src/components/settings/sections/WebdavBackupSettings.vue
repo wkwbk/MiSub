@@ -157,7 +157,10 @@ const restoreRemoteFile = async (file) => {
 };
 
 const copyCronHint = async () => {
-  const text = `${window.location.origin}/cron`;
+  const secret = props.settings?.cronSecret;
+  const text = secret
+    ? `${window.location.origin}/cron/backup?secret=${encodeURIComponent(secret)}`
+    : `${window.location.origin}/cron/backup`;
   const copied = await copyTextToClipboard(text);
   showToast(
     copied ? t('settings.webdavCronCopied') : t('settings.webdavCronCopyFailed'),

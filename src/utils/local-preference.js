@@ -100,3 +100,18 @@ export function removePreference(key) {
     return false;
   }
 }
+
+/**
+ * 清空当前站点所有本机偏好（用于恢复出厂设置）
+ * @returns {boolean}
+ */
+export function clearAllPreferences() {
+  try {
+    if (!canUseLocalStorage()) return false;
+    localStorage.clear();
+    return true;
+  } catch (error) {
+    console.warn('[LocalPreference] Failed to clear all preferences:', error);
+    return false;
+  }
+}

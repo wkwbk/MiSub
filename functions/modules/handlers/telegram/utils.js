@@ -111,7 +111,7 @@ export async function downloadTelegramFile(message, config) {
     throw new Error(`文件过大（${(size / 1024 / 1024).toFixed(1)}MB），上限 5MB`);
   }
 
-  const token = config.bot_token;
+  const token = config.botToken;
   if (!token) throw new Error('未配置 Bot Token');
 
   const fileRes = await fetch(

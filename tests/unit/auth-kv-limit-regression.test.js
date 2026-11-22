@@ -124,14 +124,14 @@ describe('single source of truth for env secrets and D1 settings', () => {
     });
   });
 
-  it('reads telegram_push_config strictly from D1 settings and ignores TELEGRAM_PUSH_* env vars', async () => {
+  it('reads telegramPushConfig strictly from D1 settings and ignores TELEGRAM_PUSH_* env vars', async () => {
     const db = createMemoryD1({
       main: {
-        telegram_push_config: {
+        telegramPushConfig: {
           enabled: true,
-          bot_token: '',
-          webhook_secret: '',
-          allowed_user_ids: [],
+          botToken: '',
+          webhookSecret: '',
+          allowedUserIds: [],
         },
       },
     });
@@ -142,8 +142,8 @@ describe('single source of truth for env secrets and D1 settings', () => {
       TELEGRAM_PUSH_ALLOWED_USERS: '12345,67890',
     });
 
-    expect(config.bot_token).toBe('');
-    expect(config.webhook_secret).toBe('');
-    expect(config.allowed_user_ids).toEqual([]);
+    expect(config.botToken).toBe('');
+    expect(config.webhookSecret).toBe('');
+    expect(config.allowedUserIds).toEqual([]);
   });
 });

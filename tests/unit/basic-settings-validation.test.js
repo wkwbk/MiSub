@@ -37,8 +37,8 @@ describe('BasicSettings validation feedback', () => {
 
   it('keeps reserved paths in the field and shows inline error state while allowing /sub', async () => {
     const wrapper = mountBasicSettings({
-      FileName: '',
-      mytoken: 'settings',
+      fileName: '',
+      myToken: 'settings',
       profileToken: 'dashboard',
       customLoginPath: 'login',
       enablePublicPage: true,
@@ -46,7 +46,7 @@ describe('BasicSettings validation feedback', () => {
 
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.props().settings.mytoken).toBe('settings');
+    expect(wrapper.props().settings.myToken).toBe('settings');
     expect(wrapper.text()).toContain('系统保留路径不可用作订阅 URL 路径');
     expect(wrapper.text()).toContain('"/login" 是系统保留路径，不可用作自定义管理后台路径');
     expect(wrapper.text()).toContain('/{URL路径}/{标识}');
@@ -54,8 +54,8 @@ describe('BasicSettings validation feedback', () => {
     expect(wrapper.props().settings.customLoginPath).toBe('login');
 
     const subWrapper = mountBasicSettings({
-      FileName: 'MiSub',
-      mytoken: '',
+      fileName: 'MiSub',
+      myToken: '',
       profileToken: 'sub',
       customLoginPath: '',
       enablePublicPage: true,
@@ -66,8 +66,8 @@ describe('BasicSettings validation feedback', () => {
 
   it('allows URL path-safe symbol characters in subscription tokens for stronger secrets', async () => {
     const wrapper = mountBasicSettings({
-      FileName: '',
-      mytoken: '!luckyss',
+      fileName: '',
+      myToken: '!luckyss',
       profileToken: 'profile:token!$&()*+,;=@',
       customLoginPath: 'login',
       enablePublicPage: true,
@@ -75,15 +75,15 @@ describe('BasicSettings validation feedback', () => {
 
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.props().settings.mytoken).toBe('!luckyss');
+    expect(wrapper.props().settings.myToken).toBe('!luckyss');
     expect(wrapper.props().settings.profileToken).toBe('profile:token!$&()*+,;=@');
     expect(wrapper.text()).not.toContain('Token 仅允许');
   });
 
   it('still rejects token characters that break a single URL path segment', async () => {
     const wrapper = mountBasicSettings({
-      FileName: '',
-      mytoken: 'bad/token',
+      fileName: '',
+      myToken: 'bad/token',
       profileToken: 'bad?token',
       customLoginPath: 'login',
       enablePublicPage: true,
@@ -96,8 +96,8 @@ describe('BasicSettings validation feedback', () => {
 
   it('handles live editing and clearing of mytoken and profileToken without throwing', async () => {
     const settings = reactive({
-      FileName: 'MiSub',
-      mytoken: '',
+      fileName: 'MiSub',
+      myToken: '',
       profileToken: 'profiles',
       customLoginPath: '',
       enablePublicPage: true,
@@ -118,8 +118,8 @@ describe('BasicSettings validation feedback', () => {
 
   it('generates a valid UUID token for mytoken only and keeps profileToken as a plain URL path input', async () => {
     const settings = reactive({
-      FileName: 'MiSub',
-      mytoken: '',
+      fileName: 'MiSub',
+      myToken: '',
       profileToken: 'profiles',
       customLoginPath: '',
       enablePublicPage: true,
@@ -128,7 +128,7 @@ describe('BasicSettings validation feedback', () => {
     const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     await wrapper.find('[data-testid="generate-mytoken-btn"]').trigger('click');
-    expect(settings.mytoken).toMatch(uuidPattern);
+    expect(settings.myToken).toMatch(uuidPattern);
     expect(wrapper.find('[data-testid="generate-profileToken-btn"]').exists()).toBe(false);
   });
 });

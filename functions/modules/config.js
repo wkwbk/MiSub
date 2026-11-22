@@ -1,8 +1,9 @@
 
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../shared/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../shared/default-public-cores.js';
+import { SETTINGS_KEYS } from '../storage/d1-schema.js';
 
-export const STORAGE_KEY_SETTINGS = 'worker_settings_v1';
+export const STORAGE_KEY_SETTINGS = SETTINGS_KEYS.MAIN;
 
 export const COOKIE_NAME = 'auth_session';
 export const SESSION_DURATION = 30 * 24 * 60 * 60 * 1000;
@@ -10,9 +11,13 @@ export const SESSION_RENEW_THRESHOLD = 7 * 24 * 60 * 60 * 1000;
 export const DEFAULT_SUBCONVERTER_BACKEND = 'subapi.cmliussss.net';
 
 export const DEFAULT_SETTINGS = {
-  FileName: 'MiSub',
-  mytoken: '',
+  fileName: 'MiSub',
+  myToken: '',
   profileToken: 'sub',
+  defaultLocale: 'zh-CN',
+  cronSecret: '',
+  botToken: '',
+  chatId: '',
   transformConfigMode: 'builtin',
   transformConfig: '',
   ruleLevel: 'std',
@@ -20,8 +25,8 @@ export const DEFAULT_SETTINGS = {
   builtinEnableUdp: true,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
-  NotifyThresholdDays: 3,
-  NotifyThresholdPercent: 90,
+  notifyThresholdDays: 3,
+  notifyThresholdPercent: 90,
   enableTrafficNode: false,
   enableFlagEmoji: true,
   enablePublicPage: true,

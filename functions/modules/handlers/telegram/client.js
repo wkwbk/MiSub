@@ -104,12 +104,12 @@ export async function setTelegramWebhook(botToken, webhookUrl, webhookSecret) {
 
 /**
  * 同步 Push Bot 的命令菜单和 Webhook
- * @param {Object} pushConfig - telegram_push_config 对象
+ * @param {Object} pushConfig - telegramPushConfig 对象
  * @param {string} origin - 当前站点 origin，如 https://example.com
  */
 export async function syncTelegramPushBot(pushConfig, origin = '') {
-  const botToken = String(pushConfig?.bot_token || '').trim();
-  const webhookSecret = String(pushConfig?.webhook_secret || '').trim();
+  const botToken = String(pushConfig?.botToken || '').trim();
+  const webhookSecret = String(pushConfig?.webhookSecret || '').trim();
 
   if (!pushConfig?.enabled || !botToken) {
     return {
@@ -167,8 +167,8 @@ export async function handleTelegramSetupRequest(request, env) {
     }
 
     const savedConfig = await getTelegramPushConfig(env);
-    const botToken = String(body.botToken ?? savedConfig.bot_token ?? '').trim();
-    const webhookSecret = String(body.webhookSecret ?? savedConfig.webhook_secret ?? '').trim();
+    const botToken = String(body.botToken ?? savedConfig.botToken ?? '').trim();
+    const webhookSecret = String(body.webhookSecret ?? savedConfig.webhookSecret ?? '').trim();
 
     if (!botToken) {
       return createJsonResponse(
@@ -184,8 +184,8 @@ export async function handleTelegramSetupRequest(request, env) {
     const syncResult = await syncTelegramPushBot(
       {
         enabled: true,
-        bot_token: botToken,
-        webhook_secret: webhookSecret,
+        botToken,
+        webhookSecret,
       },
       origin,
     );
@@ -220,7 +220,7 @@ export async function sendTelegramMessage(chatId, text, env, options = {}) {
   try {
     const { requestCache = null, ...apiOptions } = options || {};
     const config = await getTelegramPushConfig(env, requestCache);
-    if (!config.bot_token) {
+    if (!config.botToken) {
       console.error('[Telegram Push] Bot token not configured');
       return;
     }
@@ -232,7 +232,7 @@ export async function sendTelegramMessage(chatId, text, env, options = {}) {
       ...apiOptions,
     };
 
-    const response = await fetch(`https://api.telegram.org/bot${config.bot_token}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -255,7 +255,7 @@ export async function editTelegramMessage(chatId, messageId, text, env, options 
   try {
     const { requestCache = null, ...apiOptions } = options || {};
     const config = await getTelegramPushConfig(env, requestCache);
-    if (!config.bot_token) return;
+    if (!config.botToken) return;
 
     const body = {
       chat_id: chatId,
@@ -265,7 +265,7 @@ export async function editTelegramMessage(chatId, messageId, text, env, options 
       ...apiOptions,
     };
 
-    await fetch(`https://api.telegram.org/bot${config.bot_token}/editMessageText`, {
+    await fetch(`https://api.telegram.org/bot${config.botToken}/editMessageText`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -281,9 +281,9 @@ export async function editTelegramMessage(chatId, messageId, text, env, options 
 export async function answerCallbackQuery(callbackQueryId, text, env, showAlert = false, requestCache = null) {
   try {
     const config = await getTelegramPushConfig(env, requestCache);
-    if (!config.bot_token) return;
+    if (!config.botToken) return;
 
-    await fetch(`https://api.telegram.org/bot${config.bot_token}/answerCallbackQuery`, {
+    await fetch(`https://api.telegram.org/bot${config.botToken}/answerCallbackQuery`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

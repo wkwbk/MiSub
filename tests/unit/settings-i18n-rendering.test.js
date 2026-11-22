@@ -72,8 +72,8 @@ describe('settings page English translations', () => {
     const wrapper = mount(BasicSettings, {
       props: {
         settings: {
-          FileName: '',
-          mytoken: 'token',
+          fileName: '',
+          myToken: 'token',
           profileToken: 'profile-token',
           customLoginPath: 'admin',
           enablePublicPage: true,
@@ -158,14 +158,14 @@ describe('settings page English translations', () => {
     const telegram = mount(TelegramCard, {
       props: {
         settings: {
-          BotToken: '',
-          ChatID: '',
-          telegram_push_config: {
+          botToken: '',
+          chatId: '',
+          telegramPushConfig: {
             enabled: true,
-            bot_token: '',
-            webhook_secret: '',
-            allowed_user_ids: [],
-            allow_all_users: false,
+            botToken: '',
+            webhookSecret: '',
+            allowedUserIds: [],
+            allowAllUsers: false,
           },
         },
       },

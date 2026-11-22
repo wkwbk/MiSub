@@ -34,7 +34,7 @@ describe('notifications cron storage helper usage', () => {
       putAllSubscriptions,
     });
     get.mockImplementation(async (key) => {
-      if (key === 'worker_settings_v1') {
+      if (key === 'main') {
         return {};
       }
       return null;
@@ -84,8 +84,8 @@ describe('notifications cron storage helper usage', () => {
       changes: true,
     });
     expect(getAllSubscriptions).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith('worker_settings_v1');
-    expect(get).not.toHaveBeenCalledWith('misub_subscriptions_v1');
+    expect(get).toHaveBeenCalledWith('main');
+    expect(get).not.toHaveBeenCalledWith('subscriptions');
     expect(putAllSubscriptions).toHaveBeenCalledWith([
       expect.objectContaining({
         id: 'sub-1',

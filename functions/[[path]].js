@@ -26,6 +26,7 @@ import { evaluatePageAccess } from './modules/access-control.js';
 import { StorageFactory } from './storage-adapter.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
+import { handleCronBackupTrigger, handleCronMaintenanceTrigger } from './modules/scheduled-task-runner.js';
 import { renewAuthSession } from './modules/auth-middleware.js';
 import { normalizeSubPath } from '../shared/reserved-paths.js';
 
@@ -215,9 +216,8 @@ export async function onRequest(context) {
       } else if (isSubRoute) {
         // MiSub 订阅路由
         return await handleMisubRequest(context);
-      } else if (url.pathname === '/cron') {
-        // 定时任务路由 (需要认证)
-        // 使用设置中的 cronSecret 进行验证
+      } else if (url.pathname === '/cron' || url.pathname.startsWith('/cron/')) {
+        // 定时任务路由 (按业务拆分，统一校验 Cron Secret)
         const expectedSecret = settings.cronSecret;
 
         if (!expectedSecret) {
@@ -238,7 +238,22 @@ export async function onRequest(context) {
           return createJsonResponse({ error: 'Unauthorized' }, 401);
         }
 
-        return await handleCronTrigger(env);
+        switch (url.pathname) {
+          case '/cron/subscriptions':
+            return await handleCronTrigger(env);
+          case '/cron/backup':
+            return await handleCronBackupTrigger(env);
+          case '/cron/maintenance':
+            return await handleCronMaintenanceTrigger(env);
+          default:
+            return createJsonResponse(
+              {
+                error: '请指定具体的 Cron 任务路径',
+                availableTasks: ['/cron/subscriptions', '/cron/backup', '/cron/maintenance'],
+              },
+              400,
+            );
+        }
       } else {
         // 静态文件直通（如 /assets/、/src/、/logo.png 等）
         const isStaticAsset = /^\/(assets|@vite|src)\/./.test(url.pathname) || /\.\w+$/.test(url.pathname);

@@ -62,7 +62,7 @@ const customLoginPathError = computed(() => {
 });
 
 const myTokenError = computed(() => {
-  const value = props.settings.mytoken;
+  const value = props.settings.myToken;
   if (!value) return '';
 
   return hasInvalidTokenChars(value) ? t('settings.reservedTokenChars') : '';
@@ -96,7 +96,7 @@ watch(
 );
 
 watch(
-  () => props.settings.mytoken,
+  () => props.settings.myToken,
   (val) => {
     if (!val) return;
     if (hasInvalidTokenChars(val)) {
@@ -254,7 +254,7 @@ const handleCustomProfileIntervalBlur = () => {
           />
         </div>
         <div>
-          <Input v-model="settings.FileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
+          <Input v-model="settings.fileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
         </div>
         <div>
           <div class="flex items-center justify-between mb-1.5">
@@ -265,7 +265,7 @@ const handleCustomProfileIntervalBlur = () => {
               class="inline-flex items-center gap-1 text-xs font-medium text-fg-muted hover:text-fg transition-colors"
               data-testid="generate-mytoken-btn"
               type="button"
-              @click="handleGenerateToken('mytoken')"
+              @click="handleGenerateToken('myToken')"
             >
               <RefreshCw class="h-3 w-3" />
               <span>{{ t('settings.generateRandomToken') }}</span>
@@ -273,7 +273,7 @@ const handleCustomProfileIntervalBlur = () => {
           </div>
           <Input
             id="setting-mytoken"
-            v-model="settings.mytoken"
+            v-model="settings.myToken"
             :class="{
               'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-mytoken',
             }"

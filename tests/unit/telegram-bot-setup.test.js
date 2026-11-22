@@ -38,8 +38,8 @@ describe('Telegram Push Bot setup & menu registration', () => {
     const result = await syncTelegramPushBot(
       {
         enabled: true,
-        bot_token: '123456:TEST_TOKEN',
-        webhook_secret: 'valid_secret-123',
+        botToken: '123456:TEST_TOKEN',
+        webhookSecret: 'valid_secret-123',
       },
       'https://misub.example.com',
     );
@@ -78,8 +78,8 @@ describe('Telegram Push Bot setup & menu registration', () => {
     const result = await syncTelegramPushBot(
       {
         enabled: true,
-        bot_token: '123456:TEST_TOKEN',
-        webhook_secret: 'valid_secret-123',
+        botToken: '123456:TEST_TOKEN',
+        webhookSecret: 'valid_secret-123',
       },
       'http://localhost:8787',
     );
@@ -103,8 +103,8 @@ describe('Telegram Push Bot setup & menu registration', () => {
     const result = await syncTelegramPushBot(
       {
         enabled: true,
-        bot_token: 'bad-token',
-        webhook_secret: 'valid_secret-123',
+        botToken: 'bad-token',
+        webhookSecret: 'valid_secret-123',
       },
       'https://misub.example.com',
     );
@@ -116,7 +116,7 @@ describe('Telegram Push Bot setup & menu registration', () => {
   });
 
   it('skips sync when disabled or token is empty', async () => {
-    const result = await syncTelegramPushBot({ enabled: false, bot_token: '123:ABC' }, 'https://misub.example.com');
+    const result = await syncTelegramPushBot({ enabled: false, botToken: '123:ABC' }, 'https://misub.example.com');
     expect(result.attempted).toBe(false);
     expect(result.skipped).toBe(true);
     expect(globalThis.fetch).not.toHaveBeenCalled();

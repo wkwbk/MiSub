@@ -144,19 +144,19 @@ describe('worker hot-path D1 and auth performance guards', () => {
 
   it('caches settings inside D1StorageAdapter, supports fresh bypass, and auto-invalidates on put', async () => {
     clearSettingsCache();
-    const db = createCountingD1({ main: { FileName: 'MiSub-V1' } });
+    const db = createCountingD1({ main: { fileName: 'MiSub-V1' } });
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
     const first = await adapter.get(STORAGE_KEY_SETTINGS);
     const second = await adapter.get(STORAGE_KEY_SETTINGS);
-    expect(first).toEqual({ FileName: 'MiSub-V1' });
-    expect(second).toEqual({ FileName: 'MiSub-V1' });
+    expect(first).toEqual({ fileName: 'MiSub-V1' });
+    expect(second).toEqual({ fileName: 'MiSub-V1' });
     expect(db.queries).toHaveLength(1);
 
     // Mutating returned object must not pollute cache
-    first.FileName = 'Mutated';
+    first.fileName = 'Mutated';
     const third = await adapter.get(STORAGE_KEY_SETTINGS);
-    expect(third.FileName).toBe('MiSub-V1');
+    expect(third.fileName).toBe('MiSub-V1');
     expect(db.queries).toHaveLength(1);
 
     // Explicit fresh read bypasses cache
@@ -164,8 +164,8 @@ describe('worker hot-path D1 and auth performance guards', () => {
     expect(db.queries).toHaveLength(2);
 
     // Writing settings automatically invalidates cache
-    await adapter.put(STORAGE_KEY_SETTINGS, { FileName: 'MiSub-V2' });
+    await adapter.put(STORAGE_KEY_SETTINGS, { fileName: 'MiSub-V2' });
     const afterPut = await adapter.get(STORAGE_KEY_SETTINGS);
-    expect(afterPut).toEqual({ FileName: 'MiSub-V2' });
+    expect(afterPut).toEqual({ fileName: 'MiSub-V2' });
   });
 });

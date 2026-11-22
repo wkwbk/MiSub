@@ -5,7 +5,7 @@ import { createMemoryD1 } from '../helpers/memory-d1.js';
 function createEnv(settings = {}) {
   return {
     MISUB_DB: createMemoryD1({
-      worker_settings_v1: settings,
+      main: settings,
     }),
     COOKIE_SECRET: 'stable-cookie-secret',
     ADMIN_PASSWORD: 'secret-password',

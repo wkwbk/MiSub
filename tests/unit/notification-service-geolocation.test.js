@@ -30,7 +30,7 @@ describe('notification-service IP geolocation fallback', () => {
 
     const { sendEnhancedTgNotification } = await import('../../functions/services/notification-service.js');
     const sent = await sendEnhancedTgNotification(
-      { BotToken: 'bot-token', ChatID: 'chat-id' },
+      { botToken: 'bot-token', chatId: 'chat-id' },
       '<b>订阅被访问</b>',
       testIp,
     );
@@ -75,7 +75,7 @@ describe('notification-service IP geolocation fallback', () => {
 
     const { sendEnhancedTgNotification } = await import('../../functions/services/notification-service.js');
     expect(
-      await sendEnhancedTgNotification({ BotToken: 'bot-token', ChatID: 'chat-id' }, '<b>订阅被访问</b>', testIp),
+      await sendEnhancedTgNotification({ botToken: 'bot-token', chatId: 'chat-id' }, '<b>订阅被访问</b>', testIp),
     ).toBe(true);
 
     const telegramPayload = JSON.parse(fetchMock.mock.calls[2][1].body);
@@ -108,7 +108,7 @@ describe('notification-service IP geolocation fallback', () => {
 
     const { sendEnhancedTgNotification } = await import('../../functions/services/notification-service.js');
     const sent = await sendEnhancedTgNotification(
-      { BotToken: 'bot-token', ChatID: 'chat-id' },
+      { botToken: 'bot-token', chatId: 'chat-id' },
       '<b>订阅被访问</b>',
       '1.2.3.4',
       '<b>节点数:</b> <code>2</code>',

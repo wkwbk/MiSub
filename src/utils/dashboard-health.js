@@ -3,7 +3,7 @@ import { getSubscriptionTrafficState } from '@/utils/dashboard-deeplink.js';
 const DEFAULT_NOW = () => Date.now();
 
 function getTokenState(settings = {}) {
-  const token = typeof settings.mytoken === 'string' ? settings.mytoken.trim() : '';
+  const token = typeof settings.myToken === 'string' ? settings.myToken.trim() : '';
   return token ? 'stable' : 'missing';
 }
 

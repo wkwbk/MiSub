@@ -5,12 +5,12 @@ import { createMemoryD1 } from '../helpers/memory-d1.js';
 function createEnv({ settings = {}, subscriptions = [], profiles = [] } = {}) {
   return {
     MISUB_DB: createMemoryD1({
-      worker_settings_v1: {
+      main: {
         externalApi: { enabled: true, tokens: [{ name: 'default', token: 'misub_ok' }] },
         ...settings,
       },
-      misub_subscriptions_v1: subscriptions,
-      misub_profiles_v1: profiles,
+      subscriptions: subscriptions,
+      profiles: profiles,
     }),
     COOKIE_SECRET: 'stable-cookie-secret',
     ADMIN_PASSWORD: 'secret-password',

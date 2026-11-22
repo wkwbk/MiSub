@@ -152,14 +152,6 @@ export function migrateConfigSettings(config) {
       redirectUrl: typeof migratedConfig.disguise.redirectUrl === 'string' ? migratedConfig.disguise.redirectUrl.trim() : '',
     };
   }
-  // [Migration] 映射旧名到新名（如果新名不存在且旧名存在）
-  if (!migratedConfig.hasOwnProperty('builtinSkipCertVerify') && migratedConfig.hasOwnProperty('transformBackendScv')) {
-    migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.transformBackendScv);
-  }
-  if (!migratedConfig.hasOwnProperty('builtinEnableUdp') && migratedConfig.hasOwnProperty('transformBackendUdp')) {
-    migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.transformBackendUdp);
-  }
-
   if (migratedConfig.hasOwnProperty('builtinSkipCertVerify')) {
     migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.builtinSkipCertVerify);
   }
@@ -173,12 +165,6 @@ export function migrateConfigSettings(config) {
   if (migratedConfig.hasOwnProperty('profileUpdateInterval')) {
     const parsed = Number(migratedConfig.profileUpdateInterval);
     migratedConfig.profileUpdateInterval = Number.isFinite(parsed) ? parsed : 24;
-  } else if (migratedConfig.hasOwnProperty('UpdateInterval')) {
-    const parsed = Number(migratedConfig.UpdateInterval);
-    if (Number.isFinite(parsed)) {
-      migratedConfig.profileUpdateInterval =
-        parsed >= 3600 && parsed % 3600 === 0 ? Math.round(parsed / 3600) : Math.round(parsed);
-    }
   }
 
   return migratedConfig;

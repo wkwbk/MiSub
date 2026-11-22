@@ -36,9 +36,9 @@ const sampleTemplates = [
 function createEnv(settings = {}) {
   return {
     MISUB_DB: createMemoryD1({
-      worker_settings_v1: {
+      main: {
         storageType: 'd1',
-        mytoken: 'backup-token',
+        myToken: 'backup-token',
         webdavBackup: {
           enabled: true,
           endpoint: 'https://dav.example/remote.php/dav/files/user',
@@ -51,9 +51,9 @@ function createEnv(settings = {}) {
         cookieSecret: 'should-not-export',
         ...settings,
       },
-      misub_subscriptions_v1: sampleSubscriptions,
-      misub_profiles_v1: sampleProfiles,
-      misub_rule_templates_v1: sampleTemplates,
+      subscriptions: sampleSubscriptions,
+      profiles: sampleProfiles,
+      rule_templates: sampleTemplates,
       unrelated_key: { keep: true },
     }),
   };
@@ -91,12 +91,12 @@ describe('WebDAV backup payload and restore', () => {
   it('builds data-and-settings payload while excluding WebDAV config and runtime secrets', async () => {
     const { buildBackupPayload } = await import('../../functions/modules/handlers/webdav-backup-handler.js');
     const payload = await buildBackupPayload(
-      createEnv({ cronSecret: 'keep-cron-for-restore', FileName: 'MiSubTest' }),
+      createEnv({ cronSecret: 'keep-cron-for-restore', fileName: 'MiSubTest' }),
       { scope: 'dataAndSettings' },
     );
 
     expect(payload.scope).toBe('dataAndSettings');
-    expect(payload.data.settings.FileName).toBe('MiSubTest');
+    expect(payload.data.settings.fileName).toBe('MiSubTest');
     expect(payload.data.settings.cronSecret).toBe('keep-cron-for-restore');
     expect(payload.data.settings.webdavBackup).toBeUndefined();
     expect(payload.data.settings.adminPassword).toBeUndefined();
@@ -107,7 +107,7 @@ describe('WebDAV backup payload and restore', () => {
 
   it('restores data-only backups by replacing MiSub collections without touching settings or unknown keys', async () => {
     const { restoreBackupPayload } = await import('../../functions/modules/handlers/webdav-backup-handler.js');
-    const env = createEnv({ FileName: 'Before' });
+    const env = createEnv({ fileName: 'Before' });
     const restorePayload = {
       version: 1,
       app: 'MiSub',
@@ -132,17 +132,17 @@ describe('WebDAV backup payload and restore', () => {
     const kv = env.MISUB_DB.dump();
 
     expect(result.success).toBe(true);
-    expect(JSON.parse(kv.misub_subscriptions_v1)).toEqual(restorePayload.data.subscriptions);
-    expect(JSON.parse(kv.misub_profiles_v1)).toEqual(restorePayload.data.profiles);
-    expect(JSON.parse(kv.misub_rule_templates_v1)).toEqual(restorePayload.data.ruleTemplates);
-    expect(JSON.parse(kv.worker_settings_v1).FileName).toBe('Before');
+    expect(JSON.parse(kv.subscriptions)).toEqual(restorePayload.data.subscriptions);
+    expect(JSON.parse(kv.profiles)).toEqual(restorePayload.data.profiles);
+    expect(JSON.parse(kv.rule_templates)).toEqual(restorePayload.data.ruleTemplates);
+    expect(JSON.parse(kv.main).fileName).toBe('Before');
     expect(JSON.parse(kv.unrelated_key)).toEqual({ keep: true });
   });
 
   it('restores data-and-settings backups but preserves current WebDAV config', async () => {
     const { restoreBackupPayload } = await import('../../functions/modules/handlers/webdav-backup-handler.js');
-    const env = createEnv({ FileName: 'Before' });
-    const currentWebdav = JSON.parse(env.MISUB_DB.dump().worker_settings_v1).webdavBackup;
+    const env = createEnv({ fileName: 'Before' });
+    const currentWebdav = JSON.parse(env.MISUB_DB.dump().main).webdavBackup;
 
     await restoreBackupPayload(
       env,
@@ -156,7 +156,7 @@ describe('WebDAV backup payload and restore', () => {
           profiles: [],
           ruleTemplates: [],
           settings: {
-            FileName: 'Restored',
+            fileName: 'Restored',
             webdavBackup: { endpoint: 'https://old.example', password: 'old-secret' },
             adminPassword: 'bad',
             cookieSecret: 'bad',
@@ -166,8 +166,8 @@ describe('WebDAV backup payload and restore', () => {
       { createSnapshot: false },
     );
 
-    const settings = JSON.parse(env.MISUB_DB.dump().worker_settings_v1);
-    expect(settings.FileName).toBe('Restored');
+    const settings = JSON.parse(env.MISUB_DB.dump().main);
+    expect(settings.fileName).toBe('Restored');
     expect(settings.webdavBackup).toEqual(currentWebdav);
     expect(settings.adminPassword).toBeUndefined();
     expect(settings.cookieSecret).toBeUndefined();

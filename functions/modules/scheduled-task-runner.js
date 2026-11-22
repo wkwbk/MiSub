@@ -2,6 +2,7 @@
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './handlers/webdav-backup-handler.js';
+import { createJsonResponse } from './utils.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
@@ -106,4 +107,72 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
 
   await run();
   return { scheduled: true, completed: true };
+}
+
+/**
+ * HTTP /cron/backup 处理器：按独立定时任务执行 WebDAV 备份
+ */
+export async function handleCronBackupTrigger(env) {
+  const storageAdapter = await getStorage(env);
+  const now = Date.now();
+  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
+  const config = settings.webdavBackup || {};
+
+  if (!config.enabled) {
+    return createJsonResponse({
+      success: true,
+      task: 'backup',
+      skipped: true,
+      reason: 'disabled',
+    });
+  }
+
+  const lock = await storageAdapter.get(LOCK_KEY, 'json', { fresh: true }).catch(() => null);
+  if (lock?.expiresAt && parseTime(lock.expiresAt) > now) {
+    return createJsonResponse({
+      success: true,
+      task: 'backup',
+      skipped: true,
+      reason: 'locked',
+    });
+  }
+
+  await storageAdapter.put(LOCK_KEY, {
+    lockedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + LOCK_TTL_MS).toISOString(),
+    source: 'cron',
+  });
+
+  try {
+    const result = await performWebdavBackup(env, { trigger: 'cron' });
+    return createJsonResponse({
+      success: true,
+      task: 'backup',
+      result,
+    });
+  } catch (error) {
+    return createJsonResponse(
+      {
+        success: false,
+        task: 'backup',
+        error: error?.message || 'WebDAV backup failed',
+      },
+      500,
+    );
+  } finally {
+    await storageAdapter.delete?.(LOCK_KEY).catch(() => {});
+  }
+}
+
+/**
+ * HTTP /cron/maintenance 处理器：清理过期缓存、孤儿缓存与过期访问日志
+ */
+export async function handleCronMaintenanceTrigger(env) {
+  const storageAdapter = await getStorage(env);
+  const stats = (await storageAdapter.cleanupMaintenance?.({ now: Date.now() })) || {};
+  return createJsonResponse({
+    success: true,
+    task: 'maintenance',
+    stats,
+  });
 }

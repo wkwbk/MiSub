@@ -116,7 +116,7 @@ export async function handleListCommand(
     const allNodes = await getUserNodes(userId, env);
     const profiles = await getCachedProfiles(env, cache);
     const settings = await getCachedSettings(env, cache);
-    const config = settings.telegram_push_config || {};
+    const config = settings.telegramPushConfig || {};
 
     // 过滤节点
     let userNodes = allNodes;

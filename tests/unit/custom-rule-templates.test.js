@@ -69,7 +69,7 @@ describe('自定义规则模板 Phase 1 后端模型/API/渲染', () => {
     const saveJson = await saveResp.json();
     expect(saveJson.success).toBe(true);
     expect(saveJson.data).toHaveLength(1);
-    expect(storage.put).toHaveBeenCalledWith('misub_rule_templates_v1', expect.any(Array));
+    expect(storage.put).toHaveBeenCalledWith('rule_templates', expect.any(Array));
 
     const getResp = await handleRuleTemplatesRequest(new Request('https://example.com/api/rule_templates'), env);
     const getJson = await getResp.json();
@@ -79,7 +79,7 @@ describe('自定义规则模板 Phase 1 后端模型/API/渲染', () => {
 
   it('resolves custom template source and renders clash yaml without remote fetch', async () => {
     const storageAdapter = createMemoryStorage({
-      misub_rule_templates_v1: [
+      rule_templates: [
         {
           id: 'tpl-a',
           name: '本地模板',

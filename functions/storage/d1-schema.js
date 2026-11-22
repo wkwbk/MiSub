@@ -6,10 +6,16 @@ export const STORAGE_TYPES = {
   D1: 'd1',
 };
 
+export const SETTINGS_KEYS = {
+  MAIN: 'main',
+  RULE_TEMPLATES: 'rule_templates',
+  CLIENTS: 'clients',
+};
+
 export const DATA_KEYS = {
-  SUBSCRIPTIONS: 'misub_subscriptions_v1',
-  PROFILES: 'misub_profiles_v1',
-  SETTINGS: 'worker_settings_v1',
+  SUBSCRIPTIONS: 'subscriptions',
+  PROFILES: 'profiles',
+  SETTINGS: SETTINGS_KEYS.MAIN,
 };
 
 export const KEY_VALUE_TABLES = new Set(['settings', 'cache']);
@@ -104,17 +110,14 @@ const D1_CACHE_KEYS = new Set(['misub_webdav_backup_lock', 'misub_restore_snapsh
 const D1_CACHE_PREFIXES = [
   'node_cache_',
   'node_inspect_',
+  'transform_template_',
   'github_release_',
   'appstore_release_',
   'tg_push_rate:',
   'misub_test_',
 ];
 
-export const D1_KNOWN_SETTINGS_KEYS = new Set([
-  'misub_rule_templates_v1',
-  'misub_clients_v1',
-  'misub_settings_v1',
-]);
+export const D1_KNOWN_SETTINGS_KEYS = new Set(Object.values(SETTINGS_KEYS));
 
 export function isCacheKey(keyStr) {
   return D1_CACHE_KEYS.has(keyStr) || D1_CACHE_PREFIXES.some((prefix) => keyStr.startsWith(prefix));
@@ -169,6 +172,10 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
   if (keyStr.startsWith('node_inspect_')) {
     const exp = parseTimestampMs(parsed?.expiresAt);
     return exp > 0 ? exp : now + 6 * 60 * 60 * 1000;
+  }
+  if (keyStr.startsWith('transform_template_')) {
+    const ts = parseTimestampMs(parsed?.timestamp) || now;
+    return ts + NODE_CACHE_CLEANUP_AGE_MS;
   }
   if (keyStr.startsWith('misub_test_')) {
     return now + 5 * 60 * 1000;

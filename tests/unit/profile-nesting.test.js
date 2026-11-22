@@ -60,9 +60,9 @@ describe('Profile Nesting - Cycle Detection (wouldCreateCycle)', () => {
 describe('Profile Nesting - Backend Node Aggregation and Loop Breaker', () => {
   const createMockEnv = (profiles, nodes) => ({
     MISUB_DB: createMemoryD1({
-      misub_profiles_v1: profiles,
-      misub_subscriptions_v1: nodes,
-      worker_settings_v1: {},
+      profiles: profiles,
+      subscriptions: nodes,
+      main: {},
     }),
   });
 
@@ -290,9 +290,9 @@ describe('Profile Nesting - Full Subscription Request via handleMisubRequest', (
 
     const mockEnv = {
       MISUB_DB: createMemoryD1({
-        misub_profiles_v1: [topProfile, subProfile1],
-        misub_subscriptions_v1: [manualNode1],
-        worker_settings_v1: { profileToken: 'profiles' },
+        profiles: [topProfile, subProfile1],
+        subscriptions: [manualNode1],
+        main: { profileToken: 'profiles' },
       }),
     };
 

@@ -120,7 +120,7 @@ export async function handleMisubRequest(context) {
   const shouldSkipLogging = shouldSkipAccessLog(userAgentHeader);
 
   let targetMisubs;
-  let subName = config.FileName;
+  let subName = config.fileName;
   let isProfileExpired = false;
 
   const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已到期')}`;
@@ -282,7 +282,7 @@ export async function handleMisubRequest(context) {
       return new Response('Profile not found or disabled', { status: 404 });
     }
   } else {
-    if (!config.mytoken || !token || token !== config.mytoken) {
+    if (!config.myToken || !token || token !== config.myToken) {
       // [伪装加固] 同 profile token：统一走访问控制拦截响应
       return createBlockedResponse(config.disguise, request.url);
     }
@@ -540,7 +540,7 @@ export async function handleMisubRequest(context) {
     currentProfile?.expiresAt,
     mergedExpireTimestamp,
     Date.now(),
-    config.NotifyThresholdDays,
+    config.notifyThresholdDays,
   );
   const profileExpireText = `<b>状态:</b> <code>${tgEscape(expireStatus)}</code>\n<b>到期时间:</b> <code>${tgEscape(expireTime)}</code>`;
   const nodeCount = isProfileExpired ? 0 : countSubscriptionNodes(combinedNodeList, prependedContentForSubconverter);

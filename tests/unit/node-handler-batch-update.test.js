@@ -4,7 +4,7 @@ import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 const makeEnv = (subscriptions) => ({
   MISUB_DB: createMemoryD1({
-    misub_subscriptions_v1: subscriptions,
+    subscriptions: subscriptions,
   }),
 });
 

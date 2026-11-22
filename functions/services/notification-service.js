@@ -176,7 +176,7 @@ async function fetchIpGeolocation(clientIp) {
  * @returns {Promise<boolean>} - 是否发送成功
  */
 export async function sendTgNotification(settings, message) {
-  if (!settings.BotToken || !settings.ChatID) {
+  if (!settings.botToken || !settings.chatId) {
     return false;
   }
 
@@ -184,9 +184,9 @@ export async function sendTgNotification(settings, message) {
   const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   const fullMessage = `${message}\n\n<b>时间:</b> <code>${now} (UTC+8)</code>`;
 
-  const url = `https://api.telegram.org/bot${settings.BotToken}/sendMessage`;
+  const url = `https://api.telegram.org/bot${settings.botToken}/sendMessage`;
   const payload = {
-    chat_id: settings.ChatID,
+    chat_id: settings.chatId,
     text: fullMessage,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
@@ -220,7 +220,7 @@ export async function sendTgNotification(settings, message) {
  * @returns {Promise<boolean>} - 是否发送成功
  */
 export async function sendEnhancedTgNotification(settings, type, clientIp, additionalData = '') {
-  if (!settings.BotToken || !settings.ChatID) {
+  if (!settings.botToken || !settings.chatId) {
     return false;
   }
 
@@ -246,9 +246,9 @@ ${additionalData}
 
 <b>时间:</b> <code>${now} (UTC+8)</code>`;
 
-  const url = `https://api.telegram.org/bot${settings.BotToken}/sendMessage`;
+  const url = `https://api.telegram.org/bot${settings.botToken}/sendMessage`;
   const payload = {
-    chat_id: settings.ChatID,
+    chat_id: settings.chatId,
     text: message,
     parse_mode: 'HTML',
     disable_web_page_preview: true,
@@ -277,16 +277,16 @@ ${additionalData}
  * 调试发送Telegram通知（返回详细错误信息）
  */
 export async function debugTgNotification(settings, message) {
-  if (!settings.BotToken || !settings.ChatID) {
-    return { success: false, error: 'BotToken or ChatID not configured' };
+  if (!settings.botToken || !settings.chatId) {
+    return { success: false, error: 'botToken or chatId not configured' };
   }
 
   const now = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
   const fullMessage = `${message}\n\n<b>时间:</b> <code>${now} (UTC+8)</code>`;
 
-  const url = `https://api.telegram.org/bot${settings.BotToken}/sendMessage`;
+  const url = `https://api.telegram.org/bot${settings.botToken}/sendMessage`;
   const payload = {
-    chat_id: settings.ChatID,
+    chat_id: settings.chatId,
     text: fullMessage,
     parse_mode: 'HTML',
     disable_web_page_preview: true,

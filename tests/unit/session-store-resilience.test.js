@@ -52,7 +52,7 @@ describe('session store resilience', () => {
     const store = useSessionStore();
 
     const data = {
-      config: { FileName: 'MiSub' },
+      config: { fileName: 'MiSub' },
       misubs: [],
       profiles: [],
     };

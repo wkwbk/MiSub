@@ -7,11 +7,11 @@ import { createMemoryD1 } from '../helpers/memory-d1.js';
 describe('Storage adapter 8-table D1 architecture & query optimizations', () => {
   it('routes remote subscriptions to subscriptions table, manual nodes to nodes table, and resolves getProfileSources directly', async () => {
     const db = createMemoryD1({
-      misub_subscriptions_v1: [
+      subscriptions: [
         { id: 'sub-1', name: 'Sub One', url: 'https://a.example.com/sub', nodeCount: 1 },
         { id: 'node-1', name: 'Node One', url: 'vless://uuid@example.com:443#Node1' },
       ],
-      misub_profiles_v1: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
+      profiles: [{ id: 'profile-1', customId: 'custom-1', name: 'Profile One' }],
     });
 
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
@@ -43,7 +43,7 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
 
   it('stores guestbook in dedicated table and atomically increments profile downloadCount via custom_id', async () => {
     const db = createMemoryD1({
-      misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP', downloadCount: 3 }],
+      profiles: [{ id: 'p-1', customId: 'vip', name: 'VIP', downloadCount: 3 }],
     });
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
@@ -68,7 +68,7 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     const db = createMemoryD1();
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-    await adapter.put('worker_settings_v1', { FileName: 'MiSub' });
+    await adapter.put('main', { fileName: 'MiSub' });
     await adapter.put('node_cache_profile_p1', { nodes: 'ss://a', timestamp: now });
     await adapter.put('node_cache_subscription_s1', { nodes: ['ss://b'], sourceId: 's1' });
     await adapter.put('cron_last_execution', { timestamp: new Date(now).toISOString() });
@@ -123,8 +123,8 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
 
   it('cascades cleanup of node caches when deleting profiles or subscriptions', async () => {
     const db = createMemoryD1({
-      misub_profiles_v1: [{ id: 'p-1', customId: 'vip', name: 'VIP' }],
-      misub_subscriptions_v1: [{ id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' }],
+      profiles: [{ id: 'p-1', customId: 'vip', name: 'VIP' }],
+      subscriptions: [{ id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' }],
       node_cache_profile_vip: { nodes: 'a', timestamp: Date.now() },
       'node_cache_profile_p-1': { nodes: 'b', timestamp: Date.now() },
       'node_cache_subscription_sub-1': { nodes: ['ss://1'], sourceId: 'sub-1' },
@@ -142,8 +142,8 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
   it('cleanupMaintenance removes expired and orphan cache entries and backfills missing expires_at', async () => {
     const now = 1_800_000_000_000;
     const db = createMemoryD1({
-      misub_profiles_v1: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
-      worker_settings_v1: { FileName: 'MiSub' },
+      profiles: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
+      main: { fileName: 'MiSub' },
     });
 
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
@@ -164,15 +164,15 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
 
   it('avoids full-table scans on subscription group pull and invalid-token / disguise requests', async () => {
     const db = createMemoryD1({
-      worker_settings_v1: {
-        mytoken: 'admin-token',
+      main: {
+        myToken: 'admin-token',
         profileToken: 'profiles',
         enableFlagEmoji: false,
         enableTrafficNode: false,
         allowBrowserSubAccess: false,
         disguise: { pageType: 'default' },
       },
-      misub_subscriptions_v1: [
+      subscriptions: [
         {
           id: 'node-target',
           name: 'TargetNode',
@@ -186,7 +186,7 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
           enabled: true,
         },
       ],
-      misub_profiles_v1: [
+      profiles: [
         {
           id: 'prof-1',
           customId: 'my-vip',
@@ -243,11 +243,11 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
 
   it('batches putAllSubscriptions/putAllProfiles via db.batch and diffs unchanged rows in syncAllSubscriptions', async () => {
     const db = createMemoryD1({
-      misub_subscriptions_v1: [
+      subscriptions: [
         { id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub' },
         { id: 'node-1', name: 'Node 1', url: 'vless://u@1.1.1.1:443#N1' },
       ],
-      misub_profiles_v1: [{ id: 'p-1', customId: 'c1', name: 'Profile 1' }],
+      profiles: [{ id: 'p-1', customId: 'c1', name: 'Profile 1' }],
     });
 
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });

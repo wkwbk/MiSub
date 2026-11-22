@@ -26,23 +26,23 @@ const updatePushConfigField = (key, value) => {
 const telegramPushConfig = computed({
   get() {
     return (
-      props.settings.telegram_push_config || {
+      props.settings.telegramPushConfig || {
         enabled: true,
-        bot_token: '',
-        webhook_secret: '',
-        allowed_user_ids: [],
-        allow_all_users: false,
+        botToken: '',
+        webhookSecret: '',
+        allowedUserIds: [],
+        allowAllUsers: false,
       }
     );
   },
   set(value) {
-    props.settings.telegram_push_config = value;
+    props.settings.telegramPushConfig = value;
   },
 });
 
 const allowedUsersStr = computed({
   get() {
-    return (telegramPushConfig.value.allowed_user_ids || []).join(', ');
+    return (telegramPushConfig.value.allowedUserIds || []).join(', ');
   },
   set(value) {
     const ids = value
@@ -51,21 +51,21 @@ const allowedUsersStr = computed({
       .filter(Boolean);
     telegramPushConfig.value = {
       ...telegramPushConfig.value,
-      allowed_user_ids: ids,
+      allowedUserIds: ids,
     };
   },
 });
 
 const webhookUrl = computed(() => `${window.location.origin}/api/telegram/webhook`);
 
-const webhookSecret = computed(() => telegramPushConfig.value.webhook_secret?.trim() || '');
+const webhookSecret = computed(() => telegramPushConfig.value.webhookSecret?.trim() || '');
 
 const isWebhookSecretValid = computed(() => {
   return /^[A-Za-z0-9_-]{1,256}$/.test(webhookSecret.value);
 });
 
 const setWebhookUrl = computed(() => {
-  const botToken = telegramPushConfig.value.bot_token?.trim();
+  const botToken = telegramPushConfig.value.botToken?.trim();
 
   if (!botToken || !isWebhookSecretValid.value) {
     return '';
@@ -107,8 +107,8 @@ async function testNotification() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        botToken: props.settings.BotToken,
-        chatId: props.settings.ChatID,
+        botToken: props.settings.botToken,
+        chatId: props.settings.chatId,
       }),
     });
 
@@ -133,7 +133,7 @@ async function testNotification() {
 }
 
 async function syncPushBot() {
-  const botToken = telegramPushConfig.value.bot_token?.trim();
+  const botToken = telegramPushConfig.value.botToken?.trim();
   if (!botToken) return;
 
   isSyncingBot.value = true;
@@ -189,7 +189,7 @@ async function syncPushBot() {
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">Bot Token</label>
             <input
-              v-model="settings.BotToken"
+              v-model="settings.botToken"
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
               placeholder="123456:ABC-DEF..."
               type="text"
@@ -201,7 +201,7 @@ async function syncPushBot() {
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">Chat ID</label>
             <input
-              v-model="settings.ChatID"
+              v-model="settings.chatId"
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
               placeholder="123456789"
               type="text"
@@ -214,7 +214,7 @@ async function syncPushBot() {
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <button
-            :disabled="isTesting || !settings.BotToken || !settings.ChatID"
+            :disabled="isTesting || !settings.botToken || !settings.chatId"
             class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             type="button"
             @click="testNotification"
@@ -269,11 +269,11 @@ async function syncPushBot() {
           <div>
             <label class="block text-xs font-medium text-fg-muted">Push Bot Token</label>
             <input
-              :value="telegramPushConfig.bot_token"
+              :value="telegramPushConfig.botToken"
               class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="123456:ABC-DEF..."
               type="text"
-              @input="(e) => updatePushConfigField('bot_token', e.target.value)"
+              @input="(e) => updatePushConfigField('botToken', e.target.value)"
             />
             <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
               {{ t('settings.telegramPushTokenHint') }}
@@ -283,12 +283,12 @@ async function syncPushBot() {
           <div>
             <label class="block text-xs font-medium text-fg-muted">{{ t('settings.telegramWebhookSecret') }}</label>
             <input
-              :value="telegramPushConfig.webhook_secret"
+              :value="telegramPushConfig.webhookSecret"
               :aria-label="t('settings.telegramWebhookSecret')"
               class="mt-1.5 block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
               placeholder="random_secret-token"
               type="text"
-              @input="(e) => updatePushConfigField('webhook_secret', e.target.value)"
+              @input="(e) => updatePushConfigField('webhookSecret', e.target.value)"
             />
             <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
               {{ t('settings.telegramWebhookSecretHint') }}
@@ -330,8 +330,8 @@ async function syncPushBot() {
             </div>
           </div>
           <Switch
-            :model-value="telegramPushConfig.allow_all_users"
-            @update:model-value="(val) => updatePushConfigField('allow_all_users', val)"
+            :model-value="telegramPushConfig.allowAllUsers"
+            @update:model-value="(val) => updatePushConfigField('allowAllUsers', val)"
           />
         </div>
 
@@ -387,7 +387,7 @@ async function syncPushBot() {
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <button
-            :disabled="isSyncingBot || !telegramPushConfig.bot_token?.trim()"
+            :disabled="isSyncingBot || !telegramPushConfig.botToken?.trim()"
             class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             type="button"
             @click="syncPushBot"

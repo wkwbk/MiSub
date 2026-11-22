@@ -7,6 +7,7 @@ import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
+import { clearAllPreferences } from '@/utils/local-preference.js';
 
 function normalizeExternalApiConfig(value) {
   const defaults = DEFAULT_SETTINGS.externalApi;
@@ -70,7 +71,7 @@ export function useSettingsLogic() {
 
   // ========== 计算属性 ==========
   const hasWhitespace = computed(() => {
-    const fieldsCheck = ['FileName', 'mytoken', 'profileToken', 'transformConfig', 'BotToken', 'ChatID'];
+    const fieldsCheck = ['fileName', 'myToken', 'profileToken', 'transformConfig', 'botToken', 'chatId'];
     for (const key of fieldsCheck) {
       if (settings.value[key] && /\s/.test(settings.value[key])) return true;
     }
@@ -192,6 +193,7 @@ export function useSettingsLogic() {
     try {
       const result = await resetSettings();
       if (result.success) {
+        clearAllPreferences();
         showToast(t('settings.resetSuccess'), 'success');
         setTimeout(() => window.location.reload(), 1500);
       } else {

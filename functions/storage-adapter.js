@@ -1118,10 +1118,22 @@ class D1StorageAdapter {
     return stats;
   }
 
-  _parseKey(key) {
-    if (key === DATA_KEYS.SETTINGS) {
-      return { table: 'settings', queryField: 'key', queryValue: 'main' };
+  async resetAllSettings() {
+    try {
+      await this.db.prepare('DELETE FROM settings').run();
+      settingsCaches.delete(this.db);
+      return true;
+    } catch (error) {
+      if (isNoSuchTableError(error)) {
+        settingsCaches.delete(this.db);
+        return true;
+      }
+      console.error('[D1] Failed to reset settings:', error);
+      throw error;
     }
+  }
+
+  _parseKey(key) {
     const keyStr = String(key);
     if (isCacheKey(keyStr)) {
       return { table: 'cache', queryField: 'key', queryValue: keyStr };
@@ -1133,10 +1145,7 @@ class D1StorageAdapter {
     return { table: 'settings', queryField: 'key', queryValue: keyStr };
   }
 
-  _buildKey(table, keyValue) {
-    if (table === 'settings' && keyValue === 'main') {
-      return DATA_KEYS.SETTINGS;
-    }
+  _buildKey(_table, keyValue) {
     return keyValue;
   }
 }

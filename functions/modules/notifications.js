@@ -46,7 +46,7 @@ export async function handleTestNotificationRequest(request) {
 
   try {
     const { botToken, chatId } = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
-    const settings = { BotToken: botToken, ChatID: chatId };
+    const settings = { botToken, chatId };
 
     const result = await debugTgNotification(
       settings,
@@ -91,7 +91,7 @@ export async function checkAndNotify(sub, settings, _env) {
     const expiryDate = new Date(sub.userInfo.expire * 1000);
     const daysRemaining = Math.ceil((expiryDate - now) / ONE_DAY_MS);
 
-    if (daysRemaining <= (settings.NotifyThresholdDays || 7)) {
+    if (daysRemaining <= (settings.notifyThresholdDays || 7)) {
       if (!sub.lastNotifiedExpire || now - sub.lastNotifiedExpire > ONE_DAY_MS) {
         const message = `🗓️ <b>订阅临期提醒</b> 🗓️
 
@@ -113,7 +113,7 @@ export async function checkAndNotify(sub, settings, _env) {
     const used = upload + download;
     const usagePercent = Math.round((used / total) * 100);
 
-    if (usagePercent >= (settings.NotifyThresholdPercent || 90)) {
+    if (usagePercent >= (settings.notifyThresholdPercent || 90)) {
       if (!sub.lastNotifiedTraffic || now - sub.lastNotifiedTraffic > ONE_DAY_MS) {
         const message = `📈 <b>流量预警提醒</b> 📈
 
@@ -311,7 +311,7 @@ export async function handleCronTrigger(env) {
   console.info(`[Cron] Completed in ${duration}ms:`, summary.summary);
 
   // 发送节点变化通知
-  if (nodeCountChanges.length > 0 && settings.BotToken && settings.ChatID) {
+  if (nodeCountChanges.length > 0 && settings.botToken && settings.chatId) {
     let nodeChangeMessage = `📉 <b>节点数量变化提醒</b>\n\n`;
     nodeChangeMessage += `检测到 ${nodeCountChanges.length} 个订阅的节点数量发生显著变化：\n\n`;
 
@@ -330,7 +330,7 @@ export async function handleCronTrigger(env) {
   }
 
   // 发送更新摘要
-  if (settings.BotToken && settings.ChatID) {
+  if (settings.botToken && settings.chatId) {
     let updateMessage = `🔄 <b>订阅自动更新完成</b>\n\n`;
     updateMessage += `📊 <b>统计信息</b>\n`;
     updateMessage += `• 总订阅数: <code>${httpSubscriptions.length}</code> 个\n`;
@@ -356,11 +356,6 @@ export async function handleCronTrigger(env) {
 
     await sendCoreTg(settings, updateMessage);
   }
-
-  // 顺带执行存储维护（清理过期缓存与孤儿计数）
-  await storageAdapter.cleanupMaintenance?.().catch((err) => {
-    console.warn('[Cron] Storage maintenance warning:', err?.message || err);
-  });
 
   return new Response(JSON.stringify(summary), {
     status: 200,

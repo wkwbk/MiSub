@@ -31,13 +31,13 @@ vi.mock('../../functions/modules/utils.js', () => ({
 function createState(overrides = {}) {
   const state = {
     settings: {
-      telegram_push_config: {
+      telegramPushConfig: {
         enabled: true,
-        bot_token: 'bot-token',
-        webhook_secret: 'secret-token',
-        allowed_user_ids: ['1', '2'],
-        auto_bind: true,
-        user_bindings: {},
+        botToken: 'bot-token',
+        webhookSecret: 'secret-token',
+        allowedUserIds: ['1', '2'],
+        autoBind: true,
+        userBindings: {},
       },
     },
     subscriptions: [],
@@ -93,11 +93,11 @@ describe('handleTelegramWebhook', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { state, adapter } = createState({
       settings: {
-        telegram_push_config: {
+        telegramPushConfig: {
           enabled: true,
-          bot_token: 'bot-token',
-          webhook_secret: '',
-          allowed_user_ids: ['1'],
+          botToken: 'bot-token',
+          webhookSecret: '',
+          allowedUserIds: ['1'],
         },
       },
     });
@@ -123,7 +123,7 @@ describe('handleTelegramWebhook', () => {
       expect(await response.json()).toEqual({ error: 'Webhook secret required' });
       expect(errorSpy).toHaveBeenCalledWith('[Telegram Push] Missing webhook secret');
       expect(global.fetch).not.toHaveBeenCalled();
-      expect(state.settings.telegram_push_config.webhook_secret).toBe('');
+      expect(state.settings.telegramPushConfig.webhookSecret).toBe('');
     } finally {
       errorSpy.mockRestore();
     }
@@ -132,12 +132,12 @@ describe('handleTelegramWebhook', () => {
   it('denies access by default when whitelist is empty', async () => {
     const { adapter } = createState({
       settings: {
-        telegram_push_config: {
+        telegramPushConfig: {
           enabled: true,
-          bot_token: 'bot-token',
-          webhook_secret: 'secret-token',
-          allowed_user_ids: [],
-          allow_all_users: false,
+          botToken: 'bot-token',
+          webhookSecret: 'secret-token',
+          allowedUserIds: [],
+          allowAllUsers: false,
         },
       },
     });
@@ -203,7 +203,7 @@ describe('handleTelegramWebhook', () => {
         { MISUB_KV: null },
       );
 
-      expect(state.settings.telegram_push_config.user_bindings).toEqual({
+      expect(state.settings.telegramPushConfig.userBindings).toEqual({
         1: 'profile-1',
         2: 'profile-2',
       });
@@ -304,13 +304,13 @@ describe('handleTelegramWebhook', () => {
 
     const { adapter } = createState({
       settings: {
-        telegram_push_config: {
+        telegramPushConfig: {
           enabled: true,
-          bot_token: 'bot-token',
-          webhook_secret: 'secret-token',
-          allowed_user_ids: ['1', '2'],
-          auto_bind: true,
-          user_bindings: { 1: 'profile-1' },
+          botToken: 'bot-token',
+          webhookSecret: 'secret-token',
+          allowedUserIds: ['1', '2'],
+          autoBind: true,
+          userBindings: { 1: 'profile-1' },
         },
       },
       subscriptions,

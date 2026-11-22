@@ -61,7 +61,7 @@ describe('dashboard UI components', () => {
 
   it('shows a setup checklist in right panel when tokens or profiles are missing', () => {
     const wrapper = mountRightPanel({
-      config: { mytoken: '', profileToken: '' },
+      config: { myToken: '', profileToken: '' },
       profiles: [],
     });
 
@@ -73,7 +73,7 @@ describe('dashboard UI components', () => {
 
   it('keeps generated link actions enabled when fixed token and profile exist', () => {
     const wrapper = mountRightPanel({
-      config: { mytoken: 'stable-token', profileToken: 'share-token' },
+      config: { myToken: 'stable-token', profileToken: 'share-token' },
       profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
@@ -84,7 +84,7 @@ describe('dashboard UI components', () => {
 
   it('generates a native sing-box link instead of a base64 link', async () => {
     const wrapper = mountRightPanel({
-      config: { mytoken: 'stable-token', profileToken: 'share-token' },
+      config: { myToken: 'stable-token', profileToken: 'share-token' },
       profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
@@ -98,7 +98,7 @@ describe('dashboard UI components', () => {
 
   it('does not generate copyable subscription links for invalid token characters', () => {
     const wrapper = mountRightPanel({
-      config: { mytoken: ':', profileToken: 'share-token' },
+      config: { myToken: ':', profileToken: 'share-token' },
       profiles: [{ id: 'p1', customId: 'daily', name: '日常使用' }],
     });
 
@@ -137,7 +137,7 @@ describe('dashboard UI components', () => {
 
     const rightPanel = mountRightPanel(
       {
-        config: { mytoken: '', profileToken: '' },
+        config: { myToken: '', profileToken: '' },
         profiles: [],
       },
       'en-US',

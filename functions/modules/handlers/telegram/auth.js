@@ -9,7 +9,7 @@ import { StorageFactory } from '../../../storage-adapter.js';
  */
 export function verifyTelegramRequest(request, config) {
   const secretToken = request.headers.get('X-Telegram-Bot-Api-Secret-Token');
-  return secretToken === config.webhook_secret;
+  return secretToken === config.webhookSecret;
 }
 
 export function getUserBindingKey(userId) {
@@ -18,14 +18,14 @@ export function getUserBindingKey(userId) {
 
 export function getUserBoundProfileId(config, userId) {
   const bindingKey = getUserBindingKey(userId);
-  const bindings = config?.user_bindings || {};
+  const bindings = config?.userBindings || {};
 
   if (bindingKey && Object.prototype.hasOwnProperty.call(bindings, bindingKey)) {
     return bindings[bindingKey] || '';
   }
 
-  if (config?.auto_bind && config?.default_profile_id) {
-    return config.default_profile_id;
+  if (config?.autoBind && config?.defaultProfileId) {
+    return config.defaultProfileId;
   }
 
   return '';
@@ -33,13 +33,13 @@ export function getUserBoundProfileId(config, userId) {
 
 export function setUserBoundProfileId(config, userId, profileId) {
   const bindingKey = getUserBindingKey(userId);
-  const bindings = config.user_bindings && typeof config.user_bindings === 'object' ? { ...config.user_bindings } : {};
+  const bindings = config.userBindings && typeof config.userBindings === 'object' ? { ...config.userBindings } : {};
 
   if (bindingKey) {
     bindings[bindingKey] = profileId || '';
   }
 
-  config.user_bindings = bindings;
+  config.userBindings = bindings;
 }
 
 /**
@@ -50,11 +50,11 @@ export function checkUserPermission(userId, config) {
     return { allowed: false, reason: 'Bot 已被管理员禁用' };
   }
 
-  if (config.allow_all_users) {
+  if (config.allowAllUsers) {
     return { allowed: true };
   }
 
-  if (!config.allowed_user_ids || config.allowed_user_ids.length === 0) {
+  if (!config.allowedUserIds || config.allowedUserIds.length === 0) {
     return {
       allowed: false,
       reason: '未配置白名单，请先在设置中添加允许用户或显式开启公开访问',
@@ -62,7 +62,7 @@ export function checkUserPermission(userId, config) {
   }
 
   const userIdStr = userId.toString();
-  if (!config.allowed_user_ids.some((id) => id.toString().trim() === userIdStr)) {
+  if (!config.allowedUserIds.some((id) => id.toString().trim() === userIdStr)) {
     return { allowed: false, reason: '无权限使用此 Bot，请联系管理员添加白名单' };
   }
 
@@ -90,15 +90,15 @@ export async function checkRateLimit(userId, env, config) {
 
   const [minuteEntry, dayEntry] = await Promise.all([readCounter(minuteKey), readCounter(dayKey)]);
 
-  if (minuteEntry.count >= config.rate_limit.max_per_minute) {
+  if (minuteEntry.count >= config.rateLimit.maxPerMinute) {
     return {
       allowed: false,
-      reason: `操作过快，请1分钟后再试（${config.rate_limit.max_per_minute}/分钟）`,
+      reason: `操作过快，请1分钟后再试（${config.rateLimit.maxPerMinute}/分钟）`,
     };
   }
 
-  if (dayEntry.count >= config.rate_limit.max_per_day) {
-    return { allowed: false, reason: `今日配额已用完（${config.rate_limit.max_per_day}/天）` };
+  if (dayEntry.count >= config.rateLimit.maxPerDay) {
+    return { allowed: false, reason: `今日配额已用完（${config.rateLimit.maxPerDay}/天）` };
   }
 
   await Promise.all([

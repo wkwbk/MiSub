@@ -11,9 +11,9 @@ vi.mock('../../functions/storage-adapter.js', () => ({
 
 function createStorageAdapter({ settings = {}, subscriptions = [], profiles = [] } = {}) {
   const store = new Map([
-    ['worker_settings_v1', settings],
-    ['misub_subscriptions_v1', subscriptions],
-    ['misub_profiles_v1', profiles],
+    ['main', settings],
+    ['subscriptions', subscriptions],
+    ['profiles', profiles],
   ]);
 
   return {
@@ -23,21 +23,21 @@ function createStorageAdapter({ settings = {}, subscriptions = [], profiles = []
       store.set(key, value);
       return true;
     }),
-    getAllSubscriptions: vi.fn(async () => store.get('misub_subscriptions_v1') || []),
-    getAllProfiles: vi.fn(async () => store.get('misub_profiles_v1') || []),
+    getAllSubscriptions: vi.fn(async () => store.get('subscriptions') || []),
+    getAllProfiles: vi.fn(async () => store.get('profiles') || []),
     getProfileById: vi.fn(
       async (id) =>
-        (store.get('misub_profiles_v1') || []).find((p) => (p.customId && p.customId === id) || p.id === id) || null,
+        (store.get('profiles') || []).find((p) => (p.customId && p.customId === id) || p.id === id) || null,
     ),
     getSubscriptionsByIds: vi.fn(async (ids) =>
-      (store.get('misub_subscriptions_v1') || []).filter((item) => ids.includes(item.id)),
+      (store.get('subscriptions') || []).filter((item) => ids.includes(item.id)),
     ),
     updateSubscriptionById: vi.fn(async (id, updater) => {
-      const all = store.get('misub_subscriptions_v1') || [];
+      const all = store.get('subscriptions') || [];
       const index = all.findIndex((item) => item?.id === id);
       if (index === -1) return false;
       all[index] = updater(all[index]);
-      store.set('misub_subscriptions_v1', all);
+      store.set('subscriptions', all);
       return true;
     }),
   };
@@ -69,7 +69,7 @@ describe('handleMisubRequest regression coverage', () => {
       },
     ];
     const adapter = createStorageAdapter({
-      settings: { mytoken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
+      settings: { myToken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
       subscriptions,
     });
     createAdapter.mockReturnValue(adapter);
@@ -118,7 +118,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
         subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
@@ -171,7 +171,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
         subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
@@ -246,7 +246,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
         subconverter: { engineMode: 'external', defaultBackend: backend },
@@ -297,7 +297,7 @@ describe('handleMisubRequest regression coverage', () => {
       },
     ];
     const adapter = createStorageAdapter({
-      settings: { mytoken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
+      settings: { myToken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
       subscriptions,
     });
     createAdapter.mockReturnValue(adapter);
@@ -351,7 +351,7 @@ describe('handleMisubRequest regression coverage', () => {
     const profileExpiresAt = '2030-01-02T03:04:05.000Z';
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         profileToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
@@ -414,7 +414,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         profileToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
@@ -476,7 +476,7 @@ describe('handleMisubRequest regression coverage', () => {
     const profileExpiresAt = '2030-01-02T03:04:05.000Z';
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         profileToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: true,
@@ -546,7 +546,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         profileToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: true,
@@ -612,7 +612,7 @@ describe('handleMisubRequest regression coverage', () => {
       },
     ];
     const adapter = createStorageAdapter({
-      settings: { mytoken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
+      settings: { myToken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: false },
       subscriptions,
     });
     createAdapter.mockReturnValue(adapter);
@@ -643,7 +643,7 @@ describe('handleMisubRequest regression coverage', () => {
 
       await Promise.all(waitUntilPromises);
 
-      const [updatedSub] = adapter.store.get('misub_subscriptions_v1');
+      const [updatedSub] = adapter.store.get('subscriptions');
       expect(updatedSub.nodeCount).toBe(0);
       expect(updatedSub.userInfo).toBeNull();
     } finally {
@@ -654,7 +654,7 @@ describe('handleMisubRequest regression coverage', () => {
   it('serves disguise content before token validation for unauthenticated browser subscription visits', async () => {
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
         allowBrowserSubAccess: false,
@@ -712,7 +712,7 @@ describe('handleMisubRequest regression coverage', () => {
     ];
     const adapter = createStorageAdapter({
       settings: {
-        mytoken: 'stable-token',
+        myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
       },
@@ -763,7 +763,7 @@ describe('handleMisubRequest regression coverage', () => {
       },
     ];
     const adapter = createStorageAdapter({
-      settings: { mytoken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: true },
+      settings: { myToken: 'stable-token', enableFlagEmoji: false, enableTrafficNode: true },
       subscriptions,
     });
     const healthyNodes =

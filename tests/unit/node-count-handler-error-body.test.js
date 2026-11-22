@@ -4,8 +4,8 @@ import { StorageFactory } from '../../functions/storage-adapter.js';
 
 function createAdapter({ settings = {}, subscriptions = [] } = {}) {
   const store = new Map([
-    ['worker_settings_v1', settings],
-    ['misub_subscriptions_v1', subscriptions],
+    ['main', settings],
+    ['subscriptions', subscriptions],
   ]);
   return {
     get: vi.fn(async (key) => store.get(key)),
@@ -13,13 +13,13 @@ function createAdapter({ settings = {}, subscriptions = [] } = {}) {
       store.set(key, value);
       return true;
     }),
-    getAllSubscriptions: vi.fn(async () => store.get('misub_subscriptions_v1') || []),
+    getAllSubscriptions: vi.fn(async () => store.get('subscriptions') || []),
     updateSubscriptionById: vi.fn(async (id, updater) => {
-      const all = store.get('misub_subscriptions_v1') || [];
+      const all = store.get('subscriptions') || [];
       const index = all.findIndex((item) => item.id === id);
       if (index === -1) return false;
       all[index] = updater(all[index]);
-      store.set('misub_subscriptions_v1', all);
+      store.set('subscriptions', all);
       return true;
     }),
     store,
@@ -162,7 +162,7 @@ describe('handleNodeCountRequest error body handling', () => {
 
     const response = await handleNodeCountRequest(request, {});
     const data = await response.json();
-    const subscriptions = adapter.store.get('misub_subscriptions_v1');
+    const subscriptions = adapter.store.get('subscriptions');
 
     expect(data.success).toBe(true);
     expect(data.data.count).toBe(156);

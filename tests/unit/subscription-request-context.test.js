@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { resolveRequestContext } from '../../functions/modules/subscription/request-context.js';
 
 const defaultConfig = {
-  mytoken: 'stable-token',
+  myToken: 'stable-token',
   profileToken: 'sub',
 };
 
 const customPathConfig = {
-  mytoken: 'stable-token',
+  myToken: 'stable-token',
   profileToken: 'links',
 };
 
@@ -42,7 +42,7 @@ describe('subscription request context routing', () => {
   });
 
   it('falls back to /sub when profileToken is blank', () => {
-    const blankPathConfig = { mytoken: 'stable-token', profileToken: '' };
+    const blankPathConfig = { myToken: 'stable-token', profileToken: '' };
 
     expect(resolveRequestContext(new URL('https://example.com/sub/stable-token'), blankPathConfig)).toEqual({
       token: 'stable-token',

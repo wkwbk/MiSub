@@ -79,19 +79,7 @@ describe('Cloudflare Worker entry (worker.js)', () => {
     expect(assetsFetch).toHaveBeenCalled();
   });
 
-  it('executes scheduled cron trigger and registers promise with ctx.waitUntil', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    const waitUntil = vi.fn();
-    const env = {
-      MISUB_KV: createKv({
-        misub_subscriptions_v1: JSON.stringify([]),
-        worker_settings_v1: JSON.stringify({}),
-      }),
-    };
-
-    await worker.scheduled({ cron: '0 */6 * * *' }, env, { waitUntil });
-
-    expect(waitUntil).toHaveBeenCalledOnce();
-    expect(infoSpy).toHaveBeenCalled();
+  it('does not expose a redundant Worker scheduled handler', () => {
+    expect(worker.scheduled).toBeUndefined();
   });
 });

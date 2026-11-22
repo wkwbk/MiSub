@@ -109,7 +109,7 @@ describe('DashboardView 待处理事项', () => {
     postMock.mockResolvedValue({ success: true });
     const dataStore = useDataStore();
     dataStore.profiles = [{ id: 'profile-1', name: '日常', enabled: true, customId: 'daily' }];
-    useSettingsStore().setConfig({ mytoken: 'stable-token', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: 'stable-token', profileToken: 'share-token' });
   });
 
   // Regression: the view read `item.action` while the helper emitted
@@ -156,7 +156,7 @@ describe('DashboardView 待处理事项', () => {
       // Disabled alongside enabled -> the `disabled-subscriptions` category.
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     const expandButton = () => wrapper.findAll('button').find((b) => /展开其余|收起/.test(b.text()));
@@ -195,7 +195,7 @@ describe('DashboardView 待处理事项', () => {
 
   it('still routes primary actions to their target with query params', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'x' })];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     const primary = wrapper.findAll('button').find((b) => b.text() === '去设置 Token');
@@ -228,7 +228,7 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'boom' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('en-US');
     const toggle = wrapper.findAll('button').find((b) => /Show \d+ more/.test(b.text()));
@@ -244,7 +244,7 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'timeout' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('en-US');
     await wrapper.vm.$nextTick();
@@ -264,7 +264,7 @@ describe('DashboardView 待处理事项', () => {
 
   it('still renders health item copy in Chinese for zh-CN', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'timeout' })];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('zh-CN');
     await wrapper.vm.$nextTick();
@@ -277,7 +277,7 @@ describe('DashboardView 待处理事项', () => {
   // The dashboard links with a status filter the target view now honours.
   it('navigates with the status filter the subscriptions view consumes', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'timeout' })];
-    useSettingsStore().setConfig({ mytoken: 'stable-token', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: 'stable-token', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     await wrapper.vm.$nextTick();
@@ -344,7 +344,7 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'timeout' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ myToken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     await wrapper.vm.$nextTick();

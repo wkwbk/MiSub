@@ -192,7 +192,7 @@ export async function handleTelegramWebhook(request, env) {
     }
 
     // 验证请求来源
-    if (!config.webhook_secret) {
+    if (!config.webhookSecret) {
       console.error('[Telegram Push] Missing webhook secret');
       return createJsonResponse({ error: 'Webhook secret required' }, 503);
     }

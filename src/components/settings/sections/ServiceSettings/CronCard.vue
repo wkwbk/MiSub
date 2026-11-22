@@ -16,29 +16,44 @@ const props = defineProps({
   },
 });
 
-// 折叠状态
 const showCronGuide = ref(false);
 
-const cronUrl = computed(() => {
+const cronTasks = computed(() => {
   const secret = props.settings.cronSecret;
-  if (!secret) {
-    return '';
-  }
-  return `${window.location.origin}/cron?secret=${encodeURIComponent(secret)}`;
+  if (!secret) return [];
+
+  const encoded = encodeURIComponent(secret);
+  const escaped = secret.replace(/"/g, '\\"');
+  const origin = window.location.origin;
+
+  return [
+    {
+      key: 'subscriptions',
+      title: t('settings.cronTaskSubscriptionsTitle'),
+      desc: t('settings.cronTaskSubscriptionsDesc'),
+      url: `${origin}/cron/subscriptions?secret=${encoded}`,
+      command: `curl -H "Authorization: Bearer ${escaped}" ${origin}/cron/subscriptions`,
+    },
+    {
+      key: 'backup',
+      title: t('settings.cronTaskBackupTitle'),
+      desc: t('settings.cronTaskBackupDesc'),
+      url: `${origin}/cron/backup?secret=${encoded}`,
+      command: `curl -H "Authorization: Bearer ${escaped}" ${origin}/cron/backup`,
+    },
+    {
+      key: 'maintenance',
+      title: t('settings.cronTaskMaintenanceTitle'),
+      desc: t('settings.cronTaskMaintenanceDesc'),
+      url: `${origin}/cron/maintenance?secret=${encoded}`,
+      command: `curl -H "Authorization: Bearer ${escaped}" ${origin}/cron/maintenance`,
+    },
+  ];
 });
 
-const cronHeaderCommand = computed(() => {
-  const secret = props.settings.cronSecret;
-  if (!secret) {
-    return '';
-  }
-  return `curl -H "Authorization: Bearer ${secret.replace(/"/g, '\\"')}" ${window.location.origin}/cron`;
-});
-
-// 复制 Cron URL
-async function copyCronUrl() {
-  if (!cronUrl.value) return;
-  const ok = await copyTextToClipboard(cronUrl.value);
+async function copyText(value) {
+  if (!value) return;
+  const ok = await copyTextToClipboard(value);
   showToast(ok ? t('common.copied') : t('common.copyFailed'), ok ? 'success' : 'error');
 }
 </script>
@@ -74,16 +89,22 @@ async function copyCronUrl() {
         </p>
       </div>
 
-      <!-- Cron 访问链接（自动生成） -->
-      <div v-if="cronUrl" class="space-y-5">
-        <div class="max-w-xl">
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">
-            {{ t('settings.cronCompatibleUrl') }}
-          </label>
+      <!-- 按业务拆分的 Cron 任务链接（自动生成） -->
+      <div v-if="cronTasks.length > 0" class="space-y-4">
+        <div
+          v-for="task in cronTasks"
+          :key="task.key"
+          class="rounded-md border border-line bg-inset/40 p-4 space-y-3 max-w-2xl"
+        >
+          <div class="space-y-0.5">
+            <h4 class="text-xs font-semibold text-fg">{{ task.title }}</h4>
+            <p class="text-xs text-fg-subtle leading-relaxed">{{ task.desc }}</p>
+          </div>
+
           <div class="flex rounded-md shadow-none">
             <input
-              :aria-label="t('settings.cronCompatibleUrl')"
-              :value="cronUrl"
+              :aria-label="`${task.title} URL`"
+              :value="task.url"
               class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-fg font-mono text-xs"
               readonly
               type="text"
@@ -92,17 +113,32 @@ async function copyCronUrl() {
               :aria-label="t('actions.copy')"
               class="inline-flex shrink-0 items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
               type="button"
-              @click="copyCronUrl"
+              @click="copyText(task.url)"
             >
               <Copy class="h-4 w-4" />
             </button>
           </div>
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
-            {{ t('settings.cronCopyHint') }}
-          </p>
+
+          <div class="flex rounded-md shadow-none">
+            <input
+              :aria-label="`${task.title} ${t('settings.cronCommandLabel')}`"
+              :value="task.command"
+              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg-muted"
+              readonly
+              type="text"
+            />
+            <button
+              :aria-label="t('actions.copy')"
+              class="inline-flex shrink-0 items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
+              type="button"
+              @click="copyText(task.command)"
+            >
+              <Copy class="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
-        <div class="pl-4 border-l-2 border-line space-y-2.5 max-w-xl">
+        <div class="pl-4 border-l-2 border-line space-y-1 max-w-2xl">
           <div class="flex items-start gap-2">
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-[5px]"></span>
             <div class="space-y-0.5">
@@ -114,13 +150,6 @@ async function copyCronUrl() {
               </p>
             </div>
           </div>
-          <input
-            :aria-label="t('settings.cronCommandLabel')"
-            :value="cronHeaderCommand"
-            class="block w-full px-3 py-2 bg-inset border border-line rounded-md text-xs font-mono text-fg-muted"
-            readonly
-            type="text"
-          />
         </div>
       </div>
       <p v-else class="flex items-center gap-2 text-xs text-fg-subtle">

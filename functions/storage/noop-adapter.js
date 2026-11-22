@@ -95,6 +95,9 @@ export class NoopStorageAdapter {
   async putAllProfiles() {
     return true;
   }
+  async resetAllSettings() {
+    return true;
+  }
   async cleanupMaintenance() {
     return {
       removedExpiredCache: 0,

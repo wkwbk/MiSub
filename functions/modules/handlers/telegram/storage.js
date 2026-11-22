@@ -87,21 +87,21 @@ export async function getTelegramPushConfig(env, cache = null) {
     const storageAdapter = await getStorageAdapter(env);
     settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
   }
-  const config = settings.telegram_push_config || {};
-  const allowedUserIds = Array.isArray(config.allowed_user_ids) ? config.allowed_user_ids : [];
+  const config = settings.telegramPushConfig || {};
+  const allowedUserIds = Array.isArray(config.allowedUserIds) ? config.allowedUserIds : [];
 
   return {
     enabled: config.enabled ?? true,
-    bot_token: config.bot_token || '',
-    webhook_secret: config.webhook_secret || '',
-    allowed_user_ids: allowedUserIds.map((id) => id?.toString().trim()).filter(Boolean),
-    allow_all_users: config.allow_all_users === true,
-    rate_limit: config.rate_limit || {
-      max_per_minute: 1000,
-      max_per_day: 10000,
+    botToken: config.botToken || '',
+    webhookSecret: config.webhookSecret || '',
+    allowedUserIds: allowedUserIds.map((id) => id?.toString().trim()).filter(Boolean),
+    allowAllUsers: config.allowAllUsers === true,
+    rateLimit: config.rateLimit || {
+      maxPerMinute: 1000,
+      maxPerDay: 10000,
     },
-    default_profile_id: config.default_profile_id || '',
-    auto_bind: config.auto_bind ?? true,
-    user_bindings: config.user_bindings && typeof config.user_bindings === 'object' ? config.user_bindings : {},
+    defaultProfileId: config.defaultProfileId || '',
+    autoBind: config.autoBind ?? true,
+    userBindings: config.userBindings && typeof config.userBindings === 'object' ? config.userBindings : {},
   };
 }

@@ -1,8 +1,9 @@
 import { StorageFactory } from '../../storage-adapter.js';
+import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
 import { isStorageUnavailableError } from '../api-handler.js';
 import { createErrorResponse, createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
-const STORAGE_KEY_CLIENTS = 'misub_clients_v1';
+const STORAGE_KEY_CLIENTS = SETTINGS_KEYS.CLIENTS;
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
 async function getStorageAdapter(env) {

@@ -20,7 +20,7 @@ vi.mock('vue-router', async () => {
 // offline and focused on the deep-link behaviour.
 vi.mock('@/composables/useSettingsLogic.js', () => ({
   useSettingsLogic: () => ({
-    settings: { mytoken: 'stable-token', profileToken: 'share-token' },
+    settings: { myToken: 'stable-token', profileToken: 'share-token' },
     disguiseConfig: {},
     isLoading: false,
     isSaving: false,

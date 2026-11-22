@@ -623,7 +623,7 @@ export async function handleBindCommand(chatId, userId, args, env, requestCache 
     const cache = requestCache || createRequestCache();
     const profiles = await getCachedProfiles(env, cache);
     const settings = await getCachedSettings(env, cache);
-    const config = settings.telegram_push_config || {};
+    const config = settings.telegramPushConfig || {};
 
     // 没有参数时列出订阅组
     if (args.length === 0) {
@@ -684,8 +684,8 @@ export async function handleBindCommand(chatId, userId, args, env, requestCache 
 
     // 更新配置
     setUserBoundProfileId(config, userId, targetProfile.id);
-    config.auto_bind = true;
-    settings.telegram_push_config = config;
+    config.autoBind = true;
+    settings.telegramPushConfig = config;
     cache.settings = settings;
     await persistCachedSettings(env, cache);
 
@@ -710,7 +710,7 @@ export async function handleUnbindCommand(chatId, userId, env, requestCache = nu
   try {
     const cache = requestCache || createRequestCache();
     const settings = await getCachedSettings(env, cache);
-    const config = settings.telegram_push_config || {};
+    const config = settings.telegramPushConfig || {};
 
     if (!getUserBoundProfileId(config, userId)) {
       await sendTelegramMessage(chatId, '📋 当前未绑定任何订阅组', env);
@@ -718,7 +718,7 @@ export async function handleUnbindCommand(chatId, userId, env, requestCache = nu
     }
 
     setUserBoundProfileId(config, userId, '');
-    settings.telegram_push_config = config;
+    settings.telegramPushConfig = config;
     cache.settings = settings;
     await persistCachedSettings(env, cache);
 

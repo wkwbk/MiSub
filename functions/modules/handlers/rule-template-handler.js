@@ -1,7 +1,8 @@
 import { StorageFactory } from '../../storage-adapter.js';
+import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
-export const STORAGE_KEY_RULE_TEMPLATES = 'misub_rule_templates_v1';
+export const STORAGE_KEY_RULE_TEMPLATES = SETTINGS_KEYS.RULE_TEMPLATES;
 const MAX_TEMPLATE_COUNT = 50;
 const MAX_TEMPLATE_CONTENT_LENGTH = 128 * 1024;
 

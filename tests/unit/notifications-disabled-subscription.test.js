@@ -34,9 +34,9 @@ describe('subscription notifications', () => {
     await checkAndNotify(
       subscription,
       {
-        BotToken: 'test-token',
-        ChatID: 'test-chat',
-        NotifyThresholdDays: 7,
+        botToken: 'test-token',
+        chatId: 'test-chat',
+        notifyThresholdDays: 7,
       },
       {},
     );
@@ -63,9 +63,9 @@ describe('subscription notifications', () => {
     await checkAndNotify(
       subscription,
       {
-        BotToken: 'test-token',
-        ChatID: 'test-chat',
-        NotifyThresholdDays: 7,
+        botToken: 'test-token',
+        chatId: 'test-chat',
+        notifyThresholdDays: 7,
       },
       {},
     );

@@ -55,7 +55,7 @@ vi.mock('@/components/settings/sections/SystemSettings.vue', () => ({
 
 vi.mock('@/composables/useSettingsLogic.js', () => ({
   useSettingsLogic: () => ({
-    settings: { mytoken: 'stable-token', profileToken: 'share-token' },
+    settings: { myToken: 'stable-token', profileToken: 'share-token' },
     disguiseConfig: {},
     isLoading: false,
     isSaving: false,

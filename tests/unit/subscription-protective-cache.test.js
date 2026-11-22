@@ -23,12 +23,12 @@ function createMemoryStorage(initial = {}) {
       return true;
     },
     async updateSubscriptionById(id, updater) {
-      const all = store.get('misub_subscriptions_v1');
+      const all = store.get('subscriptions');
       if (!Array.isArray(all)) return false;
       const index = all.findIndex((item) => item?.id === id);
       if (index === -1) return false;
       all[index] = updater(all[index]);
-      store.set('misub_subscriptions_v1', all);
+      store.set('subscriptions', all);
       return true;
     },
   };
@@ -173,7 +173,7 @@ describe('subscription protective node cache', () => {
       enableNodeCache: true,
     };
     const storage = createMemoryStorage({
-      misub_subscriptions_v1: [{ ...sub, nodeCount: 0, userInfo: null }],
+      subscriptions: [{ ...sub, nodeCount: 0, userInfo: null }],
     });
     const waitUntilPromises = [];
     vi.stubGlobal(
@@ -214,7 +214,7 @@ describe('subscription protective node cache', () => {
 
     await Promise.all(waitUntilPromises);
 
-    const [updatedSub] = await storage.get('misub_subscriptions_v1');
+    const [updatedSub] = await storage.get('subscriptions');
     expect(updatedSub.nodeCount).toBe(1);
     expect(updatedSub.lastGoodNodeCount).toBeUndefined();
     expect(updatedSub.userInfo).toEqual({
@@ -239,7 +239,7 @@ describe('subscription protective node cache', () => {
       enabled: true,
     };
     const storage = createMemoryStorage({
-      misub_subscriptions_v1: [{ ...sub, nodeCount: 0, userInfo: null }],
+      subscriptions: [{ ...sub, nodeCount: 0, userInfo: null }],
     });
     const waitUntilPromises = [];
     vi.stubGlobal(
@@ -258,7 +258,7 @@ describe('subscription protective node cache', () => {
     );
     await Promise.all(waitUntilPromises);
 
-    const [updatedSub] = await storage.get('misub_subscriptions_v1');
+    const [updatedSub] = await storage.get('subscriptions');
     expect(updatedSub.nodeCount).toBe(12);
     expect(updatedSub.lastGoodNodeCount).toBe(12);
   });
@@ -385,7 +385,7 @@ describe('subscription protective node cache', () => {
 
   it('keeps lastGoodNodeCount when a user subscription request only sees one node', async () => {
     const storage = createMemoryStorage({
-      misub_subscriptions_v1: [
+      subscriptions: [
         {
           id: 'sub-a',
           url: 'https://example.com/sub',
@@ -428,7 +428,7 @@ describe('subscription protective node cache', () => {
 
     expect(result.trim()).toBe('');
     await Promise.all(waitUntilPromises);
-    const [updated] = await storage.get('misub_subscriptions_v1');
+    const [updated] = await storage.get('subscriptions');
     expect(updated.nodeCount).toBe(1);
     expect(updated.lastGoodNodeCount).toBe(156);
   });
@@ -444,7 +444,7 @@ describe('subscription protective node cache', () => {
       userInfo: { upload: 1, download: 2, total: 100, expire: 200 },
     };
     const storage = createMemoryStorage({
-      misub_subscriptions_v1: [{ ...sub }],
+      subscriptions: [{ ...sub }],
     });
     const waitUntilPromises = [];
     vi.stubGlobal(
@@ -475,7 +475,7 @@ describe('subscription protective node cache', () => {
 
     await Promise.all(waitUntilPromises);
 
-    const [updatedSub] = await storage.get('misub_subscriptions_v1');
+    const [updatedSub] = await storage.get('subscriptions');
     expect(updatedSub.nodeCount).toBe(0);
     expect(updatedSub.userInfo).toBeNull();
     expect(updatedSub.lastError).toBeNull();

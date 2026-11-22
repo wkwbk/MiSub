@@ -4,10 +4,13 @@ import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@shared/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '@shared/default-public-cores.js';
 
 export const DEFAULT_SETTINGS = {
-  FileName: 'MiSub',
-  mytoken: '',
+  fileName: 'MiSub',
+  myToken: '',
   profileToken: 'sub',
   defaultLocale: 'zh-CN',
+  cronSecret: '',
+  botToken: '',
+  chatId: '',
   transformConfigMode: 'builtin',
   transformConfig: '',
   ruleLevel: 'std',
@@ -17,8 +20,8 @@ export const DEFAULT_SETTINGS = {
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   mergeExpireStrategy: 'max',
-  NotifyThresholdDays: 3,
-  NotifyThresholdPercent: 90,
+  notifyThresholdDays: 3,
+  notifyThresholdPercent: 90,
   enableTrafficNode: false,
   enableFlagEmoji: true,
   enablePublicPage: true,

@@ -5,7 +5,7 @@ import { normalizeSubPath } from '../../../shared/reserved-paths.js';
  *
  * 唯一支持的 URL 格式：
  *   /{subPath}/{identifier}
- *     - identifier === config.mytoken → 默认订阅（全部启用节点）
+ *     - identifier === config.myToken → 默认订阅（全部启用节点）
  *     - 否则 → 订阅组（按 profileId 或 customId 查找）
  *
  * @param {URL} url - 请求 URL
@@ -21,9 +21,8 @@ export function resolveRequestContext(url, config) {
   }
 
   const identifier = pathSegments[1];
-  const mytoken = typeof config?.mytoken === 'string' ? config.mytoken.trim() : '';
-
-  if (mytoken && identifier === mytoken) {
+  const myToken = typeof config?.myToken === 'string' ? config.myToken.trim() : '';
+  if (myToken && identifier === myToken) {
     return { token: identifier, profileIdentifier: null };
   }
 

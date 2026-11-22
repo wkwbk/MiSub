@@ -28,10 +28,7 @@ function createD1(settings = null) {
           return this;
         },
         async first() {
-          if (/FROM settings/i.test(sql) && this.queryValue === 'worker_settings_v1') {
-            return null;
-          }
-          if (/FROM settings/i.test(sql) && settings) {
+          if (/FROM settings/i.test(sql) && this.queryValue === 'main' && settings) {
             return { data: JSON.stringify(settings) };
           }
           return null;
@@ -294,7 +291,7 @@ describe('security hardening', () => {
     expect(body.success).toBe(true);
   });
 
-  it('supports cron query secret compatibility and Authorization bearer', async () => {
+  it('supports per-business cron endpoints with query secret and Authorization bearer', async () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
     const env = {
@@ -304,26 +301,42 @@ describe('security hardening', () => {
     const next = vi.fn(async () => new Response('next'));
 
     try {
-      const queryResponse = await onRequest({
+      const bareCronResponse = await onRequest({
         request: new Request('https://example.com/cron?secret=cron-secret'),
         env,
         next,
       });
-      const bearerResponse = await onRequest({
-        request: new Request('https://example.com/cron', {
+      const queryResponse = await onRequest({
+        request: new Request('https://example.com/cron/subscriptions?secret=cron-secret'),
+        env,
+        next,
+      });
+      const bearerBackupResponse = await onRequest({
+        request: new Request('https://example.com/cron/backup', {
+          headers: { Authorization: 'Bearer cron-secret' },
+        }),
+        env,
+        next,
+      });
+      const maintenanceResponse = await onRequest({
+        request: new Request('https://example.com/cron/maintenance', {
           headers: { Authorization: 'Bearer cron-secret' },
         }),
         env,
         next,
       });
       const wrongQueryResponse = await onRequest({
-        request: new Request('https://example.com/cron?secret=wrong'),
+        request: new Request('https://example.com/cron/subscriptions?secret=wrong'),
         env,
         next,
       });
 
-      expect(queryResponse.status).not.toBe(401);
-      expect(bearerResponse.status).not.toBe(401);
+      expect(bareCronResponse.status).toBe(400);
+      expect(queryResponse.status).toBe(200);
+      expect(bearerBackupResponse.status).toBe(200);
+      expect(await bearerBackupResponse.json()).toMatchObject({ success: true, task: 'backup', skipped: true });
+      expect(maintenanceResponse.status).toBe(200);
+      expect(await maintenanceResponse.json()).toMatchObject({ success: true, task: 'maintenance' });
       expect(wrongQueryResponse.status).toBe(401);
       expect(infoSpy).toHaveBeenCalledWith('[Cron] Starting parallel update for 0 subscriptions');
     } finally {
@@ -404,13 +417,13 @@ describe('security hardening', () => {
     const env = {
       MISUB_DB: createMemoryD1({
         misub_settings_v1: JSON.stringify({
-          mytoken: 'super-secret-token',
+          myToken: 'super-secret-token',
           subConverter: 'backend',
           selectedRules: [],
           customRules: [],
         }),
-        misub_subscriptions_v1: JSON.stringify([]),
-        misub_profiles_v1: JSON.stringify([]),
+        subscriptions: JSON.stringify([]),
+        profiles: JSON.stringify([]),
       }),
     };
 

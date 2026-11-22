@@ -313,8 +313,8 @@ export async function handleSettingsSave(request, env) {
       if (rejected) return rejected;
     }
 
-    // 默认订阅 Token 位于 /{subPath}/{mytoken} 下，仅需禁止破坏单段路径的字符
-    if (newSettings.mytoken && /[\s/?#]/.test(newSettings.mytoken)) {
+    // 默认订阅 Token 位于 /{subPath}/{myToken} 下，仅需禁止破坏单段路径的字符
+    if (newSettings.myToken && /[\s/?#]/.test(newSettings.myToken)) {
       return createJsonResponse(
         {
           success: false,
@@ -392,14 +392,14 @@ export async function handleSettingsSave(request, env) {
         console.warn('[API] Failed to clear node caches:', cacheError.message);
       }
 
-      const oldPush = oldSettings.telegram_push_config || {};
-      const newPush = finalSettings.telegram_push_config || {};
+      const oldPush = oldSettings.telegramPushConfig || {};
+      const newPush = finalSettings.telegramPushConfig || {};
       const pushConfigChanged =
         Boolean(oldPush.enabled) !== Boolean(newPush.enabled) ||
-        String(oldPush.bot_token || '').trim() !== String(newPush.bot_token || '').trim() ||
-        String(oldPush.webhook_secret || '').trim() !== String(newPush.webhook_secret || '').trim();
+        String(oldPush.botToken || '').trim() !== String(newPush.botToken || '').trim() ||
+        String(oldPush.webhookSecret || '').trim() !== String(newPush.webhookSecret || '').trim();
 
-      if (pushConfigChanged && newPush.enabled && String(newPush.bot_token || '').trim()) {
+      if (pushConfigChanged && newPush.enabled && String(newPush.botToken || '').trim()) {
         try {
           const origin = new URL(request.url).origin;
           telegramSync = await syncTelegramPushBot(newPush, origin);
@@ -437,7 +437,13 @@ export async function handleSettingsReset(env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
 
-    await storageAdapter.delete(STORAGE_KEY_SETTINGS);
+    await storageAdapter.resetAllSettings();
+
+    try {
+      await clearAllNodeCaches(storageAdapter);
+    } catch (cacheError) {
+      console.warn('[API] Failed to clear node caches on reset:', cacheError.message);
+    }
 
     return createJsonResponse({
       success: true,

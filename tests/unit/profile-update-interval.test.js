@@ -13,9 +13,9 @@ vi.mock('../../functions/storage-adapter.js', () => ({
 
 function createStorageAdapter({ settings = {}, subscriptions = [], profiles = [] } = {}) {
   const store = new Map([
-    ['worker_settings_v1', settings],
-    ['misub_subscriptions_v1', subscriptions],
-    ['misub_profiles_v1', profiles],
+    ['main', settings],
+    ['subscriptions', subscriptions],
+    ['profiles', profiles],
   ]);
 
   return {
@@ -98,7 +98,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
     it('includes Profile-Update-Interval: 24 by default on Clash target even without traffic header', async () => {
       const adapter = createStorageAdapter({
         settings: {
-          mytoken: 'test-token',
+          myToken: 'test-token',
           enableFlagEmoji: false,
           enableTrafficNode: false,
         },
@@ -123,7 +123,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
     it('includes Profile-Update-Interval on raw base64 subscription request', async () => {
       const adapter = createStorageAdapter({
         settings: {
-          mytoken: 'test-token',
+          myToken: 'test-token',
           profileUpdateInterval: 12,
           enableFlagEmoji: false,
         },
@@ -146,7 +146,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
     it('includes Profile-Update-Interval on node plain export', async () => {
       const adapter = createStorageAdapter({
         settings: {
-          mytoken: 'test-token',
+          myToken: 'test-token',
           profileUpdateInterval: 18,
           enableFlagEmoji: false,
         },
@@ -169,7 +169,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
     it('omits Profile-Update-Interval when profileUpdateInterval is set to 0 (disabled)', async () => {
       const adapter = createStorageAdapter({
         settings: {
-          mytoken: 'test-token',
+          myToken: 'test-token',
           profileUpdateInterval: 0,
           enableFlagEmoji: false,
         },
@@ -192,7 +192,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
     it('includes Profile-Update-Interval on external 302 redirects', async () => {
       const adapter = createStorageAdapter({
         settings: {
-          mytoken: 'test-token',
+          myToken: 'test-token',
           profileUpdateInterval: 12,
           subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
         },

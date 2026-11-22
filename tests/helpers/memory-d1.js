@@ -54,7 +54,7 @@ export function createMemoryD1(initial = {}) {
 
   for (const [key, rawVal] of Object.entries(initial)) {
     if (rawVal === undefined || rawVal === null) continue;
-    if (key === 'subscriptions' || key === 'misub_subscriptions_v1') {
+    if (key === 'subscriptions') {
       const arr = parseIfJson(rawVal);
       if (Array.isArray(arr)) {
         arr.forEach((item, idx) => {
@@ -75,7 +75,7 @@ export function createMemoryD1(initial = {}) {
           }
         });
       }
-    } else if (key === 'profiles' || key === 'misub_profiles_v1') {
+    } else if (key === 'profiles') {
       const arr = parseIfJson(rawVal);
       if (Array.isArray(arr)) {
         arr.forEach((item, idx) => {
@@ -97,8 +97,6 @@ export function createMemoryD1(initial = {}) {
           }
         });
       }
-    } else if (key === 'worker_settings_v1') {
-      tables.settings.set('main', serialize(rawVal));
     } else if (isCacheKey(key)) {
       tables.cache.set(key, serialize(rawVal));
       cacheExpiresAt.set(key, null);
@@ -434,14 +432,10 @@ export function createMemoryD1(initial = {}) {
         ...Array.from(tables.subscriptions.values()).map((v) => JSON.parse(v)),
         ...Array.from(tables.nodes.values()).map((v) => JSON.parse(v)),
       ].sort((a, b) => (a.sortIndex || 0) - (b.sortIndex || 0));
-      out.misub_subscriptions_v1 = JSON.stringify(allSubsAndNodes);
-      out.misub_profiles_v1 = JSON.stringify(Array.from(tables.profiles.values()).map((v) => JSON.parse(v)));
+      out.subscriptions = JSON.stringify(allSubsAndNodes);
+      out.profiles = JSON.stringify(Array.from(tables.profiles.values()).map((v) => JSON.parse(v)));
       for (const [k, v] of tables.settings.entries()) {
-        if (k === 'main') {
-          out.worker_settings_v1 = v;
-        } else {
-          out[k] = v;
-        }
+        out[k] = v;
       }
       for (const [k, v] of tables.cache.entries()) {
         out[k] = v;
