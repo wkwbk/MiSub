@@ -5,7 +5,7 @@ import { generateCombinedNodeList } from '../../services/subscription-service.js
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from '../config.js';
 import { normalizeSubPath } from '../../../shared/reserved-paths.js';
-import { createDisguiseResponse } from '../disguise-page.js';
+import { createBlockedResponse, isBrowserSubAccessAllowed } from '../access-control.js';
 import {
   generateCacheKey,
   isLikelyPartialAggregateNodeList,
@@ -17,7 +17,6 @@ import { resolveNodeListWithCache } from './cache-manager.js';
 import { ProcessorService } from '../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from './access-logger.js';
 import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js';
-import { authMiddleware } from '../auth-middleware.js';
 import { handleProfileMode } from './profile-handler.js';
 
 import {
@@ -104,14 +103,12 @@ export async function handleMisubRequest(context) {
 
   const isBrowser = isBrowserAgent(userAgentHeader);
 
-  console.log(`[MiSub Logic] isBrowser: ${isBrowser}, Disguise: ${config.disguise?.enabled}`);
+  const allowBrowserSub = isBrowserSubAccessAllowed(config);
+  console.log(`[MiSub Logic] isBrowser: ${isBrowser}, AllowBrowserSub: ${allowBrowserSub}`);
 
-  // 仅当伪装已开启且为浏览器请求（非回调）时才校验管理员会话，避免代理客户端拉取订阅时触发额外鉴权与 D1 读取
-  if (config.disguise?.enabled && isBrowser && !url.searchParams.has('callback_token')) {
-    const isAuthenticated = await authMiddleware(request, env);
-    if (!isAuthenticated) {
-      return createDisguiseResponse(config.disguise, request.url);
-    }
+  // 关闭「允许浏览器打开订阅链接」后，任何浏览器直连订阅 URL 一律拦截，代理客户端不受影响
+  if (!allowBrowserSub && isBrowser && !url.searchParams.has('callback_token')) {
+    return createBlockedResponse(config.disguise, request.url);
   }
 
   context.url = url; // [核心修复] 将 url 挂载到 context，确保后续服务能获取到 debug 参数
@@ -153,10 +150,8 @@ export async function handleMisubRequest(context) {
   if (profileIdentifier) {
     const expectedSubPath = normalizeSubPath(config.profileToken, 'sub');
     if (!token || token !== expectedSubPath) {
-      // [伪装加固] 不使用裸 403/403 文本响应：403 会暴露「该地址存在一个受保护的服务」，
-      // 与首页的伪装行为形成差异，可被扫描器识别。改为返回伪装页（或 404），
-      // 与未授权的 SPA 路由行为保持一致。
-      return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
+      // [伪装加固] 不使用裸 403 响应，统一走访问控制拦截响应
+      return createBlockedResponse(config.disguise, request.url);
     }
     currentProfile = await storageAdapter.getProfileById(profileIdentifier);
     initEngineFlags(currentProfile);
@@ -288,8 +283,8 @@ export async function handleMisubRequest(context) {
     }
   } else {
     if (!config.mytoken || !token || token !== config.mytoken) {
-      // [伪装加固] 同 profile token：避免裸 403 暴露服务存在
-      return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
+      // [伪装加固] 同 profile token：统一走访问控制拦截响应
+      return createBlockedResponse(config.disguise, request.url);
     }
     const allMisubs = (await storageAdapter.getAllSubscriptions()) || [];
     targetMisubs = allMisubs.filter((s) => s.enabled);

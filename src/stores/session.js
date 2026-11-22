@@ -136,6 +136,19 @@ export const useSessionStore = defineStore('session', () => {
       }
     }
 
+    const isPublicEnabled = publicConfig.value?.enablePublicPage !== false;
+    let targetPath = '/';
+    if (!isPublicEnabled) {
+      const ownPath = subscriptionConfig.value?.customLoginPath;
+      const normalized = typeof ownPath === 'string' ? ownPath.trim().replace(/^\/+/, '') : '';
+      targetPath = normalized && normalized !== 'login' ? `/${normalized}` : '/login';
+      verifiedLoginPath.value = targetPath;
+      publicConfig.value = {
+        ...publicConfig.value,
+        isLoginPath: true,
+      };
+    }
+
     sessionState.value = 'loggedOut';
     initialData.value = null;
 
@@ -143,8 +156,8 @@ export const useSessionStore = defineStore('session', () => {
     const dataStore = useDataStore();
     dataStore.clearCachedData();
 
-    // 跳转到首页（公开页）
-    router.push({ path: '/' });
+    // 公开页开启时回首页，公开页关闭时直接回登录页
+    router.push({ path: targetPath });
   }
 
   return {

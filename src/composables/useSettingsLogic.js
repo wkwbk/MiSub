@@ -62,9 +62,8 @@ export function useSettingsLogic() {
     onUnmounted(clearReloadTimer);
   }
 
-  // 嵌套配置对象
+  // 嵌套配置对象（拦截响应策略）
   const disguiseConfig = ref({
-    enabled: false,
     pageType: 'default',
     redirectUrl: '',
   });
@@ -91,13 +90,11 @@ export function useSettingsLogic() {
         const incoming = result.data && typeof result.data === 'object' ? result.data : {};
         settings.value = normalizeSettingsObject(incoming);
 
-        if (settings.value.disguise) {
-          disguiseConfig.value = {
-            enabled: settings.value.disguise.enabled ?? false,
-            pageType: settings.value.disguise.pageType ?? 'default',
-            redirectUrl: settings.value.disguise.redirectUrl ?? '',
-          };
-        }
+        const incomingDisguise = settings.value.disguise || DEFAULT_SETTINGS.disguise;
+        disguiseConfig.value = {
+          pageType: incomingDisguise?.pageType === 'redirect' ? 'redirect' : 'default',
+          redirectUrl: typeof incomingDisguise?.redirectUrl === 'string' ? incomingDisguise.redirectUrl : '',
+        };
 
         settings.value.storageType = 'd1';
 

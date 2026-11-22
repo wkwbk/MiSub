@@ -22,6 +22,11 @@ export const DEFAULT_SETTINGS = {
   enableTrafficNode: false,
   enableFlagEmoji: true,
   enablePublicPage: true,
+  allowBrowserSubAccess: true,
+  disguise: {
+    pageType: 'default',
+    redirectUrl: '',
+  },
   storageType: 'd1',
   autoUpdateInterval: 0, // 分钟，0表示禁用自动更新
   profileUpdateInterval: 24, // 小时，客户端订阅默认更新间隔，0表示禁用注入

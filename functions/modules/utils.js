@@ -140,6 +140,18 @@ export function migrateConfigSettings(config) {
   if (migratedConfig.hasOwnProperty('enableTrafficNode')) {
     migratedConfig.enableTrafficNode = toBoolean(migratedConfig.enableTrafficNode);
   }
+  if (migratedConfig.hasOwnProperty('enablePublicPage')) {
+    migratedConfig.enablePublicPage = toBoolean(migratedConfig.enablePublicPage);
+  }
+  if (migratedConfig.hasOwnProperty('allowBrowserSubAccess')) {
+    migratedConfig.allowBrowserSubAccess = toBoolean(migratedConfig.allowBrowserSubAccess);
+  }
+  if (migratedConfig.disguise && typeof migratedConfig.disguise === 'object') {
+    migratedConfig.disguise = {
+      pageType: migratedConfig.disguise.pageType === 'redirect' ? 'redirect' : 'default',
+      redirectUrl: typeof migratedConfig.disguise.redirectUrl === 'string' ? migratedConfig.disguise.redirectUrl.trim() : '',
+    };
+  }
   // [Migration] 映射旧名到新名（如果新名不存在且旧名存在）
   if (!migratedConfig.hasOwnProperty('builtinSkipCertVerify') && migratedConfig.hasOwnProperty('transformBackendScv')) {
     migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.transformBackendScv);

@@ -94,9 +94,10 @@ describe('settings page English translations', () => {
 
     expect(wrapper.text()).toContain('Default display language');
     expect(wrapper.text()).toContain('Web Access Control');
-    expect(wrapper.text()).toContain('Allow public access without login');
-    expect(wrapper.text()).toContain('Disguise strategy');
-    expect(wrapper.text()).toContain('Target URL');
+    expect(wrapper.text()).toContain('Allow public page without login');
+    expect(wrapper.text()).toContain('Allow browsers to open subscription links');
+    expect(wrapper.text()).toContain('Response when blocked');
+    expect(wrapper.text()).toContain('Redirect target URL');
     expect(wrapper.text()).toContain('English');
   });
 

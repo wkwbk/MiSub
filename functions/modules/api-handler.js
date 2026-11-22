@@ -22,6 +22,7 @@ import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
+import { enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
 
 function normalizeProfile(profile = {}) {
   const normalized = { ...profile };
@@ -454,14 +455,15 @@ export async function handleSettingsReset(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicProfilesRequest(env) {
+export async function handlePublicProfilesRequest(request, env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
-    const [profiles, rawSettings] = await Promise.all([
-      storageAdapter.getAllProfiles(),
-      storageAdapter.get(STORAGE_KEY_SETTINGS),
-    ]);
-    const settings = rawSettings || {};
+    const rawSettings = await storageAdapter.get(STORAGE_KEY_SETTINGS);
+    const settings = { ...defaultSettings, ...rawSettings };
+    const blocked = await enforcePublicApiAccess(request, env, settings);
+    if (blocked) return blocked;
+
+    const profiles = await storageAdapter.getAllProfiles();
 
     const profileToken = settings.profileToken || 'sub';
     const defaultLocale = settings.defaultLocale || 'zh-CN';
@@ -565,7 +567,7 @@ export async function handlePublicConfig(request, env) {
     }
 
     return createJsonResponse({
-      enablePublicPage: mergedSettings.enablePublicPage,
+      enablePublicPage: isPublicPageEnabled(mergedSettings),
       isLoginPath,
       hasCustomLoginPath: configuredLoginPath !== '/login',
       customPage: {

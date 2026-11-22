@@ -1,5 +1,7 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
+import { enforcePublicApiAccess } from '../access-control.js';
 import { handleProfileMode } from './profile-handler.js';
 import { handleDirectUrlMode, handleSingleSubscriptionMode } from './single-subscription.js';
 
@@ -38,8 +40,13 @@ export async function handlePublicPreviewRequest(request, env) {
       return createJsonResponse({ error: 'Missing profile ID' }, 400);
     }
 
-    // 验证是否为公开订阅组
+    // 验证公开页开关与目标订阅组
     const storageAdapter = StorageFactory.createAdapter(env);
+    const rawSettings = await storageAdapter.get(STORAGE_KEY_SETTINGS);
+    const settings = { ...DEFAULT_SETTINGS, ...rawSettings };
+    const blocked = await enforcePublicApiAccess(request, env, settings);
+    if (blocked) return blocked;
+
     const profile = await storageAdapter.getProfileById(profileId);
 
     if (!profile || !profile.enabled || !profile.isPublic) {

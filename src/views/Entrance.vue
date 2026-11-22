@@ -46,7 +46,14 @@ const activeComponent = computed(() => {
   return markRaw(NotFound);
 });
 
-const componentProps = computed(() => (isMatchedLoginPath.value ? { login: sessionStore.login } : {}));
+const componentProps = computed(() =>
+  isMatchedLoginPath.value
+    ? {
+        login: sessionStore.login,
+        showBackHome: sessionStore.publicConfig?.enablePublicPage !== false,
+      }
+    : {},
+);
 </script>
 
 <style scoped>

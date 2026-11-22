@@ -20,14 +20,13 @@
 
 import { handleMisubRequest } from './modules/subscription/main-handler.js';
 import { handleApiRequest } from './modules/api-router.js';
-import { createJsonResponse, migrateConfigSettings, normalizeLoginPath } from './modules/utils.js';
+import { createJsonResponse, migrateConfigSettings } from './modules/utils.js';
 import { corsMiddleware, csrfOriginMiddleware, securityHeadersMiddleware } from './middleware/cors.js';
-import { handleDisguiseRequest } from './modules/handlers/disguise-handler.js';
-import { createDisguiseResponse } from './modules/disguise-page.js'; // 静态导入核心依赖以优化冷加载
+import { evaluatePageAccess } from './modules/access-control.js';
 import { StorageFactory } from './storage-adapter.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
-import { authMiddleware, renewAuthSession } from './modules/auth-middleware.js';
+import { renewAuthSession } from './modules/auth-middleware.js';
 import { normalizeSubPath } from '../shared/reserved-paths.js';
 
 function parseCorsOrigins(env, requestUrl) {
@@ -241,68 +240,14 @@ export async function onRequest(context) {
 
         return await handleCronTrigger(env);
       } else {
-        const isLocalhost = ['localhost', '127.0.0.1'].includes(url.hostname);
-
-        // 本地 wrangler pages dev 调试兜底：优先返回静态资源，避免函数逻辑影响 SPA 首屏
-        if (isLocalhost) {
-          let localResponse = await fetchStaticAsset(request, env, next);
-          const isLikelySpaPath =
-            !/\.\w+$/.test(url.pathname) &&
-            !url.pathname.startsWith('/api/') &&
-            !isSubRoute &&
-            url.pathname !== '/cron';
-
-          if (localResponse.status === 404 && isLikelySpaPath) {
-            const indexResponse = await fetchSpaEntry(request, env, next);
-            if (indexResponse.status === 200) {
-              localResponse = indexResponse;
-            }
-          }
-
-          return applyNoStoreToHtmlResponse(localResponse);
-        }
-        // 静态文件处理
+        // 静态文件直通（如 /assets/、/src/、/logo.png 等）
         const isStaticAsset = /^\/(assets|@vite|src)\/./.test(url.pathname) || /\.\w+$/.test(url.pathname);
 
-        const customLoginPath = normalizeLoginPath(settings?.customLoginPath);
-        const hasCustomLoginPath = customLoginPath !== '/login';
-
-        // 设置了自定义路径后，默认 /login 立即失效（返回伪装页或 404，避免暴露真实入口）
-        if (hasCustomLoginPath && url.pathname === '/login') {
-          return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
-        }
-
-        // SPA 路由白名单：仅包含公开入口、后台与当前实际生效的登录路径
-        const isSpaRoute = ['/', '/dashboard', '/explore', customLoginPath].some((route) => {
-          if (route === '/') return url.pathname === '/';
-          if (route === '/dashboard') {
-            return url.pathname === '/dashboard' || url.pathname.startsWith('/dashboard/');
+        if (!isStaticAsset) {
+          const access = await evaluatePageAccess(request, env, config);
+          if (!access.allow) {
+            return access.response;
           }
-          return url.pathname === route || url.pathname.startsWith(route + '/');
-        });
-
-        const isProtectedSpaRoute =
-          isSpaRoute &&
-          url.pathname !== '/' &&
-          url.pathname !== customLoginPath &&
-          !url.pathname.startsWith('/explore');
-
-        if (isProtectedSpaRoute) {
-          const isAuthenticated = await authMiddleware(request, env);
-          if (!isAuthenticated) {
-            return createDisguiseResponse(settings?.disguise, request.url);
-          }
-        }
-
-        if ((url.pathname === '/' || isSpaRoute) && !isStaticAsset) {
-          const disguiseResponse = await handleDisguiseRequest(context, settings);
-          if (disguiseResponse) {
-            return disguiseResponse;
-          }
-        }
-
-        if (!isStaticAsset && !isSpaRoute && url.pathname !== '/') {
-          return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
         }
 
         let response = await fetchStaticAsset(request, env, next);
@@ -313,7 +258,7 @@ export async function onRequest(context) {
         const isNavigationRequest = fetchMode === 'navigate' || fetchDest === 'document';
         const isHtmlRequest = isNavigationRequest && acceptHeader.includes('text/html');
 
-        if (response.status === 404 && (isSpaRoute || isHtmlRequest)) {
+        if (response.status === 404 && !isStaticAsset) {
           const indexResponse = await fetchSpaEntry(request, env, next);
 
           if (indexResponse.status === 200) {

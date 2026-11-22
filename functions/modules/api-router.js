@@ -84,7 +84,7 @@ export async function handleApiRequest(request, env, context = null) {
   }
 
   if (path === '/public/profiles') {
-    return await handlePublicProfilesRequest(env);
+    return await handlePublicProfilesRequest(request, env);
   }
 
   if (path === '/public/preview') {
@@ -94,7 +94,7 @@ export async function handleApiRequest(request, env, context = null) {
   // 留言板公开接口
   if (path === '/public/guestbook') {
     if (request.method === 'GET') {
-      return await handleGuestbookGet(env);
+      return await handleGuestbookGet(request, env);
     }
     if (request.method === 'POST') {
       return await handleGuestbookPost(request, env);

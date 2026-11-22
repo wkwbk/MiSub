@@ -17,6 +17,10 @@ const logoFailed = ref(false);
 
 const props = defineProps({
   login: Function,
+  showBackHome: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const focusPasswordInput = async () => {
@@ -124,7 +128,7 @@ const submitLogin = async () => {
       </form>
     </div>
 
-    <div class="mt-6 text-center">
+    <div v-if="showBackHome" class="mt-6 text-center">
       <router-link
         class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-line bg-transparent hover:bg-hover text-xs text-fg-muted hover:text-fg font-medium transition-colors"
         to="/"

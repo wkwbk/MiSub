@@ -380,7 +380,11 @@ const isCustomPageFullWidth = computed(() => {
       </template>
 
       <template v-else>
-        <component :is="loginComponent" :login="login" />
+        <component
+          :is="loginComponent"
+          :login="login"
+          :show-back-home="sessionStore.publicConfig?.enablePublicPage !== false"
+        />
       </template>
     </main>
 

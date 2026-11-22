@@ -657,7 +657,8 @@ describe('handleMisubRequest regression coverage', () => {
         mytoken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
-        disguise: { enabled: true, type: 'notfound' },
+        allowBrowserSubAccess: false,
+        disguise: { pageType: 'default' },
       },
       subscriptions: [
         {

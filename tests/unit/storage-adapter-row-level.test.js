@@ -169,7 +169,8 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
         profileToken: 'profiles',
         enableFlagEmoji: false,
         enableTrafficNode: false,
-        disguise: { enabled: true, pageType: 'default' },
+        allowBrowserSubAccess: false,
+        disguise: { pageType: 'default' },
       },
       misub_subscriptions_v1: [
         {

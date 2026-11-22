@@ -14,12 +14,6 @@ const route = useRoute();
 const uiStore = useUIStore();
 const sessionStore = useSessionStore();
 const { publicConfig } = storeToRefs(sessionStore);
-const isPublicEnabled = computed(() => publicConfig.value?.enablePublicPage === true);
-const hideBranding = computed(
-  () => publicConfig.value?.customPage?.enabled === true && publicConfig.value?.customPage?.hideBranding === true,
-);
-const { t } = useI18n();
-
 const props = defineProps({
   isLoggedIn: Boolean,
   pendingPath: {
@@ -27,6 +21,13 @@ const props = defineProps({
     default: null,
   },
 });
+
+const isPublicEnabled = computed(() => publicConfig.value?.enablePublicPage === true);
+const showExploreEntry = computed(() => props.isLoggedIn || isPublicEnabled.value);
+const hideBranding = computed(
+  () => publicConfig.value?.customPage?.enabled === true && publicConfig.value?.customPage?.hideBranding === true,
+);
+const { t } = useI18n();
 
 const emit = defineEmits(['logout']);
 
@@ -55,7 +56,7 @@ function handleNavClick(event, path) {
     <NavActionGroup
       :hide-external-repo="hideBranding"
       :is-logged-in="isLoggedIn"
-      :show-explore="isPublicEnabled"
+      :show-explore="showExploreEntry"
       :with-focus-ring="true"
       rounded-class="rounded-md"
       @logout="emit('logout')"
@@ -97,7 +98,7 @@ function handleNavClick(event, path) {
           :hide-external-repo="hideBranding"
           :is-logged-in="isLoggedIn"
           :show-divider="true"
-          :show-explore="isPublicEnabled"
+          :show-explore="showExploreEntry"
           :with-focus-ring="true"
           rounded-class="rounded-md"
           @logout="emit('logout')"

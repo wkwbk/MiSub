@@ -7,6 +7,7 @@ import { StorageFactory } from '../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
 import { sendTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
+import { enforcePublicApiAccess } from '../access-control.js';
 
 /**
  * 获取存储适配器实例
@@ -31,13 +32,15 @@ async function removeGuestbookMessage(storageAdapter, id) {
  * 获取公开留言列表
  * 仅返回 isVisible 为 true 的留言
  */
-export async function handleGuestbookGet(env) {
+export async function handleGuestbookGet(request, env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
-    const [messages, settings] = await Promise.all([
-      loadGuestbookMessages(storageAdapter),
-      storageAdapter.get(STORAGE_KEY_SETTINGS).then((res) => res || {}),
-    ]);
+    const rawSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+    const settings = { ...DEFAULT_SETTINGS, ...rawSettings };
+    const blocked = await enforcePublicApiAccess(request, env, settings);
+    if (blocked) return blocked;
+
+    const messages = await loadGuestbookMessages(storageAdapter);
 
     const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
 
@@ -86,7 +89,11 @@ export async function handleGuestbookGet(env) {
 export async function handleGuestbookPost(request, env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
-    const settings = await storageAdapter.get(STORAGE_KEY_SETTINGS).then((res) => res || {});
+    const rawSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+    const settings = { ...DEFAULT_SETTINGS, ...rawSettings };
+    const blocked = await enforcePublicApiAccess(request, env, settings);
+    if (blocked) return blocked;
+
     const guestbookConfig = settings.guestbook || DEFAULT_SETTINGS.guestbook;
 
     if (!guestbookConfig.enabled) {

@@ -26,6 +26,11 @@ const props = defineProps({
   },
 });
 
+const brandTarget = computed(() => {
+  if (props.isLoggedIn) return '/dashboard';
+  return sessionStore.publicConfig?.enablePublicPage !== false ? '/' : route.path;
+});
+
 const emit = defineEmits(['logout']);
 </script>
 
@@ -41,12 +46,12 @@ const emit = defineEmits(['logout']);
           <BrandLogo
             v-if="!hideBranding"
             :icon-size="24"
-            :to="isLoggedIn ? '/dashboard' : '/'"
+            :to="brandTarget"
             text-size-class="text-base"
           />
           <router-link
             v-else
-            :to="isLoggedIn ? '/dashboard' : '/'"
+            :to="brandTarget"
             class="font-mono text-xs font-semibold tracking-widest uppercase text-fg-subtle hover:text-fg"
             >{{ t('app.home') }}</router-link
           >

@@ -27,23 +27,48 @@ export function renderDisguisePage(disguiseConfig) {
             box-sizing: border-box;
         }
 
+        :root {
+            color-scheme: light dark;
+            --bg: #fafafa;
+            --surface: #ffffff;
+            --border: #e4e4e7;
+            --fg: #18181b;
+            --fg-muted: #71717a;
+            --btn-bg: #18181b;
+            --btn-fg: #fafafa;
+            --btn-hover: #27272a;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #131515;
+                --surface: #171717;
+                --border: #27272a;
+                --fg: #f4f4f5;
+                --fg-muted: #a1a1aa;
+                --btn-bg: #f4f4f5;
+                --btn-fg: #18181b;
+                --btn-hover: #ffffff;
+            }
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #131515;
+            background: var(--bg);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            color: #f4f4f5;
+            color: var(--fg);
             -webkit-font-smoothing: antialiased;
         }
 
         .card {
             position: relative;
             z-index: 10;
-            background: #171717;
-            border: 1px solid #27272a;
+            background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: 6px;
             padding: 2.5rem;
             max-width: 32rem;
@@ -56,7 +81,7 @@ export function renderDisguisePage(disguiseConfig) {
             font-size: 4.5rem;
             font-weight: 700;
             line-height: 1;
-            color: #f4f4f5;
+            color: var(--fg);
             margin-bottom: 1rem;
         }
 
@@ -64,13 +89,13 @@ export function renderDisguisePage(disguiseConfig) {
             font-size: 1.25rem;
             font-weight: 600;
             letter-spacing: -0.025em;
-            color: #f4f4f5;
+            color: var(--fg);
             margin-bottom: 0.75rem;
         }
 
         p {
             font-size: 0.875rem;
-            color: #a1a1aa;
+            color: var(--fg-muted);
             line-height: 1.625;
             margin-bottom: 2rem;
         }
@@ -85,8 +110,8 @@ export function renderDisguisePage(disguiseConfig) {
             justify-content: center;
             gap: 0.5rem;
             padding: 0.625rem 1.5rem;
-            background: #f4f4f5;
-            color: #18181b;
+            background: var(--btn-bg);
+            color: var(--btn-fg);
             text-decoration: none;
             border-radius: 6px;
             font-weight: 600;
@@ -95,7 +120,7 @@ export function renderDisguisePage(disguiseConfig) {
         }
 
         .home-link:hover {
-            background: #ffffff;
+            background: var(--btn-hover);
         }
 
         @media (max-width: 640px) {
@@ -123,7 +148,9 @@ export function renderDisguisePage(disguiseConfig) {
     status: 404,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+      'CDN-Cache-Control': 'no-store',
+      'Surrogate-Control': 'no-store',
     },
   });
 }
@@ -151,7 +178,7 @@ export function createDisguiseResponse(disguiseConfig, baseUrl) {
       });
     }
   }
-  return renderDisguisePage(disguiseConfig);
+  return renderDisguisePage(disguiseConfig?.pageType === 'redirect' ? disguiseConfig : null);
 }
 
 /** 转义 HTML 属性/文本，避免配置里的引号破坏页面结构。 */

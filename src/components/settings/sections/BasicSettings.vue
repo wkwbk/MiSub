@@ -524,76 +524,71 @@ const handleCustomProfileIntervalBlur = () => {
               {{ t('settings.publicPageAccessDesc') }}
             </p>
           </div>
-          <Switch v-model="settings.enablePublicPage" />
+          <Switch v-model="settings.enablePublicPage" class="shrink-0" />
         </div>
 
-        <!-- 伪装页面 -->
+        <!-- 允许浏览器打开订阅链接 -->
+        <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-fg">
+              {{ t('settings.disguisePageTitle') }}
+            </p>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.disguisePageDesc') }}
+            </p>
+          </div>
+          <Switch v-model="settings.allowBrowserSubAccess" class="shrink-0" />
+        </div>
+
+        <!-- 统一拦截响应方式 -->
         <div class="py-5 first:pt-0 last:pb-0 space-y-4">
-          <div class="flex items-center justify-between gap-6">
-            <div class="space-y-1">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.disguisePageTitle') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.disguisePageDesc') }}
-              </p>
-            </div>
-            <Switch v-model="disguiseConfig.enabled" />
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-fg">
+              {{ t('settings.disguiseStrategy') }}
+            </p>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.disguiseBrowserOnlyHint') }}
+            </p>
           </div>
 
-          <div
-            v-show="disguiseConfig.enabled"
-            class="pl-4 border-l-2 border-line space-y-4 transition-all duration-300"
-          >
-            <div>
-              <label class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-2.5 block">{{
-                t('settings.disguiseStrategy')
-              }}</label>
-              <div class="flex flex-col sm:flex-row gap-6">
-                <label class="flex items-center cursor-pointer group">
-                  <input
-                    v-model="disguiseConfig.pageType"
-                    class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
-                    type="radio"
-                    value="default"
-                  />
-                  <div class="ml-3 space-y-0.5">
-                    <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
-                      t('settings.disguiseDefault404')
-                    }}</span>
-                    <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseDefault404Desc') }}</span>
-                  </div>
-                </label>
-                <label class="flex items-center cursor-pointer group">
-                  <input
-                    v-model="disguiseConfig.pageType"
-                    class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
-                    type="radio"
-                    value="redirect"
-                  />
-                  <div class="ml-3 space-y-0.5">
-                    <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
-                      t('settings.disguiseRedirect')
-                    }}</span>
-                    <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseRedirectDesc') }}</span>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down max-w-md">
-              <Input
-                v-model="disguiseConfig.redirectUrl"
-                :label="t('settings.disguiseTargetUrl')"
-                placeholder="www.example.com"
-                type="url"
+          <div class="flex flex-col sm:flex-row gap-6">
+            <label class="flex items-center cursor-pointer group">
+              <input
+                v-model="disguiseConfig.pageType"
+                class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
+                type="radio"
+                value="default"
               />
-            </div>
+              <div class="ml-3 space-y-0.5">
+                <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
+                  t('settings.disguiseDefault404')
+                }}</span>
+                <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseDefault404Desc') }}</span>
+              </div>
+            </label>
+            <label class="flex items-center cursor-pointer group">
+              <input
+                v-model="disguiseConfig.pageType"
+                class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
+                type="radio"
+                value="redirect"
+              />
+              <div class="ml-3 space-y-0.5">
+                <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
+                  t('settings.disguiseRedirect')
+                }}</span>
+                <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseRedirectDesc') }}</span>
+              </div>
+            </label>
+          </div>
 
-            <p class="flex items-center gap-2 text-xs text-fg-subtle">
-              <span class="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0"></span>
-              <span>{{ t('settings.disguiseBrowserOnlyHint') }}</span>
-            </p>
+          <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down max-w-md">
+            <Input
+              v-model="disguiseConfig.redirectUrl"
+              :label="t('settings.disguiseTargetUrl')"
+              placeholder="www.example.com"
+              type="url"
+            />
           </div>
         </div>
 

@@ -5,7 +5,6 @@ import { storeToRefs } from 'pinia';
 import { useRoute, useRouter } from 'vue-router';
 
 const PublicProfilesView = defineAsyncComponent(() => import('@/views/PublicProfilesView.vue'));
-const NotFoundView = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 
 // 已登录等待重定向时的占位组件。
 // 必须使用 render 函数而不是运行时模板字符串（{ template: '<div></div>' }）：
@@ -22,36 +21,40 @@ const route = useRoute();
 const router = useRouter();
 
 const isExploreRoute = computed(() => route.path === '/explore');
+const isPublicClosedForGuest = computed(
+  () => sessionState.value === 'loggedOut' && publicConfig.value && !publicConfig.value.enablePublicPage,
+);
 
-// 如果用户已登录且访问的是首页 /，自动通过逻辑重定向到仪表盘 /dashboard
+// 1. 已登录访问根路径 / 时重定向到仪表盘 /dashboard
+// 2. 公开页关闭且未登录时，交给服务端统一访问控制返回真实 404 或 302 跳转（避免前端再维护第二套 404）
 watchEffect(() => {
   if (sessionState.value === 'loggedIn' && !isExploreRoute.value) {
     // 导航被中断/失败时不应冒泡为未处理的 Promise 拒绝（会触发全局错误提示）
     router.replace('/dashboard').catch(() => {});
+    return;
+  }
+
+  if (isPublicClosedForGuest.value && typeof window !== 'undefined') {
+    window.location.replace(route.fullPath || '/');
   }
 });
 
 const currentView = computed(() => {
-  // 1. 明确的 /explore 路由，显示公开页
+  // 等待会话与公开配置加载完成，避免公开页关闭时短暂闪现
+  if (sessionState.value === 'loading' || isPublicClosedForGuest.value) {
+    return RedirectPlaceholder;
+  }
+
+  // 1. 明确的 /explore 路由：已登录管理员始终可预览，未登录仅在公开页开启时到达此处
   if (isExploreRoute.value) {
-    if (publicConfig.value && !publicConfig.value.enablePublicPage) {
-      return NotFoundView;
-    }
     return PublicProfilesView;
   }
 
-  // 2. 根路径 /
-  // 已登录：显示空白（等待 watchEffect 执行重定向）
+  // 2. 根路径 /：已登录等待重定向到 /dashboard，未登录且公开页开启则展示公开页
   if (sessionState.value === 'loggedIn') {
     return RedirectPlaceholder;
   }
 
-  // 未登录 + 公开页关闭：显示 404 (Disguise)
-  if (sessionState.value === 'loggedOut' && publicConfig.value && !publicConfig.value.enablePublicPage) {
-    return NotFoundView;
-  }
-
-  // 其他情况（未登录 + 公开页开启）：显示公开页
   return PublicProfilesView;
 });
 </script>
