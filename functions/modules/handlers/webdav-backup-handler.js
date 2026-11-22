@@ -414,14 +414,6 @@ export async function performWebdavBackup(env, options = {}) {
   }
 }
 
-export async function handleWebdavBackupStatus(env) {
-  const { storageAdapter } = await getStorage(env);
-  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-  const config = normalizeWebdavConfig(settings);
-  const { password: _password, ...safeConfig } = config;
-  return createJsonResponse({ success: true, data: safeConfig });
-}
-
 export async function handleWebdavBackupTest(request, env) {
   if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
   try {

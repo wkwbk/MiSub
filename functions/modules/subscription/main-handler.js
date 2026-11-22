@@ -426,20 +426,8 @@ export async function handleMisubRequest(context) {
       }
     }
 
-    // nodeTransform 回退逻辑
-    const globalNodeTransform = config.defaultNodeTransform || {};
-    const globalNodeTransformPresets = Array.isArray(config.nodeTransformPresets) ? config.nodeTransformPresets : [];
-    const profileNodeTransform = activeProfile?.nodeTransform ?? null;
-    const profileNodeTransformPresetId = activeProfile?.nodeTransformPresetId || '';
-    const profilePresetNodeTransform = profileNodeTransformPresetId
-      ? globalNodeTransformPresets.find((item) => item?.id === profileNodeTransformPresetId)?.config || null
-      : null;
-    const hasProfileNodeTransform = profileNodeTransform && Object.keys(profileNodeTransform).length > 0;
-
-    // nodeTransform 使用整体覆盖逻辑
-    const effectiveNodeTransform = hasProfileNodeTransform
-      ? profileNodeTransform
-      : profilePresetNodeTransform || globalNodeTransform;
+    // 复用统一解析函数（订阅组 > 预设 > 空对象），同时承载 URL emoji 参数透传
+    const effectiveNodeTransform = resolveEffectiveNodeTransform(activeProfile, config);
 
     const generationSettings = {
       ...effectivePrefixSettings,

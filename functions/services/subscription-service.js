@@ -503,9 +503,8 @@ export async function generateCombinedNodeList(
     activeOperators = ensureArray(config.defaultOperators);
   }
 
-  if (!activeOperators.length) {
-    const legacyConfig = nodeTransformConfig?.enabled ? nodeTransformConfig : config.defaultNodeTransform;
-    activeOperators = adaptLegacyTransform(legacyConfig);
+  if (!activeOperators.length && nodeTransformConfig?.enabled) {
+    activeOperators = adaptLegacyTransform(nodeTransformConfig);
   }
 
   // 2.1 执行 Workflow 链式处理 (算子操作)

@@ -26,28 +26,20 @@ describe('addFlagEmoji 透传到内置 Clash 生成器', () => {
 });
 
 describe('resolveEffectiveNodeTransform 回退链', () => {
-  const globalOff = { addFlagEmoji: false };
-  const globalOn = { addFlagEmoji: true };
-
-  it('无 profile 时回退到全局', () => {
-    expect(resolveEffectiveNodeTransform(null, { defaultNodeTransform: globalOff })).toEqual(globalOff);
+  it('无 profile 或空 nodeTransform 时返回空对象', () => {
+    expect(resolveEffectiveNodeTransform(null, {})).toEqual({});
+    expect(resolveEffectiveNodeTransform({ nodeTransform: {} }, {})).toEqual({});
+    expect(resolveEffectiveNodeTransform(undefined, undefined)).toEqual({});
   });
 
-  it('profile 有 nodeTransform 时整体覆盖全局', () => {
-    expect(
-      resolveEffectiveNodeTransform({ nodeTransform: { addFlagEmoji: true } }, { defaultNodeTransform: globalOff }),
-    ).toEqual({ addFlagEmoji: true });
-  });
-
-  it('profile.nodeTransform 为空对象时回退到全局', () => {
-    expect(resolveEffectiveNodeTransform({ nodeTransform: {} }, { defaultNodeTransform: globalOff })).toEqual(
-      globalOff,
-    );
+  it('profile 有 nodeTransform 时直接生效', () => {
+    expect(resolveEffectiveNodeTransform({ nodeTransform: { addFlagEmoji: true } }, {})).toEqual({
+      addFlagEmoji: true,
+    });
   });
 
   it('profile 引用预设时使用预设配置', () => {
     const config = {
-      defaultNodeTransform: globalOn,
       nodeTransformPresets: [{ id: 'p1', config: { addFlagEmoji: false } }],
     };
     expect(resolveEffectiveNodeTransform({ nodeTransformPresetId: 'p1' }, config)).toEqual({
@@ -57,17 +49,11 @@ describe('resolveEffectiveNodeTransform 回退链', () => {
 
   it('profile 自身优先于预设', () => {
     const config = {
-      defaultNodeTransform: globalOn,
       nodeTransformPresets: [{ id: 'p1', config: { addFlagEmoji: false } }],
     };
     expect(
       resolveEffectiveNodeTransform({ nodeTransformPresetId: 'p1', nodeTransform: { addFlagEmoji: true } }, config),
     ).toEqual({ addFlagEmoji: true });
-  });
-
-  it('配置缺失时返回空对象，不抛错', () => {
-    expect(resolveEffectiveNodeTransform(null, {})).toEqual({});
-    expect(resolveEffectiveNodeTransform(undefined, undefined)).toEqual({});
   });
 });
 
@@ -84,10 +70,5 @@ describe('resolveAddFlagEmoji 优先级', () => {
 
   it('两边都未配置时返回 undefined（保持默认加国旗）', () => {
     expect(resolveAddFlagEmoji(null, {})).toBeUndefined();
-    expect(resolveAddFlagEmoji(null, { defaultNodeTransform: {} })).toBeUndefined();
-  });
-
-  it('全局 defaultNodeTransform.addFlagEmoji 也生效', () => {
-    expect(resolveAddFlagEmoji(null, { defaultNodeTransform: { addFlagEmoji: false } })).toBe(false);
   });
 });

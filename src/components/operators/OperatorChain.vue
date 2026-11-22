@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 import {
   ArrowUpDown,
   ChevronDown,
@@ -12,7 +12,6 @@ import {
   PlayCircle,
   Plus,
   X,
-  Zap,
 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import FilterEditor from '@/components/operators/components/FilterEditor.vue';
@@ -27,102 +26,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  legacyData: {
-    type: Object,
-    default: null,
-  },
 });
 
 const emit = defineEmits(['update:modelValue']);
 const { t } = useI18n();
-
-const canMigrate = computed(() => {
-  return props.modelValue.length === 0 && props.legacyData && props.legacyData.enabled;
-});
-
-const migrateFromLegacy = () => {
-  if (!props.legacyData) return;
-  const config = props.legacyData;
-  const ops = [];
-
-  const filter = config.filter;
-  if (
-    filter &&
-    (filter.include?.enabled ||
-      filter.exclude?.enabled ||
-      filter.protocols?.enabled ||
-      filter.regions?.enabled ||
-      filter.script?.enabled ||
-      filter.useless?.enabled)
-  ) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'filter',
-      enabled: true,
-      params: JSON.parse(JSON.stringify(filter)),
-    });
-  }
-
-  const regex = config.rename?.regex;
-  if (regex?.enabled && regex.rules?.length > 0) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'rename',
-      enabled: true,
-      params: { regex: JSON.parse(JSON.stringify(regex)) },
-    });
-  }
-
-  const template = config.rename?.template;
-  if (template?.enabled) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'rename',
-      enabled: true,
-      params: {
-        template: {
-          enabled: true,
-          template: template.template || '{emoji}{region}-{protocol}-{index}',
-          offset: template.indexStart || 1,
-        },
-      },
-    });
-  }
-
-  const renameScript = config.rename?.script;
-  if (renameScript?.enabled && renameScript.expression) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'script',
-      enabled: true,
-      params: {
-        code: `return ($nodes) => { return $nodes.map(n => { n.name = (${renameScript.expression})(n.name, n); return n; }); }`,
-      },
-    });
-  }
-
-  const dedup = config.dedup;
-  if (dedup?.enabled) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'dedup',
-      enabled: true,
-      params: JSON.parse(JSON.stringify(dedup)),
-    });
-  }
-
-  const sort = config.sort;
-  if (sort?.enabled && sort.keys?.length > 0) {
-    ops.push({
-      id: crypto.randomUUID(),
-      type: 'sort',
-      enabled: true,
-      params: JSON.parse(JSON.stringify(sort)),
-    });
-  }
-
-  emit('update:modelValue', ops);
-};
 
 const expandedIndex = ref(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
 
@@ -224,34 +131,8 @@ const updateOperatorParams = (index, params) => {
 
 <template>
   <div class="space-y-4">
-    <div v-if="canMigrate" class="group relative mb-6 overflow-hidden rounded-md border border-line bg-transparent p-4">
-      <div class="relative z-10 flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
-          <div
-            class="w-9 h-9 rounded-md border border-line bg-transparent text-fg-muted flex items-center justify-center shrink-0"
-          >
-            <Zap class="h-4 w-4" />
-          </div>
-          <div>
-            <h4 class="text-xs font-semibold text-fg">
-              {{ t('operators.legacyConfigFound') }}
-            </h4>
-            <p class="mt-0.5 text-xs text-fg-muted">
-              {{ t('operators.legacyConfigDesc') }}
-            </p>
-          </div>
-        </div>
-        <button
-          class="whitespace-nowrap rounded-md border border-accent bg-accent px-4 py-1.5 text-xs font-semibold text-accent-fg shadow-none transition-colors hover:opacity-90"
-          @click="migrateFromLegacy"
-        >
-          {{ t('operators.migrateNow') }}
-        </button>
-      </div>
-    </div>
-
     <div
-      v-if="modelValue.length === 0 && !canMigrate"
+      v-if="modelValue.length === 0"
       class="rounded-md border border-line bg-transparent py-10 text-center"
     >
       <div

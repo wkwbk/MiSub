@@ -198,7 +198,7 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         </template>
       </SectionHeader>
 
-      <OperatorChain v-model="settings.defaultOperators" :legacy-data="settings.defaultNodeTransform" />
+      <OperatorChain v-model="settings.defaultOperators" />
     </section>
   </div>
 </template>

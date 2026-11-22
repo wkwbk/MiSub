@@ -29,7 +29,7 @@ describe('端到端：订阅路径节点顺序', () => {
 
   it('修复后：透传 addFlagEmoji:false → 无国旗 → mihomo 排序正确', () => {
     const profile = { nodeTransform: { addFlagEmoji: false } };
-    const config = { defaultNodeTransform: { enabled: false }, enableFlagEmoji: false };
+    const config = { enableFlagEmoji: false };
     const effective = resolveEffectiveNodeTransform(profile, config);
     expect(effective.addFlagEmoji).toBe(false);
 

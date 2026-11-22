@@ -34,7 +34,6 @@ import {
   handleBackupRestore,
   handleManualWebdavBackup,
   handleWebdavBackupList,
-  handleWebdavBackupStatus,
   handleWebdavBackupTest,
   handleWebdavRestore,
 } from './handlers/webdav-backup-handler.js';
@@ -80,7 +79,7 @@ export async function handleApiRequest(request, env, context = null) {
     return await handleLogin(request, env);
   }
 
-  if (path === '/public_config' || path === '/config') {
+  if (path === '/public_config') {
     return await handlePublicConfig(request, env);
   }
 
@@ -197,9 +196,6 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/backup/restore':
       return await handleBackupRestore(request, env);
-
-    case '/backup/webdav/status':
-      return await handleWebdavBackupStatus(env);
 
     case '/backup/webdav/test':
       return await handleWebdavBackupTest(request, env);

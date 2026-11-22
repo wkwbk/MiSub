@@ -249,26 +249,20 @@ export function resolveBuiltinRequestOptions({ searchParams, userAgent = '' } = 
 }
 
 /**
- * 解析 profile 生效的 nodeTransform（订阅组 > 预设 > 全局）。
- *
- * 与 refreshNodes 闭包内的回退链保持一致，供闭包外的 builtinOptions 复用。
- * 闭包内的 effectiveNodeTransform 无法外泄，而 builtinOptions 在闭包外构造，
- * 因此需要独立解析一次。
+ * 解析 profile 生效的 nodeTransform（订阅组 > 预设 > 空对象）。
  *
  * @param {Object|null} profile - 当前订阅组
  * @param {Object} config - 全局设置
  * @returns {Object} 生效的 nodeTransform（可能为空对象）
  */
 export function resolveEffectiveNodeTransform(profile, config = {}) {
-  const globalNodeTransform = config.defaultNodeTransform || {};
-  const presets = Array.isArray(config.nodeTransformPresets) ? config.nodeTransformPresets : [];
+  const presets = Array.isArray(config?.nodeTransformPresets) ? config.nodeTransformPresets : [];
   const profileNodeTransform = profile?.nodeTransform ?? null;
   const presetId = profile?.nodeTransformPresetId || '';
   const presetNodeTransform = presetId ? presets.find((item) => item?.id === presetId)?.config : null;
   const hasProfileNodeTransform = profileNodeTransform && Object.keys(profileNodeTransform).length > 0;
 
-  // 整体覆盖逻辑，与 refreshNodes 内一致
-  return hasProfileNodeTransform ? profileNodeTransform : presetNodeTransform || globalNodeTransform;
+  return hasProfileNodeTransform ? profileNodeTransform : presetNodeTransform || {};
 }
 
 /**

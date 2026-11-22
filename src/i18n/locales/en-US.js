@@ -1310,10 +1310,6 @@ export default {
     script: 'Script execution',
     sort: 'Node sorting',
     dedup: 'Smart deduplication',
-    legacyConfigFound: 'Legacy config found',
-    legacyConfigDesc:
-      'Legacy “node cleanup” rules were detected. Migrate them to the new operator chain for a better workflow.',
-    migrateNow: 'Migrate now',
     emptyTitle: 'Start chained processing',
     emptyDesc: 'Add operators to customize your subscription node processing workflow.',
     paused: 'Paused',
