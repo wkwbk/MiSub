@@ -22,11 +22,11 @@ describe('dashboard health helpers', () => {
         { id: 's3', enabled: true, nodeCount: 4, lastError: 'fetch failed' },
       ],
       profiles: [{ id: 'p1', enabled: true }],
-      settings: { mytoken: 'auto' },
+      settings: { mytoken: '' },
       totalNodesCount: 4,
     });
 
-    expect(items.map((item) => item.id)).toEqual(['auto-token', 'subscription-errors', 'disabled-subscriptions']);
+    expect(items.map((item) => item.id)).toEqual(['missing-token', 'subscription-errors', 'disabled-subscriptions']);
     expect(items.find((item) => item.id === 'subscription-errors').count).toBe(1);
     expect(shouldShowFullGuide({ subscriptions: [{ id: 's1' }], profiles: [{ id: 'p1' }] })).toBe(false);
   });
@@ -64,11 +64,11 @@ describe('dashboard health helpers', () => {
         { id: 'disabled', enabled: false, nodeCount: 2 },
       ],
       profiles: [{ id: 'profile', enabled: true }],
-      settings: { mytoken: 'auto' },
+      settings: { mytoken: '' },
       totalNodesCount: 3,
     });
 
-    expect(items.find((item) => item.id === 'auto-token')).toMatchObject({
+    expect(items.find((item) => item.id === 'missing-token')).toMatchObject({
       actionRoute: '/dashboard/settings',
       actionQuery: { focus: 'mytoken' },
     });
@@ -149,14 +149,14 @@ describe('dashboard health helpers', () => {
         { id: 'off', enabled: false, nodeCount: 1 },
       ],
       profiles: [{ id: 'profile' }],
-      settings: { mytoken: 'auto' },
+      settings: { mytoken: '' },
       totalNodesCount: 9,
       now: now * 1000,
     });
 
     expect(items.length).toBeGreaterThan(4);
     expect(items.map((item) => item.id)).toEqual([
-      'auto-token',
+      'missing-token',
       'subscription-errors',
       'expired-subscriptions',
       'low-traffic',

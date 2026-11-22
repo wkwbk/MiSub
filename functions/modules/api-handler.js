@@ -19,7 +19,7 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
-import { getPathRootSegment, isReservedPathRoot } from '../../shared/reserved-paths.js';
+import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 
@@ -312,14 +312,38 @@ export async function handleSettingsSave(request, env) {
       if (rejected) return rejected;
     }
 
-    // 订阅 Token 也不能使用会和路由冲突的保留路径
-    if (newSettings.mytoken && newSettings.mytoken !== 'auto') {
-      const rejected = rejectReservedValue(newSettings.mytoken, '自定义订阅Token');
-      if (rejected) return rejected;
+    // 默认订阅 Token 位于 /{subPath}/{mytoken} 下，仅需禁止破坏单段路径的字符
+    if (newSettings.mytoken && /[\s/?#]/.test(newSettings.mytoken)) {
+      return createJsonResponse(
+        {
+          success: false,
+          message: '默认订阅 Token 不能包含斜杠、问号、井号或空白字符',
+        },
+        400,
+      );
     }
-    if (newSettings.profileToken && newSettings.profileToken !== 'profiles') {
-      const rejected = rejectReservedValue(newSettings.profileToken, '订阅组分享Token');
-      if (rejected) return rejected;
+
+    // 订阅 URL 路径位于根路径第一段，不能包含非法字符或命中非 /sub 的系统保留路径
+    if (newSettings.profileToken) {
+      if (/[\s/?#]/.test(newSettings.profileToken)) {
+        return createJsonResponse(
+          {
+            success: false,
+            message: '订阅 URL 路径不能包含斜杠、问号、井号或空白字符',
+          },
+          400,
+        );
+      }
+      if (isReservedSubPath(newSettings.profileToken)) {
+        const pathRoot = getPathRootSegment(newSettings.profileToken);
+        return createJsonResponse(
+          {
+            success: false,
+            message: `"/${pathRoot}" 是系统保留路径，不可用作订阅 URL 路径`,
+          },
+          400,
+        );
+      }
     }
 
     const storageAdapter = await getStorageAdapter(env);
@@ -439,7 +463,7 @@ export async function handlePublicProfilesRequest(env) {
     ]);
     const settings = rawSettings || {};
 
-    const profileToken = settings.profileToken || 'profiles';
+    const profileToken = settings.profileToken || 'sub';
     const defaultLocale = settings.defaultLocale || 'zh-CN';
 
     // 获取公告配置（仅当启用时返回）

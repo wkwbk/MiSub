@@ -82,7 +82,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=nodes&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -135,7 +135,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const initialResponse = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -147,7 +147,7 @@ describe('handleMisubRequest regression coverage', () => {
       expect(initialResponse.status).toBe(302);
       expect(redirectUrl.origin + redirectUrl.pathname).toBe('https://sub.example/sub');
       expect(redirectUrl.searchParams.get('target')).toBe('clash');
-      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/stable-token');
+      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/sub/stable-token');
       expect(dataSourceUrl.searchParams.has('base64')).toBe(true);
       expect(dataSourceUrl.searchParams.get('callback_token')).toBe('external');
       expect(dataSourceUrl.searchParams.has('target')).toBe(false);
@@ -204,7 +204,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env,
@@ -216,7 +216,7 @@ describe('handleMisubRequest regression coverage', () => {
       expect(response.status).toBe(302);
       expect(redirectUrl.origin + redirectUrl.pathname).toBe('https://sub.example/sub');
       expect(redirectUrl.searchParams.get('target')).toBe('clash');
-      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/stable-token');
+      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/sub/stable-token');
       expect(dataSourceUrl.searchParams.has('base64')).toBe(true);
       expect(dataSourceUrl.searchParams.get('callback_token')).toBe('external');
       expect(dataSourceUrl.searchParams.has('target')).toBe(false);
@@ -263,7 +263,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -275,7 +275,7 @@ describe('handleMisubRequest regression coverage', () => {
       expect(response.status).toBe(302);
       expect(redirectUrl.origin + redirectUrl.pathname).toBe(expectedEndpoint);
       expect(redirectUrl.searchParams.get('target')).toBe('clash');
-      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/stable-token');
+      expect(dataSourceUrl.origin + dataSourceUrl.pathname).toBe('https://misub.example/sub/stable-token');
       expect(dataSourceUrl.searchParams.has('base64')).toBe(true);
       expect(dataSourceUrl.searchParams.get('callback_token')).toBe('external');
       expect(dataSourceUrl.searchParams.has('target')).toBe(false);
@@ -319,7 +319,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=clash&refresh=1&builtin=true', {
+        request: new Request('https://misub.example/sub/stable-token?target=clash&refresh=1&builtin=true', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -626,7 +626,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=nodes&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -733,7 +733,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request(`https://misub.example/stable-token?target=nodes&${paramName}=1`, {
+        request: new Request(`https://misub.example/sub/stable-token?target=nodes&${paramName}=1`, {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -793,7 +793,7 @@ describe('handleMisubRequest regression coverage', () => {
     try {
       const { handleMisubRequest } = await import('../../functions/modules/subscription/main-handler.js');
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/stable-token?target=nodes&refresh=1', {
+        request: new Request('https://misub.example/sub/stable-token?target=nodes&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},

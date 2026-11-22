@@ -107,7 +107,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
       createAdapter.mockReturnValue(adapter);
 
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/test-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/test-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -132,7 +132,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
       createAdapter.mockReturnValue(adapter);
 
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/test-token?target=base64&refresh=1', {
+        request: new Request('https://misub.example/sub/test-token?target=base64&refresh=1', {
           headers: { 'User-Agent': 'v2rayN/6.0' },
         }),
         env: {},
@@ -155,7 +155,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
       createAdapter.mockReturnValue(adapter);
 
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/test-token?target=node&refresh=1', {
+        request: new Request('https://misub.example/sub/test-token?target=node&refresh=1', {
           headers: { 'User-Agent': 'curl/7.88.1' },
         }),
         env: {},
@@ -178,7 +178,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
       createAdapter.mockReturnValue(adapter);
 
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/test-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/test-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},
@@ -201,7 +201,7 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
       createAdapter.mockReturnValue(adapter);
 
       const response = await handleMisubRequest({
-        request: new Request('https://misub.example/test-token?target=clash&refresh=1', {
+        request: new Request('https://misub.example/sub/test-token?target=clash&refresh=1', {
           headers: { 'User-Agent': 'ClashMeta' },
         }),
         env: {},

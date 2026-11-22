@@ -11,8 +11,8 @@ export const DEFAULT_SUBCONVERTER_BACKEND = 'subapi.cmliussss.net';
 
 export const DEFAULT_SETTINGS = {
   FileName: 'MiSub',
-  mytoken: 'auto',
-  profileToken: 'profiles',
+  mytoken: '',
+  profileToken: 'sub',
   transformConfigMode: 'builtin',
   transformConfig: '',
   ruleLevel: 'std',

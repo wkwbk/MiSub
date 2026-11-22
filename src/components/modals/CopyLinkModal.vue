@@ -5,6 +5,7 @@ import { Box, Code2, Link2, Monitor, Send, Zap } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/toast';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
 
 const { t } = useI18n();
 
@@ -26,9 +27,11 @@ const identifier = computed(() => {
   return props.profile.customId || props.profile.id;
 });
 
+const subPath = computed(() => normalizeSubPath(props.token, 'sub'));
+
 const baseUrl = computed(() => {
-  if (!props.token || props.token === 'auto' || !props.token.trim()) return '';
-  return `${window.location.origin}/${props.token}/${identifier.value}`;
+  if (!identifier.value || /[\s/?#]/.test(subPath.value) || isReservedSubPath(subPath.value)) return '';
+  return `${window.location.origin}/${subPath.value}/${identifier.value}`;
 });
 
 const clients = computed(() => [

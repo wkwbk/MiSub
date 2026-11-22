@@ -156,14 +156,14 @@ describe('DashboardView 待处理事项', () => {
       // Disabled alongside enabled -> the `disabled-subscriptions` category.
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     const expandButton = () => wrapper.findAll('button').find((b) => /展开其余|收起/.test(b.text()));
 
-    // auto-token + subscription-errors + expired + low-traffic + disabled.
+    // missing-token + subscription-errors + expired + low-traffic + disabled.
     expect(wrapper.vm.dashboardHealthItems.map((item) => item.id)).toEqual([
-      'auto-token',
+      'missing-token',
       'subscription-errors',
       'expired-subscriptions',
       'low-traffic',
@@ -195,10 +195,10 @@ describe('DashboardView 待处理事项', () => {
 
   it('still routes primary actions to their target with query params', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'x' })];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
-    const primary = wrapper.findAll('button').find((b) => b.text() === '固定 Token');
+    const primary = wrapper.findAll('button').find((b) => b.text() === '去设置 Token');
 
     expect(primary).toBeTruthy();
     await primary.trigger('click');
@@ -228,7 +228,7 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'boom' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('en-US');
     const toggle = wrapper.findAll('button').find((b) => /Show \d+ more/.test(b.text()));
@@ -244,7 +244,7 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'timeout' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('en-US');
     await wrapper.vm.$nextTick();
@@ -253,25 +253,25 @@ describe('DashboardView 待处理事项', () => {
     expect(text).toContain('1 source(s) failed to update');
     expect(text).toContain('View failed sources');
     expect(text).toContain('Open logs');
-    expect(text).toContain('Main token is still automatic');
+    expect(text).toContain('Default subscription token is not set');
 
     // The old hardcoded Chinese must be gone entirely.
     expect(text).not.toContain('个订阅最近更新失败');
-    expect(text).not.toContain('主 Token 仍为自动模式');
+    expect(text).not.toContain('总订阅 Token 未配置');
     expect(text).not.toContain('打开日志');
     expect(text).not.toContain('healthItems.');
   });
 
   it('still renders health item copy in Chinese for zh-CN', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'timeout' })];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard('zh-CN');
     await wrapper.vm.$nextTick();
 
     expect(wrapper.text()).toContain('1 个订阅最近更新失败');
     expect(wrapper.text()).toContain('打开日志');
-    expect(wrapper.text()).toContain('主 Token 仍为自动模式');
+    expect(wrapper.text()).toContain('默认订阅 Token 未配置');
   });
 
   // The dashboard links with a status filter the target view now honours.
@@ -344,29 +344,29 @@ describe('DashboardView 待处理事项', () => {
       buildSub({ id: 'failed', lastError: 'timeout' }),
       buildSub({ id: 'off', enabled: false }),
     ];
-    useSettingsStore().setConfig({ mytoken: 'auto', profileToken: 'share-token' });
+    useSettingsStore().setConfig({ mytoken: '', profileToken: 'share-token' });
 
     const wrapper = mountDashboard();
     await wrapper.vm.$nextTick();
 
     const before = wrapper.vm.dashboardHealthItems.map((i) => i.id);
-    expect(before).toContain('auto-token');
+    expect(before).toContain('missing-token');
     expect(before).toContain('disabled-subscriptions');
 
     const dismiss = wrapper
       .findAll('[data-testid="health-item-dismiss"]')
-      .find((b, idx) => wrapper.vm.visibleHealthItems[idx]?.id === 'auto-token');
+      .find((b, idx) => wrapper.vm.visibleHealthItems[idx]?.id === 'missing-token');
     await dismiss.trigger('click');
     await flushPromises();
 
-    expect(wrapper.vm.dashboardHealthItems.map((i) => i.id)).not.toContain('auto-token');
+    expect(wrapper.vm.dashboardHealthItems.map((i) => i.id)).not.toContain('missing-token');
     expect(wrapper.vm.dismissedHealthItemsCount).toBe(1);
     // The rest of the list is untouched.
     expect(wrapper.vm.dashboardHealthItems.map((i) => i.id)).toContain('disabled-subscriptions');
     // 关键：同步到设置接口，而不是只留在本机
     expect(postMock).toHaveBeenCalledWith(
       '/api/settings',
-      { dismissedHealthItems: ['auto-token'] },
+      { dismissedHealthItems: ['missing-token'] },
       PREFERENCES_SAVE_OPTIONS,
     );
   });

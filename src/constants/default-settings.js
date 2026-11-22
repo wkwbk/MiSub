@@ -5,8 +5,8 @@ import { DEFAULT_PUBLIC_CORES_CONFIG } from '@shared/default-public-cores.js';
 
 export const DEFAULT_SETTINGS = {
   FileName: 'MiSub',
-  mytoken: 'auto',
-  profileToken: 'profiles',
+  mytoken: '',
+  profileToken: 'sub',
   defaultLocale: 'zh-CN',
   transformConfigMode: 'builtin',
   transformConfig: '',

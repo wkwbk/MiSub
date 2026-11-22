@@ -10,7 +10,6 @@ const {
   disguiseConfig,
   isLoading,
   isSaving,
-  restartCountdown,
   hasWhitespace,
   loadSettings,
   handleSave,
@@ -43,9 +42,6 @@ defineExpose({
   isSaving,
   saveDisabled,
 });
-const handleReloadNow = () => {
-  window.location.reload();
-};
 </script>
 
 <template>
@@ -59,12 +55,10 @@ const handleReloadNow = () => {
       :import-backup="importBackup"
       :is-loading="isLoading"
       :is-saving="isSaving"
-      :restart-countdown="restartCountdown"
       :settings="settings"
       hide-footer
       in-modal
       @save="handleSave"
-      @reload-now="handleReloadNow"
     />
   </div>
 </template>

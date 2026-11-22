@@ -188,11 +188,7 @@ const { settings } = storeToRefs(dataStore);
 const handleQRCode = (profileId) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
   if (profile) {
-    if (!settings.value.profileToken) {
-      showToast(t('notices.noToken'), 'error');
-      return;
-    }
-    const token = settings.value.profileToken;
+    const token = (settings.value.profileToken || '').trim().replace(/^\/+|\/+$/g, '') || 'sub';
     const baseUrl = window.location.origin;
     const idToUse = profile.customId || profile.id;
     qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;

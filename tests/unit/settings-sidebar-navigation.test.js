@@ -59,7 +59,6 @@ vi.mock('@/composables/useSettingsLogic.js', () => ({
     disguiseConfig: {},
     isLoading: false,
     isSaving: false,
-    restartCountdown: null,
     hasWhitespace: false,
     loadSettings: vi.fn(),
     handleSave: vi.fn(),

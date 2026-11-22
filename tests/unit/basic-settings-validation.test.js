@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { reactive } from 'vue';
 import { mount } from '@vue/test-utils';
 import BasicSettings from '@/components/settings/sections/BasicSettings.vue';
 import { createI18n } from '@/i18n/index.js';
@@ -34,11 +35,11 @@ describe('BasicSettings validation feedback', () => {
     showToast.mockReset();
   });
 
-  it('keeps reserved tokens in the field and shows inline error state', async () => {
+  it('keeps reserved paths in the field and shows inline error state while allowing /sub', async () => {
     const wrapper = mountBasicSettings({
       FileName: '',
       mytoken: 'settings',
-      profileToken: 'profile-token',
+      profileToken: 'dashboard',
       customLoginPath: 'login',
       enablePublicPage: true,
     });
@@ -46,11 +47,21 @@ describe('BasicSettings validation feedback', () => {
     await wrapper.vm.$nextTick();
 
     expect(wrapper.props().settings.mytoken).toBe('settings');
-    expect(wrapper.text()).toContain('系统保留路径不可用作自定义订阅 Token');
+    expect(wrapper.text()).toContain('系统保留路径不可用作订阅 URL 路径');
     expect(wrapper.text()).toContain('"/login" 是系统保留路径，不可用作自定义管理后台路径');
-    expect(wrapper.text()).toContain('订阅 Token 与管理密码相互独立');
+    expect(wrapper.text()).toContain('/{URL路径}/{标识}');
     expect(wrapper.text()).toContain('旧链接将立即失效');
     expect(wrapper.props().settings.customLoginPath).toBe('login');
+
+    const subWrapper = mountBasicSettings({
+      FileName: 'MiSub',
+      mytoken: '',
+      profileToken: 'sub',
+      customLoginPath: '',
+      enablePublicPage: true,
+    });
+    await subWrapper.vm.$nextTick();
+    expect(subWrapper.text()).not.toContain('系统保留路径不可用作订阅 URL 路径');
   });
 
   it('allows URL path-safe symbol characters in subscription tokens for stronger secrets', async () => {
@@ -80,6 +91,44 @@ describe('BasicSettings validation feedback', () => {
 
     await wrapper.vm.$nextTick();
 
-    expect(wrapper.text()).toContain('Token 不能包含斜杠、问号、井号或空白字符');
+    expect(wrapper.text()).toContain('不能包含斜杠、问号、井号或空白字符');
+  });
+
+  it('handles live editing and clearing of mytoken and profileToken without throwing', async () => {
+    const settings = reactive({
+      FileName: 'MiSub',
+      mytoken: '',
+      profileToken: 'profiles',
+      customLoginPath: '',
+      enablePublicPage: true,
+    });
+    const wrapper = mountBasicSettings(settings);
+    const mytokenInput = wrapper.find('input#setting-mytoken');
+    const profileTokenInput = wrapper.find('input#setting-profileToken');
+
+    await mytokenInput.setValue('my-token-1');
+    await mytokenInput.setValue('');
+    await mytokenInput.setValue('login');
+    await profileTokenInput.setValue('share-token-1');
+    await profileTokenInput.setValue('');
+    await profileTokenInput.setValue('dashboard');
+
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining('系统保留路径'), 'error');
+  });
+
+  it('generates a valid UUID token for mytoken only and keeps profileToken as a plain URL path input', async () => {
+    const settings = reactive({
+      FileName: 'MiSub',
+      mytoken: '',
+      profileToken: 'profiles',
+      customLoginPath: '',
+      enablePublicPage: true,
+    });
+    const wrapper = mountBasicSettings(settings);
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    await wrapper.find('[data-testid="generate-mytoken-btn"]').trigger('click');
+    expect(settings.mytoken).toMatch(uuidPattern);
+    expect(wrapper.find('[data-testid="generate-profileToken-btn"]').exists()).toBe(false);
   });
 });

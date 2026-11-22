@@ -419,6 +419,10 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
       }
     }
 
+    const subPath = String(settings.profileToken || 'sub')
+      .trim()
+      .replace(/^\/+|\/+$/g, '') || 'sub';
+
     if (args.length > 0) {
       // 查找指定订阅组
       const targetName = args.join(' ').trim().toLowerCase();
@@ -433,7 +437,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
 
       let message = `🔗 <b>${profile.name}</b>\n\n`;
       if (baseUrl) {
-        message += `订阅链接：\n<code>${baseUrl}/sub/${profile.id}</code>\n\n`;
+        message += `订阅链接：\n<code>${baseUrl}/${subPath}/${profile.customId || profile.id}</code>\n\n`;
         message += `点击链接可复制`;
       } else {
         message += `订阅组 ID：<code>${profile.id}</code>\n\n`;
@@ -448,7 +452,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
       publicProfiles.forEach((profile, i) => {
         message += `<b>${i + 1}. ${profile.name}</b>\n`;
         if (baseUrl) {
-          message += `<code>${baseUrl}/sub/${profile.id}</code>\n\n`;
+          message += `<code>${baseUrl}/${subPath}/${profile.customId || profile.id}</code>\n\n`;
         } else {
           message += `ID: <code>${profile.id}</code>\n\n`;
         }
@@ -487,6 +491,9 @@ export async function handleSubCommandSimple(chatId, env, requestCache = null) {
 
     // 尝试从设置中获取域名
     const customDomain = settings.custom_domain || settings.publicDomain || '';
+    const subPath = String(settings.profileToken || 'sub')
+      .trim()
+      .replace(/^\/+|\/+$/g, '') || 'sub';
 
     let message = '🔗 <b>订阅组列表</b>\n\n';
 
@@ -494,7 +501,7 @@ export async function handleSubCommandSimple(chatId, env, requestCache = null) {
       message += `<b>${i + 1}. ${profile.name}</b>\n`;
       message += `ID: <code>${profile.id}</code>\n`;
       if (customDomain) {
-        message += `链接: <code>${customDomain}/sub/${profile.id}</code>\n`;
+        message += `链接: <code>${customDomain}/${subPath}/${profile.customId || profile.id}</code>\n`;
       }
       message += '\n';
     });

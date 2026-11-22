@@ -23,6 +23,6 @@ export const API_ENDPOINTS = {
 
   // 订阅访问
   SUB_BASE: '/sub',
-  SUB_PROFILE: '/sub/:token/:profileId',
-  SUB_DIRECT: '/sub/:token',
+  SUB_PROFILE: '/:subPath/:profileId',
+  SUB_DIRECT: '/:subPath/:token',
 };

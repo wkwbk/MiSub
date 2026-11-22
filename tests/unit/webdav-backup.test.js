@@ -38,7 +38,7 @@ function createEnv(settings = {}) {
     MISUB_DB: createMemoryD1({
       worker_settings_v1: {
         storageType: 'd1',
-        mytoken: 'auto',
+        mytoken: 'backup-token',
         webdavBackup: {
           enabled: true,
           endpoint: 'https://dav.example/remote.php/dav/files/user',

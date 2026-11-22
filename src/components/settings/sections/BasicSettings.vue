@@ -1,5 +1,5 @@
 <script setup>
-import { Globe, Info, Languages, SlidersHorizontal } from '@lucide/vue';
+import { Globe, Info, Languages, RefreshCw, SlidersHorizontal } from '@lucide/vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
@@ -7,7 +7,7 @@ import Switch from '@/components/ui/Switch.vue';
 import { computed, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toast';
 import { useI18n } from '@/i18n/index.js';
-import { getPathRootSegment, isReservedPathRoot } from '@shared/reserved-paths.js';
+import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@shared/reserved-paths.js';
 
 const props = defineProps({
   settings: {
@@ -29,6 +29,23 @@ const { t } = useI18n();
 
 const hasInvalidTokenChars = (value) => /[\s/?#]/.test(value);
 
+const generateUuidToken = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  const bytes = new Uint8Array(16);
+  globalThis.crypto?.getRandomValues?.(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+};
+
+const handleGenerateToken = (field) => {
+  props.settings[field] = generateUuidToken();
+  showToast(t('settings.tokenGenerated'), 'success');
+};
+
 const customLoginPathError = computed(() => {
   const value = props.settings.customLoginPath;
   if (!value) return '';
@@ -48,11 +65,7 @@ const myTokenError = computed(() => {
   const value = props.settings.mytoken;
   if (!value) return '';
 
-  if (hasInvalidTokenChars(value)) {
-    return t('settings.reservedTokenChars');
-  }
-
-  return isReservedPathRoot(value) ? t('settings.reservedPathSubscriptionToken') : '';
+  return hasInvalidTokenChars(value) ? t('settings.reservedTokenChars') : '';
 });
 
 const profileTokenError = computed(() => {
@@ -63,7 +76,7 @@ const profileTokenError = computed(() => {
     return t('settings.reservedTokenChars');
   }
 
-  return isReservedPathRoot(value) ? t('settings.reservedPathProfileToken') : '';
+  return isReservedSubPath(value) ? t('settings.reservedPathProfileToken') : '';
 });
 
 // 监听自定义登录路径，保留输入并通过提示引导修正
@@ -88,11 +101,6 @@ watch(
     if (!val) return;
     if (hasInvalidTokenChars(val)) {
       showToast(t('settings.reservedTokenChars'), 'error');
-      return;
-    }
-    const pathSegment = getPathSegment(val);
-    if (RESERVED_PATHS.includes(pathSegment)) {
-      showToast(t('settings.reservedPathSubscriptionToken'), 'error');
     }
   },
 );
@@ -105,8 +113,7 @@ watch(
       showToast(t('settings.reservedTokenChars'), 'error');
       return;
     }
-    const pathSegment = getPathSegment(val);
-    if (RESERVED_PATHS.includes(pathSegment)) {
+    if (isReservedSubPath(val)) {
       showToast(t('settings.reservedPathProfileToken'), 'error');
     }
   },
@@ -234,21 +241,6 @@ const handleCustomProfileIntervalBlur = () => {
       </SectionHeader>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div>
-          <Input v-model="settings.FileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
-        </div>
-        <div>
-          <Input
-            id="setting-mytoken"
-            v-model="settings.mytoken"
-            :class="{
-              'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-mytoken',
-            }"
-            :error="myTokenError"
-            :label="t('settings.customToken')"
-            class="rounded-md font-mono transition-shadow duration-300"
-          />
-        </div>
-        <div>
           <Input
             id="setting-profileToken"
             v-model="settings.profileToken"
@@ -258,6 +250,35 @@ const handleCustomProfileIntervalBlur = () => {
             :error="profileTokenError"
             :label="t('settings.profileToken')"
             :placeholder="t('settings.profileTokenPlaceholder')"
+            class="rounded-md font-mono transition-shadow duration-300"
+          />
+        </div>
+        <div>
+          <Input v-model="settings.FileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-xs font-medium text-fg-muted" for="setting-mytoken">
+              {{ t('settings.customToken') }}
+            </label>
+            <button
+              class="inline-flex items-center gap-1 text-xs font-medium text-fg-muted hover:text-fg transition-colors"
+              data-testid="generate-mytoken-btn"
+              type="button"
+              @click="handleGenerateToken('mytoken')"
+            >
+              <RefreshCw class="h-3 w-3" />
+              <span>{{ t('settings.generateRandomToken') }}</span>
+            </button>
+          </div>
+          <Input
+            id="setting-mytoken"
+            v-model="settings.mytoken"
+            :class="{
+              'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-mytoken',
+            }"
+            :error="myTokenError"
+            :placeholder="t('settings.customTokenPlaceholder')"
             class="rounded-md font-mono transition-shadow duration-300"
           />
         </div>

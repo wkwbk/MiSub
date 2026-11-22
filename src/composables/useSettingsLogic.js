@@ -49,12 +49,11 @@ export function useSettingsLogic() {
   const settings = ref(normalizeSettingsObject(DEFAULT_SETTINGS));
   const isLoading = ref(false);
   const isSaving = ref(false);
-  const restartCountdown = ref(null);
   let reloadTimer = null;
 
   const clearReloadTimer = () => {
     if (reloadTimer !== null) {
-      clearInterval(reloadTimer);
+      clearTimeout(reloadTimer);
       reloadTimer = null;
     }
   };
@@ -156,14 +155,10 @@ export function useSettingsLogic() {
           showToast(t('settings.savedReloading'), 'success');
         }
         clearReloadTimer();
-        restartCountdown.value = 3;
-        reloadTimer = setInterval(() => {
-          restartCountdown.value -= 1;
-          if (restartCountdown.value <= 0) {
-            clearReloadTimer();
-            window.location.reload();
-          }
-        }, 1000);
+        reloadTimer = setTimeout(() => {
+          reloadTimer = null;
+          window.location.reload();
+        }, 1200);
         return true;
       } else {
         throw new Error(result.error || result.message || t('settings.saveFailed'));
@@ -222,7 +217,6 @@ export function useSettingsLogic() {
     disguiseConfig,
     isLoading,
     isSaving,
-    restartCountdown,
     hasWhitespace,
     loadSettings,
     handleSave,

@@ -55,7 +55,7 @@ describe('QuickImportModal', () => {
 
     await wrapper.find('button.group').trigger('click');
 
-    const expectedUrl = encodeURIComponent('https://misub.example/profiles/!luckyss?target=clash');
+    const expectedUrl = encodeURIComponent('https://misub.example/sub/!luckyss?target=clash');
     expect(mockLocation.href).toBe(`mihomo://install-config?url=${expectedUrl}&name=Lucky%20SS`);
   });
 });

@@ -56,10 +56,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  restartCountdown: {
-    type: Number,
-    default: null,
-  },
   hasWhitespace: {
     type: Boolean,
     default: false,
@@ -95,7 +91,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['update:activeTab', 'save', 'reload-now']);
+const emit = defineEmits(['update:activeTab', 'save']);
 
 const activeTabModel = computed({
   get: () => props.activeTab,
@@ -206,25 +202,6 @@ onUnmounted(() => {
     </div>
 
     <div v-else :aria-label="currentTabLabel" class="flex flex-col gap-4 w-full" role="tabpanel">
-      <div
-        v-if="restartCountdown !== null"
-        aria-live="polite"
-        class="flex items-center justify-between gap-3 rounded-md bg-amber-500/10 px-4 py-3 text-xs text-amber-200 border border-amber-500/20"
-        role="status"
-      >
-        <span class="flex items-center gap-2 font-mono">
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-          {{ t('settings.reloadCountdown', { seconds: restartCountdown }) }}
-        </span>
-        <button
-          class="shrink-0 rounded-md border border-line-strong bg-transparent px-3 py-1 text-xs font-medium text-fg hover:bg-hover"
-          type="button"
-          @click="$emit('reload-now')"
-        >
-          {{ t('settings.reloadNow') }}
-        </button>
-      </div>
-
       <BasicSettings
         v-if="visitedTabs.has('basic')"
         v-show="activeTab === 'basic'"

@@ -16,7 +16,6 @@ const {
   disguiseConfig,
   isLoading,
   isSaving,
-  restartCountdown,
   hasWhitespace,
   loadSettings,
   handleSave,
@@ -156,10 +155,6 @@ watch(
   },
 );
 
-const handleReloadNow = () => {
-  window.location.reload();
-};
-
 onUnmounted(() => {
   clearTimeout(highlightTimer);
 });
@@ -177,12 +172,10 @@ onUnmounted(() => {
       :import-backup="importBackup"
       :is-loading="isLoading"
       :is-saving="isSaving"
-      :restart-countdown="restartCountdown"
       :settings="settings"
       layout-class="h-full"
       @save="handleSave"
       @update:active-tab="handleActiveTabUpdate"
-      @reload-now="handleReloadNow"
     />
   </div>
 </template>

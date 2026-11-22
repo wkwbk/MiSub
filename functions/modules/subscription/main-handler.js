@@ -4,6 +4,7 @@ import { formatBytes } from '../../../shared/format-utils.js';
 import { generateCombinedNodeList } from '../../services/subscription-service.js';
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from '../config.js';
+import { normalizeSubPath } from '../../../shared/reserved-paths.js';
 import { createDisguiseResponse } from '../disguise-page.js';
 import {
   generateCacheKey,
@@ -150,8 +151,8 @@ export async function handleMisubRequest(context) {
   };
 
   if (profileIdentifier) {
-    // [修正] 使用 config 變量
-    if (!token || token !== config.profileToken) {
+    const expectedSubPath = normalizeSubPath(config.profileToken, 'sub');
+    if (!token || token !== expectedSubPath) {
       // [伪装加固] 不使用裸 403/403 文本响应：403 会暴露「该地址存在一个受保护的服务」，
       // 与首页的伪装行为形成差异，可被扫描器识别。改为返回伪装页（或 404），
       // 与未授权的 SPA 路由行为保持一致。
@@ -286,8 +287,7 @@ export async function handleMisubRequest(context) {
       return new Response('Profile not found or disabled', { status: 404 });
     }
   } else {
-    // [修正] 使用 config 變量
-    if (!token || token !== config.mytoken) {
+    if (!config.mytoken || !token || token !== config.mytoken) {
       // [伪装加固] 同 profile token：避免裸 403 暴露服务存在
       return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
     }

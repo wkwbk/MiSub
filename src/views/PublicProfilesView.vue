@@ -129,7 +129,7 @@ const fetchPublicProfiles = async () => {
 };
 
 const copyLink = async (profile) => {
-  const token = config.value.profileToken || 'profiles';
+  const token = config.value.profileToken || 'sub';
   const identifier = profile.customId || profile.id;
   const link = `${window.location.origin}/${token}/${identifier}`;
 
@@ -314,7 +314,7 @@ const toggleQRCode = async (profile) => {
     await nextTick();
     const canvas = qrCanvasRefs.value[profileId];
     if (canvas) {
-      const token = config.value.profileToken || 'profiles';
+      const token = config.value.profileToken || 'sub';
       const identifier = profile.customId || profile.id;
       const link = `${window.location.origin}/${token}/${identifier}`;
       try {
@@ -469,7 +469,7 @@ onUnmounted(() => {
         <ProfileGrid
           v-else
           :is-qr-expanded="isQRExpanded"
-          :profile-token="config.profileToken || 'profiles'"
+          :profile-token="config.profileToken || 'sub'"
           :profiles="publicProfiles"
           @preview="handlePreview"
           @quick-import="handleQuickImport"
@@ -580,7 +580,7 @@ onUnmounted(() => {
           <div v-else-if="publicProfiles.length > 0">
             <ProfileGrid
               :is-qr-expanded="isQRExpanded"
-              :profile-token="config.profileToken || 'profiles'"
+              :profile-token="config.profileToken || 'sub'"
               :profiles="publicProfiles"
               @preview="handlePreview"
               @quick-import="handleQuickImport"
@@ -725,7 +725,7 @@ onUnmounted(() => {
     <QuickImportModal
       :clients="clients"
       :profile="selectedProfileForImport"
-      :profile-token="config.profileToken || 'profiles'"
+      :profile-token="config.profileToken || 'sub'"
       :show="showQuickImportModal"
       @close="showQuickImportModal = false"
     />

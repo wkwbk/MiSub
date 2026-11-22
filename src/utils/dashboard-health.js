@@ -3,10 +3,8 @@ import { getSubscriptionTrafficState } from '@/utils/dashboard-deeplink.js';
 const DEFAULT_NOW = () => Date.now();
 
 function getTokenState(settings = {}) {
-  const token = settings.mytoken;
-  if (!token) return 'missing';
-  if (token === 'auto') return 'auto';
-  return 'stable';
+  const token = typeof settings.mytoken === 'string' ? settings.mytoken.trim() : '';
+  return token ? 'stable' : 'missing';
 }
 
 function getTrafficState(sub, now) {
@@ -103,20 +101,10 @@ export function getDashboardHealthItems({
   if (tokenState === 'missing') {
     items.push({
       id: 'missing-token',
-      tone: 'danger',
+      tone: 'warning',
       titleKey: 'dashboard.healthItems.missingToken.title',
       descriptionKey: 'dashboard.healthItems.missingToken.description',
       actionLabelKey: 'dashboard.healthItems.missingToken.action',
-      actionRoute: '/dashboard/settings',
-      actionQuery: { focus: 'mytoken' },
-    });
-  } else if (tokenState === 'auto') {
-    items.push({
-      id: 'auto-token',
-      tone: 'warning',
-      titleKey: 'dashboard.healthItems.autoToken.title',
-      descriptionKey: 'dashboard.healthItems.autoToken.description',
-      actionLabelKey: 'dashboard.healthItems.autoToken.action',
       actionRoute: '/dashboard/settings',
       actionQuery: { focus: 'mytoken' },
     });

@@ -1,7 +1,7 @@
 /**
  * 系统保留一级路径列表（前后端共用）
  * 这些路径会与前端路由或后端 API / 静态资源路径冲突，
- * 不允许用作自定义登录路径、自定义订阅 Token 或订阅组分享 Token。
+ * 不允许用作自定义登录路径或订阅 URL 路径（默认订阅路径 /sub 除外）。
  */
 export const RESERVED_PATH_ROOTS = Object.freeze([
   'settings',
@@ -57,4 +57,26 @@ export function getPathRootSegment(value) {
 export function isReservedPathRoot(value) {
   const segment = getPathRootSegment(value);
   return Boolean(segment && RESERVED_PATH_ROOT_SET.has(segment));
+}
+
+/**
+ * 规范化订阅 URL 路径前缀（去除首尾斜杠和空白，空值回退为默认 'sub'）
+ * @param {string} value
+ * @param {string} [fallback='sub']
+ * @returns {string}
+ */
+export function normalizeSubPath(value, fallback = 'sub') {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim().replace(/^\/+|\/+$/g, '');
+  return trimmed || fallback;
+}
+
+/**
+ * 判断输入值是否命中订阅 URL 路径保留字（允许默认路径 'sub'，拒绝其余系统保留路径）
+ * @param {string} value
+ * @returns {boolean}
+ */
+export function isReservedSubPath(value) {
+  const segment = getPathRootSegment(value);
+  return Boolean(segment && segment !== 'sub' && RESERVED_PATH_ROOT_SET.has(segment));
 }

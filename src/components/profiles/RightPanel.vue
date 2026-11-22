@@ -5,6 +5,7 @@ import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
 
 const props = defineProps({
   config: Object,
@@ -29,14 +30,26 @@ const selectedId = ref('default');
 
 const formatLabel = (format) => (format === 'universal' ? t('dashboard.linkCard.universalFormat') : format);
 const isStableToken = (value) =>
-  typeof value === 'string' && value.trim() === value && value !== 'auto' && /^[a-zA-Z0-9-_]+$/.test(value);
+  typeof value === 'string' && value.trim() === value && /^[a-zA-Z0-9-_]+$/.test(value);
 
 const hasProfiles = computed(() => (props.profiles || []).length > 0);
+const rawSubPath = computed(() =>
+  typeof props.config?.profileToken === 'string' ? props.config.profileToken.trim() : '',
+);
+const effectiveSubPath = computed(() => normalizeSubPath(rawSubPath.value, 'sub'));
+const subPathReady = computed(() => isStableToken(effectiveSubPath.value) && !isReservedSubPath(effectiveSubPath.value));
 const mainTokenReady = computed(() => isStableToken(props.config?.mytoken));
-const profileTokenReady = computed(() => isStableToken(props.config?.profileToken));
 
 const setupTasks = computed(() => {
   const tasks = [];
+  if (!subPathReady.value) {
+    tasks.push({
+      id: 'profile-token',
+      title: t('dashboard.linkCard.profileTokenTitle'),
+      description: t('dashboard.linkCard.profileTokenDesc'),
+      to: '/dashboard/settings?focus=profileToken',
+    });
+  }
   if (!mainTokenReady.value) {
     tasks.push({
       id: 'main-token',
@@ -53,20 +66,19 @@ const setupTasks = computed(() => {
       to: '/dashboard/subscriptions?focus=profiles',
     });
   }
-  if (hasProfiles.value && !profileTokenReady.value) {
-    tasks.push({
-      id: 'profile-token',
-      title: t('dashboard.linkCard.profileTokenTitle'),
-      description: t('dashboard.linkCard.profileTokenDesc'),
-      to: '/dashboard/settings?focus=profileToken',
-    });
-  }
   return tasks;
 });
 
 const hasSetupTasks = computed(() => setupTasks.value.length > 0);
 
 const requiredToken = computed(() => {
+  if (!subPathReady.value) {
+    return {
+      type: 'profileToken',
+      value: rawSubPath.value,
+      name: t('dashboard.linkCard.tokenNameShare'),
+    };
+  }
   return selectedId.value === 'default'
     ? {
         type: 'mytoken',
@@ -75,12 +87,14 @@ const requiredToken = computed(() => {
       }
     : {
         type: 'profileToken',
-        value: props.config?.profileToken,
+        value: effectiveSubPath.value,
         name: t('dashboard.linkCard.tokenNameShare'),
       };
 });
 
-const isLinkValid = computed(() => isStableToken(requiredToken.value.value));
+const isLinkValid = computed(() =>
+  selectedId.value === 'default' ? subPathReady.value && mainTokenReady.value : subPathReady.value,
+);
 
 const subLink = computed(() => {
   if (!isLinkValid.value) {
@@ -88,8 +102,8 @@ const subLink = computed(() => {
   }
 
   const origin = window.location.origin;
-  const token = requiredToken.value.value;
-  let baseUrl = selectedId.value === 'default' ? `${origin}/${token}` : `${origin}/${token}/${selectedId.value}`;
+  const identifier = selectedId.value === 'default' ? props.config.mytoken : selectedId.value;
+  const baseUrl = `${origin}/${effectiveSubPath.value}/${identifier}`;
 
   if (selectedFormat.value === 'universal') {
     return baseUrl;
@@ -247,14 +261,14 @@ onUnmounted(() => {
       </div>
 
       <p
-        v-if="(!isLinkValid && !hasSetupTasks) || (isLinkValid && requiredToken.value === 'auto')"
+        v-if="!isLinkValid && !hasSetupTasks"
         class="text-xs text-fg-muted mt-3 flex items-start gap-2 list-item-animation"
         style="--delay-index: 5"
       >
         <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
         <span>
           {{ t('dashboard.linkCard.hintPrefix') }}
-          <span v-if="!isLinkValid">
+          <span>
             {{ t('dashboard.linkCard.fixedTokenHint', { name: requiredToken.name }) }}
             <router-link
               class="font-medium text-fg underline decoration-line-strong underline-offset-4 transition-colors hover:text-fg-muted"
@@ -266,9 +280,6 @@ onUnmounted(() => {
                 name: requiredToken.name,
               })
             }}
-          </span>
-          <span v-else-if="requiredToken.type === 'mytoken' && requiredToken.value === 'auto'">
-            {{ t('dashboard.linkCard.autoTokenWarning') }}
           </span>
         </span>
       </p>

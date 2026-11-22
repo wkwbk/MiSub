@@ -61,13 +61,13 @@ describe('dashboard UI components', () => {
 
   it('shows a setup checklist in right panel when tokens or profiles are missing', () => {
     const wrapper = mountRightPanel({
-      config: { mytoken: 'auto', profileToken: '' },
+      config: { mytoken: '', profileToken: '' },
       profiles: [],
     });
 
     expect(wrapper.text()).toContain('生成链接还需几步');
-    expect(wrapper.text()).toContain('固定主 Token');
-    expect(wrapper.text()).toContain('创建组合订阅');
+    expect(wrapper.text()).toContain('设置默认订阅 Token');
+    expect(wrapper.text()).toContain('创建订阅组');
     expect(wrapper.find('input').attributes('disabled')).toBeDefined();
   });
 
@@ -79,7 +79,7 @@ describe('dashboard UI components', () => {
 
     expect(wrapper.text()).not.toContain('生成链接还需几步');
     expect(wrapper.find('input').attributes('disabled')).toBeUndefined();
-    expect(wrapper.find('input').element.value).toContain('/stable-token');
+    expect(wrapper.find('input').element.value).toContain('/share-token/stable-token');
   });
 
   it('generates a native sing-box link instead of a base64 link', async () => {
@@ -92,7 +92,7 @@ describe('dashboard UI components', () => {
     expect(singBoxButton).toBeTruthy();
     await singBoxButton.trigger('click');
 
-    expect(wrapper.find('input').element.value).toBe(`${window.location.origin}/stable-token?singbox`);
+    expect(wrapper.find('input').element.value).toBe(`${window.location.origin}/share-token/stable-token?singbox`);
     expect(wrapper.find('input').element.value).not.toContain('?base64');
   });
 
@@ -103,9 +103,9 @@ describe('dashboard UI components', () => {
     });
 
     const input = wrapper.find('input');
-    expect(wrapper.text()).toContain('固定主 Token');
+    expect(wrapper.text()).toContain('设置默认订阅 Token');
     expect(input.attributes('disabled')).toBeDefined();
-    expect(input.element.value).toBe('请先在“设置”中配置固定的 主 Token');
+    expect(input.element.value).toBe('请先在“设置”中配置 默认订阅 Token');
     expect(input.element.value).not.toContain('https://libk.top/:');
   });
 
@@ -137,7 +137,7 @@ describe('dashboard UI components', () => {
 
     const rightPanel = mountRightPanel(
       {
-        config: { mytoken: 'auto', profileToken: '' },
+        config: { mytoken: '', profileToken: '' },
         profiles: [],
       },
       'en-US',
@@ -145,7 +145,7 @@ describe('dashboard UI components', () => {
 
     expect(rightPanel.text()).toContain('Generate subscription links');
     expect(rightPanel.text()).toContain('A few steps remain before links are ready');
-    expect(rightPanel.text()).toContain('Set fixed main token');
+    expect(rightPanel.text()).toContain('Set default subscription token');
     expect(rightPanel.text()).toContain('Create a profile');
     expect(rightPanel.text()).toContain('Universal');
     expect(rightPanel.text()).not.toContain('生成订阅链接');

@@ -28,6 +28,7 @@ import { StorageFactory } from './storage-adapter.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
 import { authMiddleware, renewAuthSession } from './modules/auth-middleware.js';
+import { normalizeSubPath } from '../shared/reserved-paths.js';
 
 function parseCorsOrigins(env, requestUrl) {
   const configured = (env?.CORS_ORIGINS || '')
@@ -203,17 +204,16 @@ export async function onRequest(context) {
         return applyNoStoreToHtmlResponse(await fetchStaticAsset(request, env, next));
       }
 
-      // 动态识别订阅路由：仅保留 /sub/ 显式前缀，以及用户自定义 mytoken/profileToken 短链
-      const isExplicitSubRoute = url.pathname.startsWith('/sub/');
-
-      const firstSeg = url.pathname.split('/').filter(Boolean)[0];
-      const isCustomTokenRoute = firstSeg && (firstSeg === config.mytoken || firstSeg === config.profileToken);
+      // 统一订阅路由：/{subPath}/{identifier}（默认 subPath = 'sub'）
+      const subPath = normalizeSubPath(config.profileToken, 'sub');
+      const pathSegments = url.pathname.split('/').filter(Boolean);
+      const isSubRoute = pathSegments.length === 2 && pathSegments[0] === subPath;
 
       // 路由分发
       if (url.pathname.startsWith('/api/')) {
         // API 路由
         return await handleApiRequest(request, env, context);
-      } else if (isExplicitSubRoute || isCustomTokenRoute) {
+      } else if (isSubRoute) {
         // MiSub 订阅路由
         return await handleMisubRequest(context);
       } else if (url.pathname === '/cron') {
@@ -249,8 +249,7 @@ export async function onRequest(context) {
           const isLikelySpaPath =
             !/\.\w+$/.test(url.pathname) &&
             !url.pathname.startsWith('/api/') &&
-            !isExplicitSubRoute &&
-            !isCustomTokenRoute &&
+            !isSubRoute &&
             url.pathname !== '/cron';
 
           if (localResponse.status === 404 && isLikelySpaPath) {
@@ -303,7 +302,7 @@ export async function onRequest(context) {
         }
 
         if (!isStaticAsset && !isSpaRoute && url.pathname !== '/') {
-          return await handleMisubRequest(context);
+          return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
         }
 
         let response = await fetchStaticAsset(request, env, next);

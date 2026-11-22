@@ -56,7 +56,7 @@ const urlSchemeMap = {
 // 生成订阅链接
 const getSubscriptionUrl = () => {
   if (!props.profile) return '';
-  const token = props.profileToken || 'profiles';
+  const token = props.profileToken || 'sub';
   const identifier = props.profile.customId || props.profile.id;
   return `${window.location.origin}/${token}/${identifier}`;
 };
