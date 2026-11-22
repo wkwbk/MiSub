@@ -79,7 +79,16 @@ describe('Cloudflare Worker entry (worker.js)', () => {
     expect(assetsFetch).toHaveBeenCalled();
   });
 
-  it('does not expose a redundant Worker scheduled handler', () => {
-    expect(worker.scheduled).toBeUndefined();
+  it('dispatches Worker scheduled triggers by cron expression and registers with ctx.waitUntil', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    const waitUntil = vi.fn();
+    const env = {};
+
+    await worker.scheduled({ cron: '0 */6 * * *' }, env, { waitUntil });
+    await worker.scheduled({ cron: '0 2 * * *' }, env, { waitUntil });
+    await worker.scheduled({ cron: '30 3 * * *' }, env, { waitUntil });
+
+    expect(waitUntil).toHaveBeenCalledTimes(3);
+    expect(infoSpy).toHaveBeenCalledWith('[Cron] Starting parallel update for 0 subscriptions');
   });
 });

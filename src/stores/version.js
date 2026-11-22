@@ -13,11 +13,11 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  // 本地更新日志 (v2.8.4)
-  const localChangelog = `✨ **全站代码质量优化、目录架构重组与 UI/性能改进**
-- **UI 与交互优化**：优化仪表盘布局与移动端视图，统一手动节点卡片视图及节点/订阅/订阅组的分页控件；修复导航与按钮连点问题并预取懒加载弹窗，优化公开页图片与静态资源加载。
-- **兼容性清理与工具统一**：移除过时的 \`document.execCommand('copy')\` 与 \`escape/unescape\` Base64 兼容代码，统一为现代 Clipboard API 与 \`TextEncoder/TextDecoder\` UTF-8 Base64 工具；清理全局与组件死 CSS 及孤立模块。
-- **架构与代码规范升级**：重组前后端模块目录（收拢 \`external-api/\`、\`handlers/\`、\`subscription/generators/\`，拍平前端组件目录并统一 \`kebab-case\` 命名），引入 \`oxlint\` 并将全仓库静态检查警告清零。`;
+  // 本地更新日志 (v2.8.5)
+  const localChangelog = `✨ **定时任务分业务重构、配置键标准化与恢复出厂设置修复**
+- **定时任务按业务拆分**：将定时任务拆分为订阅更新（\`/cron/subscriptions\`）、WebDAV 备份（\`/cron/backup\`）与存储维护（\`/cron/maintenance\`）三个独立入口，同时支持 Cloudflare Worker 原生多 Cron 独立调度，无需依赖外部定时服务。
+- **配置存储与命名标准化**：统一 D1 \`settings\` 表键名注册表（\`main\` / \`rule_templates\` / \`clients\`），将远程转换模板缓存归位至 \`cache\` 表，并全站统一设置字段为 \`camelCase\`，移除历史兼容包袱。
+- **恢复出厂设置与交互修复**：修复连续二次确认弹窗自动取消的竞态缺陷；恢复出厂设置现在会完整清空全部设置键、节点缓存与本机界面偏好，并优化 WebDAV 自动备份相关提示文案。`;
 
   function normalizeVersion(version) {
     return String(version || '')

@@ -119,6 +119,6 @@ export const DEFAULT_SETTINGS = {
 };
 
 export const SYSTEM_CONSTANTS = {
-  VERSION: '2.8.4',
+  VERSION: '2.8.5',
   FETCHER_USER_AGENT: 'v2rayN/7.23',
 };

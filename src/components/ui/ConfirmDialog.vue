@@ -18,6 +18,7 @@ const handleDismiss = () => settleConfirm(false);
 <template>
   <Modal
     :cancel-text="pending ? pending.cancelText : ''"
+    :close-on-confirm="false"
     :confirm-text="pending ? pending.confirmText : ''"
     :confirm-variant="pending ? pending.variant : 'primary'"
     :show="Boolean(pending)"

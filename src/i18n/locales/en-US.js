@@ -958,14 +958,14 @@ export default {
     webdavScopeDataAndSettings: 'Data + settings',
     webdavScopeDataAndSettingsDesc:
       'Includes settings-page configuration. WebDAV configuration itself is not backed up.',
-    webdavRequestAutoBackup: 'Request-triggered automatic backup',
-    webdavEnableAutoBackup: 'Enable automatic backup checks',
+    webdavRequestAutoBackup: 'Automatic backup policy',
+    webdavEnableAutoBackup: 'Auto-check and back up when opening admin UI',
     webdavIntervalHourly: 'Hourly',
     webdavIntervalDaily: 'Daily',
     webdavIntervalWeekly: 'Weekly',
     webdavIntervalMonthly: 'Monthly',
     webdavAutoBackupHint:
-      'When subscription links, the admin UI, or external /cron are accessed, the system checks whether a backup is due. Configure external Cron for strict scheduling.',
+      'When enabled, opening the admin UI checks if the selected interval has elapsed and runs a backup automatically. Worker deployments also run a daily scheduled backup; copy the scheduled backup URL below if you want a custom external schedule.',
     webdavSecurityHint:
       'Security note: backup files may contain subscription links, node data, share tokens, Cron secrets, and other sensitive content. WebDAV configuration itself is not written into backup files. Keep remote directory permissions secure.',
     webdavRecentStatus: 'Recent status',
@@ -984,7 +984,7 @@ export default {
     webdavRestoreFromFile: 'Restore from file',
     webdavLoadingRemote: 'Loading...',
     webdavLoadRemote: 'Load remote backups',
-    webdavCopyCron: 'Copy /cron URL',
+    webdavCopyCron: 'Copy scheduled backup URL',
     webdavRemoteFiles: 'Remote backup files',
     webdavRestore: 'Restore',
     webdavTestFailed: 'Test failed',
@@ -1006,8 +1006,8 @@ export default {
       'Restore from this remote backup?\n\n{name}\n\nRestore overwrites MiSub data domains, does not clear the entire D1 database, and keeps current WebDAV configuration.',
     webdavRestoreRemoteSuccessReload: 'Remote backup restored. The page will reload soon.',
     webdavRestoreRemoteFailedWithMessage: 'Remote restore failed: {message}',
-    webdavCronCopied: 'WebDAV backup Cron URL copied. Configure it in your external scheduler.',
-    webdavCronCopyFailed: 'Copy failed. Copy the current site /cron/backup URL manually.',
+    webdavCronCopied: 'Scheduled backup URL copied for external schedulers.',
+    webdavCronCopyFailed: 'Copy failed. Copy the backup URL from Service Integrations → Automation.',
     announcementTitle: 'Announcements',
     announcementDesc:
       'Configure announcements shown on the public page, such as maintenance notices, changelogs, or usage notes.',
