@@ -1,8 +1,6 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/toast.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
-import { normalizePublicLinksConfig } from '@shared/default-public-links.js';
-import { normalizePublicCoresConfig } from '@shared/default-public-cores.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
@@ -30,9 +28,9 @@ function normalizeExternalApiConfig(value) {
 
 function normalizeSettingsObject(source = {}) {
   const merged = { ...DEFAULT_SETTINGS, ...source };
+  delete merged.publicLinks;
+  delete merged.publicCores;
   merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
-  merged.publicLinks = normalizePublicLinksConfig(source.publicLinks ?? merged.publicLinks);
-  merged.publicCores = normalizePublicCoresConfig(source.publicCores ?? merged.publicCores);
   merged.shortLink = {
     ...DEFAULT_SETTINGS.shortLink,
     ...(source.shortLink && typeof source.shortLink === 'object' ? source.shortLink : {}),
@@ -148,6 +146,8 @@ export function useSettingsLogic() {
       delete settingsToSave.prependSubName;
       delete settingsToSave.nodeTransform;
       delete settingsToSave.clashRuleLevel;
+      delete settingsToSave.publicLinks;
+      delete settingsToSave.publicCores;
 
       const result = await saveSettings(settingsToSave);
       if (result.success) {

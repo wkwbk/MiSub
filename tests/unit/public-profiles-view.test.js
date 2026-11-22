@@ -405,26 +405,29 @@ describe('PublicProfilesView hero loading state', () => {
   });
 
   it('allows adding a custom website link in PublicLinksSettings', async () => {
-    api.post.mockResolvedValue({ success: true });
-    const settings = reactive({
-      publicLinks: {
-        enabled: true,
-        items: [
-          {
-            id: 'fast-com',
-            name: 'FAST',
-            category: 'speedtest',
-            description: 'Netflix speed test',
-            url: 'https://fast.com/',
-            icon: '🚀',
-            enabled: true,
-          },
-        ],
-      },
+    const initialLinks = {
+      enabled: true,
+      items: [
+        {
+          id: 'fast-com',
+          name: 'FAST',
+          category: 'speedtest',
+          description: 'Netflix speed test',
+          url: 'https://fast.com/',
+          icon: '🚀',
+          enabled: true,
+        },
+      ],
+    };
+    api.get.mockImplementation((url) => {
+      if (url === '/api/public_links') {
+        return Promise.resolve({ success: true, data: initialLinks });
+      }
+      return Promise.resolve({ success: true, data: [] });
     });
+    api.post.mockImplementation((_url, payload) => Promise.resolve({ success: true, data: payload }));
 
     wrapper = mount(PublicLinksSettings, {
-      props: { settings },
       global: {
         stubs: {
           Modal: {
@@ -434,6 +437,7 @@ describe('PublicProfilesView hero loading state', () => {
         },
       },
     });
+    await flushPromises();
 
     const addButton = wrapper
       .findAll('button')
@@ -449,15 +453,15 @@ describe('PublicProfilesView hero loading state', () => {
     await saveButton.trigger('click');
     await flushPromises();
 
-    expect(settings.publicLinks.items).toHaveLength(2);
-    expect(settings.publicLinks.items[1]).toMatchObject({
-      name: 'Whoer',
-      url: 'https://whoer.net',
-    });
     expect(api.post).toHaveBeenCalledWith(
-      '/api/settings',
-      { publicLinks: settings.publicLinks },
-      { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
+      '/api/public_links',
+      expect.objectContaining({
+        enabled: true,
+        items: expect.arrayContaining([
+          expect.objectContaining({ id: 'fast-com' }),
+          expect.objectContaining({ name: 'Whoer', url: 'https://whoer.net' }),
+        ]),
+      }),
     );
   });
 

@@ -1,197 +1,38 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
+import { DEFAULT_PUBLIC_CLIENTS_CONFIG, normalizePublicClientsConfig } from '../../../shared/default-public-clients.js';
 import { isStorageUnavailableError } from '../api-handler.js';
 import { createErrorResponse, createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
-const STORAGE_KEY_CLIENTS = SETTINGS_KEYS.CLIENTS;
+export const STORAGE_KEY_CLIENTS = SETTINGS_KEYS.CLIENTS;
 const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
 
 async function getStorageAdapter(env) {
   return StorageFactory.createAdapter(env);
 }
 
-const DEFAULT_CLIENTS = [
-  {
-    id: 'clash-verge-rev',
-    name: 'Clash Verge Rev',
-    icon: '/icons/clients/clash-verge-rev.png',
-    description: '现代化的 Clash 客户端，界面美观，功能强大，支持多平台。',
-    platforms: ['windows', 'macos', 'linux'],
-    url: 'https://github.com/clash-verge-rev/clash-verge-rev/releases',
-    repo: 'clash-verge-rev/clash-verge-rev',
-    version: null,
-  },
-  {
-    id: 'clash-party',
-    name: 'Clash-Party',
-    icon: '/icons/clients/clash-party.png',
-    description: '基于 Electron 的 Mihomo 图形客户端，专注于简单易用的体验。',
-    platforms: ['windows', 'macos', 'linux'],
-    url: 'https://github.com/mihomo-party-org/clash-party/releases',
-    repo: 'mihomo-party-org/clash-party',
-    version: null,
-  },
-  {
-    id: 'v2rayn',
-    name: 'v2rayN',
-    icon: '/icons/clients/v2rayn.png',
-    description: 'Windows 平台最流行的 V2Ray/Xray 客户端，功能强大且易于使用。',
-    platforms: ['windows', 'linux'],
-    url: 'https://github.com/2dust/v2rayN/releases',
-    repo: '2dust/v2rayN',
-    version: null,
-  },
-  {
-    id: 'v2rayng',
-    name: 'v2rayNG',
-    icon: '/icons/clients/v2rayng.png',
-    description: 'Android 平台上最流行的通用代理工具，支持多种协议。',
-    platforms: ['android'],
-    url: 'https://github.com/2dust/v2rayNG/releases',
-    repo: '2dust/v2rayNG',
-    version: null,
-  },
-  {
-    id: 'shadowrocket',
-    name: 'Shadowrocket',
-    icon: '/icons/clients/shadowrocket.png',
-    description: 'iOS 平台功能强大的网络工具，需使用非中国区 Apple ID 下载。',
-    platforms: ['ios'],
-    url: 'https://apps.apple.com/us/app/shadowrocket/id932747118',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'hiddify',
-    name: 'Hiddify',
-    icon: '/icons/clients/hiddify.png',
-    description: '新一代通用客户端，支持 Sing-box 核心，全平台兼容。',
-    platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
-    url: 'https://github.com/hiddify/hiddify-next/releases',
-    repo: 'hiddify/hiddify-next',
-    version: null,
-  },
-  {
-    id: 'sing-box',
-    name: 'sing-box',
-    icon: '/icons/clients/singbox.png',
-    description: 'sing-box 官方全平台图形客户端（SFA / SFI / SFM / SFL），与内核同仓发布。',
-    platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
-    url: 'https://github.com/SagerNet/sing-box/releases',
-    repo: 'SagerNet/sing-box',
-    version: null,
-  },
-  {
-    id: 'nekobox',
-    name: 'NekoBox',
-    icon: '/icons/clients/nekobox.png',
-    description: '功能丰富的全能代理客户端，支持 Sing-box 和 Xray 核心。',
-    platforms: ['android', 'windows'],
-    url: 'https://github.com/MatsuriDayo/NekoBoxForAndroid/releases',
-    repo: 'MatsuriDayo/NekoBoxForAndroid',
-    version: null,
-  },
-  {
-    id: 'stash',
-    name: 'Stash',
-    icon: '/icons/clients/stash.jpg',
-    description: 'iOS 平台上强大的基于规则的代理实用工具，支持多种协议。',
-    platforms: ['ios', 'macos'],
-    url: 'https://apps.apple.com/us/app/stash-rule-based-proxy/id1596063349',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'loon',
-    name: 'Loon',
-    icon: '/icons/clients/loon.jpg',
-    description: 'iOS 平台功能强大的网络工具，界面简洁优雅，支持插件扩展。',
-    platforms: ['ios', 'macos'],
-    url: 'https://apps.apple.com/us/app/loon/id1373567447',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'egern',
-    name: 'Egern',
-    icon: '/icons/clients/egern.jpg',
-    description: 'iOS 平台的规则代理客户端，支持通过订阅链接快速导入配置。',
-    platforms: ['ios'],
-    url: 'https://apps.apple.com/us/app/egern/id1616105820',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'surge',
-    name: 'Surge',
-    icon: '/icons/clients/surge.png',
-    description: 'iOS/macOS 平台的高级网络工具，拥有强大的性能和丰富的功能。',
-    platforms: ['ios', 'macos'],
-    url: 'https://apps.apple.com/us/app/surge-6/id1442620678',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'flclash',
-    name: 'FlClash',
-    icon: '/icons/clients/flclash.png',
-    description: '基于 Flutter 开发的多平台 Clash 客户端，界面美观流畅。',
-    platforms: ['windows', 'linux', 'android'],
-    url: 'https://github.com/chen08209/FlClash/releases',
-    repo: 'chen08209/FlClash',
-    version: null,
-  },
-  {
-    id: 'clashmi',
-    name: 'ClashMI',
-    icon: '/icons/clients/clashmi.png',
-    description: '基于 Mihomo 内核的多平台客户端，简单易用，支持全平台。',
-    platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
-    url: 'https://github.com/KaringX/clashmi/releases',
-    repo: 'KaringX/clashmi',
-    version: null,
-  },
-  {
-    id: 'flyclash',
-    name: 'FlyClash',
-    icon: '/icons/clients/flyclash.png',
-    description: '基于 ClashMeta 内核的轻量级客户端，专注于速度和稳定性。',
-    platforms: ['windows', 'android'],
-    url: 'https://github.com/GtxFury/FlyClash/releases',
-    repo: 'GtxFury/FlyClash',
-    version: null,
-  },
-  {
-    id: 'karing',
-    name: 'Karing',
-    icon: '/icons/clients/karing.png',
-    description: '简单的兼容 Clash/V2ray/Sing-box 的全平台客户端。',
-    platforms: ['windows', 'macos', 'linux', 'android', 'ios'],
-    url: 'https://github.com/KaringX/karing/releases',
-    repo: 'KaringX/karing',
-    version: null,
-  },
-  {
-    id: 'quantumultx',
-    name: 'Quantumult X',
-    icon: '/icons/clients/quantumultx.png',
-    description: 'iOS 平台功能强大的网络工具，界面精美，支持脚本。',
-    platforms: ['ios'],
-    url: 'https://apps.apple.com/us/app/quantumult-x/id1443988620',
-    repo: null,
-    version: null,
-  },
-  {
-    id: 'clashbox',
-    name: 'ClashBox',
-    icon: '/icons/clients/clashbox.png',
-    description: 'HarmonyOS NEXT 平台的原生 Clash 客户端，界面美观，性能强大。',
-    platforms: ['HarmonyOS'],
-    url: 'https://github.com/xiaobaigroup/ClashBox/releases',
-    repo: 'xiaobaigroup/ClashBox',
-    version: null,
-  },
-];
+function validateIconsSize(items = []) {
+  if (!Array.isArray(items)) return null;
+  for (const item of items) {
+    if (typeof item?.icon === 'string' && item.icon.startsWith('data:')) {
+      if (item.icon.length > MAX_ICON_DATA_URL_BYTES) {
+        return 'Icon data URL is too large (max 200KB)';
+      }
+    }
+  }
+  return null;
+}
+
+export async function getPublicClientsConfig(storageAdapter) {
+  if (!storageAdapter || storageAdapter.type === 'noop') {
+    return normalizePublicClientsConfig(DEFAULT_PUBLIC_CLIENTS_CONFIG);
+  }
+  const stored = await storageAdapter.get(STORAGE_KEY_CLIENTS);
+  if (stored && (typeof stored === 'object' || Array.isArray(stored))) {
+    return normalizePublicClientsConfig(stored);
+  }
+  return normalizePublicClientsConfig(DEFAULT_PUBLIC_CLIENTS_CONFIG);
+}
 
 export async function handleClientRequest(request, env) {
   const url = new URL(request.url);
@@ -204,22 +45,22 @@ export async function handleClientRequest(request, env) {
       if (isStorageUnavailable) {
         return createJsonResponse({
           success: true,
-          data: DEFAULT_CLIENTS,
+          data: normalizePublicClientsConfig(DEFAULT_PUBLIC_CLIENTS_CONFIG),
           storageUnavailable: true,
         });
       }
       try {
-        const data = await storageAdapter.get(STORAGE_KEY_CLIENTS);
+        const data = await getPublicClientsConfig(storageAdapter);
         return createJsonResponse({
           success: true,
-          data: data || DEFAULT_CLIENTS,
+          data,
           storageUnavailable: false,
         });
       } catch (readError) {
         if (isStorageUnavailableError(readError)) {
           return createJsonResponse({
             success: true,
-            data: DEFAULT_CLIENTS,
+            data: normalizePublicClientsConfig(DEFAULT_PUBLIC_CLIENTS_CONFIG),
             storageUnavailable: true,
             message: '存储已暂停，客户端列表已回退为内置默认值。',
           });
@@ -234,11 +75,16 @@ export async function handleClientRequest(request, env) {
 
     if (request.method === 'POST') {
       if (path.endsWith('/init')) {
-        await storageAdapter.put(STORAGE_KEY_CLIENTS, DEFAULT_CLIENTS);
+        const current = await getPublicClientsConfig(storageAdapter);
+        const resetData = normalizePublicClientsConfig({
+          enabled: current.enabled !== false,
+          items: DEFAULT_PUBLIC_CLIENTS_CONFIG.items,
+        });
+        await storageAdapter.put(STORAGE_KEY_CLIENTS, resetData);
         return createJsonResponse({
           success: true,
           message: 'Clients initialized',
-          data: DEFAULT_CLIENTS,
+          data: resetData,
         });
       }
 
@@ -249,30 +95,40 @@ export async function handleClientRequest(request, env) {
         return createErrorResponse(e?.status === 413 ? e.message : 'Invalid JSON body', e?.status || 400);
       }
 
-      let clients = (await storageAdapter.get(STORAGE_KEY_CLIENTS)) || [];
+      const current = await getPublicClientsConfig(storageAdapter);
+      let nextConfig;
 
       if (Array.isArray(body)) {
-        clients = body;
-      } else {
+        nextConfig = { enabled: current.enabled !== false, items: body };
+      } else if (body && typeof body === 'object' && ('items' in body || 'enabled' in body) && !('name' in body)) {
+        nextConfig = {
+          enabled: body.enabled !== undefined ? body.enabled !== false : current.enabled !== false,
+          items: Array.isArray(body.items) ? body.items : current.items,
+        };
+      } else if (body && typeof body === 'object') {
         if (!body.name) {
           return createErrorResponse('Client name is required', 400);
         }
-        if (typeof body.icon === 'string' && body.icon.startsWith('data:')) {
-          if (body.icon.length > MAX_ICON_DATA_URL_BYTES) {
-            return createErrorResponse('Icon data URL is too large (max 200KB)', 400);
-          }
-        }
-        const index = clients.findIndex((c) => c.id === body.id);
+        const items = [...current.items];
+        const index = items.findIndex((c) => c.id === body.id);
         if (index !== -1) {
-          clients[index] = { ...clients[index], ...body };
+          items[index] = { ...items[index], ...body };
         } else {
-          if (!body.id) body.id = generateId();
-          clients.push(body);
+          items.push({ ...body, id: body.id || generateId() });
         }
+        nextConfig = { enabled: current.enabled !== false, items };
+      } else {
+        return createErrorResponse('Invalid request payload', 400);
       }
 
-      await storageAdapter.put(STORAGE_KEY_CLIENTS, clients);
-      return createJsonResponse({ success: true, data: clients });
+      const iconError = validateIconsSize(nextConfig.items);
+      if (iconError) {
+        return createErrorResponse(iconError, 400);
+      }
+
+      const normalized = normalizePublicClientsConfig(nextConfig);
+      await storageAdapter.put(STORAGE_KEY_CLIENTS, normalized);
+      return createJsonResponse({ success: true, data: normalized });
     }
 
     if (request.method === 'DELETE') {
@@ -281,16 +137,20 @@ export async function handleClientRequest(request, env) {
         return createErrorResponse('Client ID is required', 400);
       }
 
-      let clients = (await storageAdapter.get(STORAGE_KEY_CLIENTS)) || [];
-      const originalLength = clients.length;
-      clients = clients.filter((c) => c.id !== id);
+      const current = await getPublicClientsConfig(storageAdapter);
+      const originalLength = current.items.length;
+      const nextItems = current.items.filter((c) => c.id !== id);
 
-      if (clients.length === originalLength) {
+      if (nextItems.length === originalLength) {
         return createErrorResponse('Client not found', 404);
       }
 
-      await storageAdapter.put(STORAGE_KEY_CLIENTS, clients);
-      return createJsonResponse({ success: true, data: clients });
+      const normalized = normalizePublicClientsConfig({
+        enabled: current.enabled !== false,
+        items: nextItems,
+      });
+      await storageAdapter.put(STORAGE_KEY_CLIENTS, normalized);
+      return createJsonResponse({ success: true, data: normalized });
     }
 
     return createErrorResponse('Method Not Allowed', 405);

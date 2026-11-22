@@ -14,10 +14,14 @@ describe('API route access boundaries', () => {
     const publicConfig = await handleApiRequest(new Request('https://example.com/api/public_config'), env);
     const publicProfiles = await handleApiRequest(new Request('https://example.com/api/public/profiles'), env);
     const publicClients = await handleApiRequest(new Request('https://example.com/api/clients'), env);
+    const publicCores = await handleApiRequest(new Request('https://example.com/api/public_cores'), env);
+    const publicLinks = await handleApiRequest(new Request('https://example.com/api/public_links'), env);
 
     expect(publicConfig.status).toBe(200);
     expect(publicProfiles.status).toBe(200);
     expect(publicClients.status).toBe(200);
+    expect(publicCores.status).toBe(200);
+    expect(publicLinks.status).toBe(200);
   });
 
   it('does not expose the custom login path through public configuration', async () => {

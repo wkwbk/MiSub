@@ -1,7 +1,10 @@
 
 import { utf8ToBase64 } from '../../../shared/base64.js';
 import { StorageFactory } from '../../storage-adapter.js';
+import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
 import { STORAGE_KEY_SETTINGS } from '../config.js';
+import { getPublicCoresConfig, STORAGE_KEY_PUBLIC_CORES } from './public-cores-handler.js';
+import { getPublicLinksConfig, STORAGE_KEY_PUBLIC_LINKS } from './public-links-handler.js';
 import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
@@ -60,6 +63,8 @@ function sanitizeRuntimeSecrets(settings = {}) {
   delete sanitized.lastBackupStatus;
   delete sanitized.lastBackupMessage;
   delete sanitized.lastBackupFile;
+  delete sanitized.publicLinks;
+  delete sanitized.publicCores;
   return sanitized;
 }
 
@@ -118,7 +123,21 @@ export async function buildBackupPayload(env, options = {}) {
   };
 
   if (scope === BACKUP_SCOPES.DATA_AND_SETTINGS) {
+    const [clients, publicCores, publicLinks] = await Promise.all([
+      storageAdapter.get(SETTINGS_KEYS.CLIENTS).catch(() => null),
+      storageAdapter.get(STORAGE_KEY_PUBLIC_CORES).catch(() => null),
+      storageAdapter.get(STORAGE_KEY_PUBLIC_LINKS).catch(() => null),
+    ]);
     payload.data.settings = sanitizeSettingsForBackup(settings);
+    if (clients && (typeof clients === 'object' || Array.isArray(clients))) {
+      payload.data.clients = cloneJson(clients);
+    }
+    if (publicCores && typeof publicCores === 'object') {
+      payload.data.publicCores = cloneJson(publicCores);
+    }
+    if (publicLinks && typeof publicLinks === 'object') {
+      payload.data.publicLinks = cloneJson(publicLinks);
+    }
   }
 
   return payload;
@@ -138,6 +157,20 @@ export function normalizeBackupPayload(raw) {
         profiles: Array.isArray(raw.data.profiles) ? raw.data.profiles : [],
         ruleTemplates: Array.isArray(raw.data.ruleTemplates) ? raw.data.ruleTemplates : [],
         settings: raw.data.settings && typeof raw.data.settings === 'object' ? raw.data.settings : null,
+        clients:
+          raw.data.clients && (typeof raw.data.clients === 'object' || Array.isArray(raw.data.clients))
+            ? raw.data.clients
+            : null,
+        publicCores:
+          (raw.data.publicCores && typeof raw.data.publicCores === 'object' ? raw.data.publicCores : null) ||
+          (raw.data.settings?.publicCores && typeof raw.data.settings.publicCores === 'object'
+            ? raw.data.settings.publicCores
+            : null),
+        publicLinks:
+          (raw.data.publicLinks && typeof raw.data.publicLinks === 'object' ? raw.data.publicLinks : null) ||
+          (raw.data.settings?.publicLinks && typeof raw.data.settings.publicLinks === 'object'
+            ? raw.data.settings.publicLinks
+            : null),
       },
     };
   }
@@ -237,6 +270,16 @@ export async function restoreBackupPayload(env, rawPayload, options = {}) {
       webdavBackup: currentSettings.webdavBackup,
     };
     await storageAdapter.put(STORAGE_KEY_SETTINGS, finalSettings);
+
+    if (payload.data.clients && (typeof payload.data.clients === 'object' || Array.isArray(payload.data.clients))) {
+      await storageAdapter.put(SETTINGS_KEYS.CLIENTS, payload.data.clients);
+    }
+    if (payload.data.publicCores && typeof payload.data.publicCores === 'object') {
+      await storageAdapter.put(STORAGE_KEY_PUBLIC_CORES, payload.data.publicCores);
+    }
+    if (payload.data.publicLinks && typeof payload.data.publicLinks === 'object') {
+      await storageAdapter.put(STORAGE_KEY_PUBLIC_LINKS, payload.data.publicLinks);
+    }
   }
 
   return {

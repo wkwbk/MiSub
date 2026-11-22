@@ -8,6 +8,8 @@ describe('handleSettingsReset (factory reset)', () => {
       main: { fileName: 'CustomName', cronSecret: 'sec-123', botToken: 'tg-token' },
       rule_templates: [{ id: 'tpl-1', name: 'My Template', content: '[custom]\nruleset=a,b' }],
       clients: [{ id: 'custom-client', name: 'Custom Client' }],
+      public_cores: { enabled: true, items: [{ id: 'core-1', name: 'Core 1', url: 'https://example.com' }] },
+      public_links: { enabled: true, items: [{ id: 'link-1', name: 'Link 1', url: 'https://example.com' }] },
       node_cache_profile_1: { nodes: ['ss://abc'], timestamp: Date.now() },
       subscriptions: [{ id: 'sub-1', name: 'Airport A', url: 'https://example.com/sub', enabled: true }],
       profiles: [{ id: 'prof-1', name: 'Profile A', enabled: true, subscriptions: ['sub-1'] }],

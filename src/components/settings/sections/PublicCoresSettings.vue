@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, Cpu, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -9,45 +9,36 @@ import Textarea from '@/components/ui/Textarea.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { api } from '@/lib/http.js';
 import {
-  DEFAULT_PUBLIC_CORES,
+  DEFAULT_PUBLIC_CORES_CONFIG,
   normalizeCoreTags,
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
 } from '@shared/default-public-cores.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
-
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const ensurePublicCores = () => {
-  if (!props.settings) return;
-  if (!props.settings.publicCores || !Array.isArray(props.settings.publicCores.items)) {
-    props.settings.publicCores = normalizePublicCoresConfig(props.settings.publicCores);
+const publicCoresConfig = ref(normalizePublicCoresConfig(DEFAULT_PUBLIC_CORES_CONFIG));
+const loading = ref(false);
+
+const fetchPublicCores = async () => {
+  loading.value = true;
+  try {
+    const data = await api.get('/api/public_cores');
+    if (data?.success && data.data) {
+      publicCoresConfig.value = normalizePublicCoresConfig(data.data);
+    } else if (data?.success === false) {
+      showToast(data.message || t('settings.loadFailed'), 'error');
+    }
+  } catch {
+    showToast(t('settings.networkError'), 'error');
+  } finally {
+    loading.value = false;
   }
 };
 
-ensurePublicCores();
-
-watch(
-  () => props.settings?.publicCores,
-  (val) => {
-    if (!val || !Array.isArray(val.items)) {
-      ensurePublicCores();
-    }
-  },
-);
-
-const publicCoresConfig = computed(() => {
-  ensurePublicCores();
-  return props.settings.publicCores;
-});
+onMounted(fetchPublicCores);
 
 const activeCategory = ref('all');
 const showEditModal = ref(false);
@@ -124,16 +115,15 @@ const normalizeCoreUrl = (rawUrl) => {
   return `https://${trimmed}`;
 };
 
-const persistPublicCoresSilently = async () => {
+const persistPublicCores = async (nextConfig = publicCoresConfig.value) => {
   try {
-    const res = await api.post(
-      '/api/settings',
-      { publicCores: props.settings.publicCores },
-      { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
-    );
+    const res = await api.post('/api/public_cores', nextConfig);
     if (res?.success === false) {
       showToast(res.message || t('settings.saveFailed'), 'error');
       return false;
+    }
+    if (res?.data) {
+      publicCoresConfig.value = normalizePublicCoresConfig(res.data);
     }
     return true;
   } catch (error) {
@@ -143,7 +133,7 @@ const persistPublicCoresSilently = async () => {
 };
 
 const handleEnabledToggle = async () => {
-  await persistPublicCoresSilently();
+  await persistPublicCores();
 };
 
 const handleIconFileSelect = (event) => {
@@ -271,12 +261,12 @@ const handleSaveCore = async () => {
       list.push(nextItem);
     }
 
-    props.settings.publicCores = {
+    publicCoresConfig.value = {
       ...publicCoresConfig.value,
       items: list,
     };
 
-    const saved = await persistPublicCoresSilently();
+    const saved = await persistPublicCores();
     if (!saved) return;
     showEditModal.value = false;
     showToast(t('settings.clientSaveSuccess'), 'success');
@@ -302,11 +292,11 @@ const moveCore = async (coreId, direction) => {
   fullList[fullIdxA] = fullList[fullIdxB];
   fullList[fullIdxB] = temp;
 
-  props.settings.publicCores = {
+  publicCoresConfig.value = {
     ...publicCoresConfig.value,
     items: fullList,
   };
-  const saved = await persistPublicCoresSilently();
+  const saved = await persistPublicCores();
   if (!saved) return;
   showToast(t('settings.clientOrderSaved'), 'success');
 };
@@ -319,26 +309,30 @@ const handleDelete = (id) => {
 const executeDelete = async () => {
   if (!coreToDeleteId.value) return;
   const nextItems = (publicCoresConfig.value.items || []).filter((item) => item.id !== coreToDeleteId.value);
-  props.settings.publicCores = {
+  publicCoresConfig.value = {
     ...publicCoresConfig.value,
     items: nextItems,
   };
   showDeleteConfirm.value = false;
   coreToDeleteId.value = null;
-  const saved = await persistPublicCoresSilently();
+  const saved = await persistPublicCores();
   if (!saved) return;
   showToast(t('settings.clientDeleted'), 'success');
 };
 
 const executeReset = async () => {
-  props.settings.publicCores = {
-    enabled: publicCoresConfig.value.enabled !== false,
-    items: DEFAULT_PUBLIC_CORES.map((item) => ({ ...item, tags: [...(item.tags || [])] })),
-  };
   showResetConfirm.value = false;
-  const saved = await persistPublicCoresSilently();
-  if (!saved) return;
-  showToast(t('settings.clientResetSuccess'), 'success');
+  try {
+    const res = await api.post('/api/public_cores/init');
+    if (res?.success && res.data) {
+      publicCoresConfig.value = normalizePublicCoresConfig(res.data);
+      showToast(t('settings.clientResetSuccess'), 'success');
+    } else {
+      showToast(res?.message || t('settings.clientResetFailed'), 'error');
+    }
+  } catch (error) {
+    showToast(error?.message || t('settings.clientResetFailed'), 'error');
+  }
 };
 </script>
 
@@ -377,7 +371,12 @@ const executeReset = async () => {
     </SectionHeader>
 
     <div v-if="publicCoresConfig.enabled" class="space-y-4">
-      <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
+      <div v-if="loading" class="text-center py-8 text-xs text-fg-subtle">
+        {{ t('common.loading') }}
+      </div>
+
+      <template v-else>
+        <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
         <button
           v-for="tab in categoryTabs"
           :key="tab.value"
@@ -498,6 +497,7 @@ const executeReset = async () => {
           </div>
         </div>
       </div>
+      </template>
     </div>
 
     <Modal

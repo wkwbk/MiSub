@@ -4,9 +4,11 @@ import { useToastStore } from '@/stores/toast.js';
 import { hasStoredLocale, useI18n } from '@/i18n/index.js';
 import { api } from '@/lib/http.js';
 import ProfileGrid from '@/components/public/ProfileGrid.vue';
+import PublicClientsSection from '@/components/public/PublicClientsSection.vue';
 import PublicCoresSection from '@/components/public/PublicCoresSection.vue';
 import PublicLinksSection from '@/components/public/PublicLinksSection.vue';
-import { AlertTriangle, ArrowRight } from '@lucide/vue';
+import { AlertTriangle } from '@lucide/vue';
+import { normalizePublicClientsConfig } from '@shared/default-public-clients.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
@@ -146,13 +148,20 @@ const copyShortLink = async (profile) => {
   showToast(copied ? t('public.shortLinkCopied') : t('publicProfiles.copyFailedManual'), copied ? 'success' : 'error');
 };
 
-const clients = ref([]);
+const publicClients = ref({});
+const publicCores = ref({});
+const publicLinks = ref({});
+
+const enabledClientsForImport = computed(() => {
+  const normalized = normalizePublicClientsConfig(publicClients.value);
+  return normalized.enabled ? (normalized.items || []).filter((item) => item.enabled !== false) : [];
+});
 
 const fetchClients = async () => {
   try {
     const data = await api.get('/api/clients');
-    if (data.success && data.data && data.data.length > 0) {
-      clients.value = data.data;
+    if (data?.success && data.data && (typeof data.data === 'object' || Array.isArray(data.data))) {
+      publicClients.value = data.data;
     }
   } catch (e) {
     // 客户端列表属辅助信息（推荐下载），失败时保持该区块为空即可，不必打扰访客；
@@ -161,92 +170,26 @@ const fetchClients = async () => {
   }
 };
 
-const extractAppStoreInfo = (rawUrl) => {
-  if (!rawUrl) return null;
+const fetchPublicCores = async () => {
   try {
-    const parsed = new URL(rawUrl);
-    if (parsed.hostname !== 'apps.apple.com' && parsed.hostname !== 'itunes.apple.com') {
-      return null;
+    const data = await api.get('/api/public_cores');
+    if (data?.success && data.data && typeof data.data === 'object') {
+      publicCores.value = data.data;
     }
-    const idMatch = parsed.pathname.match(/\/id(\d+)/i);
-    if (!idMatch) return null;
-    const countryMatch = parsed.pathname.match(/^\/([a-z]{2})\//i);
-    return {
-      id: idMatch[1],
-      country: countryMatch ? countryMatch[1].toLowerCase() : 'us',
-    };
-  } catch {
-    return null;
+  } catch (e) {
+    console.error('Failed to fetch public cores', e);
   }
 };
 
-const fetchClientVersions = async () => {
-  clients.value.forEach(async (client) => {
-    let endpoint = '';
-    if (client.repo) {
-      endpoint = `/api/github/release?repo=${client.repo}`;
-    } else {
-      const appStore = extractAppStoreInfo(client.url);
-      if (!appStore) return;
-      endpoint = `/api/appstore/release?id=${appStore.id}&country=${appStore.country}`;
+const fetchPublicLinks = async () => {
+  try {
+    const data = await api.get('/api/public_links');
+    if (data?.success && data.data && typeof data.data === 'object') {
+      publicLinks.value = data.data;
     }
-    try {
-      const data = await api.get(endpoint);
-      if (data) {
-        if (data.tag_name) {
-          client.version = data.tag_name;
-        }
-        if (data.published_at) {
-          client.publishedAt = data.published_at;
-        }
-      }
-    } catch (e) {
-      console.warn(`Failed to fetch version for ${client.name}`, e);
-    }
-  });
-};
-
-const getPlatformLabel = (p) => {
-  const map = {
-    windows: 'Windows',
-    macos: 'macOS',
-    linux: 'Linux',
-    android: 'Android',
-    ios: 'iOS',
-    HarmonyOS: 'HarmonyOS',
-  };
-  return map[p] || p;
-};
-
-const CLIENT_PLATFORM_ORDER = ['windows', 'macos', 'linux', 'android', 'ios', 'HarmonyOS'];
-const activeClientPlatform = ref('all');
-const availableClientPlatforms = computed(() => {
-  const present = new Set();
-  clients.value.forEach((client) => {
-    (client.platforms || []).forEach((p) => present.add(p));
-  });
-  const dynamicTabs = CLIENT_PLATFORM_ORDER.filter((p) => present.has(p)).map((p) => ({
-    value: p,
-    label: getPlatformLabel(p),
-  }));
-  present.forEach((p) => {
-    if (!CLIENT_PLATFORM_ORDER.includes(p)) {
-      dynamicTabs.push({ value: p, label: getPlatformLabel(p) });
-    }
-  });
-  return [{ value: 'all', label: t('publicProfiles.allCategories') }, ...dynamicTabs];
-});
-const displayedClients = computed(() => {
-  if (activeClientPlatform.value === 'all') return clients.value;
-  return clients.value.filter(
-    (client) => Array.isArray(client.platforms) && client.platforms.includes(activeClientPlatform.value),
-  );
-});
-
-const getClientVersionLabel = (client) => {
-  if (client.version) return client.version;
-  if (!client.repo && client.platforms?.includes('ios')) return t('publicProfiles.appStoreVersion');
-  return t('publicProfiles.stableVersion');
+  } catch (e) {
+    console.error('Failed to fetch public links', e);
+  }
 };
 
 const RECENT_UPDATE_DAYS = 7;
@@ -283,10 +226,6 @@ const formatReleaseUpdatedTitle = (publishedAt) => {
     date: publishedDate.toLocaleString(),
   });
 };
-
-const getClientUpdatedLabel = (client) => formatReleaseUpdatedLabel(client?.publishedAt);
-
-const getClientUpdatedTitle = (client) => formatReleaseUpdatedTitle(client?.publishedAt);
 
 const showPreviewModal = ref(false);
 const previewProfileId = ref(null);
@@ -352,34 +291,14 @@ const downloadQRCode = (profile) => {
   showToast(t('publicProfiles.qrDownloaded'), 'success');
 };
 
-const getPlatformStyle = (p) => {
-  const map = {
-    windows:
-      'bg-blue-100 text-blue-800 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30',
-    macos:
-      'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-300 border border-slate-200 dark:border-slate-500/30',
-    linux:
-      'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300 border border-orange-200 dark:border-orange-500/30',
-    android:
-      'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300 border border-green-200 dark:border-green-500/30',
-    HarmonyOS:
-      'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
-    ios: 'bg-gray-800 text-white dark:bg-white dark:text-gray-900 border border-gray-700 dark:border-gray-200',
-  };
-  return map[p] || 'bg-elevated-card text-fg-muted border border-line';
-};
-
-onMounted(async () => {
+onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('open-guestbook', handleGuestbookEvent);
   }
   fetchPublicProfiles();
-  await fetchClients();
-  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-    window.requestIdleCallback(() => fetchClientVersions(), { timeout: 1500 });
-  } else {
-    setTimeout(fetchClientVersions, 200);
-  }
+  fetchClients();
+  fetchPublicCores();
+  fetchPublicLinks();
 });
 
 watch(
@@ -599,122 +518,21 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="mt-16 pt-12 pb-2 border-t border-line bg-transparent">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-8 relative">
-              <div class="relative inline-flex flex-col items-center">
-                <span class="font-mono text-xs font-semibold tracking-widest text-fg-muted uppercase mb-2">{{
-                  t('publicProfiles.clientsEyebrow')
-                }}</span>
-                <h2 class="text-2xl md:text-3xl font-bold text-fg tracking-tight">
-                  {{ t('publicProfiles.clientsTitle') }}
-                </h2>
-                <p class="mt-2 text-sm text-fg-muted max-w-2xl mx-auto">
-                  {{ t('publicProfiles.clientsDescription') }}
-                </p>
-              </div>
-            </div>
-
-            <div
-              v-if="!error && availableClientPlatforms.length > 2"
-              class="flex flex-wrap items-center justify-center gap-2 mb-8"
-            >
-              <button
-                v-for="tab in availableClientPlatforms"
-                :key="tab.value"
-                :class="
-                  activeClientPlatform === tab.value
-                    ? 'bg-accent text-accent-fg border-accent font-semibold'
-                    : 'bg-surface text-fg-muted border-line hover:border-line-strong hover:text-fg'
-                "
-                class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
-                type="button"
-                @click="activeClientPlatform = tab.value"
-              >
-                {{ tab.label }}
-              </button>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div
-                v-for="client in displayedClients"
-                :key="client.id || client.name"
-                class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
-              >
-                <div class="flex items-start gap-4">
-                  <div
-                    class="h-10 w-10 rounded-md flex items-center justify-center text-2xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
-                  >
-                    <img
-                      v-if="client.icon && (client.icon.includes('/') || client.icon.startsWith('data:'))"
-                      :alt="client.name"
-                      :src="client.icon"
-                      loading="lazy"
-                      decoding="async"
-                      class="w-full h-full object-cover rounded-md p-1"
-                    />
-                    <span v-else>{{ client.icon }}</span>
-                  </div>
-
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center justify-between mb-1.5">
-                      <h3 class="text-sm font-semibold text-fg truncate">
-                        {{ client.name }}
-                      </h3>
-                    </div>
-                    <div class="flex flex-wrap gap-1 mb-2">
-                      <span
-                        v-for="platform in client.platforms"
-                        :key="platform"
-                        class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted"
-                      >
-                        {{ getPlatformLabel(platform) }}
-                      </span>
-                    </div>
-                    <p class="text-fg-muted text-xs line-clamp-2 leading-relaxed h-9">
-                      {{ client.description }}
-                    </p>
-                  </div>
-                </div>
-
-                <div class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-line">
-                  <div class="flex items-center gap-2 min-w-0">
-                    <span
-                      class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md shrink-0"
-                    >
-                      {{ getClientVersionLabel(client) }}
-                    </span>
-                    <span
-                      v-if="getClientUpdatedLabel(client)"
-                      :title="getClientUpdatedTitle(client)"
-                      class="font-mono text-[11px] text-fg-subtle truncate"
-                    >
-                      {{ getClientUpdatedLabel(client) }}
-                    </span>
-                  </div>
-
-                  <a
-                    :href="client.url"
-                    class="font-mono text-xs font-semibold text-fg-muted hover:text-fg transition-colors flex items-center gap-1 group/link shrink-0"
-                    target="_blank"
-                  >
-                    {{ t('publicProfiles.download') }}
-                    <ArrowRight class="w-3.5 h-3.5 transform group-hover/link:translate-x-0.5 transition-transform" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PublicClientsSection
+          v-if="!error"
+          :format-release-updated-label="formatReleaseUpdatedLabel"
+          :format-release-updated-title="formatReleaseUpdatedTitle"
+          :public-clients="publicClients"
+        />
 
         <PublicCoresSection
           v-if="!error"
           :format-release-updated-label="formatReleaseUpdatedLabel"
           :format-release-updated-title="formatReleaseUpdatedTitle"
-          :public-cores="config.publicCores"
+          :public-cores="publicCores"
         />
 
-        <PublicLinksSection v-if="!error" :public-links="config.publicLinks" />
+        <PublicLinksSection v-if="!error" :public-links="publicLinks" />
       </div>
     </template>
 
@@ -730,7 +548,7 @@ onUnmounted(() => {
     <GuestbookModal :config="guestbookConfig" :show="showGuestbookModal" @close="showGuestbookModal = false" />
 
     <QuickImportModal
-      :clients="clients"
+      :clients="enabledClientsForImport"
       :profile="selectedProfileForImport"
       :profile-token="config.profileToken || 'sub'"
       :show="showQuickImportModal"

@@ -1,5 +1,3 @@
-import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../shared/default-public-links.js';
-import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../shared/default-public-cores.js';
 import { SETTINGS_KEYS } from '../storage/d1-schema.js';
 
 export const STORAGE_KEY_SETTINGS = SETTINGS_KEYS.MAIN;
@@ -61,10 +59,6 @@ export const DEFAULT_SETTINGS = {
     enabled: false,
     allowAnonymous: true,
   },
-  // 公开页导航链接设置
-  publicLinks: DEFAULT_PUBLIC_LINKS_CONFIG,
-  // 公开页代理内核设置
-  publicCores: DEFAULT_PUBLIC_CORES_CONFIG,
   // 自定义公开页设置
   customPage: {
     enabled: false, // 是否启用自定义页面

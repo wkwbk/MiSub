@@ -54,9 +54,9 @@ defineProps({
 
     <ClientSettings />
 
-    <PublicCoresSettings :settings="settings" />
+    <PublicCoresSettings />
 
-    <PublicLinksSettings :settings="settings" />
+    <PublicLinksSettings />
 
     <AnnouncementSettings :settings="settings" />
 

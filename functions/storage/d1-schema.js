@@ -10,6 +10,8 @@ export const SETTINGS_KEYS = {
   MAIN: 'main',
   RULE_TEMPLATES: 'rule_templates',
   CLIENTS: 'clients',
+  PUBLIC_CORES: 'public_cores',
+  PUBLIC_LINKS: 'public_links',
 };
 
 export const DATA_KEYS = {

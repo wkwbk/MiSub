@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, Compass, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -9,44 +9,35 @@ import Textarea from '@/components/ui/Textarea.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { api } from '@/lib/http.js';
 import {
-  DEFAULT_PUBLIC_LINKS,
+  DEFAULT_PUBLIC_LINKS_CONFIG,
   normalizePublicLinksConfig,
   PUBLIC_LINK_CATEGORIES,
   resolvePublicLinkIcon,
 } from '@shared/default-public-links.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
-
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const ensurePublicLinks = () => {
-  if (!props.settings) return;
-  if (!props.settings.publicLinks || !Array.isArray(props.settings.publicLinks.items)) {
-    props.settings.publicLinks = normalizePublicLinksConfig(props.settings.publicLinks);
+const publicLinksConfig = ref(normalizePublicLinksConfig(DEFAULT_PUBLIC_LINKS_CONFIG));
+const loading = ref(false);
+
+const fetchPublicLinks = async () => {
+  loading.value = true;
+  try {
+    const data = await api.get('/api/public_links');
+    if (data?.success && data.data) {
+      publicLinksConfig.value = normalizePublicLinksConfig(data.data);
+    } else if (data?.success === false) {
+      showToast(data.message || t('settings.loadFailed'), 'error');
+    }
+  } catch {
+    showToast(t('settings.networkError'), 'error');
+  } finally {
+    loading.value = false;
   }
 };
 
-ensurePublicLinks();
-
-watch(
-  () => props.settings?.publicLinks,
-  (val) => {
-    if (!val || !Array.isArray(val.items)) {
-      ensurePublicLinks();
-    }
-  },
-);
-
-const publicLinksConfig = computed(() => {
-  ensurePublicLinks();
-  return props.settings.publicLinks;
-});
+onMounted(fetchPublicLinks);
 
 const activeCategory = ref('all');
 const showEditModal = ref(false);
@@ -121,16 +112,15 @@ const normalizeWebsiteUrl = (rawUrl) => {
   return `https://${trimmed}`;
 };
 
-const persistPublicLinksSilently = async () => {
+const persistPublicLinks = async (nextConfig = publicLinksConfig.value) => {
   try {
-    const res = await api.post(
-      '/api/settings',
-      { publicLinks: props.settings.publicLinks },
-      { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
-    );
+    const res = await api.post('/api/public_links', nextConfig);
     if (res?.success === false) {
       showToast(res.message || t('settings.saveFailed'), 'error');
       return false;
+    }
+    if (res?.data) {
+      publicLinksConfig.value = normalizePublicLinksConfig(res.data);
     }
     return true;
   } catch (error) {
@@ -140,7 +130,7 @@ const persistPublicLinksSilently = async () => {
 };
 
 const handleEnabledToggle = async () => {
-  await persistPublicLinksSilently();
+  await persistPublicLinks();
 };
 
 const handleIconFileSelect = (event) => {
@@ -264,12 +254,12 @@ const handleSaveLink = async () => {
       list.push(nextItem);
     }
 
-    props.settings.publicLinks = {
+    publicLinksConfig.value = {
       ...publicLinksConfig.value,
       items: list,
     };
 
-    const saved = await persistPublicLinksSilently();
+    const saved = await persistPublicLinks();
     if (!saved) return;
     showEditModal.value = false;
     showToast(t('settings.clientSaveSuccess'), 'success');
@@ -295,11 +285,11 @@ const moveLink = async (linkId, direction) => {
   fullList[fullIdxA] = fullList[fullIdxB];
   fullList[fullIdxB] = temp;
 
-  props.settings.publicLinks = {
+  publicLinksConfig.value = {
     ...publicLinksConfig.value,
     items: fullList,
   };
-  const saved = await persistPublicLinksSilently();
+  const saved = await persistPublicLinks();
   if (!saved) return;
   showToast(t('settings.clientOrderSaved'), 'success');
 };
@@ -312,26 +302,30 @@ const handleDelete = (id) => {
 const executeDelete = async () => {
   if (!linkToDeleteId.value) return;
   const nextItems = (publicLinksConfig.value.items || []).filter((item) => item.id !== linkToDeleteId.value);
-  props.settings.publicLinks = {
+  publicLinksConfig.value = {
     ...publicLinksConfig.value,
     items: nextItems,
   };
   showDeleteConfirm.value = false;
   linkToDeleteId.value = null;
-  const saved = await persistPublicLinksSilently();
+  const saved = await persistPublicLinks();
   if (!saved) return;
   showToast(t('settings.clientDeleted'), 'success');
 };
 
 const executeReset = async () => {
-  props.settings.publicLinks = {
-    enabled: publicLinksConfig.value.enabled !== false,
-    items: DEFAULT_PUBLIC_LINKS.map((item) => ({ ...item })),
-  };
   showResetConfirm.value = false;
-  const saved = await persistPublicLinksSilently();
-  if (!saved) return;
-  showToast(t('settings.clientResetSuccess'), 'success');
+  try {
+    const res = await api.post('/api/public_links/init');
+    if (res?.success && res.data) {
+      publicLinksConfig.value = normalizePublicLinksConfig(res.data);
+      showToast(t('settings.clientResetSuccess'), 'success');
+    } else {
+      showToast(res?.message || t('settings.clientResetFailed'), 'error');
+    }
+  } catch (error) {
+    showToast(error?.message || t('settings.clientResetFailed'), 'error');
+  }
 };
 </script>
 
@@ -370,7 +364,12 @@ const executeReset = async () => {
     </SectionHeader>
 
     <div v-if="publicLinksConfig.enabled" class="space-y-4">
-      <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
+      <div v-if="loading" class="text-center py-8 text-xs text-fg-subtle">
+        {{ t('common.loading') }}
+      </div>
+
+      <template v-else>
+        <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
         <button
           v-for="tab in categoryTabs"
           :key="tab.value"
@@ -482,6 +481,7 @@ const executeReset = async () => {
           </div>
         </div>
       </div>
+      </template>
     </div>
 
     <Modal

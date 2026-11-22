@@ -44,6 +44,8 @@ import {
 } from './handlers/node-handler.js';
 import { handleNodeInspectRequest, handleNodeTcpingRequest } from './handlers/node-inspect-handler.js';
 import { handleClientRequest } from './handlers/client-handler.js';
+import { handlePublicCoresRequest } from './handlers/public-cores-handler.js';
+import { handlePublicLinksRequest } from './handlers/public-links-handler.js';
 import { handleErrorReportRequest } from './handlers/error-report-handler.js';
 import {
   handleGuestbookGet,
@@ -117,6 +119,14 @@ export async function handleApiRequest(request, env, context = null) {
     return await handleClientRequest(request, env);
   }
 
+  if (path.startsWith('/public_cores') && request.method === 'GET') {
+    return await handlePublicCoresRequest(request, env);
+  }
+
+  if (path.startsWith('/public_links') && request.method === 'GET') {
+    return await handlePublicLinksRequest(request, env);
+  }
+
   if (path === '/data') {
     if (!(await authMiddleware(request, env))) {
       return createJsonResponse({
@@ -174,6 +184,14 @@ export async function handleApiRequest(request, env, context = null) {
 
   if (path.startsWith('/clients')) {
     return await handleClientRequest(request, env);
+  }
+
+  if (path.startsWith('/public_cores')) {
+    return await handlePublicCoresRequest(request, env);
+  }
+
+  if (path.startsWith('/public_links')) {
+    return await handlePublicLinksRequest(request, env);
   }
 
   if (path === '/test_notification') {

@@ -17,8 +17,6 @@ import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.
 import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
-import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
-import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
@@ -262,17 +260,20 @@ export async function handleMisubsSave(request, env, context = null) {
  * @returns {Promise<Response>} HTTP响应
  */
 function redactSettingsForResponse(settings = {}) {
-  const shortLink = settings.shortLink
+  const cleaned = { ...settings };
+  delete cleaned.publicLinks;
+  delete cleaned.publicCores;
+  const shortLink = cleaned.shortLink
     ? {
         ...defaultSettings.shortLink,
-        ...settings.shortLink,
+        ...cleaned.shortLink,
         apiToken: '',
-        hasToken: Boolean(String(settings.shortLink.apiToken || '').trim()),
+        hasToken: Boolean(String(cleaned.shortLink.apiToken || '').trim()),
       }
     : { ...defaultSettings.shortLink, hasToken: false };
   return {
-    ...settings,
-    webdavBackup: settings.webdavBackup ? { ...settings.webdavBackup, password: '' } : settings.webdavBackup,
+    ...cleaned,
+    webdavBackup: cleaned.webdavBackup ? { ...cleaned.webdavBackup, password: '' } : cleaned.webdavBackup,
     shortLink,
   };
 }
@@ -381,6 +382,8 @@ export async function handleSettingsSave(request, env) {
       };
     }
     const finalSettings = { ...oldSettings, ...newSettings };
+    delete finalSettings.publicLinks;
+    delete finalSettings.publicCores;
 
     // 使用存储适配器保存设置
     if (!storageAdapter || storageAdapter.type === 'noop') {
@@ -549,9 +552,6 @@ export async function handlePublicProfilesRequest(request, env) {
       hideFooter: settings.customPage?.hideFooter === true,
     };
 
-    const publicLinks = normalizePublicLinksConfig(settings.publicLinks);
-    const publicCores = normalizePublicCoresConfig(settings.publicCores);
-
     return createJsonResponse({
       success: true,
       data: publicProfiles,
@@ -561,8 +561,6 @@ export async function handlePublicProfilesRequest(request, env) {
         hero,
         guestbook,
         customPage,
-        publicLinks,
-        publicCores,
         defaultLocale,
       },
     });
