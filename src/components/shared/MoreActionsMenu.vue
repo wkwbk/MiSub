@@ -66,7 +66,6 @@ function getFocusableItems() {
 
 async function openMenu() {
   isOpen.value = true;
-  updatePosition();
   await nextTick();
   updatePosition();
   const [firstItem] = getFocusableItems();
@@ -189,7 +188,9 @@ onUnmounted(() => {
 <style scoped>
 .slide-fade-sm-enter-active,
 .slide-fade-sm-leave-active {
-  transition: all 0.2s ease-out;
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out;
 }
 
 .slide-fade-sm-enter-from,
