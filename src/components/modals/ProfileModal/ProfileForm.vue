@@ -178,7 +178,7 @@ watch(
       </span>
     </div>
 
-    <div v-if="localProfile.isPublic" class="animate-fade-in-down">
+    <div v-if="localProfile.isPublic" class="animate-fade-in-down space-y-3">
       <Textarea
         id="profile-description"
         v-model="localProfile.description"
@@ -187,6 +187,17 @@ watch(
         rows="2"
         wrapperClass="focus-within:border-line-strong focus-within:ring-0"
       />
+      <div v-if="globalSettings?.shortLink?.enabled || localProfile.shortLink">
+        <Input
+          id="profile-short-link"
+          v-model="localProfile.shortLink"
+          :label="t('profiles.shortLinkLabel')"
+          :placeholder="t('profiles.shortLinkPlaceholder')"
+        />
+        <p class="text-xs text-fg-subtle mt-1">
+          {{ t('profiles.shortLinkHint') }}
+        </p>
+      </div>
     </div>
     <div v-else class="text-xs text-fg-subtle">
       {{ t('profiles.publicDisplayHint') }}

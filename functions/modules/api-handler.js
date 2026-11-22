@@ -35,6 +35,8 @@ function normalizeProfile(profile = {}) {
   normalized.enabled = profile.enabled !== false;
   normalized.isPublic = profile.isPublic === true;
   normalized.downloadCount = Number(profile.downloadCount) || 0;
+  const rawShortLink = typeof profile.shortLink === 'string' ? profile.shortLink.trim() : '';
+  normalized.shortLink = /^https?:\/\//i.test(rawShortLink) ? rawShortLink : '';
   return normalized;
 }
 
@@ -79,10 +81,10 @@ export async function handleDataRequest(env, context = null) {
     ]);
     const settings = rawSettings || {};
     const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
-    const config = {
+    const config = redactSettingsForResponse({
       ...defaultSettings,
       ...settings,
-    };
+    });
     try {
       const taskContext = context || { env };
       const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
@@ -260,9 +262,18 @@ export async function handleMisubsSave(request, env, context = null) {
  * @returns {Promise<Response>} HTTP响应
  */
 function redactSettingsForResponse(settings = {}) {
+  const shortLink = settings.shortLink
+    ? {
+        ...defaultSettings.shortLink,
+        ...settings.shortLink,
+        apiToken: '',
+        hasToken: Boolean(String(settings.shortLink.apiToken || '').trim()),
+      }
+    : { ...defaultSettings.shortLink, hasToken: false };
   return {
     ...settings,
     webdavBackup: settings.webdavBackup ? { ...settings.webdavBackup, password: '' } : settings.webdavBackup,
+    shortLink,
   };
 }
 
@@ -357,6 +368,17 @@ export async function handleSettingsSave(request, env) {
           password: oldSettings.webdavBackup.password,
         };
       }
+    }
+    if (newSettings.shortLink && typeof newSettings.shortLink === 'object') {
+      const { hasToken: _omitHasToken, ...cleanShortLink } = newSettings.shortLink;
+      const incomingToken = String(cleanShortLink.apiToken || '').trim();
+      const preservedToken = incomingToken || String(oldSettings.shortLink?.apiToken || '').trim();
+      newSettings.shortLink = {
+        ...defaultSettings.shortLink,
+        ...cleanShortLink,
+        apiUrl: String(cleanShortLink.apiUrl || '').trim(),
+        apiToken: preservedToken,
+      };
     }
     const finalSettings = { ...oldSettings, ...newSettings };
 
@@ -508,6 +530,7 @@ export async function handlePublicProfilesRequest(request, env) {
         description: p.description || '',
         tags: Array.isArray(p.tags) ? p.tags : [],
         customId: p.customId,
+        shortLink: p.shortLink || '',
         updatedAt: p.updatedAt,
         subscriptionCount: (p.subscriptions || []).length,
         manualNodeCount: (p.manualNodes || []).length,
@@ -569,8 +592,7 @@ export async function handlePublicConfig(request, env) {
       if (sourcePath) {
         isLoginPath = new URL(sourcePath, request.url).pathname === configuredLoginPath;
       }
-    } catch {
-    }
+    } catch {}
 
     return createJsonResponse({
       enablePublicPage: isPublicPageEnabled(mergedSettings),

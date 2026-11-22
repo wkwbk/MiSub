@@ -33,6 +33,10 @@ function normalizeSettingsObject(source = {}) {
   merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
   merged.publicLinks = normalizePublicLinksConfig(source.publicLinks ?? merged.publicLinks);
   merged.publicCores = normalizePublicCoresConfig(source.publicCores ?? merged.publicCores);
+  merged.shortLink = {
+    ...DEFAULT_SETTINGS.shortLink,
+    ...(source.shortLink && typeof source.shortLink === 'object' ? source.shortLink : {}),
+  };
   return merged;
 }
 

@@ -1,10 +1,12 @@
 <script setup>
-import { computed, onUnmounted, ref } from 'vue';
-import { ArrowRight, Check, Copy, QrCode } from '@lucide/vue';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import { ArrowRight, Check, Copy, Link2, Loader2, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/toast.js';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { createShortLink } from '@/lib/api.js';
 import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
 
 const props = defineProps({
@@ -19,25 +21,32 @@ const props = defineProps({
 const emit = defineEmits(['qrcode']);
 
 const { showToast } = useToastStore();
+const dataStore = useDataStore();
 const { t } = useI18n();
 
 const copied = ref(false);
+const shortCopied = ref(false);
+const customSlug = ref('');
+const isGeneratingShortLink = ref(false);
+const generatedShortLink = ref('');
 let copyTimeout = null;
+let shortCopyTimeout = null;
 
 const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon'];
 const selectedFormat = ref('universal');
 const selectedId = ref('default');
 
 const formatLabel = (format) => (format === 'universal' ? t('dashboard.linkCard.universalFormat') : format);
-const isStableToken = (value) =>
-  typeof value === 'string' && value.trim() === value && /^[a-zA-Z0-9-_]+$/.test(value);
+const isStableToken = (value) => typeof value === 'string' && value.trim() === value && /^[a-zA-Z0-9-_]+$/.test(value);
 
 const hasProfiles = computed(() => (props.profiles || []).length > 0);
 const rawSubPath = computed(() =>
   typeof props.config?.profileToken === 'string' ? props.config.profileToken.trim() : '',
 );
 const effectiveSubPath = computed(() => normalizeSubPath(rawSubPath.value, 'sub'));
-const subPathReady = computed(() => isStableToken(effectiveSubPath.value) && !isReservedSubPath(effectiveSubPath.value));
+const subPathReady = computed(
+  () => isStableToken(effectiveSubPath.value) && !isReservedSubPath(effectiveSubPath.value),
+);
 const mainTokenReady = computed(() => isStableToken(props.config?.myToken));
 
 const setupTasks = computed(() => {
@@ -132,8 +141,80 @@ const copyToClipboard = async () => {
   }, 2000);
 };
 
+const selectedProfile = computed(() => {
+  if (selectedId.value === 'default') return null;
+  return (props.profiles || []).find((p) => (p.customId || p.id) === selectedId.value) || null;
+});
+
+const shortLinkEnabled = computed(() =>
+  Boolean(props.config?.shortLink?.enabled && String(props.config?.shortLink?.apiUrl || '').trim()),
+);
+
+watch(
+  [selectedId, selectedFormat, () => selectedProfile.value?.shortLink],
+  () => {
+    if (selectedProfile.value && selectedFormat.value === 'universal' && selectedProfile.value.shortLink) {
+      generatedShortLink.value = selectedProfile.value.shortLink;
+    } else {
+      generatedShortLink.value = '';
+    }
+    customSlug.value = '';
+  },
+  { immediate: true },
+);
+
+const handleGenerateShortLink = async () => {
+  if (!isLinkValid.value || isGeneratingShortLink.value) return;
+  isGeneratingShortLink.value = true;
+  try {
+    const shouldSaveToProfile = Boolean(selectedProfile.value && selectedFormat.value === 'universal');
+    const result = await createShortLink({
+      url: subLink.value,
+      slug: customSlug.value.trim(),
+      profileId: shouldSaveToProfile ? selectedProfile.value.id : '',
+      saveToProfile: shouldSaveToProfile,
+    });
+
+    if (!result?.success || !result.shortUrl) {
+      showToast(result?.message || result?.error || t('dashboard.linkCard.shortLinkFailed'), 'error');
+      return;
+    }
+
+    generatedShortLink.value = result.shortUrl;
+    customSlug.value = '';
+
+    if (result.savedToProfile && selectedProfile.value) {
+      const target = (dataStore.profiles || []).find((p) => p.id === selectedProfile.value.id);
+      if (target) {
+        target.shortLink = result.shortUrl;
+      }
+      showToast(t('dashboard.linkCard.shortLinkCreatedAndSaved'), 'success');
+    } else {
+      showToast(t('dashboard.linkCard.shortLinkCreated'), 'success');
+    }
+  } finally {
+    isGeneratingShortLink.value = false;
+  }
+};
+
+const copyShortLink = async () => {
+  if (!generatedShortLink.value) return;
+  const isCopied = await copyTextToClipboard(generatedShortLink.value);
+  if (!isCopied) {
+    showToast(t('notices.copyFailed'), 'error');
+    return;
+  }
+  showToast(t('notices.copied'), 'success');
+  shortCopied.value = true;
+  clearTimeout(shortCopyTimeout);
+  shortCopyTimeout = setTimeout(() => {
+    shortCopied.value = false;
+  }, 2000);
+};
+
 onUnmounted(() => {
   clearTimeout(copyTimeout);
+  clearTimeout(shortCopyTimeout);
 });
 </script>
 
@@ -257,6 +338,74 @@ onUnmounted(() => {
               <Copy v-else class="h-4 w-4" stroke-width="1.5" />
             </Transition>
           </button>
+        </div>
+      </div>
+
+      <!-- 短链生成与展示 -->
+      <div
+        v-if="(shortLinkEnabled || generatedShortLink) && isLinkValid"
+        class="mt-3 pt-3 border-t border-line space-y-2.5 list-item-animation"
+        style="--delay-index: 5"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <span class="inline-flex items-center gap-1.5 text-xs font-medium text-fg-muted">
+            <Link2 class="h-3.5 w-3.5" />
+            {{ t('dashboard.linkCard.shortLinkTitle') }}
+          </span>
+        </div>
+
+        <div v-if="shortLinkEnabled" class="flex items-center gap-1.5">
+          <input
+            v-model="customSlug"
+            :placeholder="t('dashboard.linkCard.shortLinkSlugPlaceholder')"
+            class="flex-1 min-w-0 h-9 px-2.5 text-xs font-mono text-fg bg-inset border border-line rounded-md focus-visible:outline-hidden focus-visible:border-line-strong"
+            type="text"
+            @keyup.enter="handleGenerateShortLink"
+          />
+          <button
+            :disabled="isGeneratingShortLink"
+            class="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 text-xs font-medium rounded-md border border-line bg-transparent text-fg hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            type="button"
+            @click="handleGenerateShortLink"
+          >
+            <Loader2 v-if="isGeneratingShortLink" class="h-3.5 w-3.5 animate-spin" />
+            <span>{{
+              isGeneratingShortLink
+                ? t('dashboard.linkCard.shortLinkGenerating')
+                : t('dashboard.linkCard.shortLinkGenerate')
+            }}</span>
+          </button>
+        </div>
+
+        <div v-if="generatedShortLink" class="relative">
+          <input
+            :aria-label="t('dashboard.linkCard.shortLinkTitle')"
+            :value="generatedShortLink"
+            class="w-full min-h-10 text-xs sm:text-sm text-fg bg-inset rounded-md pl-3 pr-20 py-2 border border-line focus-visible:outline-hidden focus-visible:border-line-strong font-mono shadow-none"
+            readonly
+            type="text"
+          />
+          <div class="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <button
+              :aria-label="t('dashboard.linkCard.showQrCode')"
+              :title="t('dashboard.linkCard.showQrCode')"
+              class="flex h-7 w-7 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover transition-colors"
+              type="button"
+              @click="$emit('qrcode', generatedShortLink, t('dashboard.linkCard.shortLinkQrTitle'))"
+            >
+              <QrCode class="h-3.5 w-3.5" stroke-width="1.5" />
+            </button>
+            <button
+              :aria-label="t('dashboard.linkCard.shortLinkCopy')"
+              :title="t('dashboard.linkCard.shortLinkCopy')"
+              class="flex h-7 w-7 items-center justify-center rounded-md border border-accent bg-accent text-accent-fg hover:opacity-90 transition-colors"
+              type="button"
+              @click="copyShortLink"
+            >
+              <Check v-if="shortCopied" class="h-3.5 w-3.5" stroke-width="2.5" />
+              <Copy v-else class="h-3.5 w-3.5" stroke-width="1.5" />
+            </button>
+          </div>
         </div>
       </div>
 

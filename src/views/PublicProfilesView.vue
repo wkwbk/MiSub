@@ -140,6 +140,12 @@ const copyLink = async (profile) => {
   );
 };
 
+const copyShortLink = async (profile) => {
+  if (!profile?.shortLink) return;
+  const copied = await copyTextToClipboard(profile.shortLink);
+  showToast(copied ? t('public.shortLinkCopied') : t('publicProfiles.copyFailedManual'), copied ? 'success' : 'error');
+};
+
 const clients = ref([]);
 
 const fetchClients = async () => {
@@ -586,6 +592,7 @@ onUnmounted(() => {
               @quick-import="handleQuickImport"
               @toggle-qr="toggleQRCode"
               @copy-link="copyLink"
+              @copy-short-link="copyShortLink"
               @download-qr="downloadQRCode"
               @register-canvas="registerQrCanvas"
             />

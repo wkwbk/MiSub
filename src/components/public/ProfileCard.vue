@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Download, Eye, Link2, QrCode } from '@lucide/vue';
+import { Copy, Download, Eye, Link2, QrCode } from '@lucide/vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 import { getItemTags } from '@/utils/tags.js';
 import { useI18n } from '@/i18n/index.js';
@@ -20,7 +20,15 @@ const props = defineProps({
 
 const profileTags = computed(() => getItemTags(props.profile));
 
-const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', 'download-qr', 'register-canvas']);
+const emit = defineEmits([
+  'quick-import',
+  'toggle-qr',
+  'preview',
+  'copy-link',
+  'copy-short-link',
+  'download-qr',
+  'register-canvas',
+]);
 </script>
 
 <template>
@@ -63,10 +71,25 @@ const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', '
       </span>
     </div>
 
-    <div class="flex-1 mb-5">
+    <div class="flex-1 mb-5 space-y-3">
       <p class="text-fg-subtle text-xs leading-relaxed line-clamp-3">
         {{ profile.description || t('public.noDescription') }}
       </p>
+
+      <button
+        v-if="profile.shortLink"
+        :aria-label="t('public.copyShortLink')"
+        :title="`${t('public.copyShortLink')}: ${profile.shortLink}`"
+        class="w-full flex items-center justify-between gap-2 rounded-md border border-line bg-inset/50 px-2.5 py-1.5 text-left text-xs text-fg-muted hover:border-line-strong hover:text-fg transition-colors cursor-pointer"
+        type="button"
+        @click.stop="emit('copy-short-link', profile)"
+      >
+        <span class="inline-flex items-center gap-1.5 min-w-0">
+          <Link2 class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+          <span class="truncate font-mono text-[11px]">{{ profile.shortLink }}</span>
+        </span>
+        <Copy class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+      </button>
     </div>
 
     <div class="mt-auto pt-4 border-t border-line flex items-center gap-2">

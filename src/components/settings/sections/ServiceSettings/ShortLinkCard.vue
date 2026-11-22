@@ -1,0 +1,166 @@
+<script setup>
+import { computed, ref } from 'vue';
+import { Eye, EyeOff, Link2, Loader2 } from '@lucide/vue';
+import SectionHeader from '@/components/settings/SectionHeader.vue';
+import Switch from '@/components/ui/Switch.vue';
+import { testShortLinkConnection } from '@/lib/api.js';
+import { useI18n } from '@/i18n/index.js';
+
+const { t } = useI18n();
+
+const props = defineProps({
+  settings: {
+    type: Object,
+    required: true,
+  },
+});
+
+const showToken = ref(false);
+const isTesting = ref(false);
+const testResult = ref(null);
+
+const shortLinkConfig = computed({
+  get() {
+    if (!props.settings.shortLink || typeof props.settings.shortLink !== 'object') {
+      return {
+        enabled: false,
+        provider: 'sink',
+        apiUrl: '',
+        apiToken: '',
+        hasToken: false,
+      };
+    }
+    return props.settings.shortLink;
+  },
+  set(value) {
+    props.settings.shortLink = value;
+  },
+});
+
+function updateField(key, value) {
+  shortLinkConfig.value = {
+    ...shortLinkConfig.value,
+    [key]: value,
+  };
+}
+
+async function handleTestConnection() {
+  if (isTesting.value) return;
+  isTesting.value = true;
+  testResult.value = null;
+
+  try {
+    const result = await testShortLinkConnection({
+      apiUrl: shortLinkConfig.value.apiUrl,
+      apiToken: shortLinkConfig.value.apiToken,
+    });
+    if (result?.success) {
+      testResult.value = {
+        success: true,
+        message: result.message || t('settings.shortLinkTestSuccess'),
+      };
+    } else {
+      testResult.value = {
+        success: false,
+        message: result?.message || result?.error || t('settings.shortLinkTestFailed'),
+      };
+    }
+  } catch (error) {
+    testResult.value = {
+      success: false,
+      message: error?.message || t('settings.shortLinkTestFailed'),
+    };
+  } finally {
+    isTesting.value = false;
+  }
+}
+</script>
+
+<template>
+  <section class="rounded-lg border border-line bg-surface p-6">
+    <SectionHeader :description="t('settings.shortLinkDesc')" :title="t('settings.shortLinkTitle')">
+      <template #icon>
+        <Link2 class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <Switch
+          :aria-label="t('settings.shortLinkEnable')"
+          :model-value="Boolean(shortLinkConfig.enabled)"
+          @update:model-value="updateField('enabled', $event)"
+        />
+      </template>
+    </SectionHeader>
+
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <div>
+          <label class="block text-xs font-medium text-fg-muted mb-1.5">
+            {{ t('settings.shortLinkApiUrl') }}
+          </label>
+          <input
+            :placeholder="t('settings.shortLinkApiUrlPlaceholder')"
+            :value="shortLinkConfig.apiUrl"
+            class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
+            type="text"
+            @input="updateField('apiUrl', $event.target.value)"
+          />
+          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            {{ t('settings.shortLinkApiUrlHint') }}
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-fg-muted mb-1.5">
+            {{ t('settings.shortLinkApiToken') }}
+          </label>
+          <div class="relative">
+            <input
+              :placeholder="
+                shortLinkConfig.hasToken
+                  ? t('settings.shortLinkTokenSavedPlaceholder')
+                  : t('settings.shortLinkTokenPlaceholder')
+              "
+              :type="showToken ? 'text' : 'password'"
+              :value="shortLinkConfig.apiToken"
+              autocomplete="off"
+              class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
+              @input="updateField('apiToken', $event.target.value)"
+            />
+            <button
+              :aria-label="showToken ? t('actions.hide') : t('actions.show')"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
+              type="button"
+              @click="showToken = !showToken"
+            >
+              <EyeOff v-if="showToken" class="h-4 w-4" />
+              <Eye v-else class="h-4 w-4" />
+            </button>
+          </div>
+          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            {{ t('settings.shortLinkApiTokenHint') }}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 pt-1">
+        <button
+          :disabled="isTesting || !String(shortLinkConfig.apiUrl || '').trim()"
+          class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-md border border-line bg-transparent text-fg hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          type="button"
+          @click="handleTestConnection"
+        >
+          <Loader2 v-if="isTesting" class="h-3.5 w-3.5 animate-spin" />
+          <span>{{ isTesting ? t('settings.shortLinkTesting') : t('settings.shortLinkTestBtn') }}</span>
+        </button>
+
+        <span
+          v-if="testResult"
+          :class="testResult.success ? 'text-emerald-500' : 'text-red-400'"
+          class="text-xs font-medium"
+        >
+          {{ testResult.message }}
+        </span>
+      </div>
+    </div>
+  </section>
+</template>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Download, Eye, Link2, QrCode } from '@lucide/vue';
+import { Copy, Download, Eye, Link2, QrCode } from '@lucide/vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 import { getItemTags } from '@/utils/tags.js';
 import { useI18n } from '@/i18n/index.js';
@@ -20,7 +20,15 @@ const props = defineProps({
 
 const profileTags = computed(() => getItemTags(props.profile));
 
-const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', 'download-qr', 'register-canvas']);
+const emit = defineEmits([
+  'quick-import',
+  'preview',
+  'copy-link',
+  'copy-short-link',
+  'toggle-qr',
+  'download-qr',
+  'register-canvas',
+]);
 </script>
 
 <template>
@@ -57,11 +65,24 @@ const emit = defineEmits(['quick-import', 'preview', 'copy-link', 'toggle-qr', '
         </div>
 
         <div
-          class="flex-1 border-t lg:border-t-0 lg:border-l border-line pt-5 lg:pt-0 lg:pl-10 w-full lg:w-auto text-center lg:text-left"
+          class="flex-1 border-t lg:border-t-0 lg:border-l border-line pt-5 lg:pt-0 lg:pl-10 w-full lg:w-auto text-center lg:text-left space-y-3"
         >
           <p class="text-fg-muted text-sm leading-relaxed max-w-2xl mx-auto lg:mx-0">
             {{ profile.description || t('public.heroDescription') }}
           </p>
+          <div v-if="profile.shortLink" class="flex justify-center lg:justify-start">
+            <button
+              :aria-label="t('public.copyShortLink')"
+              :title="`${t('public.copyShortLink')}: ${profile.shortLink}`"
+              class="inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-inset/50 px-3 py-1.5 text-xs text-fg-muted hover:border-line-strong hover:text-fg transition-colors cursor-pointer"
+              type="button"
+              @click.stop="emit('copy-short-link', profile)"
+            >
+              <Link2 class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+              <span class="truncate font-mono text-xs">{{ profile.shortLink }}</span>
+              <Copy class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
+            </button>
+          </div>
         </div>
 
         <div class="flex-shrink-0 w-full lg:w-auto flex flex-col gap-2.5 min-w-[200px]">

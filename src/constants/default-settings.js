@@ -1,4 +1,3 @@
-
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '@shared/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '@shared/default-public-cores.js';
@@ -107,6 +106,14 @@ export const DEFAULT_SETTINGS = {
       list: false,
     },
   },
+  // 短链服务设置（支持 Sink）
+  shortLink: {
+    enabled: false,
+    provider: 'sink',
+    apiUrl: '',
+    apiToken: '',
+    hasToken: false,
+  },
   // 自定义公开页
   customDnsOverride: '',
   customPage: {
@@ -134,6 +141,7 @@ export const DEFAULT_SETTINGS = {
 export const DEFAULT_PROFILE_FORM = {
   name: '',
   customId: '',
+  shortLink: '',
   transformConfigMode: 'global',
   transformConfig: '',
   ruleLevel: '', // 为空表示跟随全局配置

@@ -18,7 +18,15 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['quick-import', 'toggle-qr', 'preview', 'copy-link', 'download-qr', 'register-canvas']);
+const emit = defineEmits([
+  'quick-import',
+  'toggle-qr',
+  'preview',
+  'copy-link',
+  'copy-short-link',
+  'download-qr',
+  'register-canvas',
+]);
 
 // 计算布局类型
 const isSingleProfile = computed(() => props.profiles.length === 1);
@@ -44,6 +52,7 @@ const gridClass = computed(() => {
         @quick-import="emit('quick-import', profiles[0])"
         @toggle-qr="emit('toggle-qr', profiles[0])"
         @copy-link="emit('copy-link', profiles[0])"
+        @copy-short-link="emit('copy-short-link', profiles[0])"
         @download-qr="emit('download-qr', profiles[0])"
         @register-canvas="(id, el) => emit('register-canvas', id, el)"
       />
@@ -57,6 +66,7 @@ const gridClass = computed(() => {
         @quick-import="emit('quick-import', profiles[0])"
         @toggle-qr="emit('toggle-qr', profiles[0])"
         @copy-link="emit('copy-link', profiles[0])"
+        @copy-short-link="emit('copy-short-link', profiles[0])"
         @download-qr="emit('download-qr', profiles[0])"
         @register-canvas="(id, el) => emit('register-canvas', id, el)"
       />
@@ -74,6 +84,7 @@ const gridClass = computed(() => {
       @quick-import="emit('quick-import', profile)"
       @toggle-qr="emit('toggle-qr', profile)"
       @copy-link="emit('copy-link', profile)"
+      @copy-short-link="emit('copy-short-link', profile)"
       @download-qr="emit('download-qr', profile)"
       @register-canvas="(id, el) => emit('register-canvas', id, el)"
     />

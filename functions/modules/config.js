@@ -1,4 +1,3 @@
-
 import { DEFAULT_PUBLIC_LINKS_CONFIG } from '../../shared/default-public-links.js';
 import { DEFAULT_PUBLIC_CORES_CONFIG } from '../../shared/default-public-cores.js';
 import { SETTINGS_KEYS } from '../storage/d1-schema.js';
@@ -115,6 +114,13 @@ export const DEFAULT_SETTINGS = {
       sort: false,
       list: false,
     },
+  },
+  // 短链服务设置（支持 Sink）
+  shortLink: {
+    enabled: false,
+    provider: 'sink',
+    apiUrl: '',
+    apiToken: '',
   },
 };
 

@@ -53,6 +53,7 @@ import {
 } from './handlers/guestbook-handler.js';
 import { handleAppStoreReleaseRequest, handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
+import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';
@@ -248,6 +249,12 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/subconverter/test':
       return await handleSubconverterTestRequest(request, env);
+
+    case '/shortlink/test':
+      return await handleShortLinkTest(request, env);
+
+    case '/shortlink/create':
+      return await handleShortLinkCreate(request, env);
 
     case '/logs':
       if (request.method === 'GET') {
@@ -522,4 +529,3 @@ export async function handleExternalFetchRequest(request, _env) {
     return createErrorResponse(errorMessage, error.status || 500);
   }
 }
-

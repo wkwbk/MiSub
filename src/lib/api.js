@@ -255,3 +255,34 @@ export async function testSubconverterBackend(backend, target = 'clash') {
   }
 }
 
+export async function testShortLinkConnection(shortLink) {
+  let timeoutId;
+  try {
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 12000);
+    const data = await api.post('/api/shortlink/test', { shortLink }, { signal: controller.signal });
+    return data;
+  } catch (error) {
+    return handleApiError(error, 'testShortLinkConnection');
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+export async function createShortLink({ url, slug = '', profileId = '', saveToProfile = false }) {
+  let timeoutId;
+  try {
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 12000);
+    const data = await api.post(
+      '/api/shortlink/create',
+      { url, slug, profileId, saveToProfile },
+      { signal: controller.signal },
+    );
+    return data;
+  } catch (error) {
+    return handleApiError(error, 'createShortLink');
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}

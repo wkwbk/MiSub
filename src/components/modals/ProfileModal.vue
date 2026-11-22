@@ -279,6 +279,7 @@ watch(
       profileCopy.operators = Array.isArray(profileCopy.operators) ? profileCopy.operators : [];
 
       profileCopy.subProfiles = Array.isArray(profileCopy.subProfiles) ? profileCopy.subProfiles : [];
+      profileCopy.shortLink = typeof profileCopy.shortLink === 'string' ? profileCopy.shortLink : '';
 
       localProfile.value = profileCopy;
     } else {
@@ -290,6 +291,7 @@ watch(
         manualNodes: [],
         tags: [],
         customId: '',
+        shortLink: '',
         expiresAt: '',
         isPublic: true,
         description: '',
