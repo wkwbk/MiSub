@@ -1,22 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '@/utils/login-path.js';
+import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
+import { getPathRootSegment, isReservedPathRoot } from '@shared/reserved-paths.js';
 
-describe('isValidCustomLoginPath', () => {
-  it('treats login as the default path instead of a custom-only route', () => {
-    expect(isValidCustomLoginPath('login')).toBe(false);
-    expect(isValidCustomLoginPath('/login')).toBe(false);
-    expect(isValidCustomLoginPath(' /login ')).toBe(false);
+describe('shared reserved path validation', () => {
+  it('extracts normalized first path segment', () => {
+    expect(getPathRootSegment('/Login/extra')).toBe('login');
+    expect(getPathRootSegment('  ///Dashboard/settings ')).toBe('dashboard');
+    expect(getPathRootSegment('')).toBe('');
   });
 
-  it('rejects empty and slash-only values', () => {
-    expect(isValidCustomLoginPath('')).toBe(false);
-    expect(isValidCustomLoginPath('/')).toBe(false);
-    expect(isValidCustomLoginPath('   ')).toBe(false);
-  });
-
-  it('accepts non-login custom paths', () => {
-    expect(isValidCustomLoginPath('admin-login')).toBe(true);
-    expect(isValidCustomLoginPath('/admin-login')).toBe(true);
+  it('rejects system reserved roots and allows custom paths', () => {
+    expect(isReservedPathRoot('login')).toBe(true);
+    expect(isReservedPathRoot('/api/v1')).toBe(true);
+    expect(isReservedPathRoot('/dashboard')).toBe(true);
+    expect(isReservedPathRoot('/secret-panel')).toBe(false);
+    expect(isReservedPathRoot('admin-gate')).toBe(false);
   });
 });
 

@@ -7,6 +7,7 @@ import Switch from '@/components/ui/Switch.vue';
 import { computed, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toast';
 import { useI18n } from '@/i18n/index.js';
+import { getPathRootSegment, isReservedPathRoot } from '@shared/reserved-paths.js';
 
 const props = defineProps({
   settings: {
@@ -26,42 +27,6 @@ const props = defineProps({
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-// 系统保留路径列表，这些路径会与前端路由或后端 API 冲突
-const RESERVED_PATHS = [
-  'settings',
-  'login',
-  'groups',
-  'nodes',
-  'subscriptions',
-  'dashboard',
-  'api',
-  'explore',
-  'sub',
-  'cron',
-  'assets',
-  '@vite',
-  'public',
-  'profile',
-  'offline',
-  'logout',
-  'auth_debug',
-  'auth_check',
-  'data',
-  'clients',
-  'system',
-  'github',
-  'telegram',
-  'test_notification',
-  'misubs',
-  'node_count',
-  'fetch_external_url',
-  'batch_update_nodes',
-  'subscription_nodes',
-  'debug_subscription',
-  'preview',
-];
-
-const getPathSegment = (value) => value.replace(/^\/+/, '').split('/')[0].toLowerCase();
 const hasInvalidTokenChars = (value) => /[\s/?#]/.test(value);
 
 const customLoginPathError = computed(() => {
@@ -72,9 +37,8 @@ const customLoginPathError = computed(() => {
     return t('settings.reservedPathChars');
   }
 
-  const pathSegment = getPathSegment(value);
-  if (RESERVED_PATHS.includes(pathSegment)) {
-    return t('settings.reservedPathCustomLogin', { path: pathSegment });
+  if (isReservedPathRoot(value)) {
+    return t('settings.reservedPathCustomLogin', { path: getPathRootSegment(value) });
   }
 
   return '';
@@ -88,8 +52,7 @@ const myTokenError = computed(() => {
     return t('settings.reservedTokenChars');
   }
 
-  const pathSegment = getPathSegment(value);
-  return RESERVED_PATHS.includes(pathSegment) ? t('settings.reservedPathSubscriptionToken') : '';
+  return isReservedPathRoot(value) ? t('settings.reservedPathSubscriptionToken') : '';
 });
 
 const profileTokenError = computed(() => {
@@ -100,8 +63,7 @@ const profileTokenError = computed(() => {
     return t('settings.reservedTokenChars');
   }
 
-  const pathSegment = getPathSegment(value);
-  return RESERVED_PATHS.includes(pathSegment) ? t('settings.reservedPathProfileToken') : '';
+  return isReservedPathRoot(value) ? t('settings.reservedPathProfileToken') : '';
 });
 
 // 监听自定义登录路径，保留输入并通过提示引导修正

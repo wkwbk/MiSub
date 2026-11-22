@@ -19,6 +19,7 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { normalizePublicLinksConfig } from '../../shared/default-public-links.js';
 import { normalizePublicCoresConfig } from '../../shared/default-public-cores.js';
+import { getPathRootSegment, isReservedPathRoot } from '../../shared/reserved-paths.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 
@@ -291,47 +292,9 @@ export async function handleSettingsSave(request, env) {
   try {
     const newSettings = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
-    const reservedPathRoots = new Set([
-      'settings',
-      'login',
-      'groups',
-      'nodes',
-      'subscriptions',
-      'dashboard',
-      'api',
-      'explore',
-      'sub',
-      'cron',
-      'assets',
-      '@vite',
-      'public',
-      'profile',
-      'logout',
-      'auth_debug',
-      'auth_check',
-      'data',
-      'clients',
-      'system',
-      'github',
-      'telegram',
-      'test_notification',
-      'misubs',
-      'node_count',
-      'fetch_external_url',
-      'batch_update_nodes',
-      'subscription_nodes',
-      'debug_subscription',
-      'preview',
-    ]);
-
-    const normalizePathRoot = (value) => {
-      if (typeof value !== 'string') return '';
-      return value.trim().replace(/^\/+/, '').split('/')[0].toLowerCase();
-    };
-
     const rejectReservedValue = (value, fieldLabel) => {
-      const pathRoot = normalizePathRoot(value);
-      if (pathRoot && reservedPathRoots.has(pathRoot)) {
+      if (isReservedPathRoot(value)) {
+        const pathRoot = getPathRootSegment(value);
         return createJsonResponse(
           {
             success: false,

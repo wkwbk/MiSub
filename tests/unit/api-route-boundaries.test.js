@@ -32,6 +32,7 @@ describe('API route access boundaries', () => {
 
     expect(response.status).toBe(200);
     expect(body).not.toHaveProperty('customLoginPath');
+    expect(body.hasCustomLoginPath).toBe(true);
     expect(body.isLoginPath).toBe(false);
   });
 
@@ -52,6 +53,7 @@ describe('API route access boundaries', () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
+    expect(body.hasCustomLoginPath).toBe(true);
     expect(body.isLoginPath).toBe(true);
     expect(body).not.toHaveProperty('customLoginPath');
   });

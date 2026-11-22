@@ -13,29 +13,9 @@ const sessionStore = useSessionStore();
 const { t } = useI18n();
 
 const shouldHideLoginButton = computed(() => {
-  if (sessionStore.sessionState === 'loading') {
-    return true;
-  }
-
-  if (route.path === '/login') {
-    return true;
-  }
-
-  if (sessionStore.publicConfig?.hasCustomLoginPath) {
-    return true;
-  }
-
-  const rawPath = sessionStore.publicConfig?.customLoginPath;
-  if (!rawPath || typeof rawPath !== 'string') {
-    return false;
-  }
-
-  const normalizedPath = rawPath.trim().replace(/^\/+/, '');
-  if (!normalizedPath || normalizedPath === 'login') {
-    return false;
-  }
-
-  return true;
+  if (sessionStore.sessionState === 'loading') return true;
+  if (route.path === '/login') return true;
+  return Boolean(sessionStore.publicConfig?.hasCustomLoginPath);
 });
 
 const props = defineProps({

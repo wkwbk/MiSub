@@ -266,15 +266,15 @@ export async function onRequest(context) {
         const isStaticAsset = /^\/(assets|@vite|src)\/./.test(url.pathname) || /\.\w+$/.test(url.pathname);
 
         const customLoginPath = normalizeLoginPath(settings?.customLoginPath);
-        const defaultLoginPath = '/login';
-        const hasCustomLoginPath = customLoginPath !== defaultLoginPath;
+        const hasCustomLoginPath = customLoginPath !== '/login';
 
-        // SPA 路由白名单：这些请求应该交由前端路由处理，而不是作为订阅请求
-        // [修复] 增加更多可能的SPA路由，防止被误判为订阅请求
-        // [新增] 动态包含自定义登录路径
-        // [Fix #400] 当设置了自定义登录路径时，/login 不再作为 SPA 路由，
-        // 应直接返回 404 / disguise 页面以避免暴露自定义路径。
-        const isSpaRoute = ['/', '/dashboard', '/login', '/explore', customLoginPath].some((route) => {
+        // 设置了自定义路径后，默认 /login 立即失效（返回伪装页或 404，避免暴露真实入口）
+        if (hasCustomLoginPath && url.pathname === '/login') {
+          return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
+        }
+
+        // SPA 路由白名单：仅包含公开入口、后台与当前实际生效的登录路径
+        const isSpaRoute = ['/', '/dashboard', '/explore', customLoginPath].some((route) => {
           if (route === '/') return url.pathname === '/';
           if (route === '/dashboard') {
             return url.pathname === '/dashboard' || url.pathname.startsWith('/dashboard/');
@@ -282,16 +282,9 @@ export async function onRequest(context) {
           return url.pathname === route || url.pathname.startsWith(route + '/');
         });
 
-        // [Fix #400] 设置了自定义路径后，/login 不再是有效 SPA 路由
-        const isLoginPath = url.pathname === '/login';
-        if (hasCustomLoginPath && isLoginPath) {
-          return createDisguiseResponse(settings?.disguise, request.url) || new Response('Not Found', { status: 404 });
-        }
-
         const isProtectedSpaRoute =
           isSpaRoute &&
           url.pathname !== '/' &&
-          url.pathname !== '/login' &&
           url.pathname !== customLoginPath &&
           !url.pathname.startsWith('/explore');
 

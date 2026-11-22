@@ -16,23 +16,12 @@ export async function handleDisguiseRequest(context, preloadedSettings = null) {
   }
 
   const disguise = settings.disguise;
-
-  const customLoginPath = normalizeLoginPath(settings?.customLoginPath);
-  const defaultLoginPath = '/login';
-  const hasCustomLoginPath = customLoginPath !== defaultLoginPath;
-
-  // [Fix #400] 当设置了自定义登录路径后，访问 /login 不应重定向到自定义路径，
-  // 否则会暴露隐藏的管理入口。直接返回 disguise 页面或 404。
-  if (hasCustomLoginPath && url.pathname === defaultLoginPath) {
-    const disguiseResponse = createDisguiseResponse(settings?.disguise, request.url);
-    if (disguiseResponse) return disguiseResponse;
-    return new Response('Not Found', { status: 404 });
-  }
-  if (url.pathname === customLoginPath) {
+  if (!disguise || !disguise.enabled) {
     return null;
   }
 
-  if (!disguise || !disguise.enabled) {
+  // 允许访问当前实际配置的登录路径（/login 已在入口处针对自定义路径场景拦截）
+  if (url.pathname === normalizeLoginPath(settings?.customLoginPath)) {
     return null;
   }
 

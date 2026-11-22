@@ -16,7 +16,6 @@ export const useSessionStore = defineStore('session', () => {
     enablePublicPage: true,
     isLoginPath: false,
     hasCustomLoginPath: false,
-    customLoginPath: 'login',
     customPage: {
       enabled: false,
       useDefaultLayout: true,
@@ -37,19 +36,23 @@ export const useSessionStore = defineStore('session', () => {
     ...defaultPublicConfig,
     customPage: { ...defaultPublicConfig.customPage },
   });
+  const verifiedLoginPath = ref('');
   const hasLoadedPublicConfig = ref(false);
 
   async function checkSession() {
+    const currentPathname = typeof window !== 'undefined' ? window.location?.pathname || '' : '';
     const [dataResult, pConfigResult] = await Promise.all([fetchInitialData(), fetchPublicConfig()]);
 
     if (pConfigResult.success) {
       publicConfig.value = pConfigResult.data;
+      verifiedLoginPath.value = pConfigResult.data?.isLoginPath ? currentPathname : '';
       hasLoadedPublicConfig.value = true;
     } else if (!hasLoadedPublicConfig.value) {
       publicConfig.value = {
         ...disabledPublicConfig,
         customPage: { ...disabledPublicConfig.customPage },
       };
+      verifiedLoginPath.value = '';
     }
 
     if (dataResult.success) {
@@ -148,6 +151,7 @@ export const useSessionStore = defineStore('session', () => {
     sessionState,
     initialData,
     publicConfig,
+    verifiedLoginPath,
     subscriptionConfig,
     checkSession,
     handleUnauthorized,

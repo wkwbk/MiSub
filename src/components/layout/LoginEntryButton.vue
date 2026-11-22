@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue';
 import { LogIn } from '@lucide/vue';
-import { useSessionStore } from '@/stores/session.js';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({
@@ -11,17 +10,9 @@ const props = defineProps({
   },
 });
 
-const sessionStore = useSessionStore();
 const { t } = useI18n();
 
-const loginPath = computed(() => {
-  if (props.to) {
-    return props.to;
-  }
-  const rawPath = sessionStore.publicConfig?.customLoginPath;
-  const normalizedPath = rawPath && typeof rawPath === 'string' ? rawPath.trim().replace(/^\/+/, '') : '';
-  return normalizedPath ? `/${normalizedPath}` : '/login';
-});
+const loginPath = computed(() => props.to || '/login');
 </script>
 
 <template>

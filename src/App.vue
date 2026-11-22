@@ -18,7 +18,6 @@ import { useI18n } from '@/i18n/index.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { COMMON_DASHBOARD_ROUTE_LOADERS, configureAuthGuard, translateRouteTitle } from '@/router/index.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
-import { readSessionPreference } from '@/utils/session-preference.js';
 
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
@@ -64,14 +63,12 @@ const isLoggedIn = computed(() => sessionState.value === 'loggedIn');
 const isPublicRoute = computed(() => route.meta.isPublic);
 const isSessionLoading = computed(() => sessionState.value === 'loading');
 const loginPath = computed(() => {
-  const rawPath = sessionStore.publicConfig?.customLoginPath;
-  if (typeof rawPath === 'string' && rawPath.trim()) {
-    const normalized = rawPath.trim().replace(/^\/+/, '');
+  if (sessionStore.publicConfig?.hasCustomLoginPath) {
+    const ownPath = sessionStore.subscriptionConfig?.customLoginPath;
+    const normalized = typeof ownPath === 'string' ? ownPath.trim().replace(/^\/+/, '') : '';
     if (normalized && normalized !== 'login') return `/${normalized}`;
+    return '/';
   }
-
-  const rememberedPath = readSessionPreference('misub:login-path');
-  if (rememberedPath && rememberedPath.startsWith('/')) return rememberedPath;
   return '/login';
 });
 
@@ -132,10 +129,7 @@ const isModernSettingsPage = computed(
 );
 
 const loginComponent = computed(() => {
-  const rawPath = sessionStore.publicConfig?.customLoginPath;
-  const normalizedPath = rawPath && typeof rawPath === 'string' ? rawPath.trim().replace(/^\/+/, '') : '';
-  // 只有当存在有效的自定义路径（非空且不等于默认 'login'）时才显示 NotFound
-  return normalizedPath && normalizedPath !== 'login' ? NotFound : Login;
+  return sessionStore.publicConfig?.hasCustomLoginPath ? NotFound : Login;
 });
 
 onMounted(async () => {

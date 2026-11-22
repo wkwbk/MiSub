@@ -5,12 +5,10 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, markRaw, onMounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, markRaw, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '@/stores/session';
-import { storeToRefs } from 'pinia';
-import { isValidCustomLoginPath, resolveSafeLoginRedirect } from '@/utils/login-path.js';
-import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
+import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
@@ -18,82 +16,37 @@ const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
 const route = useRoute();
 const router = useRouter();
 const sessionStore = useSessionStore();
-const { publicConfig } = storeToRefs(sessionStore);
 
-const activeComponent = ref(null);
-const componentProps = ref({});
+const isMatchedLoginPath = computed(() => {
+  if (sessionStore.sessionState === 'loading') return false;
 
-onMounted(async () => {
-  checkPath();
+  const config = sessionStore.publicConfig || {};
+  if (config.hasCustomLoginPath) {
+    return (
+      route.path !== '/login' &&
+      config.isLoginPath === true &&
+      (!sessionStore.verifiedLoginPath || route.path === sessionStore.verifiedLoginPath)
+    );
+  }
+  return route.path === '/login';
 });
 
-watch(
-  () => route.path,
-  () => {
-    checkPath();
-  },
-);
-
-watch(publicConfig, () => {
-  checkPath();
+watchEffect(() => {
+  if (sessionStore.sessionState === 'loggedIn' && isMatchedLoginPath.value) {
+    const target = resolveSafeLoginRedirect(route.query.redirect, '/dashboard', [route.path]);
+    router.replace(target).catch(() => {});
+  }
 });
 
-watch(
-  () => sessionStore.sessionState,
-  () => {
-    checkPath();
-  },
-);
-
-function checkPath() {
-  // 在 session 还在 loading 时，publicConfig 尚未从 API 加载，不做判断
-  if (sessionStore.sessionState === 'loading') {
-    activeComponent.value = null;
-    return;
+const activeComponent = computed(() => {
+  if (sessionStore.sessionState === 'loading') return null;
+  if (isMatchedLoginPath.value) {
+    return sessionStore.sessionState === 'loggedIn' ? null : markRaw(Login);
   }
+  return markRaw(NotFound);
+});
 
-  const config = publicConfig.value || {};
-  const currentPath = route.path;
-
-  // customLoginPath 不再由公开 API 返回；后端返回 hasCustomLoginPath 布尔值，
-  // 并只在当前请求路径命中实际登录路径时返回 isLoginPath=true。
-  const hasCustomPath = Boolean(config.hasCustomLoginPath) || isValidCustomLoginPath(config.customLoginPath);
-  let isMatchedLoginPath = false;
-
-  if (hasCustomPath) {
-    // 启用了自定义登录路径时，/login 永远不允许打开登录页
-    if (currentPath !== '/login') {
-      if (config.isLoginPath) {
-        writeSessionPreference('misub:login-path', currentPath);
-        isMatchedLoginPath = true;
-      } else {
-        const knownCustomPath = isValidCustomLoginPath(config.customLoginPath)
-          ? '/' + config.customLoginPath.trim().replace(/^\/+/, '')
-          : readSessionPreference('misub:login-path') || '';
-        isMatchedLoginPath = Boolean(
-          knownCustomPath && knownCustomPath !== '/login' && currentPath === knownCustomPath,
-        );
-      }
-    }
-  } else {
-    isMatchedLoginPath = currentPath === '/login';
-  }
-
-  if (isMatchedLoginPath) {
-    if (sessionStore.sessionState === 'loggedIn') {
-      activeComponent.value = null;
-      const target = resolveSafeLoginRedirect(route.query.redirect, '/dashboard', [currentPath]);
-      router.replace(target).catch(() => {});
-      return;
-    }
-    // 匹配到配置的登录路径（自定义或默认 /login）
-    activeComponent.value = markRaw(Login);
-    componentProps.value = { login: sessionStore.login };
-  } else {
-    // 不匹配任何登录路径 → 显示 404
-    activeComponent.value = markRaw(NotFound);
-  }
-}
+const componentProps = computed(() => (isMatchedLoginPath.value ? { login: sessionStore.login } : {}));
 </script>
 
 <style scoped>

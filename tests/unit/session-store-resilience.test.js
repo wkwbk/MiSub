@@ -43,7 +43,7 @@ describe('session store resilience', () => {
     await store.checkSession();
 
     expect(store.sessionState).toBe('loggedOut');
-    expect(store.publicConfig.customLoginPath).toBe('login');
+    expect(store.publicConfig.hasCustomLoginPath).toBe(false);
     expect(store.publicConfig.enablePublicPage).toBe(false);
   });
 
@@ -68,7 +68,7 @@ describe('session store resilience', () => {
 
     expect(store.sessionState).toBe('loggedIn');
     expect(store.initialData).toEqual(data);
-    expect(store.publicConfig.customLoginPath).toBe('login');
+    expect(store.publicConfig.hasCustomLoginPath).toBe(false);
   });
 
   it('preserves the last known public config after a later fetch failure', async () => {
@@ -78,14 +78,14 @@ describe('session store resilience', () => {
     apiMocks.fetchInitialData.mockResolvedValue({ success: true, data });
     apiMocks.fetchPublicConfig.mockResolvedValueOnce({
       success: true,
-      data: { customLoginPath: 'admin-login', enablePublicPage: true },
+      data: { hasCustomLoginPath: true, isLoginPath: false, enablePublicPage: true },
     });
     await store.checkSession();
 
     apiMocks.fetchPublicConfig.mockResolvedValueOnce({ success: false, error: 'network down' });
     await store.checkSession();
 
-    expect(store.publicConfig.customLoginPath).toBe('admin-login');
+    expect(store.publicConfig.hasCustomLoginPath).toBe(true);
     expect(store.publicConfig.enablePublicPage).toBe(true);
   });
 
