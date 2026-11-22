@@ -21,8 +21,6 @@ vi.mock('../../functions/storage-adapter.js', () => ({
 vi.mock('../../functions/modules/utils.js', () => ({
   getCookieSecret: vi.fn(),
   getAdminPassword: vi.fn(),
-  setAdminPassword: vi.fn(),
-  isUsingDefaultPassword: vi.fn().mockResolvedValue(false),
   normalizeLoginPath: (p) => (typeof p === 'string' && p.trim().replace(/^\/+/, '') ? `/${p.trim().replace(/^\/+/, '')}` : '/login'),
   createJsonResponse: (data, status = 200) => new Response(JSON.stringify(data), { status }),
   createErrorResponse: (data, status = 500) => new Response(JSON.stringify({ error: String(data) }), { status }),

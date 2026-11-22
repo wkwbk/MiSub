@@ -10,7 +10,6 @@ import {
   getAuthDebugInfo,
   getCookieSecret,
   JSON_BODY_LIMITS,
-  markAuthInitialized,
   readJsonWithLimit,
   RequestBodyTooLargeError,
 } from './utils.js';
@@ -21,6 +20,54 @@ function normalizeSecret(value) {
     .replace(/[\u200B-\u200D]/g, '')
     .trim()
     .replace(/^['"]|['"]$/g, '');
+}
+
+async function sha256Bytes(value) {
+  const data = new TextEncoder().encode(String(value ?? ''));
+  const digest = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(digest);
+}
+
+/**
+ * 常量时间字符串比对（先做 SHA-256 归一化长度，再常量时间比较）
+ * @param {string} a
+ * @param {string} b
+ * @returns {Promise<boolean>}
+ */
+export async function timingSafeStringEqual(a, b) {
+  const [hashA, hashB] = await Promise.all([sha256Bytes(a), sha256Bytes(b)]);
+  if (typeof crypto.subtle?.timingSafeEqual === 'function') {
+    return crypto.subtle.timingSafeEqual(hashA, hashB);
+  }
+  let diff = 0;
+  for (let i = 0; i < hashA.length; i++) {
+    diff |= hashA[i] ^ hashB[i];
+  }
+  return diff === 0;
+}
+
+/**
+ * 派生会话签名密钥：绑定 COOKIE_SECRET 与 ADMIN_PASSWORD，修改 ADMIN_PASSWORD 时自动吊销所有旧会话
+ * @param {Object} env
+ * @returns {Promise<string|null>}
+ */
+export async function getSessionSigningSecret(env) {
+  const cookieSecret = await getCookieSecret(env);
+  if (!cookieSecret) return null;
+
+  const adminPassword = normalizeSecret(await getAdminPassword(env));
+  const encoder = new TextEncoder();
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(cookieSecret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const derived = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(`misub-session-v1:${adminPassword}`));
+  return Array.from(new Uint8Array(derived))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function buildRequestMeta(request, env) {
@@ -35,11 +82,6 @@ function buildRequestMeta(request, env) {
     cfRay: request?.headers?.get('CF-Ray'),
     hasD1: !!env?.MISUB_DB,
   };
-}
-
-async function isUsingDefaultAdminPassword(env) {
-  const debugInfo = await getAuthDebugInfo(env);
-  return debugInfo?.adminPassword?.isDefaultFallback === true;
 }
 
 /**
@@ -179,7 +221,16 @@ export async function getAuthSessionDiagnostic(request, env) {
     return result;
   }
 
-  const secret = await getCookieSecret(env);
+  let secret;
+  try {
+    secret = await getSessionSigningSecret(env);
+  } catch (error) {
+    if (error instanceof AdminPasswordMissingError) {
+      result.reason = 'admin_password_missing';
+      return result;
+    }
+    throw error;
+  }
   if (!secret) {
     result.reason = 'no_secret';
     return result;
@@ -222,7 +273,15 @@ export async function renewAuthSession(request, env, response, diagnostic = null
     return response;
   }
 
-  const secret = await getCookieSecret(env);
+  let secret;
+  try {
+    secret = await getSessionSigningSecret(env);
+  } catch (error) {
+    if (error instanceof AdminPasswordMissingError) {
+      return response;
+    }
+    throw error;
+  }
   if (!secret) return response;
 
   const token = await createSignedToken(secret, String(Date.now()));
@@ -269,8 +328,18 @@ export async function getLoginPasswordDiagnostic(request, env) {
     return result;
   }
 
+  let currentPassword;
+  try {
+    currentPassword = normalizeSecret(await getAdminPassword(env));
+  } catch (error) {
+    if (error instanceof AdminPasswordMissingError) {
+      result.reason = 'admin_password_missing';
+      return result;
+    }
+    throw error;
+  }
+
   const inputPassword = normalizeSecret(payload?.password);
-  const currentPassword = normalizeSecret(await getAdminPassword(env));
 
   result.input.provided = typeof payload?.password === 'string';
   result.input.normalizedLength = inputPassword.length;
@@ -281,7 +350,7 @@ export async function getLoginPasswordDiagnostic(request, env) {
     return result;
   }
 
-  result.matched = inputPassword === currentPassword;
+  result.matched = await timingSafeStringEqual(inputPassword, currentPassword);
   result.success = true;
   result.reason = result.matched ? 'matched' : 'mismatch';
   return result;
@@ -337,30 +406,20 @@ export async function handleLogin(request, env) {
     const { password } = payload || {};
     const inputPassword = normalizeSecret(password);
     const currentPassword = normalizeSecret(await getAdminPassword(env));
-    const isPasswordMatched = inputPassword === currentPassword;
+    const isPasswordMatched = await timingSafeStringEqual(inputPassword, currentPassword);
 
     if (isPasswordMatched) {
-      const secret = await getCookieSecret(env);
+      const secret = await getSessionSigningSecret(env);
       const token = await createSignedToken(secret, String(Date.now()));
       const isSecure = request.url.startsWith('https');
       const cookieString = `${COOKIE_NAME}=${token}; Path=/; HttpOnly; ${isSecure ? 'Secure;' : ''} SameSite=Lax; Max-Age=${SESSION_DURATION / 1000}`;
-      const responseBody = { success: true };
-      const isDefaultPassword = await isUsingDefaultAdminPassword(env);
-      if (isDefaultPassword) {
-        responseBody.securityWarning = {
-          type: 'default_admin_password',
-          shouldChangePassword: true,
-          message: '当前正在使用默认管理员密码 admin，请登录后立即修改。',
-        };
-      } else {
-        await markAuthInitialized(env);
-      }
-      return new Response(JSON.stringify(responseBody), {
+      const response = new Response(JSON.stringify({ success: true }), {
         headers: {
           'Content-Type': 'application/json',
-          'Set-Cookie': cookieString,
         },
       });
+      response.headers.append('Set-Cookie', cookieString);
+      return response;
     }
     return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
   } catch (e) {

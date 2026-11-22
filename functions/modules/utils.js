@@ -182,11 +182,9 @@ export async function getCookieSecret(env) {
   return getFallbackCookieSecret();
 }
 
-const SYSTEM_AUTH_INITIALIZED_KEY = 'SYSTEM_AUTH_INITIALIZED';
-
 export class AdminPasswordMissingError extends Error {
   constructor(
-    message = '管理员密码未配置：检测到实例已初始化或已有数据，但缺少 ADMIN_PASSWORD。请在平台控制台将其设置为 Secret 密钥后重试。',
+    message = '管理员密码未配置：请在平台控制台将 ADMIN_PASSWORD 设置为 Secret 密钥（本地开发请在 .dev.vars 中配置）后重试。',
   ) {
     super(message);
     this.name = 'AdminPasswordMissingError';
@@ -195,59 +193,18 @@ export class AdminPasswordMissingError extends Error {
   }
 }
 
-export async function hasInitializedInstanceState(env) {
-  const db = getD1(env);
-  if (!db) return false;
-
-  const initialized = await readD1SettingStrict(db, SYSTEM_AUTH_INITIALIZED_KEY);
-  if (initialized !== null && initialized !== undefined && String(initialized) !== '') {
-    return true;
-  }
-
-  for (const table of ['subscriptions', 'profiles', 'settings']) {
-    try {
-      const row = await db.prepare(`SELECT 1 AS ok FROM ${table} LIMIT 1`).first();
-      if (row) return true;
-    } catch (error) {
-      if (isNoSuchTableError(error)) {
-        continue;
-      }
-      throw error;
-    }
-  }
-
-  return false;
-}
-
-export async function markAuthInitialized(env) {
-  const db = getD1(env);
-  if (!db) return false;
-  return safeD1Put(db, SYSTEM_AUTH_INITIALIZED_KEY, '1');
-}
-
 /**
  * 获取管理员密码
- * 优先顺序：环境变量 ADMIN_PASSWORD → D1 → 默认值 'admin'（仅限未初始化的全新实例）
+ * 仅从环境变量 ADMIN_PASSWORD 读取；未配置时 fail-closed 抛出 AdminPasswordMissingError
  * @param {Object} env - 运行时环境对象
  * @returns {Promise<string>} 密码
  */
 export async function getAdminPassword(env) {
   const runtimeAdminPassword = getRuntimeEnvValue(env, 'ADMIN_PASSWORD');
-  if (runtimeAdminPassword) {
-    return runtimeAdminPassword.trim();
-  }
-
-  const db = getD1(env);
-  if (db) {
-    const d1Password = await readD1SettingStrict(db, 'SYSTEM_ADMIN_PASSWORD');
-    if (d1Password) return String(d1Password).trim();
-  }
-
-  if (await hasInitializedInstanceState(env)) {
+  if (!runtimeAdminPassword) {
     throw new AdminPasswordMissingError();
   }
-
-  return 'admin';
+  return runtimeAdminPassword.trim();
 }
 
 /**
@@ -260,19 +217,10 @@ export async function getAuthDebugInfo(env) {
   const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
   const db = getD1(env);
 
-  let hasD1AdminPassword = false;
   let hasD1CookieSecret = false;
 
   if (db) {
-    hasD1AdminPassword = !!(await safeD1Get(db, 'SYSTEM_ADMIN_PASSWORD'));
     hasD1CookieSecret = !!(await safeD1Get(db, 'SYSTEM_COOKIE_SECRET'));
-  }
-
-  let adminPasswordSource = 'default';
-  if (runtimeAdminPassword) {
-    adminPasswordSource = 'env';
-  } else if (hasD1AdminPassword) {
-    adminPasswordSource = 'd1';
   }
 
   let cookieSecretSource = 'generated';
@@ -285,10 +233,8 @@ export async function getAuthDebugInfo(env) {
   return {
     hasD1: !!db,
     adminPassword: {
-      source: adminPasswordSource,
-      hasRuntime: !!runtimeAdminPassword,
-      hasD1Value: hasD1AdminPassword,
-      isDefaultFallback: adminPasswordSource === 'default',
+      source: runtimeAdminPassword ? 'env' : 'missing',
+      configured: !!runtimeAdminPassword,
     },
     cookieSecret: {
       source: cookieSecretSource,
@@ -297,41 +243,6 @@ export async function getAuthDebugInfo(env) {
       mayRegenerateWithoutD1: !db && !runtimeCookieSecret,
     },
   };
-}
-
-/**
- * 检查是否正在使用默认密码
- * @param {Object} env
- * @returns {Promise<boolean>}
- */
-export async function isUsingDefaultPassword(env) {
-  try {
-    const current = await getAdminPassword(env);
-    return current === 'admin';
-  } catch (error) {
-    if (error instanceof AdminPasswordMissingError) {
-      return false;
-    }
-    throw error;
-  }
-}
-
-/**
- * 设置管理员密码
- * 持久化到 D1；无 D1 时抛出提示
- * @param {Object} env - 运行时环境对象
- * @param {string} newPassword - 新密码
- */
-export async function setAdminPassword(env, newPassword) {
-  if (getRuntimeEnvValue(env, 'ADMIN_PASSWORD')) {
-    throw new Error('当前部署通过环境变量 ADMIN_PASSWORD 设置密码，请在平台控制台修改该变量');
-  }
-  const db = getD1(env);
-  if (!db) {
-    throw new Error('D1 database not available');
-  }
-  await putD1SettingStrict(db, 'SYSTEM_ADMIN_PASSWORD', newPassword);
-  await markAuthInitialized(env);
 }
 
 /**

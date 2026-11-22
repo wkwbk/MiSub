@@ -52,7 +52,7 @@ describe('session store resilience', () => {
     const store = useSessionStore();
 
     const data = {
-      config: { password: 'changed', isDefaultPassword: false },
+      config: { FileName: 'MiSub' },
       misubs: [],
       profiles: [],
     };
@@ -115,37 +115,6 @@ describe('session store resilience', () => {
     await store.login('password');
 
     expect(store.sessionState).toBe('loggedIn');
-  });
-
-  it('keeps default-password warning from login response for immediate frontend display', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
-    const store = useSessionStore();
-
-    apiMocks.login.mockResolvedValue({
-      success: true,
-      data: {
-        securityWarning: {
-          type: 'default_admin_password',
-          shouldChangePassword: true,
-          message: '当前正在使用默认管理员密码 admin，请登录后立即修改。',
-        },
-      },
-    });
-    apiMocks.fetchInitialData.mockResolvedValue({
-      success: true,
-      data: { config: { isDefaultPassword: true }, misubs: [], profiles: [] },
-    });
-    apiMocks.fetchPublicConfig.mockResolvedValue({
-      success: true,
-      data: { customLoginPath: 'login' },
-    });
-
-    await store.login('admin');
-
-    expect(store.securityWarning).toMatchObject({
-      type: 'default_admin_password',
-      shouldChangePassword: true,
-    });
   });
 
   it('keeps sessionState as loggedOut without switching to loading when post-login session check fails', async () => {

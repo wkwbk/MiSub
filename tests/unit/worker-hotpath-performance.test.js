@@ -4,6 +4,7 @@ import {
   authMiddleware,
   createSignedToken,
   getAuthSessionDiagnostic,
+  getSessionSigningSecret,
   renewAuthSession,
 } from '../../functions/modules/auth-middleware.js';
 import { clearCookieSecretCache, getCookieSecret } from '../../functions/modules/utils.js';
@@ -135,8 +136,8 @@ describe('worker hot-path D1 and auth performance guards', () => {
     clearCookieSecretCache();
     const secret = 'reuse-diagnostic-secret';
     const db = createCountingD1({ SYSTEM_COOKIE_SECRET: secret });
-    const env = { MISUB_DB: db };
-    const token = await createSignedToken(secret, String(Date.now() - 1000));
+    const env = { MISUB_DB: db, ADMIN_PASSWORD: 'test-admin-password' };
+    const token = await createSignedToken(await getSessionSigningSecret(env), String(Date.now() - 1000));
     const request = createMockRequest('https://example.com/api/data', {
       headers: { Cookie: `auth_session=${token}` },
     });

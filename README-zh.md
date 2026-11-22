@@ -244,12 +244,17 @@ wrangler d1 execute misub --file=schema.sql --remote
 > - 使用 `wrangler deploy` / Git 自动部署时，若 `wrangler.toml` 中配置了 `[vars]` 且未开启 `keep_vars = true`，控制台手动添加的**普通文本变量会被覆盖清空**，而 `Secret` 密钥不受影响。
 > - 也可直接通过命令行注入加密密钥：`npx wrangler secret put ADMIN_PASSWORD`
 
-**可选：**
+**必选：**
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
-| `ADMIN_PASSWORD` | 管理员登录密码 | `your_secure_password` (未设置则默认为 `admin`) |
-| `COOKIE_SECRET` | Cookie 加密密钥 | `64位随机字符串` (推荐留空，系统自动生成) |
+| `ADMIN_PASSWORD` | 管理员登录密码（Secret，未配置时拒绝登录；修改后旧会话自动失效） | `your_secure_password` |
+
+**推荐：**
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| `COOKIE_SECRET` | Cookie 加密密钥 | `64位随机字符串` (推荐留空，系统自动生成并存入 D1) |
 
 **可选（按需设置）：**
 
@@ -279,9 +284,8 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 1. 部署完成后，公开页面默认 **不开启**（访问域名会显示伪装页）。
 2. 请直接访问 `您的域名/login` 进入登录页面。
-3. 输入设置的 `ADMIN_PASSWORD` 即可进入管理后台。
-    - **注意**：如果未设置 `ADMIN_PASSWORD`，默认密码为 **`admin`**。
-    - **首次登录**：使用默认密码登录后，系统会提示您立即在「设置」->「基础设置」中修改密码。
+3. 输入已配置的 `ADMIN_PASSWORD` 即可进入管理后台。
+    - **安全说明**：未配置 `ADMIN_PASSWORD` 时系统会拒绝登录（fail-closed）；在 Cloudflare 控制台（Secret）或 `.dev.vars` 中修改 `ADMIN_PASSWORD` 后，所有旧登录会话会立即失效。
 
 ### 添加订阅
 

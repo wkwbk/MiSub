@@ -26,7 +26,6 @@ import {
   handleSettingsGet,
   handleSettingsReset,
   handleSettingsSave,
-  handleUpdatePassword,
 } from './api-handler.js';
 import { handleRuleTemplatesRequest } from './handlers/rule-template-handler.js';
 import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription/preview-handler.js';
@@ -278,9 +277,6 @@ export async function handleApiRequest(request, env, context = null) {
         return await handleSettingsSave(request, env);
       }
       return createJsonResponse('Method Not Allowed', 405);
-
-    case '/settings/password':
-      return await handleUpdatePassword(request, env);
 
     case '/settings/reset':
       if (request.method === 'POST') {

@@ -7,11 +7,9 @@ import { STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
 import {
   createErrorResponse,
   createJsonResponse,
-  isUsingDefaultPassword,
   JSON_BODY_LIMITS,
   normalizeLoginPath,
   readJsonWithLimit,
-  setAdminPassword,
 } from './utils.js';
 import { checkAndNotify, sendTgNotification } from './notifications.js';
 import { clearAllNodeCaches } from '../services/node-cache-service.js';
@@ -82,7 +80,6 @@ export async function handleDataRequest(env, context = null) {
     const config = {
       ...defaultSettings,
       ...settings,
-      isDefaultPassword: await isUsingDefaultPassword(env),
     };
     try {
       const taskContext = context || { env };
@@ -597,31 +594,5 @@ export async function handlePublicConfig(request, env) {
   } catch (e) {
     console.error('[API Error /public/config]', e);
     return createErrorResponse('获取公开配置失败', 500);
-  }
-}
-
-/**
- * 处理密码更新API
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-export async function handleUpdatePassword(request, env) {
-  if (request.method !== 'POST') {
-    return createErrorResponse('Method Not Allowed', 405);
-  }
-
-  try {
-    const { password } = await readJsonWithLimit(request, JSON_BODY_LIMITS.auth);
-
-    if (!password || typeof password !== 'string' || password.length < 6) {
-      return createErrorResponse('密码必须至少6位字符', 400);
-    }
-
-    await setAdminPassword(env, password);
-    return createJsonResponse({ success: true, message: '密码已更新' });
-  } catch (e) {
-    console.error('[API Error /settings/password]', e);
-    return createErrorResponse(e?.status ? e.message : 'Failed to update password', e?.status || 500);
   }
 }

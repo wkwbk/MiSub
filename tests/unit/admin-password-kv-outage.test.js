@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
+import { AdminPasswordMissingError, getAdminPassword, getAuthDebugInfo } from '../../functions/modules/utils.js';
 import {
-  AdminPasswordMissingError,
-  getAdminPassword,
-  isUsingDefaultPassword,
-  setAdminPassword,
-} from '../../functions/modules/utils.js';
-import { handleLogin } from '../../functions/modules/auth-middleware.js';
+  getAuthSessionDiagnostic,
+  handleLogin,
+  timingSafeStringEqual,
+} from '../../functions/modules/auth-middleware.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createFailingD1(errorMessage = 'D1 storage is paused') {
@@ -26,83 +25,43 @@ function createFailingD1(errorMessage = 'D1 storage is paused') {
   };
 }
 
-describe('admin password fails closed when D1 is unavailable', () => {
-  it('does not fall back to the default password when D1 read fails', async () => {
-    const password = await getAdminPassword({
-      MISUB_DB: createFailingD1('D1 storage is paused'),
-    }).catch((error) => error.message);
-    expect(password).toBe('D1 storage is paused');
+describe('pure ADMIN_PASSWORD secret authentication', () => {
+  it('returns trimmed ADMIN_PASSWORD from env', async () => {
+    await expect(getAdminPassword({ ADMIN_PASSWORD: '  my-strong-secret  ' })).resolves.toBe('my-strong-secret');
   });
 
-  it('rejects login while D1 password storage is unavailable', async () => {
+  it('fails closed with AdminPasswordMissingError when ADMIN_PASSWORD is unset', async () => {
+    await expect(getAdminPassword({ MISUB_DB: createMemoryD1() })).rejects.toBeInstanceOf(AdminPasswordMissingError);
+    await expect(getAdminPassword({})).rejects.toBeInstanceOf(AdminPasswordMissingError);
+  });
+
+  it('ignores legacy D1 SYSTEM_ADMIN_PASSWORD and still fails closed when ADMIN_PASSWORD is unset', async () => {
+    const db = createMemoryD1({
+      SYSTEM_ADMIN_PASSWORD: 'legacy-d1-password',
+    });
+    await expect(getAdminPassword({ MISUB_DB: db })).rejects.toBeInstanceOf(AdminPasswordMissingError);
+    await expect(getAuthDebugInfo({ MISUB_DB: db })).resolves.toMatchObject({
+      adminPassword: {
+        source: 'missing',
+        configured: false,
+      },
+    });
+  });
+
+  it('rejects login with 503 ADMIN_PASSWORD_MISSING when ADMIN_PASSWORD is unset', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const env = {
-      MISUB_DB: createFailingD1('D1 storage is paused'),
-      COOKIE_SECRET: 'test-cookie-secret',
-    };
     const request = new Request('https://example.com/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password: 'admin' }),
     });
     try {
-      const response = await handleLogin(request, env);
-      expect(response.status).toBe(500);
-      expect(await response.json()).toMatchObject({ error: expect.any(String) });
-    } finally {
-      errorSpy.mockRestore();
-    }
-  });
-
-  it('rejects password changes controlled by ADMIN_PASSWORD env var', async () => {
-    const db = createMemoryD1();
-    const result = await setAdminPassword({ ADMIN_PASSWORD: 'env-password', MISUB_DB: db }, 'new-password').catch(
-      (error) => error.message,
-    );
-    expect(result).toMatch(/环境变量 ADMIN_PASSWORD/);
-    expect(db.tables.settings.has('SYSTEM_ADMIN_PASSWORD')).toBe(false);
-  });
-
-  it('still uses the default password when D1 is genuinely empty', async () => {
-    await expect(getAdminPassword({ MISUB_DB: createMemoryD1() })).resolves.toBe('admin');
-  });
-
-  it('persists updated admin password in D1 settings table when ADMIN_PASSWORD is unset', async () => {
-    const db = createMemoryD1();
-    await setAdminPassword({ MISUB_DB: db }, 'custom-d1-password');
-    await expect(getAdminPassword({ MISUB_DB: db })).resolves.toBe('custom-d1-password');
-    expect(db.tables.settings.get('SYSTEM_AUTH_INITIALIZED')).toBe('1');
-  });
-
-  it('fails closed if ADMIN_PASSWORD is removed after a prior non-default login', async () => {
-    const db = createMemoryD1();
-    const firstLogin = await handleLogin(
-      new Request('https://example.com/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: 'strong-secret-password' }),
-      }),
-      {
-        MISUB_DB: db,
-        ADMIN_PASSWORD: 'strong-secret-password',
+      const response = await handleLogin(request, {
+        MISUB_DB: createMemoryD1(),
         COOKIE_SECRET: 'test-cookie-secret',
-      },
-    );
-    expect(firstLogin.status).toBe(200);
-    expect(db.tables.settings.get('SYSTEM_AUTH_INITIALIZED')).toBe('1');
-
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      const secondLogin = await handleLogin(
-        new Request('https://example.com/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: 'admin' }),
-        }),
-        { MISUB_DB: db, COOKIE_SECRET: 'test-cookie-secret' },
-      );
-      expect(secondLogin.status).toBe(503);
-      expect(await secondLogin.json()).toMatchObject({
+      });
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({
         code: 'ADMIN_PASSWORD_MISSING',
       });
     } finally {
@@ -110,11 +69,67 @@ describe('admin password fails closed when D1 is unavailable', () => {
     }
   });
 
-  it('fails closed when D1 already has rows and ADMIN_PASSWORD is missing', async () => {
-    const db = createMemoryD1({
-      misub_subscriptions_v1: [{ id: 'sub-1', name: 'Sub 1' }],
+  it('authenticates with ADMIN_PASSWORD even when D1 is unavailable', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const env = {
+      MISUB_DB: createFailingD1('D1 storage is paused'),
+      ADMIN_PASSWORD: 'env-only-password',
+      COOKIE_SECRET: 'test-cookie-secret',
+    };
+    const request = new Request('https://example.com/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: 'env-only-password' }),
     });
-    await expect(getAdminPassword({ MISUB_DB: db })).rejects.toBeInstanceOf(AdminPasswordMissingError);
-    await expect(isUsingDefaultPassword({ MISUB_DB: db })).resolves.toBe(false);
+    try {
+      const response = await handleLogin(request, env);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ success: true });
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
+
+  it('immediately invalidates existing sessions when ADMIN_PASSWORD changes', async () => {
+    const db = createMemoryD1();
+    const initialEnv = {
+      MISUB_DB: db,
+      ADMIN_PASSWORD: 'old-password-123',
+      COOKIE_SECRET: 'stable-cookie-secret',
+    };
+
+    const loginResponse = await handleLogin(
+      new Request('https://example.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'old-password-123' }),
+      }),
+      initialEnv,
+    );
+    expect(loginResponse.status).toBe(200);
+    const cookieHeader = loginResponse.headers.get('Set-Cookie').split(';')[0];
+
+    const validDiag = await getAuthSessionDiagnostic(
+      { headers: { get: (name) => (name.toLowerCase() === 'cookie' ? cookieHeader : '') } },
+      initialEnv,
+    );
+    expect(validDiag.isAuthenticated).toBe(true);
+
+    const rotatedEnv = {
+      ...initialEnv,
+      ADMIN_PASSWORD: 'new-password-456',
+    };
+    const invalidatedDiag = await getAuthSessionDiagnostic(
+      { headers: { get: (name) => (name.toLowerCase() === 'cookie' ? cookieHeader : '') } },
+      rotatedEnv,
+    );
+    expect(invalidatedDiag.isAuthenticated).toBe(false);
+    expect(invalidatedDiag.reason).toBe('invalid_signature_or_secret');
+  });
+
+  it('compares passwords in constant time across equal and unequal inputs', async () => {
+    await expect(timingSafeStringEqual('secret-abc', 'secret-abc')).resolves.toBe(true);
+    await expect(timingSafeStringEqual('secret-abc', 'secret-abd')).resolves.toBe(false);
+    await expect(timingSafeStringEqual('short', 'much-longer-secret')).resolves.toBe(false);
   });
 });

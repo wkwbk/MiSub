@@ -114,9 +114,7 @@ export const D1_KNOWN_SETTINGS_KEYS = new Set([
   'misub_rule_templates_v1',
   'misub_clients_v1',
   'misub_settings_v1',
-  'SYSTEM_ADMIN_PASSWORD',
   'SYSTEM_COOKIE_SECRET',
-  'SYSTEM_AUTH_INITIALIZED',
 ]);
 
 export function isCacheKey(keyStr) {

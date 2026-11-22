@@ -190,7 +190,7 @@ describe('settings page English translations', () => {
     expectNoChineseOrKeys(rules.text());
   });
 
-  it('renders SystemSettings storage backup external api and admin security copy in English', () => {
+  it('renders SystemSettings storage backup and external api copy in English', () => {
     const wrapper = mount(SystemSettings, {
       props: {
         settings: {
@@ -209,8 +209,7 @@ describe('settings page English translations', () => {
     expect(wrapper.text()).toContain('Generate random token');
     expect(wrapper.text()).toContain('Backup and restore');
     expect(wrapper.text()).toContain('Export backup');
-    expect(wrapper.text()).toContain('Administrator security settings');
-    expect(wrapper.text()).toContain('Change admin password');
+    expect(wrapper.text()).not.toContain('Change admin password');
     expectNoChineseOrKeys(wrapper.text());
   });
 });

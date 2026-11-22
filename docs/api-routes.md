@@ -317,11 +317,6 @@
     - 写入：settings；双存储同步到 D1/KV；清理节点缓存；发送设置更新通知。
     - 限制：拒绝将自定义登录路径、订阅 token、profile token 设置为系统保留路径。
 
-- `POST /api/settings/password`
-    - Handler：`handleUpdatePassword()`
-    - 写入：管理员密码。
-    - 限制：密码至少 6 位。
-
 - `POST /api/settings/reset`
     - Handler：`handleSettingsReset()`
     - 写入：删除 settings；双存储清理；清理 SettingsCache。

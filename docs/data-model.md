@@ -56,7 +56,7 @@ MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版�
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`settings`**（纯系统配置）
     - `key TEXT PRIMARY KEY`
-    - `value TEXT NOT NULL`：仅存放 `main`（全局系统设置）、`SYSTEM_ADMIN_PASSWORD` / `SYSTEM_COOKIE_SECRET` / `SYSTEM_AUTH_INITIALIZED`（认证配置）、`misub_clients_v1`（客户端配置）、`misub_rule_templates_v1` / `misub_dns_templates_v1`（自定义模板）
+    - `value TEXT NOT NULL`：仅存放 `main`（全局系统设置）、`SYSTEM_COOKIE_SECRET`（会话密钥）、`misub_clients_v1`（客户端配置）、`misub_rule_templates_v1` / `misub_dns_templates_v1`（自定义模板）
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`cache`**（临时缓存与运行态）
     - `key TEXT PRIMARY KEY`
@@ -223,7 +223,6 @@ Profile 输出链路：
     - `tokens[]`
         - `name`：token 标签名。
         - `token`：Bearer Token 明文。
-- `isDefaultPassword`：只在 `GET /api/data` 返回时动态附加，不是持久设置字段。
 
 保存规则：
 

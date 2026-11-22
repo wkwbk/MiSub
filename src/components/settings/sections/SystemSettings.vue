@@ -1,6 +1,5 @@
 <script setup>
-import { ref } from 'vue';
-import { AlertTriangle, Archive, KeyRound, Loader2, Lock } from '@lucide/vue';
+import { AlertTriangle, Archive, Lock } from '@lucide/vue';
 import { useToastStore } from '@/stores/toast.js';
 import Input from '@/components/ui/Input.vue';
 import Switch from '@/components/ui/Switch.vue';
@@ -20,12 +19,6 @@ const props = defineProps({
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
-
-const passwordForm = ref({
-  newPassword: '',
-  confirmPassword: '',
-});
-const isUpdatingPassword = ref(false);
 
 const ensureExternalApiDefaults = (settings) => {
   if (!settings.externalApi || typeof settings.externalApi !== 'object') {
@@ -74,39 +67,6 @@ const handleCopyExternalApiToken = async (settings) => {
     copied ? t('systemSettings.externalApiTokenCopied') : t('systemSettings.copyFailedManual'),
     copied ? 'success' : 'error',
   );
-};
-
-const handleUpdatePassword = async () => {
-  if (isUpdatingPassword.value) return;
-  if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    showToast(t('systemSettings.passwordMismatch'), 'error');
-    return;
-  }
-  if (passwordForm.value.newPassword.length < 6) {
-    showToast(t('systemSettings.passwordTooShort'), 'error');
-    return;
-  }
-
-  isUpdatingPassword.value = true;
-  try {
-    const res = await fetch('/api/settings/password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: passwordForm.value.newPassword }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      showToast(t('systemSettings.passwordUpdated'), 'success');
-      passwordForm.value.newPassword = '';
-      passwordForm.value.confirmPassword = '';
-    } else {
-      showToast(data.error || t('systemSettings.updateFailed'), 'error');
-    }
-  } catch (e) {
-    showToast(t('systemSettings.requestFailed', { message: e.message }), 'error');
-  } finally {
-    isUpdatingPassword.value = false;
-  }
 };
 </script>
 
@@ -188,45 +148,6 @@ const handleUpdatePassword = async () => {
           </button>
         </template>
       </SectionHeader>
-    </section>
-
-    <!-- 管理员安全设置 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('systemSettings.adminSecurityDesc')"
-        :title="t('systemSettings.adminSecurityTitle')"
-      >
-        <template #icon>
-          <KeyRound class="h-4 w-4" />
-        </template>
-      </SectionHeader>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
-        <Input
-          v-model="passwordForm.newPassword"
-          :label="t('systemSettings.newPassword')"
-          :placeholder="t('systemSettings.newPasswordPlaceholder')"
-          class="rounded-md"
-          type="password"
-        />
-        <Input
-          v-model="passwordForm.confirmPassword"
-          :label="t('systemSettings.confirmPassword')"
-          :placeholder="t('systemSettings.confirmPasswordPlaceholder')"
-          class="rounded-md"
-          type="password"
-        />
-      </div>
-      <div class="mt-5">
-        <button
-          :disabled="isUpdatingPassword || !passwordForm.newPassword"
-          class="px-4 py-1.5 rounded-md text-accent-fg text-xs font-semibold shadow-none transition-colors flex items-center gap-2 bg-accent border border-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          @click="handleUpdatePassword"
-        >
-          <Loader2 v-if="isUpdatingPassword" class="animate-spin h-4 w-4 text-fg-subtle" />
-          <span>{{ isUpdatingPassword ? t('systemSettings.updating') : t('systemSettings.updatePassword') }}</span>
-        </button>
-      </div>
     </section>
 
     <!-- 危险区域 -->

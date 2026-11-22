@@ -7,6 +7,7 @@ import {
 import {
   createSignedToken,
   getAuthSessionDiagnostic,
+  getSessionSigningSecret,
   handleLogin,
   renewAuthSession,
 } from '../../functions/modules/auth-middleware.js';
@@ -96,30 +97,37 @@ describe('security hardening', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it('warns after logging in with the default admin password but still allows login', async () => {
+  it('fails closed when ADMIN_PASSWORD is not configured', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
-    const response = await handleLogin(
-      new Request('https://example.com/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: 'admin' }),
-      }),
-      env,
-    );
-    const body = await response.json();
+    try {
+      const response = await handleLogin(
+        new Request('https://example.com/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: 'admin' }),
+        }),
+        env,
+      );
+      const body = await response.json();
 
-    expect(response.status).toBe(200);
-    expect(body.success).toBe(true);
-    expect(body.securityWarning).toMatchObject({
-      type: 'default_admin_password',
-      shouldChangePassword: true,
-    });
+      expect(response.status).toBe(503);
+      expect(body).toMatchObject({
+        code: 'ADMIN_PASSWORD_MISSING',
+      });
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('keeps browser login sessions valid for thirty days', async () => {
-    const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
+    const env = {
+      MISUB_DB: createMemoryD1(),
+      COOKIE_SECRET: 'stable-cookie-secret',
+      ADMIN_PASSWORD: 'strong-secret-password',
+    };
     const issuedAt = Date.now() - (29 * 24 * 60 * 60 * 1000 + 23 * 60 * 60 * 1000);
-    const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
+    const token = await createSignedToken(await getSessionSigningSecret(env), String(issuedAt));
     const diagnostic = await getAuthSessionDiagnostic(
       {
         headers: {
@@ -135,9 +143,13 @@ describe('security hardening', () => {
   });
 
   it('marks browser login sessions expired after thirty days', async () => {
-    const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
+    const env = {
+      MISUB_DB: createMemoryD1(),
+      COOKIE_SECRET: 'stable-cookie-secret',
+      ADMIN_PASSWORD: 'strong-secret-password',
+    };
     const issuedAt = Date.now() - (30 * 24 * 60 * 60 * 1000 + 1000);
-    const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
+    const token = await createSignedToken(await getSessionSigningSecret(env), String(issuedAt));
     const diagnostic = await getAuthSessionDiagnostic(
       {
         headers: {
@@ -152,9 +164,14 @@ describe('security hardening', () => {
   });
 
   it('marks sessions for renewal after seven days without renewing earlier sessions', async () => {
-    const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
-    const recentToken = await createSignedToken(env.COOKIE_SECRET, String(Date.now() - SESSION_RENEW_THRESHOLD + 1000));
-    const matureToken = await createSignedToken(env.COOKIE_SECRET, String(Date.now() - SESSION_RENEW_THRESHOLD - 1000));
+    const env = {
+      MISUB_DB: createMemoryD1(),
+      COOKIE_SECRET: 'stable-cookie-secret',
+      ADMIN_PASSWORD: 'strong-secret-password',
+    };
+    const signingSecret = await getSessionSigningSecret(env);
+    const recentToken = await createSignedToken(signingSecret, String(Date.now() - SESSION_RENEW_THRESHOLD + 1000));
+    const matureToken = await createSignedToken(signingSecret, String(Date.now() - SESSION_RENEW_THRESHOLD - 1000));
 
     const recent = await getAuthSessionDiagnostic(
       {
@@ -178,9 +195,13 @@ describe('security hardening', () => {
   });
 
   it('renews mature sessions with a fresh thirty-day cookie', async () => {
-    const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
+    const env = {
+      MISUB_DB: createMemoryD1(),
+      COOKIE_SECRET: 'stable-cookie-secret',
+      ADMIN_PASSWORD: 'strong-secret-password',
+    };
     const issuedAt = Date.now() - SESSION_RENEW_THRESHOLD - 1000;
-    const token = await createSignedToken(env.COOKIE_SECRET, String(issuedAt));
+    const token = await createSignedToken(await getSessionSigningSecret(env), String(issuedAt));
     const request = {
       url: 'https://example.com/api/data',
       headers: {
@@ -203,9 +224,14 @@ describe('security hardening', () => {
   });
 
   it('does not renew sessions before the threshold or after expiry', async () => {
-    const env = { MISUB_DB: createMemoryD1(), COOKIE_SECRET: 'stable-cookie-secret' };
-    const recentToken = await createSignedToken(env.COOKIE_SECRET, String(Date.now() - 1000));
-    const expiredToken = await createSignedToken(env.COOKIE_SECRET, String(Date.now() - SESSION_DURATION - 1000));
+    const env = {
+      MISUB_DB: createMemoryD1(),
+      COOKIE_SECRET: 'stable-cookie-secret',
+      ADMIN_PASSWORD: 'strong-secret-password',
+    };
+    const signingSecret = await getSessionSigningSecret(env);
+    const recentToken = await createSignedToken(signingSecret, String(Date.now() - 1000));
+    const expiredToken = await createSignedToken(signingSecret, String(Date.now() - SESSION_DURATION - 1000));
 
     const recentResponse = await renewAuthSession(
       {

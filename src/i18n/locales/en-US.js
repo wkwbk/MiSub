@@ -75,8 +75,6 @@ export default {
     viewDetail: 'View details',
   },
   notices: {
-    defaultPasswordWarning:
-      'Security warning: you are using the default password "admin". For your system safety, change it in Settings immediately.',
     discardedChanges: 'Discarded all unsaved changes',
     updateAvailable: 'New version: {version}',
     currentVersion: 'Current: {version}. Check notes before upgrade.',
@@ -1390,19 +1388,6 @@ export default {
     backupRestoreDesc: 'Export current data before changes and import it later if recovery is needed.',
     exportBackup: 'Export backup',
     importBackup: 'Import backup',
-    adminSecurityTitle: 'Administrator security settings',
-    adminSecurityDesc: 'Manage the admin login password. Update it regularly and avoid weak passwords.',
-    newPassword: 'New password',
-    newPasswordPlaceholder: 'Enter new password',
-    confirmPassword: 'Confirm password',
-    confirmPasswordPlaceholder: 'Enter the new password again',
-    updating: 'Updating...',
-    updatePassword: 'Change admin password',
-    passwordMismatch: 'The two passwords do not match',
-    passwordTooShort: 'Password must be at least 6 characters',
-    passwordUpdated: 'Password updated',
-    updateFailed: 'Update failed',
-    requestFailed: 'Request failed: {message}',
     copyFailedManual: 'Copy failed. Please copy the file content manually.',
     externalApiTitle: 'External management API',
     externalApiDesc:

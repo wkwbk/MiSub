@@ -138,16 +138,6 @@ const loginComponent = computed(() => {
   return normalizedPath && normalizedPath !== 'login' ? NotFound : Login;
 });
 
-const isDefaultPassword = computed(() => {
-  return (
-    sessionStore.subscriptionConfig?.isDefaultPassword === true ||
-    sessionStore.securityWarning?.type === 'default_admin_password'
-  );
-});
-const defaultPasswordWarningMessage = computed(
-  () => sessionStore.securityWarning?.message || t('notices.defaultPasswordWarning'),
-);
-
 onMounted(async () => {
   window.addEventListener('misub:unauthorized', handleUnauthorized);
   initTheme();
@@ -295,7 +285,7 @@ const isCustomPageFullWidth = computed(() => {
               shouldCenterMain
                 ? 'py-6 flex items-center justify-center'
                 : [
-                    isModernSettingsPage && !isDefaultPassword && !showUpdateNotice ? 'pt-0 md:pt-6' : 'pt-6',
+                    isModernSettingsPage && !showUpdateNotice ? 'pt-0 md:pt-6' : 'pt-6',
                     showModernNavBar ? 'pb-[calc(6rem+max(env(safe-area-inset-bottom,0px),12px))] md:pb-6' : 'pb-6',
                   ],
             ],
@@ -330,17 +320,6 @@ const isCustomPageFullWidth = computed(() => {
       </div>
 
       <template v-else-if="isLoggedIn">
-        <div v-if="isDefaultPassword" class="mb-4 px-4 py-3 bg-surface text-fg rounded-md border border-line">
-          <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
-            <div class="flex items-center gap-2.5">
-              <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
-              <p class="text-xs sm:text-sm font-medium text-fg">
-                {{ defaultPasswordWarningMessage }}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div
           v-if="showUpdateNotice && versionReleaseInfo"
           class="mb-4 rounded-md border border-line bg-surface px-4 py-3 text-fg"
