@@ -9,7 +9,7 @@
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
 [![Version](https://img.shields.io/badge/version-v2.8.0-indigo.svg)](#更新日志)
 
-[功能特性](#功能特性) • [快速开始](#快速开始) • [部署指南](#部署指南) • [使用说明](#使用说明) • [External API 使用说明](docs/external-management-api-usage.md) • [操作符链指南](docs/operator-chain-guide.md) • [更新日志](#更新日志)
+[功能特性](#功能特性) • [快速开始](#快速开始) • [部署指南](#部署指南) • [使用说明](#使用说明) • [更新日志](#更新日志)
 
 </div>
 
@@ -293,7 +293,7 @@ wrangler d1 execute misub --file=schema.sql --remote
 2. 填写订阅名称和链接
 3. (可选) 设置自定义 UA
 4. (可选) 添加备注信息
-5. (可选) 设置操作符链（详情请参考 [操作符指南](docs/operator-chain-guide.md)）
+5. (可选) 设置操作符链
 6. 保存订阅
 
 ### 创建订阅组
@@ -386,8 +386,7 @@ MiSub 提供 `/cron` 接口用于外部定时服务触发订阅刷新，适合 C
 
 ### 代理抓取 (Vercel)
 
-如果由于网络限制导致订阅内容抓取失败，可以额外部署一个用于抓取转发的 Edge Functions 代理：
-- [Vercel Fetch Proxy 部署指南](docs/fetch-proxy-tutorial.md)
+如果由于网络限制导致订阅内容抓取失败，可以额外部署一个用于抓取转发的 Edge Functions 代理并在订阅设置中填写代理地址。
 
 > 说明：该代理仅作为可选的辅助抓取组件，不属于 MiSub 主站部署方式。MiSub 主站支持部署在 Cloudflare Pages 或 Cloudflare Workers。
 
@@ -417,15 +416,6 @@ MiSub 提供 `/cron` 接口用于外部定时服务触发订阅刷新，适合 C
 - **部署平台**: Cloudflare Pages / Workers
 
 ---
-
-## 文档索引
-
-- [External API 使用说明](docs/external-management-api-usage.md)
-- [External API 接口总览](docs/external-management-api.md)
-- [External API OpenAPI 规范](docs/external-management-api.openapi.yaml)
-- [操作符链指南](docs/operator-chain-guide.md)
-- [架构说明](docs/architecture.md)
-- [数据模型](docs/data-model.md)
 
 ## 更新日志
 

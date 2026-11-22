@@ -169,8 +169,6 @@ Profiles can inherit a global default operator chain or define their own process
 - Sort nodes by weighted conditions and custom region priority.
 - Deduplicate nodes with protocol-aware smart rules.
 
-See [Operator Chain Guide](docs/operator-chain-guide.md) for details.
-
 ## Security Notes
 
 - Admin APIs are password/session protected.
@@ -183,12 +181,6 @@ See [Operator Chain Guide](docs/operator-chain-guide.md) for details.
 ## Documentation
 
 - [Chinese README](README-zh.md)
-- [External API Usage Guide](docs/external-management-api-usage.md)
-- [External API Reference](docs/external-management-api.md)
-- [External API OpenAPI Spec](docs/external-management-api.openapi.yaml)
-- [Operator Chain Guide](docs/operator-chain-guide.md)
-- [Architecture](docs/architecture.md)
-- [Data Model](docs/data-model.md)
 
 ## Version
 
