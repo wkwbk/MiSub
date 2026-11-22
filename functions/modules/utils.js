@@ -149,7 +149,8 @@ export function migrateConfigSettings(config) {
   if (migratedConfig.disguise && typeof migratedConfig.disguise === 'object') {
     migratedConfig.disguise = {
       pageType: migratedConfig.disguise.pageType === 'redirect' ? 'redirect' : 'default',
-      redirectUrl: typeof migratedConfig.disguise.redirectUrl === 'string' ? migratedConfig.disguise.redirectUrl.trim() : '',
+      redirectUrl:
+        typeof migratedConfig.disguise.redirectUrl === 'string' ? migratedConfig.disguise.redirectUrl.trim() : '',
     };
   }
   if (migratedConfig.hasOwnProperty('builtinSkipCertVerify')) {
@@ -165,6 +166,13 @@ export function migrateConfigSettings(config) {
   if (migratedConfig.hasOwnProperty('profileUpdateInterval')) {
     const parsed = Number(migratedConfig.profileUpdateInterval);
     migratedConfig.profileUpdateInterval = Number.isFinite(parsed) ? parsed : 24;
+  }
+  if (migratedConfig.hasOwnProperty('subFetchMinInterval')) {
+    const parsed = Number(migratedConfig.subFetchMinInterval);
+    migratedConfig.subFetchMinInterval = Number.isFinite(parsed) ? Math.max(0, Math.min(1440, Math.round(parsed))) : 15;
+  }
+  if (migratedConfig.hasOwnProperty('subFetchLimitMode')) {
+    migratedConfig.subFetchLimitMode = migratedConfig.subFetchLimitMode === 'strict' ? 'strict' : 'cache';
   }
 
   return migratedConfig;

@@ -36,6 +36,8 @@ export const DEFAULT_SETTINGS = {
   },
   storageType: 'd1',
   profileUpdateInterval: 24, // 客户端订阅默认更新间隔（小时），0 表示禁用注入 Profile-Update-Interval
+  subFetchMinInterval: 15, // 服务端最小拉取间隔（分钟），0 表示禁用（回退默认 3 分钟节点缓存）
+  subFetchLimitMode: 'cache', // 超频处理模式：'cache'（温和返回边缘缓存）| 'strict'（严格返回 429）
   defaultPrefixSettings: {
     enableManualNodes: true,
     enableSubscriptions: true,

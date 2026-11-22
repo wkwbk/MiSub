@@ -105,7 +105,12 @@ export const D1_INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_error_reports_timestamp ON error_reports(timestamp DESC);`,
 ];
 
-const D1_CACHE_KEYS = new Set(['misub_webdav_backup_lock', 'misub_restore_snapshot_latest', 'cron_last_execution']);
+const D1_CACHE_KEYS = new Set([
+  'misub_webdav_backup_lock',
+  'misub_restore_snapshot_latest',
+  'cron_last_execution',
+  'sub_edge_cache_version',
+]);
 
 const D1_CACHE_PREFIXES = [
   'node_cache_',
@@ -192,8 +197,7 @@ export async function ensureD1Schema(d1Db) {
   for (const alterSql of D1_COLUMN_MIGRATIONS) {
     try {
       await d1Db.prepare(alterSql).run();
-    } catch {
-    }
+    } catch {}
   }
 
   // 为存量 profiles 行一次性回填 custom_id 索引列
@@ -205,14 +209,12 @@ export async function ensureD1Schema(d1Db) {
                  WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
       )
       .run();
-  } catch {
-  }
+  } catch {}
 
   for (const indexSql of D1_INDEX_STATEMENTS) {
     try {
       await d1Db.prepare(indexSql).run();
-    } catch {
-    }
+    } catch {}
   }
 
   if (d1Db && typeof d1Db === 'object') {

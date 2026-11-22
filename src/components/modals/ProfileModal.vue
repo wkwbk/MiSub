@@ -280,6 +280,14 @@ watch(
 
       profileCopy.subProfiles = Array.isArray(profileCopy.subProfiles) ? profileCopy.subProfiles : [];
       profileCopy.shortLink = typeof profileCopy.shortLink === 'string' ? profileCopy.shortLink : '';
+      profileCopy.fetchMinInterval =
+        profileCopy.fetchMinInterval === undefined || profileCopy.fetchMinInterval === null
+          ? ''
+          : String(profileCopy.fetchMinInterval);
+      profileCopy.fetchLimitMode =
+        profileCopy.fetchLimitMode === 'strict' || profileCopy.fetchLimitMode === 'cache'
+          ? profileCopy.fetchLimitMode
+          : '';
 
       localProfile.value = profileCopy;
     } else {
@@ -293,6 +301,8 @@ watch(
         customId: '',
         shortLink: '',
         expiresAt: '',
+        fetchMinInterval: '',
+        fetchLimitMode: '',
         isPublic: true,
         description: '',
         prefixSettings: {
@@ -320,6 +330,20 @@ const handleConfirm = () => {
       console.error('Error processing expiresAt date:', e);
       profileToSave.expiresAt = '';
     }
+  }
+  const rawFetchInterval = profileToSave.fetchMinInterval;
+  if (rawFetchInterval === '' || rawFetchInterval === null || rawFetchInterval === undefined) {
+    delete profileToSave.fetchMinInterval;
+  } else {
+    const parsed = Number.parseInt(String(rawFetchInterval), 10);
+    if (Number.isNaN(parsed)) {
+      delete profileToSave.fetchMinInterval;
+    } else {
+      profileToSave.fetchMinInterval = Math.min(1440, Math.max(0, parsed));
+    }
+  }
+  if (profileToSave.fetchLimitMode !== 'strict' && profileToSave.fetchLimitMode !== 'cache') {
+    delete profileToSave.fetchLimitMode;
   }
   emit('save', profileToSave);
 };

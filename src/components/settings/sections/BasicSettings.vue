@@ -202,6 +202,51 @@ const handleCustomProfileIntervalBlur = () => {
     customProfileIntervalInput.value = String(MIN_CUSTOM_PROFILE_INTERVAL);
   }
 };
+
+const QUICK_SUB_FETCH_INTERVAL_VALUES = [0, 15, 30, 60];
+const MIN_CUSTOM_SUB_FETCH_INTERVAL = 1;
+const MAX_CUSTOM_SUB_FETCH_INTERVAL = 1440;
+
+const isCustomSubFetchInterval = computed(
+  () => !QUICK_SUB_FETCH_INTERVAL_VALUES.includes(Number(props.settings.subFetchMinInterval ?? 15)),
+);
+
+const customSubFetchIntervalInput = ref(
+  isCustomSubFetchInterval.value ? String(props.settings.subFetchMinInterval ?? '') : '',
+);
+
+watch(
+  () => props.settings.subFetchMinInterval,
+  (val) => {
+    if (QUICK_SUB_FETCH_INTERVAL_VALUES.includes(Number(val))) {
+      customSubFetchIntervalInput.value = '';
+    } else if (val !== undefined && val !== null) {
+      customSubFetchIntervalInput.value = String(val);
+    }
+  },
+);
+
+const handleCustomSubFetchIntervalInput = (event) => {
+  const raw = event.target.value;
+  customSubFetchIntervalInput.value = raw;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_SUB_FETCH_INTERVAL) {
+    props.settings.subFetchMinInterval = Math.min(MAX_CUSTOM_SUB_FETCH_INTERVAL, parsed);
+  }
+};
+
+const handleCustomSubFetchIntervalBlur = () => {
+  const parsed = Number.parseInt(customSubFetchIntervalInput.value, 10);
+  if (customSubFetchIntervalInput.value === '' || Number.isNaN(parsed)) {
+    customSubFetchIntervalInput.value = isCustomSubFetchInterval.value
+      ? String(props.settings.subFetchMinInterval ?? 15)
+      : '';
+    return;
+  }
+  const clamped = Math.min(MAX_CUSTOM_SUB_FETCH_INTERVAL, Math.max(MIN_CUSTOM_SUB_FETCH_INTERVAL, parsed));
+  props.settings.subFetchMinInterval = clamped;
+  customSubFetchIntervalInput.value = String(clamped);
+};
 </script>
 
 <template>
@@ -427,6 +472,93 @@ const handleCustomProfileIntervalBlur = () => {
           </div>
         </div>
 
+        <!-- 服务端最小拉取间隔与边缘缓存防刷 -->
+        <div class="py-5 first:pt-0 last:pb-0 space-y-3">
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
+            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
+              <p class="text-sm font-medium text-fg">
+                {{ t('settings.subFetchMinInterval') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.subFetchMinIntervalDesc') }}
+              </p>
+            </div>
+            <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
+              <div
+                :class="[
+                  'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
+                  isCustomSubFetchInterval
+                    ? 'border-line-strong'
+                    : 'border-line hover:border-line-strong focus-within:border-line-strong',
+                ]"
+              >
+                <input
+                  :aria-label="t('settings.subFetchMinInterval')"
+                  :max="MAX_CUSTOM_SUB_FETCH_INTERVAL"
+                  :min="MIN_CUSTOM_SUB_FETCH_INTERVAL"
+                  :placeholder="t('settings.customInterval')"
+                  :value="customSubFetchIntervalInput"
+                  class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  inputmode="numeric"
+                  type="number"
+                  @blur="handleCustomSubFetchIntervalBlur"
+                  @input="handleCustomSubFetchIntervalInput"
+                />
+                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                  {{ t('settings.minutes') }}
+                </span>
+              </div>
+              <div class="flex min-w-0 flex-wrap items-center gap-1.5">
+                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
+                <button
+                  v-for="option in [
+                    { value: 0, label: t('settings.disabledOption') },
+                    { value: 15, label: t('settings.option15Minutes') },
+                    { value: 30, label: t('settings.option30Minutes') },
+                    { value: 60, label: t('settings.option1Hour') },
+                  ]"
+                  :key="option.value"
+                  :aria-pressed="(settings.subFetchMinInterval ?? 15) === option.value"
+                  :class="[
+                    'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
+                    (settings.subFetchMinInterval ?? 15) === option.value
+                      ? 'bg-active text-fg border-line-strong font-semibold'
+                      : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
+                  ]"
+                  type="button"
+                  @click="settings.subFetchMinInterval = option.value"
+                >
+                  {{ option.label }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div
+            v-if="(settings.subFetchMinInterval ?? 15) > 0"
+            class="pl-4 border-l-2 border-line flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+          >
+            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
+              <p class="text-xs font-medium text-fg">
+                {{ t('settings.subFetchLimitMode') }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t('settings.subFetchLimitModeDesc') }}
+              </p>
+            </div>
+            <div class="w-full xl:w-56 shrink-0">
+              <Select
+                v-model="settings.subFetchLimitMode"
+                :options="[
+                  { value: 'cache', label: t('settings.subFetchLimitCache') },
+                  { value: 'strict', label: t('settings.subFetchLimitStrict') },
+                ]"
+                size="sm"
+              />
+            </div>
+          </div>
+        </div>
+
         <!-- 访问日志 -->
         <div class="py-5 first:pt-0 last:pb-0 space-y-3">
           <div class="flex items-start justify-between gap-4">
@@ -637,7 +769,6 @@ const handleCustomProfileIntervalBlur = () => {
 </template>
 
 <style scoped>
-
 .animate-fade-in-down {
   animation: fadeInDown 0.3s ease-out;
 }

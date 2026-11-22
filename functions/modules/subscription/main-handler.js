@@ -8,10 +8,20 @@ import { normalizeSubPath } from '../../../shared/reserved-paths.js';
 import { createBlockedResponse, isBrowserSubAccessAllowed } from '../access-control.js';
 import {
   generateCacheKey,
+  getEdgeCacheVersion,
   isLikelyPartialAggregateNodeList,
   isSuspiciousNodeCountDrop,
   setCache,
 } from '../../services/node-cache-service.js';
+import {
+  buildEdgeCacheRequest,
+  checkStrictFetchCooldown,
+  createStrictRateLimitResponse,
+  readEdgeCachedResponse,
+  recordStrictFetchCooldown,
+  resolveFetchGuardPolicy,
+  writeEdgeCachedResponse,
+} from './fetch-guard.js';
 import { resolveRequestContext } from './request-context.js';
 import { resolveNodeListWithCache } from './cache-manager.js';
 import { ProcessorService } from '../../services/processor-service.js';
@@ -147,6 +157,74 @@ export async function handleMisubRequest(context) {
     shouldEnableUdp = flags.shouldEnableUdp;
   };
 
+  // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
+  let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
+
+  // 检查是否强制刷新（通过 URL 参数）
+  const forceRefresh =
+    url.searchParams.has('refresh') || url.searchParams.has('nocache') || url.searchParams.has('debug');
+
+  const requestClientIp =
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Real-IP') ||
+    request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
+    'N/A';
+
+  let fetchGuardPolicy = resolveFetchGuardPolicy(null, config);
+  let edgeCacheRequest = null;
+  const bypassFetchGuard = forceRefresh || url.searchParams.has('callback_token') || shouldSkipLogging;
+  const fetchGuardScopeKey = profileIdentifier ? `profile:${profileIdentifier}` : `token:${token}`;
+
+  const evaluateFetchGuard = async (activeProfile, expired) => {
+    fetchGuardPolicy = resolveFetchGuardPolicy(activeProfile, config);
+    if (!fetchGuardPolicy.enabled || bypassFetchGuard) {
+      return null;
+    }
+
+    if (fetchGuardPolicy.mode === 'strict') {
+      const strictStatus = await checkStrictFetchCooldown({
+        origin: url.origin,
+        scopeKey: fetchGuardScopeKey,
+        clientIp: requestClientIp,
+        minIntervalMs: fetchGuardPolicy.minIntervalMs,
+      });
+      if (strictStatus.limited) {
+        return createStrictRateLimitResponse(strictStatus.retryAfterSeconds, fetchGuardPolicy.minIntervalMinutes);
+      }
+      return null;
+    }
+
+    const baseVersion = await getEdgeCacheVersion(storageAdapter);
+    const profileUpdatedAt = activeProfile?.updatedAt ? String(activeProfile.updatedAt) : '';
+    const cacheVersion = profileUpdatedAt ? `${baseVersion}:${profileUpdatedAt}` : baseVersion;
+    edgeCacheRequest = buildEdgeCacheRequest({
+      requestUrl: request.url,
+      targetFormat,
+      isMeta: isMetaCore(userAgentHeader, url.searchParams),
+      cacheVersion,
+      isProfileExpired: expired,
+    });
+    return await readEdgeCachedResponse(edgeCacheRequest, storageAdapter);
+  };
+
+  const finalizeGuardedResponse = (response) => {
+    if (!fetchGuardPolicy.enabled || bypassFetchGuard) {
+      return response;
+    }
+    if (fetchGuardPolicy.mode === 'strict') {
+      recordStrictFetchCooldown({
+        context,
+        origin: url.origin,
+        scopeKey: fetchGuardScopeKey,
+        clientIp: requestClientIp,
+        minIntervalMs: fetchGuardPolicy.minIntervalMs,
+      });
+    } else if (edgeCacheRequest && response?.status === 200) {
+      writeEdgeCachedResponse(context, edgeCacheRequest, response, fetchGuardPolicy.minIntervalSeconds, storageAdapter);
+    }
+    return response;
+  };
+
   if (profileIdentifier) {
     const expectedSubPath = normalizeSubPath(config.profileToken, 'sub');
     if (!token || token !== expectedSubPath) {
@@ -163,6 +241,11 @@ export async function handleMisubRequest(context) {
         if (now > expiryDate) {
           isProfileExpired = true;
         }
+      }
+
+      const guardedResponse = await evaluateFetchGuard(profile, isProfileExpired);
+      if (guardedResponse) {
+        return guardedResponse;
       }
 
       if (isProfileExpired) {
@@ -286,13 +369,14 @@ export async function handleMisubRequest(context) {
       // [伪装加固] 同 profile token：统一走访问控制拦截响应
       return createBlockedResponse(config.disguise, request.url);
     }
+    const guardedResponse = await evaluateFetchGuard(null, false);
+    if (guardedResponse) {
+      return guardedResponse;
+    }
     const allMisubs = (await storageAdapter.getAllSubscriptions()) || [];
     targetMisubs = allMisubs.filter((s) => s.enabled);
     initEngineFlags(null);
   }
-
-  // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
-  let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
 
   const updateIntervalHours = resolveProfileUpdateInterval(currentProfile, config);
   const updateIntervalSeconds = (updateIntervalHours || 24) * 3600;
@@ -362,10 +446,6 @@ export async function handleMisubRequest(context) {
 
   // === 缓存机制：快速响应客户端请求 ===
   const cacheKey = generateCacheKey(profileIdentifier ? 'profile' : 'token', profileIdentifier || token);
-
-  // 检查是否强制刷新（通过 URL 参数）
-  const forceRefresh =
-    url.searchParams.has('refresh') || url.searchParams.has('nocache') || url.searchParams.has('debug');
 
   // 定义刷新函数（用于后台刷新）
   const refreshNodes = async (_isBackground = false) => {
@@ -529,6 +609,7 @@ export async function handleMisubRequest(context) {
     context,
     targetMisubsCount: targetMisubs.length,
     expectedNodeCount: expectedRemoteNodeCount,
+    freshTtlMs: fetchGuardPolicy.enabled ? fetchGuardPolicy.minIntervalMs : undefined,
   });
 
   console.log(`[MiSub Nodes] Count/Length: ${combinedNodeList ? combinedNodeList.length : 0}`);
@@ -562,9 +643,11 @@ export async function handleMisubRequest(context) {
     }
     // [兼容性优化] 第三方转换后端对明文列表的支持通常比 Base64 更好。
     // 同时对于 Cloudflare 而言，明文输出更有利于其边缘节点的流式处理。
-    return new Response(contentToReturn, {
-      headers: nodeHeaders,
-    });
+    return finalizeGuardedResponse(
+      new Response(contentToReturn, {
+        headers: nodeHeaders,
+      }),
+    );
   }
 
   if (isExternalMode && targetFormat !== 'base64') {
@@ -627,7 +710,7 @@ export async function handleMisubRequest(context) {
             responseHeaders.set('Profile-Update-Interval', String(updateIntervalHours));
           }
           Object.entries(rendered.headers || {}).forEach(([key, value]) => responseHeaders.set(key, value));
-          return new Response(rendered.content, { headers: responseHeaders });
+          return finalizeGuardedResponse(new Response(rendered.content, { headers: responseHeaders }));
         }
       } catch (err) {
         console.warn(
@@ -684,10 +767,12 @@ export async function handleMisubRequest(context) {
     if (updateIntervalHours !== null) {
       redirectHeaders['Profile-Update-Interval'] = String(updateIntervalHours);
     }
-    return new Response(null, {
-      status: 302,
-      headers: redirectHeaders,
-    });
+    return finalizeGuardedResponse(
+      new Response(null, {
+        status: 302,
+        headers: redirectHeaders,
+      }),
+    );
   }
 
   if (targetFormat === 'base64') {
@@ -744,7 +829,7 @@ export async function handleMisubRequest(context) {
       }
     }
 
-    return new Response(base64EncodeUtf8(contentToEncode), { headers });
+    return finalizeGuardedResponse(new Response(base64EncodeUtf8(contentToEncode), { headers }));
   }
 
   // [Subconverter API] URL 参数优先级高于全局/Profile 设置
@@ -871,7 +956,7 @@ export async function handleMisubRequest(context) {
         }
       }
 
-      return new Response(finalContent || '', { headers: responseHeaders });
+      return finalizeGuardedResponse(new Response(finalContent || '', { headers: responseHeaders }));
     } catch (e) {
       console.error(`[Builtin${targetFormat}] Generation failed:`, e);
     }
@@ -892,5 +977,5 @@ export async function handleMisubRequest(context) {
     base64Headers[key] = value;
   });
 
-  return new Response(base64EncodeUtf8(combinedNodeList), { headers: base64Headers });
+  return finalizeGuardedResponse(new Response(base64EncodeUtf8(combinedNodeList), { headers: base64Headers }));
 }

@@ -19,6 +19,60 @@ const CACHE_CONFIG = {
 const SHRINK_PROTECTION_MIN_CACHED_NODES = 10;
 const SHRINK_PROTECTION_MAX_RATIO = 0.3;
 
+export const EDGE_CACHE_VERSION_KEY = 'sub_edge_cache_version';
+const EDGE_VERSION_MEMORY_TTL_MS = 10 * 1000;
+let edgeVersionCaches = new WeakMap();
+
+function getAdapterCacheTarget(storageAdapter) {
+  if (!storageAdapter || typeof storageAdapter !== 'object') return null;
+  return storageAdapter.db && typeof storageAdapter.db === 'object' ? storageAdapter.db : storageAdapter;
+}
+
+export async function getEdgeCacheVersion(storageAdapter) {
+  try {
+    const cacheTarget = getAdapterCacheTarget(storageAdapter);
+    const now = Date.now();
+    if (cacheTarget) {
+      const cached = edgeVersionCaches.get(cacheTarget);
+      if (cached && now - cached.timestamp < EDGE_VERSION_MEMORY_TTL_MS) {
+        return cached.version;
+      }
+    }
+    if (typeof storageAdapter?.get !== 'function') return '0';
+    const val = await storageAdapter.get(EDGE_CACHE_VERSION_KEY);
+    let version = '0';
+    if (typeof val === 'string' || typeof val === 'number') {
+      version = String(val);
+    } else if (val && typeof val === 'object' && val.version !== undefined) {
+      version = String(val.version);
+    }
+    if (cacheTarget) {
+      edgeVersionCaches.set(cacheTarget, { version, timestamp: now });
+    }
+    return version;
+  } catch {
+    return '0';
+  }
+}
+
+export async function bumpEdgeCacheVersion(storageAdapter) {
+  try {
+    if (typeof storageAdapter?.put === 'function') {
+      const now = Date.now();
+      const version = String(now);
+      await storageAdapter.put(EDGE_CACHE_VERSION_KEY, { version, updatedAt: now });
+      const cacheTarget = getAdapterCacheTarget(storageAdapter);
+      if (cacheTarget) {
+        edgeVersionCaches.set(cacheTarget, { version, timestamp: now });
+      }
+      return version;
+    }
+  } catch (error) {
+    console.warn('[Cache] Failed to bump edge cache version:', error?.message || error);
+  }
+  return null;
+}
+
 export function isSuspiciousNodeCountDrop(previousCount, nextCount) {
   const previous = Number(previousCount);
   const next = Number(nextCount);
@@ -73,7 +127,7 @@ function isSubscriptionNodeCacheKey(key) {
  * @param {string} cacheKey - 缓存键
  * @returns {Promise<{data: CacheEntry|null, status: 'fresh'|'stale'|'expired'|'miss'}>}
  */
-export async function getCache(storageAdapter, cacheKey) {
+export async function getCache(storageAdapter, cacheKey, options = {}) {
   try {
     const cached = await storageAdapter.get(cacheKey);
     if (!cached) {
@@ -82,12 +136,17 @@ export async function getCache(storageAdapter, cacheKey) {
 
     const now = Date.now();
     const age = now - cached.timestamp;
+    const customFreshTtl = Number(options?.freshTtlMs);
+    const effectiveFreshTtl =
+      Number.isFinite(customFreshTtl) && customFreshTtl > 0 ? customFreshTtl : CACHE_CONFIG.FRESH_TTL;
+    const effectiveStaleTtl = Math.max(CACHE_CONFIG.STALE_TTL, effectiveFreshTtl);
+    const effectiveMaxAge = Math.max(CACHE_CONFIG.MAX_AGE, effectiveFreshTtl * 2);
 
-    if (age < CACHE_CONFIG.FRESH_TTL) {
+    if (age < effectiveFreshTtl) {
       return { data: cached, status: 'fresh' };
-    } else if (age < CACHE_CONFIG.STALE_TTL) {
+    } else if (age < effectiveStaleTtl) {
       return { data: cached, status: 'stale' };
-    } else if (age < CACHE_CONFIG.MAX_AGE) {
+    } else if (age < effectiveMaxAge) {
       return { data: cached, status: 'expired' };
     } else {
       return { data: null, status: 'miss' };
@@ -217,6 +276,8 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
 
     if (typeof storageAdapter.list !== 'function') {
       console.warn('[Cache] Storage adapter does not support list operation');
+      await bumpEdgeCacheVersion(storageAdapter);
+
       return { cleared, failed, skipped };
     }
 
@@ -238,10 +299,11 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
       }
     }
 
+    await bumpEdgeCacheVersion(storageAdapter);
+
     return { cleared, failed, skipped };
   } catch (error) {
     console.error('[Cache] Failed to clear all caches:', error);
     return { cleared: 0, failed: 0, skipped: 0 };
   }
 }
-

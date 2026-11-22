@@ -381,6 +381,37 @@ watch(
             />
           </div>
 
+          <!-- 最小拉取间隔（分钟） -->
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
+              t('profileModal.fetchMinIntervalLabel')
+            }}</label>
+            <input
+              v-model="localProfile.fetchMinInterval"
+              :placeholder="t('profileModal.fetchMinIntervalPlaceholder')"
+              class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
+              max="1440"
+              min="0"
+              type="number"
+            />
+          </div>
+
+          <!-- 超频处理方式 -->
+          <div>
+            <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
+              t('profileModal.fetchLimitModeLabel')
+            }}</label>
+            <Select
+              v-model="localProfile.fetchLimitMode"
+              :options="[
+                { value: '', label: t('profileModal.followGlobal') },
+                { value: 'cache', label: t('profileModal.fetchLimitCache') },
+                { value: 'strict', label: t('profileModal.fetchLimitStrict') },
+              ]"
+              size="sm"
+            />
+          </div>
+
           <!-- 节点前缀设置 (合并) -->
           <div class="sm:col-span-2 space-y-3 pt-3 border-t border-line">
             <label class="block text-[11px] font-semibold text-fg-muted uppercase tracking-wider">{{

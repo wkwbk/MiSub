@@ -169,6 +169,11 @@ export default {
     tuningTitle: 'Parameters & post-processing',
     tuningDesc: 'Fine-tune conversion parameters and output',
     expiresLabel: 'Expiry date (falls back after expiry)',
+    fetchMinIntervalLabel: 'Min fetch interval (minutes)',
+    fetchMinIntervalPlaceholder: 'Empty = follow global, 0 = disabled',
+    fetchLimitModeLabel: 'Rate-limit mode',
+    fetchLimitCache: 'Soft cache (serve cached)',
+    fetchLimitStrict: 'Strict block (HTTP 429)',
     ruleLevelLabel: 'Built-in rule level',
     followGlobalLevel: 'Follow global level',
     ruleBase: 'Base',
@@ -865,6 +870,15 @@ export default {
     option12Hours: '12 hrs',
     option24Hours: '24 hrs',
     option48Hours: '48 hrs',
+    option15Minutes: '15 min',
+    subFetchMinInterval: 'Server Min Fetch Interval (Edge Cache / Guard)',
+    subFetchMinIntervalDesc:
+      'Minimum cooldown between repeated fetches of the same subscription. Absorbs frequent polling without upstream fetches, D1 writes, or log spam (append ?refresh=1 to bypass)',
+    subFetchLimitMode: 'Over-frequency handling',
+    subFetchLimitModeDesc:
+      'Soft mode serves edge-cached output without client errors; strict mode returns HTTP 429 per IP',
+    subFetchLimitCache: 'Soft cache (recommended)',
+    subFetchLimitStrict: 'Strict block (HTTP 429)',
     accessLogTitle: 'Access logs & count',
     accessLogDesc: 'Record access and count traffic/IPs',
     accessLogQuotaHint:
