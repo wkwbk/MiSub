@@ -120,7 +120,7 @@ If schema initialization fails in the CLI, run the latest `schema.sql` manually 
 > **Security Note**: Always configure `ADMIN_PASSWORD`, `COOKIE_SECRET`, and `CRON_SECRET` as **Secret** (encrypted) in the Cloudflare Dashboard (or via `npx wrangler secret put <KEY>`), **not** as plaintext variables. Plaintext dashboard variables are overwritten by `[vars]` in `wrangler.toml` on deploy unless `keep_vars = true` is set.
 
 - `ADMIN_PASSWORD` (**required**): admin login password (configure as a Secret). Login fails closed if unset, and rotating `ADMIN_PASSWORD` immediately invalidates existing sessions.
-- `COOKIE_SECRET`: stable session signing secret.
+- `COOKIE_SECRET`: optional session signing secret (configure as a Secret; never persisted to D1, derived deterministically from `ADMIN_PASSWORD` if omitted, and rotating it immediately invalidates existing sessions).
 - `CORS_ORIGINS`: allowed browser origins for API requests.
 - `CRON_SECRET`: secret used by external cron triggers.
 - `MISUB_PUBLIC_URL`: public site URL used to generate subscription conversion callback URLs.

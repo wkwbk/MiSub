@@ -254,7 +254,7 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
-| `COOKIE_SECRET` | Cookie 加密密钥 | `64位随机字符串` (推荐留空，系统自动生成并存入 D1) |
+| `COOKIE_SECRET` | Cookie 签名密钥（Secret，可选；留空时由 `ADMIN_PASSWORD` 稳定派生，修改后旧会话自动失效） | `64位随机字符串` |
 
 **可选（按需设置）：**
 

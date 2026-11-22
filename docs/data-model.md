@@ -56,7 +56,7 @@ MiSub 全面使用 Cloudflare D1 行级存储（已移除 Workers KV 与旧版�
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`settings`**（纯系统配置）
     - `key TEXT PRIMARY KEY`
-    - `value TEXT NOT NULL`：仅存放 `main`（全局系统设置）、`SYSTEM_COOKIE_SECRET`（会话密钥）、`misub_clients_v1`（客户端配置）、`misub_rule_templates_v1` / `misub_dns_templates_v1`（自定义模板）
+    - `value TEXT NOT NULL`：仅存放 `main`（全局系统设置）、`misub_clients_v1`（客户端配置）、`misub_rule_templates_v1` / `misub_dns_templates_v1`（自定义模板）
     - `created_at DATETIME` / `updated_at DATETIME`
 - **`cache`**（临时缓存与运行态）
     - `key TEXT PRIMARY KEY`

@@ -1,61 +1,48 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { getAuthDebugInfo, getCookieSecret } from '../../functions/modules/utils.js';
-import { handleLogin } from '../../functions/modules/auth-middleware.js';
+import {
+  getAuthSessionDiagnostic,
+  getSessionSigningSecret,
+  handleLogin,
+} from '../../functions/modules/auth-middleware.js';
+import { getTelegramPushConfig } from '../../functions/modules/handlers/telegram/storage.js';
+import { createMemoryD1 } from '../helpers/memory-d1.js';
 
-function createWriteFailingD1() {
+function createFailingD1() {
   return {
     prepare() {
+      const fail = async () => {
+        throw new Error('D1 should not be touched by env-only auth');
+      };
       return {
-        async first() {
-          return null;
-        },
-        async all() {
-          return { results: [] };
-        },
-        async run() {
-          throw new Error('D1 write limit exceeded for the day.');
-        },
+        first: fail,
+        all: fail,
+        run: fail,
         bind() {
-          return {
-            async first() {
-              return null;
-            },
-            async all() {
-              return { results: [] };
-            },
-            async run() {
-              throw new Error('D1 write limit exceeded for the day.');
-            },
-          };
+          return { first: fail, all: fail, run: fail };
         },
       };
     },
   };
 }
 
-describe('auth gracefully handles exhausted D1 write quota', () => {
-  it('uses COOKIE_SECRET without failing when D1 cannot persist it', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+describe('single source of truth for env secrets and D1 settings', () => {
+  it('reads COOKIE_SECRET strictly from env without reading or writing D1', async () => {
     const env = {
-      MISUB_DB: createWriteFailingD1(),
-      COOKIE_SECRET: 'stable-cookie-secret',
+      MISUB_DB: createFailingD1(),
+      COOKIE_SECRET: '  stable-cookie-secret  ',
       ADMIN_PASSWORD: 'secret-password',
     };
 
-    try {
-      await expect(getCookieSecret(env)).resolves.toBe('stable-cookie-secret');
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[Auth Storage] D1 put skipped for SYSTEM_COOKIE_SECRET: D1 write limit exceeded for the day.',
-      );
-    } finally {
-      warnSpy.mockRestore();
-    }
+    await expect(getCookieSecret(env)).resolves.toBe('stable-cookie-secret');
+    await expect(getCookieSecret({ MISUB_DB: createMemoryD1({ SYSTEM_COOKIE_SECRET: 'stale-d1-secret' }) })).resolves.toBe(
+      null,
+    );
   });
 
-  it('still logs in when D1 write quota is exceeded but COOKIE_SECRET is configured', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  it('logs in without touching D1 even when D1 is completely unavailable', async () => {
     const env = {
-      MISUB_DB: createWriteFailingD1(),
+      MISUB_DB: createFailingD1(),
       COOKIE_SECRET: 'stable-cookie-secret',
       ADMIN_PASSWORD: 'secret-password',
     };
@@ -65,59 +52,98 @@ describe('auth gracefully handles exhausted D1 write quota', () => {
       body: JSON.stringify({ password: 'secret-password' }),
     });
 
-    try {
-      const response = await handleLogin(request, env);
-      const body = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(body).toEqual({ success: true });
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[Auth Storage] D1 put skipped for SYSTEM_COOKIE_SECRET: D1 write limit exceeded for the day.',
-      );
-    } finally {
-      warnSpy.mockRestore();
-    }
+    const response = await handleLogin(request, env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
   });
 
-  it('auth_debug reports env COOKIE_SECRET without failing when D1 is read-only', async () => {
-    const env = {
-      MISUB_DB: createWriteFailingD1(),
-      COOKIE_SECRET: 'stable-cookie-secret',
+  it('immediately invalidates existing sessions when COOKIE_SECRET is rotated', async () => {
+    const initialEnv = {
+      MISUB_DB: createFailingD1(),
       ADMIN_PASSWORD: 'secret-password',
+      COOKIE_SECRET: 'cookie-secret-v1',
     };
+    const loginResponse = await handleLogin(
+      new Request('https://example.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: 'secret-password' }),
+      }),
+      initialEnv,
+    );
+    const cookieHeader = loginResponse.headers.get('Set-Cookie').split(';')[0];
 
-    await expect(getAuthDebugInfo(env)).resolves.toMatchObject({
-      hasD1: true,
-      cookieSecret: {
-        source: 'env',
-        hasRuntime: true,
-        hasD1Value: false,
-      },
-    });
+    const rotatedEnv = {
+      ...initialEnv,
+      COOKIE_SECRET: 'cookie-secret-v2',
+    };
+    const diag = await getAuthSessionDiagnostic(
+      { headers: { get: (name) => (name.toLowerCase() === 'cookie' ? cookieHeader : '') } },
+      rotatedEnv,
+    );
+    expect(diag.isAuthenticated).toBe(false);
+    expect(diag.reason).toBe('invalid_signature_or_secret');
   });
 
-  it('reuses the same in-memory fallback secret when D1 and COOKIE_SECRET are both unavailable', async () => {
-    const first = await getCookieSecret({});
-    const second = await getCookieSecret({});
+  it('derives a stable signing key from ADMIN_PASSWORD when COOKIE_SECRET is omitted', async () => {
+    const env = { ADMIN_PASSWORD: 'secret-password' };
+    const first = await getSessionSigningSecret(env);
+    const second = await getSessionSigningSecret({ ADMIN_PASSWORD: 'secret-password' });
+    const withCookieSecret = await getSessionSigningSecret({
+      ADMIN_PASSWORD: 'secret-password',
+      COOKIE_SECRET: 'extra-secret',
+    });
 
     expect(first).toBeTruthy();
     expect(second).toBe(first);
+    expect(withCookieSecret).not.toBe(first);
   });
 
-  it('reuses the same in-memory fallback secret when D1 put fails and COOKIE_SECRET is unset', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const env = {
-      MISUB_DB: createWriteFailingD1(),
-    };
+  it('auth_debug reports pure env and derived sources without touching D1', async () => {
+    await expect(
+      getAuthDebugInfo({
+        MISUB_DB: createFailingD1(),
+        COOKIE_SECRET: 'stable-cookie-secret',
+        ADMIN_PASSWORD: 'secret-password',
+      }),
+    ).resolves.toMatchObject({
+      hasD1: true,
+      adminPassword: { source: 'env', configured: true },
+      cookieSecret: { source: 'env', configured: true },
+    });
 
-    try {
-      const first = await getCookieSecret(env);
-      const second = await getCookieSecret(env);
+    await expect(
+      getAuthDebugInfo({
+        MISUB_DB: createFailingD1(),
+        ADMIN_PASSWORD: 'secret-password',
+      }),
+    ).resolves.toMatchObject({
+      hasD1: true,
+      adminPassword: { source: 'env', configured: true },
+      cookieSecret: { source: 'derived', configured: false },
+    });
+  });
 
-      expect(first).toBeTruthy();
-      expect(second).toBe(first);
-    } finally {
-      warnSpy.mockRestore();
-    }
+  it('reads telegram_push_config strictly from D1 settings and ignores TELEGRAM_PUSH_* env vars', async () => {
+    const db = createMemoryD1({
+      main: {
+        telegram_push_config: {
+          enabled: true,
+          bot_token: '',
+          webhook_secret: '',
+          allowed_user_ids: [],
+        },
+      },
+    });
+    const config = await getTelegramPushConfig({
+      MISUB_DB: db,
+      TELEGRAM_PUSH_BOT_TOKEN: 'stale-env-bot-token',
+      TELEGRAM_PUSH_WEBHOOK_SECRET: 'stale-env-webhook-secret',
+      TELEGRAM_PUSH_ALLOWED_USERS: '12345,67890',
+    });
+
+    expect(config.bot_token).toBe('');
+    expect(config.webhook_secret).toBe('');
+    expect(config.allowed_user_ids).toEqual([]);
   });
 });

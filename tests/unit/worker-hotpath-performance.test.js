@@ -7,10 +7,8 @@ import {
   getSessionSigningSecret,
   renewAuthSession,
 } from '../../functions/modules/auth-middleware.js';
-import { clearCookieSecretCache, getCookieSecret } from '../../functions/modules/utils.js';
-import { SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.js';
+import { SESSION_RENEW_THRESHOLD, STORAGE_KEY_SETTINGS } from '../../functions/modules/config.js';
 import { clearSettingsCache, StorageFactory } from '../../functions/storage-adapter.js';
-import { STORAGE_KEY_SETTINGS } from '../../functions/modules/config.js';
 
 function createCountingD1(initialSettings = {}) {
   const settingsMap = new Map(Object.entries(initialSettings));
@@ -65,11 +63,10 @@ function createMockRequest(url, { method = 'GET', headers = {} } = {}) {
 
 describe('worker hot-path D1 and auth performance guards', () => {
   it('skips D1 and session renewal completely for static public assets even with mature auth cookie', async () => {
-    clearCookieSecretCache();
     clearSettingsCache();
 
     const secret = 'test-static-secret';
-    const db = createCountingD1({ SYSTEM_COOKIE_SECRET: secret });
+    const db = createCountingD1();
     const matureIssuedAt = Date.now() - SESSION_RENEW_THRESHOLD - 5000;
     const token = await createSignedToken(secret, String(matureIssuedAt));
 
@@ -84,6 +81,8 @@ describe('worker hot-path D1 and auth performance guards', () => {
       request,
       env: {
         MISUB_DB: db,
+        ADMIN_PASSWORD: 'test-admin-password',
+        COOKIE_SECRET: secret,
         ASSETS: {
           fetch: vi.fn(
             async () =>
@@ -104,39 +103,26 @@ describe('worker hot-path D1 and auth performance guards', () => {
   });
 
   it('short-circuits getAuthSessionDiagnostic without touching D1 when auth cookie is absent', async () => {
-    clearCookieSecretCache();
-    const db = createCountingD1({ SYSTEM_COOKIE_SECRET: 'secret-1' });
+    const db = createCountingD1();
     const request = createMockRequest('https://example.com/api/public_config', {
       headers: { Cookie: 'other_cookie=1' },
     });
 
-    const diagnostic = await getAuthSessionDiagnostic(request, { MISUB_DB: db });
+    const diagnostic = await getAuthSessionDiagnostic(request, {
+      MISUB_DB: db,
+      ADMIN_PASSWORD: 'test-admin-password',
+      COOKIE_SECRET: 'secret-1',
+    });
 
     expect(diagnostic.isAuthenticated).toBe(false);
     expect(diagnostic.reason).toBe('no_cookie');
     expect(db.queries).toHaveLength(0);
   });
 
-  it('caches getCookieSecret per D1 instance across repeated lookups', async () => {
-    clearCookieSecretCache();
-    const db = createCountingD1({ SYSTEM_COOKIE_SECRET: 'cached-secret-value' });
-    const env = { MISUB_DB: db };
-
-    const first = await getCookieSecret(env);
-    const second = await getCookieSecret(env);
-    const third = await getCookieSecret(env);
-
-    expect(first).toBe('cached-secret-value');
-    expect(second).toBe('cached-secret-value');
-    expect(third).toBe('cached-secret-value');
-    expect(db.queries).toHaveLength(1);
-  });
-
-  it('reuses per-request auth diagnostic between authMiddleware and renewAuthSession', async () => {
-    clearCookieSecretCache();
+  it('reuses per-request auth diagnostic between authMiddleware and renewAuthSession with zero D1 queries', async () => {
     const secret = 'reuse-diagnostic-secret';
-    const db = createCountingD1({ SYSTEM_COOKIE_SECRET: secret });
-    const env = { MISUB_DB: db, ADMIN_PASSWORD: 'test-admin-password' };
+    const db = createCountingD1();
+    const env = { MISUB_DB: db, ADMIN_PASSWORD: 'test-admin-password', COOKIE_SECRET: secret };
     const token = await createSignedToken(await getSessionSigningSecret(env), String(Date.now() - 1000));
     const request = createMockRequest('https://example.com/api/data', {
       headers: { Cookie: `auth_session=${token}` },
@@ -150,7 +136,7 @@ describe('worker hot-path D1 and auth performance guards', () => {
       const response = await renewAuthSession(request, env, new Response('ok'));
       expect(response.headers.has('Set-Cookie')).toBe(false);
       expect(verifySpy).toHaveBeenCalledTimes(1);
-      expect(db.queries).toHaveLength(1);
+      expect(db.queries).toHaveLength(0);
     } finally {
       verifySpy.mockRestore();
     }

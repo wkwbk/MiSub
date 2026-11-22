@@ -47,24 +47,28 @@ export async function timingSafeStringEqual(a, b) {
 }
 
 /**
- * 派生会话签名密钥：绑定 COOKIE_SECRET 与 ADMIN_PASSWORD，修改 ADMIN_PASSWORD 时自动吊销所有旧会话
+ * 派生会话签名密钥：仅基于环境变量（COOKIE_SECRET 与 ADMIN_PASSWORD），不读写 D1。
+ * 修改 ADMIN_PASSWORD 或 COOKIE_SECRET 都会立即吊销所有旧会话；未配置 COOKIE_SECRET 时基于 ADMIN_PASSWORD 稳定派生。
  * @param {Object} env
- * @returns {Promise<string|null>}
+ * @returns {Promise<string>}
  */
 export async function getSessionSigningSecret(env) {
-  const cookieSecret = await getCookieSecret(env);
-  if (!cookieSecret) return null;
-
   const adminPassword = normalizeSecret(await getAdminPassword(env));
+  const cookieSecret = normalizeSecret(await getCookieSecret(env));
+  const hmacKeyMaterial = cookieSecret || adminPassword;
+  const derivationContext = cookieSecret
+    ? `misub-session-v2:${adminPassword}`
+    : 'misub-session-v2:derived-from-admin-password';
+
   const encoder = new TextEncoder();
   const cryptoKey = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(cookieSecret),
+    encoder.encode(hmacKeyMaterial),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
   );
-  const derived = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(`misub-session-v1:${adminPassword}`));
+  const derived = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(derivationContext));
   return Array.from(new Uint8Array(derived))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');

@@ -3,8 +3,6 @@
  * 包含各种通用的辅助函数
  */
 
-import { ensureD1Schema } from '../storage-adapter.js';
-
 /**
  * 规范化自定义登录路径，确保始终以单个前导斜杠开头；无效时回退为 '/login'
  * @param {string} customLoginPath
@@ -36,150 +34,15 @@ function getRuntimeEnvValue(env, key) {
   return undefined;
 }
 
-function isNoSuchTableError(error) {
-  return String(error?.message || error || '')
-    .toLowerCase()
-    .includes('no such table');
-}
-
-function isD1StorageUnavailableError(error) {
-  const message = String(error?.message || error || '').toLowerCase();
-  return (
-    message.includes('d1') ||
-    message.includes('database is locked') ||
-    message.includes('storage is paused') ||
-    message.includes('limit exceeded')
-  );
-}
-
-function unwrapStoredText(raw) {
-  if (raw === null || raw === undefined) return null;
-  const text = String(raw);
-  if (text.startsWith('"') && text.endsWith('"')) {
-    try {
-      return String(JSON.parse(text));
-    } catch {
-      return text;
-    }
-  }
-  return text;
-}
-
-async function readD1SettingStrict(db, key) {
-  if (!db) return null;
-  try {
-    const stmt = db.prepare('SELECT value as data FROM settings WHERE key = ?');
-    const bound = typeof stmt.bind === 'function' ? stmt.bind(key) : stmt;
-    const row = await bound.first();
-    if (!row) return null;
-    return unwrapStoredText(row.data ?? row.value);
-  } catch (error) {
-    if (isNoSuchTableError(error)) {
-      return null;
-    }
-    throw error;
-  }
-}
-
-async function safeD1Get(db, key) {
-  try {
-    return await readD1SettingStrict(db, key);
-  } catch (error) {
-    if (isD1StorageUnavailableError(error)) {
-      console.warn(`[Auth Storage] D1 get skipped for ${key}: ${error.message}`);
-      return null;
-    }
-    throw error;
-  }
-}
-
-async function putD1SettingStrict(db, key, value) {
-  const writeOnce = async () => {
-    await db
-      .prepare(`INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`)
-      .bind(key, String(value))
-      .run();
-  };
-  try {
-    await writeOnce();
-  } catch (error) {
-    if (isNoSuchTableError(error)) {
-      await ensureD1Schema(db);
-      await writeOnce();
-      return;
-    }
-    throw error;
-  }
-}
-
-async function safeD1Put(db, key, value) {
-  if (!db) return false;
-  try {
-    await putD1SettingStrict(db, key, value);
-    return true;
-  } catch (error) {
-    console.warn(`[Auth Storage] D1 put skipped for ${key}: ${error.message}`);
-    return false;
-  }
-}
-
-let fallbackCookieSecret = null;
-let cookieSecretCache = new WeakMap();
-const COOKIE_SECRET_CACHE_TTL_MS = 5 * 60 * 1000;
-
-function getFallbackCookieSecret() {
-  if (!fallbackCookieSecret) {
-    fallbackCookieSecret = crypto.randomUUID();
-  }
-  return fallbackCookieSecret;
-}
-
-export function clearCookieSecretCache() {
-  cookieSecretCache = new WeakMap();
-}
-
 /**
- * 获取或生成 Cookie 加密密钥
- * 优先顺序：D1 → 环境变量 COOKIE_SECRET → 当前实例临时密钥（无 D1 或写入失败时）
+ * 获取 Cookie 加密密钥
+ * 仅从环境变量 COOKIE_SECRET 读取；未配置时返回 null（由会话层基于 ADMIN_PASSWORD 稳定派生）
  * @param {Object} env - 运行时环境对象
- * @returns {Promise<string>} 密钥
+ * @returns {Promise<string|null>} 密钥
  */
 export async function getCookieSecret(env) {
-  const db = getD1(env);
   const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
-
-  if (db) {
-    const now = Date.now();
-    const cached = cookieSecretCache.get(db);
-    if (cached && now - cached.timestamp < COOKIE_SECRET_CACHE_TTL_MS) {
-      return cached.secret;
-    }
-
-    const storedSecret = await safeD1Get(db, 'SYSTEM_COOKIE_SECRET');
-    if (storedSecret) {
-      cookieSecretCache.set(db, { secret: storedSecret, timestamp: now });
-      return storedSecret;
-    }
-
-    if (runtimeCookieSecret) {
-      const saved = await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', runtimeCookieSecret);
-      if (saved) {
-        cookieSecretCache.set(db, { secret: runtimeCookieSecret, timestamp: now });
-      }
-      return runtimeCookieSecret;
-    }
-
-    const newSecret = crypto.randomUUID();
-    const saved = await safeD1Put(db, 'SYSTEM_COOKIE_SECRET', newSecret);
-    if (saved) {
-      cookieSecretCache.set(db, { secret: newSecret, timestamp: now });
-      return newSecret;
-    }
-    return getFallbackCookieSecret();
-  }
-
-  if (runtimeCookieSecret) return runtimeCookieSecret;
-  return getFallbackCookieSecret();
+  return runtimeCookieSecret ? runtimeCookieSecret.trim() : null;
 }
 
 export class AdminPasswordMissingError extends Error {
@@ -217,19 +80,6 @@ export async function getAuthDebugInfo(env) {
   const runtimeCookieSecret = getRuntimeEnvValue(env, 'COOKIE_SECRET');
   const db = getD1(env);
 
-  let hasD1CookieSecret = false;
-
-  if (db) {
-    hasD1CookieSecret = !!(await safeD1Get(db, 'SYSTEM_COOKIE_SECRET'));
-  }
-
-  let cookieSecretSource = 'generated';
-  if (runtimeCookieSecret) {
-    cookieSecretSource = 'env';
-  } else if (hasD1CookieSecret) {
-    cookieSecretSource = 'd1';
-  }
-
   return {
     hasD1: !!db,
     adminPassword: {
@@ -237,10 +87,8 @@ export async function getAuthDebugInfo(env) {
       configured: !!runtimeAdminPassword,
     },
     cookieSecret: {
-      source: cookieSecretSource,
-      hasRuntime: !!runtimeCookieSecret,
-      hasD1Value: hasD1CookieSecret,
-      mayRegenerateWithoutD1: !db && !runtimeCookieSecret,
+      source: runtimeCookieSecret ? 'env' : 'derived',
+      configured: !!runtimeCookieSecret,
     },
   };
 }

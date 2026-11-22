@@ -88,14 +88,12 @@ export async function getTelegramPushConfig(env, cache = null) {
     settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
   }
   const config = settings.telegram_push_config || {};
-  const allowedUserIds = Array.isArray(config.allowed_user_ids)
-    ? config.allowed_user_ids
-    : env.TELEGRAM_PUSH_ALLOWED_USERS?.split(',') || [];
+  const allowedUserIds = Array.isArray(config.allowed_user_ids) ? config.allowed_user_ids : [];
 
   return {
     enabled: config.enabled ?? true,
-    bot_token: config.bot_token || env.TELEGRAM_PUSH_BOT_TOKEN,
-    webhook_secret: config.webhook_secret || env.TELEGRAM_PUSH_WEBHOOK_SECRET,
+    bot_token: config.bot_token || '',
+    webhook_secret: config.webhook_secret || '',
     allowed_user_ids: allowedUserIds.map((id) => id?.toString().trim()).filter(Boolean),
     allow_all_users: config.allow_all_users === true,
     rate_limit: config.rate_limit || {
