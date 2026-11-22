@@ -276,7 +276,8 @@ const handleSaveCore = async () => {
       items: list,
     };
 
-    await persistPublicCoresSilently();
+    const saved = await persistPublicCoresSilently();
+    if (!saved) return;
     showEditModal.value = false;
     showToast(t('settings.clientSaveSuccess'), 'success');
   } finally {
@@ -305,7 +306,8 @@ const moveCore = async (coreId, direction) => {
     ...publicCoresConfig.value,
     items: fullList,
   };
-  await persistPublicCoresSilently();
+  const saved = await persistPublicCoresSilently();
+  if (!saved) return;
   showToast(t('settings.clientOrderSaved'), 'success');
 };
 
@@ -323,7 +325,8 @@ const executeDelete = async () => {
   };
   showDeleteConfirm.value = false;
   coreToDeleteId.value = null;
-  await persistPublicCoresSilently();
+  const saved = await persistPublicCoresSilently();
+  if (!saved) return;
   showToast(t('settings.clientDeleted'), 'success');
 };
 
@@ -333,7 +336,8 @@ const executeReset = async () => {
     items: DEFAULT_PUBLIC_CORES.map((item) => ({ ...item, tags: [...(item.tags || [])] })),
   };
   showResetConfirm.value = false;
-  await persistPublicCoresSilently();
+  const saved = await persistPublicCoresSilently();
+  if (!saved) return;
   showToast(t('settings.clientResetSuccess'), 'success');
 };
 </script>

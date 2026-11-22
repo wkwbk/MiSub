@@ -112,7 +112,6 @@ export function useSubscriptions(markDirty) {
 
   function reorderSubscriptionTags(newOrder) {
     setSubscriptionTagOrder(normalizeTagList(newOrder));
-    markDirty();
   }
 
   const filteredSubscriptions = computed(() => {

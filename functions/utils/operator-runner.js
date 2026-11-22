@@ -32,6 +32,14 @@ function normalizeRules(rules) {
   return normalized;
 }
 
+const normalizeProto = (p) => {
+  const lower = String(p || '').toLowerCase();
+  if (lower === 'hy2') return 'hysteria2';
+  if (lower === 'hy') return 'hysteria';
+  if (lower === 'socks5') return 'socks';
+  return lower;
+};
+
 function opFilter(nodes, params) {
   if (!params) return nodes;
   const { include, exclude, protocols, regions } = params;
@@ -70,13 +78,6 @@ function opFilter(nodes, params) {
     }
   }
   if (protocols?.enabled && Array.isArray(protocols.values)) {
-    const normalizeProto = (p) => {
-      const lower = String(p || '').toLowerCase();
-      if (lower === 'hy2') return 'hysteria2';
-      if (lower === 'hy') return 'hysteria';
-      if (lower === 'socks5') return 'socks';
-      return lower;
-    };
     const allowed = new Set(protocols.values.map(normalizeProto));
     result = result.filter((r) => allowed.has(normalizeProto(r.protocol)));
   }
@@ -125,6 +126,9 @@ function opRename(nodes, params) {
             ...r,
             name: newName,
             url: NodeUtils.setNodeName(r.url, r.protocol, newName),
+            region: '',
+            regionZh: '',
+            emoji: '',
           };
         }
         return r;
@@ -278,19 +282,20 @@ export async function runOperatorChain(nodeUrls, operators, context = {}) {
         const mode = params?.mode === 'url' ? 'url' : 'serverPort';
         const includeProtocol = params?.includeProtocol !== false;
         const protocolOrder = Array.isArray(params?.prefer?.protocolOrder)
-          ? params.prefer.protocolOrder.map((p) => String(p || '').toLowerCase())
+          ? params.prefer.protocolOrder.map(normalizeProto)
           : [];
         const getProtocolRank = (protocol) => {
-          const idx = protocolOrder.indexOf(String(protocol || '').toLowerCase());
+          const idx = protocolOrder.indexOf(normalizeProto(protocol));
           return idx === -1 ? Number.MAX_SAFE_INTEGER : idx;
         };
         const seenNodes = new Map();
         for (const r of records) {
+          const hasHostPort = Boolean(r.server && r.port);
           const key =
-            mode === 'url'
+            mode === 'url' || !hasHostPort
               ? String(r.url || '').split('#')[0]
               : includeProtocol
-                ? `${r.protocol}|${r.server}:${r.port}`
+                ? `${normalizeProto(r.protocol)}|${r.server}:${r.port}`
                 : `${r.server}:${r.port}`;
           if (!seenNodes.has(key)) {
             seenNodes.set(key, r);

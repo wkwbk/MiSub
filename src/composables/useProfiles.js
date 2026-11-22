@@ -119,7 +119,6 @@ export function useProfiles(markDirty) {
     if (typeof dataStore.saveSettings === 'function') {
       dataStore.saveSettings({ profileTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
     }
-    markDirty();
   }
 
   const filteredProfiles = computed(() => {

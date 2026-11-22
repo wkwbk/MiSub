@@ -47,10 +47,19 @@ const blankTemplate = () => ({
 
 const localTemplates = ref([]);
 const selectedId = ref('');
+const selectedIndex = ref(-1);
 const isSaving = ref(false);
 const isLoading = ref(false);
 
-const selectedTemplate = computed(() => localTemplates.value.find((item) => item.id === selectedId.value) || null);
+const selectedTemplate = computed(() => {
+  if (selectedIndex.value >= 0 && selectedIndex.value < localTemplates.value.length) {
+    const byIndex = localTemplates.value[selectedIndex.value];
+    if (byIndex && byIndex.id === selectedId.value) {
+      return byIndex;
+    }
+  }
+  return localTemplates.value.find((item) => item.id === selectedId.value) || null;
+});
 const selectedTemplateId = computed({
   get: () => selectedTemplate.value?.id || '',
   set: (value) => {
@@ -65,14 +74,26 @@ function cloneTemplates(items) {
   return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
 }
 
+function selectTemplateAt(index) {
+  if (index >= 0 && index < localTemplates.value.length) {
+    selectedIndex.value = index;
+    selectedId.value = localTemplates.value[index].id;
+  } else {
+    selectedIndex.value = -1;
+    selectedId.value = '';
+  }
+}
+
 function syncFromStore() {
   localTemplates.value = cloneTemplates(dataStore.ruleTemplates);
-  if (!selectedId.value && localTemplates.value[0]) {
-    selectedId.value = localTemplates.value[0].id;
+  if (!localTemplates.value.length) {
+    selectTemplateAt(-1);
+    return;
   }
-  if (selectedId.value && !localTemplates.value.some((item) => item.id === selectedId.value)) {
-    selectedId.value = localTemplates.value[0]?.id || '';
-  }
+  const matchedIdx = selectedId.value
+    ? localTemplates.value.findIndex((item) => item.id === selectedId.value)
+    : -1;
+  selectTemplateAt(matchedIdx >= 0 ? matchedIdx : 0);
 }
 
 watch(() => dataStore.ruleTemplates, syncFromStore, { immediate: true, deep: true });
@@ -85,7 +106,7 @@ function createTemplate() {
     name: t('settings.ruleTemplateDefaultName'),
   };
   localTemplates.value.unshift(template);
-  selectedId.value = template.id;
+  selectTemplateAt(0);
   return template;
 }
 
@@ -95,13 +116,13 @@ function duplicateTemplate(template) {
   copy.id = `${template.id || 'custom'}-copy-${Date.now().toString(36)}`;
   copy.name = `${template.name || t('settings.ruleTemplateDefaultName')} ${t('settings.ruleTemplateCopySuffix')}`;
   localTemplates.value.unshift(copy);
-  selectedId.value = copy.id;
+  selectTemplateAt(0);
 }
 
 function removeTemplate(template) {
   if (!template) return;
-  localTemplates.value = localTemplates.value.filter((item) => item.id !== template.id);
-  selectedId.value = localTemplates.value[0]?.id || '';
+  localTemplates.value = localTemplates.value.filter((item) => item !== template);
+  selectTemplateAt(localTemplates.value.length ? 0 : -1);
 }
 
 async function refreshTemplates() {
@@ -119,10 +140,9 @@ async function saveTemplates() {
   try {
     const saved = await dataStore.saveRuleTemplates(localTemplates.value);
     localTemplates.value = cloneTemplates(saved);
-    if (!localTemplates.value.some((item) => item.id === selectedId.value)) {
-      selectedId.value = localTemplates.value[0]?.id || '';
-    }
-    const active = localTemplates.value.find((item) => item.id === selectedId.value && item.enabled !== false);
+    const matchedIdx = localTemplates.value.findIndex((item) => item.id === selectedId.value);
+    selectTemplateAt(matchedIdx >= 0 ? matchedIdx : localTemplates.value.length ? 0 : -1);
+    const active = selectedTemplate.value && selectedTemplate.value.enabled !== false ? selectedTemplate.value : null;
     emit('saved', active?.id || '');
     return true;
   } catch {
@@ -167,16 +187,16 @@ defineExpose({
     <div v-else class="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
       <div class="space-y-1.5">
         <button
-          v-for="template in localTemplates"
-          :key="template.id"
+          v-for="(template, index) in localTemplates"
+          :key="index"
           :class="
-            selectedId === template.id
+            selectedTemplate === template
               ? 'border-line-strong bg-elevated-card text-fg'
               : 'border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg'
           "
           class="w-full rounded-md border px-3 py-2 text-left transition"
           type="button"
-          @click="selectedId = template.id"
+          @click="selectTemplateAt(index)"
         >
           <div class="truncate text-xs font-semibold">
             {{ template.name || t('settings.ruleTemplateUnnamed') }}

@@ -165,8 +165,8 @@ export function matchesRegexRules(name, rules) {
 export function ensureRegionInfo(record, enableEmoji = false) {
   if (record.regionZh) return record;
 
-  // 优先使用预解析的元数据
-  let regionZh = record.metadata?.regionZh || record.metadata?.region || extractNodeRegion(record.name);
+  // 优先基于当前节点名重新识别地区（避免正则重命名后仍被旧 metadata.region 短路）
+  let regionZh = record.metadata?.regionZh || extractNodeRegion(record.name);
   let regionCode = record.metadata?.regionCode || '';
 
   if (regionZh === '其他' && record.server) {
@@ -177,7 +177,7 @@ export function ensureRegionInfo(record, enableEmoji = false) {
     regionCode = toRegionCode(regionZh);
   }
 
-  const emoji = enableEmoji ? record.metadata?.flag || getRegionEmoji(regionZh) : '';
+  const emoji = enableEmoji ? getRegionEmoji(regionZh) : '';
   return { ...record, region: regionCode, regionZh, emoji };
 }
 
@@ -782,9 +782,13 @@ export function applyNodeTransformPipeline(nodeUrls, transformConfig = {}) {
   if (cfg.rename.regex.enabled && cfg.rename.regex.rules.length > 0) {
     records = records.map((r) => {
       const newName = applyRegexRename(r.name, cfg.rename.regex.rules, r);
+      if (newName === r.name) return r;
       return {
         ...r,
         name: newName,
+        region: '',
+        regionZh: '',
+        emoji: '',
       };
     });
   }

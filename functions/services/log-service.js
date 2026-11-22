@@ -177,10 +177,11 @@ export const LogService = {
         logBatch.unshift(...batchToFlush);
       } else {
         console.warn(`[LogService] Dropping ${batchToFlush.length} logs after ${MAX_FLUSH_RETRIES} failed flush attempts.`);
+        consecutiveFlushFailures = 0;
       }
     } finally {
-      // 检查是否有在刷盘期间新进来的日志，且未触发连续失败上限
-      if (logBatch.length > 0 && consecutiveFlushFailures < MAX_FLUSH_RETRIES) {
+      // 检查是否有在刷盘期间新进来的日志
+      if (logBatch.length > 0) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         await this._flush(env);
       } else {

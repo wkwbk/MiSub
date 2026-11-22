@@ -386,7 +386,6 @@ export function useManualNodes(markDirty) {
         .saveSettings({ manualNodeTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true })
         .catch(() => {});
     }
-    markDirty();
   }
 
   function setPingMode(mode) {

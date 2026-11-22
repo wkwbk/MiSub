@@ -230,31 +230,23 @@ function buildWireGuardSection(proxy) {
 function buildProxyGroupLine(group) {
   const type = String(group.type || 'select').toLowerCase();
   const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
-  const members = (
-    ['url-test', 'fallback', 'load-balance'].includes(type)
-      ? rawMembers.filter(
-          (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
-        )
-      : rawMembers
-  ).join(', ');
-  const filter = Array.isArray(group.filters) && group.filters.length > 0 ? group.filters.join('|') : '';
+  const filteredMembers = ['url-test', 'fallback', 'load-balance'].includes(type)
+    ? rawMembers.filter(
+        (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
+      )
+    : rawMembers;
+  const members = (filteredMembers.length > 0 ? filteredMembers : ['DIRECT']).join(', ');
   const tolerance = group.options?.tolerance;
   if (type === 'url-test') {
-    const base = filter
-      ? `${group.name} = url-test, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
-      : `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
+    const base = `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
     return tolerance ? `${base}, tolerance=${tolerance}` : base;
   }
   if (type === 'fallback') {
-    const base = filter
-      ? `${group.name} = fallback, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
-      : `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
+    const base = `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
     return tolerance ? `${base}, tolerance=${tolerance}` : base;
   }
   if (type === 'load-balance') {
-    return filter
-      ? `${group.name} = load-balance, ${members ? `${members}, ` : ''}policy-regex-filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
-      : `${group.name} = load-balance, ${members}`;
+    return `${group.name} = load-balance, ${members}`;
   }
   return `${group.name} = select, ${members}`;
 }

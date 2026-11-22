@@ -269,7 +269,8 @@ const handleSaveLink = async () => {
       items: list,
     };
 
-    await persistPublicLinksSilently();
+    const saved = await persistPublicLinksSilently();
+    if (!saved) return;
     showEditModal.value = false;
     showToast(t('settings.clientSaveSuccess'), 'success');
   } finally {
@@ -298,7 +299,8 @@ const moveLink = async (linkId, direction) => {
     ...publicLinksConfig.value,
     items: fullList,
   };
-  await persistPublicLinksSilently();
+  const saved = await persistPublicLinksSilently();
+  if (!saved) return;
   showToast(t('settings.clientOrderSaved'), 'success');
 };
 
@@ -316,7 +318,8 @@ const executeDelete = async () => {
   };
   showDeleteConfirm.value = false;
   linkToDeleteId.value = null;
-  await persistPublicLinksSilently();
+  const saved = await persistPublicLinksSilently();
+  if (!saved) return;
   showToast(t('settings.clientDeleted'), 'success');
 };
 
@@ -326,7 +329,8 @@ const executeReset = async () => {
     items: DEFAULT_PUBLIC_LINKS.map((item) => ({ ...item })),
   };
   showResetConfirm.value = false;
-  await persistPublicLinksSilently();
+  const saved = await persistPublicLinksSilently();
+  if (!saved) return;
   showToast(t('settings.clientResetSuccess'), 'success');
 };
 </script>
