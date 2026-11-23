@@ -408,7 +408,7 @@ onUnmounted(() => {
       <template #guestbook>
         <button
           v-if="guestbookConfig?.enabled !== false"
-          class="px-6 py-2 bg-indigo-500 text-white rounded-lg"
+          class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-accent text-accent-fg text-sm font-medium border border-accent hover:opacity-90 transition-opacity"
           @click="handleGuestbookTrigger"
         >
           {{ t('publicProfiles.guestbook') }}

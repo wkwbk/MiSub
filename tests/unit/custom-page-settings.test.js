@@ -66,4 +66,39 @@ describe('CustomPageSettings safety messaging', () => {
       window.confirm = originalConfirm;
     }
   });
+
+  it('applies scoped, script-free preset templates without global CSS resets', async () => {
+    const originalConfirm = window.confirm;
+    window.confirm = vi.fn(() => true);
+    const wrapper = mountSettings();
+
+    try {
+      const buttons = wrapper.findAll('[data-testid="custom-page-template"]');
+      expect(buttons.length).toBe(3);
+
+      for (const button of buttons) {
+        await button.trigger('click');
+        const { content, css } = wrapper.props('settings').customPage;
+
+        expect(content).toBeTruthy();
+        expect(css).toBeTruthy();
+        expect(content).not.toMatch(/<script/i);
+        expect(css).not.toMatch(/(^|\n)\s*\*\s*\{/);
+      }
+
+      // First template (Minimal Nav) auto-applies immersive fullscreen layout preset
+      await buttons[0].trigger('click');
+      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
+      expect(wrapper.props('settings').customPage.hideHeader).toBe(true);
+      expect(wrapper.props('settings').customPage.hideFooter).toBe(true);
+
+      // Third template (Sub Portal) keeps native header & footer
+      await buttons[2].trigger('click');
+      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
+      expect(wrapper.props('settings').customPage.hideHeader).toBe(false);
+      expect(wrapper.props('settings').customPage.hideFooter).toBe(false);
+    } finally {
+      window.confirm = originalConfirm;
+    }
+  });
 });

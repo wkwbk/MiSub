@@ -61,7 +61,7 @@ const isIframeMode = computed(() => ['iframe-srcdoc', 'iframe-url'].includes(cus
 const sanitizeHtml = (html) =>
   DOMPurify.sanitize(html || '', {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['data-slot'],
+    ADD_ATTR: ['data-slot', 'target'],
     FORBID_TAGS: ['script', 'object', 'embed', 'link', 'style'],
     FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'style'],
   });
@@ -298,8 +298,8 @@ watch(
   box-shadow: 0 20px 45px rgba(15, 23, 42, 0.16);
 }
 
-/* 确保 Teleport 的目标容器不会坍塌 */
-[data-slot] {
-  min-height: 10px;
+/* 空插槽不占高度，避免禁用公告或留言板时留出空白间距 */
+[data-slot]:empty {
+  min-height: 0;
 }
 </style>
