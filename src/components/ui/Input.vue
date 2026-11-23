@@ -107,7 +107,7 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none transition-colors duration-200 text-fg-subtle"
       >
         <slot name="prefix">
-          <span :class="props.size === 'sm' ? 'text-[10px]' : 'text-sm'" class="font-mono">{{ prefix }}</span>
+          <span :class="props.size === 'sm' ? 'text-xs' : 'text-sm'" class="font-mono">{{ prefix }}</span>
         </slot>
       </div>
 

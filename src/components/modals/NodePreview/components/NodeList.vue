@@ -80,7 +80,7 @@ const getProtocolDot = (protocol) => {
           <!-- 表头 -->
           <div class="sticky top-0 z-10 border-b border-line bg-surface">
             <div
-              class="grid min-h-[2.75rem] grid-cols-12 gap-2 px-4 py-2 items-center text-[11px] font-medium text-fg-subtle uppercase tracking-wider"
+              class="grid min-h-[2.75rem] grid-cols-12 gap-2 px-4 py-2 items-center text-xs font-medium text-fg-subtle uppercase tracking-wider"
             >
               <div v-if="selectionMode" class="col-span-1 flex justify-center text-fg-subtle">
                 {{ t('nodePreview.columnPick') }}
@@ -154,7 +154,7 @@ const getProtocolDot = (protocol) => {
                 <!-- 类型 (桌面端) -->
                 <div class="col-span-1 hidden sm:flex justify-center">
                   <span
-                    class="inline-flex h-5 max-w-full items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
+                    class="inline-flex h-5 max-w-full items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none uppercase text-fg-muted"
                   >
                     <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
                     <span class="truncate">{{ parseNodeInfo(node).protocol }}</span>
@@ -165,7 +165,7 @@ const getProtocolDot = (protocol) => {
                 <div class="col-span-2 hidden sm:flex justify-center">
                   <span
                     :title="parseNodeInfo(node).region"
-                    class="inline-flex h-5 max-w-full items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted"
+                    class="inline-flex h-5 max-w-full items-center rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted"
                   >
                     <span class="truncate">{{ parseNodeInfo(node).region }}</span>
                   </span>

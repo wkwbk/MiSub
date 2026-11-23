@@ -430,7 +430,7 @@ const executeReset = async () => {
                   {{ core.name }}
                 </h4>
                 <span
-                  class="px-1.5 py-0.5 text-[10px] rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
+                  class="px-1.5 py-0.5 text-xs rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
                 >
                   {{ getCategoryLabel(core.category) }}
                 </span>
@@ -439,7 +439,7 @@ const executeReset = async () => {
                 <span
                   v-for="tag in core.tags"
                   :key="tag"
-                  class="px-1.5 py-0.5 text-[10px] rounded-md border border-line bg-elevated-card text-fg-muted font-mono"
+                  class="px-1.5 py-0.5 text-xs rounded-md border border-line bg-elevated-card text-fg-muted font-mono"
                 >
                   {{ tag }}
                 </span>
@@ -449,7 +449,7 @@ const executeReset = async () => {
               </p>
               <a
                 :href="core.url"
-                class="inline-flex items-center gap-1 text-[11px] font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
+                class="inline-flex items-center gap-1 text-xs font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
                 rel="noopener noreferrer"
                 target="_blank"
               >

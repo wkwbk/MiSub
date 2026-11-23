@@ -254,7 +254,7 @@ function clearActiveBaseConfig() {
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualRulesTitle') }}</h4>
-          <p class="mt-0.5 text-[11px] text-fg-muted">{{ t('settings.visualRulesGridHint') }}</p>
+          <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualRulesGridHint') }}</p>
         </div>
         <div class="w-28">
           <Select v-model="currentPreset" :options="presetOptions" size="sm" />
@@ -289,7 +289,7 @@ function clearActiveBaseConfig() {
       <div class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualCustomRulesTitle') }}</h4>
-          <p class="mt-0.5 text-[11px] text-fg-muted">{{ t('settings.visualCustomRulesDesc') }}</p>
+          <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualCustomRulesDesc') }}</p>
         </div>
         <div class="flex rounded-md border border-line bg-inset p-0.5">
           <button
@@ -346,7 +346,7 @@ function clearActiveBaseConfig() {
           >
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
               <div class="sm:col-span-6">
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualCustomRuleName') }}
                 </label>
                 <input
@@ -357,7 +357,7 @@ function clearActiveBaseConfig() {
                 />
               </div>
               <div class="sm:col-span-4">
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualCustomRuleAction') }}
                 </label>
                 <Select v-model="rule.action" :options="actionOptions" size="sm" />
@@ -377,7 +377,7 @@ function clearActiveBaseConfig() {
 
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualDomainSuffix') }}
                 </label>
                 <input
@@ -389,7 +389,7 @@ function clearActiveBaseConfig() {
                 />
               </div>
               <div>
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualDomainKeyword') }}
                 </label>
                 <input
@@ -401,7 +401,7 @@ function clearActiveBaseConfig() {
                 />
               </div>
               <div>
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualIpCidr') }}
                 </label>
                 <input
@@ -413,7 +413,7 @@ function clearActiveBaseConfig() {
                 />
               </div>
               <div>
-                <label class="mb-1 block text-[11px] font-medium text-fg-muted">
+                <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualSrcIpCidr') }}
                 </label>
                 <input
@@ -455,7 +455,7 @@ function clearActiveBaseConfig() {
     <div class="border-t border-line pt-4 space-y-2">
       <div>
         <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualSubconverterTitle') }}</h4>
-        <p class="mt-0.5 text-[11px] text-fg-muted">{{ t('settings.visualSubconverterDesc') }}</p>
+        <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualSubconverterDesc') }}</p>
       </div>
       <div class="flex flex-col gap-2 sm:flex-row">
         <input
@@ -486,7 +486,7 @@ function clearActiveBaseConfig() {
     <div class="flex flex-wrap items-center justify-between gap-2">
       <div>
         <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualBaseConfigTitle') }}</h4>
-        <p class="mt-0.5 text-[11px] text-fg-muted">{{ t('settings.visualBaseConfigDesc') }}</p>
+        <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualBaseConfigDesc') }}</p>
       </div>
       <div class="w-44">
         <Select v-model="activeBaseConfigTarget" :options="baseConfigTargetOptions" size="sm" />

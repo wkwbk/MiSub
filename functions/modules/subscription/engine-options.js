@@ -5,13 +5,14 @@
 import { DEFAULT_SUBCONVERTER_BACKEND } from '../config.js';
 import { assertPublicNetworkUrl } from '../security-utils.js';
 import { isHiddifyAgent, isMetaCore } from './user-agent-utils.js';
+import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '../../../shared/visual-rules-catalog.js';
 
 export function resolveTemplateUrl(mode, value, fallbackUrl = '') {
   const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
   const normalizedValue = typeof value === 'string' ? value.trim() : '';
   const normalizedFallback = typeof fallbackUrl === 'string' ? fallbackUrl.trim() : '';
 
-  if (normalizedMode === 'builtin') return '';
+  if (normalizedMode === 'builtin' || normalizedMode === 'visual') return '';
   if (normalizedMode === 'global') return normalizedFallback;
   if (normalizedMode === 'custom_template') {
     return normalizedValue.startsWith('custom:') ? normalizedValue : '';
@@ -298,4 +299,56 @@ export function shouldRenderClashYamlProfileTemplateLocally({
   } catch {
     return /\.ya?ml(?:[?#].*)?$/i.test(String(templateSource.value || '').trim());
   }
+}
+
+/**
+ * 解析当前请求生效的内置可视化分流配置（订阅组规则覆盖 > 全局配置）。
+ *
+ * 规则：
+ * - 无订阅组或订阅组为 global：完整继承全局 builtinTransform。
+ * - 订阅组启用可视化规则（mode === 'visual' 或 mode === 'builtin' 且 profile.builtinTransform.visualRulesEnabled）：
+ *   继承全局通用引擎参数（groupByCountry / includeAutoSelect / enableClashApi / baseConfig 等），
+ *   但使用订阅组自身的 selectedRules / customRules / rulePreset，并开启 visualRulesEnabled。
+ * - 订阅组为内置自动分流（mode === 'builtin' 且未开启 visualRulesEnabled）或规则模板模式：
+ *   继承全局通用引擎参数，但强制 visualRulesEnabled = false，避免被全局可视化规则劫持。
+ *
+ * @param {Object|null} profile - 当前订阅组
+ * @param {Object} config - 全局设置
+ * @returns {Object|null}
+ */
+export function resolveEffectiveBuiltinTransform(profile, config = {}) {
+  const hasGlobalBt = Boolean(config?.builtinTransform && typeof config.builtinTransform === 'object');
+  const globalBt = hasGlobalBt ? normalizeBuiltinTransform(config.builtinTransform) : null;
+
+  if (!profile || typeof profile !== 'object') {
+    return globalBt;
+  }
+
+  const rawMode = String(profile.transformConfigMode || 'global')
+    .trim()
+    .toLowerCase();
+
+  if (rawMode === 'global') {
+    return globalBt;
+  }
+
+  const baseBt = globalBt || normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
+  const profileBtRaw = profile.builtinTransform && typeof profile.builtinTransform === 'object' ? profile.builtinTransform : null;
+  const isProfileVisual = rawMode === 'visual' || (rawMode === 'builtin' && Boolean(profileBtRaw?.visualRulesEnabled));
+
+  if (isProfileVisual) {
+    const normalizedProfileBt = normalizeBuiltinTransform(profileBtRaw || baseBt);
+    return {
+      ...baseBt,
+      visualRulesEnabled: true,
+      rulePreset: normalizedProfileBt.rulePreset,
+      selectedRules: normalizedProfileBt.selectedRules,
+      customRules: normalizedProfileBt.customRules,
+    };
+  }
+
+  return {
+    ...baseBt,
+    visualRulesEnabled: false,
+  };
 }

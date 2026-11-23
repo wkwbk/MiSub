@@ -49,7 +49,7 @@ const currentVersion = packageJson.version;
             ? t('notices.updateAvailable', { version: latestRelease.tag_name })
             : undefined
         "
-        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-transparent text-[10px] font-mono text-fg-muted hover:text-fg hover:bg-hover transition-colors cursor-pointer border border-line hover:border-line-strong touch-target-min"
+        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-transparent text-xs font-mono text-fg-muted hover:text-fg hover:bg-hover transition-colors cursor-pointer border border-line hover:border-line-strong touch-target-min"
         type="button"
         @click="versionStore.openModal"
       >

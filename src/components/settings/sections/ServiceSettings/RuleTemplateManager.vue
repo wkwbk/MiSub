@@ -201,14 +201,14 @@ defineExpose({
           <div class="truncate text-xs font-semibold">
             {{ template.name || t('settings.ruleTemplateUnnamed') }}
           </div>
-          <div class="mt-1 truncate font-mono text-[10px] text-fg-subtle">custom:{{ template.id }}</div>
+          <div class="mt-1 truncate font-mono text-xs text-fg-subtle">custom:{{ template.id }}</div>
         </button>
       </div>
 
       <div v-if="selectedTemplate" class="space-y-4 lg:pl-6 lg:border-l lg:border-line">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label class="block">
-            <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted">{{
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-fg-muted">{{
               t('settings.ruleTemplateName')
             }}</span>
             <input
@@ -217,7 +217,7 @@ defineExpose({
             />
           </label>
           <label class="block">
-            <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted">{{
+            <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-fg-muted">{{
               t('settings.ruleTemplateId')
             }}</span>
             <input
@@ -228,7 +228,7 @@ defineExpose({
         </div>
 
         <label class="block">
-          <span class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-fg-muted">{{
+          <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-fg-muted">{{
             t('settings.ruleTemplateDescription')
           }}</span>
           <input
@@ -240,7 +240,7 @@ defineExpose({
 
         <div>
           <div class="mb-1 flex items-center justify-between gap-2">
-            <span class="text-[11px] font-semibold uppercase tracking-wide text-fg-muted">{{
+            <span class="text-xs font-semibold uppercase tracking-wide text-fg-muted">{{
               t('settings.ruleTemplateContent')
             }}</span>
             <button

@@ -1,15 +1,19 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { ChevronDown, SlidersHorizontal } from '@lucide/vue';
+import { ChevronDown, RotateCcw, SlidersHorizontal } from '@lucide/vue';
+import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
+import VisualTransformCard from '@/components/settings/sections/ServiceSettings/VisualTransformCard.vue';
 import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
 import { useI18n } from '@/i18n/index.js';
+import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
 
 const { t } = useI18n();
 
@@ -44,50 +48,53 @@ const props = defineProps({
   },
 });
 
+const activePinia = getActivePinia();
+const ruleTemplates = activePinia ? storeToRefs(useDataStore()).ruleTemplates : ref([]);
+const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
+
 const globalEngineLabel = computed(() => {
   const mode = props.globalSettings?.subconverter?.engineMode || 'builtin';
   return mode === 'external' ? t('profileModal.externalBackend') : t('profileModal.builtinEngine');
 });
 
+const isGlobalBuiltinAuto = computed(() => {
+  const mode = props.globalSettings?.transformConfigMode || 'builtin';
+  return mode === 'builtin' && !props.globalSettings?.builtinTransform?.visualRulesEnabled;
+});
+
 const globalConfigLabel = computed(() => {
   const mode = props.globalSettings?.transformConfigMode || 'builtin';
-  if (mode === 'builtin') return t('profileModal.builtinAutoRoute');
+  if (mode === 'builtin') {
+    return props.globalSettings?.builtinTransform?.visualRulesEnabled
+      ? t('profileModal.visualRulesOption')
+      : t('profileModal.builtinAutoRoute');
+  }
   const url = props.globalSettings?.transformConfig || '';
+  if (url.startsWith('custom:')) {
+    const templateId = url.slice('custom:'.length);
+    const tpl = (ruleTemplates.value || []).find((item) => item?.id === templateId);
+    if (tpl?.name) return tpl.name;
+  }
   const asset = getLocalizedTransformAssetByUrl(url, t);
   return asset ? asset.name : url ? t('profileModal.customUrl') : t('profileModal.notSet');
 });
 
-const transformModeOptions = [
-  { value: 'global', label: t('profileModal.followGlobalSettings') },
-  { value: 'preset', label: t('profileModal.selectPreset') },
-  { value: 'custom', label: t('profileModal.customTemplateUrl') },
-  { value: 'custom_template', label: t('profileModal.customTemplate') },
-];
-
-const engineOptions = [
+const engineOptions = computed(() => [
   { value: 'builtin', label: t('profileModal.builtinScriptEngine') },
   { value: 'external', label: t('profileModal.externalBackendConvert') },
-];
+]);
 
-const flagOptions = [
+const flagOptions = computed(() => [
   { key: 'udp', label: t('profileModal.udpForward') },
   { key: 'emoji', label: t('profileModal.emojiSwitch') },
   { key: 'scv', label: t('profileModal.skipCert') },
   { key: 'sort', label: t('profileModal.nodeSort') },
   { key: 'tfo', label: 'TCP Fast Open' },
   { key: 'list', label: t('profileModal.outputList') },
-];
+]);
 
 const selectedTransformAsset = ref(null);
 const showRuleTemplateModal = ref(false);
-
-function handleRuleTemplatesSaved(savedTemplateId) {
-  if (props.localProfile.transformConfigMode !== 'custom_template' || !savedTemplateId) return;
-  if (!String(props.localProfile.transformConfig || '').trim()) {
-    props.localProfile.transformConfig = `custom:${savedTemplateId}`;
-  }
-}
-const emit = defineEmits(['toggle-advanced']);
 
 const isExternalEngine = computed(() => {
   const localMode = props.localProfile?.subconverter?.engineMode || '';
@@ -96,15 +103,101 @@ const isExternalEngine = computed(() => {
   return (props.globalSettings?.subconverter?.engineMode || 'builtin') === 'external';
 });
 
+function createInitialVisualTransformFromGlobal() {
+  const source =
+    props.globalSettings?.builtinTransform && typeof props.globalSettings.builtinTransform === 'object'
+      ? props.globalSettings.builtinTransform
+      : DEFAULT_BUILTIN_TRANSFORM;
+  const normalized = normalizeBuiltinTransform(source);
+  return {
+    ...normalized,
+    visualRulesEnabled: true,
+    selectedRules: [...normalized.selectedRules],
+    customRules: JSON.parse(JSON.stringify(normalized.customRules || [])),
+  };
+}
+
+const ruleSourceSelection = computed({
+  get: () => {
+    const mode = props.localProfile?.transformConfigMode || 'global';
+    if (mode === 'global') return 'global';
+    if (mode === 'visual') return 'visual';
+    if (mode === 'builtin') {
+      return props.localProfile?.builtinTransform?.visualRulesEnabled ? 'visual' : 'builtin';
+    }
+    // 兼容历史保存的 preset / custom / custom_template，全部统一归入「规则模板」
+    return 'preset';
+  },
+  set: (val) => {
+    if (val === 'global') {
+      props.localProfile.transformConfigMode = 'global';
+      if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
+        props.localProfile.builtinTransform.visualRulesEnabled = false;
+      }
+      return;
+    }
+    if (val === 'visual') {
+      props.localProfile.transformConfigMode = 'builtin';
+      if (!props.localProfile.builtinTransform || typeof props.localProfile.builtinTransform !== 'object') {
+        props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
+      } else {
+        Object.assign(props.localProfile.builtinTransform, normalizeBuiltinTransform(props.localProfile.builtinTransform));
+        props.localProfile.builtinTransform.visualRulesEnabled = true;
+      }
+      return;
+    }
+    if (val === 'builtin') {
+      props.localProfile.transformConfigMode = 'builtin';
+      if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
+        props.localProfile.builtinTransform.visualRulesEnabled = false;
+      }
+      return;
+    }
+    props.localProfile.transformConfigMode = 'preset';
+    if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
+      props.localProfile.builtinTransform.visualRulesEnabled = false;
+    }
+  },
+});
+
+const isVisualMode = computed(() => ruleSourceSelection.value === 'visual' && !isExternalEngine.value);
+const isTemplateMode = computed(() => ruleSourceSelection.value === 'preset');
+const showRuleLevelSelector = computed(
+  () =>
+    !isExternalEngine.value &&
+    (ruleSourceSelection.value === 'builtin' || (ruleSourceSelection.value === 'global' && isGlobalBuiltinAuto.value)),
+);
+
+function syncVisualRulesFromGlobal() {
+  props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
+}
+
+function handleRuleTemplatesSaved(savedTemplateId) {
+  if (!isTemplateMode.value || !savedTemplateId) return;
+  const current = String(props.localProfile.transformConfig || '').trim();
+  const stillExists = (ruleTemplates.value || []).some(
+    (item) => item && item.enabled !== false && `custom:${item.id}` === current,
+  );
+  if (!current || (current.startsWith('custom:') && !stillExists)) {
+    props.localProfile.transformConfig = `custom:${savedTemplateId}`;
+  }
+}
+
+const emit = defineEmits(['toggle-advanced']);
+
 const enforceExternalSchemeConstraints = () => {
   const enabled = isExternalEngine.value;
   if (!enabled) return;
 
   if (
     props.localProfile.transformConfigMode === 'builtin' ||
+    props.localProfile.transformConfigMode === 'visual' ||
     props.localProfile.transformConfigMode === 'custom_template'
   ) {
     props.localProfile.transformConfigMode = 'preset';
+  }
+  if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
+    props.localProfile.builtinTransform.visualRulesEnabled = false;
   }
 
   if (/^(builtin|custom):/.test(String(props.localProfile.transformConfig || ''))) {
@@ -171,7 +264,7 @@ watch(
       </div>
       <span
         v-if="localProfile.isPublic"
-        class="inline-flex items-center gap-1.5 text-[11px] text-fg-muted border border-line bg-transparent px-2 py-0.5 rounded-md"
+        class="inline-flex items-center gap-1.5 text-xs text-fg-muted border border-line bg-transparent px-2 py-0.5 rounded-md"
       >
         <span class="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
         <span>{{ t('profiles.publicVisible') }}</span>
@@ -221,7 +314,7 @@ watch(
           <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
             {{ t('profileModal.coreConfig') }}
           </h3>
-          <span class="text-[11px] text-fg-subtle">{{ t('profileModal.coreConfigDesc') }}</span>
+          <span class="text-xs text-fg-subtle">{{ t('profileModal.coreConfigDesc') }}</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-line rounded-md shadow-none">
@@ -235,17 +328,17 @@ watch(
             />
             <div v-if="localProfile.subconverter.engineMode === ''" class="flex items-center gap-1.5 mt-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-              <span class="font-mono text-[10px] text-fg-muted uppercase tracking-tight">
+              <span class="text-xs text-fg-muted">
                 {{ t('profileModal.currentGlobal', { value: globalEngineLabel }) }}
               </span>
             </div>
           </div>
 
-          <!-- 方案选择 -->
+          <!-- 方案选择（与设置页三合一对齐：跟随全局 / 内置自动分流 / 内置可视化规则 / 规则模板） -->
           <div class="space-y-1.5">
             <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.schemeLabel') }}</label>
             <Select
-              v-model="localProfile.transformConfigMode"
+              v-model="ruleSourceSelection"
               :options="[
                 { value: 'global', label: t('profileModal.followGlobalScheme') },
                 {
@@ -253,20 +346,24 @@ watch(
                   label: t('profileModal.builtinAutoRoute'),
                   disabled: isExternalEngine,
                 },
-                ...transformModeOptions.slice(1).map((option) => ({
-                  value: option.value,
-                  label: option.label,
-                  disabled: option.value === 'custom_template' && isExternalEngine,
-                })),
+                {
+                  value: 'visual',
+                  label: t('profileModal.visualRulesOption'),
+                  disabled: isExternalEngine,
+                },
+                {
+                  value: 'preset',
+                  label: t('profileModal.templateUnified'),
+                },
               ]"
               size="sm"
             />
-            <p v-if="isExternalEngine" class="mt-1 text-[10px] leading-relaxed text-fg-muted">
+            <p v-if="isExternalEngine" class="mt-1 text-xs leading-relaxed text-fg-muted">
               {{ t('profileModal.externalEngineHint') }}
             </p>
-            <div v-if="localProfile.transformConfigMode === 'global'" class="flex items-center gap-1.5 mt-1.5">
+            <div v-if="ruleSourceSelection === 'global'" class="flex items-center gap-1.5 mt-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-              <span class="font-mono text-[10px] text-fg-muted uppercase tracking-tight">
+              <span class="text-xs text-fg-muted">
                 {{ t('profileModal.currentGlobal', { value: globalConfigLabel }) }}
               </span>
             </div>
@@ -283,12 +380,12 @@ watch(
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
               type="text"
             />
-            <p class="mt-1.5 text-[10px] leading-relaxed text-fg-subtle">
+            <p class="mt-1.5 text-xs leading-relaxed text-fg-subtle">
               {{ t('profileModal.backendHint') }}
             </p>
             <div v-if="!localProfile.subconverter.backend" class="flex items-center gap-1.5 mt-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
-              <span class="font-mono text-[10px] text-fg-muted uppercase tracking-tight">
+              <span class="text-xs text-fg-muted">
                 {{
                   t('profileModal.currentGlobal', {
                     value: globalSettings?.subconverter?.defaultBackend || t('profileModal.notSet'),
@@ -298,41 +395,67 @@ watch(
             </div>
           </div>
 
-          <!-- 规则配置选择器 -->
-          <div
-            v-if="localProfile.transformConfigMode !== 'global' && localProfile.transformConfigMode !== 'builtin'"
-            class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3"
-          >
+          <!-- 内置自动分流：紧跟规则方案展示「分流粒度」 -->
+          <div v-if="showRuleLevelSelector" class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3">
+            <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.ruleLevelLabel') }}</label>
+            <Select
+              v-model="localProfile.ruleLevel"
+              :options="[
+                { value: '', label: t('profileModal.followGlobalLevel') },
+                { value: 'base', label: t('profileModal.ruleBase') },
+                { value: 'std', label: t('profileModal.ruleStandard') },
+                { value: 'full', label: t('profileModal.ruleFull') },
+                { value: 'relay', label: t('profileModal.ruleRelay') },
+              ]"
+              size="sm"
+            />
+          </div>
+
+          <!-- 内置可视化规则：复用 VisualTransformCard (section="rules") -->
+          <div v-if="isVisualMode" class="sm:col-span-2 animate-fade-in-down border-t border-line pt-4 space-y-3">
+            <div class="flex items-center justify-end">
+              <button
+                class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+                data-testid="sync-global-visual-rules"
+                type="button"
+                @click="syncVisualRulesFromGlobal"
+              >
+                <RotateCcw class="h-3 w-3" />
+                <span>{{ t('profileModal.syncGlobalVisualRules') }}</span>
+              </button>
+            </div>
+            <VisualTransformCard :settings="localProfile" section="rules" />
+          </div>
+
+          <!-- 规则模板：统一支持预设 / 自定义模板 / 远程 URL，与设置页一致 -->
+          <div v-if="isTemplateMode" class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3">
             <div class="mb-1.5 flex items-center justify-between gap-2">
               <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.templateLabel') }}</label>
               <button
-                v-if="localProfile.transformConfigMode === 'custom_template'"
+                v-if="!isExternalEngine"
                 class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                 type="button"
                 @click="showRuleTemplateModal = true"
               >
                 <SlidersHorizontal class="h-3 w-3" />
-                <span>{{ t('settings.ruleTemplatesManage') }}</span>
+                <span>{{
+                  ruleTemplateCount > 0
+                    ? t('settings.ruleTemplatesManageWithCount', { count: ruleTemplateCount })
+                    : t('settings.ruleTemplatesManage')
+                }}</span>
               </button>
             </div>
             <TransformSelector
               v-model="localProfile.transformConfig"
               :allowEmpty="false"
               :custom-placeholder="t('profileModal.remoteTemplatePlaceholder')"
-              :custom-templates-only="localProfile.transformConfigMode === 'custom_template'"
+              :custom-templates-only="false"
               :exclude-builtin-assets="isExternalEngine"
-              :force-custom="localProfile.transformConfigMode === 'custom'"
+              :force-custom="false"
               :placeholder="t('profileModal.presetPlaceholder')"
               type="config"
               @select-asset="selectedTransformAsset = $event"
             />
-            <div
-              v-if="localProfile.transformConfigMode === 'custom_template'"
-              class="mt-2 flex items-center gap-2 rounded-md border border-line bg-transparent px-3 py-2 text-[11px] leading-relaxed text-fg-muted"
-            >
-              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400"></span>
-              <span>{{ t('profileModal.customTemplateHint') }}</span>
-            </div>
             <RuleTemplateModal
               v-if="showRuleTemplateModal"
               v-model:show="showRuleTemplateModal"
@@ -348,7 +471,7 @@ watch(
           <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
             {{ t('profileModal.tuningTitle') }}
           </h3>
-          <span class="text-[11px] text-fg-subtle">{{ t('profileModal.tuningDesc') }}</span>
+          <span class="text-xs text-fg-subtle">{{ t('profileModal.tuningDesc') }}</span>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-line rounded-md shadow-none">
@@ -359,25 +482,6 @@ watch(
               v-model="localProfile.expiresAt"
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg focus:border-line-strong focus-visible:outline-hidden"
               type="date"
-            />
-          </div>
-
-          <!-- 内置规则等级 (当切换到内置引擎，或切换到第三方引擎但使用内置分流方案时显示) -->
-          <div v-if="!isExternalEngine">
-            <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.ruleLevelLabel') }}</label>
-            <Select
-              v-model="localProfile.ruleLevel"
-              :disabled="
-                localProfile.transformConfigMode !== 'builtin' && localProfile.transformConfigMode !== 'global'
-              "
-              :options="[
-                { value: '', label: t('profileModal.followGlobalLevel') },
-                { value: 'base', label: t('profileModal.ruleBase') },
-                { value: 'std', label: t('profileModal.ruleStandard') },
-                { value: 'full', label: t('profileModal.ruleFull') },
-                { value: 'relay', label: t('profileModal.ruleRelay') },
-              ]"
-              size="sm"
             />
           </div>
 
@@ -414,7 +518,7 @@ watch(
 
           <!-- 节点前缀设置 (合并) -->
           <div class="sm:col-span-2 space-y-3 pt-3 border-t border-line">
-            <label class="block text-[11px] font-semibold text-fg-muted uppercase tracking-wider">{{
+            <label class="block text-xs font-semibold text-fg-muted uppercase tracking-wider">{{
               t('profileModal.nodeNameVisibility')
             }}</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -469,7 +573,7 @@ watch(
                 class="flex flex-col gap-1.5 p-2 bg-transparent rounded-md border border-line"
               >
                 <div class="flex items-center gap-1.5">
-                  <span class="text-[10px] font-semibold text-fg-muted uppercase">{{ flag.label }}</span>
+                  <span class="text-xs font-semibold text-fg-muted uppercase">{{ flag.label }}</span>
                 </div>
                 <Select
                   v-model="localProfile.subconverter.options[flag.key]"
@@ -492,7 +596,7 @@ watch(
           <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
             {{ t('profileModal.pipelineTitle') }}
           </h3>
-          <span class="text-[11px] text-fg-subtle">{{ t('profileModal.pipelineDesc') }}</span>
+          <span class="text-xs text-fg-subtle">{{ t('profileModal.pipelineDesc') }}</span>
         </div>
 
         <OperatorChain v-model="localProfile.operators" />

@@ -234,7 +234,7 @@ watch(
                 <span
                   v-for="platform in client.platforms"
                   :key="platform"
-                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-xs font-medium border border-line bg-transparent text-fg-muted"
                 >
                   {{ getPlatformLabel(platform) }}
                 </span>
@@ -255,7 +255,7 @@ watch(
               <span
                 v-if="getClientUpdatedLabel(client)"
                 :title="getClientUpdatedTitle(client)"
-                class="font-mono text-[11px] text-fg-subtle truncate"
+                class="font-mono text-xs text-fg-subtle truncate"
               >
                 {{ getClientUpdatedLabel(client) }}
               </span>

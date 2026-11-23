@@ -376,7 +376,7 @@ const handleCustomSubFetchIntervalBlur = () => {
                   @blur="handleCustomIntervalBlur"
                   @input="handleCustomIntervalInput"
                 />
-                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
                   {{ t('settings.minutes') }}
                 </span>
               </div>
@@ -440,7 +440,7 @@ const handleCustomSubFetchIntervalBlur = () => {
                   @blur="handleCustomProfileIntervalBlur"
                   @input="handleCustomProfileIntervalInput"
                 />
-                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
                   {{ t('settings.hours') }}
                 </span>
               </div>
@@ -503,7 +503,7 @@ const handleCustomSubFetchIntervalBlur = () => {
                   @blur="handleCustomSubFetchIntervalBlur"
                   @input="handleCustomSubFetchIntervalInput"
                 />
-                <span class="text-[11px] text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
+                <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
                   {{ t('settings.minutes') }}
                 </span>
               </div>

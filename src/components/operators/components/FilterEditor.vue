@@ -84,12 +84,12 @@ const toggleValue = (type, value) => {
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
+          <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">{{
             t('operators.protocolLimit')
           }}</label>
           <button
             :class="[
-              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-hover hover:text-fg',
               params.protocols.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -110,7 +110,7 @@ const toggleValue = (type, value) => {
             v-for="p in commonProtocols"
             :key="p"
             :class="[
-              'px-2 py-1 rounded-md font-mono text-[10px] font-semibold uppercase transition-all',
+              'px-2 py-1 rounded-md font-mono text-xs font-semibold uppercase transition-all',
               params.protocols.values?.includes(p)
                 ? 'bg-accent text-accent-fg'
                 : 'bg-transparent text-fg-muted border border-line hover:bg-hover hover:text-fg',
@@ -124,12 +124,12 @@ const toggleValue = (type, value) => {
 
       <div class="space-y-2">
         <div class="flex items-center justify-between">
-          <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
+          <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">{{
             t('operators.regionLimit')
           }}</label>
           <button
             :class="[
-              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-hover hover:text-fg',
               params.regions.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -150,7 +150,7 @@ const toggleValue = (type, value) => {
             v-for="r in commonRegions"
             :key="r"
             :class="[
-              'px-2 py-1 rounded-md text-[10px] font-semibold transition-all',
+              'px-2 py-1 rounded-md text-xs font-semibold transition-all',
               params.regions.values?.includes(r)
                 ? 'bg-accent text-accent-fg'
                 : 'bg-transparent text-fg-muted border border-line hover:bg-hover hover:text-fg',
@@ -165,20 +165,20 @@ const toggleValue = (type, value) => {
 
     <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
       <div class="flex items-center justify-between">
-        <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">
+        <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">
           {{ t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex') }}
         </label>
         <div class="flex items-center gap-2">
           <button
             v-if="params[type].enabled"
-            class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+            class="rounded px-1.5 py-0.5 text-xs font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
             @click="addRule(type)"
           >
             + {{ t('operators.add') }}
           </button>
           <button
             :class="[
-              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-hover hover:text-fg',
               params[type].enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="updateParam(type, { ...params[type], enabled: !params[type].enabled })"
@@ -194,7 +194,7 @@ const toggleValue = (type, value) => {
             v-model="rule.pattern"
             :aria-label="t('operators.regexPlaceholder')"
             :placeholder="t('operators.regexPlaceholder')"
-            class="flex-1 px-3 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle focus:border-line-strong transition-all outline-none"
+            class="flex-1 px-3 py-1.5 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle focus:border-line-strong transition-all outline-none"
             @input="normalizeRuleFlags(type, idx)"
           />
           <button
@@ -205,10 +205,10 @@ const toggleValue = (type, value) => {
             <X class="h-3.5 w-3.5" />
           </button>
         </div>
-        <p class="text-[10px] text-fg-subtle px-1">
+        <p class="text-xs text-fg-subtle px-1">
           {{ t('operators.regexFlagsHint') }}
         </p>
-        <div v-if="!params[type].rules?.length" class="text-center py-2 text-[10px] text-fg-subtle italic">
+        <div v-if="!params[type].rules?.length" class="text-center py-2 text-xs text-fg-subtle italic">
           {{ t('operators.filterEmptyRules') }}
         </div>
       </div>

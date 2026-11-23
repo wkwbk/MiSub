@@ -15,7 +15,7 @@ function formatInlineMarkdown(rawText) {
   const withPlaceholders = escaped.replace(/`([^`]+)`/g, (_, code) => {
     const index = codeTokens.length;
     codeTokens.push(
-      `<code class="px-1.5 py-0.5 mx-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-mono text-[11px]">${code}</code>`,
+      `<code class="px-1.5 py-0.5 mx-0.5 rounded bg-zinc-200/80 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 font-mono text-xs">${code}</code>`,
     );
     return `%%MISUB_CODE_${index}%%`;
   });

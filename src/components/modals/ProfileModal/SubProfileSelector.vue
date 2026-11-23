@@ -143,12 +143,12 @@ const handleSelectAllValid = () => {
           <span
             v-if="isCycleCandidate(item.id)"
             :title="t('profileModal.cycleWarning')"
-            class="inline-flex items-center gap-1.5 text-[10px] px-1.5 py-0.5 rounded-md border border-line text-red-400 shrink-0"
+            class="inline-flex items-center gap-1.5 text-xs px-1.5 py-0.5 rounded-md border border-line text-red-400 shrink-0"
           >
             <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
             {{ t('profileModal.cycleWarning') }}
           </span>
-          <span v-else class="text-[11px] font-mono text-fg-subtle shrink-0">
+          <span v-else class="text-xs font-mono text-fg-subtle shrink-0">
             {{ (item.subscriptions || []).length }} 机场 · {{ (item.manualNodes || []).length }} 节点
           </span>
         </label>

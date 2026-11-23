@@ -483,7 +483,7 @@ watch(
               <span>{{ t('settings.visualAdvancedDrawerTitle') }}</span>
               <span
                 v-if="hasBaseConfigOverride"
-                class="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-semibold text-accent"
+                class="rounded bg-accent/15 px-1.5 py-0.5 text-xs font-semibold text-accent"
               >
                 {{ t('settings.dnsOverrideActive') }}
               </span>

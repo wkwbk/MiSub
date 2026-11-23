@@ -120,7 +120,7 @@ const getLinkHostname = (rawUrl) => {
                   {{ link.name }}
                 </h3>
                 <span
-                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted shrink-0"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-xs font-medium border border-line bg-transparent text-fg-muted shrink-0"
                 >
                   {{ getLinkCategoryLabel(link.category) }}
                 </span>

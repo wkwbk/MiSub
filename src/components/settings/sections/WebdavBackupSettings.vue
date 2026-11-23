@@ -349,25 +349,25 @@ ensureConfig();
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
-            <span class="block text-[11px] text-fg-muted">{{ t('settings.webdavLastChecked') }}</span>
+            <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastChecked') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
               {{ settings.webdavBackup.lastCheckedAt || t('settings.webdavNotChecked') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
-            <span class="block text-[11px] text-fg-muted">{{ t('settings.webdavLastBackup') }}</span>
+            <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastBackup') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
               {{ settings.webdavBackup.lastBackupAt || t('settings.webdavNotBackedUp') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
-            <span class="block text-[11px] text-fg-muted">{{ t('settings.webdavLastResult') }}</span>
+            <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastResult') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
               {{ settings.webdavBackup.lastBackupStatus || t('settings.webdavNone') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
-            <span class="block text-[11px] text-fg-muted">{{ t('settings.webdavLastFile') }}</span>
+            <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastFile') }}</span>
             <span
               :title="settings.webdavBackup.lastBackupFile || t('settings.webdavNone')"
               class="block font-mono text-xs text-fg truncate"

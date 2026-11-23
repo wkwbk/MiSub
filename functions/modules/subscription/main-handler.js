@@ -49,6 +49,7 @@ import {
   resolveAddFlagEmoji,
   resolveBuiltinEngineFlags,
   resolveBuiltinRequestOptions,
+  resolveEffectiveBuiltinTransform,
   resolveEffectiveEngine,
   resolveEffectiveNodeTransform,
   resolveExternalTemplateConfigUrl,
@@ -70,6 +71,7 @@ export {
   normalizeSubconverterBackend,
   buildExternalSubconverterUrl,
   resolveBuiltinEngineFlags,
+  resolveEffectiveBuiltinTransform,
   resolveEffectiveEngine,
   resolveBuiltinRequestOptions,
   resolveEffectiveNodeTransform,
@@ -684,7 +686,7 @@ export async function handleMisubRequest(context) {
           isMeta: isMetaCore(userAgentHeader, url.searchParams),
           customDnsOverride: config.customDnsOverride || '',
           dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
-          builtinTransform: config.builtinTransform || null,
+          builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
         };
         const rendered = await ProcessorService.renderOutput({
           targetFormat,
@@ -860,7 +862,7 @@ export async function handleMisubRequest(context) {
     isMeta: isMetaCore(userAgentHeader, url.searchParams),
     customDnsOverride: config.customDnsOverride || '',
     dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
-    builtinTransform: config.builtinTransform || null,
+    builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
   };
 
   const managedConfigUrl = buildManagedConfigUrl(request.url);

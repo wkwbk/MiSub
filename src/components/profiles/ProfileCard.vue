@@ -79,7 +79,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
         </div>
 
         <span
-          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted"
         >
           {{ t('profiles.badge') }}
         </span>
@@ -93,7 +93,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
             v-for="tag in visibleTags"
             :key="tag"
             :title="tag"
-            class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+            class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
             data-testid="profile-tag-badge"
             type="button"
             @click.stop="emit('filter-tag', tag)"
@@ -103,7 +103,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
           <span
             v-if="overflowCount > 0"
             :title="profileTags.join(', ')"
-            class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
+            class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-subtle"
           >
             +{{ overflowCount }}
           </span>
@@ -111,14 +111,14 @@ const isPublic = computed(() => props.profile?.isPublic === true);
 
         <span
           v-if="!isEnabled"
-          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-zinc-500 shrink-0"></span>
           {{ t('profiles.disabled') }}
         </span>
         <span
           v-else-if="isPublic"
-          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted"
         >
           <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
           {{ t('profiles.public') }}
@@ -183,7 +183,7 @@ const isPublic = computed(() => props.profile?.isPublic === true);
       </span>
       <span
         v-if="subProfileCount > 0"
-        class="inline-flex items-center px-1.5 py-0.5 rounded-md border border-line bg-transparent text-[11px] font-mono text-fg-muted"
+        class="inline-flex items-center px-1.5 py-0.5 rounded-md border border-line bg-transparent text-xs font-mono text-fg-muted"
       >
         {{ t('profileModal.subProfilesCountBadge', { count: subProfileCount }) }}
       </span>

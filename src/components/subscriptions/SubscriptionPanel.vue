@@ -290,7 +290,7 @@ watch(totalPages, (nextTotal) => {
                     : 'border-line bg-elevated-card text-fg-muted'
               "
               aria-live="polite"
-              class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-mono whitespace-nowrap"
+              class="inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-mono whitespace-nowrap"
               data-testid="subscriptions-refresh-status"
             >
               <span

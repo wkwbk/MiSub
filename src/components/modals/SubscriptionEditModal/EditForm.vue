@@ -139,7 +139,7 @@ const testProxyConnectivity = async () => {
           {{ isTestingProxy ? t('subscriptions.testing') : t('subscriptions.testProxy') }}
         </button>
       </div>
-      <p class="text-[11px] text-fg-subtle">
+      <p class="text-xs text-fg-subtle">
         {{ t('subscriptions.fetchProxyHint') }}
       </p>
     </div>

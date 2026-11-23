@@ -62,7 +62,7 @@ const placement = ref('bottom');
 const popoverStyle = ref({});
 
 const sizeClasses = {
-  xs: 'h-7 px-2 text-[11px] rounded-md gap-1.5',
+  xs: 'h-7 px-2 text-xs rounded-md gap-1.5',
   sm: 'h-8 px-2.5 text-xs rounded-md gap-2',
   md: 'h-9 px-3 text-sm rounded-md gap-2',
   lg: 'h-10 px-3.5 text-sm rounded-md gap-2',
@@ -373,7 +373,7 @@ const getOptionClasses = (opt) => {
               <template v-for="(item, idx) in renderItems" :key="idx">
                 <div
                   v-if="item.isGroupHeader"
-                  class="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-fg-subtle"
+                  class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle"
                 >
                   {{ item.label }}
                 </div>

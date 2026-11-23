@@ -331,7 +331,7 @@ const searchModel = computed({
         @click="emit('toggle-protocol-filter', item.value)"
       >
         <span class="font-mono">{{ item.label }}</span>
-        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+        <span class="font-mono text-xs leading-none text-fg-subtle">{{ item.count }}</span>
       </button>
 
       <span
@@ -365,7 +365,7 @@ const searchModel = computed({
           class="h-1.5 w-1.5 rounded-full shrink-0"
         ></span>
         <span>{{ networkLabel(item.value) }}</span>
-        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+        <span class="font-mono text-xs leading-none text-fg-subtle">{{ item.count }}</span>
       </button>
 
       <span
@@ -388,7 +388,7 @@ const searchModel = computed({
         @click="emit('toggle-country-filter', item.value)"
       >
         <span>{{ item.label }}</span>
-        <span class="font-mono text-[11px] leading-none text-fg-subtle">{{ item.count }}</span>
+        <span class="font-mono text-xs leading-none text-fg-subtle">{{ item.count }}</span>
       </button>
 
       <button

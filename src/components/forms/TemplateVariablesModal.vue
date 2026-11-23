@@ -148,14 +148,14 @@ onUnmounted(() => {
                 <code class="font-mono text-xs text-fg">{{ item.key }}</code>
                 <span
                   v-if="copiedKey === item.key"
-                  class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400"
+                  class="inline-flex items-center gap-1 text-xs font-medium text-emerald-400"
                 >
                   <Check class="h-3 w-3" />
                   {{ t('transformSelector.variableCopied') }}
                 </span>
                 <Copy v-else class="h-3 w-3 shrink-0 text-fg-subtle transition-colors group-hover:text-fg" />
               </div>
-              <p class="mt-1 text-[11px] leading-relaxed text-fg-subtle">
+              <p class="mt-1 text-xs leading-relaxed text-fg-subtle">
                 {{ t('transformSelector.exampleLabel') }}: {{ item.example }}
               </p>
             </button>

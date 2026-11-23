@@ -194,7 +194,7 @@ watch(
                     </span>
                   </div>
                   <span
-                    class="shrink-0 px-1.5 py-0.5 rounded-md border border-line bg-transparent font-mono text-[10px] font-medium text-fg-muted whitespace-nowrap"
+                    class="shrink-0 px-1.5 py-0.5 rounded-md border border-line bg-transparent font-mono text-xs font-medium text-fg-muted whitespace-nowrap"
                   >
                     {{ getClientInfo(log.userAgent).name }}
                   </span>
@@ -204,28 +204,28 @@ watch(
                   <div class="flex justify-between items-center">
                     <div class="flex items-center gap-1.5">
                       <span
-                        class="text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
+                        class="text-xs px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                         >{{ t('logs.time') }}</span
                       >
-                      <span class="font-mono text-[10px] text-fg-muted">{{ formatTime(log.timestamp) }}</span>
+                      <span class="font-mono text-xs text-fg-muted">{{ formatTime(log.timestamp) }}</span>
                     </div>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <span
-                      class="text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
+                      class="text-xs px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                       >{{ t('logs.location') }}</span
                     >
                     <span class="truncate text-fg-muted">
                       {{ log.geoInfo?.country || 'Unknown' }}
-                      <span v-if="log.geoInfo?.city" class="text-fg-subtle text-[10px]"> / {{ log.geoInfo.city }}</span>
+                      <span v-if="log.geoInfo?.city" class="text-fg-subtle text-xs"> / {{ log.geoInfo.city }}</span>
                     </span>
                   </div>
                   <div class="flex items-center gap-1.5">
                     <span
-                      class="font-mono text-[10px] px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
+                      class="font-mono text-xs px-1 py-px rounded-sm border border-line text-fg-subtle min-w-[24px] text-center"
                       >IP</span
                     >
-                    <span class="font-mono text-[10px] text-fg-muted">{{ log.clientIp }}</span>
+                    <span class="font-mono text-xs text-fg-muted">{{ log.clientIp }}</span>
                   </div>
                 </div>
 

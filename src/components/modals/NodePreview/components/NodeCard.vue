@@ -104,20 +104,20 @@ const getProtocolDot = (protocol) => {
             </h4>
             <div class="flex items-center gap-1.5 min-w-0">
               <span
-                class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
+                class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-mono leading-none uppercase text-fg-muted"
               >
                 <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
                 {{ parseNodeInfo(node).protocol }}
               </span>
               <span
                 v-if="parseNodeInfo(node).region"
-                class="inline-flex h-5 max-w-[84px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-[10px] font-medium leading-none text-fg-muted"
+                class="inline-flex h-5 max-w-[84px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-xs font-medium leading-none text-fg-muted"
               >
                 <span class="truncate">{{ parseNodeInfo(node).region }}</span>
               </span>
               <span
                 :title="`${parseNodeInfo(node).server}:${parseNodeInfo(node).port}`"
-                class="min-w-0 flex-1 truncate text-[11px] text-fg-subtle font-mono"
+                class="min-w-0 flex-1 truncate text-xs text-fg-subtle font-mono"
               >
                 {{ parseNodeInfo(node).server }}:{{ parseNodeInfo(node).port }}
               </span>
@@ -180,14 +180,14 @@ const getProtocolDot = (protocol) => {
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5 mb-2 overflow-hidden">
                 <span
-                  class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-[10px] font-mono leading-none uppercase text-fg-muted"
+                  class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-mono leading-none uppercase text-fg-muted"
                 >
                   <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
                   {{ parseNodeInfo(node).protocol }}
                 </span>
                 <span
                   :title="parseNodeInfo(node).region || 'UNKNOWN'"
-                  class="inline-flex h-5 max-w-[120px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-[10px] font-medium leading-none text-fg-muted"
+                  class="inline-flex h-5 max-w-[120px] shrink-0 items-center rounded-md border border-line bg-surface px-2 text-xs font-medium leading-none text-fg-muted"
                 >
                   <span class="truncate">{{ parseNodeInfo(node).region || 'UNKNOWN' }}</span>
                 </span>

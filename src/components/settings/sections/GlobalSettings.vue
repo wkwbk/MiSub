@@ -192,7 +192,7 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         </template>
         <template #actions>
           <span
-            class="rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-fg-muted"
+            class="rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-xs font-medium text-fg-muted"
             >{{ t('settings.globalDefaultBadge') }}</span
           >
         </template>

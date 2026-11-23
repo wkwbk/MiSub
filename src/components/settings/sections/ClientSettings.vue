@@ -422,7 +422,7 @@ const getPlatformClass = (platform) => {
                     v-for="p in client.platforms"
                     :key="p"
                     :class="getPlatformClass(p)"
-                    class="px-1.5 py-0.5 text-[10px] rounded-md"
+                    class="px-1.5 py-0.5 text-xs rounded-md"
                   >
                     {{ platformOptions.find((opt) => opt.value === p)?.label || p }}
                   </span>
@@ -433,7 +433,7 @@ const getPlatformClass = (platform) => {
                 <a
                   v-if="client.url"
                   :href="client.url"
-                  class="inline-flex items-center gap-1 text-[11px] font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
+                  class="inline-flex items-center gap-1 text-xs font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

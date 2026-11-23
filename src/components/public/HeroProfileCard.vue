@@ -37,7 +37,7 @@ const emit = defineEmits([
       <div class="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
         <div class="flex-shrink-0 flex flex-col items-center lg:items-start text-center lg:text-left space-y-2.5">
           <div
-            class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-fg-muted"
+            class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2.5 py-0.5 text-xs font-medium uppercase tracking-wider text-fg-muted"
           >
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
             <span>{{ t('public.featured') }}</span>
@@ -56,7 +56,7 @@ const emit = defineEmits([
                 v-for="tag in profileTags"
                 :key="tag"
                 :title="tag"
-                class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-2 py-0.5 text-[11px] font-medium text-fg-muted"
+                class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-2 py-0.5 text-xs font-medium text-fg-muted"
               >
                 {{ tag }}
               </span>

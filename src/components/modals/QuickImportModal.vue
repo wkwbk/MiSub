@@ -200,7 +200,7 @@ onMounted(() => {
         >
           <div
             v-if="isRecommended(client)"
-            class="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent text-accent-fg text-[10px] font-medium rounded-sm shadow-none"
+            class="absolute top-2 right-2 inline-flex items-center gap-1 px-1.5 py-0.5 bg-accent text-accent-fg text-xs font-medium rounded-sm shadow-none"
           >
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
             {{ t('quickImport.recommended') }}
@@ -226,7 +226,7 @@ onMounted(() => {
               <span
                 v-for="platform in client.platforms?.slice(0, 2)"
                 :key="platform"
-                class="text-[10px] font-mono px-1.5 py-0.5 rounded-sm border border-line bg-transparent text-fg-subtle"
+                class="text-xs font-mono px-1.5 py-0.5 rounded-sm border border-line bg-transparent text-fg-subtle"
               >
                 {{ getPlatformLabel(platform) }}
               </span>

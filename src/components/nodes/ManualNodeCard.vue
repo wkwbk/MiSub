@@ -166,7 +166,7 @@ const copyToClipboard = async (text) => {
         </div>
 
         <button
-          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-protocol-badge"
           type="button"
           @click.stop="emit('filter-protocol', protocol)"
@@ -179,7 +179,7 @@ const copyToClipboard = async (text) => {
           v-if="countryBadge"
           :class="countryBadge.className"
           :title="countryBadge.title"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-[10px] font-medium leading-none transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-country-badge"
           type="button"
           @click.stop="
@@ -195,7 +195,7 @@ const copyToClipboard = async (text) => {
           v-if="networkBadge"
           :class="networkBadge.className"
           :title="networkBadge.title"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-[10px] font-medium leading-none transition-colors hover:opacity-85 cursor-pointer"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:opacity-85 cursor-pointer"
           data-testid="manual-node-network-badge"
           type="button"
           @click.stop="emit('filter-network', inspectInfo?.networkType || '')"
@@ -207,7 +207,7 @@ const copyToClipboard = async (text) => {
           v-for="tag in visibleTags"
           :key="tag"
           :title="tag"
-          class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center truncate rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+          class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center truncate rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
           data-testid="manual-node-tag-badge"
           @click.stop="emit('filter-tag', tag)"
         >
@@ -216,7 +216,7 @@ const copyToClipboard = async (text) => {
         <span
           v-if="overflowCount > 0"
           :title="nodeTags.join(', ')"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
+          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-subtle"
         >
           +{{ overflowCount }}
         </span>
@@ -225,7 +225,7 @@ const copyToClipboard = async (text) => {
       <div
         v-if="pingResult"
         :title="pingTooltip"
-        class="flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-muted"
+        class="flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted"
       >
         <span
           :class="{
@@ -272,7 +272,7 @@ const copyToClipboard = async (text) => {
         <span
           v-if="resolvedIpText"
           :title="`${t('manualNodes.resolvedIp')}: ${resolvedIpText}`"
-          class="mt-0.5 block truncate font-mono text-[10px] text-fg-subtle/80"
+          class="mt-0.5 block truncate font-mono text-xs text-fg-subtle/80"
           data-testid="manual-node-resolved-ip"
         >
           → {{ resolvedIpText }}

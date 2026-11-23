@@ -122,7 +122,7 @@ const closeModal = () => {
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2.5">
             <span
-              class="inline-flex shrink-0 items-center rounded-sm border border-line-strong bg-active px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wide text-fg"
+              class="inline-flex shrink-0 items-center rounded-sm border border-line-strong bg-active px-2 py-0.5 text-xs font-mono font-semibold uppercase tracking-wide text-fg"
             >
               {{ detail.protocol }}
             </span>
@@ -187,7 +187,7 @@ const closeModal = () => {
 
         <div v-if="activeTab === 'structured'" class="space-y-4">
           <section v-if="networkItems.length > 0">
-            <h4 class="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-fg-muted">
+            <h4 class="mb-1.5 px-1 text-xs font-medium uppercase tracking-wider text-fg-muted">
               {{ t('nodeDetail.sectionNetwork') }}
             </h4>
             <div class="modal-section-card rounded-md overflow-hidden">
@@ -222,7 +222,7 @@ const closeModal = () => {
           </section>
 
           <section v-for="section in detail.sections" :key="section.id">
-            <h4 class="mb-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-fg-muted">
+            <h4 class="mb-1.5 px-1 text-xs font-medium uppercase tracking-wider text-fg-muted">
               {{ t(sectionTitleMap[section.id] || section.id) }}
             </h4>
             <div class="modal-section-card rounded-md overflow-hidden">
@@ -243,7 +243,7 @@ const closeModal = () => {
                           ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
                           : 'border-line-strong bg-active text-fg-muted'
                       "
-                      class="inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-[11px]"
+                      class="inline-flex items-center rounded-sm border px-1.5 py-0.5 font-mono text-xs"
                     >
                       {{ item.display }}
                     </span>
@@ -269,11 +269,11 @@ const closeModal = () => {
 
           <section v-if="detail.rawUrl">
             <div class="mb-1.5 flex items-center justify-between px-1">
-              <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">
+              <h4 class="text-xs font-medium uppercase tracking-wider text-fg-muted">
                 {{ t('nodeDetail.rawUrl') }}
               </h4>
               <button
-                class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+                class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
                 type="button"
                 @click="copyText(detail.rawUrl, '__raw_url__')"
               >
@@ -284,7 +284,7 @@ const closeModal = () => {
             </div>
             <div class="modal-inset-surface rounded-md overflow-hidden">
               <pre
-                class="modal-scrollbar max-h-28 overflow-auto whitespace-pre-wrap break-all px-3.5 py-2.5 font-mono text-[11px] leading-relaxed text-fg-muted"
+                class="modal-scrollbar max-h-28 overflow-auto whitespace-pre-wrap break-all px-3.5 py-2.5 font-mono text-xs leading-relaxed text-fg-muted"
                 >{{ detail.rawUrl }}</pre>
             </div>
           </section>
@@ -292,9 +292,9 @@ const closeModal = () => {
 
         <div v-else-if="activeTab === 'yaml'">
           <div class="mb-1.5 flex items-center justify-between px-1">
-            <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">Clash Proxy YAML</h4>
+            <h4 class="text-xs font-medium uppercase tracking-wider text-fg-muted">Clash Proxy YAML</h4>
             <button
-              class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+              class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
               type="button"
               @click="copyText(detail.formattedYaml, '__yaml__')"
             >
@@ -312,9 +312,9 @@ const closeModal = () => {
 
         <div v-else-if="activeTab === 'json'">
           <div class="mb-1.5 flex items-center justify-between px-1">
-            <h4 class="text-[11px] font-medium uppercase tracking-wider text-fg-muted">JSON</h4>
+            <h4 class="text-xs font-medium uppercase tracking-wider text-fg-muted">JSON</h4>
             <button
-              class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[11px] font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+              class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
               type="button"
               @click="copyText(detail.formattedJson, '__json__')"
             >

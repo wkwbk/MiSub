@@ -10,6 +10,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useI18n } from '@/i18n/index.js';
 import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
+import { normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
 
 const { t } = useI18n();
 const dataStore = useDataStore();
@@ -277,6 +278,15 @@ watch(
       }
 
       profileCopy.operators = Array.isArray(profileCopy.operators) ? profileCopy.operators : [];
+      if (!profileCopy.transformConfigMode) {
+        profileCopy.transformConfigMode = profileCopy.transformConfig ? 'preset' : 'global';
+      }
+      if (profileCopy.ruleLevel === undefined || profileCopy.ruleLevel === null) {
+        profileCopy.ruleLevel = '';
+      }
+      if (profileCopy.builtinTransform && typeof profileCopy.builtinTransform === 'object') {
+        profileCopy.builtinTransform = normalizeBuiltinTransform(profileCopy.builtinTransform);
+      }
 
       profileCopy.subProfiles = Array.isArray(profileCopy.subProfiles) ? profileCopy.subProfiles : [];
       profileCopy.shortLink = typeof profileCopy.shortLink === 'string' ? profileCopy.shortLink : '';
@@ -305,6 +315,9 @@ watch(
         fetchLimitMode: '',
         isPublic: true,
         description: '',
+        transformConfigMode: 'global',
+        transformConfig: '',
+        ruleLevel: '',
         prefixSettings: {
           enableManualNodes: null,
           enableSubscriptions: null,
@@ -344,6 +357,21 @@ const handleConfirm = () => {
   }
   if (profileToSave.fetchLimitMode !== 'strict' && profileToSave.fetchLimitMode !== 'cache') {
     delete profileToSave.fetchLimitMode;
+  }
+  const isVisualMode =
+    profileToSave.transformConfigMode === 'visual' ||
+    (profileToSave.transformConfigMode === 'builtin' && Boolean(profileToSave.builtinTransform?.visualRulesEnabled));
+  if (isVisualMode) {
+    const normalizedBt = normalizeBuiltinTransform(profileToSave.builtinTransform || {});
+    profileToSave.transformConfigMode = 'builtin';
+    profileToSave.builtinTransform = {
+      visualRulesEnabled: true,
+      rulePreset: normalizedBt.rulePreset,
+      selectedRules: normalizedBt.selectedRules,
+      customRules: normalizedBt.customRules,
+    };
+  } else {
+    delete profileToSave.builtinTransform;
   }
   emit('save', profileToSave);
 };
@@ -421,7 +449,7 @@ const updateSelectedIds = (listName, newIds) => {
                 :class="
                   activeResourceTab === 'manualNodes' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
                 "
-                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
+                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
               >
                 {{ localProfile.manualNodes.length }}
               </span>
@@ -447,7 +475,7 @@ const updateSelectedIds = (listName, newIds) => {
                 :class="
                   activeResourceTab === 'subscriptions' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
                 "
-                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
+                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
               >
                 {{ localProfile.subscriptions.length }}
               </span>
@@ -473,7 +501,7 @@ const updateSelectedIds = (listName, newIds) => {
                 :class="
                   activeResourceTab === 'subProfiles' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
                 "
-                class="px-1.5 py-0.5 rounded-full font-mono text-[10px] leading-none border bg-transparent font-semibold"
+                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
               >
                 {{ localProfile.subProfiles.length }}
               </span>

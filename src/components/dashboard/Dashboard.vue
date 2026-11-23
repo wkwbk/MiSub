@@ -693,7 +693,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
                   ? 'border-line-strong bg-surface text-fg'
                   : 'border-line bg-transparent text-fg-subtle',
               ]"
-              class="rounded-md border px-1.5 py-0.5 text-[11px] font-mono leading-none"
+              class="rounded-md border px-1.5 py-0.5 text-xs font-mono leading-none"
             >
               {{ tab.count }}
             </span>

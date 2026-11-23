@@ -315,7 +315,7 @@ onUnmounted(() => {
           :key="group.id"
           :class="groupIndex > 0 ? 'mt-2 pt-2 border-t border-line-subtle' : ''"
         >
-          <p class="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle">
+          <p class="px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-fg-subtle">
             {{ t(group.labelKey) }}
           </p>
           <div class="space-y-0.5">
@@ -343,7 +343,7 @@ onUnmounted(() => {
                   </span>
                   <span
                     :class="activeTab === tab.id ? 'text-fg-muted' : 'text-fg-subtle'"
-                    class="block mt-0.5 text-[11px] leading-snug truncate"
+                    class="block mt-0.5 text-xs leading-snug truncate"
                   >
                     {{ t(tab.descKey) }}
                   </span>
@@ -369,7 +369,7 @@ onUnmounted(() => {
     <template v-for="(group, groupIndex) in tabGroups" :key="group.id">
       <p
         :class="groupIndex > 0 ? 'mt-3.5 pt-3 border-t border-line-subtle' : 'pt-1'"
-        class="px-2.5 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-fg-subtle"
+        class="px-2.5 pb-1.5 text-xs font-semibold uppercase tracking-wider text-fg-subtle"
       >
         {{ t(group.labelKey) }}
       </p>
@@ -401,7 +401,7 @@ onUnmounted(() => {
           </span>
           <span
             :class="activeTab === tab.id ? 'text-fg-muted' : 'text-fg-subtle group-hover:text-fg-muted'"
-            class="block mt-0.5 text-[11px] leading-snug truncate"
+            class="block mt-0.5 text-xs leading-snug truncate"
           >
             {{ t(tab.descKey) }}
           </span>

@@ -176,11 +176,11 @@ const updateOperatorParams = (index, params) => {
                   </h4>
                   <span
                     v-if="!isOperatorEnabled(op)"
-                    class="rounded-md border border-line bg-transparent px-1.5 py-0.5 font-mono text-[10px] text-fg-subtle"
+                    class="rounded-md border border-line bg-transparent px-1.5 py-0.5 font-mono text-xs text-fg-subtle"
                     >{{ t('operators.paused') }}</span
                   >
                 </div>
-                <p class="mt-1 text-[11px] text-fg-subtle sm:hidden">
+                <p class="mt-1 text-xs text-fg-subtle sm:hidden">
                   {{ isOperatorEnabled(op) ? t('operators.enabled') : t('operators.disabled') }}
                 </p>
               </div>

@@ -56,7 +56,7 @@ const toggleProtocol = (protocol) => {
   <div class="space-y-4">
     <div class="grid gap-4 md:grid-cols-2">
       <div class="space-y-2">
-        <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+        <label class="block text-xs font-semibold uppercase tracking-tight text-fg-muted">{{
           t('operators.dedupMode')
         }}</label>
         <Select
@@ -67,13 +67,13 @@ const toggleProtocol = (protocol) => {
           ]"
           @update:model-value="updateValue({ mode: $event })"
         />
-        <p class="text-[10px] text-fg-subtle">
+        <p class="text-xs text-fg-subtle">
           {{ t('operators.dedupModeHint') }}
         </p>
       </div>
 
       <div class="space-y-2">
-        <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+        <label class="block text-xs font-semibold uppercase tracking-tight text-fg-muted">{{
           t('operators.includeProtocolDedup')
         }}</label>
         <div class="grid h-9 grid-cols-2 gap-1 rounded-md border border-line bg-inset p-1">
@@ -102,14 +102,14 @@ const toggleProtocol = (protocol) => {
             {{ t('operators.statusOff') }}
           </button>
         </div>
-        <p class="text-[10px] text-fg-subtle">
+        <p class="text-xs text-fg-subtle">
           {{ t('operators.includeProtocolDedupHint') }}
         </p>
       </div>
     </div>
 
     <div class="space-y-2">
-      <label class="block text-[11px] font-semibold uppercase tracking-tight text-fg-muted">{{
+      <label class="block text-xs font-semibold uppercase tracking-tight text-fg-muted">{{
         t('operators.preferredProtocols')
       }}</label>
       <div class="flex flex-wrap gap-2 rounded-md border border-line bg-transparent p-3">
@@ -127,7 +127,7 @@ const toggleProtocol = (protocol) => {
           {{ protocol }}
         </button>
       </div>
-      <p class="text-[10px] text-fg-subtle">
+      <p class="text-xs text-fg-subtle">
         {{ t('operators.preferredProtocolsHint') }}
       </p>
     </div>

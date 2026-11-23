@@ -88,13 +88,13 @@ const applyPresetRegex = (rule) => {
   <div class="space-y-6">
     <div class="space-y-3">
       <div class="flex items-center justify-between">
-        <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
+        <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">{{
           t('operators.regexReplace')
         }}</label>
         <div class="flex items-center gap-2">
           <div class="relative group/presets">
             <button
-              class="text-[10px] text-fg-muted font-medium hover:text-fg transition-colors flex items-center gap-0.5"
+              class="text-xs text-fg-muted font-medium hover:text-fg transition-colors flex items-center gap-0.5"
             >
               {{ t('operators.commonRegex') }}
               <ChevronDown class="h-2.5 w-2.5" />
@@ -105,7 +105,7 @@ const applyPresetRegex = (rule) => {
               <button
                 v-for="rule in presetRegexRules"
                 :key="rule.nameKey"
-                class="w-full text-left px-3 py-1.5 text-[10px] text-fg-muted hover:bg-hover hover:text-fg transition-colors"
+                class="w-full text-left px-3 py-1.5 text-xs text-fg-muted hover:bg-hover hover:text-fg transition-colors"
                 @click="applyPresetRegex(rule)"
               >
                 {{ t(rule.nameKey) }}
@@ -114,14 +114,14 @@ const applyPresetRegex = (rule) => {
           </div>
           <button
             v-if="props.modelValue.regex?.enabled"
-            class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+            class="rounded px-1.5 py-0.5 text-xs font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
             @click="addRule"
           >
             + {{ t('operators.addItem') }}
           </button>
           <button
             :class="[
-              'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-hover hover:text-fg',
               props.modelValue.regex?.enabled ? 'text-fg' : 'text-fg-subtle',
             ]"
             @click="
@@ -156,7 +156,7 @@ const applyPresetRegex = (rule) => {
                 :aria-label="t('operators.regexFindPlaceholder')"
                 :placeholder="t('operators.regexFindPlaceholder')"
                 :value="rule.pattern"
-                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
+                class="w-full px-2 py-1.5 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
                 @change="normalizeRuleFlags(idx)"
                 @input="
                   (e) => {
@@ -171,7 +171,7 @@ const applyPresetRegex = (rule) => {
                 :aria-label="t('operators.regexReplacePlaceholder')"
                 :placeholder="t('operators.regexReplacePlaceholder')"
                 :value="rule.replacement"
-                class="w-full px-2 py-1.5 font-mono text-[11px] rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
+                class="w-full px-2 py-1.5 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
                 @change="normalizeRuleFlags(idx)"
                 @input="
                   (e) => {
@@ -183,10 +183,10 @@ const applyPresetRegex = (rule) => {
             </div>
           </div>
         </div>
-        <p class="px-1 text-[10px] text-fg-subtle">
+        <p class="px-1 text-xs text-fg-subtle">
           {{ t('operators.regexReplaceHint') }}
         </p>
-        <div v-if="!props.modelValue.regex.rules?.length" class="text-center py-2 text-[10px] text-fg-subtle italic">
+        <div v-if="!props.modelValue.regex.rules?.length" class="text-center py-2 text-xs text-fg-subtle italic">
           {{ t('operators.renameEmptyRules') }}
         </div>
       </div>
@@ -194,12 +194,12 @@ const applyPresetRegex = (rule) => {
 
     <div class="space-y-3 pt-4 border-t border-line">
       <div class="flex items-center justify-between">
-        <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
+        <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">{{
           t('operators.templateRewrite')
         }}</label>
         <button
           :class="[
-            'rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors hover:bg-hover hover:text-fg',
+            'rounded px-1.5 py-0.5 text-xs font-medium transition-colors hover:bg-hover hover:text-fg',
             props.modelValue.template?.enabled ? 'text-fg' : 'text-fg-subtle',
           ]"
           @click="updateTemplate({ enabled: !props.modelValue.template?.enabled })"
@@ -234,7 +234,7 @@ const applyPresetRegex = (rule) => {
                   '{server}',
                 ]"
                 :key="tag"
-                class="font-mono text-[9px] bg-transparent text-fg-muted px-1.5 py-0.5 rounded-md border border-line hover:bg-hover hover:text-fg transition-colors touch-target-min"
+                class="font-mono text-xs bg-transparent text-fg-muted px-1.5 py-0.5 rounded-md border border-line hover:bg-hover hover:text-fg transition-colors touch-target-min"
                 @click="
                   updateTemplate({
                     template: (props.modelValue.template.template || '') + tag,
@@ -245,11 +245,11 @@ const applyPresetRegex = (rule) => {
               </button>
             </div>
             <div class="flex items-center gap-2 mt-1">
-              <span class="text-[9px] text-fg-subtle">{{ t('operators.recommendedTemplates') }}</span>
+              <span class="text-xs text-fg-subtle">{{ t('operators.recommendedTemplates') }}</span>
               <button
                 v-for="tpl in presetTemplates"
                 :key="tpl.nameKey"
-                class="text-[9px] px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors touch-target-min"
+                class="text-xs px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors touch-target-min"
                 @click="applyPresetTemplate(tpl.template)"
               >
                 {{ t(tpl.nameKey) }}
@@ -258,11 +258,11 @@ const applyPresetRegex = (rule) => {
           </div>
 
           <div class="flex items-center gap-2 mt-3 pt-3 border-t border-line">
-            <span class="text-[10px] text-fg-muted font-medium">{{ t('operators.startIndex') }}</span>
+            <span class="text-xs text-fg-muted font-medium">{{ t('operators.startIndex') }}</span>
             <input
               :aria-label="t('operators.startIndex')"
               :value="props.modelValue.template.offset || 1"
-              class="w-14 px-2 py-1 font-mono text-[10px] rounded-md bg-inset border border-line text-fg outline-none focus:border-line-strong"
+              class="w-14 px-2 py-1 font-mono text-xs rounded-md bg-inset border border-line text-fg outline-none focus:border-line-strong"
               type="number"
               @input="(e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })"
             />

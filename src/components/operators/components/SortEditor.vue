@@ -270,11 +270,11 @@ const displayTagName = (item, name) =>
 <template>
   <div class="space-y-3">
     <div class="flex items-center justify-between">
-      <label class="text-[11px] font-semibold text-fg-muted uppercase tracking-tight">{{
+      <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">{{
         t('operators.sortWeights')
       }}</label>
       <button
-        class="rounded px-1.5 py-0.5 text-[10px] font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+        class="rounded px-1.5 py-0.5 text-xs font-semibold text-fg-muted transition-colors hover:bg-hover hover:text-fg"
         @click="addKey"
       >
         + {{ t('operators.addCondition') }}
@@ -343,7 +343,7 @@ const displayTagName = (item, name) =>
           v-if="item.key === 'region' || item.key === 'protocol' || item.key === 'regex'"
           class="mt-0.5 p-2 bg-inset rounded-md border border-line space-y-2"
         >
-          <div class="flex items-center justify-between text-[10px]">
+          <div class="flex items-center justify-between text-xs">
             <span class="font-semibold text-fg-muted uppercase tracking-tight flex items-center gap-1">
               {{
                 t('operators.customPriorityOrder', {
@@ -374,7 +374,7 @@ const displayTagName = (item, name) =>
               <input
                 v-model="regexDrafts[idx]"
                 :class="[
-                  'flex-1 px-2.5 py-1 text-[11px] rounded-md bg-canvas border text-fg focus:bg-inset transition-all outline-none',
+                  'flex-1 px-2.5 py-1 text-xs rounded-md bg-canvas border text-fg focus:bg-inset transition-all outline-none',
                   regexErrors[idx]
                     ? 'border-rose-400 dark:border-rose-500/70 focus:border-rose-500'
                     : 'border-line focus:border-line-strong',
@@ -385,14 +385,14 @@ const displayTagName = (item, name) =>
                 @keydown.enter="handleRegexEnter($event, idx)"
               />
               <button
-                class="px-2.5 py-1 rounded-md bg-accent hover:opacity-90 text-accent-fg text-[10px] font-bold transition-colors shrink-0"
+                class="px-2.5 py-1 rounded-md bg-accent hover:opacity-90 text-accent-fg text-xs font-bold transition-colors shrink-0"
                 type="button"
                 @click="addCustomOrderItem(idx)"
               >
                 + {{ t('operators.add') }}
               </button>
             </div>
-            <p v-if="regexErrors[idx]" class="text-[10px] text-rose-500">
+            <p v-if="regexErrors[idx]" class="text-xs text-rose-500">
               {{ regexErrors[idx] }}
             </p>
           </div>
@@ -406,7 +406,7 @@ const displayTagName = (item, name) =>
           >
             <template #item="{ element, index }">
               <div
-                class="cursor-grab active:cursor-grabbing inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-transparent border border-line font-mono text-[10px] text-fg-muted font-semibold hover:bg-hover hover:text-fg transition-colors select-none"
+                class="cursor-grab active:cursor-grabbing inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-transparent border border-line font-mono text-xs text-fg-muted font-semibold hover:bg-hover hover:text-fg transition-colors select-none"
               >
                 <span v-if="item.key === 'regex'" class="opacity-60 font-mono">{{ index + 1 }}.</span>
                 <span>{{ displayTagName(item, element.name) }}</span>
@@ -423,16 +423,16 @@ const displayTagName = (item, name) =>
             </template>
           </draggable>
 
-          <div v-if="!(item.customOrder || []).length" class="text-[9px] text-fg-subtle italic">
+          <div v-if="!(item.customOrder || []).length" class="text-xs text-fg-subtle italic">
             {{ t(item.key === 'regex' ? 'operators.emptyRegexPriorityItems' : 'operators.emptyPriorityItems') }}
           </div>
         </div>
       </div>
 
-      <div v-if="params.keys.length === 0" class="text-center py-2 text-[10px] text-fg-subtle italic">
+      <div v-if="params.keys.length === 0" class="text-center py-2 text-xs text-fg-subtle italic">
         {{ t('operators.emptySortConditions') }}
       </div>
     </div>
-    <p class="text-[10px] text-fg-subtle">{{ t('operators.sortHint') }}</p>
+    <p class="text-xs text-fg-subtle">{{ t('operators.sortHint') }}</p>
   </div>
 </template>

@@ -248,7 +248,7 @@ onUnmounted(() => {
           >
             <span class="min-w-0">
               <span class="block font-medium text-fg">{{ task.title }}</span>
-              <span class="mt-0.5 block text-[11px] leading-snug text-fg-muted">{{ task.description }}</span>
+              <span class="mt-0.5 block text-xs leading-snug text-fg-muted">{{ task.description }}</span>
             </span>
             <ArrowRight
               aria-hidden="true"

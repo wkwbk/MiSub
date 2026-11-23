@@ -263,7 +263,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
 
           <span
             :class="protocolStyle.style"
-            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border px-2 text-[10px] font-mono leading-none uppercase tracking-wider"
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border px-2 text-xs font-mono leading-none uppercase tracking-wider"
           >
             <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
             {{ protocolStyle.text }}
@@ -278,7 +278,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
               v-for="tag in visibleTags"
               :key="tag"
               :title="tag"
-              class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+              class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
               data-testid="subscription-tag-badge"
               type="button"
               @click.stop="emit('filter-tag', tag)"
@@ -288,7 +288,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
             <span
               v-if="overflowCount > 0"
               :title="subTags.join(', ')"
-              class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none text-fg-subtle"
+              class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-subtle"
             >
               +{{ overflowCount }}
             </span>
@@ -297,7 +297,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           <span
             v-if="expiryInfo"
             :class="expiryInfo.style"
-            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-[10px] font-mono leading-none"
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none"
           >
             <span :class="expiryInfo.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
             {{ expiryInfo.daysRemaining }}
@@ -497,7 +497,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
 
       <div
         v-if="hasFooterMeta"
-        class="mt-3 flex items-center gap-1 truncate text-[10px] text-fg-muted"
+        class="mt-3 flex items-center gap-1 truncate text-xs text-fg-muted"
         data-testid="subscription-footer-meta"
       >
         <MessageSquare class="w-3 h-3 shrink-0" />

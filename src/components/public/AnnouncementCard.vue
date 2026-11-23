@@ -115,7 +115,7 @@ const typeConfig = computed(() => {
 
         <div
           v-if="announcement.updatedAt"
-          class="pt-1 pl-3.5 text-[11px] font-mono text-fg-subtle flex items-center gap-2"
+          class="pt-1 pl-3.5 text-xs font-mono text-fg-subtle flex items-center gap-2"
         >
           {{
             t('common.updatedAt', {

@@ -205,7 +205,7 @@ watch(
                   {{ core.name }}
                 </h3>
                 <span
-                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted shrink-0"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-xs font-medium border border-line bg-transparent text-fg-muted shrink-0"
                 >
                   {{ getCoreCategoryLabel(core.category) }}
                 </span>
@@ -214,7 +214,7 @@ watch(
                 <span
                   v-for="tag in core.tags"
                   :key="tag"
-                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-[10px] font-medium border border-line bg-transparent text-fg-muted"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-md font-mono text-xs font-medium border border-line bg-transparent text-fg-muted"
                 >
                   {{ tag }}
                 </span>
@@ -236,7 +236,7 @@ watch(
               <span
                 v-if="getCoreUpdatedLabel(core)"
                 :title="getCoreUpdatedTitle(core)"
-                class="font-mono text-[11px] text-fg-subtle truncate"
+                class="font-mono text-xs text-fg-subtle truncate"
               >
                 {{ getCoreUpdatedLabel(core) }}
               </span>

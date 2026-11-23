@@ -65,7 +65,7 @@ const emit = defineEmits([
         v-for="tag in profileTags"
         :key="tag"
         :title="tag"
-        class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-1.5 py-0.5 text-[10px] font-medium text-fg-muted"
+        class="max-w-[140px] truncate rounded-md border border-line bg-elevated-card px-1.5 py-0.5 text-xs font-medium text-fg-muted"
       >
         {{ tag }}
       </span>
@@ -86,7 +86,7 @@ const emit = defineEmits([
       >
         <span class="inline-flex items-center gap-1.5 min-w-0">
           <Link2 class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
-          <span class="truncate font-mono text-[11px]">{{ profile.shortLink }}</span>
+          <span class="truncate font-mono text-xs">{{ profile.shortLink }}</span>
         </span>
         <Copy class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
       </button>

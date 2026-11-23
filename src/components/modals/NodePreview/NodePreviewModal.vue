@@ -479,7 +479,7 @@ const goToPage = (page) => {
         class="grid grid-cols-2 lg:grid-cols-4 gap-px bg-line border border-line rounded-md overflow-hidden mb-4"
       >
         <div class="bg-inset px-3.5 py-3 sm:p-4">
-          <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
+          <div class="text-xs font-medium text-fg-subtle uppercase tracking-wider">
             {{ t('nodePreview.nodesTotal') }}
           </div>
           <div class="mt-1 text-xl font-semibold font-mono text-fg">
@@ -487,7 +487,7 @@ const goToPage = (page) => {
           </div>
         </div>
         <div class="bg-inset px-3.5 py-3 sm:p-4">
-          <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
+          <div class="text-xs font-medium text-fg-subtle uppercase tracking-wider">
             {{ t('nodePreview.protocolTypes') }}
           </div>
           <div class="mt-1 text-xl font-semibold font-mono text-fg">
@@ -495,7 +495,7 @@ const goToPage = (page) => {
           </div>
         </div>
         <div class="bg-inset px-3.5 py-3 sm:p-4">
-          <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
+          <div class="text-xs font-medium text-fg-subtle uppercase tracking-wider">
             {{ t('nodePreview.regionsCount') }}
           </div>
           <div class="mt-1 text-xl font-semibold font-mono text-fg">
@@ -503,7 +503,7 @@ const goToPage = (page) => {
           </div>
         </div>
         <div class="bg-inset px-3.5 py-3 sm:p-4">
-          <div class="text-[11px] font-medium text-fg-subtle uppercase tracking-wider">
+          <div class="text-xs font-medium text-fg-subtle uppercase tracking-wider">
             {{ t('nodePreview.totalPages') }}
           </div>
           <div class="mt-1 text-xl font-semibold font-mono text-fg">
@@ -616,7 +616,7 @@ const goToPage = (page) => {
     <template #footer>
       <div v-if="pickingMode" class="flex w-full flex-wrap items-center justify-between gap-3">
         <div class="flex flex-col">
-          <span class="text-[10px] text-fg-muted uppercase tracking-wider font-semibold">
+          <span class="text-xs text-fg-muted uppercase tracking-wider font-semibold">
             {{ t('nodePreview.pickingMode') }}
           </span>
           <span class="text-xs font-medium text-fg-muted">

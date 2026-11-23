@@ -340,13 +340,13 @@ const handleConfirm = async () => {
               <span class="font-mono text-xs text-fg-subtle w-5 text-right">{{ idx + 1 }}</span>
               <span
                 v-if="node.protocol"
-                class="font-mono text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-md border border-line bg-transparent text-fg-muted shrink-0"
+                class="font-mono text-xs font-semibold uppercase px-1.5 py-0.5 rounded-md border border-line bg-transparent text-fg-muted shrink-0"
               >
                 {{ node.protocol.name }}
               </span>
               <span
                 v-else
-                class="font-mono text-[10px] text-fg-subtle px-1.5 py-0.5 rounded-md border border-line bg-transparent shrink-0"
+                class="font-mono text-xs text-fg-subtle px-1.5 py-0.5 rounded-md border border-line bg-transparent shrink-0"
               >
                 {{ t('manualNodes.unknownProtocol') }}
               </span>

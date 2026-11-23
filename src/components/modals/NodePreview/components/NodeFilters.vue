@@ -79,7 +79,7 @@ const isProcessedToggleVisible = computed(() => {
     <div class="flex flex-col gap-3 lg:grid lg:grid-cols-4 lg:items-end sm:gap-4">
       <!-- 搜索 (移动端置顶) -->
       <div class="w-full">
-        <label class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
+        <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
           {{ t('nodePreview.searchLabel') }}
         </label>
         <div class="flex gap-2">
@@ -116,7 +116,7 @@ const isProcessedToggleVisible = computed(() => {
       <div class="grid grid-cols-2 gap-3 lg:contents">
         <!-- 协议筛选 -->
         <div>
-          <label class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
+          <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
             {{ t('nodePreview.protocolFilterLabel') }}
           </label>
           <Select
@@ -134,7 +134,7 @@ const isProcessedToggleVisible = computed(() => {
 
         <!-- 地区筛选 -->
         <div>
-          <label class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
+          <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
             {{ t('nodePreview.regionFilterLabel') }}
           </label>
           <Select
@@ -154,7 +154,7 @@ const isProcessedToggleVisible = computed(() => {
       <div class="hidden lg:flex gap-6">
         <!-- 视图切换 -->
         <div>
-          <label class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
+          <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
             {{ t('nodePreview.layoutLabel') }}
           </label>
           <div class="inline-flex items-center border border-line rounded-md overflow-hidden divide-x divide-line">
@@ -181,7 +181,7 @@ const isProcessedToggleVisible = computed(() => {
 
         <!-- 规则处理 -->
         <div v-if="isProcessedToggleVisible">
-          <label class="block text-[10px] uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
+          <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
             {{ t('nodePreview.optimizationLabel') }}
           </label>
           <div class="flex items-center gap-2">
