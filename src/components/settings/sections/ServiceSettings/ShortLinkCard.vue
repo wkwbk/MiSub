@@ -155,7 +155,7 @@ async function handleTestConnection() {
 
         <span
           v-if="testResult"
-          :class="testResult.success ? 'text-emerald-500' : 'text-red-400'"
+          :class="testResult.success ? 'text-status-success' : 'text-status-danger'"
           class="text-xs font-medium"
         >
           {{ testResult.message }}

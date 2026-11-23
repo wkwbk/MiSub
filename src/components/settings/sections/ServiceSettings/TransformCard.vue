@@ -147,8 +147,8 @@ const engineChangeNoticeDismissed = ref(false);
 const backendTestToneClass = computed(() => {
   if (!backendTestStatus.value) return 'border-line bg-transparent text-fg-muted';
   return backendTestStatus.value.success
-    ? 'border-line bg-transparent text-emerald-400'
-    : 'border-line bg-transparent text-red-400';
+    ? 'border-status-success-border bg-transparent text-status-success'
+    : 'border-status-danger-border bg-transparent text-status-danger';
 });
 
 async function handleTestBackend() {
@@ -281,7 +281,7 @@ watch(
         data-testid="engine-change-notice"
       >
         <div class="flex min-w-0 items-center gap-2.5 text-fg-muted">
-          <Info class="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          <Info class="h-3.5 w-3.5 shrink-0 text-status-warning" />
           <p class="leading-relaxed">
             {{ t('settings.transformEngineChangeNotice') }}
           </p>
@@ -445,7 +445,7 @@ watch(
         <!-- Clash API 详细输入（仅开启时展开） -->
         <div
           v-if="settings.builtinTransform.enableClashApi"
-          class="grid grid-cols-1 gap-4 rounded-md border border-line bg-inset p-4 md:grid-cols-2"
+          class="grid grid-cols-1 gap-4 rounded-md border border-line bg-inset/40 p-4 md:grid-cols-2"
         >
           <div>
             <label class="mb-1.5 block text-xs font-medium text-fg-muted">
@@ -453,7 +453,7 @@ watch(
             </label>
             <input
               v-model="settings.builtinTransform.externalController"
-              class="block w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-fg focus:border-line-strong"
+              class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-xs text-fg shadow-none focus:border-line-strong"
               placeholder="0.0.0.0:9090"
               type="text"
             />
@@ -465,7 +465,7 @@ watch(
             <input
               v-model="settings.builtinTransform.externalUiDownloadUrl"
               :placeholder="t('settings.visualExternalUiUrlPlaceholder')"
-              class="block w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-xs text-fg focus:border-line-strong"
+              class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-xs text-fg shadow-none focus:border-line-strong"
               type="text"
             />
           </div>
@@ -513,14 +513,6 @@ watch(
       >
         <template #icon>
           <Server class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <span
-            class="inline-flex items-center gap-1.5 rounded-md border border-line bg-inset px-2 py-0.5 font-mono text-[10px] text-fg-muted"
-          >
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-            subconverter
-          </span>
         </template>
       </SectionHeader>
 

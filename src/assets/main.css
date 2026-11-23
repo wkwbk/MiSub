@@ -714,9 +714,10 @@ html.theme-view-transition-sweep::view-transition-new(root) {
         align-items: center;
         justify-content: space-between;
         gap: 0.75rem;
+        height: 2.25rem;
         border-radius: var(--misub-radius-md);
         border: 1px solid var(--line);
         background-color: var(--inset);
-        padding: 0.625rem 0.875rem;
+        padding: 0 0.875rem;
     }
 }

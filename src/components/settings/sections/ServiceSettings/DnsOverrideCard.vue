@@ -84,7 +84,7 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
         spellcheck="false"
         @blur="validateInput"
       />
-      <p v-if="jsonError" class="mt-2 text-xs text-red-400">
+      <p v-if="jsonError" class="mt-2 text-xs text-status-danger">
         {{ jsonError }}
       </p>
       <p v-else class="mt-2 text-xs leading-relaxed text-fg-muted">

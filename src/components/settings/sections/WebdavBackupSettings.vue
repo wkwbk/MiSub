@@ -222,10 +222,10 @@ ensureConfig();
 
       <div class="space-y-6 pt-6 border-t border-line">
         <div class="space-y-3">
-          <p class="text-xs font-medium text-fg-muted">
+          <h4 class="text-xs font-semibold text-fg">
             {{ t('settings.webdavBackupScope') }}
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <label
               :class="
                 settings.webdavBackup.backupScope === 'dataOnly'
@@ -275,10 +275,10 @@ ensureConfig();
         </div>
 
         <div class="space-y-3 pt-6 border-t border-line">
-          <p class="text-xs font-medium text-fg-muted">
+          <h4 class="text-xs font-semibold text-fg">
             {{ t('settings.webdavRequestAutoBackup') }}
-          </p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <div class="setting-switch-card">
               <span class="text-xs font-medium text-fg-muted">
                 {{ t('settings.webdavEnableAutoBackup') }}
@@ -306,9 +306,9 @@ ensureConfig();
 
       <div class="pt-6 border-t border-line space-y-4 text-xs">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <p class="text-xs font-medium text-fg-muted">
+          <h4 class="text-xs font-semibold text-fg">
             {{ t('settings.webdavRecentStatus') }}
-          </p>
+          </h4>
           <div class="flex flex-wrap items-center gap-2">
             <button
               :disabled="isTesting"
@@ -379,9 +379,9 @@ ensureConfig();
       </div>
 
       <div v-if="remoteFiles.length" class="pt-6 border-t border-line">
-        <p class="text-xs font-medium text-fg-muted mb-3">
+        <h4 class="text-xs font-semibold text-fg mb-3">
           {{ t('settings.webdavRemoteFiles') }}
-        </p>
+        </h4>
         <div class="divide-y divide-line-subtle max-h-56 overflow-y-auto">
           <div v-for="file in remoteFiles" :key="file.path" class="flex items-center justify-between gap-3 py-2.5">
             <span class="text-xs font-mono text-fg-muted break-all">{{ file.name }}</span>

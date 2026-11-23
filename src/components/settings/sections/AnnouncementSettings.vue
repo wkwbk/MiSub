@@ -133,16 +133,9 @@ const handleContentUpdate = () => {
       </div>
 
       <!-- 选项 -->
-      <div class="flex items-center gap-4">
-        <label class="flex items-center gap-2.5 cursor-pointer">
-          <input
-            v-model="announcement.dismissible"
-            class="rounded border-line-strong bg-elevated-card text-fg shadow-none focus:border-line-strong"
-            type="checkbox"
-            @change="handleContentUpdate"
-          />
-          <span class="text-sm text-fg-muted">{{ t('settings.announcementDismissible') }}</span>
-        </label>
+      <div class="setting-switch-card max-w-sm">
+        <span class="text-xs font-medium text-fg-muted">{{ t('settings.announcementDismissible') }}</span>
+        <Switch v-model="announcement.dismissible" size="sm" @change="handleContentUpdate" />
       </div>
 
       <!-- 预览区域 -->

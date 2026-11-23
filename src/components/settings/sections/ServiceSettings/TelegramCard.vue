@@ -225,7 +225,7 @@ async function syncPushBot() {
 
           <div
             v-if="testResult"
-            :class="testResult.success ? 'text-emerald-400' : 'text-red-400'"
+            :class="testResult.success ? 'text-status-success' : 'text-status-danger'"
             class="text-xs flex items-center gap-2"
           >
             <span
@@ -293,7 +293,7 @@ async function syncPushBot() {
             <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramWebhookSecretHint') }}
             </p>
-            <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-red-400">
+            <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-status-danger">
               {{ t('settings.telegramWebhookSecretInvalid') }}
             </p>
           </div>
@@ -397,7 +397,7 @@ async function syncPushBot() {
 
             <div
               v-if="syncBotResult"
-              :class="syncBotResult.success ? 'text-emerald-400' : 'text-red-400'"
+              :class="syncBotResult.success ? 'text-status-success' : 'text-status-danger'"
               class="text-xs flex items-center gap-2 flex-wrap"
             >
               <span

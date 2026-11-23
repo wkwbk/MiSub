@@ -342,7 +342,7 @@ function clearActiveBaseConfig() {
           <div
             v-for="(rule, index) in bt.customRules"
             :key="index"
-            class="rounded-md border border-line bg-inset p-4 space-y-3"
+            class="rounded-md border border-line bg-inset/40 p-4 space-y-3"
           >
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
               <div class="sm:col-span-6">
@@ -352,7 +352,7 @@ function clearActiveBaseConfig() {
                 <input
                   v-model="rule.name"
                   :placeholder="t('settings.visualCustomRuleNamePlaceholder')"
-                  class="block w-full rounded-md border border-line bg-surface px-3 py-1.5 text-xs text-fg focus:border-line-strong"
+                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 text-xs text-fg shadow-none focus:border-line-strong"
                   type="text"
                 />
               </div>
@@ -365,7 +365,7 @@ function clearActiveBaseConfig() {
               <div class="flex justify-end sm:col-span-2">
                 <button
                   :aria-label="t('actions.delete')"
-                  class="inline-flex h-8 items-center gap-1 rounded-md border border-line bg-surface px-2.5 text-xs text-red-400 transition-colors hover:bg-red-500/10"
+                  class="inline-flex h-8 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 text-xs text-status-danger shadow-none transition-colors hover:bg-status-danger-bg hover:border-status-danger-border"
                   type="button"
                   @click="removeCustomRule(index)"
                 >
@@ -382,7 +382,7 @@ function clearActiveBaseConfig() {
                 </label>
                 <input
                   :value="formatListField(rule.domainSuffix)"
-                  class="block w-full rounded-md border border-line bg-surface px-3 py-1.5 font-mono text-xs text-fg focus:border-line-strong"
+                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="example.com, internal.local"
                   type="text"
                   @input="updateListField(rule, 'domainSuffix', $event.target.value)"
@@ -394,7 +394,7 @@ function clearActiveBaseConfig() {
                 </label>
                 <input
                   :value="formatListField(rule.domainKeyword)"
-                  class="block w-full rounded-md border border-line bg-surface px-3 py-1.5 font-mono text-xs text-fg focus:border-line-strong"
+                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="openai, company"
                   type="text"
                   @input="updateListField(rule, 'domainKeyword', $event.target.value)"
@@ -406,7 +406,7 @@ function clearActiveBaseConfig() {
                 </label>
                 <input
                   :value="formatListField(rule.ipCidr)"
-                  class="block w-full rounded-md border border-line bg-surface px-3 py-1.5 font-mono text-xs text-fg focus:border-line-strong"
+                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="10.0.0.0/8, 192.168.1.0/24"
                   type="text"
                   @input="updateListField(rule, 'ipCidr', $event.target.value)"
@@ -418,7 +418,7 @@ function clearActiveBaseConfig() {
                 </label>
                 <input
                   :value="formatListField(rule.srcIpCidr)"
-                  class="block w-full rounded-md border border-line bg-surface px-3 py-1.5 font-mono text-xs text-fg focus:border-line-strong"
+                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="192.168.1.100/32"
                   type="text"
                   @input="updateListField(rule, 'srcIpCidr', $event.target.value)"
@@ -445,7 +445,7 @@ function clearActiveBaseConfig() {
           placeholder='[{"name":"公司内网","action":"direct","domainSuffix":["corp.local"],"ipCidr":["10.0.0.0/8"]}]'
           @input="handleCustomRuleJsonInput"
         />
-        <p v-if="customRuleJsonError" class="text-xs text-red-400">
+        <p v-if="customRuleJsonError" class="text-xs text-status-danger">
           {{ customRuleJsonError }}
         </p>
       </div>
@@ -471,7 +471,7 @@ function clearActiveBaseConfig() {
           type="button"
           @click="copySubconverterUrl"
         >
-          <Check v-if="copiedSubconverterUrl" class="h-3.5 w-3.5 text-emerald-400" />
+          <Check v-if="copiedSubconverterUrl" class="h-3.5 w-3.5 text-status-success" />
           <Copy v-else class="h-3.5 w-3.5" />
           <span>{{
             copiedSubconverterUrl ? t('settings.visualCopied') : t('settings.visualCopySubconverterUrl')
@@ -499,7 +499,7 @@ function clearActiveBaseConfig() {
       class="block min-h-[130px] w-full rounded-md border border-line bg-inset p-3 font-mono text-xs text-fg focus:border-line-strong"
     />
     <div class="flex items-center justify-between gap-2">
-      <p v-if="baseConfigValidationError" class="text-xs text-red-400">
+      <p v-if="baseConfigValidationError" class="text-xs text-status-danger">
         {{ baseConfigValidationError }}
       </p>
       <p v-else class="text-xs text-fg-muted">
@@ -507,7 +507,7 @@ function clearActiveBaseConfig() {
       </p>
       <button
         v-if="activeBaseConfigText"
-        class="inline-flex shrink-0 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
+        class="inline-flex shrink-0 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-status-danger transition-colors hover:bg-status-danger-bg hover:border-status-danger-border"
         type="button"
         @click="clearActiveBaseConfig"
       >
