@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Check, Copy, Info, Pencil, Trash2, Zap } from '@lucide/vue';
+import { Check, Copy, CornerDownRight, Info, Pencil, Trash2, Zap } from '@lucide/vue';
 import { extractHostAndPort } from '@/lib/utils.js';
 import { getItemTags } from '@/utils/tags.js';
 import { getManualNodeProtocol } from '@/composables/manual-nodes/filters.js';
@@ -245,10 +245,7 @@ const copyToClipboard = async (text) => {
     </div>
 
     <div class="my-1.5 min-w-0">
-      <h4
-        :title="node.name || t('manualNodes.unnamed')"
-        class="truncate text-sm font-medium text-fg transition-colors"
-      >
+      <h4 :title="node.name || t('manualNodes.unnamed')" class="truncate text-sm font-medium text-fg transition-colors">
         {{ node.name || t('manualNodes.unnamed') }}
       </h4>
     </div>
@@ -272,10 +269,11 @@ const copyToClipboard = async (text) => {
         <span
           v-if="resolvedIpText"
           :title="`${t('manualNodes.resolvedIp')}: ${resolvedIpText}`"
-          class="mt-0.5 block truncate font-mono text-xs text-fg-subtle/80"
+          class="mt-0.5 flex items-center gap-1 font-mono text-xs text-fg-subtle/80"
           data-testid="manual-node-resolved-ip"
         >
-          → {{ resolvedIpText }}
+          <CornerDownRight aria-hidden="true" class="h-3 w-3 shrink-0 text-fg-subtle/60" />
+          <span class="truncate">{{ resolvedIpText }}</span>
         </span>
       </div>
 
