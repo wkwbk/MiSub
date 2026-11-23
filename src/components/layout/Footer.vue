@@ -1,5 +1,7 @@
 <script setup>
 import { computed } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useI18n } from '@/i18n/index.js';
 import { useVersionStore } from '@/stores/version';
 import packageJson from '../../../package.json';
 
@@ -14,7 +16,9 @@ defineProps({
   },
 });
 
+const { t } = useI18n();
 const versionStore = useVersionStore();
+const { hasUpdate, latestRelease } = storeToRefs(versionStore);
 const currentYear = computed(() => new Date().getFullYear());
 const currentVersion = packageJson.version;
 </script>
@@ -40,10 +44,21 @@ const currentVersion = packageJson.version;
         <template v-else> Copyright © {{ currentYear }}. All Rights Reserved. </template>
       </p>
       <button
-        class="px-2 py-0.5 rounded-md bg-transparent text-[10px] font-mono text-fg-muted hover:text-fg hover:bg-hover transition-colors cursor-pointer border border-line hover:border-line-strong touch-target-min"
+        :title="
+          hasUpdate && latestRelease?.tag_name
+            ? t('notices.updateAvailable', { version: latestRelease.tag_name })
+            : undefined
+        "
+        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-transparent text-[10px] font-mono text-fg-muted hover:text-fg hover:bg-hover transition-colors cursor-pointer border border-line hover:border-line-strong touch-target-min"
+        type="button"
         @click="versionStore.openModal"
       >
-        v{{ currentVersion }}
+        <span
+          v-if="hasUpdate"
+          aria-hidden="true"
+          class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"
+        ></span>
+        <span>v{{ currentVersion }}</span>
       </button>
     </div>
   </footer>

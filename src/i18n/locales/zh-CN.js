@@ -31,6 +31,7 @@ export default {
     switchToLegacyLayout: '切换到经典布局',
     switchToModernLayout: '切换到现代布局',
     openSettings: '打开设置',
+    viewChangelog: '查看更新内容',
     viewReleaseNotes: '查看发布说明',
     gotIt: '知道了',
     save: '保存',

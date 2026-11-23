@@ -1,10 +1,19 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { fetchGithubLatestRelease } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
-import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
+import {
+  readPreference,
+  readRawPreference,
+  writePreference,
+  writeRawPreference,
+} from '@/utils/local-preference.js';
 import packageJson from '../../package.json';
+
+const RELEASE_CACHE_KEY = 'misub_latest_release_cache';
+const RELEASE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 小时客户端节流缓存
+const UPDATE_NOTICE_DISMISSED_KEY = 'misub_update_notice_dismissed_version';
 
 export const useVersionStore = defineStore('version', () => {
   const currentVersion = ref(packageJson.version);
@@ -13,11 +22,12 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  // 本地更新日志 (v2.8.5)
-  const localChangelog = `✨ **定时任务分业务重构、配置键标准化与恢复出厂设置修复**
-- **定时任务按业务拆分**：将定时任务拆分为订阅更新（\`/cron/subscriptions\`）、WebDAV 备份（\`/cron/backup\`）与存储维护（\`/cron/maintenance\`）三个独立入口，同时支持 Cloudflare Worker 原生多 Cron 独立调度，无需依赖外部定时服务。
-- **配置存储与命名标准化**：统一 D1 \`settings\` 表键名注册表（\`main\` / \`rule_templates\` / \`clients\` / \`public_cores\` / \`public_links\`），将远程转换模板缓存归位至 \`cache\` 表，并全站统一设置字段为 \`camelCase\`，移除历史兼容包袱。
-- **恢复出厂设置与交互修复**：修复连续二次确认弹窗自动取消的竞态缺陷；恢复出厂设置现在会完整清空全部设置键、节点缓存与本机界面偏好，并优化 WebDAV 自动备份相关提示文案。`;
+  // 本地更新日志 (v2.8.6)
+  const localChangelog = `✨ **内置转换路由升级、防刷与短链接入及版本更新体验优化**
+- **转换与路由设置升级**：拆分独立的「转换与路由」设置页，新增可视化规则集选择、自定义规则与基础配置覆盖；支持 ECH 解析并完善 Sing-Box / Clash / Surge 生成器协议兼容。
+- **防刷保护与 Sink 短链**：新增服务端最小拉取间隔与边缘缓存防刷保护（支持温和缓存与严格 429 模式）；接入自建 Sink 短链服务，支持随机/自定义后缀与公开页只读展示。
+- **版本更新与自动发版**：优化新版本提示（按版本持久化忽略、延迟检查、1 小时客户端缓存与页脚红点），修复本地版本高于上游时的误报；新增版本号同步与 Tag 自动发布 GitHub Release 流程。
+- **架构与界面细节修复**：拆分 \`public_cores\` 与 \`public_links\` 独立存储键，统一明暗语义色板与表单样式，修复节点重命名地区重算、Surge 分组渲染及菜单动画等细节问题。`;
 
   function normalizeVersion(version) {
     return String(version || '')
@@ -42,26 +52,69 @@ export const useVersionStore = defineStore('version', () => {
     return 0;
   }
 
+  const hasUpdate = computed(() => {
+    if (!latestRelease.value?.tag_name) return false;
+    return compareVersions(latestRelease.value.tag_name, currentVersion.value) > 0;
+  });
+
   function getDismissKey(releaseTag) {
     return `misub_release_notes_hidden:${normalizeVersion(currentVersion.value)}:${normalizeVersion(releaseTag)}`;
   }
 
-  async function checkVersion(suppressModal = false) {
+  function readCachedRelease(now) {
+    const cached = readPreference(
+      RELEASE_CACHE_KEY,
+      (value) => {
+        if (!value || typeof value !== 'object') return undefined;
+        if (typeof value.checkedAt !== 'number' || !Number.isFinite(value.checkedAt)) return undefined;
+        if (!value.release || typeof value.release !== 'object' || !value.release.tag_name) return undefined;
+        return value;
+      },
+      null,
+    );
+    if (!cached) return null;
+    if (now - cached.checkedAt >= RELEASE_CACHE_TTL_MS) return null;
+    return cached.release;
+  }
+
+  function applyReleaseState(release, suppressModal) {
+    if (!release?.tag_name) return;
+    latestRelease.value = release;
+    const comparison = compareVersions(release.tag_name, currentVersion.value);
+
+    if (comparison > 0) {
+      const dismissedVersion = readRawPreference(UPDATE_NOTICE_DISMISSED_KEY);
+      if (dismissedVersion !== normalizeVersion(release.tag_name)) {
+        showUpdateNotice.value = true;
+      }
+    } else if (comparison === 0 && !suppressModal) {
+      // 如果已是最新且未被禁止，则尝试显示更新日志
+      const dismissKey = getDismissKey(release.tag_name);
+      if (readRawPreference(dismissKey) !== 'true') {
+        showModal.value = true;
+      }
+    }
+  }
+
+  async function checkVersion(suppressModal = false, options = {}) {
+    const force = options?.force === true;
     try {
+      const now = Date.now();
+      if (!force) {
+        const cachedRelease = readCachedRelease(now);
+        if (cachedRelease) {
+          applyReleaseState(cachedRelease, suppressModal);
+          return;
+        }
+      }
+
       const release = await fetchGithubLatestRelease(upstreamRepo);
       if (release?.tag_name) {
-        latestRelease.value = release;
-        const comparison = compareVersions(release.tag_name, currentVersion.value);
-
-        if (comparison > 0) {
-          showUpdateNotice.value = true;
-        } else if (comparison === 0 && !suppressModal) {
-          // 如果已是最新且未被禁止，则尝试显示更新日志
-          const dismissKey = getDismissKey(release.tag_name);
-          if (readRawPreference(dismissKey) !== 'true') {
-            showModal.value = true;
-          }
-        }
+        writePreference(RELEASE_CACHE_KEY, {
+          checkedAt: now,
+          release,
+        });
+        applyReleaseState(release, suppressModal);
       }
     } catch (error) {
       console.error('[VersionStore] Failed to check version:', error);
@@ -74,6 +127,17 @@ export const useVersionStore = defineStore('version', () => {
 
   function closeModal() {
     showModal.value = false;
+  }
+
+  function dismissUpdateNotice() {
+    showUpdateNotice.value = false;
+    if (latestRelease.value?.tag_name) {
+      const persisted = writeRawPreference(
+        UPDATE_NOTICE_DISMISSED_KEY,
+        normalizeVersion(latestRelease.value.tag_name),
+      );
+      if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');
+    }
   }
 
   function suppressUpdateModal() {
@@ -89,11 +153,14 @@ export const useVersionStore = defineStore('version', () => {
     currentVersion,
     latestRelease,
     localChangelog,
+    hasUpdate,
     showModal,
     showUpdateNotice,
+    compareVersions,
     checkVersion,
     openModal,
     closeModal,
+    dismissUpdateNotice,
     suppressUpdateModal,
   };
 });

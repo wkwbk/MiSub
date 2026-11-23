@@ -48,4 +48,23 @@ describe('VersionChangelogModal markdown rendering', () => {
     expect(wrapper.findAll('code').length).toBeGreaterThan(0);
     expect(wrapper.text()).not.toContain('**');
   });
+
+  it('treats local version ahead of upstream release as up to date instead of showing an older release as new', () => {
+    const wrapper = mount(VersionChangelogModal, {
+      props: {
+        show: true,
+        currentVersion: '2.8.5',
+        release: { tag_name: 'v2.8.4', body: 'Old release notes' },
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+        stubs: { Modal: ModalStub },
+      },
+    });
+
+    expect(wrapper.text()).toContain('最新版本');
+    expect(wrapper.text()).toContain('v2.8.5');
+    expect(wrapper.text()).not.toContain('有新版本');
+    expect(wrapper.text()).not.toContain('Old release notes');
+  });
 });

@@ -26,9 +26,7 @@ const emit = defineEmits(['update:show', 'confirm', 'suppress']);
 
 const isLatest = computed(() => {
   if (!props.release?.tag_name) return true;
-  return (
-    props.currentVersion === props.release.tag_name || props.currentVersion === props.release.tag_name.replace(/^v/, '')
-  );
+  return versionStore.compareVersions(props.release.tag_name, props.currentVersion) <= 0;
 });
 
 const renderedChangelogHtml = computed(() => {

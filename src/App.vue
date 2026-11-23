@@ -186,22 +186,36 @@ watch(
   },
 );
 
+let versionCheckTimer = null;
+
+function clearVersionCheckTimer() {
+  if (versionCheckTimer !== null) {
+    clearTimeout(versionCheckTimer);
+    versionCheckTimer = null;
+  }
+}
+
 onUnmounted(() => {
   stopAutoUpdate();
+  clearVersionCheckTimer();
 });
 
 watch(
   sessionState,
   async (newVal) => {
+    clearVersionCheckTimer();
     if (newVal === 'loggedIn') {
       await dataStore.fetchData();
       cancelRoutePrefetch();
       cancelRoutePrefetch = scheduleIdlePrefetch(COMMON_DASHBOARD_ROUTE_LOADERS);
 
-      try {
-        await versionStore.checkVersion(false);
-      } catch {
-      }
+      // 延迟检查版本，避免阻塞首屏渲染与核心数据加载
+      versionCheckTimer = setTimeout(() => {
+        versionCheckTimer = null;
+        if (sessionState.value === 'loggedIn') {
+          versionStore.checkVersion(false).catch(() => {});
+        }
+      }, 3000);
     }
   },
   { immediate: true },
@@ -331,19 +345,29 @@ const isCustomPageFullWidth = computed(() => {
               <p class="text-xs sm:text-sm text-fg-muted font-mono">
                 {{ t('notices.currentVersion', { version: currentVersion }) }}
               </p>
-              <a
-                v-if="versionReleaseInfo.html_url"
-                :href="versionReleaseInfo.html_url"
-                class="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-medium text-fg underline decoration-line-strong underline-offset-4 hover:text-fg-muted transition-colors"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {{ t('actions.viewReleaseNotes') }}
-              </a>
+              <div class="flex flex-wrap items-center gap-3 pt-0.5">
+                <button
+                  class="inline-flex items-center gap-1.5 text-xs sm:text-sm font-mono font-medium text-fg underline decoration-line-strong underline-offset-4 hover:text-fg-muted transition-colors cursor-pointer"
+                  type="button"
+                  @click="versionStore.openModal"
+                >
+                  {{ t('actions.viewChangelog') }}
+                </button>
+                <a
+                  v-if="versionReleaseInfo.html_url"
+                  :href="versionReleaseInfo.html_url"
+                  class="inline-flex items-center gap-2 text-xs sm:text-sm font-mono font-medium text-fg-muted underline decoration-line underline-offset-4 hover:text-fg transition-colors"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {{ t('actions.viewReleaseNotes') }}
+                </a>
+              </div>
             </div>
             <button
-              class="rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
-              @click="showUpdateNotice = false"
+              class="rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors shrink-0 cursor-pointer"
+              type="button"
+              @click="versionStore.dismissUpdateNotice"
             >
               {{ t('actions.gotIt') }}
             </button>

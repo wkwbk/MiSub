@@ -31,6 +31,7 @@ export default {
     switchToLegacyLayout: 'Switch to classic layout',
     switchToModernLayout: 'Switch to modern layout',
     openSettings: 'Settings',
+    viewChangelog: 'View changelog',
     viewReleaseNotes: 'Release notes',
     gotIt: 'Got it',
     save: 'Save',

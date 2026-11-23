@@ -13,6 +13,7 @@
     "test:run": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "lint": "oxlint",
+    "release": "node scripts/release.mjs",
     "format": "prettier --write \"functions/**/*.js\" \"shared/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\"",
     "format:check": "prettier --check \"functions/**/*.js\" \"shared/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\""
   },
