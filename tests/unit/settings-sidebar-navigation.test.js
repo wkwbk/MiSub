@@ -36,6 +36,10 @@ vi.mock('@/components/settings/sections/GlobalSettings.vue', () => ({
   __esModule: true,
   default: { name: 'GlobalSettings', render: () => null },
 }));
+vi.mock('@/components/settings/sections/TransformSettings.vue', () => ({
+  __esModule: true,
+  default: { name: 'TransformSettings', render: () => null },
+}));
 vi.mock('@/components/settings/sections/ServiceSettings.vue', () => ({
   __esModule: true,
   default: { name: 'ServiceSettings', render: () => null },
@@ -78,6 +82,7 @@ function mountSettingsView() {
         BasicSettings: true,
         HomeSettings: true,
         GlobalSettings: true,
+        TransformSettings: true,
         ServiceSettings: true,
         CustomPageSettings: true,
         SystemSettings: true,
@@ -107,6 +112,7 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
 
   describe('resolveSettingsTab', () => {
     it('normalises valid tab ids and rejects unknown values', () => {
+      expect(resolveSettingsTab('transform')).toBe('transform');
       expect(resolveSettingsTab('service')).toBe('service');
       expect(resolveSettingsTab('  SYSTEM ')).toBe('system');
       expect(resolveSettingsTab('custom-page')).toBe('custom-page');
@@ -196,7 +202,7 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
       expect(mobileTablist.classes()).not.toContain('grid-cols-2');
 
       const mobileButtons = mobileTablist.findAll('[role="tab"]');
-      expect(mobileButtons).toHaveLength(6);
+      expect(mobileButtons).toHaveLength(7);
       mobileButtons.forEach((btn) => {
         expect(btn.classes()).toContain('whitespace-nowrap');
         expect(btn.classes()).toContain('shrink-0');
@@ -219,7 +225,8 @@ describe('Settings navigation persistence & responsive sidebar UX', () => {
       const menu = wrapper.find('[data-testid="settings-mobile-menu"]');
       expect(menu.exists()).toBe(true);
       expect(menu.text()).toContain('站点展示');
-      expect(menu.text()).toContain('转换引擎、DNS、Bot 与定时');
+      expect(menu.text()).toContain('分流规则、转换参数与 DNS');
+      expect(menu.text()).toContain('短链、Telegram 通知与定时');
 
       // Press Escape closes menu
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));

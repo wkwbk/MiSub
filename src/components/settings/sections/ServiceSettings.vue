@@ -1,9 +1,7 @@
 <script setup>
-import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
-import DnsOverrideCard from '@/components/settings/sections/ServiceSettings/DnsOverrideCard.vue';
+import ShortLinkCard from '@/components/settings/sections/ServiceSettings/ShortLinkCard.vue';
 import TelegramCard from '@/components/settings/sections/ServiceSettings/TelegramCard.vue';
 import CronCard from '@/components/settings/sections/ServiceSettings/CronCard.vue';
-import ShortLinkCard from '@/components/settings/sections/ServiceSettings/ShortLinkCard.vue';
 
 defineProps({
   settings: {
@@ -15,9 +13,7 @@ defineProps({
 
 <template>
   <div class="space-y-4">
-    <TransformCard :settings="settings" />
     <ShortLinkCard :settings="settings" />
-    <DnsOverrideCard :settings="settings" />
     <TelegramCard :settings="settings" />
     <CronCard :settings="settings" />
   </div>

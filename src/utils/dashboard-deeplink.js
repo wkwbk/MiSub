@@ -50,7 +50,7 @@ export function getSubscriptionTrafficState(sub, now = Date.now()) {
   return null;
 }
 
-export const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'service', 'system'];
+export const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'transform', 'service', 'system'];
 
 export const SETTINGS_ACTIVE_TAB_STORAGE_KEY = 'misub:settings-active-tab';
 

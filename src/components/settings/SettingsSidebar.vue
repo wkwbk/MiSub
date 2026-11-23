@@ -1,6 +1,6 @@
 <script setup>
 import { computed, markRaw, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Check, FileText, Globe, Home, LayoutGrid, Server, Settings, Zap } from '@lucide/vue';
+import { Check, FileText, Globe, Home, LayoutGrid, Server, Settings, SlidersHorizontal, Zap } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
@@ -54,6 +54,12 @@ const tabGroups = [
         labelKey: 'settings.tabs.global',
         descKey: 'settings.tabDescriptions.global',
         icon: markRaw(Globe),
+      },
+      {
+        id: 'transform',
+        labelKey: 'settings.tabs.transform',
+        descKey: 'settings.tabDescriptions.transform',
+        icon: markRaw(SlidersHorizontal),
       },
       {
         id: 'service',

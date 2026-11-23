@@ -9,6 +9,7 @@ import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 const loadBasicSettings = () => import('@/components/settings/sections/BasicSettings.vue');
 const loadHomeSettings = () => import('@/components/settings/sections/HomeSettings.vue');
 const loadGlobalSettings = () => import('@/components/settings/sections/GlobalSettings.vue');
+const loadTransformSettings = () => import('@/components/settings/sections/TransformSettings.vue');
 const loadServiceSettings = () => import('@/components/settings/sections/ServiceSettings.vue');
 const loadCustomPageSettings = () => import('@/components/settings/sections/CustomPageSettings.vue');
 const loadWebdavBackupSettings = () => import('@/components/settings/sections/WebdavBackupSettings.vue');
@@ -17,6 +18,7 @@ const loadSystemSettings = () => import('@/components/settings/sections/SystemSe
 const BasicSettings = defineAsyncComponent(loadBasicSettings);
 const HomeSettings = defineAsyncComponent(loadHomeSettings);
 const GlobalSettings = defineAsyncComponent(loadGlobalSettings);
+const TransformSettings = defineAsyncComponent(loadTransformSettings);
 const ServiceSettings = defineAsyncComponent(loadServiceSettings);
 const CustomPageSettings = defineAsyncComponent(loadCustomPageSettings);
 const WebdavBackupSettings = defineAsyncComponent(loadWebdavBackupSettings);
@@ -120,6 +122,8 @@ const currentTabLabel = computed(() => {
       return t('settings.tabs.home');
     case 'global':
       return t('settings.tabs.global');
+    case 'transform':
+      return t('settings.tabs.transform');
     case 'service':
       return t('settings.tabs.service');
     case 'custom-page':
@@ -168,6 +172,7 @@ onMounted(() => {
     loadBasicSettings,
     loadHomeSettings,
     loadGlobalSettings,
+    loadTransformSettings,
     loadServiceSettings,
     loadCustomPageSettings,
     loadWebdavBackupSettings,
@@ -211,6 +216,7 @@ onUnmounted(() => {
       />
       <HomeSettings v-if="visitedTabs.has('home')" v-show="activeTab === 'home'" :settings="settings" />
       <GlobalSettings v-if="visitedTabs.has('global')" v-show="activeTab === 'global'" :settings="settings" />
+      <TransformSettings v-if="visitedTabs.has('transform')" v-show="activeTab === 'transform'" :settings="settings" />
       <ServiceSettings v-if="visitedTabs.has('service')" v-show="activeTab === 'service'" :settings="settings" />
       <CustomPageSettings
         v-if="visitedTabs.has('custom-page')"
