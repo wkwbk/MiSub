@@ -138,4 +138,91 @@ describe('session store resilience', () => {
     expect(observedStates).toEqual(['loggedOut']);
     expect(store.sessionState).toBe('loggedOut');
   });
+
+  it('keeps custom login path verified and flags isLoggingOut while logout navigates to home', async () => {
+    const router = (await import('@/router')).default;
+    const { useSessionStore } = await import('@/stores/session.js');
+    const store = useSessionStore();
+
+    store.sessionState = 'loggedIn';
+    store.publicConfig = {
+      ...store.publicConfig,
+      enablePublicPage: true,
+      hasCustomLoginPath: true,
+      isLoginPath: false,
+    };
+    store.subscriptionConfig = { customLoginPath: '/secret-admin' };
+    apiMocks.apiGet.mockResolvedValue({ success: true });
+
+    let isLoggingOutDuringPush = false;
+    let resolvePush;
+    router.push.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          isLoggingOutDuringPush = store.isLoggingOut;
+          resolvePush = resolve;
+        }),
+    );
+
+    const logoutPromise = store.logout();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(isLoggingOutDuringPush).toBe(true);
+    expect(store.isLoggingOut).toBe(true);
+    expect(store.sessionState).toBe('loggedOut');
+    expect(store.verifiedLoginPath).toBe('/secret-admin');
+    expect(store.publicConfig.isLoginPath).toBe(true);
+    expect(router.push).toHaveBeenCalledWith({ path: '/' });
+
+    resolvePush();
+    await logoutPromise;
+    expect(store.isLoggingOut).toBe(false);
+  });
+
+  it('marks custom login path as verified on unauthorized session expiry', async () => {
+    const { useSessionStore } = await import('@/stores/session.js');
+    const store = useSessionStore();
+
+    store.sessionState = 'loggedIn';
+    store.publicConfig = {
+      ...store.publicConfig,
+      enablePublicPage: true,
+      hasCustomLoginPath: true,
+      isLoginPath: false,
+    };
+    store.subscriptionConfig = { customLoginPath: 'secret-admin' };
+
+    const changed = await store.handleUnauthorized();
+
+    expect(changed).toBe(true);
+    expect(store.sessionState).toBe('loggedOut');
+    expect(store.verifiedLoginPath).toBe('/secret-admin');
+    expect(store.publicConfig.isLoginPath).toBe(true);
+    expect(store.loginPath).toBe('/secret-admin');
+  });
+
+  it('deduplicates concurrent logout calls while a logout request is in flight', async () => {
+    const { useSessionStore } = await import('@/stores/session.js');
+    const store = useSessionStore();
+
+    store.sessionState = 'loggedIn';
+    let resolveLogoutRequest;
+    apiMocks.apiGet.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveLogoutRequest = resolve;
+        }),
+    );
+
+    const first = store.logout();
+    const second = store.logout();
+
+    expect(apiMocks.apiGet).toHaveBeenCalledTimes(1);
+
+    resolveLogoutRequest({ success: true });
+    await Promise.all([first, second]);
+    expect(apiMocks.apiGet).toHaveBeenCalledTimes(1);
+    expect(store.sessionState).toBe('loggedOut');
+  });
 });

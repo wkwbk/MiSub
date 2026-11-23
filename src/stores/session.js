@@ -1,4 +1,4 @@
-import { ref, shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
 import router from '@/router';
 import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api';
@@ -10,6 +10,7 @@ import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 export const useSessionStore = defineStore('session', () => {
   const sessionState = ref('loading');
+  const isLoggingOut = ref(false);
   const initialData = shallowRef(null);
   const subscriptionConfig = ref({});
   const defaultPublicConfig = Object.freeze({
@@ -113,60 +114,95 @@ export const useSessionStore = defineStore('session', () => {
     return sessionState.value === 'loggedIn';
   }
 
+  let logoutInFlightPromise = null;
+
+  const loginPath = computed(() => {
+    if (publicConfig.value?.hasCustomLoginPath) {
+      const ownPath = subscriptionConfig.value?.customLoginPath;
+      const normalized = typeof ownPath === 'string' ? ownPath.trim().replace(/^\/+/, '') : '';
+      if (normalized && normalized !== 'login') return `/${normalized}`;
+      if (verifiedLoginPath.value && verifiedLoginPath.value !== '/login') return verifiedLoginPath.value;
+      return '/';
+    }
+    return '/login';
+  });
+
+  function syncVerifiedCustomLoginPath() {
+    if (!publicConfig.value?.hasCustomLoginPath) return;
+    const knownLoginPath = loginPath.value;
+    if (knownLoginPath && knownLoginPath !== '/' && knownLoginPath !== '/login') {
+      verifiedLoginPath.value = knownLoginPath;
+      publicConfig.value = {
+        ...publicConfig.value,
+        isLoginPath: true,
+      };
+    }
+  }
+
   async function handleUnauthorized() {
     if (sessionState.value !== 'loggedIn') return false;
+    syncVerifiedCustomLoginPath();
     sessionState.value = 'loggedOut';
     initialData.value = null;
     useDataStore().clearCachedData();
     return true;
   }
 
-  async function logout() {
-    let logoutConfirmed = false;
-    try {
-      await api.get('/api/logout');
-      logoutConfirmed = true;
-    } catch (error) {
-      console.warn('Logout request failed:', error);
+  function logout() {
+    if (logoutInFlightPromise) {
+      return logoutInFlightPromise;
     }
 
-    if (!logoutConfirmed) {
-      const sessionCheck = await fetchInitialData();
-      if (sessionCheck.success || sessionCheck.errorType !== 'auth') {
-        sessionState.value = 'loggedIn';
-        handleError(new Error(t('settings.logoutFailed')), t('settings.logoutContext'), {
-          errorType: 'logout_failed',
-        });
-        return false;
+    logoutInFlightPromise = (async () => {
+      let logoutConfirmed = false;
+      try {
+        await api.get('/api/logout');
+        logoutConfirmed = true;
+      } catch (error) {
+        console.warn('Logout request failed:', error);
       }
-    }
 
-    const isPublicEnabled = publicConfig.value?.enablePublicPage !== false;
-    let targetPath = '/';
-    if (!isPublicEnabled) {
-      const ownPath = subscriptionConfig.value?.customLoginPath;
-      const normalized = typeof ownPath === 'string' ? ownPath.trim().replace(/^\/+/, '') : '';
-      targetPath = normalized && normalized !== 'login' ? `/${normalized}` : '/login';
-      verifiedLoginPath.value = targetPath;
-      publicConfig.value = {
-        ...publicConfig.value,
-        isLoginPath: true,
-      };
-    }
+      if (!logoutConfirmed) {
+        const sessionCheck = await fetchInitialData();
+        if (sessionCheck.success || sessionCheck.errorType !== 'auth') {
+          sessionState.value = 'loggedIn';
+          handleError(new Error(t('settings.logoutFailed')), t('settings.logoutContext'), {
+            errorType: 'logout_failed',
+          });
+          return false;
+        }
+      }
 
-    sessionState.value = 'loggedOut';
-    initialData.value = null;
+      syncVerifiedCustomLoginPath();
 
-    // 清除缓存数据
-    const dataStore = useDataStore();
-    dataStore.clearCachedData();
+      const isPublicEnabled = publicConfig.value?.enablePublicPage !== false;
+      const targetPath = isPublicEnabled ? '/' : loginPath.value;
 
-    // 公开页开启时回首页，公开页关闭时直接回登录页
-    router.push({ path: targetPath });
+      isLoggingOut.value = true;
+      try {
+        sessionState.value = 'loggedOut';
+        initialData.value = null;
+
+        // 清除缓存数据
+        const dataStore = useDataStore();
+        dataStore.clearCachedData();
+
+        // 公开页开启时回首页，公开页关闭时直接回登录页
+        await Promise.resolve(router.push({ path: targetPath })).catch(() => {});
+      } finally {
+        isLoggingOut.value = false;
+      }
+    })().finally(() => {
+      logoutInFlightPromise = null;
+    });
+
+    return logoutInFlightPromise;
   }
 
   return {
     sessionState,
+    isLoggingOut,
+    loginPath,
     initialData,
     publicConfig,
     verifiedLoginPath,

@@ -16,13 +16,17 @@ const PublicProfilesView = defineAsyncComponent(() => import('@/views/PublicProf
 const RedirectPlaceholder = { render: () => h('div') };
 
 const sessionStore = useSessionStore();
-const { sessionState, publicConfig } = storeToRefs(sessionStore);
+const { sessionState, publicConfig, isLoggingOut } = storeToRefs(sessionStore);
 const route = useRoute();
 const router = useRouter();
 
 const isExploreRoute = computed(() => route.path === '/explore');
 const isPublicClosedForGuest = computed(
-  () => sessionState.value === 'loggedOut' && publicConfig.value && !publicConfig.value.enablePublicPage,
+  () =>
+    !isLoggingOut.value &&
+    sessionState.value === 'loggedOut' &&
+    publicConfig.value &&
+    !publicConfig.value.enablePublicPage,
 );
 
 // 1. 已登录访问根路径 / 时重定向到仪表盘 /dashboard

@@ -40,7 +40,7 @@ const { theme } = storeToRefs(themeStore);
 const { initTheme } = themeStore;
 
 const sessionStore = useSessionStore();
-const { sessionState } = storeToRefs(sessionStore);
+const { sessionState, isLoggingOut, loginPath } = storeToRefs(sessionStore);
 const { checkSession, login, logout } = sessionStore;
 
 const toastStore = useToastStore();
@@ -62,15 +62,13 @@ const {
 const isLoggedIn = computed(() => sessionState.value === 'loggedIn');
 const isPublicRoute = computed(() => route.meta.isPublic);
 const isSessionLoading = computed(() => sessionState.value === 'loading');
-const loginPath = computed(() => {
-  if (sessionStore.publicConfig?.hasCustomLoginPath) {
-    const ownPath = sessionStore.subscriptionConfig?.customLoginPath;
-    const normalized = typeof ownPath === 'string' ? ownPath.trim().replace(/^\/+/, '') : '';
-    if (normalized && normalized !== 'login') return `/${normalized}`;
-    return '/';
-  }
-  return '/login';
-});
+
+const isRedirectingFromProtectedRoute = computed(
+  () =>
+    sessionState.value === 'loggedOut' &&
+    Boolean(route.meta?.requiresAuth) &&
+    (isLoggingOut.value || route.path !== loginPath.value),
+);
 
 configureAuthGuard(() => ({
   state: sessionState.value,
@@ -244,6 +242,7 @@ const handleDiscard = async () => {
 };
 
 const redirectUnauthenticatedRoute = () => {
+  if (isLoggingOut.value) return;
   if (sessionState.value !== 'loggedOut' || !route.meta?.requiresAuth) return;
   if (route.path === loginPath.value) return;
   router.replace({ path: loginPath.value, query: { redirect: route.fullPath } }).catch(() => {});
@@ -256,7 +255,7 @@ const handleUnauthorized = async () => {
   redirectUnauthenticatedRoute();
 };
 
-watch([sessionState, () => route.fullPath, loginPath], redirectUnauthenticatedRoute, {
+watch([sessionState, isLoggingOut, () => route.fullPath, loginPath], redirectUnauthenticatedRoute, {
   immediate: true,
 });
 
@@ -303,7 +302,7 @@ const isCustomPageFullWidth = computed(() => {
       ]"
     >
       <div
-        v-if="sessionState === 'loading'"
+        v-if="sessionState === 'loading' || isRedirectingFromProtectedRoute"
         aria-live="polite"
         class="flex flex-col items-center justify-center p-8 min-h-[60vh] select-none"
         role="status"
