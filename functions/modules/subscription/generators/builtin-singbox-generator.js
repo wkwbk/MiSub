@@ -85,33 +85,47 @@ function buildOutbound(proxy) {
         outbound.tls.insecure = true;
       }
     }
-    outbound.transport = {
-      type: proxy.network === 'ws' ? 'ws' : 'tcp',
-    };
-    if (proxy['ws-opts']?.path || proxy.wsOpts?.path) {
-      outbound.transport.path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
+    if (proxy.network === 'ws') {
+      outbound.transport = { type: 'ws' };
+      if (proxy['ws-opts']?.path || proxy.wsOpts?.path) {
+        outbound.transport.path = proxy['ws-opts']?.path || proxy.wsOpts?.path;
+      }
+      const host = proxy['ws-opts']?.headers?.Host || proxy.wsOpts?.headers?.Host;
+      if (host) outbound.transport.headers = { Host: host };
+    } else if (proxy.network === 'grpc') {
+      const grpcOpts = proxy['grpc-opts'] || proxy.grpcOpts;
+      outbound.transport = {
+        type: 'grpc',
+        ...(grpcOpts?.['grpc-service-name'] ? { service_name: grpcOpts['grpc-service-name'] } : {}),
+      };
+    } else if (proxy.network === 'h2' || proxy.network === 'http') {
+      outbound.transport = { type: 'http' };
+    } else if (proxy.network === 'httpupgrade') {
+      outbound.transport = { type: 'httpupgrade' };
     }
-    const host = proxy['ws-opts']?.headers?.Host || proxy.wsOpts?.headers?.Host;
-    if (host) outbound.transport.headers = { Host: host };
   } else if (type === 'vless') {
     outbound.type = 'vless';
     outbound.server = server;
     outbound.server_port = port;
     outbound.uuid = proxy.uuid || '';
-    if (proxy.network) {
-      outbound.transport = { type: proxy.network };
-      if (proxy.network === 'ws') {
+    const vlessNet = String(proxy.network || '').toLowerCase();
+    if (vlessNet && vlessNet !== 'tcp' && vlessNet !== 'raw') {
+      if (vlessNet === 'ws') {
+        outbound.transport = { type: 'ws' };
         const wsOpts = proxy['ws-opts'] || proxy.wsOpts;
         if (wsOpts?.path) outbound.transport.path = wsOpts.path;
         if (wsOpts?.headers?.Host) outbound.transport.headers = { Host: wsOpts.headers.Host };
-      } else if (proxy.network === 'grpc') {
+      } else if (vlessNet === 'grpc') {
+        outbound.transport = { type: 'grpc' };
         const grpcOpts = proxy['grpc-opts'] || proxy.grpcOpts;
         if (grpcOpts?.['grpc-service-name']) outbound.transport.service_name = grpcOpts['grpc-service-name'];
-      } else if (proxy.network === 'xhttp') {
-        const xhttpOpts = proxy['xhttp-opts'] || proxy.xhttpOpts;
-        if (xhttpOpts?.path) outbound.transport.path = xhttpOpts.path;
-        if (xhttpOpts?.host) outbound.transport.host = xhttpOpts.host;
-        if (xhttpOpts?.mode) outbound.transport.mode = xhttpOpts.mode;
+      } else if (vlessNet === 'h2' || vlessNet === 'http') {
+        outbound.transport = { type: 'http' };
+      } else if (vlessNet === 'httpupgrade') {
+        outbound.transport = { type: 'httpupgrade' };
+      } else if (vlessNet === 'xhttp') {
+        // sing-box 暂不支持 xhttp transport，跳过该节点避免整份配置无法加载
+        return null;
       }
     }
     if (proxy.flow) outbound.flow = proxy.flow;
@@ -127,6 +141,14 @@ function buildOutbound(proxy) {
           short_id: reality['short-id'] || reality.short_id,
         },
       };
+    } else if (proxy.tls || proxy.sni || proxy.servername || proxy['skip-cert-verify']) {
+      outbound.tls = {
+        enabled: true,
+        server_name: proxy.sni || proxy.servername || server,
+      };
+      if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
+        outbound.tls.insecure = true;
+      }
     }
   } else if (type === 'trojan') {
     outbound.type = 'trojan';
@@ -150,6 +172,24 @@ function buildOutbound(proxy) {
     outbound.server = server;
     outbound.server_port = port;
     outbound.password = proxy.password || '';
+    if (String(proxy.obfs || '').toLowerCase() === 'salamander' && proxy['obfs-password']) {
+      outbound.obfs = {
+        type: 'salamander',
+        password: String(proxy['obfs-password']),
+      };
+    }
+    const rawPorts = proxy.ports || proxy['port-hopping'];
+    if (rawPorts) {
+      const ranges = String(rawPorts)
+        .split(',')
+        .map((r) => r.trim().replace('-', ':'))
+        .filter(Boolean);
+      if (ranges.length > 0) outbound.server_ports = ranges;
+    }
+    const upVal = Number.parseInt(String(proxy.up || ''), 10);
+    if (Number.isFinite(upVal) && upVal > 0) outbound.up_mbps = upVal;
+    const downVal = Number.parseInt(String(proxy.down || ''), 10);
+    if (Number.isFinite(downVal) && downVal > 0) outbound.down_mbps = downVal;
     outbound.tls = {
       enabled: true,
       server_name: proxy.sni || proxy.servername || server,
@@ -243,6 +283,15 @@ function buildOutbound(proxy) {
   if (proxy['client-fingerprint']) {
     outbound.tls = outbound.tls || {};
     outbound.tls.utls = { enabled: true, fingerprint: proxy['client-fingerprint'] };
+  }
+  if (proxy['ech-opts']?.enable && outbound.tls?.enabled) {
+    const ech = { enabled: true };
+    if (proxy['ech-opts']['query-server-name']) {
+      ech.query_server_name = proxy['ech-opts']['query-server-name'];
+    } else if (proxy['ech-opts'].config) {
+      ech.config = [`-----BEGIN ECH CONFIGS-----\n${proxy['ech-opts'].config}\n-----END ECH CONFIGS-----`];
+    }
+    outbound.tls.ech = ech;
   }
 
   if (proxy.tfo) {

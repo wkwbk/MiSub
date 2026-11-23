@@ -76,6 +76,35 @@ function stripInternalProxyFields(proxies) {
 }
 
 /**
+ * 将内部策略组规范化为标准 Clash/Mihomo 顶层字段。
+ * 内置策略组工厂使用 `options: { url, interval, tolerance }` 作为跨内核中间结构，
+ * 输出到 Clash YAML 时必须拍平到顶层，且为 url-test / fallback 补齐默认测速参数。
+ * @param {Object[]} proxyGroups
+ * @returns {Object[]}
+ */
+function normalizeClashProxyGroups(proxyGroups) {
+  return proxyGroups.map((group) => {
+    const { options: groupOptions, ...rest } = group;
+    const normalized = { ...rest };
+    if (groupOptions && typeof groupOptions === 'object') {
+      if (groupOptions.url !== undefined && normalized.url === undefined) normalized.url = groupOptions.url;
+      if (groupOptions.interval !== undefined && normalized.interval === undefined) {
+        normalized.interval = groupOptions.interval;
+      }
+      if (groupOptions.tolerance !== undefined && normalized.tolerance === undefined) {
+        normalized.tolerance = groupOptions.tolerance;
+      }
+      if (groupOptions.lazy !== undefined && normalized.lazy === undefined) normalized.lazy = groupOptions.lazy;
+    }
+    if (normalized.type === 'url-test' || normalized.type === 'fallback') {
+      if (!normalized.url) normalized.url = 'http://www.gstatic.com/generate_204';
+      if (!normalized.interval) normalized.interval = 300;
+    }
+    return normalized;
+  });
+}
+
+/**
  * 为 Mihomo/Meta 生成链式代理节点。
  * 当前 Meta 内核不再支持 relay 策略组语义，应通过 dialer-proxy 让落地节点经由入口节点拨号。
  * @param {Object[]} proxies 原始代理对象（保留内部 metadata）
@@ -245,7 +274,7 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
         'subscription-url': options.managedConfigUrl || '',
       },
 
-      'proxy-groups': proxyGroups,
+      'proxy-groups': normalizeClashProxyGroups(proxyGroups),
       ...(Object.keys(ruleProviders).length ? { 'rule-providers': ruleProviders } : {}),
       rules: clashRules,
     };

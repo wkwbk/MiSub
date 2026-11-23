@@ -6,6 +6,47 @@ import { applyDownloadInheritanceGuard, parseXhttpExtra } from '../xhttp-extra.j
 import { extractName, parseHostPort, parseQueryParams } from './common.js';
 
 /**
+ * 解析 ECH 参数为 Mihomo/Clash 兼容的 ech-opts 对象
+ * 支持：
+ * - `<domain>+<doh>`（如 cloudflare-ech.com+https://dns.alidns.com/dns-query）
+ * - 纯域名（如 cloudflare-ech.com）
+ * - 静态 Base64 ECHConfigList
+ * - 布尔开关（1 / true）
+ * @param {string|null|undefined} echRaw
+ * @returns {Object|null}
+ */
+function buildEchOpts(echRaw) {
+  const raw = String(echRaw || '').trim();
+  if (!raw || raw === '0' || raw.toLowerCase() === 'false') return null;
+
+  if (raw === '1' || raw.toLowerCase() === 'true') {
+    return { enable: true };
+  }
+
+  // URLSearchParams 会把未编码的 '+' 解析为空格，兼容 '+' 与空格分隔的 `<domain>+<doh>`
+  // 注意 Base64 本身也可能包含 '+'，因此必须确认左侧是合法域名且右侧是 DNS/DoH 地址
+  const domainDohMatch = raw.match(/^([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})[+\s]+((?:https?|udp|tcp|tls|quic):\/\/.+)$/i);
+  if (domainDohMatch) {
+    return {
+      enable: true,
+      'query-server-name': domainDohMatch[1],
+    };
+  }
+
+  if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(raw)) {
+    return {
+      enable: true,
+      'query-server-name': raw,
+    };
+  }
+
+  return {
+    enable: true,
+    config: raw,
+  };
+}
+
+/**
  * 将 VLESS URL 转换为 Clash 代理对象
  * @param {string} url - VLESS URL
  * @returns {Object|null} Clash 代理对象
@@ -191,6 +232,11 @@ export function parseVlessUrl(url) {
       proxy.alpn = params.get('alpn').split(',');
     }
 
+    const echOpts = buildEchOpts(params.get('ech'));
+    if (echOpts) {
+      proxy['ech-opts'] = echOpts;
+    }
+
     // [重要] dialer-proxy 链式代理
     if (params.get('dp')) {
       proxy['dialer-proxy'] = params.get('dp');
@@ -292,6 +338,11 @@ export function parseTrojanUrl(url) {
 
     if (params.get('allowInsecure') === '1' || params.get('insecure') === '1') {
       proxy['skip-cert-verify'] = true;
+    }
+
+    const echOpts = buildEchOpts(params.get('ech'));
+    if (echOpts) {
+      proxy['ech-opts'] = echOpts;
     }
 
     // [重要] dialer-proxy 链式代理
@@ -425,6 +476,10 @@ export function parseVmessUrl(url) {
         proxy.alpn = String(config.alpn)
           .split(',')
           .map((s) => s.trim());
+      const echOpts = buildEchOpts(config.ech);
+      if (echOpts) {
+        proxy['ech-opts'] = echOpts;
+      }
     }
 
     return proxy;

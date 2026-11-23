@@ -169,19 +169,17 @@ function clashProxyToSurgeResult(proxy) {
     }
     appendTlsParams(parts, proxy);
   } else if (type === 'tuic') {
-    // 格式: name = tuic, server, port, token=xxx
-    // TUIC v5 使用 uuid + password 格式，Surge 使用 token 参数
-    parts.push(`${name} = tuic`);
+    // Surge 区分 TUIC v4 (`tuic` + `token`) 与 TUIC v5 (`tuic-v5` + `uuid` + `password`)
+    const isTuicV5 = !proxy.token && Boolean(proxy.uuid) && Boolean(proxy.password);
+    parts.push(`${name} = ${isTuicV5 ? 'tuic-v5' : 'tuic'}`);
     parts.push(server);
     parts.push(String(port));
-    // 回退链：token → uuid:password → password
-    let tokenValue = proxy.token;
-    if (!tokenValue && proxy.uuid) {
-      // TUIC v5: uuid 作为 token，password 单独传递（部分实现中合并为 uuid:password）
-      tokenValue = proxy.password ? `${proxy.uuid}:${proxy.password}` : proxy.uuid;
+    if (isTuicV5) {
+      parts.push(`password=${surgeQuote(proxy.password)}`);
+      parts.push(`uuid=${surgeQuote(proxy.uuid)}`);
+    } else {
+      parts.push(`token=${surgeQuote(proxy.token || proxy.uuid || proxy.password || '')}`);
     }
-    if (!tokenValue) tokenValue = proxy.password || '';
-    parts.push(`token=${surgeQuote(tokenValue)}`);
     // alpn（必须与服务端 ALPN 匹配）
     if (proxy.alpn) {
       const alpnStr = Array.isArray(proxy.alpn) ? proxy.alpn[0] : proxy.alpn;
