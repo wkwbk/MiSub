@@ -240,7 +240,7 @@ ensureConfig();
             />
             <span
               ><strong class="font-medium">{{ t('settings.webdavScopeDataOnly') }}</strong
-              ><br /><span class="text-xs text-fg-subtle leading-relaxed">{{
+              ><br /><span class="text-xs text-fg-muted leading-relaxed">{{
                 t('settings.webdavScopeDataOnlyDesc')
               }}</span></span
             >
@@ -254,7 +254,7 @@ ensureConfig();
             />
             <span
               ><strong class="font-medium">{{ t('settings.webdavScopeDataAndSettings') }}</strong
-              ><br /><span class="text-xs text-fg-subtle leading-relaxed">{{
+              ><br /><span class="text-xs text-fg-muted leading-relaxed">{{
                 t('settings.webdavScopeDataAndSettingsDesc')
               }}</span></span
             >
@@ -282,15 +282,16 @@ ensureConfig();
               { value: 'monthly', label: t('settings.webdavIntervalMonthly') },
             ]"
           />
-          <p class="text-xs text-fg-subtle leading-relaxed">
+          <p class="text-xs text-fg-muted leading-relaxed">
             {{ t('settings.webdavAutoBackupHint') }}
           </p>
         </div>
       </div>
 
-      <p class="flex items-start gap-2 text-xs text-fg-subtle leading-relaxed">
-        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
-        <span>{{ t('settings.webdavSecurityHint') }}</span>
+      <p
+        class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-2 text-xs leading-relaxed text-amber-300/90"
+      >
+        {{ t('settings.webdavSecurityHint') }}
       </p>
 
       <div class="pt-6 border-t border-line flex flex-col lg:flex-row lg:items-end justify-between gap-6 text-xs">

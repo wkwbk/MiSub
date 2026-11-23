@@ -16,6 +16,13 @@ import {
   POLICY_GROUPS,
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
+import {
+  applyGeneralGroupToggles,
+  applySurgeBaseConfigOverride,
+  buildVisualPolicyGroups,
+  buildVisualRulesAndProviders,
+  normalizeBuiltinTransform,
+} from '../visual-rules-builder.js';
 
 /**
  * 安全化节点名称，移除或转义可能破坏 Surge INI 格式的字符
@@ -451,7 +458,8 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
   sections.push(`[Proxy]\nDIRECT = direct\n${finalProxyLines.join('\n')}`);
 
   const levelKey = (ruleLevel || 'std').toUpperCase();
-  const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+  const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
+  const useVisualRules = Boolean(bt?.visualRulesEnabled);
 
   // 构造带元数据的代理对象用于策略分组
   const proxiesForGrouping = finalProxyNames.map((name, index) => ({
@@ -461,9 +469,18 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
   }));
 
   // 生成策略组
-  let abstractGroups = policyFactory(proxiesForGrouping, options);
-  abstractGroups = pruneProxyGroups(abstractGroups, proxiesForGrouping);
-  if (levelKey === 'RELAY') {
+  let abstractGroups;
+  if (useVisualRules) {
+    abstractGroups = buildVisualPolicyGroups(proxiesForGrouping, { ...options, builtinTransform: bt });
+  } else {
+    const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    abstractGroups = policyFactory(proxiesForGrouping, options);
+    if (bt) {
+      abstractGroups = applyGeneralGroupToggles(abstractGroups, { builtinTransform: bt });
+    }
+    abstractGroups = pruneProxyGroups(abstractGroups, proxiesForGrouping);
+  }
+  if (!useVisualRules && levelKey === 'RELAY') {
     abstractGroups = abstractGroups.map((group) =>
       group.name === '🔗 链式代理' ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] } : group,
     );
@@ -491,7 +508,9 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
 
   sections.push(`[Proxy Group]\n${proxyGroupLines.join('\n')}`);
 
-  const builtinRuleLines = getBuiltinRules(levelKey, 'surge');
+  const builtinRuleLines = useVisualRules
+    ? buildVisualRulesAndProviders('surge', { builtinTransform: bt }).rules
+    : getBuiltinRules(levelKey, 'surge');
   const ruleLines = [
     '# 基础分流',
     'DOMAIN-SUFFIX,localhost,DIRECT',
@@ -500,7 +519,7 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
     'IP-CIDR,172.16.0.0/12,DIRECT',
     'IP-CIDR,192.168.0.0/16,DIRECT',
     ...builtinRuleLines,
-    `FINAL,${levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP},dns-failed`,
+    `FINAL,${!useVisualRules && levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP},dns-failed`,
   ];
   sections.push(`[Rule]\n${ruleLines.filter(Boolean).join('\n')}`);
 
@@ -508,7 +527,11 @@ dns-server = 119.29.29.29, 223.5.5.5, system`);
     sections.push(wireguardSections.join('\n\n'));
   }
 
-  return sections.join('\n\n') + '\n';
+  const finalSections = bt?.baseConfig?.surge
+    ? applySurgeBaseConfigOverride(sections, bt.baseConfig.surge, managedLine)
+    : sections;
+
+  return finalSections.join('\n\n') + '\n';
 }
 
 function escapeRegExp(str) {

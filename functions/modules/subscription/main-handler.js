@@ -684,6 +684,7 @@ export async function handleMisubRequest(context) {
           isMeta: isMetaCore(userAgentHeader, url.searchParams),
           customDnsOverride: config.customDnsOverride || '',
           dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
+          builtinTransform: config.builtinTransform || null,
         };
         const rendered = await ProcessorService.renderOutput({
           targetFormat,
@@ -859,6 +860,7 @@ export async function handleMisubRequest(context) {
     isMeta: isMetaCore(userAgentHeader, url.searchParams),
     customDnsOverride: config.customDnsOverride || '',
     dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
+    builtinTransform: config.builtinTransform || null,
   };
 
   const managedConfigUrl = buildManagedConfigUrl(request.url);

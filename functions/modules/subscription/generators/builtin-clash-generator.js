@@ -16,6 +16,13 @@ import {
   POLICY_GROUPS,
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
+import {
+  applyClashBaseConfigOverride,
+  applyGeneralGroupToggles,
+  buildVisualPolicyGroups,
+  buildVisualRulesAndProviders,
+  normalizeBuiltinTransform,
+} from '../visual-rules-builder.js';
 import * as yaml from 'js-yaml';
 
 /**
@@ -153,28 +160,45 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
   // 生成 YAML
   try {
     const levelKey = (ruleLevel || 'std').toUpperCase();
-    const rawRules = isHiddifyClient ? ['MATCH,🚀 节点选择'] : getBuiltinRules(levelKey, 'clash');
+    const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
+    const useVisualRules = Boolean(bt?.visualRulesEnabled) && !isHiddifyClient;
 
-    // 生成策略组并执行引用修剪
-    const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-    let proxyGroups = policyGroupsFactory(proxies, options);
-    proxyGroups = pruneProxyGroups(proxyGroups, proxies);
+    let proxyGroups;
+    let ruleProviders;
+    let clashRules;
 
-    // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
-    // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
-    const ruleProviders = isHiddifyClient ? {} : getRemoteProviderDefinitions('clash', rawRules);
+    if (useVisualRules) {
+      proxyGroups = buildVisualPolicyGroups(proxies, { ...options, builtinTransform: bt });
+      const visualOutput = buildVisualRulesAndProviders('clash', { builtinTransform: bt });
+      ruleProviders = visualOutput.clashProviders;
+      clashRules = visualOutput.rules;
+    } else {
+      const rawRules = isHiddifyClient ? ['MATCH,🚀 节点选择'] : getBuiltinRules(levelKey, 'clash');
 
-    // 转换规则行为最终字符串
-    const clashRules = rawRules
-      .map((r) => {
-        if (typeof r === 'string') return r;
-        if (r.type === 'rule-provider') return `RULE-SET,${r.provider},${r.target}`;
-        return null;
-      })
-      .filter(Boolean);
+      // 生成策略组并执行引用修剪
+      const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+      proxyGroups = policyGroupsFactory(proxies, options);
+      if (bt) {
+        proxyGroups = applyGeneralGroupToggles(proxyGroups, { builtinTransform: bt });
+      }
+      proxyGroups = pruneProxyGroups(proxyGroups, proxies);
+
+      // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
+      // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
+      ruleProviders = isHiddifyClient ? {} : getRemoteProviderDefinitions('clash', rawRules);
+
+      // 转换规则行为最终字符串
+      clashRules = rawRules
+        .map((r) => {
+          if (typeof r === 'string') return r;
+          if (r.type === 'rule-provider') return `RULE-SET,${r.provider},${r.target}`;
+          return null;
+        })
+        .filter(Boolean);
+    }
 
     let publicProxies = stripInternalProxyFields(proxies);
-    if (levelKey === 'RELAY' && enableMihomoSyntax) {
+    if (!useVisualRules && levelKey === 'RELAY' && enableMihomoSyntax) {
       const relayConfig = applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups);
       publicProxies = relayConfig.proxies;
       proxyGroups = relayConfig.proxyGroups;
@@ -194,14 +218,24 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
       subscriptionDnsPolicies: options.subscriptionDnsPolicies || [],
     });
 
-    const config = {
+    const clashApiFields = bt?.enableClashApi
+      ? {
+          'external-controller': bt.externalController || '0.0.0.0:9090',
+          'external-ui': 'ui',
+          ...(bt.externalUiDownloadUrl ? { 'external-ui-url': bt.externalUiDownloadUrl } : {}),
+        }
+      : {
+          'external-controller': '127.0.0.1:9090',
+        };
+
+    let config = {
       'mixed-port': 7890,
       'allow-lan': false,
       'bind-address': '127.0.0.1',
       ipv6: false,
       mode: 'rule',
       'log-level': 'info',
-      'external-controller': '127.0.0.1:9090',
+      ...clashApiFields,
 
       dns: dnsConfig,
 
@@ -215,6 +249,10 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
       ...(Object.keys(ruleProviders).length ? { 'rule-providers': ruleProviders } : {}),
       rules: clashRules,
     };
+
+    if (bt?.baseConfig?.clash) {
+      config = applyClashBaseConfigOverride(config, bt.baseConfig.clash);
+    }
 
     let yamlStr = yaml.dump(config, {
       indent: 2,

@@ -92,7 +92,7 @@ async function handleTestConnection() {
     </SectionHeader>
 
     <div class="space-y-4">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="block text-xs font-medium text-fg-muted mb-1.5">
             {{ t('settings.shortLinkApiUrl') }}
@@ -104,7 +104,7 @@ async function handleTestConnection() {
             type="text"
             @input="updateField('apiUrl', $event.target.value)"
           />
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.shortLinkApiUrlHint') }}
           </p>
         </div>
@@ -136,7 +136,7 @@ async function handleTestConnection() {
               <Eye v-else class="h-4 w-4" />
             </button>
           </div>
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.shortLinkApiTokenHint') }}
           </p>
         </div>

@@ -249,19 +249,15 @@ const helperText = computed(() => {
 
     <div
       v-if="missingCustomTemplateValue"
-      class="mt-2 flex items-center gap-2 rounded-md border border-line bg-transparent px-3 py-2 text-xs leading-relaxed text-fg-muted"
+      class="mt-2 rounded-md border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300"
     >
-      <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400"></span>
-      <div>
-        <span>{{ t('transformSelector.missingTemplatePrefix') }}</span><code class="font-mono text-fg">{{
-          missingCustomTemplateValue
-        }}</code
-        ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
-      </div>
+      <span>{{ t('transformSelector.missingTemplatePrefix') }}</span
+      ><code class="font-mono text-amber-200">{{ missingCustomTemplateValue }}</code
+      ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
     </div>
 
     <div v-if="type === 'config'" class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs">
-      <span class="leading-relaxed text-fg-subtle">{{ helperText }}</span>
+      <span class="leading-relaxed text-fg-muted">{{ helperText }}</span>
       <button
         v-if="!excludeBuiltinAssets"
         :aria-expanded="showTemplateVariables"

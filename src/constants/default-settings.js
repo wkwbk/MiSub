@@ -1,4 +1,5 @@
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
+import { DEFAULT_BUILTIN_TRANSFORM } from '@shared/visual-rules-catalog.js';
 
 export const DEFAULT_SETTINGS = {
   fileName: 'MiSub',
@@ -13,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   ruleLevel: 'std',
   builtinSkipCertVerify: false,
   builtinEnableUdp: true,
+  builtinTransform: { ...DEFAULT_BUILTIN_TRANSFORM, baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig } },
   builtinLoonSkipCertVerify: false,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',

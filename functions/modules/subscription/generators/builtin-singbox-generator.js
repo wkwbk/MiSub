@@ -15,6 +15,13 @@ import {
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
+import {
+  applyGeneralGroupToggles,
+  applySingboxBaseConfigOverride,
+  buildVisualPolicyGroups,
+  buildVisualRulesAndProviders,
+  normalizeBuiltinTransform,
+} from '../visual-rules-builder.js';
 
 function sanitizeName(name) {
   if (!name) return 'Untitled';
@@ -279,12 +286,23 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
   }
 
   const levelKey = (ruleLevel || 'std').toUpperCase();
-  // 获取内置策略组
-  const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-  let proxyGroups = policyGroupsFactory(outbounds, options);
-  proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
+  const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
+  const useVisualRules = Boolean(bt?.visualRulesEnabled);
 
-  if (levelKey === 'RELAY') {
+  let proxyGroups;
+  if (useVisualRules) {
+    proxyGroups = buildVisualPolicyGroups(outbounds, { ...options, builtinTransform: bt });
+  } else {
+    // 获取内置策略组
+    const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
+    proxyGroups = policyGroupsFactory(outbounds, options);
+    if (bt) {
+      proxyGroups = applyGeneralGroupToggles(proxyGroups, { builtinTransform: bt });
+    }
+    proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
+  }
+
+  if (!useVisualRules && levelKey === 'RELAY') {
     const chainOutbounds = nodeEntries.map(({ tag, outbound }) => ({
       ...outbound,
       tag: `🔗 链式代理 - ${tag}`,
@@ -329,36 +347,60 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     };
   });
 
-  // 从统一规则库获取分流规则
-  const rawRules = getBuiltinRules(levelKey, 'singbox');
+  let ruleSets;
+  let routeRules;
+  if (useVisualRules) {
+    const visualOutput = buildVisualRulesAndProviders('singbox', { builtinTransform: bt });
+    const dnsCnRuleSet = getSingboxDnsRuleSet();
+    const seenTags = new Set([dnsCnRuleSet.tag]);
+    ruleSets = [
+      dnsCnRuleSet,
+      ...visualOutput.singboxRuleSets.filter((item) => {
+        if (seenTags.has(item.tag)) return false;
+        seenTags.add(item.tag);
+        return true;
+      }),
+    ];
+    routeRules = [
+      {
+        ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
+        outbound: 'DIRECT',
+      },
+      { domain_suffix: ['localhost'], outbound: 'DIRECT' },
+      ...visualOutput.rules,
+    ];
+  } else {
+    // 从统一规则库获取分流规则
+    const rawRules = getBuiltinRules(levelKey, 'singbox');
 
-  // 提取远程 Rule Set 定义 (Sing-Box 格式)
-  const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules);
-  const ruleSets = [
-    getSingboxDnsRuleSet(),
-    ...Object.values(ruleSetsMap).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
-  ];
+    // 提取远程 Rule Set 定义 (Sing-Box 格式)
+    const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules);
+    ruleSets = [
+      getSingboxDnsRuleSet(),
+      ...Object.values(ruleSetsMap).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
+    ];
 
-  // 转换路由规则：将中间对象映射为 Sing-Box 语法
-  const routeRules = [
-    {
-      ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
-      outbound: 'DIRECT',
-    },
-    { domain_suffix: ['localhost'], outbound: 'DIRECT' },
-    ...rawRules.map((r) => {
-      if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
-      return r; // 已经是 Sing-Box 格式的普通规则
-    }),
-    { domain_suffix: ['cn'], outbound: 'DIRECT' },
-  ];
+    // 转换路由规则：将中间对象映射为 Sing-Box 语法
+    routeRules = [
+      {
+        ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
+        outbound: 'DIRECT',
+      },
+      { domain_suffix: ['localhost'], outbound: 'DIRECT' },
+      ...rawRules.map((r) => {
+        if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
+        return r; // 已经是 Sing-Box 格式的普通规则
+      }),
+      { domain_suffix: ['cn'], outbound: 'DIRECT' },
+    ];
+  }
 
   const dnsConfig = buildSingboxDnsConfig(options.customDnsOverride || '', {
     mode: options.dnsMode,
     proxyGroup: DNS_PROXY_GROUP,
   });
 
-  const config = {
+  let config = {
     log: { level: 'info' },
     dns: dnsConfig,
     inbounds: [
@@ -375,11 +417,26 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     route: {
       auto_detect_interface: true,
       default_domain_resolver: dnsConfig.servers[0]?.tag || 'dns-cn-1',
-      final: levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP,
+      final: !useVisualRules && levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP,
       rule_set: ruleSets,
       rules: routeRules,
     },
+    ...(bt?.enableClashApi
+      ? {
+          experimental: {
+            clash_api: {
+              external_controller: bt.externalController || '0.0.0.0:9090',
+              external_ui: 'ui',
+              ...(bt.externalUiDownloadUrl ? { external_ui_download_url: bt.externalUiDownloadUrl } : {}),
+            },
+          },
+        }
+      : {}),
   };
+
+  if (bt?.baseConfig?.singbox) {
+    config = applySingboxBaseConfigOverride(config, bt.baseConfig.singbox);
+  }
 
   return JSON.stringify(config, null, 2) + '\n';
 }

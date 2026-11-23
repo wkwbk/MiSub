@@ -147,7 +147,7 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         </template>
       </SectionHeader>
 
-      <p v-if="!settings.regionOverrides.length" class="text-xs text-fg-subtle">
+      <p v-if="!settings.regionOverrides.length" class="text-xs text-fg-muted">
         {{ t('settings.regionOverridesEmpty') }}
       </p>
 

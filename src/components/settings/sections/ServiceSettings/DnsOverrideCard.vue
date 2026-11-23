@@ -65,10 +65,7 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
         <Globe class="h-4 w-4" />
       </template>
       <template v-if="hasValue" #actions>
-        <span
-          class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-[10px] font-medium text-fg-muted"
-        >
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+        <span class="rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
           {{ t('settings.dnsOverrideActive') }}
         </span>
       </template>
@@ -90,7 +87,7 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
       <p v-if="jsonError" class="mt-2 text-xs text-red-400">
         {{ jsonError }}
       </p>
-      <p v-else class="mt-2 text-xs leading-relaxed text-fg-subtle">
+      <p v-else class="mt-2 text-xs leading-relaxed text-fg-muted">
         {{ t('settings.dnsOverrideHint') }}
       </p>
     </div>

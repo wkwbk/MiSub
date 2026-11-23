@@ -1,4 +1,5 @@
 import { SETTINGS_KEYS } from '../storage/d1-schema.js';
+import { DEFAULT_BUILTIN_TRANSFORM } from '../../shared/visual-rules-catalog.js';
 
 export const STORAGE_KEY_SETTINGS = SETTINGS_KEYS.MAIN;
 
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS = {
   ruleLevel: 'std',
   builtinSkipCertVerify: false,
   builtinEnableUdp: true,
+  builtinTransform: { ...DEFAULT_BUILTIN_TRANSFORM, baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig } },
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   notifyThresholdDays: 3,

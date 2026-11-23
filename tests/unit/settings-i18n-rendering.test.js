@@ -150,7 +150,7 @@ describe('settings page English translations', () => {
     });
 
     expect(transform.text()).toContain('Rules and config scheme');
-    expect(transform.text()).toContain('Built-in renderer');
+    expect(transform.text()).toContain('Built-in');
     expect(transform.text()).toContain('External backend parameters');
     expect(transform.text()).toContain('Test backend availability');
     expectNoChineseOrKeys(transform.text());

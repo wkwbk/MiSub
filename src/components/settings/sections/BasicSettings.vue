@@ -328,7 +328,7 @@ const handleCustomSubFetchIntervalBlur = () => {
           />
         </div>
       </div>
-      <p class="mt-4 text-xs text-fg-subtle leading-relaxed">
+      <p class="mt-4 text-xs text-fg-muted leading-relaxed">
         {{ t('settings.subscriptionTokenRotationHint') }}
       </p>
     </section>
@@ -404,9 +404,11 @@ const handleCustomSubFetchIntervalBlur = () => {
               </div>
             </div>
           </div>
-          <p v-if="settings.autoUpdateInterval === 0" class="text-xs text-amber-400 mt-2.5 flex items-start gap-1.5">
-            <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-            <span>{{ t('settings.autoUpdateDisabledHint') }}</span>
+          <p
+            v-if="settings.autoUpdateInterval === 0"
+            class="mt-2.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
+          >
+            {{ t('settings.autoUpdateDisabledHint') }}
           </p>
         </div>
 
@@ -572,9 +574,10 @@ const handleCustomSubFetchIntervalBlur = () => {
             </div>
             <Switch v-model="settings.enableAccessLog" class="shrink-0 mt-0.5" />
           </div>
-          <p class="text-xs text-amber-400/90 leading-relaxed flex items-start gap-1.5">
-            <span class="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-            <span>{{ t('settings.accessLogQuotaHint') }}</span>
+          <p
+            class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
+          >
+            {{ t('settings.accessLogQuotaHint') }}
           </p>
 
           <div
@@ -695,7 +698,7 @@ const handleCustomSubFetchIntervalBlur = () => {
                 <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
                   t('settings.disguiseDefault404')
                 }}</span>
-                <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseDefault404Desc') }}</span>
+                <span class="block text-xs text-fg-muted">{{ t('settings.disguiseDefault404Desc') }}</span>
               </div>
             </label>
             <label class="flex items-center cursor-pointer group">
@@ -709,12 +712,12 @@ const handleCustomSubFetchIntervalBlur = () => {
                 <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
                   t('settings.disguiseRedirect')
                 }}</span>
-                <span class="block text-xs text-fg-subtle">{{ t('settings.disguiseRedirectDesc') }}</span>
+                <span class="block text-xs text-fg-muted">{{ t('settings.disguiseRedirectDesc') }}</span>
               </div>
             </label>
           </div>
 
-          <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down max-w-md">
+          <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down">
             <Input
               v-model="disguiseConfig.redirectUrl"
               :label="t('settings.disguiseTargetUrl')"
@@ -726,7 +729,7 @@ const handleCustomSubFetchIntervalBlur = () => {
 
         <!-- 自定义登录路径设置 -->
         <div class="py-5 first:pt-0 last:pb-0">
-          <div class="max-w-md">
+          <div>
             <!-- 隐藏的诱饵输入框，吸收浏览器自动填充 -->
             <input
               aria-hidden="true"
@@ -755,11 +758,12 @@ const handleCustomSubFetchIntervalBlur = () => {
               type="search"
             />
           </div>
-          <p class="text-xs text-fg-subtle mt-2 leading-relaxed">
+          <p class="text-xs text-fg-muted mt-2 leading-relaxed">
             {{ t('settings.customAdminPathHint') }}
           </p>
-          <p class="text-xs text-amber-400/90 mt-1.5 flex items-center gap-1.5">
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+          <p
+            class="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
+          >
             {{ t('settings.reservedPathListHint') }}
           </p>
         </div>

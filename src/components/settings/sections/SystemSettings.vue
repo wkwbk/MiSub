@@ -88,12 +88,12 @@ const handleCopyExternalApiToken = async (settings) => {
           <p class="text-xs leading-relaxed text-fg-muted">
             {{ t('systemSettings.externalApiHint') }}
           </p>
-          <p class="text-xs font-mono leading-relaxed text-fg-subtle">
+          <p class="text-xs font-mono leading-relaxed text-fg-muted">
             {{ t('systemSettings.externalApiPathHint') }}
           </p>
         </div>
 
-        <div class="grid gap-6 md:grid-cols-2 max-w-2xl">
+        <div class="grid gap-6 md:grid-cols-2">
           <Input
             v-model="settings.externalApi.tokens[0].name"
             :label="t('systemSettings.externalApiTokenName')"

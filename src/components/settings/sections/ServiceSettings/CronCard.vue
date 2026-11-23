@@ -76,7 +76,7 @@ async function copyText(value) {
 
     <div class="space-y-5">
       <!-- Cron Secret 输入框 -->
-      <div class="max-w-xl">
+      <div>
         <label class="block text-xs font-medium text-fg-muted mb-1.5">Cron Secret</label>
         <input
           v-model="settings.cronSecret"
@@ -84,7 +84,7 @@ async function copyText(value) {
           class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
           type="text"
         />
-        <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+        <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
           {{ t('settings.cronSecretHint') }}
         </p>
       </div>
@@ -94,11 +94,11 @@ async function copyText(value) {
         <div
           v-for="task in cronTasks"
           :key="task.key"
-          class="rounded-md border border-line bg-inset/40 p-4 space-y-3 max-w-2xl"
+          class="rounded-md border border-line bg-inset/40 p-4 space-y-3"
         >
           <div class="space-y-0.5">
             <h4 class="text-xs font-semibold text-fg">{{ task.title }}</h4>
-            <p class="text-xs text-fg-subtle leading-relaxed">{{ task.desc }}</p>
+            <p class="text-xs text-fg-muted leading-relaxed">{{ task.desc }}</p>
           </div>
 
           <div class="flex rounded-md shadow-none">
@@ -138,23 +138,20 @@ async function copyText(value) {
           </div>
         </div>
 
-        <div class="pl-4 border-l-2 border-line space-y-1 max-w-2xl">
-          <div class="flex items-start gap-2">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0 mt-[5px]"></span>
-            <div class="space-y-0.5">
-              <p class="text-xs font-medium text-fg">
-                {{ t('settings.cronRecommendedSecurity') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.cronBearerHint') }}
-              </p>
-            </div>
-          </div>
+        <div class="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-2.5 space-y-0.5">
+          <p class="text-xs font-medium text-emerald-400">
+            {{ t('settings.cronRecommendedSecurity') }}
+          </p>
+          <p class="text-xs text-fg-muted leading-relaxed">
+            {{ t('settings.cronBearerHint') }}
+          </p>
         </div>
       </div>
-      <p v-else class="flex items-center gap-2 text-xs text-fg-subtle">
-        <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-        <span>{{ t('settings.cronEmptyHint') }}</span>
+      <p
+        v-else
+        class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-2 text-xs leading-relaxed text-amber-300/90"
+      >
+        {{ t('settings.cronEmptyHint') }}
       </p>
 
       <div

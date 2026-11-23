@@ -361,7 +361,7 @@ const getPlatformClass = (platform) => {
     </SectionHeader>
 
     <div v-if="publicClientsConfig.enabled" class="space-y-4">
-      <div v-if="loading" class="text-center py-8 text-xs text-fg-subtle">
+      <div v-if="loading" class="text-center py-8 text-xs text-fg-muted">
         {{ t('common.loading') }}
       </div>
 
@@ -385,7 +385,7 @@ const getPlatformClass = (platform) => {
 
         <div
           v-if="filteredClients.length === 0"
-          class="py-8 text-center text-xs text-fg-subtle border border-dashed border-line rounded-md"
+          class="py-8 text-center text-xs text-fg-muted border border-dashed border-line rounded-md"
         >
           {{ t('settings.clientEmptyPlatform') }}
         </div>
@@ -637,7 +637,7 @@ const getPlatformClass = (platform) => {
                     type="text"
                   />
                 </div>
-                <p class="mt-1 text-xs text-fg-subtle">
+                <p class="mt-1 text-xs text-fg-muted">
                   {{ t('settings.clientRepoHint') }}
                 </p>
               </div>
@@ -687,9 +687,8 @@ const getPlatformClass = (platform) => {
     >
       <template #body>
         <div class="space-y-3">
-          <div class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line">
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-            <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
+          <div class="rounded-md border border-amber-500/25 bg-amber-500/5 p-3 text-xs font-medium text-amber-300">
+            {{ t('settings.clientDangerWarning') }}
           </div>
           <p class="text-xs text-fg-muted">
             {{ t('settings.clientResetConfirmQuestion') }}
@@ -710,9 +709,8 @@ const getPlatformClass = (platform) => {
     >
       <template #body>
         <div class="space-y-3">
-          <div class="flex items-center gap-2.5 text-fg bg-transparent p-3 rounded-md border border-line">
-            <span class="h-1.5 w-1.5 rounded-full bg-red-500 shrink-0"></span>
-            <p class="text-xs font-medium">{{ t('settings.clientDangerWarning') }}</p>
+          <div class="rounded-md border border-red-500/25 bg-red-500/5 p-3 text-xs font-medium text-red-300">
+            {{ t('settings.clientDangerWarning') }}
           </div>
           <p class="text-xs text-fg-muted">
             {{ t('settings.clientDeleteConfirmQuestion') }}

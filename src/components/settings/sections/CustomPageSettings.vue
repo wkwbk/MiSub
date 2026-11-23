@@ -298,8 +298,7 @@ const normalizeFullPageSource = () => {
         </div>
 
         <div class="pt-2">
-          <h3 class="text-xs font-semibold text-fg-muted mb-3 flex items-center gap-2">
-            <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+          <h3 class="text-xs font-semibold text-fg-muted mb-3">
             {{ t('settings.customPageTemplatesTitle') }}
           </h3>
           <div class="flex flex-wrap gap-2.5">
@@ -315,9 +314,8 @@ const normalizeFullPageSource = () => {
           </div>
         </div>
 
-        <div class="pl-4 border-l-2 border-line text-xs text-fg-muted leading-relaxed space-y-2">
-          <p class="font-semibold text-fg flex items-center gap-2">
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
+        <div class="rounded-md border border-line bg-inset/50 p-4 text-xs text-fg-muted leading-relaxed space-y-2">
+          <p class="font-semibold text-fg">
             {{ t('settings.customPagePlaceholdersTitle') }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
@@ -368,7 +366,7 @@ const normalizeFullPageSource = () => {
               </li>
             </ul>
           </div>
-          <p class="text-fg-subtle">{{ t('settings.customPageModeHint') }}</p>
+          <p class="text-fg-muted">{{ t('settings.customPageModeHint') }}</p>
         </div>
       </div>
     </section>

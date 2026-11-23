@@ -216,10 +216,10 @@ onMounted(() => {
       </div>
 
       <div class="divide-y divide-line-subtle">
-        <div v-if="loading" class="py-8 text-center text-xs text-fg-subtle">
+        <div v-if="loading" class="py-8 text-center text-xs text-fg-muted">
           {{ t('settings.guestbookLoading') }}
         </div>
-        <div v-else-if="filteredMessages.length === 0" class="py-8 text-center text-xs text-fg-subtle">
+        <div v-else-if="filteredMessages.length === 0" class="py-8 text-center text-xs text-fg-muted">
           {{ t('settings.guestbookEmpty') }}
         </div>
 

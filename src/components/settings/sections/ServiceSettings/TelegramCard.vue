@@ -194,7 +194,7 @@ async function syncPushBot() {
               placeholder="123456:ABC-DEF..."
               type="text"
             />
-            <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramBotTokenHint') }}
             </p>
           </div>
@@ -206,7 +206,7 @@ async function syncPushBot() {
               placeholder="123456789"
               type="text"
             />
-            <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramChatIdHint') }}
             </p>
           </div>
@@ -275,7 +275,7 @@ async function syncPushBot() {
               type="text"
               @input="(e) => updatePushConfigField('botToken', e.target.value)"
             />
-            <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramPushTokenHint') }}
             </p>
           </div>
@@ -290,7 +290,7 @@ async function syncPushBot() {
               type="text"
               @input="(e) => updatePushConfigField('webhookSecret', e.target.value)"
             />
-            <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramWebhookSecretHint') }}
             </p>
             <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-red-400">
@@ -308,10 +308,10 @@ async function syncPushBot() {
             rows="2"
             wrapperClass="mt-1.5"
           />
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.telegramAllowedUsersHint') }}
             <a
-              class="font-mono text-fg-muted underline hover:text-fg"
+              class="font-mono text-fg underline hover:opacity-80"
               href="https://t.me/userinfobot"
               target="_blank"
               >{{ t('settings.telegramGetUserId') }}</a
@@ -319,15 +319,14 @@ async function syncPushBot() {
           </p>
         </div>
 
-        <div class="flex items-center justify-between gap-6 py-4 border-y border-line">
-          <div class="flex items-start gap-2.5">
-            <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5"></span>
-            <div class="space-y-1">
-              <label class="block text-sm font-medium text-fg">{{ t('settings.telegramPublicAccess') }}</label>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.telegramPublicAccessHint') }}
-              </p>
-            </div>
+        <div
+          class="flex items-center justify-between gap-6 rounded-md border border-amber-500/25 bg-amber-500/5 px-4 py-3"
+        >
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-amber-400">{{ t('settings.telegramPublicAccess') }}</label>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.telegramPublicAccessHint') }}
+            </p>
           </div>
           <Switch
             :model-value="telegramPushConfig.allowAllUsers"
@@ -352,7 +351,7 @@ async function syncPushBot() {
               {{ copyStatus?.key === 'webhook' ? copyStatus.message : t('actions.copy') }}
             </button>
           </div>
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.telegramWebhookUrlHint') }}
           </p>
         </div>
@@ -375,75 +374,79 @@ async function syncPushBot() {
               {{ copyStatus?.key === 'setWebhook' ? copyStatus.message : t('actions.copy') }}
             </button>
           </div>
-          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.telegramSetWebhookHint') }}
           </p>
         </div>
 
-        <p v-else class="flex items-center gap-2 text-xs text-fg-subtle">
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
-          <span>{{ t('settings.telegramSetWebhookEmpty') }}</span>
+        <p
+          v-else
+          class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-2 text-xs leading-relaxed text-amber-300/90"
+        >
+          {{ t('settings.telegramSetWebhookEmpty') }}
         </p>
 
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <button
-            :disabled="isSyncingBot || !telegramPushConfig.botToken?.trim()"
-            class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            type="button"
-            @click="syncPushBot"
-          >
-            <Loader2 v-if="isSyncingBot" class="animate-spin h-4 w-4 text-fg-subtle" />
-            <span>{{ isSyncingBot ? t('settings.telegramSyncing') : t('settings.telegramSyncBot') }}</span>
-          </button>
-
-          <div
-            v-if="syncBotResult"
-            :class="syncBotResult.success ? 'text-emerald-400' : 'text-red-400'"
-            class="text-xs flex items-center gap-2 flex-wrap"
-          >
-            <span
-              :class="syncBotResult.success ? 'bg-emerald-500' : 'bg-red-500'"
-              class="h-1.5 w-1.5 rounded-full shrink-0"
-            ></span>
-            <span>{{ syncBotResult.message }}</span>
-            <details
-              v-if="syncBotResult.detail && !syncBotResult.success"
-              class="w-full mt-1 text-xs font-mono bg-inset border border-line p-2 rounded-md max-h-32 overflow-auto"
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div class="flex flex-wrap items-center gap-3">
+            <button
+              :disabled="isSyncingBot || !telegramPushConfig.botToken?.trim()"
+              class="px-4 py-1.5 bg-accent hover:opacity-90 border border-accent text-accent-fg text-xs font-semibold rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              type="button"
+              @click="syncPushBot"
             >
-              <summary class="cursor-pointer text-fg-subtle">
-                {{ t('settings.telegramDetails') }}
-              </summary>
-              <pre>{{ JSON.stringify(syncBotResult.detail, null, 2) }}</pre>
-            </details>
+              <Loader2 v-if="isSyncingBot" class="animate-spin h-4 w-4 text-fg-subtle" />
+              <span>{{ isSyncingBot ? t('settings.telegramSyncing') : t('settings.telegramSyncBot') }}</span>
+            </button>
+
+            <div
+              v-if="syncBotResult"
+              :class="syncBotResult.success ? 'text-emerald-400' : 'text-red-400'"
+              class="text-xs flex items-center gap-2 flex-wrap"
+            >
+              <span
+                :class="syncBotResult.success ? 'bg-emerald-500' : 'bg-red-500'"
+                class="h-1.5 w-1.5 rounded-full shrink-0"
+              ></span>
+              <span>{{ syncBotResult.message }}</span>
+              <details
+                v-if="syncBotResult.detail && !syncBotResult.success"
+                class="w-full mt-1 text-xs font-mono bg-inset border border-line p-2 rounded-md max-h-32 overflow-auto"
+              >
+                <summary class="cursor-pointer text-fg-subtle">
+                  {{ t('settings.telegramDetails') }}
+                </summary>
+                <pre>{{ JSON.stringify(syncBotResult.detail, null, 2) }}</pre>
+              </details>
+            </div>
           </div>
-        </div>
 
-        <div class="flex flex-wrap gap-2.5">
-          <button
-            :class="
-              showSetupGuide
-                ? 'bg-accent border-accent text-accent-fg'
-                : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
-            "
-            class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
-            type="button"
-            @click="showSetupGuide = !showSetupGuide"
-          >
-            <span>{{ t('settings.telegramSetupSteps') }}</span>
-          </button>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button
+              :class="
+                showSetupGuide
+                  ? 'bg-accent border-accent text-accent-fg'
+                  : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
+              "
+              class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
+              type="button"
+              @click="showSetupGuide = !showSetupGuide"
+            >
+              <span>{{ t('settings.telegramSetupSteps') }}</span>
+            </button>
 
-          <button
-            :class="
-              showUsageGuide
-                ? 'bg-accent border-accent text-accent-fg'
-                : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
-            "
-            class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
-            type="button"
-            @click="showUsageGuide = !showUsageGuide"
-          >
-            <span>{{ t('settings.telegramUsageGuide') }}</span>
-          </button>
+            <button
+              :class="
+                showUsageGuide
+                  ? 'bg-accent border-accent text-accent-fg'
+                  : 'bg-transparent border-line text-fg-muted hover:bg-hover hover:text-fg'
+              "
+              class="flex items-center justify-center gap-2 px-3.5 py-1.5 text-xs font-medium rounded-md border transition-colors"
+              type="button"
+              @click="showUsageGuide = !showUsageGuide"
+            >
+              <span>{{ t('settings.telegramUsageGuide') }}</span>
+            </button>
+          </div>
         </div>
 
         <div v-if="showSetupGuide" class="pl-4 border-l-2 border-line py-1">

@@ -58,6 +58,12 @@ import { handleParseSubscription } from './handlers/parse-subscription-handler.j
 import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
+import {
+  generateSubconverterIniConfig,
+  VISUAL_RULE_PRESETS,
+} from './subscription/visual-rules-builder.js';
+import { StorageFactory } from '../storage-adapter.js';
+import { STORAGE_KEY_SETTINGS } from './config.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';
 
 function isAuthDiagnosticsEnabled(env) {
@@ -84,6 +90,76 @@ export async function handleApiRequest(request, env, context = null) {
 
   if (path === '/public_config') {
     return await handlePublicConfig(request, env);
+  }
+
+  // 动态生成外部 Subconverter 可用的 [custom] INI 配置（公开只读，供外部转换后端拉取）
+  if (path === '/subconverter-config' && request.method === 'GET') {
+    const rawSelected = url.searchParams.get('selectedRules');
+    const rawCustom = url.searchParams.get('customRules');
+    const rawGroupByCountry = url.searchParams.get('group_by_country');
+    const rawIncludeAuto = url.searchParams.get('include_auto_select');
+
+    let options = {};
+    const hasQueryOverrides =
+      rawSelected !== null || rawCustom !== null || rawGroupByCountry !== null || rawIncludeAuto !== null;
+
+    if (!hasQueryOverrides) {
+      try {
+        const storageAdapter = StorageFactory.createAdapter(env);
+        const savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+        if (savedSettings.builtinTransform) {
+          options = savedSettings.builtinTransform;
+        }
+      } catch {
+        // 无存储绑定时回退默认配置
+      }
+    } else {
+      let selectedRules;
+      if (!rawSelected) {
+        selectedRules = VISUAL_RULE_PRESETS.balanced;
+      } else if (VISUAL_RULE_PRESETS[rawSelected]) {
+        selectedRules = VISUAL_RULE_PRESETS[rawSelected];
+      } else {
+        try {
+          const parsed = JSON.parse(rawSelected);
+          if (!Array.isArray(parsed)) {
+            return new Response('Invalid selectedRules parameter', { status: 400 });
+          }
+          selectedRules = parsed;
+        } catch {
+          selectedRules = rawSelected
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+      }
+
+      let customRules = [];
+      if (rawCustom) {
+        try {
+          const parsedCustom = JSON.parse(rawCustom);
+          if (Array.isArray(parsedCustom)) customRules = parsedCustom;
+        } catch {
+          return new Response('Invalid customRules JSON parameter', { status: 400 });
+        }
+      }
+
+      options = {
+        selectedRules,
+        customRules,
+        groupByCountry: rawGroupByCountry !== 'false',
+        includeAutoSelect: rawIncludeAuto !== 'false',
+      };
+    }
+
+    const iniContent = generateSubconverterIniConfig(options);
+    return new Response(iniContent, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      },
+    });
   }
 
   if (path === '/public/profiles') {

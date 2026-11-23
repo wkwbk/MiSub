@@ -127,7 +127,7 @@ const handleContentUpdate = () => {
             </div>
           </template>
         </Textarea>
-        <p class="mt-2 text-xs text-fg-subtle leading-relaxed">
+        <p class="mt-2 text-xs text-fg-muted leading-relaxed">
           {{ t('settings.announcementHtmlHint') }}
         </p>
       </div>
@@ -147,7 +147,7 @@ const handleContentUpdate = () => {
 
       <!-- 预览区域 -->
       <div class="pt-6 border-t border-line">
-        <h4 class="text-xs font-semibold text-fg-subtle uppercase tracking-wider mb-3">
+        <h4 class="text-xs font-semibold text-fg-muted uppercase tracking-wider mb-3">
           {{ t('settings.announcementPreview') }}
         </h4>
         <div class="bg-canvas/85 rounded-md border border-line p-4">
