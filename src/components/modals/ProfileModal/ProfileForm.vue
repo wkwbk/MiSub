@@ -5,6 +5,7 @@ import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
 import VisualTransformCard from '@/components/settings/sections/ServiceSettings/VisualTransformCard.vue';
 import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
+import DatePicker from '@/components/ui/DatePicker.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import TagInput from '@/components/ui/TagInput.vue';
@@ -93,6 +94,13 @@ const flagOptions = computed(() => [
   { key: 'list', label: t('profileModal.outputList') },
 ]);
 
+const expiryPresets = computed(() => [
+  { label: t('profileModal.expiresPreset7d'), days: 7 },
+  { label: t('profileModal.expiresPreset30d'), days: 30 },
+  { label: t('profileModal.expiresPreset90d'), days: 90 },
+  { label: t('profileModal.expiresPreset1y'), years: 1 },
+]);
+
 const selectedTransformAsset = ref(null);
 const showRuleTemplateModal = ref(false);
 
@@ -141,7 +149,10 @@ const ruleSourceSelection = computed({
       if (!props.localProfile.builtinTransform || typeof props.localProfile.builtinTransform !== 'object') {
         props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
       } else {
-        Object.assign(props.localProfile.builtinTransform, normalizeBuiltinTransform(props.localProfile.builtinTransform));
+        Object.assign(
+          props.localProfile.builtinTransform,
+          normalizeBuiltinTransform(props.localProfile.builtinTransform),
+        );
         props.localProfile.builtinTransform.visualRulesEnabled = true;
       }
       return;
@@ -297,17 +308,25 @@ watch(
     </div>
   </div>
 
-  <div class="border-t border-line pt-4 mt-6">
+  <div class="rounded-md border border-line bg-transparent mt-4 overflow-hidden">
     <button
-      class="flex items-center text-xs font-semibold text-fg-muted hover:text-fg transition-colors focus-visible:outline-hidden"
+      :aria-expanded="showAdvanced"
+      class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-hover/40 focus-visible:outline-hidden"
       type="button"
       @click="emit('toggle-advanced')"
     >
-      <span>{{ t('profiles.advancedTitle') }}</span>
-      <ChevronDown :class="{ 'rotate-180': showAdvanced }" class="w-4 h-4 ml-1 transition-transform" />
+      <div class="flex min-w-0 items-center gap-2.5">
+        <SlidersHorizontal class="h-3.5 w-3.5 shrink-0 text-fg-muted" />
+        <span class="text-xs font-medium text-fg shrink-0">{{ t('profiles.advancedTitle') }}</span>
+        <span class="hidden sm:inline truncate text-xs text-fg-subtle">{{ t('profiles.advancedDesc') }}</span>
+      </div>
+      <ChevronDown
+        :class="{ 'rotate-180 text-fg': showAdvanced }"
+        class="h-4 w-4 shrink-0 text-fg-muted transition-transform duration-200"
+      />
     </button>
 
-    <div v-show="showAdvanced" class="mt-4 space-y-6 animate-fade-in-down">
+    <div v-show="showAdvanced" class="border-t border-line p-4 space-y-6 animate-fade-in-down">
       <!-- === 区块 A：渲染核心配置 (Core Logic) === -->
       <div class="space-y-3">
         <div class="flex items-center gap-2">
@@ -478,10 +497,12 @@ watch(
           <!-- 到期时间 -->
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.expiresLabel') }}</label>
-            <input
+            <DatePicker
               v-model="localProfile.expiresAt"
-              class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg focus:border-line-strong focus-visible:outline-hidden"
-              type="date"
+              :aria-label="t('profileModal.expiresLabel')"
+              :placeholder="t('profileModal.expiresPlaceholder')"
+              :presets="expiryPresets"
+              size="sm"
             />
           </div>
 
@@ -493,7 +514,7 @@ watch(
             <input
               v-model="localProfile.fetchMinInterval"
               :placeholder="t('profileModal.fetchMinIntervalPlaceholder')"
-              class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
+              class="block h-8 w-full px-2.5 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle hover:border-line-strong focus:border-line-strong focus-visible:outline-hidden transition-colors duration-200"
               max="1440"
               min="0"
               type="number"

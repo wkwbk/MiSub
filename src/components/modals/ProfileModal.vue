@@ -430,153 +430,155 @@ const updateSelectedIds = (listName, newIds) => {
           @toggle-advanced="showAdvanced = !showAdvanced"
         />
 
-        <!-- 资源类型 Tab 切换栏 -->
-        <div class="border-b border-line">
-          <nav aria-label="Tabs" class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
-            <button
-              :class="[
-                activeResourceTab === 'manualNodes'
-                  ? 'text-fg font-semibold'
-                  : 'text-fg-muted hover:text-fg font-medium',
-                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
-              ]"
-              type="button"
-              @click="activeResourceTab = 'manualNodes'"
-            >
-              <span>{{ t('profileModal.tabManualNodes') }}</span>
-              <span
-                v-if="localProfile.manualNodes?.length"
-                :class="
-                  activeResourceTab === 'manualNodes' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
-                "
-                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+        <!-- 资源选择区（节点 / 订阅 / 订阅组） -->
+        <div class="space-y-4">
+          <div class="border-b border-line">
+            <nav aria-label="Tabs" class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+              <button
+                :class="[
+                  activeResourceTab === 'manualNodes'
+                    ? 'text-fg font-semibold'
+                    : 'text-fg-muted hover:text-fg font-medium',
+                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                ]"
+                type="button"
+                @click="activeResourceTab = 'manualNodes'"
               >
-                {{ localProfile.manualNodes.length }}
-              </span>
-              <span
-                v-if="activeResourceTab === 'manualNodes'"
-                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
-              ></span>
-            </button>
+                <span>{{ t('profileModal.tabManualNodes') }}</span>
+                <span
+                  v-if="localProfile.manualNodes?.length"
+                  :class="
+                    activeResourceTab === 'manualNodes' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
+                  "
+                  class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+                >
+                  {{ localProfile.manualNodes.length }}
+                </span>
+                <span
+                  v-if="activeResourceTab === 'manualNodes'"
+                  class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
+                ></span>
+              </button>
 
-            <button
-              :class="[
-                activeResourceTab === 'subscriptions'
-                  ? 'text-fg font-semibold'
-                  : 'text-fg-muted hover:text-fg font-medium',
-                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
-              ]"
-              type="button"
-              @click="activeResourceTab = 'subscriptions'"
-            >
-              <span>{{ t('profileModal.tabSubscriptions') }}</span>
-              <span
-                v-if="localProfile.subscriptions?.length"
-                :class="
-                  activeResourceTab === 'subscriptions' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
-                "
-                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+              <button
+                :class="[
+                  activeResourceTab === 'subscriptions'
+                    ? 'text-fg font-semibold'
+                    : 'text-fg-muted hover:text-fg font-medium',
+                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                ]"
+                type="button"
+                @click="activeResourceTab = 'subscriptions'"
               >
-                {{ localProfile.subscriptions.length }}
-              </span>
-              <span
-                v-if="activeResourceTab === 'subscriptions'"
-                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
-              ></span>
-            </button>
+                <span>{{ t('profileModal.tabSubscriptions') }}</span>
+                <span
+                  v-if="localProfile.subscriptions?.length"
+                  :class="
+                    activeResourceTab === 'subscriptions' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
+                  "
+                  class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+                >
+                  {{ localProfile.subscriptions.length }}
+                </span>
+                <span
+                  v-if="activeResourceTab === 'subscriptions'"
+                  class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
+                ></span>
+              </button>
 
-            <button
-              :class="[
-                activeResourceTab === 'subProfiles'
-                  ? 'text-fg font-semibold'
-                  : 'text-fg-muted hover:text-fg font-medium',
-                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
-              ]"
-              type="button"
-              @click="activeResourceTab = 'subProfiles'"
-            >
-              <span>{{ t('profileModal.tabSubProfiles') }}</span>
-              <span
-                v-if="localProfile.subProfiles?.length"
-                :class="
-                  activeResourceTab === 'subProfiles' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
-                "
-                class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+              <button
+                :class="[
+                  activeResourceTab === 'subProfiles'
+                    ? 'text-fg font-semibold'
+                    : 'text-fg-muted hover:text-fg font-medium',
+                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                ]"
+                type="button"
+                @click="activeResourceTab = 'subProfiles'"
               >
-                {{ localProfile.subProfiles.length }}
-              </span>
-              <span
-                v-if="activeResourceTab === 'subProfiles'"
-                class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
-              ></span>
-            </button>
+                <span>{{ t('profileModal.tabSubProfiles') }}</span>
+                <span
+                  v-if="localProfile.subProfiles?.length"
+                  :class="
+                    activeResourceTab === 'subProfiles' ? 'border-line-strong text-fg' : 'border-line text-fg-muted'
+                  "
+                  class="px-1.5 py-0.5 rounded-full font-mono text-xs leading-none border bg-transparent font-semibold"
+                >
+                  {{ localProfile.subProfiles.length }}
+                </span>
+                <span
+                  v-if="activeResourceTab === 'subProfiles'"
+                  class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"
+                ></span>
+              </button>
 
-            <button
-              :class="[
-                activeResourceTab === 'all' ? 'text-fg font-semibold' : 'text-fg-muted hover:text-fg font-medium',
-                'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
-              ]"
-              type="button"
-              @click="activeResourceTab = 'all'"
-            >
-              <span>{{ t('profileModal.tabAll') }}</span>
-              <span v-if="activeResourceTab === 'all'" class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"></span>
-            </button>
-          </nav>
-        </div>
-
-        <div :class="activeResourceTab === 'all' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : ''">
-          <div v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'">
-            <NodeSelector
-              :active-tag-filters="activeManualNodeTagFilters"
-              :filtered-nodes="filteredManualNodes"
-              :nodes="allManualNodes"
-              :search-term="nodeSearchTerm"
-              :selected-ids="localProfile.manualNodes || []"
-              :tags="manualNodeTags"
-              @update:search-term="nodeSearchTerm = $event"
-              @update:tag-filters="activeManualNodeTagFilters = $event"
-              @update:selected-ids="updateSelectedIds('manualNodes', $event)"
-              @toggle-selection="toggleSelection('manualNodes', $event)"
-              @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
-              @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
-            />
+              <button
+                :class="[
+                  activeResourceTab === 'all' ? 'text-fg font-semibold' : 'text-fg-muted hover:text-fg font-medium',
+                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                ]"
+                type="button"
+                @click="activeResourceTab = 'all'"
+              >
+                <span>{{ t('profileModal.tabAll') }}</span>
+                <span v-if="activeResourceTab === 'all'" class="absolute inset-x-0 bottom-0 h-0.5 bg-accent"></span>
+              </button>
+            </nav>
           </div>
 
-          <div v-show="activeResourceTab === 'subscriptions' || activeResourceTab === 'all'">
-            <SubscriptionSelector
-              :active-tag-filters="activeSubscriptionTagFilters"
-              :filtered-subscriptions="filteredSubscriptions"
-              :search-term="subscriptionSearchTerm"
-              :selected-ids="localProfile.subscriptions || []"
-              :subscriptions="selectableSubscriptions"
-              :tags="subscriptionTags"
-              @update:search-term="subscriptionSearchTerm = $event"
-              @update:tag-filters="activeSubscriptionTagFilters = $event"
-              @update:selected-ids="updateSelectedIds('subscriptions', $event)"
-              @toggle-selection="toggleSelection('subscriptions', $event)"
-              @select-all="handleSelectAll('subscriptions', filteredSubscriptions)"
-              @deselect-all="handleDeselectAll('subscriptions', filteredSubscriptions)"
-            />
-          </div>
+          <div :class="activeResourceTab === 'all' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : ''">
+            <div v-show="activeResourceTab === 'manualNodes' || activeResourceTab === 'all'">
+              <NodeSelector
+                :active-tag-filters="activeManualNodeTagFilters"
+                :filtered-nodes="filteredManualNodes"
+                :nodes="allManualNodes"
+                :search-term="nodeSearchTerm"
+                :selected-ids="localProfile.manualNodes || []"
+                :tags="manualNodeTags"
+                @update:search-term="nodeSearchTerm = $event"
+                @update:tag-filters="activeManualNodeTagFilters = $event"
+                @update:selected-ids="updateSelectedIds('manualNodes', $event)"
+                @toggle-selection="toggleSelection('manualNodes', $event)"
+                @select-all="handleSelectAll('manualNodes', filteredManualNodes)"
+                @deselect-all="handleDeselectAll('manualNodes', filteredManualNodes)"
+              />
+            </div>
 
-          <div v-show="activeResourceTab === 'subProfiles' || activeResourceTab === 'all'">
-            <SubProfileSelector
-              :active-tag-filters="activeSubProfileTagFilters"
-              :all-profiles="dataStore.profiles || []"
-              :filtered-profiles="filteredSubProfiles"
-              :profiles="selectableSubProfiles"
-              :search-term="subProfileSearchTerm"
-              :selected-ids="localProfile.subProfiles || []"
-              :tags="subProfileTags"
-              :target-profile-id="localProfile.id || props.profile?.id || ''"
-              @update:search-term="subProfileSearchTerm = $event"
-              @update:tag-filters="activeSubProfileTagFilters = $event"
-              @update:selected-ids="updateSelectedIds('subProfiles', $event)"
-              @toggle-selection="toggleSelection('subProfiles', $event)"
-              @select-all="handleSelectAll('subProfiles', $event)"
-              @deselect-all="handleDeselectAll('subProfiles', filteredSubProfiles)"
-            />
+            <div v-show="activeResourceTab === 'subscriptions' || activeResourceTab === 'all'">
+              <SubscriptionSelector
+                :active-tag-filters="activeSubscriptionTagFilters"
+                :filtered-subscriptions="filteredSubscriptions"
+                :search-term="subscriptionSearchTerm"
+                :selected-ids="localProfile.subscriptions || []"
+                :subscriptions="selectableSubscriptions"
+                :tags="subscriptionTags"
+                @update:search-term="subscriptionSearchTerm = $event"
+                @update:tag-filters="activeSubscriptionTagFilters = $event"
+                @update:selected-ids="updateSelectedIds('subscriptions', $event)"
+                @toggle-selection="toggleSelection('subscriptions', $event)"
+                @select-all="handleSelectAll('subscriptions', filteredSubscriptions)"
+                @deselect-all="handleDeselectAll('subscriptions', filteredSubscriptions)"
+              />
+            </div>
+
+            <div v-show="activeResourceTab === 'subProfiles' || activeResourceTab === 'all'">
+              <SubProfileSelector
+                :active-tag-filters="activeSubProfileTagFilters"
+                :all-profiles="dataStore.profiles || []"
+                :filtered-profiles="filteredSubProfiles"
+                :profiles="selectableSubProfiles"
+                :search-term="subProfileSearchTerm"
+                :selected-ids="localProfile.subProfiles || []"
+                :tags="subProfileTags"
+                :target-profile-id="localProfile.id || props.profile?.id || ''"
+                @update:search-term="subProfileSearchTerm = $event"
+                @update:tag-filters="activeSubProfileTagFilters = $event"
+                @update:selected-ids="updateSelectedIds('subProfiles', $event)"
+                @toggle-selection="toggleSelection('subProfiles', $event)"
+                @select-all="handleSelectAll('subProfiles', $event)"
+                @deselect-all="handleDeselectAll('subProfiles', filteredSubProfiles)"
+              />
+            </div>
           </div>
         </div>
       </div>
