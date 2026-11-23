@@ -8,6 +8,7 @@ import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 
 const props = defineProps({
   node: {
@@ -140,6 +141,22 @@ const copyToClipboard = async (text) => {
   const copied = await copyTextToClipboard(text);
   showToast(copied ? t('notices.copied') : t('notices.copyFailed'), copied ? 'success' : 'error');
 };
+
+const {
+  scrollRef: badgesScrollRef,
+  scrollFadeClass: badgesScrollFadeClass,
+  updateScrollFade: updateBadgesScrollFade,
+} = useHorizontalScrollFade({
+  deps: () => [
+    protocol.value,
+    countryBadge.value?.text,
+    networkBadge.value?.text,
+    visibleTags.value.join(','),
+    overflowCount.value,
+    Boolean(props.pingResult),
+    props.isSelectionMode,
+  ],
+});
 </script>
 
 <template>
@@ -155,7 +172,7 @@ const copyToClipboard = async (text) => {
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
     <div class="flex items-center justify-between gap-2">
-      <div class="flex items-center gap-1.5 min-w-0 overflow-hidden">
+      <div class="flex min-w-0 flex-1 items-center gap-1.5">
         <div v-if="isSelectionMode" class="shrink-0 mr-0.5">
           <div
             :class="isSelected ? 'bg-accent border-accent text-accent-fg' : 'border-line-strong bg-transparent'"
@@ -165,61 +182,68 @@ const copyToClipboard = async (text) => {
           </div>
         </div>
 
-        <button
-          class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
-          data-testid="manual-node-protocol-badge"
-          type="button"
-          @click.stop="emit('filter-protocol', protocol)"
-        >
-          <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
-          {{ protocolStyle.text }}
-        </button>
-
-        <button
-          v-if="countryBadge"
-          :class="countryBadge.className"
-          :title="countryBadge.title"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:bg-hover hover:text-fg cursor-pointer"
-          data-testid="manual-node-country-badge"
-          type="button"
-          @click.stop="
-            inspectInfo?.isRelay
-              ? emit('filter-network', 'relay')
-              : emit('filter-country', inspectInfo?.countryCode || '')
-          "
-        >
-          {{ countryBadge.text }}
-        </button>
-
-        <button
-          v-if="networkBadge"
-          :class="networkBadge.className"
-          :title="networkBadge.title"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:opacity-85 cursor-pointer"
-          data-testid="manual-node-network-badge"
-          type="button"
-          @click.stop="emit('filter-network', inspectInfo?.networkType || '')"
-        >
-          {{ networkBadge.text }}
-        </button>
-
         <div
-          v-for="tag in visibleTags"
-          :key="tag"
-          :title="tag"
-          class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center truncate rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
-          data-testid="manual-node-tag-badge"
-          @click.stop="emit('filter-tag', tag)"
+          ref="badgesScrollRef"
+          :class="badgesScrollFadeClass"
+          class="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto no-scrollbar"
+          @scroll.passive="updateBadgesScrollFade"
         >
-          <span class="truncate">{{ tag }}</span>
+          <button
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+            data-testid="manual-node-protocol-badge"
+            type="button"
+            @click.stop="emit('filter-protocol', protocol)"
+          >
+            <span :class="protocolStyle.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
+            {{ protocolStyle.text }}
+          </button>
+
+          <button
+            v-if="countryBadge"
+            :class="countryBadge.className"
+            :title="countryBadge.title"
+            class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+            data-testid="manual-node-country-badge"
+            type="button"
+            @click.stop="
+              inspectInfo?.isRelay
+                ? emit('filter-network', 'relay')
+                : emit('filter-country', inspectInfo?.countryCode || '')
+            "
+          >
+            {{ countryBadge.text }}
+          </button>
+
+          <button
+            v-if="networkBadge"
+            :class="networkBadge.className"
+            :title="networkBadge.title"
+            class="inline-flex h-5 shrink-0 items-center rounded-md border px-2 text-xs font-medium leading-none transition-colors hover:opacity-85 cursor-pointer"
+            data-testid="manual-node-network-badge"
+            type="button"
+            @click.stop="emit('filter-network', inspectInfo?.networkType || '')"
+          >
+            {{ networkBadge.text }}
+          </button>
+
+          <div
+            v-for="tag in visibleTags"
+            :key="tag"
+            :title="tag"
+            class="inline-flex h-5 max-w-[96px] sm:max-w-[110px] shrink-0 items-center truncate rounded-md border border-line bg-transparent px-2 text-xs font-medium leading-none text-fg-muted transition-colors hover:bg-hover hover:text-fg cursor-pointer"
+            data-testid="manual-node-tag-badge"
+            @click.stop="emit('filter-tag', tag)"
+          >
+            <span class="truncate">{{ tag }}</span>
+          </div>
+          <span
+            v-if="overflowCount > 0"
+            :title="nodeTags.join(', ')"
+            class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-subtle"
+          >
+            +{{ overflowCount }}
+          </span>
         </div>
-        <span
-          v-if="overflowCount > 0"
-          :title="nodeTags.join(', ')"
-          class="inline-flex h-5 shrink-0 items-center rounded-md border border-line bg-transparent px-2 text-xs font-mono leading-none text-fg-subtle"
-        >
-          +{{ overflowCount }}
-        </span>
       </div>
 
       <div

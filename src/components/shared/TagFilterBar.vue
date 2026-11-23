@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from '@/i18n/index.js';
+import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 import { normalizeActiveTagFilters, normalizeTagList, toggleTagFilterValue, UNTAGGED_KEY } from '@/utils/tags.js';
 
 const { t } = useI18n();
@@ -60,13 +61,20 @@ const handleWheel = (e) => {
     el.scrollLeft += e.deltaY;
   }
 };
+
+const { scrollRef, scrollFadeClass, updateScrollFade } = useHorizontalScrollFade({
+  deps: () => [displayTags.value.length, props.showUntagged, shouldRender.value],
+});
 </script>
 
 <template>
   <div
     v-if="shouldRender"
+    ref="scrollRef"
+    :class="scrollFadeClass"
     :data-testid="`${testIdPrefix}-tabs`"
     class="flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar"
+    @scroll.passive="updateScrollFade"
     @wheel="handleWheel"
   >
     <button

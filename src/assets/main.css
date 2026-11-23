@@ -280,6 +280,21 @@
     scrollbar-width: none;
 }
 
+.scroll-fade-right {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
+}
+
+.scroll-fade-left {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px);
+    mask-image: linear-gradient(to right, transparent 0, #000 20px);
+}
+
+.scroll-fade-both {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+}
+
 * {
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-thumb) transparent;

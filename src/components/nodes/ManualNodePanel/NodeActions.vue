@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Globe, Loader2, Plus, Search, X, Zap } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
+import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
@@ -111,6 +112,19 @@ const handleAttrWheel = (e) => {
 const searchModel = computed({
   get: () => props.searchTerm,
   set: (val) => emit('update:searchTerm', val),
+});
+
+const {
+  scrollRef: attrScrollRef,
+  scrollFadeClass: attrScrollFadeClass,
+  updateScrollFade: updateAttrScrollFade,
+} = useHorizontalScrollFade({
+  deps: () => [
+    props.attributeOptions?.protocols?.length,
+    props.attributeOptions?.networks?.length,
+    props.attributeOptions?.countries?.length,
+    hasActiveAttrFilters.value,
+  ],
 });
 </script>
 
@@ -288,7 +302,7 @@ const searchModel = computed({
 
     <div
       v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
-      class="mt-3 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar md:hidden"
+      class="mt-3 flex w-full min-w-0 items-center gap-1.5 md:hidden"
       data-testid="manual-node-mobile-tags"
     >
       <TagFilterBar
@@ -301,7 +315,7 @@ const searchModel = computed({
 
     <div
       v-if="manualNodeTags.length > 0 || activeTagFilters.length > 0"
-      class="hidden md:flex items-center gap-1.5 mt-3"
+      class="hidden md:flex w-full min-w-0 items-center gap-1.5 mt-3"
     >
       <TagFilterBar
         :active-filters="activeTagFilters"
@@ -313,8 +327,11 @@ const searchModel = computed({
 
     <div
       v-if="hasAttrOptions || hasActiveAttrFilters"
+      ref="attrScrollRef"
+      :class="attrScrollFadeClass"
       class="mt-2.5 flex w-full min-w-0 items-center gap-1.5 overflow-x-auto no-scrollbar"
       data-testid="manual-node-attr-filters"
+      @scroll.passive="updateAttrScrollFade"
       @wheel="handleAttrWheel"
     >
       <button

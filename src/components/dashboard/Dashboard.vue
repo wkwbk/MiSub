@@ -666,7 +666,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
 
       <div class="space-y-4 lg:col-span-2">
         <div
-          class="flex items-center gap-1 rounded-md border border-line bg-surface p-1 overflow-x-auto"
+          class="grid grid-cols-3 items-center gap-1 rounded-md border border-line bg-surface p-1"
           data-testid="classic-dashboard-tabs"
           role="tablist"
         >
@@ -680,20 +680,20 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
                 : 'bg-transparent text-fg-muted border-transparent hover:bg-hover hover:text-fg',
             ]"
             :data-testid="`classic-tab-${tab.id}`"
-            class="flex-1 min-w-fit inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-xs sm:text-sm transition-colors cursor-pointer whitespace-nowrap"
+            class="min-w-0 inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-md border px-2 sm:px-3 py-2 text-xs sm:text-sm transition-colors cursor-pointer whitespace-nowrap"
             role="tab"
             type="button"
             @click="setActiveTab(tab.id)"
           >
-            <component :is="tab.icon" class="h-4 w-4 shrink-0" stroke-width="1.75" />
-            <span>{{ tab.label }}</span>
+            <component :is="tab.icon" class="hidden sm:block h-4 w-4 shrink-0" stroke-width="1.75" />
+            <span class="truncate">{{ tab.label }}</span>
             <span
               :class="[
                 activeTab === tab.id
                   ? 'border-line-strong bg-surface text-fg'
                   : 'border-line bg-transparent text-fg-subtle',
               ]"
-              class="rounded-md border px-1.5 py-0.5 text-xs font-mono leading-none"
+              class="shrink-0 rounded-md border px-1.5 py-0.5 text-xs font-mono leading-none"
             >
               {{ tab.count }}
             </span>
