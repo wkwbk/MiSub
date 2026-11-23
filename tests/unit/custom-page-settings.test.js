@@ -74,7 +74,7 @@ describe('CustomPageSettings safety messaging', () => {
 
     try {
       const buttons = wrapper.findAll('[data-testid="custom-page-template"]');
-      expect(buttons.length).toBe(3);
+      expect(buttons.length).toBe(4);
 
       for (const button of buttons) {
         await button.trigger('click');
@@ -97,6 +97,12 @@ describe('CustomPageSettings safety messaging', () => {
       expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
       expect(wrapper.props('settings').customPage.hideHeader).toBe(false);
       expect(wrapper.props('settings').customPage.hideFooter).toBe(false);
+
+      // Fourth template (Editorial Zine) auto-applies immersive fullscreen layout preset
+      await buttons[3].trigger('click');
+      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
+      expect(wrapper.props('settings').customPage.hideHeader).toBe(true);
+      expect(wrapper.props('settings').customPage.hideFooter).toBe(true);
     } finally {
       window.confirm = originalConfirm;
     }
