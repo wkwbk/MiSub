@@ -65,7 +65,7 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
         <Globe class="h-4 w-4" />
       </template>
       <template v-if="hasValue" #actions>
-        <span class="rounded bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+        <span class="badge-success">
           {{ t('settings.dnsOverrideActive') }}
         </span>
       </template>

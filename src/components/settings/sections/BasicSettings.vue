@@ -404,10 +404,7 @@ const handleCustomSubFetchIntervalBlur = () => {
               </div>
             </div>
           </div>
-          <p
-            v-if="settings.autoUpdateInterval === 0"
-            class="mt-2.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
-          >
+          <p v-if="settings.autoUpdateInterval === 0" class="callout-warning mt-2.5">
             {{ t('settings.autoUpdateDisabledHint') }}
           </p>
         </div>
@@ -574,9 +571,7 @@ const handleCustomSubFetchIntervalBlur = () => {
             </div>
             <Switch v-model="settings.enableAccessLog" class="shrink-0 mt-0.5" />
           </div>
-          <p
-            class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
-          >
+          <p class="callout-warning">
             {{ t('settings.accessLogQuotaHint') }}
           </p>
 
@@ -761,9 +756,7 @@ const handleCustomSubFetchIntervalBlur = () => {
           <p class="text-xs text-fg-muted mt-2 leading-relaxed">
             {{ t('settings.customAdminPathHint') }}
           </p>
-          <p
-            class="mt-2 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-300/90"
-          >
+          <p class="callout-warning mt-2">
             {{ t('settings.reservedPathListHint') }}
           </p>
         </div>

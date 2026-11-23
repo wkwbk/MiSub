@@ -663,7 +663,7 @@ const executeReset = async () => {
     >
       <template #body>
         <div class="space-y-3">
-          <div class="rounded-md border border-amber-500/25 bg-amber-500/5 p-3 text-xs font-medium text-amber-300">
+          <div class="callout-warning font-medium">
             {{ t('settings.clientDangerWarning') }}
           </div>
           <p class="text-xs text-fg-muted">
@@ -685,7 +685,7 @@ const executeReset = async () => {
     >
       <template #body>
         <div class="space-y-3">
-          <div class="rounded-md border border-red-500/25 bg-red-500/5 p-3 text-xs font-medium text-red-300">
+          <div class="callout-danger font-medium">
             {{ t('settings.clientDangerWarning') }}
           </div>
           <p class="text-xs text-fg-muted">

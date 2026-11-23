@@ -320,10 +320,10 @@ async function syncPushBot() {
         </div>
 
         <div
-          class="flex items-center justify-between gap-6 rounded-md border border-amber-500/25 bg-amber-500/5 px-4 py-3"
+          class="flex items-center justify-between gap-6 rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3"
         >
           <div class="space-y-1">
-            <label class="block text-sm font-medium text-amber-400">{{ t('settings.telegramPublicAccess') }}</label>
+            <label class="block text-sm font-medium text-status-warning">{{ t('settings.telegramPublicAccess') }}</label>
             <p class="text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramPublicAccessHint') }}
             </p>
@@ -379,10 +379,7 @@ async function syncPushBot() {
           </p>
         </div>
 
-        <p
-          v-else
-          class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-2 text-xs leading-relaxed text-amber-300/90"
-        >
+        <p v-else class="callout-warning">
           {{ t('settings.telegramSetWebhookEmpty') }}
         </p>
 

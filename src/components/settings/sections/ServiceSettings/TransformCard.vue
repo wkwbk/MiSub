@@ -416,27 +416,27 @@ watch(
       <div class="space-y-5">
         <!-- 统一开关网格 -->
         <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          <div class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5">
+          <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.transformBuiltinSkipCert') }}</span>
             <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5">
+          <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.transformBuiltinUdp') }}</span>
             <Switch v-model="settings.builtinEnableUdp" size="sm" />
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5">
+          <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualGroupByCountry') }}</span>
             <Switch v-model="settings.builtinTransform.groupByCountry" size="sm" />
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5">
+          <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualIncludeAutoSelect') }}</span>
             <Switch v-model="settings.builtinTransform.includeAutoSelect" size="sm" />
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5">
+          <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualEnableClashApi') }}</span>
             <Switch v-model="settings.builtinTransform.enableClashApi" size="sm" />
           </div>
@@ -589,11 +589,7 @@ watch(
         </div>
 
         <div class="pt-4 border-t border-line grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="flag in flagOptions"
-            :key="flag.key"
-            class="flex items-center justify-between rounded-md border border-line bg-inset px-3.5 py-2.5"
-          >
+          <div v-for="flag in flagOptions" :key="flag.key" class="setting-switch-card">
             <span :title="flag.label" class="truncate text-xs font-medium text-fg-muted">{{ flag.label }}</span>
             <Switch v-model="settings.subconverter.defaultOptions[flag.key]" size="xs" />
           </div>

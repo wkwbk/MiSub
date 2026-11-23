@@ -138,19 +138,16 @@ async function copyText(value) {
           </div>
         </div>
 
-        <div class="rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3.5 py-2.5 space-y-0.5">
-          <p class="text-xs font-medium text-emerald-400">
+        <div class="callout-success space-y-0.5">
+          <p class="font-medium text-status-success">
             {{ t('settings.cronRecommendedSecurity') }}
           </p>
-          <p class="text-xs text-fg-muted leading-relaxed">
+          <p class="text-fg-muted">
             {{ t('settings.cronBearerHint') }}
           </p>
         </div>
       </div>
-      <p
-        v-else
-        class="rounded-md border border-amber-500/20 bg-amber-500/5 px-3.5 py-2 text-xs leading-relaxed text-amber-300/90"
-      >
+      <p v-else class="callout-warning">
         {{ t('settings.cronEmptyHint') }}
       </p>
 
