@@ -120,6 +120,14 @@ export const DEFAULT_SETTINGS = {
     apiUrl: '',
     apiToken: '',
   },
+  // Cloudflare Turnstile 人机验证设置
+  turnstile: {
+    enabled: false,
+    siteKey: '',
+    secretKey: '',
+    enableForGuestbook: true,
+    enableForLogin: false,
+  },
 };
 
 export const SYSTEM_CONSTANTS = {

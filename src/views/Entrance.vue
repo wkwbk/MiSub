@@ -51,6 +51,7 @@ const componentProps = computed(() =>
     ? {
         login: sessionStore.login,
         showBackHome: sessionStore.publicConfig?.enablePublicPage !== false,
+        turnstileConfig: sessionStore.publicConfig?.turnstile || null,
       }
     : {},
 );

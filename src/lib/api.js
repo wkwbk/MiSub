@@ -101,16 +101,21 @@ export async function fetchInitialData() {
   }
 }
 
-export async function login(password) {
+export async function login(password, turnstileToken = '') {
   try {
-    const data = await api.post('/api/login', { password });
+    const payload = { password };
+    if (turnstileToken) {
+      payload.turnstileToken = turnstileToken;
+    }
+    const data = await api.post('/api/login', payload);
     return { success: true, data };
   } catch (error) {
-    if (error instanceof APIError && error.status === 401) {
+    if (error instanceof APIError && (error.status === 401 || error.status === 400)) {
       return {
         success: false,
         error: error.data?.message || error.data?.error || t('settings.loginFailed'),
-        errorType: 'auth',
+        errorType: error.status === 401 ? 'auth' : 'validation',
+        code: error.data?.code,
       };
     }
     return handleApiError(error, 'login');

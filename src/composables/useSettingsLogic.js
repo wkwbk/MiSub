@@ -35,6 +35,10 @@ function normalizeSettingsObject(source = {}) {
     ...DEFAULT_SETTINGS.shortLink,
     ...(source.shortLink && typeof source.shortLink === 'object' ? source.shortLink : {}),
   };
+  merged.turnstile = {
+    ...DEFAULT_SETTINGS.turnstile,
+    ...(source.turnstile && typeof source.turnstile === 'object' ? source.turnstile : {}),
+  };
   return merged;
 }
 

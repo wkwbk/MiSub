@@ -1,8 +1,9 @@
 <script setup>
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import { AlertCircle, ArrowLeft, Eye, EyeOff, Globe, Lock } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import Button from '@/components/ui/Button.vue';
+import TurnstileWidget from '@/components/ui/TurnstileWidget.vue';
 
 const { t } = useI18n();
 
@@ -11,6 +12,8 @@ const passwordInput = ref(null);
 const isLoading = ref(false);
 const error = ref('');
 const showPassword = ref(false);
+const turnstileRef = ref(null);
+const turnstileToken = ref('');
 // 伪装开启时 /logo.png 对未鉴权请求会被服务端有意 404（指纹防护），
 // 这里降级为内联图标，避免登录页出现「图片损坏」占位符。
 const logoFailed = ref(false);
@@ -21,7 +24,29 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
+  turnstileConfig: {
+    type: Object,
+    default: null,
+  },
 });
+
+const useTurnstile = computed(() =>
+  Boolean(props.turnstileConfig?.enableForLogin && props.turnstileConfig?.siteKey),
+);
+
+const handleTurnstileVerify = (token) => {
+  turnstileToken.value = token || '';
+  if (error.value) error.value = '';
+};
+
+const handleTurnstileExpire = () => {
+  turnstileToken.value = '';
+};
+
+const handleTurnstileError = () => {
+  turnstileToken.value = '';
+  error.value = t('login.turnstileLoadError');
+};
 
 const focusPasswordInput = async () => {
   await nextTick();
@@ -36,12 +61,24 @@ const submitLogin = async () => {
     await focusPasswordInput();
     return;
   }
+  if (useTurnstile.value && !turnstileToken.value) {
+    error.value = t('login.turnstileRequired');
+    return;
+  }
   isLoading.value = true;
   error.value = '';
   try {
-    await props.login(password.value);
+    if (useTurnstile.value) {
+      await props.login(password.value, turnstileToken.value);
+    } else {
+      await props.login(password.value);
+    }
   } catch (err) {
     error.value = err.message || t('login.unknownError');
+    if (useTurnstile.value) {
+      turnstileToken.value = '';
+      turnstileRef.value?.reset?.();
+    }
   } finally {
     isLoading.value = false;
     if (error.value) {
@@ -115,6 +152,17 @@ const submitLogin = async () => {
               {{ error }}
             </p>
           </transition>
+        </div>
+
+        <div v-if="useTurnstile" class="flex justify-center">
+          <TurnstileWidget
+            ref="turnstileRef"
+            :site-key="turnstileConfig.siteKey"
+            action="login"
+            @error="handleTurnstileError"
+            @expire="handleTurnstileExpire"
+            @verify="handleTurnstileVerify"
+          />
         </div>
 
         <Button :loading="isLoading" class="w-full relative overflow-hidden" size="md" type="submit" variant="primary">

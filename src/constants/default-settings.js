@@ -112,6 +112,17 @@ export const DEFAULT_SETTINGS = {
     apiToken: '',
     hasToken: false,
   },
+  // Cloudflare Turnstile 人机验证设置
+  turnstile: {
+    enabled: false,
+    siteKey: '',
+    secretKey: '',
+    enableForGuestbook: true,
+    enableForLogin: false,
+    hasSecretKey: false,
+    hasEnvKeys: false,
+    loginDisabledByEnv: false,
+  },
   // 自定义公开页
   customDnsOverride: '',
   customPage: {

@@ -8,6 +8,7 @@ import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWith
 import { sendTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { enforcePublicApiAccess } from '../access-control.js';
+import { resolveTurnstileConfig, verifyTurnstileToken } from '../turnstile.js';
 
 /**
  * 获取存储适配器实例
@@ -101,7 +102,17 @@ export async function handleGuestbookPost(request, env) {
     }
 
     const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
-    const { nickname, content, type } = body;
+    const { nickname, content, type, turnstileToken } = body;
+
+    const turnstileConfig = resolveTurnstileConfig(settings, env);
+    if (turnstileConfig.enableForGuestbook) {
+      const verification = await verifyTurnstileToken(turnstileToken, request, {
+        secretKey: turnstileConfig.secretKey,
+      });
+      if (!verification.success) {
+        return createErrorResponse(verification.error, 400);
+      }
+    }
 
     // 基础验证
     if (!content || content.trim().length === 0) {

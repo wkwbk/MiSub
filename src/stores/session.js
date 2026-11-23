@@ -16,6 +16,11 @@ export const useSessionStore = defineStore('session', () => {
     enablePublicPage: true,
     isLoginPath: false,
     hasCustomLoginPath: false,
+    turnstile: {
+      siteKey: '',
+      enableForGuestbook: false,
+      enableForLogin: false,
+    },
     customPage: {
       enabled: false,
       useDefaultLayout: true,
@@ -83,8 +88,8 @@ export const useSessionStore = defineStore('session', () => {
     }
   }
 
-  async function login(password) {
-    const result = await apiLogin(password);
+  async function login(password, turnstileToken = '') {
+    const result = await apiLogin(password, turnstileToken);
     if (result.success) {
       const authenticated = await handleLoginSuccess();
       if (!authenticated) {

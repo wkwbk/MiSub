@@ -3,7 +3,9 @@
  * 处理用户认证和会话管理
  */
 
-import { COOKIE_NAME, SESSION_DURATION, SESSION_RENEW_THRESHOLD } from './config.js';
+import { COOKIE_NAME, DEFAULT_SETTINGS, SESSION_DURATION, SESSION_RENEW_THRESHOLD, STORAGE_KEY_SETTINGS } from './config.js';
+import { StorageFactory } from '../storage-adapter.js';
+import { resolveTurnstileConfig, verifyTurnstileToken } from './turnstile.js';
 import {
   AdminPasswordMissingError,
   getAdminPassword,
@@ -407,7 +409,37 @@ export async function handleLogin(request, env) {
   }
 
   try {
-    const { password } = payload || {};
+    const { password, turnstileToken } = payload || {};
+
+    let savedSettings = {};
+    try {
+      const storageAdapter = StorageFactory.createAdapter(env);
+      if (storageAdapter && storageAdapter.type !== 'noop') {
+        savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+      }
+    } catch (settingsError) {
+      console.warn('[API /login] Failed to load settings for Turnstile check:', settingsError?.message);
+    }
+
+    const turnstileConfig = resolveTurnstileConfig({ ...DEFAULT_SETTINGS, ...savedSettings }, env);
+    if (turnstileConfig.enableForLogin) {
+      const verification = await verifyTurnstileToken(turnstileToken, request, {
+        secretKey: turnstileConfig.secretKey,
+      });
+      if (!verification.success) {
+        return new Response(
+          JSON.stringify({
+            error: verification.error,
+            code: verification.code || 'turnstile_failed',
+          }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' },
+          },
+        );
+      }
+    }
+
     const inputPassword = normalizeSecret(password);
     const currentPassword = normalizeSecret(await getAdminPassword(env));
     const isPasswordMatched = await timingSafeStringEqual(inputPassword, currentPassword);

@@ -35,6 +35,9 @@ crons = [
 #   npx wrangler secret put ADMIN_PASSWORD
 #   npx wrangler secret put COOKIE_SECRET
 #   npx wrangler secret put GITHUB_TOKEN
+#   npx wrangler secret put TURNSTILE_SITE_KEY      # 可选：Cloudflare Turnstile Site Key（也可在后台设置）
+#   npx wrangler secret put TURNSTILE_SECRET_KEY    # 可选：Cloudflare Turnstile Secret Key（也可在后台设置）
+#   # 紧急跳过登录 Turnstile 验证（防止配置错误锁死后台）：设置变量 DISABLE_LOGIN_TURNSTILE=true
 # ==============================================================================
 
 [[d1_databases]]

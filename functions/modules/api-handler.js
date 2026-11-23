@@ -21,6 +21,7 @@ import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../..
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
+import { getPublicTurnstileConfig } from './turnstile.js';
 
 function normalizeProfile(profile = {}) {
   const normalized = { ...profile };
@@ -79,10 +80,13 @@ export async function handleDataRequest(env, context = null) {
     ]);
     const settings = rawSettings || {};
     const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
-    const config = redactSettingsForResponse({
-      ...defaultSettings,
-      ...settings,
-    });
+    const config = redactSettingsForResponse(
+      {
+        ...defaultSettings,
+        ...settings,
+      },
+      env,
+    );
     try {
       const taskContext = context || { env };
       const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
@@ -259,7 +263,7 @@ export async function handleMisubsSave(request, env, context = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-function redactSettingsForResponse(settings = {}) {
+function redactSettingsForResponse(settings = {}, env = null) {
   const cleaned = { ...settings };
   delete cleaned.publicLinks;
   delete cleaned.publicCores;
@@ -271,10 +275,33 @@ function redactSettingsForResponse(settings = {}) {
         hasToken: Boolean(String(cleaned.shortLink.apiToken || '').trim()),
       }
     : { ...defaultSettings.shortLink, hasToken: false };
+  const hasEnvTurnstileKeys = Boolean(
+    String(env?.TURNSTILE_SITE_KEY || '').trim() && String(env?.TURNSTILE_SECRET_KEY || '').trim(),
+  );
+  const loginDisabledByEnv =
+    String(env?.DISABLE_LOGIN_TURNSTILE || '')
+      .trim()
+      .toLowerCase() === 'true';
+  const turnstile = cleaned.turnstile
+    ? {
+        ...defaultSettings.turnstile,
+        ...cleaned.turnstile,
+        secretKey: '',
+        hasSecretKey: Boolean(String(cleaned.turnstile.secretKey || '').trim()),
+        hasEnvKeys: hasEnvTurnstileKeys,
+        loginDisabledByEnv,
+      }
+    : {
+        ...defaultSettings.turnstile,
+        hasSecretKey: false,
+        hasEnvKeys: hasEnvTurnstileKeys,
+        loginDisabledByEnv,
+      };
   return {
     ...cleaned,
     webdavBackup: cleaned.webdavBackup ? { ...cleaned.webdavBackup, password: '' } : cleaned.webdavBackup,
     shortLink,
+    turnstile,
   };
 }
 
@@ -282,7 +309,7 @@ export async function handleSettingsGet(env) {
   try {
     const storageAdapter = await getStorageAdapter(env);
     const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-    return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }));
+    return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }, env));
   } catch (e) {
     if (isStorageUnavailableError(e)) {
       return createJsonResponse({
@@ -381,6 +408,37 @@ export async function handleSettingsSave(request, env) {
         apiToken: preservedToken,
       };
     }
+    if (newSettings.turnstile && typeof newSettings.turnstile === 'object') {
+      const {
+        hasSecretKey: _omitHasSecretKey,
+        hasEnvKeys: _omitHasEnvKeys,
+        loginDisabledByEnv: _omitLoginDisabledByEnv,
+        ...cleanTurnstile
+      } = newSettings.turnstile;
+      const incomingSiteKey = String(cleanTurnstile.siteKey || '').trim();
+      const incomingSecretKey = String(cleanTurnstile.secretKey || '').trim();
+      const preservedSecretKey = incomingSecretKey || String(oldSettings.turnstile?.secretKey || '').trim();
+      const effectiveSiteKey = incomingSiteKey || String(env?.TURNSTILE_SITE_KEY || '').trim();
+      const effectiveSecretKey = preservedSecretKey || String(env?.TURNSTILE_SECRET_KEY || '').trim();
+      if (Boolean(cleanTurnstile.enabled) && (!effectiveSiteKey || !effectiveSecretKey)) {
+        return createJsonResponse(
+          {
+            success: false,
+            message: '启用 Cloudflare Turnstile 需要先填写 Site Key 和 Secret Key（或通过环境变量配置）',
+          },
+          400,
+        );
+      }
+      newSettings.turnstile = {
+        ...defaultSettings.turnstile,
+        ...cleanTurnstile,
+        enabled: Boolean(cleanTurnstile.enabled),
+        siteKey: incomingSiteKey,
+        secretKey: preservedSecretKey,
+        enableForGuestbook: cleanTurnstile.enableForGuestbook !== false,
+        enableForLogin: Boolean(cleanTurnstile.enableForLogin),
+      };
+    }
     const finalSettings = { ...oldSettings, ...newSettings };
     delete finalSettings.publicLinks;
     delete finalSettings.publicCores;
@@ -445,7 +503,7 @@ export async function handleSettingsSave(request, env) {
     return createJsonResponse({
       success: true,
       message: '设置已保存',
-      data: redactSettingsForResponse(finalSettings),
+      data: redactSettingsForResponse(finalSettings, env),
       ...(telegramSync ? { telegramSync } : {}),
     });
   } catch (error) {
@@ -517,10 +575,13 @@ export async function handlePublicProfilesRequest(request, env) {
       description: settings.heroDescription || '浏览并获取由管理员分享的精选订阅组合，一键导入到您的客户端。',
     };
 
+    const turnstile = getPublicTurnstileConfig(settings, env);
+
     const guestbook = {
       enabled: settings.guestbook?.enabled,
       requireAudit: settings.guestbook?.requireAudit,
       allowAnonymous: settings.guestbook?.allowAnonymous,
+      turnstile,
     };
 
     // 过滤出公开且启用的订阅组
@@ -596,6 +657,7 @@ export async function handlePublicConfig(request, env) {
       enablePublicPage: isPublicPageEnabled(mergedSettings),
       isLoginPath,
       hasCustomLoginPath: configuredLoginPath !== '/login',
+      turnstile: getPublicTurnstileConfig(mergedSettings, env),
       customPage: {
         enabled: mergedSettings.customPage?.enabled || false,
         useDefaultLayout: mergedSettings.customPage?.useDefaultLayout !== false,

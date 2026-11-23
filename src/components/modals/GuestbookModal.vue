@@ -1,13 +1,17 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Check, RefreshCw } from '@lucide/vue';
 import { api } from '@/lib/http.js';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
+import TurnstileWidget from '@/components/ui/TurnstileWidget.vue';
 import { useI18n } from '@/i18n/index.js';
+import { getActivePinia } from 'pinia';
+import { useSessionStore } from '@/stores/session.js';
 
 const { t } = useI18n();
+const sessionStore = getActivePinia() ? useSessionStore() : null;
 
 const props = defineProps({
   show: {
@@ -21,6 +25,13 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+
+const turnstileConfig = computed(() => props.config?.turnstile || sessionStore?.publicConfig?.turnstile || null);
+const useTurnstile = computed(() =>
+  Boolean(turnstileConfig.value?.enableForGuestbook && turnstileConfig.value?.siteKey),
+);
+const turnstileRef = ref(null);
+const turnstileToken = ref('');
 
 const form = ref({
   nickname: '',
@@ -59,11 +70,39 @@ const generateCaptcha = () => {
   form.value.captcha = '';
 };
 
+const resetVerification = () => {
+  if (useTurnstile.value) {
+    turnstileToken.value = '';
+    turnstileRef.value?.reset?.();
+  } else {
+    generateCaptcha();
+  }
+};
+
+const handleTurnstileVerify = (token) => {
+  turnstileToken.value = token || '';
+  if (errorMsg.value) errorMsg.value = '';
+};
+
+const handleTurnstileExpire = () => {
+  turnstileToken.value = '';
+};
+
+const handleTurnstileError = () => {
+  turnstileToken.value = '';
+  errorMsg.value = t('guestbook.turnstileLoadError');
+};
+
 const resetForm = () => {
   form.value = { nickname: '', content: '', type: 'general', captcha: '' };
   showSuccess.value = false;
   errorMsg.value = '';
-  generateCaptcha();
+  turnstileToken.value = '';
+  if (useTurnstile.value) {
+    turnstileRef.value?.reset?.();
+  } else {
+    generateCaptcha();
+  }
 };
 
 watch(
@@ -87,7 +126,12 @@ const submitMessage = async () => {
     return;
   }
 
-  if (parseInt(form.value.captcha) !== captcha.value.answer) {
+  if (useTurnstile.value) {
+    if (!turnstileToken.value) {
+      errorMsg.value = t('guestbook.turnstileRequired');
+      return;
+    }
+  } else if (parseInt(form.value.captcha) !== captcha.value.answer) {
     errorMsg.value = t('guestbook.captchaError');
     generateCaptcha();
     return;
@@ -95,22 +139,26 @@ const submitMessage = async () => {
 
   submitting.value = true;
   try {
-    const data = await api.post('/api/public/guestbook', {
+    const payload = {
       nickname: form.value.nickname,
       content: form.value.content,
       type: form.value.type,
-    });
+    };
+    if (useTurnstile.value) {
+      payload.turnstileToken = turnstileToken.value;
+    }
+    const data = await api.post('/api/public/guestbook', payload);
 
     if (data.success) {
       showSuccess.value = true;
     } else {
       errorMsg.value = data.message || t('guestbook.submitFailed');
-      generateCaptcha();
+      resetVerification();
     }
   } catch (e) {
     console.error('Submit guestbook error', e);
     errorMsg.value = e?.data?.error || e?.data?.message || e?.message || t('guestbook.networkError');
-    generateCaptcha();
+    resetVerification();
   } finally {
     submitting.value = false;
   }
@@ -177,7 +225,16 @@ const submitMessage = async () => {
 
         <div>
           <label class="mb-1 block text-xs font-medium text-fg-muted">{{ t('guestbook.captchaLabel') }}</label>
-          <div class="flex items-center gap-3">
+          <TurnstileWidget
+            v-if="useTurnstile"
+            ref="turnstileRef"
+            :site-key="turnstileConfig.siteKey"
+            action="guestbook"
+            @error="handleTurnstileError"
+            @expire="handleTurnstileExpire"
+            @verify="handleTurnstileVerify"
+          />
+          <div v-else class="flex items-center gap-3">
             <div
               class="min-w-[80px] select-none rounded-md border border-line bg-inset px-3 py-2 text-center font-mono text-sm font-semibold text-fg"
             >
