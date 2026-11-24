@@ -30,7 +30,8 @@ describe('subscription preview disabledNodes & latency exclusions (B.7)', () => 
     const activeUrl = 'vless://11111111-1111-1111-1111-111111111111@1.1.1.1:443#KeepMe';
     const disabledUrls = Array.from(
       { length: 12 },
-      (_, idx) => `vless://11111111-1111-1111-1111-1111111111${String(idx).padStart(2, '0')}@2.2.2.${idx}:443#Drop_${idx}`,
+      (_, idx) =>
+        `vless://11111111-1111-1111-1111-1111111111${String(idx).padStart(2, '0')}@2.2.2.${idx}:443#Drop_${idx}`,
     );
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(

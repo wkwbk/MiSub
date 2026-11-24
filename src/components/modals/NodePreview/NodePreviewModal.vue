@@ -108,7 +108,9 @@ const { addNodesFromBulk } = useManualNodes(dataStore.markDirty);
 
 // 单订阅节点开关 & 延迟测速状态
 const isPublicPreview = computed(() => props.apiEndpoint === '/api/public/preview');
-const canManageSubscriptionNodes = computed(() => Boolean(props.subscriptionId) && !props.profileId && !isPublicPreview.value);
+const canManageSubscriptionNodes = computed(
+  () => Boolean(props.subscriptionId) && !props.profileId && !isPublicPreview.value,
+);
 const allowPing = computed(() => !isPublicPreview.value);
 const nodeEnabledMap = ref({});
 const nodePingMap = ref({});
@@ -123,8 +125,8 @@ const currentSubscriptionRecord = computed(() => {
   return (dataStore.subscriptions || []).find((s) => s?.id === props.subscriptionId) || null;
 });
 
-const disabledCount = computed(() =>
-  allNodes.value.filter((node) => (nodeEnabledMap.value[node.url] ?? node.enabled !== false) === false).length,
+const disabledCount = computed(
+  () => allNodes.value.filter((node) => (nodeEnabledMap.value[node.url] ?? node.enabled !== false) === false).length,
 );
 
 const enabledCount = computed(() => Math.max(0, allNodes.value.length - disabledCount.value));
@@ -857,7 +859,9 @@ const goToPage = (page) => {
 
           <div class="inline-flex items-center rounded-md border border-line overflow-hidden divide-x divide-line">
             <button
-              :class="pingMode === 'tcping' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'"
+              :class="
+                pingMode === 'tcping' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
+              "
               class="px-2 py-1 transition-colors"
               type="button"
               @click="pingMode = 'tcping'"
@@ -865,7 +869,9 @@ const goToPage = (page) => {
               TCPing
             </button>
             <button
-              :class="pingMode === 'local' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'"
+              :class="
+                pingMode === 'local' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
+              "
               class="px-2 py-1 transition-colors"
               type="button"
               @click="pingMode = 'local'"

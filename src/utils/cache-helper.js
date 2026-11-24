@@ -1,4 +1,3 @@
-
 const isDev = import.meta.env.DEV;
 
 export function createStorageCache(keyBase, ttlMs) {
@@ -37,8 +36,7 @@ export function createStorageCache(keyBase, ttlMs) {
     try {
       sessionStorage.removeItem(DATA_KEY);
       sessionStorage.removeItem(TS_KEY);
-    } catch {
-    }
+    } catch {}
   }
 
   return { get, set, clear };

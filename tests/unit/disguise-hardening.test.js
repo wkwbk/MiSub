@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDisguiseResponse, renderDisguisePage, } from '../../functions/modules/disguise-page.js';
+import { createDisguiseResponse, renderDisguisePage } from '../../functions/modules/disguise-page.js';
 
 /**
  * 伪装页加固测试：

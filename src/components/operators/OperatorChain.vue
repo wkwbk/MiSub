@@ -131,10 +131,7 @@ const updateOperatorParams = (index, params) => {
 
 <template>
   <div class="space-y-4">
-    <div
-      v-if="modelValue.length === 0"
-      class="rounded-md border border-line bg-transparent py-10 text-center"
-    >
+    <div v-if="modelValue.length === 0" class="rounded-md border border-line bg-transparent py-10 text-center">
       <div
         class="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted"
       >

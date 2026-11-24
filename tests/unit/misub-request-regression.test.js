@@ -26,8 +26,7 @@ function createStorageAdapter({ settings = {}, subscriptions = [], profiles = []
     getAllSubscriptions: vi.fn(async () => store.get('subscriptions') || []),
     getAllProfiles: vi.fn(async () => store.get('profiles') || []),
     getProfileById: vi.fn(
-      async (id) =>
-        (store.get('profiles') || []).find((p) => (p.customId && p.customId === id) || p.id === id) || null,
+      async (id) => (store.get('profiles') || []).find((p) => (p.customId && p.customId === id) || p.id === id) || null,
     ),
     getSubscriptionsByIds: vi.fn(async (ids) =>
       (store.get('subscriptions') || []).filter((item) => ids.includes(item.id)),

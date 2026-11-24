@@ -93,9 +93,7 @@ const applyPresetRegex = (rule) => {
         }}</label>
         <div class="flex items-center gap-2">
           <div class="relative group/presets">
-            <button
-              class="text-xs text-fg-muted font-medium hover:text-fg transition-colors flex items-center gap-0.5"
-            >
+            <button class="text-xs text-fg-muted font-medium hover:text-fg transition-colors flex items-center gap-0.5">
               {{ t('operators.commonRegex') }}
               <ChevronDown class="h-2.5 w-2.5" />
             </button>

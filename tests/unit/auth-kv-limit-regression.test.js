@@ -35,9 +35,9 @@ describe('single source of truth for env secrets and D1 settings', () => {
     };
 
     await expect(getCookieSecret(env)).resolves.toBe('stable-cookie-secret');
-    await expect(getCookieSecret({ MISUB_DB: createMemoryD1({ SYSTEM_COOKIE_SECRET: 'stale-d1-secret' }) })).resolves.toBe(
-      null,
-    );
+    await expect(
+      getCookieSecret({ MISUB_DB: createMemoryD1({ SYSTEM_COOKIE_SECRET: 'stale-d1-secret' }) }),
+    ).resolves.toBe(null);
   });
 
   it('logs in without touching D1 even when D1 is completely unavailable', async () => {

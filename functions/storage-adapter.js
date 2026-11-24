@@ -459,8 +459,7 @@ class D1StorageAdapter {
         invalidateD1CollectionCache(this.db, 'profiles');
         return Number(updatedRow.downloadCount);
       }
-    } catch {
-    }
+    } catch {}
 
     const existing = await this.getProfileById(target);
     if (!existing?.id) return null;
@@ -781,8 +780,7 @@ class D1StorageAdapter {
       try {
         await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id).run();
         invalidateD1CollectionCache(this.db, otherTable);
-      } catch {
-      }
+      } catch {}
     }
 
     return item;
@@ -836,8 +834,7 @@ class D1StorageAdapter {
         customId = typeof parsed?.customId === 'string' ? parsed.customId.trim() : '';
         linkId = typeof parsed?.linkId === 'string' ? parsed.linkId.trim() : '';
       }
-    } catch {
-    }
+    } catch {}
 
     const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
     invalidateD1CollectionCache(this.db, 'profiles');
@@ -977,10 +974,7 @@ class D1StorageAdapter {
 
   async syncAllSubscriptions(items) {
     if (!Array.isArray(items)) return false;
-    const [subRows, nodeRows] = await Promise.all([
-      this._readTableRows('subscriptions'),
-      this._readTableRows('nodes'),
-    ]);
+    const [subRows, nodeRows] = await Promise.all([this._readTableRows('subscriptions'), this._readTableRows('nodes')]);
     const inSubscriptions = new Set();
     const inNodes = new Set();
     const currentMap = new Map();
@@ -1210,8 +1204,7 @@ class D1StorageAdapter {
         .prepare('DELETE FROM access_logs WHERE timestamp < ?')
         .bind(now - ACCESS_LOG_MAX_AGE_MS)
         .run();
-    } catch {
-    }
+    } catch {}
 
     return stats;
   }

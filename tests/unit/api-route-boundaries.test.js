@@ -88,9 +88,7 @@ describe('API route access boundaries', () => {
   it('returns unauthenticated metadata for /api/data without exposing management data', async () => {
     const env = {
       MISUB_DB: createMemoryD1({
-        subscriptions: JSON.stringify([
-          { id: 'secret-sub', name: 'Private Sub', url: 'https://airport.example/sub' },
-        ]),
+        subscriptions: JSON.stringify([{ id: 'secret-sub', name: 'Private Sub', url: 'https://airport.example/sub' }]),
         profiles: JSON.stringify([{ id: 'secret-profile', name: 'Private Profile' }]),
       }),
       COOKIE_SECRET: 'stable-cookie-secret',

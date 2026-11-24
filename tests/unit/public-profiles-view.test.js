@@ -3,7 +3,6 @@ import { flushPromises, mount } from '@vue/test-utils';
 import PublicProfilesView from '@/views/PublicProfilesView.vue';
 import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
 import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
-import { reactive } from 'vue';
 import { api } from '@/lib/http.js';
 
 vi.mock('@/lib/http.js', () => ({

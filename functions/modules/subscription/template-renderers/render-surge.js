@@ -232,9 +232,7 @@ function buildProxyGroupLine(group) {
   const type = String(group.type || 'select').toLowerCase();
   const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
   const filteredMembers = ['url-test', 'fallback', 'load-balance'].includes(type)
-    ? rawMembers.filter(
-        (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
-      )
+    ? rawMembers.filter((member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()))
     : rawMembers;
   const members = (filteredMembers.length > 0 ? filteredMembers : ['DIRECT']).join(', ');
   const tolerance = group.options?.tolerance;

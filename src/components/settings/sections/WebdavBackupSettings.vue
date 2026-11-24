@@ -163,10 +163,7 @@ const copyCronHint = async () => {
     ? `${window.location.origin}/cron/backup?secret=${encodeURIComponent(secret)}`
     : `${window.location.origin}/cron/backup`;
   const copied = await copyTextToClipboard(text);
-  showToast(
-    copied ? t('settings.webdavCronCopied') : t('settings.webdavCronCopyFailed'),
-    copied ? 'success' : 'error',
-  );
+  showToast(copied ? t('settings.webdavCronCopied') : t('settings.webdavCronCopyFailed'), copied ? 'success' : 'error');
 };
 
 ensureConfig();

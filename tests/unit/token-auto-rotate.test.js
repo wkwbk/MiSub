@@ -65,13 +65,9 @@ describe('subscription myToken scheduled rotation & domain fallback (B.8)', () =
       ),
     ).toBe('https://misub.example.com');
 
-    expect(
-      resolvePublicBaseUrl(
-        {},
-        { CF_PAGES_URL: 'https://misub-demo.pages.dev' },
-        null,
-      ),
-    ).toBe('https://misub-demo.pages.dev');
+    expect(resolvePublicBaseUrl({}, { CF_PAGES_URL: 'https://misub-demo.pages.dev' }, null)).toBe(
+      'https://misub-demo.pages.dev',
+    );
   });
 
   it('rotates myToken, uses normalized profileToken path, updates lastRotatedAt, and sends TG notification', async () => {
@@ -98,9 +94,9 @@ describe('subscription myToken scheduled rotation & domain fallback (B.8)', () =
     };
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ ok: true }), { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
 
     const now = Date.parse('2026-06-10T12:00:00.000Z');
     const result = await rotateSubscriptionToken(

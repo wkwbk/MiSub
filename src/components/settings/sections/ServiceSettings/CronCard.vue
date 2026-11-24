@@ -98,11 +98,7 @@ async function copyText(value) {
 
       <!-- 按业务拆分的 Cron 任务链接（自动生成） -->
       <div v-if="cronTasks.length > 0" class="space-y-4">
-        <div
-          v-for="task in cronTasks"
-          :key="task.key"
-          class="rounded-md border border-line bg-inset/40 p-4 space-y-3"
-        >
+        <div v-for="task in cronTasks" :key="task.key" class="rounded-md border border-line bg-inset/40 p-4 space-y-3">
           <div class="space-y-0.5">
             <h4 class="text-xs font-semibold text-fg">{{ task.title }}</h4>
             <p class="text-xs text-fg-muted leading-relaxed">{{ task.desc }}</p>

@@ -43,13 +43,13 @@ describe('manual nodes labels', () => {
       manualNodeTags: ['香港', '日本'],
     });
     const tagScroller = wrapper.get('[data-testid="manual-node-mobile-tags"]');
+    const mobileTagTabs = wrapper.get('[data-testid="manual-node-mobile-tag-tabs"]');
     const toolbarActions = wrapper.get('[data-testid="manual-node-toolbar-actions"]');
     const search = wrapper.get('[data-testid="manual-node-search"]');
     const searchInput = search.get('input[type="text"]');
 
-    expect(tagScroller.classes()).toEqual(
-      expect.arrayContaining(['w-full', 'min-w-0', 'overflow-x-auto', 'md:hidden']),
-    );
+    expect(tagScroller.classes()).toEqual(expect.arrayContaining(['w-full', 'min-w-0', 'md:hidden']));
+    expect(mobileTagTabs.classes()).toEqual(expect.arrayContaining(['w-full', 'min-w-0', 'overflow-x-auto']));
     expect(toolbarActions.classes()).toEqual(
       expect.arrayContaining(['w-full', 'min-w-0', 'flex-wrap', 'sm:flex-nowrap']),
     );

@@ -272,32 +272,6 @@ export function filterNodeObjects(nodes, rules, mode = 'exclude') {
   });
 }
 
-export function filterNodeUrls(nodeUrls, rules, mode = 'exclude') {
-  if (!rules || !rules.hasRules || !Array.isArray(nodeUrls)) return nodeUrls;
-
-  const nodes = nodeUrls.map((url) => ({
-    url,
-    protocol:
-      String(url || '')
-        .match(/^(.*?):\/\//)?.[1]
-        ?.toLowerCase() || '',
-    name: parseNodeUrlName(url),
-  }));
-  const keptUrls = new Set(filterNodeObjects(nodes, rules, mode).map((node) => node.url));
-  return nodeUrls.filter((url) => keptUrls.has(url));
-}
-
-function parseNodeUrlName(nodeUrl) {
-  if (!nodeUrl || typeof nodeUrl !== 'string') return '';
-  const hashIndex = nodeUrl.lastIndexOf('#');
-  if (hashIndex === -1) return nodeUrl;
-  try {
-    return decodeURIComponent(nodeUrl.substring(hashIndex + 1));
-  } catch {
-    return nodeUrl.substring(hashIndex + 1);
-  }
-}
-
 /**
  * 将手动节点的自定义名称应用到节点链接中
  */
@@ -313,20 +287,17 @@ export function applyManualNodeName(nodeUrl, customName) {
 
   if (nodeUrl.startsWith('vmess://')) {
     try {
-      const base64Part = nodeUrl.substring(8);
+      const hashIndex = nodeUrl.indexOf('#');
+      const base64Part = hashIndex !== -1 ? nodeUrl.substring(8, hashIndex) : nodeUrl.substring(8);
       const jsonStr = base64ToUtf8(base64Part);
       const config = JSON.parse(jsonStr);
-      config.ps = customName;
-      return 'vmess://' + utf8ToBase64(JSON.stringify(config));
+      if (config && typeof config === 'object') {
+        config.ps = customName;
+        return 'vmess://' + utf8ToBase64(JSON.stringify(config));
+      }
     } catch {
-      return nodeUrl;
+      // 解码失败时降级按通用 fragment 更新
     }
-  }
-
-  if (nodeUrl.startsWith('ss://')) {
-    const hashIndex = nodeUrl.indexOf('#');
-    const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
-    return `${baseUrl}#${encodedName}`;
   }
 
   if (
@@ -341,50 +312,11 @@ export function applyManualNodeName(nodeUrl, customName) {
       urlObj.hash = '#' + encodedName;
       return urlObj.toString();
     } catch {
-      const hashIndex = nodeUrl.indexOf('#');
-      const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
-      return `${baseUrl}#${encodedName}`;
+      // 回退到末尾 fragment 替换
     }
   }
 
-  // 通用 fallback：对所有其他协议（socks5/http/snell/socks 等）通过 #fragment 写入名称
-  const hashIndex = nodeUrl.indexOf('#');
+  const hashIndex = nodeUrl.lastIndexOf('#');
   const baseUrl = hashIndex === -1 ? nodeUrl : nodeUrl.substring(0, hashIndex);
   return `${baseUrl}#${encodedName}`;
-}
-
-/**
- * 应用过滤规则 (针对 URL string 列表)
- * @param {Array} validNodes
- * @param {Object} sub
- * @returns {Array} filtered nodes
- */
-export function applyFilterRules(validNodes, sub) {
-  if (!sub || !Array.isArray(validNodes)) return validNodes;
-
-  let filteredNodes = [...validNodes];
-
-  // 1. 包含关键词 (Include)
-  if (sub.filterInclude && sub.filterInclude.trim() !== '') {
-    const { includeRules, excludeRules } = parseFilterRuleText(sub.filterInclude);
-    if (includeRules.hasRules) {
-      filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
-    }
-    if (excludeRules.hasRules) {
-      filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
-    }
-  }
-
-  // 2. 排除关键词 (Exclude)
-  if (sub.filterExclude && sub.filterExclude.trim() !== '') {
-    const { includeRules, excludeRules } = parseFilterRuleText(sub.filterExclude);
-    if (includeRules.hasRules) {
-      filteredNodes = filterNodeUrls(filteredNodes, includeRules, 'include');
-    }
-    if (excludeRules.hasRules) {
-      filteredNodes = filterNodeUrls(filteredNodes, excludeRules, 'exclude');
-    }
-  }
-
-  return filteredNodes;
 }

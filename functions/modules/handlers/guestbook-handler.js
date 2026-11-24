@@ -4,7 +4,7 @@
  */
 
 import { StorageFactory } from '../../storage-adapter.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 import { sendTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { enforcePublicApiAccess } from '../access-control.js';

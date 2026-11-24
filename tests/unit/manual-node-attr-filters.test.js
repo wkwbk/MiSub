@@ -53,9 +53,13 @@ describe('manual node dynamic attribute filtering', () => {
 
   it('filters nodes by combinations of tags, protocol, country, network, and resolved IP search', () => {
     expect(
-      filterManualNodes(nodes, '', ['Evoxt'], { protocol: 'hysteria2', country: 'US', network: 'direct' }, inspectMap).map(
-        (n) => n.id,
-      ),
+      filterManualNodes(
+        nodes,
+        '',
+        ['Evoxt'],
+        { protocol: 'hysteria2', country: 'US', network: 'direct' },
+        inspectMap,
+      ).map((n) => n.id),
     ).toEqual(['n1']);
 
     expect(filterManualNodes(nodes, '', [], { network: 'cdn' }, inspectMap).map((n) => n.id)).toEqual(['n2']);

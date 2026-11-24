@@ -21,10 +21,11 @@ export function generateRotatedSubscriptionToken(previousToken = '') {
       crypto.getRandomValues(bytes);
       candidate = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
     } else {
-      candidate = `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`.slice(
-        0,
-        32,
-      );
+      candidate =
+        `${Date.now().toString(16)}${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`.slice(
+          0,
+          32,
+        );
     }
     if (candidate && candidate !== prev) {
       return candidate;

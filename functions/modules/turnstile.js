@@ -10,9 +10,11 @@ function normalizeString(value) {
 }
 
 function isTruthyEnvFlag(value) {
-  return String(value || '')
-    .trim()
-    .toLowerCase() === 'true';
+  return (
+    String(value || '')
+      .trim()
+      .toLowerCase() === 'true'
+  );
 }
 
 /**

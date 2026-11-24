@@ -238,4 +238,3 @@ export function buildSingboxDnsConfig(raw, options = {}) {
     final: foreignTag,
   };
 }
-

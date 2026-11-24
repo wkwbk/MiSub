@@ -1,4 +1,3 @@
-
 import { generateCombinedNodeList } from './subscription-service.js';
 import { transformBuiltinSubscription } from '../modules/subscription/transformer-factory.js';
 import {

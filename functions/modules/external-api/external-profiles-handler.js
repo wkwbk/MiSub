@@ -205,9 +205,7 @@ export async function handleExternalProfilesRequest(request, env, { id = null, r
       : payload.customId !== undefined
         ? String(payload.customId || '').trim()
         : String(current.customId || '').trim();
-    const legacyExempt = Boolean(
-      current.customId && String(current.customId).trim() === nextCustomId,
-    );
+    const legacyExempt = Boolean(current.customId && String(current.customId).trim() === nextCustomId);
     const aliasCheck = validateSingleProfileAlias(nextCustomId, {
       currentProfileId: current.id,
       profiles: allProfiles,

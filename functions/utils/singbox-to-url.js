@@ -17,10 +17,7 @@ function toArray(value) {
 
 function b64url(input) {
   const str = typeof input === 'string' ? input : JSON.stringify(input);
-  return utf8ToBase64(str)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+  return utf8ToBase64(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 function tlsParams(outbound) {

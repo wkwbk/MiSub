@@ -171,15 +171,14 @@ export function createMemoryD1(initial = {}) {
           throw new Error('D1_ERROR: no such table: logs');
         }
         if (/SELECT data FROM profiles WHERE id = \? OR custom_id = \? OR link_id = \?/i.test(normalized)) {
-          const targetLower = String(args[0] ?? '').trim().toLowerCase();
+          const targetLower = String(args[0] ?? '')
+            .trim()
+            .toLowerCase();
           const rows = [];
           for (const [id, data] of tables.profiles.entries()) {
             const cid = String(profileCustomIds.get(id) || '').toLowerCase();
             const lid = String(profileLinkIds.get(id) || '').toLowerCase();
-            if (
-              targetLower &&
-              (id.toLowerCase() === targetLower || cid === targetLower || lid === targetLower)
-            ) {
+            if (targetLower && (id.toLowerCase() === targetLower || cid === targetLower || lid === targetLower)) {
               rows.push({ data });
             }
           }

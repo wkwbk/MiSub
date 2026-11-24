@@ -30,9 +30,7 @@ const props = defineProps({
   },
 });
 
-const useTurnstile = computed(() =>
-  Boolean(props.turnstileConfig?.enableForLogin && props.turnstileConfig?.siteKey),
-);
+const useTurnstile = computed(() => Boolean(props.turnstileConfig?.enableForLogin && props.turnstileConfig?.siteKey));
 
 const handleTurnstileVerify = (token) => {
   turnstileToken.value = token || '';

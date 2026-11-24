@@ -29,16 +29,22 @@ export function usesShadowrocketRuleBundle(templateText) {
 }
 
 export function parseShadowrocketRuleBundle(text) {
-  const lines = String(text || '').trimEnd().split(/\r?\n/);
+  const lines = String(text || '')
+    .trimEnd()
+    .split(/\r?\n/);
   if (lines[0] !== BUNDLE_HEADER || lines.length < 51) {
     throw new Error('Invalid rule bundle header or count');
   }
   const keys = new Set();
   return lines.map((lineText) => {
-    if (lineText.startsWith('# ') && ![...lineText].some((ch) => {
-      const code = ch.charCodeAt(0);
-      return code === 13 || code <= 8;
-    })) return { text: lineText };
+    if (
+      lineText.startsWith('# ') &&
+      ![...lineText].some((ch) => {
+        const code = ch.charCodeAt(0);
+        return code === 13 || code <= 8;
+      })
+    )
+      return { text: lineText };
     const [, key, action] = lineText.match(DOMAIN_RULE) || lineText.match(IP_RULE) || [];
     if (!key || keys.has(key)) throw new Error('Invalid or duplicate bundled rule');
     keys.add(key);

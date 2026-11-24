@@ -4,11 +4,7 @@ import { useDataStore } from '@/stores/useDataStore';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast';
 import { generateProfileId } from '@/utils/id.js';
-import {
-  ensureProfileLinkId,
-  generateProfileLinkId,
-  normalizeProfileIdentifier,
-} from '@shared/profile-link.js';
+import { ensureProfileLinkId, generateProfileLinkId, normalizeProfileIdentifier } from '@shared/profile-link.js';
 import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@shared/profile-alias.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
@@ -123,7 +119,9 @@ export function useProfiles(markDirty) {
     const normalizedOrder = normalizeTagList(newOrder);
     settingsStore.updateConfig({ profileTagOrder: normalizedOrder });
     if (typeof dataStore.saveSettings === 'function') {
-      dataStore.saveSettings({ profileTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      dataStore
+        .saveSettings({ profileTagOrder: normalizedOrder }, { silent: true, preferencesOnly: true })
+        .catch(() => {});
     }
   }
 
@@ -209,9 +207,7 @@ export function useProfiles(markDirty) {
       showToast(t('profiles.nameRequired'), 'error');
       return;
     }
-    const existingProfile = profileData.id
-      ? profiles.value.find((p) => p.id === profileData.id)
-      : null;
+    const existingProfile = profileData.id ? profiles.value.find((p) => p.id === profileData.id) : null;
     const prevAlias = normalizeProfileIdentifier(existingProfile?.customId);
     const nextAlias = normalizeProfileIdentifier(profileData.customId);
     const legacyExempt = Boolean(existingProfile && prevAlias && prevAlias === nextAlias);
@@ -223,7 +219,8 @@ export function useProfiles(markDirty) {
     if (!aliasCheck.valid) {
       let errorMsg = aliasCheck.message;
       if (aliasCheck.code === 'duplicate') errorMsg = t('profiles.customIdExists', { id: aliasCheck.alias });
-      else if (aliasCheck.code === 'too_long') errorMsg = t('profiles.customIdTooLong', { max: PROFILE_ALIAS_MAX_LENGTH });
+      else if (aliasCheck.code === 'too_long')
+        errorMsg = t('profiles.customIdTooLong', { max: PROFILE_ALIAS_MAX_LENGTH });
       else if (aliasCheck.code === 'invalid_chars') errorMsg = t('profiles.customIdInvalidChars');
       else if (aliasCheck.code === 'reserved') errorMsg = t('profiles.customIdReserved', { id: aliasCheck.alias });
       showToast(errorMsg, 'error');

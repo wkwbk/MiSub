@@ -487,7 +487,12 @@ watch(totalPages, (nextTotal) => {
         </template>
       </draggable>
     </div>
-    <div v-else-if="matchedSubscriptions.length > 0" ref="listStartRef" :class="{ 'pb-48': isSelectionMode }" class="space-y-4">
+    <div
+      v-else-if="matchedSubscriptions.length > 0"
+      ref="listStartRef"
+      :class="{ 'pb-48': isSelectionMode }"
+      class="space-y-4"
+    >
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
           v-for="(subscription, index) in visibleSubscriptions"

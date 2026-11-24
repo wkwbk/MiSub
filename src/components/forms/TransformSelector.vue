@@ -248,8 +248,9 @@ const helperText = computed(() => {
     </div>
 
     <div v-if="missingCustomTemplateValue" class="callout-warning mt-2">
-      <span>{{ t('transformSelector.missingTemplatePrefix') }}</span
-      ><code class="font-mono font-semibold">{{ missingCustomTemplateValue }}</code
+      <span>{{ t('transformSelector.missingTemplatePrefix') }}</span><code class="font-mono font-semibold">{{
+        missingCustomTemplateValue
+      }}</code
       ><span>{{ t('transformSelector.missingTemplateSuffix') }}</span>
     </div>
 

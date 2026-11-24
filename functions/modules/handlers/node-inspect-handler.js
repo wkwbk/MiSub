@@ -101,8 +101,7 @@ async function probeTcpOnce(connectFn, host, port, timeoutMs) {
     if (socket && typeof socket.close === 'function') {
       try {
         await socket.close();
-      } catch {
-      }
+      } catch {}
     }
   }
 }

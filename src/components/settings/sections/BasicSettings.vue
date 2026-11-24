@@ -395,10 +395,7 @@ const handleCustomSubFetchIntervalBlur = () => {
           </p>
         </div>
 
-        <div
-          v-if="settings.tokenAutoRotate"
-          class="flex flex-col xl:flex-row xl:items-center justify-between gap-4"
-        >
+        <div v-if="settings.tokenAutoRotate" class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div class="space-y-1 flex-1 min-w-0">
             <div class="flex items-center gap-2">
               <span class="text-sm font-medium text-fg">{{ t('settings.tokenAutoRotateTitle') }}</span>
@@ -439,10 +436,7 @@ const handleCustomSubFetchIntervalBlur = () => {
               <span>{{ isRotatingNow ? t('settings.rotatingTokenNow') : t('settings.rotateTokenNowBtn') }}</span>
             </button>
 
-            <Switch
-              v-model="settings.tokenAutoRotate.enabled"
-              data-testid="token-auto-rotate-switch"
-            />
+            <Switch v-model="settings.tokenAutoRotate.enabled" data-testid="token-auto-rotate-switch" />
           </div>
         </div>
       </div>

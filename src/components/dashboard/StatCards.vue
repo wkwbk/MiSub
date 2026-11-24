@@ -229,13 +229,14 @@ const navigate = (path, query = {}) => {
                 : t('dashboard.normalRunningWithNodes', { count: totalNodesCount })
           "
           class="truncate"
-        >{{
-          hasSubscriptionWarning
-            ? t('dashboard.needsEnableSubscriptions')
-            : hasNodeWarning
-              ? t('dashboard.needsRefreshNodes')
-              : t('dashboard.normalRunningWithNodes', { count: totalNodesCount })
-        }}</span>
+          >{{
+            hasSubscriptionWarning
+              ? t('dashboard.needsEnableSubscriptions')
+              : hasNodeWarning
+                ? t('dashboard.needsRefreshNodes')
+                : t('dashboard.normalRunningWithNodes', { count: totalNodesCount })
+          }}</span
+        >
       </p>
     </button>
 

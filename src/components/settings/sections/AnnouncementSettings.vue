@@ -171,7 +171,6 @@ const handleContentUpdate = () => {
 </template>
 
 <style scoped>
-
 .animate-fade-in-down {
   animation: fadeInDown 0.3s ease-out;
 }

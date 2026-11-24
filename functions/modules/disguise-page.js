@@ -1,3 +1,5 @@
+import { escapeHtml } from './utils.js';
+
 /**
  * 伪装页面渲染模块
  * 当浏览器访问订阅链接时显示的伪装页面
@@ -179,16 +181,6 @@ export function createDisguiseResponse(disguiseConfig, baseUrl) {
     }
   }
   return renderDisguisePage(disguiseConfig?.pageType === 'redirect' ? disguiseConfig : null);
-}
-
-/** 转义 HTML 属性/文本，避免配置里的引号破坏页面结构。 */
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 /**

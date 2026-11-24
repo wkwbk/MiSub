@@ -36,11 +36,13 @@ export const DEFAULT_SETTINGS = {
   enableFlagEmoji: true,
   enablePublicPage: true,
   allowBrowserSubAccess: true,
+  mergeExpireStrategy: 'max',
   disguise: {
     pageType: 'default',
     redirectUrl: '',
   },
   storageType: 'd1',
+  autoUpdateInterval: 0,
   profileUpdateInterval: 24, // 客户端订阅默认更新间隔（小时），0 表示禁用注入 Profile-Update-Interval
   subFetchMinInterval: 15, // 服务端最小拉取间隔（分钟），0 表示禁用（回退默认 3 分钟节点缓存）
   subFetchLimitMode: 'cache', // 超频处理模式：'cache'（温和返回边缘缓存）| 'strict'（严格返回 429）
@@ -51,6 +53,11 @@ export const DEFAULT_SETTINGS = {
     prependTagName: false,
   },
   defaultOperators: [], // 新版操作符链式处理 (New Unified Pipeline)
+  manualNodeTagOrder: [],
+  subscriptionTagOrder: [],
+  profileTagOrder: [],
+  dismissedHealthItems: [],
+  customDnsOverride: '',
   regionOverrides: [], // 自定义节点地区覆盖规则：{ pattern, region, flags }
   nodeTransformPresets: [],
   // 公告设置

@@ -90,9 +90,7 @@ function syncFromStore() {
     selectTemplateAt(-1);
     return;
   }
-  const matchedIdx = selectedId.value
-    ? localTemplates.value.findIndex((item) => item.id === selectedId.value)
-    : -1;
+  const matchedIdx = selectedId.value ? localTemplates.value.findIndex((item) => item.id === selectedId.value) : -1;
   selectTemplateAt(matchedIdx >= 0 ? matchedIdx : 0);
 }
 

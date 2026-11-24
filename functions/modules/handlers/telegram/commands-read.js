@@ -5,7 +5,8 @@
 import { utf8ToBase64 } from '../../../../shared/base64.js';
 import { getProfileShareIdentifier } from '../../../../shared/profile-link.js';
 import { escapeHtml } from '../../utils.js';
-import { createRequestCache, getCachedProfiles, getCachedSettings, } from './storage.js';
+import { resolvePublicBaseUrl } from '../rotate-token.js';
+import { createRequestCache, getCachedProfiles, getCachedSettings } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
 import { getUserBoundProfileId } from './auth.js';
 import { getTelegramItemTags, parseTargetArgs } from './utils.js';
@@ -409,20 +410,13 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
       return;
     }
 
-    // 获取基础 URL - 优先使用设置中的域名
-    let baseUrl = settings.custom_domain || settings.publicDomain || '';
-    if (!baseUrl && request?.url) {
-      try {
-        const url = new URL(request.url);
-        baseUrl = `${url.protocol}//${url.host}`;
-      } catch {
-        baseUrl = '';
-      }
-    }
+    // 获取基础 URL - 统一使用 resolvePublicBaseUrl 解析公开站点地址 / 环境变量 / 请求域名
+    const baseUrl = resolvePublicBaseUrl(settings, env, request);
 
-    const subPath = String(settings.profileToken || 'sub')
-      .trim()
-      .replace(/^\/+|\/+$/g, '') || 'sub';
+    const subPath =
+      String(settings.profileToken || 'sub')
+        .trim()
+        .replace(/^\/+|\/+$/g, '') || 'sub';
 
     if (args.length > 0) {
       // 查找指定订阅组
@@ -490,11 +484,12 @@ export async function handleSubCommandSimple(chatId, env, requestCache = null) {
       return;
     }
 
-    // 尝试从设置中获取域名
-    const customDomain = settings.custom_domain || settings.publicDomain || '';
-    const subPath = String(settings.profileToken || 'sub')
-      .trim()
-      .replace(/^\/+|\/+$/g, '') || 'sub';
+    // 尝试从设置或环境变量中获取域名
+    const customDomain = resolvePublicBaseUrl(settings, env);
+    const subPath =
+      String(settings.profileToken || 'sub')
+        .trim()
+        .replace(/^\/+|\/+$/g, '') || 'sub';
 
     let message = '🔗 <b>订阅组列表</b>\n\n';
 

@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const dashboardSource = () =>
-  readFileSync(resolve(process.cwd(), 'src/components/dashboard/Dashboard.vue'), 'utf8');
+const dashboardSource = () => readFileSync(resolve(process.cwd(), 'src/components/dashboard/Dashboard.vue'), 'utf8');
 
 describe('Dashboard regression coverage for issue #387', () => {
   it('wires manual node speed test state and actions in the dashboard view', () => {

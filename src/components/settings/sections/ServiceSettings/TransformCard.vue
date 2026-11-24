@@ -32,7 +32,9 @@ if (!props.settings.builtinTransform || typeof props.settings.builtinTransform !
 const showAdvancedDrawer = ref(false);
 const hasBaseConfigOverride = computed(() => {
   const base = props.settings.builtinTransform?.baseConfig || {};
-  return Boolean(String(base.singbox || '').trim() || String(base.clash || '').trim() || String(base.surge || '').trim());
+  return Boolean(
+    String(base.singbox || '').trim() || String(base.clash || '').trim() || String(base.surge || '').trim(),
+  );
 });
 
 const modeOptions = computed(() => [
@@ -488,10 +490,7 @@ watch(
                 {{ t('settings.dnsOverrideActive') }}
               </span>
             </span>
-            <ChevronDown
-              :class="{ 'rotate-180': showAdvancedDrawer }"
-              class="h-4 w-4 transition-transform"
-            />
+            <ChevronDown :class="{ 'rotate-180': showAdvancedDrawer }" class="h-4 w-4 transition-transform" />
           </button>
 
           <div v-if="showAdvancedDrawer" class="mt-4">

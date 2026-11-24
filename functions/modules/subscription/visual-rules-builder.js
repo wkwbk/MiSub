@@ -68,11 +68,7 @@ function buildRegionGroupsForVisual(proxies, options = {}) {
 }
 
 function buildGroupCandidates({ action = 'proxy', includeAutoSelect = true, regionNames = [], includeDirect = true }) {
-  const proxyCandidates = [
-    ...(includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
-    ...regionNames,
-    MANUAL_SELECT_GROUP,
-  ];
+  const proxyCandidates = [...(includeAutoSelect ? [AUTO_SELECT_GROUP] : []), ...regionNames, MANUAL_SELECT_GROUP];
   if (action === 'reject') {
     return ['REJECT', 'DIRECT', ...proxyCandidates];
   }
@@ -300,7 +296,9 @@ export function buildVisualRulesAndProviders(format, options = {}) {
  */
 export function applyGeneralGroupToggles(proxyGroups, options = {}) {
   const bt = normalizeBuiltinTransform(options.builtinTransform);
-  let nextGroups = Array.isArray(proxyGroups) ? proxyGroups.map((g) => ({ ...g, proxies: [...(g.proxies || [])] })) : [];
+  let nextGroups = Array.isArray(proxyGroups)
+    ? proxyGroups.map((g) => ({ ...g, proxies: [...(g.proxies || [])] }))
+    : [];
 
   if (!bt.includeAutoSelect) {
     const removedNames = new Set(
@@ -469,7 +467,11 @@ export function generateSubconverterIniConfig(options = {}) {
     { name: '🇹🇼 台湾节点', regex: '(台|TW|Taiwan|新北|彰化)' },
     { name: '🇸🇬 狮城节点', regex: '(新加坡|坡|狮城|SG|Singapore)' },
     { name: '🇯🇵 日本节点', regex: '(日本|川日|东京|大阪|泉日|埼玉|沪日|深日|JP|Japan)' },
-    { name: '🇺🇸 美国节点', regex: '(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)' },
+    {
+      name: '🇺🇸 美国节点',
+      regex:
+        '(美|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|US|United States)',
+    },
     { name: '🇰🇷 韩国节点', regex: '(KR|Korea|KOR|首尔|韩|韓)' },
   ];
 
@@ -478,7 +480,9 @@ export function generateSubconverterIniConfig(options = {}) {
   const commonProxyRefs = [autoRef, regionRefs, `[]${MANUAL_SELECT_GROUP}`].filter(Boolean).join('`');
 
   // 顶层策略组
-  lines.push(`custom_proxy_group=${DEFAULT_SELECT_GROUP}\`select\`${[commonProxyRefs, '[]DIRECT'].filter(Boolean).join('`')}`);
+  lines.push(
+    `custom_proxy_group=${DEFAULT_SELECT_GROUP}\`select\`${[commonProxyRefs, '[]DIRECT'].filter(Boolean).join('`')}`,
+  );
   if (bt.includeAutoSelect) {
     lines.push(`custom_proxy_group=${AUTO_SELECT_GROUP}\`url-test\`.*\`http://www.gstatic.com/generate_204\`300,,50`);
   }

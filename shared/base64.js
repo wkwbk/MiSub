@@ -28,8 +28,16 @@ export function utf8ToBase64(str) {
 export function normalizeBase64String(str) {
   let normalized = String(str ?? '')
     .trim()
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
+    .replace(/\s+/g, '');
+  if (!normalized) return '';
+  if (normalized.includes('%')) {
+    try {
+      normalized = decodeURIComponent(normalized);
+    } catch {
+      // Ignore malformed percent-encoding and continue normalizing Base64 characters
+    }
+  }
+  normalized = normalized.replace(/-/g, '+').replace(/_/g, '/');
   const mod = normalized.length % 4;
   if (mod) {
     normalized += '='.repeat(4 - mod);

@@ -332,7 +332,9 @@ export function useManualNodes(markDirty) {
         manualNodeTagOrder: nextOrder,
       });
       if (typeof dataStore.saveSettings === 'function') {
-        dataStore.saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+        dataStore
+          .saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true })
+          .catch(() => {});
       }
     }
 
@@ -365,7 +367,9 @@ export function useManualNodes(markDirty) {
         manualNodeTagOrder: nextOrder,
       });
       if (typeof dataStore.saveSettings === 'function') {
-        dataStore.saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+        dataStore
+          .saveSettings({ manualNodeTagOrder: nextOrder }, { silent: true, preferencesOnly: true })
+          .catch(() => {});
       }
     }
 
@@ -416,8 +420,7 @@ export function useManualNodes(markDirty) {
   function writeInspectLocalCache(cacheObj) {
     try {
       writeRawPreference(INSPECT_CACHE_KEY, JSON.stringify(cacheObj));
-    } catch {
-    }
+    } catch {}
   }
 
   function hydrateInspectCache(targetNodes = manualNodes.value) {

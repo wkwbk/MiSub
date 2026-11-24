@@ -104,9 +104,7 @@ export function validateProfileAliases(profiles = [], { previousProfiles = [] } 
   }
 
   const prevById = new Map(
-    (Array.isArray(previousProfiles) ? previousProfiles : [])
-      .filter((p) => p && p.id)
-      .map((p) => [p.id, p]),
+    (Array.isArray(previousProfiles) ? previousProfiles : []).filter((p) => p && p.id).map((p) => [p.id, p]),
   );
 
   for (const profile of profiles) {

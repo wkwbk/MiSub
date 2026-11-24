@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
-import { resolveEffectiveBuiltinTransform, resolveTemplateUrl } from '../../functions/modules/subscription/engine-options.js';
+import {
+  resolveEffectiveBuiltinTransform,
+  resolveTemplateUrl,
+} from '../../functions/modules/subscription/engine-options.js';
 import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
 import { setLocale } from '@/i18n/index.js';
 

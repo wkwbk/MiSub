@@ -310,12 +310,9 @@ async function syncPushBot() {
           />
           <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.telegramAllowedUsersHint') }}
-            <a
-              class="font-mono text-fg underline hover:opacity-80"
-              href="https://t.me/userinfobot"
-              target="_blank"
-              >{{ t('settings.telegramGetUserId') }}</a
-            >
+            <a class="font-mono text-fg underline hover:opacity-80" href="https://t.me/userinfobot" target="_blank">{{
+              t('settings.telegramGetUserId')
+            }}</a>
           </p>
         </div>
 
@@ -323,7 +320,9 @@ async function syncPushBot() {
           class="flex items-center justify-between gap-6 rounded-md border border-status-warning-border bg-status-warning-bg px-4 py-3"
         >
           <div class="space-y-1">
-            <label class="block text-sm font-medium text-status-warning">{{ t('settings.telegramPublicAccess') }}</label>
+            <label class="block text-sm font-medium text-status-warning">{{
+              t('settings.telegramPublicAccess')
+            }}</label>
             <p class="text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramPublicAccessHint') }}
             </p>

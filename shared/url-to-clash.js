@@ -37,7 +37,8 @@ function parseV2raynClashProxy(url) {
   if (!decoded) return null;
 
   const { protocol: rawProtocol, config } = decoded;
-  const protocol = V2RAYN_CLASH_PROTOCOL_ALIAS[String(config.Protocol || config.protocol || rawProtocol || '').toLowerCase()];
+  const protocol =
+    V2RAYN_CLASH_PROTOCOL_ALIAS[String(config.Protocol || config.protocol || rawProtocol || '').toLowerCase()];
   if (!protocol) return null;
 
   const server = String(config.Address || config.address || config.Server || config.server || '');
@@ -95,7 +96,8 @@ function parseV2raynClashProxy(url) {
           .map((item) => item.trim())
           .filter(Boolean);
       }
-      const congestion = config.ProtoExtraObj?.CongestionControl || config.CongestionControl || config.congestionControl;
+      const congestion =
+        config.ProtoExtraObj?.CongestionControl || config.CongestionControl || config.congestionControl;
       if (congestion) proxy['congestion-controller'] = String(congestion);
       break;
     }

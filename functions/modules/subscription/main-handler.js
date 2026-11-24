@@ -374,8 +374,8 @@ export async function handleMisubRequest(context) {
       if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
         try {
           context.waitUntil(
-            Promise.resolve(storageAdapter.incrementProfileDownloadCount?.(profile.id)).catch(
-              (err) => console.error('[Download Count] Failed to update:', err),
+            Promise.resolve(storageAdapter.incrementProfileDownloadCount?.(profile.id)).catch((err) =>
+              console.error('[Download Count] Failed to update:', err),
             ),
           );
         } catch (err) {

@@ -113,10 +113,7 @@ const typeConfig = computed(() => {
           v-html="sanitizedContent"
         ></div>
 
-        <div
-          v-if="announcement.updatedAt"
-          class="pt-1 pl-3.5 text-xs font-mono text-fg-subtle flex items-center gap-2"
-        >
+        <div v-if="announcement.updatedAt" class="pt-1 pl-3.5 text-xs font-mono text-fg-subtle flex items-center gap-2">
           {{
             t('common.updatedAt', {
               time: new Date(announcement.updatedAt).toLocaleString(),

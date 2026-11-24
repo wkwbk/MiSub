@@ -159,9 +159,6 @@ export function migrateConfigSettings(config) {
   if (migratedConfig.hasOwnProperty('builtinEnableUdp')) {
     migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.builtinEnableUdp);
   }
-  if (migratedConfig.hasOwnProperty('builtinLoonSkipCertVerify')) {
-    migratedConfig.builtinLoonSkipCertVerify = toBoolean(migratedConfig.builtinLoonSkipCertVerify);
-  }
 
   if (migratedConfig.hasOwnProperty('profileUpdateInterval')) {
     const parsed = Number(migratedConfig.profileUpdateInterval);

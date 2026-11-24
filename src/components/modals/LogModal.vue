@@ -86,7 +86,8 @@ const targetProfileDownloadCount = computed(() => {
 });
 
 const canClearLogs = computed(
-  () => !isLoading.value && !isClearing.value && (filteredLogs.value.length > 0 || targetProfileDownloadCount.value > 0),
+  () =>
+    !isLoading.value && !isClearing.value && (filteredLogs.value.length > 0 || targetProfileDownloadCount.value > 0),
 );
 
 const clearLogs = async () => {

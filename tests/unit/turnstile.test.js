@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getPublicTurnstileConfig, resolveTurnstileConfig, verifyTurnstileToken } from '../../functions/modules/turnstile.js';
+import {
+  getPublicTurnstileConfig,
+  resolveTurnstileConfig,
+  verifyTurnstileToken,
+} from '../../functions/modules/turnstile.js';
 import { handleGuestbookPost } from '../../functions/modules/handlers/guestbook-handler.js';
 import { handleLogin } from '../../functions/modules/auth-middleware.js';
 import { handlePublicConfig, handleSettingsGet, handleSettingsSave } from '../../functions/modules/api-handler.js';

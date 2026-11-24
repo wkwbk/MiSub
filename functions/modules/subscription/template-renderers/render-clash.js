@@ -145,8 +145,7 @@ function getRuleProviderBehavior(providerUrl) {
         .pop()
         ?.replace(/\.(yaml|yml|list|txt|conf)$/i, '') || '';
     if (ACL4SSR_IPCIDR_PROVIDER_FILES.has(fileName.toLowerCase())) return 'ipcidr';
-  } catch {
-  }
+  } catch {}
   return 'classical';
 }
 
@@ -196,8 +195,7 @@ export function renderClashFromTemplateModel(model, options = {}) {
       if (fileName) {
         nameHint = fileName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
       }
-    } catch {
-    }
+    } catch {}
 
     const providerName = `${nameHint}_${providerCounter++}`;
     ruleProviderMap.set(providerUrl, providerName);

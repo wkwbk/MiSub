@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  filterAutoUpdateSubscriptions,
-  isAutoUpdateEnabled,
-  isAutoUpdatePaused,
-} from '../../shared/auto-update.js';
+import { filterAutoUpdateSubscriptions, isAutoUpdateEnabled, isAutoUpdatePaused } from '../../shared/auto-update.js';
 import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
 import { handleCronTrigger } from '../../functions/modules/notifications.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
@@ -41,9 +37,11 @@ describe('per-subscription autoUpdate pause (B.5)', () => {
     };
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
 
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('vless://11111111-1111-1111-1111-111111111111@1.2.3.4:443#NodeA', { status: 200 }),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response('vless://11111111-1111-1111-1111-111111111111@1.2.3.4:443#NodeA', { status: 200 }),
+      );
 
     const reqAllPaused = new Request('https://panel.example/api/batch_update_nodes', {
       method: 'POST',
@@ -75,9 +73,11 @@ describe('per-subscription autoUpdate pause (B.5)', () => {
   it('skips paused subscriptions during handleCronTrigger', async () => {
     const adapter = {
       type: 'd1',
-      getRemoteSubscriptions: vi.fn().mockResolvedValue([
-        { id: 'sub-1', name: 'Paused', url: 'https://paused.example/sub', enabled: true, autoUpdate: false },
-      ]),
+      getRemoteSubscriptions: vi
+        .fn()
+        .mockResolvedValue([
+          { id: 'sub-1', name: 'Paused', url: 'https://paused.example/sub', enabled: true, autoUpdate: false },
+        ]),
       get: vi.fn(async (key) => (key === STORAGE_KEY_SETTINGS ? {} : null)),
       putAllSubscriptions: vi.fn().mockResolvedValue(true),
     };

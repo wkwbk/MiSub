@@ -164,7 +164,8 @@ function handleCustomRuleJsonInput(event) {
 const copiedSubconverterUrl = ref(false);
 
 const subconverterConfigUrl = computed(() => {
-  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://example.com';
+  const origin =
+    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://example.com';
   const params = new URLSearchParams();
   const preset = detectVisualRulePreset(bt.value.selectedRules);
   if (preset !== 'custom') {
@@ -294,9 +295,7 @@ function clearActiveBaseConfig() {
         <div class="flex rounded-md border border-line bg-inset p-0.5">
           <button
             :class="
-              customRuleMode === 'form'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+              customRuleMode === 'form' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
             class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
@@ -307,9 +306,7 @@ function clearActiveBaseConfig() {
           </button>
           <button
             :class="
-              customRuleMode === 'json'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+              customRuleMode === 'json' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
             class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"

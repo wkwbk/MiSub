@@ -73,7 +73,10 @@ function handleNavClick(event, path) {
         <BrandLogo :icon-size="28" text-size-class="text-lg" to="/dashboard" />
       </div>
 
-      <nav :aria-label="t('nav.main')" class="nav-tab-shell min-w-0 flex items-center gap-0.5 md:gap-1 lg:gap-1.5 overflow-x-auto no-scrollbar">
+      <nav
+        :aria-label="t('nav.main')"
+        class="nav-tab-shell min-w-0 flex items-center gap-0.5 md:gap-1 lg:gap-1.5 overflow-x-auto no-scrollbar"
+      >
         <router-link
           v-for="item in navItems"
           :key="item.path"

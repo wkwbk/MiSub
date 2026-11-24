@@ -44,7 +44,9 @@ export function useSubscriptions(markDirty) {
       dataStore.settings.subscriptionTagOrder = nextOrder;
     }
     if (typeof dataStore.saveSettings === 'function') {
-      dataStore.saveSettings({ subscriptionTagOrder: nextOrder }, { silent: true, preferencesOnly: true }).catch(() => {});
+      dataStore
+        .saveSettings({ subscriptionTagOrder: nextOrder }, { silent: true, preferencesOnly: true })
+        .catch(() => {});
     }
   };
 

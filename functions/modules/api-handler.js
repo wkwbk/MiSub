@@ -18,7 +18,11 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
-import { ensureProfileLinkId, getProfileShareIdentifier, normalizeProfileIdentifier } from '../../shared/profile-link.js';
+import {
+  ensureProfileLinkId,
+  getProfileShareIdentifier,
+  normalizeProfileIdentifier,
+} from '../../shared/profile-link.js';
 import { validateProfileAliases } from '../../shared/profile-alias.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
@@ -86,7 +90,11 @@ export async function handleDataRequest(env, context = null) {
     const rawList = Array.isArray(rawProfiles) ? rawProfiles : [];
     const needsLinkIdMigration = rawList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
     const migratedRawProfiles = needsLinkIdMigration ? rawList.map((p) => ensureProfileLinkId(p)) : rawList;
-    if (needsLinkIdMigration && storageAdapter?.type !== 'noop' && typeof storageAdapter.syncAllProfiles === 'function') {
+    if (
+      needsLinkIdMigration &&
+      storageAdapter?.type !== 'noop' &&
+      typeof storageAdapter.syncAllProfiles === 'function'
+    ) {
       await storageAdapter.syncAllProfiles(migratedRawProfiles).catch((err) => {
         console.warn('[API /data] Failed to persist linkId migration:', err?.message || err);
       });
@@ -184,7 +192,9 @@ export async function handleMisubsSave(request, env, context = null) {
 
     const finalProfiles = profiles.map((p, index) => {
       const normalized = normalizeProfile(p);
-      const preservedLinkId = !normalized.linkId ? normalizeProfileIdentifier(prevProfileMap.get(normalized.id)?.linkId) : '';
+      const preservedLinkId = !normalized.linkId
+        ? normalizeProfileIdentifier(prevProfileMap.get(normalized.id)?.linkId)
+        : '';
       return ensureProfileLinkId({
         ...normalized,
         ...(preservedLinkId ? { linkId: preservedLinkId } : {}),
@@ -622,7 +632,11 @@ export async function handlePublicProfilesRequest(request, env) {
     const rawProfileList = Array.isArray(profiles) ? profiles : [];
     const needsLinkIdMigration = rawProfileList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
     const ensuredProfiles = needsLinkIdMigration ? rawProfileList.map((p) => ensureProfileLinkId(p)) : rawProfileList;
-    if (needsLinkIdMigration && storageAdapter?.type !== 'noop' && typeof storageAdapter.syncAllProfiles === 'function') {
+    if (
+      needsLinkIdMigration &&
+      storageAdapter?.type !== 'noop' &&
+      typeof storageAdapter.syncAllProfiles === 'function'
+    ) {
       await storageAdapter.syncAllProfiles(ensuredProfiles).catch(() => {});
     }
 

@@ -309,17 +309,13 @@ const isCustomPageFullWidth = computed(() => {
       >
         <div class="relative flex items-center justify-center mb-6">
           <div class="w-12 h-12 rounded-full border border-line"></div>
-          <div
-            class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-fg animate-spin"
-          ></div>
+          <div class="absolute inset-0 w-12 h-12 rounded-full border border-transparent border-t-fg animate-spin"></div>
           <div class="absolute inset-0 flex items-center justify-center text-fg-subtle">
             <Globe class="w-5 h-5" stroke-width="1.75" />
           </div>
         </div>
         <div class="flex flex-col items-center gap-1.5">
-          <span class="font-display font-semibold tracking-tight text-sm text-fg">
-            MiSub
-          </span>
+          <span class="font-display font-semibold tracking-tight text-sm text-fg"> MiSub </span>
           <span class="text-xs font-mono text-fg-subtle">
             {{ t('common.loading') }}
           </span>

@@ -13,10 +13,10 @@ import {
   saveSingleProfile,
   saveSingleSubscription,
 } from './storage.js';
-import { answerCallbackQuery, editTelegramMessage, sendTelegramMessage, } from './client.js';
-import { getUserBoundProfileId, setUserBoundProfileId, } from './auth.js';
+import { answerCallbackQuery, editTelegramMessage, sendTelegramMessage } from './client.js';
+import { getUserBoundProfileId, setUserBoundProfileId } from './auth.js';
 import { getUserNodes } from './node-queries.js';
-import { applyTagOperation, handleTagActions, handleTagManage, handleTagSelect, } from './tags.js';
+import { applyTagOperation, handleTagActions, handleTagManage, handleTagSelect } from './tags.js';
 import {
   handleCopyCommand,
   handleExportCommand,
@@ -563,7 +563,6 @@ export async function handleCallbackQuery(callbackQuery, env, request, requestCa
                 await handleListCommand(chatId, userId, env, 0, 'sub');
               }
             } else {
-
               const allNodes = await getUserNodes(userId, env);
               const realIdx = allNodes.findIndex((n) => n.id === targetItem.id);
 

@@ -22,7 +22,16 @@ export const VISUAL_RULE_CATEGORIES = Object.freeze([
     groupName: '💬 AI 服务',
     defaultAction: 'proxy',
     geosite: ['openai', 'anthropic', 'google-gemini'],
-    domains: ['chatgpt.com', 'openai.com', 'claude.ai', 'anthropic.com', 'gemini.google.com', 'perplexity.ai', 'x.ai', 'grok.com'],
+    domains: [
+      'chatgpt.com',
+      'openai.com',
+      'claude.ai',
+      'anthropic.com',
+      'gemini.google.com',
+      'perplexity.ai',
+      'x.ai',
+      'grok.com',
+    ],
     clashProvider: 'ACL4SSR/Clash/Providers/Ruleset/OpenAi.yaml',
     surgeList: 'ACL4SSR/Clash/Ruleset/OpenAi.list',
   },
@@ -208,9 +217,7 @@ export const VISUAL_RULE_CATEGORIES = Object.freeze([
   },
 ]);
 
-export const VISUAL_RULE_MAP = Object.freeze(
-  Object.fromEntries(VISUAL_RULE_CATEGORIES.map((item) => [item.id, item])),
-);
+export const VISUAL_RULE_MAP = Object.freeze(Object.fromEntries(VISUAL_RULE_CATEGORIES.map((item) => [item.id, item])));
 
 export const VISUAL_RULE_PRESETS = Object.freeze({
   minimal: ['private', 'cn_services', 'non_cn'],
@@ -295,7 +302,8 @@ export function normalizeBuiltinTransform(raw = {}) {
     groupByCountry: input.groupByCountry !== false,
     includeAutoSelect: input.includeAutoSelect !== false,
     enableClashApi: Boolean(input.enableClashApi),
-    externalController: String(input.externalController || DEFAULT_BUILTIN_TRANSFORM.externalController).trim() || '0.0.0.0:9090',
+    externalController:
+      String(input.externalController || DEFAULT_BUILTIN_TRANSFORM.externalController).trim() || '0.0.0.0:9090',
     externalUiDownloadUrl: String(input.externalUiDownloadUrl || '').trim(),
     baseConfig: {
       singbox: typeof rawBase.singbox === 'string' ? rawBase.singbox : '',

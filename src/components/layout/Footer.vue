@@ -53,11 +53,7 @@ const currentVersion = packageJson.version;
         type="button"
         @click="versionStore.openModal"
       >
-        <span
-          v-if="hasUpdate"
-          aria-hidden="true"
-          class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"
-        ></span>
+        <span v-if="hasUpdate" aria-hidden="true" class="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0"></span>
         <span>v{{ currentVersion }}</span>
       </button>
     </div>

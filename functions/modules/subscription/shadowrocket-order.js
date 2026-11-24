@@ -4,7 +4,8 @@ import { setNodeName } from '../../utils/node-transformer.js';
 
 const REGIONS = ['美国', '香港', '台湾', '日本', '新加坡', '韩国', '英国', '德国', '法国', '加拿大', '澳大利亚'];
 
-const countryNames = typeof Intl?.DisplayNames === 'function' ? new Intl.DisplayNames(['zh-Hans'], { type: 'region' }) : null;
+const countryNames =
+  typeof Intl?.DisplayNames === 'function' ? new Intl.DisplayNames(['zh-Hans'], { type: 'region' }) : null;
 const flagPattern = /^([\u{1F1E6}-\u{1F1FF}]{2})\s*/u;
 const shortRegions = { HK: '香港', MO: '澳门' };
 const multiplierPattern = /(?:^|[-\s✨])(\d+(?:\.\d+)?\s*(?:x|×|倍))\s*[-–—]?\s*$/iu;
@@ -12,7 +13,11 @@ const multiplierPattern = /(?:^|[-\s✨])(\d+(?:\.\d+)?\s*(?:x|×|倍))\s*[-–�
 export function compactShadowrocketNodeName(original) {
   const text = String(original || '').trim();
   if (!text) return '节点';
-  if (/到期|剩余流量|流量剩余/.test(text)) return text.replace(/[,="\\]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (/到期|剩余流量|流量剩余/.test(text))
+    return text
+      .replace(/[,="\\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   const flag = text.match(flagPattern)?.[1];
   let shownFlag = flag === '🇺🇲' ? '🇺🇸' : flag;
   if (shownFlag === '🇮🇳' && text.includes('印度尼西亚')) shownFlag = '🇮🇩';
@@ -25,9 +30,7 @@ export function compactShadowrocketNodeName(original) {
     .replace(/^[\s-]+|[\s-]+$/g, '');
   let name = labels;
   if (shownFlag && countryNames) {
-    const regionCode = [...shownFlag]
-      .map((char) => String.fromCharCode(char.codePointAt(0) - 0x1f1e6 + 65))
-      .join('');
+    const regionCode = [...shownFlag].map((char) => String.fromCharCode(char.codePointAt(0) - 0x1f1e6 + 65)).join('');
     try {
       const country = shortRegions[regionCode] || countryNames.of(regionCode);
       if (country) {
@@ -103,9 +106,7 @@ export function manualProxyKeys(sources = []) {
         !/^https?:\/\//i.test(source.url.trim()),
     )
     .sort(
-      (a, b) =>
-        Number(/洛杉矶|los\s*angeles/i.test(b.name || '')) -
-        Number(/洛杉矶|los\s*angeles/i.test(a.name || '')),
+      (a, b) => Number(/洛杉矶|los\s*angeles/i.test(b.name || '')) - Number(/洛杉矶|los\s*angeles/i.test(a.name || '')),
     )
     .flatMap((source) => urlsToClashProxies([source.url], { addFlagEmoji: false }).map(identity))
     .filter(Boolean);
@@ -116,7 +117,10 @@ export function sortShadowrocketProxies(proxies, preferredKeys = []) {
   const rank = (proxy) => {
     const key = identity(proxy);
     if (key && ranks.has(key)) return ranks.get(key) - preferredKeys.length - 1;
-    if (/到期|剩余|流量|过期/.test(proxy?.name || '') && ['http', 'trojan'].includes(String(proxy?.type || '').toLowerCase())) {
+    if (
+      /到期|剩余|流量|过期/.test(proxy?.name || '') &&
+      ['http', 'trojan'].includes(String(proxy?.type || '').toLowerCase())
+    ) {
       return 1000;
     }
     const region = extractNodeRegion(proxy?.name || '');
@@ -139,7 +143,13 @@ export function sortShadowrocketNodeList(nodeList, preferredKeys = [], { compact
       return { ...(proxy || { name: '', type: 'unknown' }), line };
     });
   const ordered = sortShadowrocketProxies(entries, preferredKeys);
-  const names = compactNames ? shadowrocketProxyNames(ordered.filter((entry) => entry.name), [], { compact: true }) : [];
+  const names = compactNames
+    ? shadowrocketProxyNames(
+        ordered.filter((entry) => entry.name),
+        [],
+        { compact: true },
+      )
+    : [];
   let namedIndex = 0;
   return (
     ordered

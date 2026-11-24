@@ -173,12 +173,22 @@ describe('Pagination auto-scroll integration', () => {
         plugins: [createPinia(), createI18n({ initialLocale: 'zh-CN' })],
         stubs: {
           ManualNodeCard: { template: '<div class="node-card-stub"></div>' },
-          draggable: { template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>', props: ['modelValue'] },
+          draggable: {
+            template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>',
+            props: ['modelValue'],
+          },
         },
       },
     });
 
-    wrapper.element.getBoundingClientRect = () => ({ top: -200, bottom: 400, height: 600, width: 800, left: 0, right: 800 });
+    wrapper.element.getBoundingClientRect = () => ({
+      top: -200,
+      bottom: 400,
+      height: 600,
+      width: 800,
+      left: 0,
+      right: 800,
+    });
 
     const nextBtn = wrapper.get('button[aria-label="下一页"]');
     await nextBtn.trigger('click');
@@ -208,13 +218,23 @@ describe('Pagination auto-scroll integration', () => {
         stubs: {
           ProfileCard: { template: '<div class="profile-card-stub"></div>' },
           MoreActionsMenu: { template: '<div><slot name="menu" :close="() => {}" /></div>' },
-          draggable: { template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>', props: ['modelValue'] },
+          draggable: {
+            template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>',
+            props: ['modelValue'],
+          },
         },
       },
     });
 
     const listContainer = wrapper.find('.profile-card-stub').element.parentElement.parentElement.parentElement;
-    listContainer.getBoundingClientRect = () => ({ top: -150, bottom: 400, height: 550, width: 800, left: 0, right: 800 });
+    listContainer.getBoundingClientRect = () => ({
+      top: -150,
+      bottom: 400,
+      height: 550,
+      width: 800,
+      left: 0,
+      right: 800,
+    });
 
     const nextBtn = wrapper.get('button[aria-label="下一页"]');
     await nextBtn.trigger('click');
@@ -246,13 +266,23 @@ describe('Pagination auto-scroll integration', () => {
         stubs: {
           Card: { props: ['misub'], template: '<div class="sub-card-stub">{{ misub.name }}</div>' },
           MoreActionsMenu: { template: '<div><slot name="menu" :close="() => {}" /></div>' },
-          draggable: { template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>', props: ['modelValue'] },
+          draggable: {
+            template: '<div><slot name="item" v-for="el in modelValue" :element="el" /></div>',
+            props: ['modelValue'],
+          },
         },
       },
     });
 
     const listContainer = wrapper.find('.sub-card-stub').element.parentElement.parentElement.parentElement;
-    listContainer.getBoundingClientRect = () => ({ top: -150, bottom: 400, height: 550, width: 800, left: 0, right: 800 });
+    listContainer.getBoundingClientRect = () => ({
+      top: -150,
+      bottom: 400,
+      height: 550,
+      width: 800,
+      left: 0,
+      right: 800,
+    });
 
     const nextBtn = wrapper.get('button[aria-label="下一页"]');
     await nextBtn.trigger('click');

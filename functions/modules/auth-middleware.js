@@ -3,7 +3,13 @@
  * 处理用户认证和会话管理
  */
 
-import { COOKIE_NAME, DEFAULT_SETTINGS, SESSION_DURATION, SESSION_RENEW_THRESHOLD, STORAGE_KEY_SETTINGS } from './config.js';
+import {
+  COOKIE_NAME,
+  DEFAULT_SETTINGS,
+  SESSION_DURATION,
+  SESSION_RENEW_THRESHOLD,
+  STORAGE_KEY_SETTINGS,
+} from './config.js';
 import { StorageFactory } from '../storage-adapter.js';
 import { resolveTurnstileConfig, verifyTurnstileToken } from './turnstile.js';
 import {

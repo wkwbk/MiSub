@@ -1,4 +1,3 @@
-
 export const TIMING = {
   SECOND_IN_MS: 1000,
   CACHE_TTL_MS: 5 * 60 * 1000,

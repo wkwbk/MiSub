@@ -4,7 +4,7 @@
 
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { escapeHtml } from '../../utils.js';
-import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions, } from './storage.js';
+import { createRequestCache, getCachedStorageAdapter, getCachedSubscriptions } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
 import { getTelegramItemTags } from './utils.js';
 import { getUserNodes } from './node-queries.js';

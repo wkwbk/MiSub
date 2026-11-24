@@ -227,9 +227,7 @@ onMounted(() => {
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-center gap-2.5">
               <span class="text-sm font-medium text-fg">{{ msg.nickname || t('settings.guestbookAnonymous') }}</span>
-              <span
-                class="text-xs font-mono px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted"
-              >
+              <span class="text-xs font-mono px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted">
                 {{ getTypeLabel(msg.type) }}
               </span>
               <span :class="['text-xs px-2 py-0.5 rounded-md', getStatusBadgeClass(msg.status)]">

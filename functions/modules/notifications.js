@@ -10,33 +10,8 @@ import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-t
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
 // 导入核心通知服务及工具
-import {
-  debugTgNotification,
-  sendEnhancedTgNotification as sendCoreEnhancedTg,
-  sendTgNotification as sendCoreTg,
-  tgEscape as coreTgEscape,
-} from '../services/notification-service.js';
-
-/**
- * 转义 Telegram HTML 特殊字符
- */
-export function tgEscape(text) {
-  return coreTgEscape(text);
-}
-
-/**
- * 发送Telegram基础通知 (兼容旧调用)
- */
-export async function sendTgNotification(settings, message) {
-  return sendCoreTg(settings, message);
-}
-
-/**
- * 增强版TG通知 (兼容旧调用)
- */
-export async function sendEnhancedTgNotification(settings, type, clientIp, additionalData = '') {
-  return sendCoreEnhancedTg(settings, type, clientIp, additionalData);
-}
+import { debugTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
+export { sendEnhancedTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
 
 /**
  * 测试 Telegram 通知
@@ -101,7 +76,7 @@ export async function checkAndNotify(sub, settings, _env) {
 <b>状态:</b> <code>${tgEscape(daysRemaining < 0 ? '已过期' : `仅剩 ${daysRemaining} 天到期`)}</code>
 <b>到期日期:</b> <code>${expiryDate.toLocaleDateString('zh-CN')}</code>`;
 
-        const sent = await sendCoreTg(settings, message);
+        const sent = await sendTgNotification(settings, message);
         if (sent) {
           sub.lastNotifiedExpire = now;
         }
@@ -123,7 +98,7 @@ export async function checkAndNotify(sub, settings, _env) {
 <b>状态:</b> <code>已使用 ${usagePercent}%</code>
 <b>详情:</b> <code>${tgEscape(formatBytes(used))} / ${tgEscape(formatBytes(total))}</code>`;
 
-        const sent = await sendCoreTg(settings, message);
+        const sent = await sendTgNotification(settings, message);
         if (sent) {
           sub.lastNotifiedTraffic = now;
         }
@@ -364,7 +339,7 @@ export async function handleCronTrigger(env) {
       nodeChangeMessage += `\n... 还有 ${nodeCountChanges.length - 10} 个订阅有变化`;
     }
 
-    await sendCoreTg(settings, nodeChangeMessage);
+    await sendTgNotification(settings, nodeChangeMessage);
   }
 
   // 发送更新摘要
@@ -392,7 +367,7 @@ export async function handleCronTrigger(env) {
       });
     }
 
-    await sendCoreTg(settings, updateMessage);
+    await sendTgNotification(settings, updateMessage);
   }
 
   return new Response(JSON.stringify(summary), {

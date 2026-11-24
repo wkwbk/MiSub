@@ -103,4 +103,3 @@ export function toExternalProfile(profile) {
     updatedAt: profile.updatedAt || null,
   };
 }
-

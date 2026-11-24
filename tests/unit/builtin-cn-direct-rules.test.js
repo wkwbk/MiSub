@@ -89,10 +89,7 @@ describe('内置规则 - 国内直连（域名维度 + IP 维度）', () => {
       rules,
       (r) => typeof r === 'object' && r.type === 'rule_set' && r.tag === 'geosite-cn',
     );
-    const geoipIdx = indexOfRule(
-      rules,
-      (r) => typeof r === 'object' && r.type === 'rule_set' && r.tag === 'geoip-cn',
-    );
+    const geoipIdx = indexOfRule(rules, (r) => typeof r === 'object' && r.type === 'rule_set' && r.tag === 'geoip-cn');
     const cnSuffixIdx = indexOfRule(
       rules,
       (r) => typeof r === 'object' && Array.isArray(r.domain_suffix) && r.domain_suffix.includes('cn'),

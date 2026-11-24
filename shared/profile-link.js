@@ -137,9 +137,7 @@ export function resolvePublicProfile(profiles, identifier) {
 export function resolveInternalProfile(profiles, identifier) {
   const target = normalizeProfileIdentifier(identifier);
   if (!Array.isArray(profiles) || !target) return null;
-  const exactMatch = profiles.find(
-    (p) => p && (p.id === target || p.customId === target || p.linkId === target),
-  );
+  const exactMatch = profiles.find((p) => p && (p.id === target || p.customId === target || p.linkId === target));
   if (exactMatch) return exactMatch;
   const targetLower = target.toLowerCase();
   return (

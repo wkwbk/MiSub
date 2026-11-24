@@ -81,10 +81,7 @@ function applyCacheHeadersToAssetResponse(response, pathname) {
   if (pathname.startsWith('/assets/')) {
     headers.set('Cache-Control', 'public, max-age=31536000, immutable');
     headers.set('CDN-Cache-Control', 'public, max-age=31536000, immutable');
-  } else if (
-    pathname.startsWith('/icons/') ||
-    /\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(pathname)
-  ) {
+  } else if (pathname.startsWith('/icons/') || /\.(png|jpe?g|svg|webp|ico|woff2?|ttf|eot)$/i.test(pathname)) {
     // 静态图标及图片字体：浏览器与 CDN 强缓存 7 天，后台平滑重校验
     headers.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
     headers.set('CDN-Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');

@@ -21,7 +21,8 @@ vi.mock('../../functions/storage-adapter.js', () => ({
 vi.mock('../../functions/modules/utils.js', () => ({
   getCookieSecret: vi.fn(),
   getAdminPassword: vi.fn(),
-  normalizeLoginPath: (p) => (typeof p === 'string' && p.trim().replace(/^\/+/, '') ? `/${p.trim().replace(/^\/+/, '')}` : '/login'),
+  normalizeLoginPath: (p) =>
+    typeof p === 'string' && p.trim().replace(/^\/+/, '') ? `/${p.trim().replace(/^\/+/, '')}` : '/login',
   createJsonResponse: (data, status = 200) => new Response(JSON.stringify(data), { status }),
   createErrorResponse: (data, status = 500) => new Response(JSON.stringify({ error: String(data) }), { status }),
   JSON_BODY_LIMITS: {
@@ -150,12 +151,8 @@ describe('api-handler storage helper usage', () => {
     const response = await handleMisubsSave(request, { MISUB_DB: {} });
 
     expect(response.status).toBe(200);
-    expect(syncAllSubscriptions).toHaveBeenCalledWith([
-      expect.objectContaining({ id: 'sub-new', sortIndex: 0 }),
-    ]);
-    expect(syncAllProfiles).toHaveBeenCalledWith([
-      expect.objectContaining({ id: 'profile-new', sortIndex: 0 }),
-    ]);
+    expect(syncAllSubscriptions).toHaveBeenCalledWith([expect.objectContaining({ id: 'sub-new', sortIndex: 0 })]);
+    expect(syncAllProfiles).toHaveBeenCalledWith([expect.objectContaining({ id: 'profile-new', sortIndex: 0 })]);
     expect(put).not.toHaveBeenCalled();
   });
 });

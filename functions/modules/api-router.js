@@ -43,9 +43,11 @@ import {
   handleNodeCountRequest as handleLegacyNodeCountRequest,
 } from './handlers/node-handler.js';
 import { handleNodeInspectRequest, handleNodeTcpingRequest } from './handlers/node-inspect-handler.js';
-import { handleClientRequest } from './handlers/client-handler.js';
-import { handlePublicCoresRequest } from './handlers/public-cores-handler.js';
-import { handlePublicLinksRequest } from './handlers/public-links-handler.js';
+import {
+  handleClientRequest,
+  handlePublicCoresRequest,
+  handlePublicLinksRequest,
+} from './handlers/public-collection-handler.js';
 import { handleErrorReportRequest } from './handlers/error-report-handler.js';
 import {
   handleGuestbookGet,
@@ -58,10 +60,7 @@ import { handleParseSubscription } from './handlers/parse-subscription-handler.j
 import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
 import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
-import {
-  generateSubconverterIniConfig,
-  VISUAL_RULE_PRESETS,
-} from './subscription/visual-rules-builder.js';
+import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/visual-rules-builder.js';
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';

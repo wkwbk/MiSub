@@ -43,12 +43,7 @@ const emit = defineEmits(['logout']);
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="safe-top-inset">
         <div class="flex justify-between items-center h-14">
-          <BrandLogo
-            v-if="!hideBranding"
-            :icon-size="24"
-            :to="brandTarget"
-            text-size-class="text-base"
-          />
+          <BrandLogo v-if="!hideBranding" :icon-size="24" :to="brandTarget" text-size-class="text-base" />
           <router-link
             v-else
             :to="brandTarget"

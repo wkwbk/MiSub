@@ -49,21 +49,25 @@ describe('profile linkId decoupling, alias validation & scoped log clearing (B.6
       { id: 'p2', customId: '旧别名!', linkId: generateProfileLinkId() },
     ];
 
-    expect(
-      validateSingleProfileAlias('game', { currentProfileId: 'p3', profiles: existing }),
-    ).toMatchObject({ valid: false, code: 'duplicate' });
+    expect(validateSingleProfileAlias('game', { currentProfileId: 'p3', profiles: existing })).toMatchObject({
+      valid: false,
+      code: 'duplicate',
+    });
 
-    expect(
-      validateSingleProfileAlias('api', { currentProfileId: 'p3', profiles: existing }),
-    ).toMatchObject({ valid: false, code: 'reserved' });
+    expect(validateSingleProfileAlias('api', { currentProfileId: 'p3', profiles: existing })).toMatchObject({
+      valid: false,
+      code: 'reserved',
+    });
 
-    expect(
-      validateSingleProfileAlias('bad space', { currentProfileId: 'p3', profiles: existing }),
-    ).toMatchObject({ valid: false, code: 'invalid_chars' });
+    expect(validateSingleProfileAlias('bad space', { currentProfileId: 'p3', profiles: existing })).toMatchObject({
+      valid: false,
+      code: 'invalid_chars',
+    });
 
-    expect(
-      validateSingleProfileAlias('a'.repeat(65), { currentProfileId: 'p3', profiles: existing }),
-    ).toMatchObject({ valid: false, code: 'too_long' });
+    expect(validateSingleProfileAlias('a'.repeat(65), { currentProfileId: 'p3', profiles: existing })).toMatchObject({
+      valid: false,
+      code: 'too_long',
+    });
 
     // Unchanged legacy customId is exempted on save
     expect(validateProfileAliases(existing, { previousProfiles: existing })).toEqual({ valid: true });

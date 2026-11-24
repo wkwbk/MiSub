@@ -256,8 +256,7 @@ export function resolvePublicLinkIcon(link) {
     if (hostname) {
       return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=128`;
     }
-  } catch {
-  }
+  } catch {}
   return '';
 }
 

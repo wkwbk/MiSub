@@ -66,7 +66,9 @@ const hasActiveAttrFilters = computed(() =>
   Boolean(props.attrFilters?.protocol || props.attrFilters?.country || props.attrFilters?.network),
 );
 
-const displayPage = computed(() => (props.localSearchTerm || props.useLocalPagination ? props.searchPage : props.basePage));
+const displayPage = computed(() =>
+  props.localSearchTerm || props.useLocalPagination ? props.searchPage : props.basePage,
+);
 const displayTotalPages = computed(() =>
   props.localSearchTerm || props.useLocalPagination ? props.searchTotalPages : props.baseTotalPages,
 );

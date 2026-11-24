@@ -1,4 +1,3 @@
-
 export const SUBSCRIPTION_STATUS_FILTERS = {
   missing: 'all',
   disabled: 'disabled',

@@ -1,4 +1,3 @@
-
 export function isSameOriginUrl(value, origin, baseUrl = origin) {
   if (!origin || value === undefined || value === null || value === '') return false;
 
@@ -29,4 +28,11 @@ const CRITICAL_ASSET_PATTERN = /\/assets\/.+\.(js|css)$/i;
 
 export function isCriticalAssetPath(pathname) {
   return CRITICAL_ASSET_PATTERN.test(String(pathname || ''));
+}
+
+export function normalizeWebsiteUrl(rawUrl) {
+  const trimmed = String(rawUrl || '').trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
 }

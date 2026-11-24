@@ -21,7 +21,6 @@ export const DEFAULT_SETTINGS = {
   builtinSkipCertVerify: false,
   builtinEnableUdp: true,
   builtinTransform: { ...DEFAULT_BUILTIN_TRANSFORM, baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig } },
-  builtinLoonSkipCertVerify: false,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   mergeExpireStrategy: 'max',
@@ -54,6 +53,7 @@ export const DEFAULT_SETTINGS = {
   // 存在设置里是为了跨设备同步（原先只存 localStorage，换设备就丢）。
   // 条目的 id 都是固定字符串（见 src/utils/dashboard-health.js），跨设备可比对。
   dismissedHealthItems: [],
+  defaultOperators: [],
   nodeTransformPresets: [],
   regionOverrides: [],
   // 公告设置

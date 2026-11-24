@@ -1,6 +1,6 @@
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
-import { reactive } from 'vue';
+import { reactive, ref } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SettingsView from '@/views/SettingsView.vue';
 import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
@@ -61,9 +61,9 @@ vi.mock('@/composables/useSettingsLogic.js', () => ({
   useSettingsLogic: () => ({
     settings: { myToken: 'stable-token', profileToken: 'share-token' },
     disguiseConfig: {},
-    isLoading: false,
-    isSaving: false,
-    hasWhitespace: false,
+    isLoading: ref(false),
+    isSaving: ref(false),
+    hasWhitespace: ref(false),
     loadSettings: vi.fn(),
     handleSave: vi.fn(),
     handleReset: vi.fn(),

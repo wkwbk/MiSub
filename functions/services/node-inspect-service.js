@@ -170,13 +170,16 @@ export function isIpInCidr(ip, cidr) {
   const netInt = ipv4ToInt(network);
   if (ipInt === null || netInt === null) return false;
   if (prefix === 0) return true;
-  const mask = (~((1 << (32 - prefix)) - 1)) >>> 0;
+  const mask = ~((1 << (32 - prefix)) - 1) >>> 0;
   return (ipInt & mask) === (netInt & mask);
 }
 
 export function isPrivateOrReservedIp(ip) {
   if (!ip || typeof ip !== 'string') return true;
-  const cleaned = ip.trim().replace(/^\[|\]$/g, '').toLowerCase();
+  const cleaned = ip
+    .trim()
+    .replace(/^\[|\]$/g, '')
+    .toLowerCase();
   if (isIPv4(cleaned)) {
     const privateCidrs = [
       '0.0.0.0/8',
@@ -481,8 +484,7 @@ async function writeCacheSafe(storageAdapter, key, payload) {
   if (!storageAdapter || storageAdapter.type === 'noop') return;
   try {
     await storageAdapter.put(key, payload);
-  } catch {
-  }
+  } catch {}
 }
 
 async function runWithConcurrency(items, concurrency, worker) {

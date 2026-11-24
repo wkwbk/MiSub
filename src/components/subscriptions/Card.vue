@@ -23,6 +23,7 @@ import { TIMING } from '@/constants/timing.js';
 import { useToastStore } from '@/stores/toast.js';
 import Switch from '@/components/ui/Switch.vue';
 import { useI18n } from '@/i18n/index.js';
+import { normalizeWebsiteUrl } from '@/utils/url-origin.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
@@ -209,13 +210,6 @@ const expiryInfo = computed(() => {
     dot,
   };
 });
-
-const normalizeWebsiteUrl = (value) => {
-  const website = (value || '').trim();
-  if (!website) return null;
-  if (/^https?:\/\//i.test(website)) return website;
-  return `https://${website}`;
-};
 
 const websiteUrl = computed(() => {
   const explicitWebsite = normalizeWebsiteUrl(props.misub.website);
@@ -436,10 +430,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         </button>
       </div>
 
-      <div
-        v-if="trafficInfo"
-        class="mb-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5"
-      >
+      <div v-if="trafficInfo" class="mb-2.5 grid gap-2 rounded-md border border-line bg-transparent px-3 py-2.5">
         <div class="space-y-1.5">
           <div class="flex items-end justify-between text-xs">
             <span class="text-fg-muted"

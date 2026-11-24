@@ -1,5 +1,5 @@
 import { StorageFactory } from '../../storage-adapter.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit, } from '../utils.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { enforcePublicApiAccess } from '../access-control.js';
 import { handleProfileMode } from './profile-handler.js';
@@ -49,7 +49,8 @@ export async function handlePublicPreviewRequest(request, env) {
 
     const profile =
       typeof storageAdapter.getPublicProfileByIdentifier === 'function'
-        ? (await storageAdapter.getPublicProfileByIdentifier(profileId)) || (await storageAdapter.getProfileById(profileId))
+        ? (await storageAdapter.getPublicProfileByIdentifier(profileId)) ||
+          (await storageAdapter.getProfileById(profileId))
         : await storageAdapter.getProfileById(profileId);
 
     if (!profile || !profile.enabled || !profile.isPublic) {

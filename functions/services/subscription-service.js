@@ -3,10 +3,8 @@
  * @author MiSub Team
  */
 
-import { utf8ToBase64 } from '../../shared/base64.js';
 import { isAutoUpdateEnabled } from '../../shared/auto-update.js';
 import { getDisabledNodeSet } from '../../shared/disabled-nodes.js';
-import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
@@ -17,8 +15,9 @@ import {
   removeFlagEmoji,
   sanitizeNodeForYaml,
 } from '../utils/node-utils.js';
+import { applyManualNodeName } from '../utils/node-cleaner.js';
 import { runOperatorChain } from '../utils/operator-runner.js';
-import { createTimeoutFetch } from '../modules/utils.js';
+import { fetchWithRetry } from './fetch-utils.js';
 import { assertPublicNetworkUrl } from '../modules/security-utils.js';
 import { isSuspiciousNodeCountDrop } from './node-cache-service.js';
 import { inferAirportRootDomain } from '../../shared/airport-domain.js';
@@ -61,81 +60,6 @@ export {
   readSubscriptionNodeCache,
   applyFilterRules,
 };
-
-/**
- * 带重试的订阅获取函数（支持网络错误和 HTTP 状态码重试）
- * @param {string} url - 请求 URL
- * @param {Object} init - fetch 初始化选项
- * @param {Object} options - 重试选项
- * @returns {Promise<Response>} - 响应对象
- */
-async function fetchWithRetry(url, init = {}, options = {}) {
-  const {
-    timeout = FETCH_CONFIG.TIMEOUT,
-    maxRetries = FETCH_CONFIG.MAX_RETRIES,
-    baseDelay = FETCH_CONFIG.BASE_DELAY,
-    retryableStatus = FETCH_CONFIG.RETRYABLE_STATUS,
-  } = options;
-
-  let lastError;
-  let lastResponse;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await createTimeoutFetch(url, init, timeout);
-
-      // 检查是否需要重试（可重试的 HTTP 状态码）
-      if (!response.ok && retryableStatus.includes(response.status)) {
-        if (attempt < maxRetries) {
-          // 计算延迟：优先使用 Retry-After 头，否则使用指数退避
-          let delay = baseDelay * Math.pow(2, attempt);
-          const retryAfter = response.headers.get('Retry-After');
-          if (retryAfter) {
-            const retryAfterSeconds = parseInt(retryAfter, 10);
-            if (!isNaN(retryAfterSeconds) && retryAfterSeconds > 0) {
-              delay = Math.min(retryAfterSeconds * 1000, 30000); // 最多等待 30 秒
-            }
-          }
-
-          console.warn(
-            `[Retry] HTTP ${response.status} (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms`,
-          );
-
-          // 释放响应体，避免连接占用
-          try {
-            await response.body?.cancel();
-          } catch (cancelError) {
-            console.debug('[Retry] Failed to cancel response body:', cancelError);
-          }
-
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          continue;
-        }
-        // 最后一次重试仍失败，保存响应供上层处理
-        lastResponse = response;
-      }
-
-      return response;
-    } catch (error) {
-      lastError = error;
-
-      if (attempt === maxRetries) {
-        throw error;
-      }
-
-      const delay = baseDelay * Math.pow(2, attempt);
-      console.warn(`[Retry] ${error.message} (attempt ${attempt + 1}/${maxRetries + 1}), retrying in ${delay}ms`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  // 如果有最后的响应（可重试状态码耗尽），返回它
-  if (lastResponse) {
-    return lastResponse;
-  }
-
-  throw lastError;
-}
 
 /**
  * 确保配置是数组格式（处理 D1 数据库可能返回的 JSON 字符串）
@@ -308,8 +232,7 @@ export async function generateCombinedNodeList(
       if (transformed.length > 0) {
         manualProcessedLines.push(...transformed);
       }
-    } catch {
-    }
+    } catch {}
   }
 
   const processedManualNodeList = manualProcessedLines.join('\n');
@@ -385,19 +308,28 @@ export async function generateCombinedNodeList(
       }
       requestUrl = assertPublicNetworkUrl(requestUrl).toString();
 
-      const response = await fetchWithRetry(requestUrl, {
-        headers: requestHeaders,
-        redirect: 'follow',
-        ...(skipCertVerify
-          ? {
-              cf: {
-                insecureSkipVerify: true,
-                allowUntrusted: true,
-                validateCertificate: false,
-              },
-            }
-          : {}),
-      });
+      const response = await fetchWithRetry(
+        requestUrl,
+        {
+          headers: requestHeaders,
+          redirect: 'follow',
+          ...(skipCertVerify
+            ? {
+                cf: {
+                  insecureSkipVerify: true,
+                  allowUntrusted: true,
+                  validateCertificate: false,
+                },
+              }
+            : {}),
+        },
+        {
+          timeout: FETCH_CONFIG.TIMEOUT,
+          maxRetries: FETCH_CONFIG.MAX_RETRIES,
+          baseDelay: FETCH_CONFIG.BASE_DELAY,
+          retryableStatus: FETCH_CONFIG.RETRYABLE_STATUS,
+        },
+      );
 
       if (!response.ok) {
         recordEmptyRuntimeInfo();
@@ -660,65 +592,4 @@ async function decodeBase64Content(text) {
     console.debug('[Subscription] Base64 decode failed, using raw text:', e);
   }
   return text;
-}
-
-/**
- * 将手动节点的自定义名称应用到节点链接中
- * @param {string} nodeUrl - 节点URL
- * @param {string} customName - 用户自定义名称
- * @returns {string} - 应用名称后的URL
- */
-function applyManualNodeName(nodeUrl, customName) {
-  if (!customName) return nodeUrl;
-
-  if (isV2raynUrl(nodeUrl)) {
-    return renameV2raynNodeUrl(nodeUrl, customName);
-  }
-
-  // vmess 协议：修改 base64 解码后 JSON 中的 ps 字段
-  if (nodeUrl.startsWith('vmess://')) {
-    try {
-      const hashIndex = nodeUrl.indexOf('#');
-      let base64Part =
-        hashIndex !== -1 ? nodeUrl.substring('vmess://'.length, hashIndex) : nodeUrl.substring('vmess://'.length);
-
-      // 处理 URL 编码和 URL-safe base64
-      if (base64Part.includes('%')) {
-        base64Part = decodeURIComponent(base64Part);
-      }
-      base64Part = base64Part.replace(/-/g, '+').replace(/_/g, '/');
-      // 补齐 padding
-      while (base64Part.length % 4 !== 0) {
-        base64Part += '=';
-      }
-
-      const binaryString = atob(base64Part);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      const jsonString = new TextDecoder('utf-8').decode(bytes);
-      const nodeConfig = JSON.parse(jsonString);
-
-      // 类型校验：确保是对象
-      if (nodeConfig && typeof nodeConfig === 'object') {
-        nodeConfig.ps = customName;
-
-        const newJsonString = JSON.stringify(nodeConfig);
-        const newBase64Part = utf8ToBase64(newJsonString);
-        return 'vmess://' + newBase64Part;
-      }
-    } catch (e) {
-      console.debug('[Subscription] VMess decode failed, falling back to fragment update:', e);
-    }
-  }
-
-  // 其他协议：修改 URL 的 #fragment 部分
-  try {
-    const hashIndex = nodeUrl.lastIndexOf('#');
-    const baseLink = hashIndex !== -1 ? nodeUrl.substring(0, hashIndex) : nodeUrl;
-    return `${baseLink}#${encodeURIComponent(customName)}`;
-  } catch {
-    return nodeUrl;
-  }
 }

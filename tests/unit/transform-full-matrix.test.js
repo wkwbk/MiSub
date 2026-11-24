@@ -271,7 +271,9 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         includeAutoSelect: false,
         enableClashApi: false,
       };
-      const clash = assertClashIntegrity(transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }));
+      const clash = assertClashIntegrity(
+        transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
+      );
       expect(clash['proxy-groups'].map((g) => g.name)).not.toContain('♻️ 自动选择');
       expect(clash['proxy-groups'].map((g) => g.name)).not.toContain('🇭🇰 香港节点');
 
@@ -285,7 +287,9 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
     it('supports all 18 visual rule categories individually without broken providers', () => {
       const allIds = VISUAL_RULE_CATEGORIES.map((c) => c.id);
       const builtinTransform = { visualRulesEnabled: true, selectedRules: allIds };
-      const clash = assertClashIntegrity(transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }));
+      const clash = assertClashIntegrity(
+        transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
+      );
       const singbox = assertSingboxIntegrity(
         transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }),
       );
@@ -344,11 +348,14 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
             outbounds: [],
             route: { auto_detect_interface: false, rules: [], rule_set: [] },
           }),
-          surge: '[General]\nloglevel = info\nipv6 = true\n\n[MITM]\nskip-server-cert-verify = true\n\n[Proxy]\nFAKE = direct\n',
+          surge:
+            '[General]\nloglevel = info\nipv6 = true\n\n[MITM]\nskip-server-cert-verify = true\n\n[Proxy]\nFAKE = direct\n',
         },
       };
 
-      const clash = assertClashIntegrity(transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }));
+      const clash = assertClashIntegrity(
+        transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
+      );
       expect(clash['mixed-port']).toBe(10808);
       expect(clash['allow-lan']).toBe(true);
       expect(clash.ipv6).toBe(true);
@@ -419,8 +426,7 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
     it('parses ECH parameter into Clash ech-opts and Sing-Box tls.ech for VLESS, Trojan, and VMess', () => {
       const vlessEch =
         'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443?encryption=none&security=tls&sni=okra.ijg.cc&fp=chrome&alpn=h3&ech=cloudflare-ech.com%2Bhttps%3A%2F%2Fdns.alidns.com%2Fdns-query&type=xhttp&path=%2Fapi%2Fv2%2Fsync&mode=packet-up#OKRA%7CXHTTP%7CCDN';
-      const trojanEch =
-        'trojan://pass123@tr.example.com:443?sni=tr.example.com&ech=cloudflare-ech.com#Trojan-ECH';
+      const trojanEch = 'trojan://pass123@tr.example.com:443?sni=tr.example.com&ech=cloudflare-ech.com#Trojan-ECH';
       const vmessEch = `vmess://${Buffer.from(
         JSON.stringify({
           v: '2',
@@ -481,7 +487,9 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         'tuic://legacytoken123@v4.example.com:443?alpn=h3#TUIC-V4',
       ].join('\n');
       const surge = transformBuiltinSubscription(nodes, 'surge', { ruleLevel: 'std' });
-      expect(surge).toContain('OKRA|TU5 = tuic-v5, no.okra.ijg.cc, 51888, password=pass123, uuid=ecb7b51b-3e4f-448b-89a4-6fd2ceef8257, alpn=h3');
+      expect(surge).toContain(
+        'OKRA|TU5 = tuic-v5, no.okra.ijg.cc, 51888, password=pass123, uuid=ecb7b51b-3e4f-448b-89a4-6fd2ceef8257, alpn=h3',
+      );
       expect(surge).toContain('TUIC-V4 = tuic, v4.example.com, 443, token=legacytoken123, alpn=h3');
     });
   });

@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { handleNodeInspectRequest, handleNodeTcpingRequest } from '../../functions/modules/handlers/node-inspect-handler.js';
+import {
+  handleNodeInspectRequest,
+  handleNodeTcpingRequest,
+} from '../../functions/modules/handlers/node-inspect-handler.js';
 
 describe('node-inspect-handler', () => {
   it('rejects non-POST requests on inspect and tcping endpoints', async () => {

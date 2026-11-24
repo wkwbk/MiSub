@@ -128,14 +128,20 @@ describe('Shadowrocket native .conf generator and rule bundle', () => {
     const db = createMemoryD1();
     const storageAdapter = StorageFactory.createAdapter({ MISUB_DB: db });
 
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(bundleText)));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(bundleText)),
+    );
     const first = await loadShadowrocketRuleBundle({ storageAdapter, isChinaClient: false });
     expect(first.filter(({ key }) => key)).toHaveLength(50);
     expect(db.tables.cache.has('node_cache_sr_rule_bundle_v1')).toBe(true);
 
     // Cold worker reads cached bundle directly from D1 without blocking on upstream failure
     resetShadowrocketRuleBundleState();
-    vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new Error('network down'))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => Promise.reject(new Error('network down'))),
+    );
     const cached = await loadShadowrocketRuleBundle({ storageAdapter, isChinaClient: false });
     expect(cached.filter(({ key }) => key)).toHaveLength(50);
 
@@ -203,7 +209,9 @@ describe('Shadowrocket native .conf generator and rule bundle', () => {
 
   it('resolves 3-segment .conf download paths while rejecting /sub/profiles/...', () => {
     const config = { myToken: 'main', profileToken: 'sub' };
-    expect(resolveRequestContext(new URL('https://example.com/sub/vip/MyProfile.conf?target=shadowrocket'), config)).toEqual({
+    expect(
+      resolveRequestContext(new URL('https://example.com/sub/vip/MyProfile.conf?target=shadowrocket'), config),
+    ).toEqual({
       token: 'sub',
       profileIdentifier: 'vip',
     });
@@ -240,9 +248,7 @@ describe('Shadowrocket native .conf generator and rule bundle', () => {
         stubs: { Modal: modalStub },
       },
     });
-    const srItem = copyWrapper
-      .findAll('.cursor-pointer')
-      .find((el) => el.text().includes('Shadowrocket'));
+    const srItem = copyWrapper.findAll('.cursor-pointer').find((el) => el.text().includes('Shadowrocket'));
     expect(srItem).toBeTruthy();
     await srItem.trigger('click');
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('.conf?target=shadowrocket'));

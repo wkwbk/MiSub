@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onActivated, onMounted, onUnmounted, ref, unref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 import SettingsContent from '@/components/settings/SettingsContent.vue';
@@ -123,11 +123,14 @@ onActivated(() => {
   syncStateOnEnter();
 });
 
-watch(isLoading, (loading, wasLoading) => {
-  if (wasLoading && !loading && resolveSettingsFocusTab(route.query?.focus)) {
-    applyFocusFromQuery();
-  }
-});
+watch(
+  () => unref(isLoading),
+  (loading, wasLoading) => {
+    if (wasLoading && !loading && resolveSettingsFocusTab(route.query?.focus)) {
+      applyFocusFromQuery();
+    }
+  },
+);
 
 watch(
   () => route.query.focus,

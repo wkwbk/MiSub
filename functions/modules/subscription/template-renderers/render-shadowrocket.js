@@ -167,8 +167,7 @@ export function renderShadowrocketProxy(proxy, displayName = proxy?.name) {
     parts.push('anytls', server, String(port), `password=${proxy.password || ''}`);
     appendCommonTls(parts, proxy, true);
   } else if (type === 'http' || type === 'https' || type === 'socks5' || type === 'socks5-tls') {
-    const scheme =
-      type === 'http' && proxy.tls ? 'https' : type === 'socks5' && proxy.tls ? 'socks5-tls' : type;
+    const scheme = type === 'http' && proxy.tls ? 'https' : type === 'socks5' && proxy.tls ? 'socks5-tls' : type;
     parts.push(scheme, server, String(port));
     if (proxy.username || proxy.password) {
       parts.push(scalar(proxy.username || ''), String(proxy.password || ''));
@@ -184,11 +183,7 @@ export function renderShadowrocketProxy(proxy, displayName = proxy?.name) {
     if (ipv4) wgLines.push(`self-ip = ${ipv4}`);
     const ipv6 = Array.isArray(proxy.ipv6) ? proxy.ipv6.find(Boolean) : proxy.ipv6;
     if (ipv6) wgLines.push(`self-ip-v6 = ${ipv6}`);
-    const dnsServers = proxy.dns
-      ? Array.isArray(proxy.dns)
-        ? proxy.dns.join(', ')
-        : proxy.dns
-      : '8.8.8.8, 1.1.1.1';
+    const dnsServers = proxy.dns ? (Array.isArray(proxy.dns) ? proxy.dns.join(', ') : proxy.dns) : '8.8.8.8, 1.1.1.1';
     wgLines.push(`dns-server = ${dnsServers}`);
     if (proxy.mtu) wgLines.push(`mtu = ${proxy.mtu}`);
     const peerParts = [];
@@ -397,7 +392,12 @@ export function renderShadowrocketConfigFromClash(source = {}, options = {}) {
   for (const group of orderedGroups) {
     if (!group?.name) continue;
     const rawType = String(group.type || 'select').toLowerCase();
-    const srType = rawType === 'url-test' || rawType === 'load-balance' ? 'url-test' : rawType === 'fallback' ? 'fallback' : 'select';
+    const srType =
+      rawType === 'url-test' || rawType === 'load-balance'
+        ? 'url-test'
+        : rawType === 'fallback'
+          ? 'fallback'
+          : 'select';
 
     let members = (Array.isArray(group.proxies) ? group.proxies : []).filter((m) => {
       if (!m) return false;
@@ -426,7 +426,9 @@ export function renderShadowrocketConfigFromClash(source = {}, options = {}) {
       extras.push(`timeout=${Math.max(1, Math.ceil(Number(group.timeout) / 1000))}`);
     }
 
-    sections.push(`${resolvePolicy(group.name)} = ${srType}, ${members.map(resolvePolicy).join(', ')}, ${extras.join(', ')}`);
+    sections.push(
+      `${resolvePolicy(group.name)} = ${srType}, ${members.map(resolvePolicy).join(', ')}, ${extras.join(', ')}`,
+    );
   }
 
   // [Rule]
@@ -488,9 +490,7 @@ export function renderShadowrocketConfigFromClash(source = {}, options = {}) {
 
   if (Array.isArray(ruleBundle) && ruleBundle.length > 0) {
     const hasProxyGroup = groupNames.includes('PROXY') || groupNames.includes('🚀 节点选择');
-    const managedProxyName = groupNames.includes('PROXY')
-      ? resolvePolicy('PROXY')
-      : resolvePolicy('🚀 节点选择');
+    const managedProxyName = groupNames.includes('PROXY') ? resolvePolicy('PROXY') : resolvePolicy('🚀 节点选择');
     if (hasProxyGroup) {
       const finalIndex = renderedRules.findIndex((line) => /^FINAL,/i.test(line));
       const existingKeys = new Set(renderedRules.map((line) => line.split(',').slice(0, 2).join(',')));

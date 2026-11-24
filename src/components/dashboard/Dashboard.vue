@@ -967,7 +967,12 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     @update:show="showNodePreviewModal = $event"
   />
 
-  <QRCodeModal v-model:show="showQRCodeModal" :subscription="qrCodeIsSubscription" :title="qrCodeTitle" :url="qrCodeUrl" />
+  <QRCodeModal
+    v-model:show="showQRCodeModal"
+    :subscription="qrCodeIsSubscription"
+    :title="qrCodeTitle"
+    :url="qrCodeUrl"
+  />
 
   <CopyLinkModal
     v-if="showCopyModal && showCopyModalProfile"

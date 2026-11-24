@@ -138,7 +138,10 @@ const getProtocolDot = (protocol) => {
               <span
                 class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-mono leading-none uppercase text-fg-muted"
               >
-                <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
+                <span
+                  :class="getProtocolDot(parseNodeInfo(node).protocol)"
+                  class="h-1.5 w-1.5 shrink-0 rounded-full"
+                ></span>
                 {{ parseNodeInfo(node).protocol }}
               </span>
               <span
@@ -237,7 +240,10 @@ const getProtocolDot = (protocol) => {
                 <span
                   class="inline-flex h-5 shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs font-mono leading-none uppercase text-fg-muted"
                 >
-                  <span :class="getProtocolDot(parseNodeInfo(node).protocol)" class="h-1.5 w-1.5 shrink-0 rounded-full"></span>
+                  <span
+                    :class="getProtocolDot(parseNodeInfo(node).protocol)"
+                    class="h-1.5 w-1.5 shrink-0 rounded-full"
+                  ></span>
                   {{ parseNodeInfo(node).protocol }}
                 </span>
                 <span

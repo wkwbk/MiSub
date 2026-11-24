@@ -327,11 +327,7 @@ const draggableProfiles = computed({
         >
           <template #item="{ element: profile }">
             <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
-              <ProfileCard
-                :is-sorting="isSorting"
-                :profile="profile"
-                class="pointer-events-none select-none"
-              />
+              <ProfileCard :is-sorting="isSorting" :profile="profile" class="pointer-events-none select-none" />
             </div>
           </template>
         </draggable>

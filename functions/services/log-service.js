@@ -176,7 +176,9 @@ export const LogService = {
         // 写入失败且未超过重试上限时，把日志塞回队列前部等待重试
         logBatch.unshift(...batchToFlush);
       } else {
-        console.warn(`[LogService] Dropping ${batchToFlush.length} logs after ${MAX_FLUSH_RETRIES} failed flush attempts.`);
+        console.warn(
+          `[LogService] Dropping ${batchToFlush.length} logs after ${MAX_FLUSH_RETRIES} failed flush attempts.`,
+        );
         consecutiveFlushFailures = 0;
       }
     } finally {

@@ -382,11 +382,7 @@ function appendTlsParams(parts, proxy) {
  */
 
 export function generateBuiltinSurgeConfig(nodeList, options = {}) {
-  const {
-    managedConfigUrl = '',
-    interval = 86400,
-    ruleLevel = 'std',
-  } = options;
+  const { managedConfigUrl = '', interval = 86400, ruleLevel = 'std' } = options;
 
   const cleanedNodeList = cleanControlChars(nodeList);
   const nodeUrls = cleanedNodeList

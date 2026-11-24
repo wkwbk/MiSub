@@ -333,7 +333,8 @@ export function resolveEffectiveBuiltinTransform(profile, config = {}) {
   }
 
   const baseBt = globalBt || normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
-  const profileBtRaw = profile.builtinTransform && typeof profile.builtinTransform === 'object' ? profile.builtinTransform : null;
+  const profileBtRaw =
+    profile.builtinTransform && typeof profile.builtinTransform === 'object' ? profile.builtinTransform : null;
   const isProfileVisual = rawMode === 'visual' || (rawMode === 'builtin' && Boolean(profileBtRaw?.visualRulesEnabled));
 
   if (isProfileVisual) {

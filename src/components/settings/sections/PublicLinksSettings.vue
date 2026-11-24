@@ -8,6 +8,7 @@ import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { api } from '@/lib/http.js';
+import { normalizeWebsiteUrl } from '@/utils/url-origin.js';
 import {
   DEFAULT_PUBLIC_LINKS_CONFIG,
   normalizePublicLinksConfig,
@@ -103,13 +104,6 @@ const getHostname = (rawUrl) => {
   } catch {
     return rawUrl || '';
   }
-};
-
-const normalizeWebsiteUrl = (rawUrl) => {
-  const trimmed = String(rawUrl || '').trim();
-  if (!trimmed) return '';
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
 };
 
 const persistPublicLinks = async (nextConfig = publicLinksConfig.value) => {
@@ -370,117 +364,117 @@ const executeReset = async () => {
 
       <template v-else>
         <div class="flex flex-wrap items-center gap-2 pb-2 border-b border-line">
-        <button
-          v-for="tab in categoryTabs"
-          :key="tab.value"
-          :class="
-            activeCategory === tab.value
-              ? 'bg-accent text-accent-fg border-accent font-semibold'
-              : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
-          "
-          class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
-          type="button"
-          @click="activeCategory = tab.value"
-        >
-          {{ tab.label }}
-        </button>
-      </div>
+          <button
+            v-for="tab in categoryTabs"
+            :key="tab.value"
+            :class="
+              activeCategory === tab.value
+                ? 'bg-accent text-accent-fg border-accent font-semibold'
+                : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
+            "
+            class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
+            type="button"
+            @click="activeCategory = tab.value"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
 
-      <div
-        v-if="filteredLinks.length === 0"
-        class="py-8 text-center text-xs text-fg-muted border border-dashed border-line rounded-md"
-      >
-        {{ t('publicLinks.emptyCategory') }}
-      </div>
-
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div
-          v-for="(link, index) in filteredLinks"
-          :key="link.id"
-          class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
+          v-if="filteredLinks.length === 0"
+          class="py-8 text-center text-xs text-fg-muted border border-dashed border-line rounded-md"
         >
-          <div class="flex items-start gap-3 min-w-0">
-            <div
-              class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
-            >
-              <img
-                v-if="
-                  resolvePublicLinkIcon(link) &&
-                  (resolvePublicLinkIcon(link).includes('/') ||
-                    resolvePublicLinkIcon(link).startsWith('data:') ||
-                    resolvePublicLinkIcon(link).startsWith('http'))
-                "
-                :alt="link.name"
-                :src="resolvePublicLinkIcon(link)"
-                class="w-full h-full object-contain rounded-md p-1"
-              />
-              <span v-else>{{ link.icon || link.name?.slice(0, 1) || '🌐' }}</span>
-            </div>
+          {{ t('publicLinks.emptyCategory') }}
+        </div>
 
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-2">
-                <h4 class="text-sm font-semibold text-fg truncate">
-                  {{ link.name }}
-                </h4>
-                <span
-                  class="px-1.5 py-0.5 text-xs rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
-                >
-                  {{ getCategoryLabel(link.category) }}
-                </span>
-              </div>
-              <p class="text-xs text-fg-muted truncate mt-1">
-                {{ link.description }}
-              </p>
-              <a
-                :href="link.url"
-                class="inline-flex items-center gap-1 text-xs font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
-                rel="noopener noreferrer"
-                target="_blank"
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="(link, index) in filteredLinks"
+            :key="link.id"
+            class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
+          >
+            <div class="flex items-start gap-3 min-w-0">
+              <div
+                class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
               >
-                <span class="truncate">{{ getHostname(link.url) }}</span>
-                <ExternalLink class="w-3 h-3 shrink-0" />
-              </a>
-            </div>
-          </div>
+                <img
+                  v-if="
+                    resolvePublicLinkIcon(link) &&
+                    (resolvePublicLinkIcon(link).includes('/') ||
+                      resolvePublicLinkIcon(link).startsWith('data:') ||
+                      resolvePublicLinkIcon(link).startsWith('http'))
+                  "
+                  :alt="link.name"
+                  :src="resolvePublicLinkIcon(link)"
+                  class="w-full h-full object-contain rounded-md p-1"
+                />
+                <span v-else>{{ link.icon || link.name?.slice(0, 1) || '🌐' }}</span>
+              </div>
 
-          <div class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3">
-            <button
-              :disabled="index === 0"
-              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
-              type="button"
-              @click.stop="moveLink(link.id, -1)"
-            >
-              <ChevronUp class="w-3.5 h-3.5" />
-              <span>{{ t('actions.moveUp') }}</span>
-            </button>
-            <button
-              :disabled="index === filteredLinks.length - 1"
-              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
-              type="button"
-              @click.stop="moveLink(link.id, 1)"
-            >
-              <ChevronDown class="w-3.5 h-3.5" />
-              <span>{{ t('actions.moveDown') }}</span>
-            </button>
-            <button
-              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors"
-              type="button"
-              @click.stop="handleEdit(link)"
-            >
-              <SquarePen class="w-3.5 h-3.5" />
-              <span>{{ t('actions.edit') }}</span>
-            </button>
-            <button
-              class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
-              type="button"
-              @click.stop="handleDelete(link.id)"
-            >
-              <Trash2 class="w-3.5 h-3.5" />
-              <span>{{ t('actions.delete') }}</span>
-            </button>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <h4 class="text-sm font-semibold text-fg truncate">
+                    {{ link.name }}
+                  </h4>
+                  <span
+                    class="px-1.5 py-0.5 text-xs rounded-md border border-line bg-transparent text-fg-muted font-mono shrink-0"
+                  >
+                    {{ getCategoryLabel(link.category) }}
+                  </span>
+                </div>
+                <p class="text-xs text-fg-muted truncate mt-1">
+                  {{ link.description }}
+                </p>
+                <a
+                  :href="link.url"
+                  class="inline-flex items-center gap-1 text-xs font-mono text-fg-subtle hover:text-fg-muted mt-1.5 truncate max-w-full"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <span class="truncate">{{ getHostname(link.url) }}</span>
+                  <ExternalLink class="w-3 h-3 shrink-0" />
+                </a>
+              </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3">
+              <button
+                :disabled="index === 0"
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
+                type="button"
+                @click.stop="moveLink(link.id, -1)"
+              >
+                <ChevronUp class="w-3.5 h-3.5" />
+                <span>{{ t('actions.moveUp') }}</span>
+              </button>
+              <button
+                :disabled="index === filteredLinks.length - 1"
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
+                type="button"
+                @click.stop="moveLink(link.id, 1)"
+              >
+                <ChevronDown class="w-3.5 h-3.5" />
+                <span>{{ t('actions.moveDown') }}</span>
+              </button>
+              <button
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors"
+                type="button"
+                @click.stop="handleEdit(link)"
+              >
+                <SquarePen class="w-3.5 h-3.5" />
+                <span>{{ t('actions.edit') }}</span>
+              </button>
+              <button
+                class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-red-400 hover:border-red-900/60 hover:bg-red-950/40 rounded-md transition-colors"
+                type="button"
+                @click.stop="handleDelete(link.id)"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+                <span>{{ t('actions.delete') }}</span>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       </template>
     </div>
 

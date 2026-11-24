@@ -1,33 +1,9 @@
+import { base64ToUtf8 } from '@shared/base64.js';
 import { getItemTags } from '@/utils/tags.js';
-
-const isDev = import.meta.env.DEV;
-
-const normalizeBase64 = (input) => {
-  let s = String(input || '')
-    .trim()
-    .replace(/\s+/g, '');
-  if (!s) return '';
-  if (s.includes('%')) {
-    try {
-      s = decodeURIComponent(s);
-    } catch (error) {
-      if (isDev) {
-        console.debug('[ManualNodes] URL decode failed, using raw text:', error);
-      }
-    }
-  }
-  s = s.replace(/-/g, '+').replace(/_/g, '/');
-  while (s.length % 4 !== 0) s += '=';
-  return s;
-};
 
 const safeBase64Decode = (input) => {
   try {
-    const normalized = normalizeBase64(input);
-    const binary = atob(normalized);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    return new TextDecoder('utf-8').decode(bytes);
+    return base64ToUtf8(input);
   } catch {
     return '';
   }

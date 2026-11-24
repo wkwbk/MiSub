@@ -51,6 +51,7 @@ const importHint = computed(() =>
 
 const generateQRCode = async () => {
   if (!props.url || !canvasRef.value) return;
+  if (typeof canvasRef.value.getContext !== 'function' || !canvasRef.value.getContext('2d')) return;
   try {
     await QRCode.toCanvas(canvasRef.value, payload.value, {
       width: 256,

@@ -5,12 +5,7 @@
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
 import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
-import {
-  decodeV2raynNodeUrl,
-  getV2raynRemarks,
-  isV2raynUrl,
-  renameV2raynNodeUrl,
-} from '../../shared/v2rayn-utils.js';
+import { decodeV2raynNodeUrl, getV2raynRemarks, isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 import { extractNodeMetadata } from './metadata-extractor.js';
 
 /**
@@ -54,25 +49,12 @@ export function isLocalProxyEndpoint(proxy) {
   );
 }
 
-function normalizeBase64(input) {
-  let normalized = String(input || '')
-    .replace(/\s+/g, '')
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const padding = normalized.length % 4;
-  if (padding) normalized += '='.repeat(4 - padding);
-  return normalized;
-}
-
 function base64UrlSafeEncodeUtf8(str) {
-  return utf8ToBase64(str)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/g, '');
+  return utf8ToBase64(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
 
 function base64UrlSafeDecodeUtf8(str) {
-  return base64ToUtf8(normalizeBase64(str));
+  return base64ToUtf8(str);
 }
 
 function updateSsrRemarks(link, updater) {
@@ -197,10 +179,7 @@ export function addFlagEmoji(link) {
   if (link.startsWith('vmess://')) {
     try {
       const base64Part = link.substring('vmess://'.length);
-      const binaryString = atob(normalizeBase64(base64Part));
-      const decodedStr = new TextDecoder('utf-8').decode(
-        new Uint8Array(Array.from(binaryString, (c) => c.charCodeAt(0))),
-      );
+      const decodedStr = base64ToUtf8(base64Part);
       const nodeConfig = JSON.parse(decodedStr);
       if (nodeConfig.ps) {
         const updatedPs = appendEmoji(nodeConfig.ps);

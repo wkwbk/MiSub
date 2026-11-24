@@ -55,4 +55,3 @@ export function logAccessSuccess({
     context.waitUntil(LogService.addLog(env, payload));
   }
 }
-

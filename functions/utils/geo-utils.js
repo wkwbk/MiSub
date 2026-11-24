@@ -2,6 +2,7 @@
  * 地理识别工具模块
  * 提供节点地区识别和相关功能
  */
+import { normalizeBase64String } from '../../shared/base64.js';
 import { REGION_EMOJI } from '../../shared/region-emoji.js';
 import { decodeV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 
@@ -346,22 +347,6 @@ export const REGION_KEYWORDS = {
   中国: ['中国', 'China', 'PRC'],
 };
 
-function normalizeBase64(input) {
-  let s = String(input || '')
-    .trim()
-    .replace(/\s+/g, '');
-  if (!s) return '';
-  if (s.includes('%')) {
-    try {
-      s = decodeURIComponent(s);
-    } catch {
-    }
-  }
-  s = s.replace(/-/g, '+').replace(/_/g, '/');
-  while (s.length % 4) s += '=';
-  return s;
-}
-
 function isLikelyBase64(input) {
   const s = String(input || '').trim();
   if (!s) return false;
@@ -372,7 +357,7 @@ function isLikelyBase64(input) {
 function tryDecodeBase64(input) {
   if (!isLikelyBase64(input)) return null;
   try {
-    return atob(normalizeBase64(input));
+    return atob(normalizeBase64String(input));
   } catch {
     return null;
   }
@@ -618,7 +603,7 @@ export function parseNodeInfo(nodeUrl) {
               const remarksB64 = remarksMatch[1].replace(/\s+/g, '');
               // remarks 通常包含中文，需要 UTF-8 安全解码
               try {
-                const normalized = normalizeBase64(remarksB64);
+                const normalized = normalizeBase64String(remarksB64);
                 const binaryString = atob(normalized);
                 const bytes = new Uint8Array(binaryString.length);
                 for (let i = 0; i < binaryString.length; i++) {

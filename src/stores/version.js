@@ -3,12 +3,7 @@ import { computed, ref } from 'vue';
 import { fetchGithubLatestRelease } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/toast.js';
-import {
-  readPreference,
-  readRawPreference,
-  writePreference,
-  writeRawPreference,
-} from '@/utils/local-preference.js';
+import { readPreference, readRawPreference, writePreference, writeRawPreference } from '@/utils/local-preference.js';
 import packageJson from '../../package.json';
 
 const RELEASE_CACHE_KEY = 'misub_latest_release_cache';
@@ -132,10 +127,7 @@ export const useVersionStore = defineStore('version', () => {
   function dismissUpdateNotice() {
     showUpdateNotice.value = false;
     if (latestRelease.value?.tag_name) {
-      const persisted = writeRawPreference(
-        UPDATE_NOTICE_DISMISSED_KEY,
-        normalizeVersion(latestRelease.value.tag_name),
-      );
+      const persisted = writeRawPreference(UPDATE_NOTICE_DISMISSED_KEY, normalizeVersion(latestRelease.value.tag_name));
       if (!persisted) useToastStore().showToast(t('errors.preferenceNotSaved'), 'error');
     }
   }

@@ -52,10 +52,7 @@ const getLinkHostname = (rawUrl) => {
 </script>
 
 <template>
-  <div
-    v-if="enabledPublicLinks.length > 0"
-    class="mt-16 pt-12 pb-6 border-t border-line bg-transparent"
-  >
+  <div v-if="enabledPublicLinks.length > 0" class="mt-16 pt-12 pb-6 border-t border-line bg-transparent">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="text-center mb-8 relative">
         <div class="relative inline-flex flex-col items-center">

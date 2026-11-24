@@ -149,8 +149,7 @@ function parseVMessFeatures(rawUrl) {
         .toLowerCase();
       const security = tlsVal === 'tls' || tlsVal === '1' || tlsVal === 'true' ? 'tls' : 'none';
       return { transport, security };
-    } catch {
-    }
+    } catch {}
   }
 
   return { transport: 'tcp', security: 'none' };

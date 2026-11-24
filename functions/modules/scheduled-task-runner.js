@@ -1,4 +1,3 @@
-
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './handlers/webdav-backup-handler.js';
