@@ -17,7 +17,7 @@ export function extractProxySectionFromBuiltin(content, targetFormat) {
     return match ? match[1].trim() : '';
   }
 
-  if (targetFormat.startsWith('surge') || targetFormat === 'loon') {
+  if (targetFormat.startsWith('surge') || targetFormat === 'loon' || targetFormat === 'shadowrocket') {
     const match = content.match(/\[Proxy\]\s*\n([\s\S]*?)(?:\n\n\[|$)/i);
     if (!match) return '';
     return match[1]

@@ -42,6 +42,7 @@ export function determineTargetFormat(userAgent, searchParams) {
       'trojan',
       'quanx',
       'egern',
+      'shadowrocket',
       'nodes',
     ];
     for (const format of supportedFormats) {

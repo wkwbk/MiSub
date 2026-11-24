@@ -2,6 +2,11 @@
 import { computed, onMounted, ref } from 'vue';
 import { utf8ToBase64 } from '@shared/base64.js';
 import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import {
+  shadowrocketConfigUrl as buildShadowrocketConfigUrl,
+  shadowrocketQrPayload,
+} from '@shared/shadowrocket-links.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -18,6 +23,7 @@ const { t } = useI18n();
 
 // 设备检测
 const detectedPlatform = ref(null);
+const fullConfigCopied = ref(false);
 
 const detectPlatform = () => {
   const ua = navigator.userAgent;
@@ -60,6 +66,23 @@ const getSubscriptionUrl = () => {
   const token = props.profileToken || 'sub';
   const identifier = getProfileShareIdentifier(props.profile);
   return `${window.location.origin}/${token}/${identifier}`;
+};
+
+const shadowrocketConfigLink = computed(() => {
+  if (!props.profile) return '';
+  return buildShadowrocketConfigUrl(getSubscriptionUrl(), props.profile.name);
+});
+
+const copyShadowrocketConfig = async () => {
+  if (!shadowrocketConfigLink.value) return;
+  fullConfigCopied.value = await copyTextToClipboard(shadowrocketConfigLink.value);
+};
+
+const openShadowrocketConfigImport = () => {
+  const deepLink = shadowrocketQrPayload(getSubscriptionUrl(), 'shadowrocket-config', props.profile?.name);
+  if (deepLink) {
+    window.location.href = deepLink;
+  }
 };
 
 // 生成深度链接
@@ -183,6 +206,41 @@ onMounted(() => {
     </template>
 
     <template #body>
+      <div
+        v-if="profile"
+        class="mb-4 rounded-md border border-line bg-inset/60 p-3.5 text-xs space-y-2"
+        data-testid="quick-import-shadowrocket-config"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="font-semibold text-fg">{{ t('quickImport.shadowrocketConfigTitle') }}</p>
+            <p class="mt-0.5 text-fg-muted">{{ t('quickImport.shadowrocketConfigHint') }}</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              class="px-2.5 py-1.5 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover transition-colors"
+              type="button"
+              @click="copyShadowrocketConfig"
+            >
+              {{ fullConfigCopied ? t('quickImport.fullConfigCopied') : t('quickImport.copyFullConfig') }}
+            </button>
+            <button
+              class="px-2.5 py-1.5 rounded-md bg-accent text-accent-fg font-medium hover:opacity-90 transition-opacity"
+              type="button"
+              @click="openShadowrocketConfigImport"
+            >
+              {{ t('quickImport.importShadowrocketConfig') }}
+            </button>
+          </div>
+        </div>
+        <input
+          :aria-label="t('quickImport.shadowrocketConfigTitle')"
+          :value="shadowrocketConfigLink"
+          class="w-full rounded-md border border-line bg-inset px-2.5 py-1.5 font-mono text-xs text-fg"
+          readonly
+        />
+      </div>
+
       <div v-if="groupedClients.length === 0" class="py-12 text-center text-sm text-fg-subtle">
         {{ t('quickImport.empty') }}
       </div>

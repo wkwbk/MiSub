@@ -10,6 +10,7 @@ import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
 import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
 import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import { shadowrocketConfigUrl } from '@shared/shadowrocket-links.js';
 
 const { t } = useI18n();
 
@@ -65,6 +66,13 @@ const clients = computed(() => [
     format: '',
   },
   {
+    name: t('copyLink.shadowrocketConfig'),
+    hint: t('copyLink.shadowrocketConfigHint'),
+    type: 'shadowrocket-config',
+    icon: markRaw(Zap),
+    format: 'shadowrocket-config',
+  },
+  {
     name: 'Clash',
     type: 'clash',
     icon: markRaw(Link2),
@@ -98,7 +106,10 @@ const copyToClipboard = async (format) => {
     return;
   }
 
-  const link = `${baseUrl.value}${format}`;
+  const link =
+    format === 'shadowrocket-config'
+      ? shadowrocketConfigUrl(baseUrl.value, props.profile?.name)
+      : `${baseUrl.value}${format}`;
   const copied = await copyTextToClipboard(link);
   if (copied) {
     showToast(t('copyLink.copied'), 'success');
@@ -235,6 +246,18 @@ const handleCreateShortLink = async () => {
               <p class="text-sm font-medium text-fg">
                 {{ client.name }}
               </p>
+              <p v-if="client.hint" class="mt-0.5 text-xs text-fg-muted">
+                {{ client.hint }}
+              </p>
+              <a
+                v-if="client.type === 'shadowrocket-config'"
+                :href="shadowrocketConfigUrl(baseUrl, profile?.name)"
+                class="mt-1 inline-block text-xs font-medium text-fg underline decoration-line-strong underline-offset-4 hover:text-fg-muted"
+                download
+                @click.stop
+              >
+                {{ t('copyLink.downloadShadowrocketConfig') }}
+              </a>
             </div>
           </div>
 

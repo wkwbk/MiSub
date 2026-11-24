@@ -205,10 +205,13 @@ export async function onRequest(context) {
         return applyNoStoreToHtmlResponse(await fetchStaticAsset(request, env, next));
       }
 
-      // 统一订阅路由：/{subPath}/{identifier}（默认 subPath = 'sub'）
+      // 统一订阅路由：/{subPath}/{identifier}（亦兼容 /{subPath}/{identifier}/{name}.conf 原生配置下载链接）
       const subPath = normalizeSubPath(config.profileToken, 'sub');
       const pathSegments = url.pathname.split('/').filter(Boolean);
-      const isSubRoute = pathSegments.length === 2 && pathSegments[0] === subPath;
+      const isSubRoute =
+        pathSegments[0] === subPath &&
+        (pathSegments.length === 2 ||
+          (pathSegments.length === 3 && pathSegments[1] !== 'profiles' && /\.conf$/i.test(pathSegments[2])));
 
       // 路由分发
       if (url.pathname.startsWith('/api/')) {

@@ -29,6 +29,7 @@ import { ProcessorService } from '../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from './access-logger.js';
 import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js';
 import { handleProfileMode } from './profile-handler.js';
+import { manualProxyKeys, sortShadowrocketNodeList } from './shadowrocket-order.js';
 
 import {
   buildManagedConfigUrl,
@@ -162,6 +163,9 @@ export async function handleMisubRequest(context) {
 
   // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
   let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
+  if (url.searchParams.get('client') === 'shadowrocket' && targetFormat !== 'shadowrocket') {
+    targetFormat = 'shadowrocket';
+  }
 
   // 检查是否强制刷新（通过 URL 参数）
   const forceRefresh =
@@ -796,9 +800,14 @@ export async function handleMisubRequest(context) {
   }
 
   if (targetFormat === 'base64') {
+    const isShadowrocketOrderedFeed = url.searchParams.get('node-order') === 'manual-region';
     let contentToEncode;
     if (isProfileExpired) {
       contentToEncode = DEFAULT_EXPIRED_NODE + '\n';
+    } else if (isShadowrocketOrderedFeed) {
+      contentToEncode = sortShadowrocketNodeList(combinedNodeList, manualProxyKeys(targetMisubs), {
+        compactNames: url.searchParams.get('compact') === '1',
+      });
     } else {
       contentToEncode = combinedNodeList;
     }
@@ -882,6 +891,12 @@ export async function handleMisubRequest(context) {
     dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
     isChinaClient,
     builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
+    ...(targetFormat === 'shadowrocket'
+      ? {
+          preferredProxyKeys: manualProxyKeys(targetMisubs),
+          compactNames: url.searchParams.get('compact') !== '0',
+        }
+      : {}),
   };
 
   const managedConfigUrl = buildManagedConfigUrl(request.url);
@@ -889,6 +904,7 @@ export async function handleMisubRequest(context) {
   const shouldUseBuiltin =
     useBuiltin &&
     (targetFormat === 'clash' ||
+      targetFormat === 'shadowrocket' ||
       targetFormat === 'egern' ||
       targetFormat.startsWith('surge') ||
       targetFormat === 'loon' ||
@@ -904,6 +920,7 @@ export async function handleMisubRequest(context) {
         content: finalContent,
         contentType,
         headers: resultHeaders,
+        fileName: resultFileName,
       } = await ProcessorService.renderOutput({
         targetFormat,
         combinedNodeList,
@@ -914,6 +931,14 @@ export async function handleMisubRequest(context) {
         managedConfigUrl,
         storageAdapter,
         userInfoHeader,
+        ruleBundleContext:
+          targetFormat === 'shadowrocket'
+            ? {
+                storageAdapter,
+                isChinaClient,
+                waitUntil: typeof context.waitUntil === 'function' ? (p) => context.waitUntil(p) : undefined,
+              }
+            : undefined,
       });
 
       // [Subconverter API] 处理 list=true 逻辑：仅输出节点片段
@@ -925,8 +950,9 @@ export async function handleMisubRequest(context) {
         }
       }
 
-      const asciiSubName = subName.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '\\"');
-      const encodedSubName = encodeURIComponent(subName)
+      const downloadName = resultFileName || subName;
+      const asciiSubName = downloadName.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '\\"');
+      const encodedSubName = encodeURIComponent(downloadName)
         .replace(/'/g, '%27')
         .replace(/\(/g, '%28')
         .replace(/\)/g, '%29')

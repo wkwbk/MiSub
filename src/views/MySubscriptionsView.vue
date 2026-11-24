@@ -300,7 +300,7 @@ const handleQRCode = (profileId) => {
       @update:show="showNodePreviewModal = $event"
     />
 
-    <QRCodeModal v-model:show="showQRCodeModal" :title="qrCodeTitle" :url="qrCodeUrl" />
+    <QRCodeModal v-model:show="showQRCodeModal" :subscription="true" :title="qrCodeTitle" :url="qrCodeUrl" />
 
     <CopyLinkModal
       v-if="showCopyModal && showCopyModalProfile"

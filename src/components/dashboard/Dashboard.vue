@@ -84,6 +84,7 @@ const isSortingProfiles = ref(false);
 const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
+const qrCodeIsSubscription = ref(false);
 const showCopyModal = ref(false);
 const showCopyModalProfile = ref(null);
 
@@ -93,6 +94,7 @@ const handleQRCode = (id, type = 'subscription') => {
     if (sub) {
       qrCodeUrl.value = sub.url;
       qrCodeTitle.value = sub.name || t('subscriptions.qrCodeTitle');
+      qrCodeIsSubscription.value = false;
       showQRCodeModal.value = true;
     }
   } else if (type === 'profile') {
@@ -103,6 +105,7 @@ const handleQRCode = (id, type = 'subscription') => {
       const idToUse = getProfileShareIdentifier(profile);
       qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;
       qrCodeTitle.value = profile.name || t('profiles.qrCodeTitle');
+      qrCodeIsSubscription.value = true;
       showQRCodeModal.value = true;
     }
   }
@@ -662,6 +665,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
             (url, title) => {
               qrCodeUrl = url;
               qrCodeTitle = title;
+              qrCodeIsSubscription = true;
               showQRCodeModal = true;
             }
           "
@@ -963,7 +967,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     @update:show="showNodePreviewModal = $event"
   />
 
-  <QRCodeModal v-model:show="showQRCodeModal" :title="qrCodeTitle" :url="qrCodeUrl" />
+  <QRCodeModal v-model:show="showQRCodeModal" :subscription="qrCodeIsSubscription" :title="qrCodeTitle" :url="qrCodeUrl" />
 
   <CopyLinkModal
     v-if="showCopyModal && showCopyModalProfile"

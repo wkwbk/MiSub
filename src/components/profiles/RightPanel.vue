@@ -9,6 +9,7 @@ import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
 import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
 import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import { shadowrocketConfigUrl } from '@shared/shadowrocket-links.js';
 
 const props = defineProps({
   config: Object,
@@ -33,7 +34,7 @@ const generatedShortLink = ref('');
 let copyTimeout = null;
 let shortCopyTimeout = null;
 
-const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon'];
+const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon', 'Shadowrocket'];
 const selectedFormat = ref('universal');
 const selectedId = ref('default');
 
@@ -117,6 +118,11 @@ const subLink = computed(() => {
 
   if (selectedFormat.value === 'universal') {
     return baseUrl;
+  }
+
+  if (selectedFormat.value === 'Shadowrocket') {
+    const profileName = selectedProfile.value?.name || props.config?.fileName || 'MiSub';
+    return shadowrocketConfigUrl(baseUrl, profileName);
   }
 
   const targetMapping = { 'Sing-Box': 'singbox', QuanX: 'quanx' };

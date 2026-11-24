@@ -6,9 +6,15 @@ import {
   renderEgernFromIniTemplate,
   renderLoonFromIniTemplate,
   renderQuanxFromIniTemplate,
+  renderShadowrocketFromIniTemplate,
   renderSingboxFromIniTemplate,
   renderSurgeFromIniTemplate,
 } from '../modules/subscription/template-pipeline.js';
+import { renderShadowrocketConfigFromClash } from '../modules/subscription/template-renderers/render-shadowrocket.js';
+import {
+  loadShadowrocketRuleBundle,
+  usesShadowrocketRuleBundle,
+} from '../modules/subscription/shadowrocket-rule-bundle.js';
 import { getBuiltinTemplate } from '../modules/subscription/builtin-template-registry.js';
 import { fetchTransformTemplate } from '../modules/subscription/transform-template-cache.js';
 import { resolveRuleTemplateSource } from '../modules/handlers/rule-template-handler.js';
@@ -178,6 +184,7 @@ export class ProcessorService {
       managedConfigUrl,
       storageAdapter,
       userInfoHeader,
+      ruleBundleContext,
     } = options || {};
 
     if (targetFormat === 'base64') {
@@ -265,11 +272,42 @@ export class ProcessorService {
               finalContent = renderEgernFromIniTemplate(templateText, renderParams);
               contentType = 'application/x-yaml; charset=utf-8';
               break;
+            case 'shadowrocket': {
+              const wantsRuleBundle = Boolean(
+                (customTemplateEntry || templateSource.kind === 'custom') && usesShadowrocketRuleBundle(templateText),
+              );
+              const ruleBundle = wantsRuleBundle
+                ? await loadShadowrocketRuleBundle(
+                    ruleBundleContext || { storageAdapter, isChinaClient: builtinOptions.isChinaClient },
+                  )
+                : null;
+              finalContent = renderShadowrocketFromIniTemplate(templateText, {
+                ...renderParams,
+                preferredProxyKeys: builtinOptions.preferredProxyKeys,
+                compactNames: builtinOptions.compactNames,
+                ruleBundle,
+              });
+              if (wantsRuleBundle) {
+                headers['X-MiSub-Shadowrocket-Rules'] = finalContent.includes('\n# Shadowrocket-Rule-Sets v1\n')
+                  ? 'aggregated'
+                  : 'local-fallback';
+              }
+              break;
+            }
           }
         }
-      } else if (templateText && targetFormat === 'clash' && isClashYamlProfileTemplate(templateText)) {
-        finalContent = renderClashYamlProfileTemplate(templateText, combinedNodeList, builtinOptions);
-        contentType = 'application/x-yaml; charset=utf-8';
+      } else if (
+        templateText &&
+        (targetFormat === 'clash' || targetFormat === 'shadowrocket') &&
+        isClashYamlProfileTemplate(templateText)
+      ) {
+        const renderedYaml = renderClashYamlProfileTemplate(templateText, combinedNodeList, builtinOptions);
+        if (targetFormat === 'shadowrocket') {
+          finalContent = renderShadowrocketConfigFromClash(yaml.load(renderedYaml), builtinOptions);
+        } else {
+          finalContent = renderedYaml;
+          contentType = 'application/x-yaml; charset=utf-8';
+        }
         headers['X-MiSub-Template-Mode'] = 'clash-yaml-profile';
       }
     }
@@ -284,6 +322,9 @@ export class ProcessorService {
       content: finalContent,
       contentType,
       headers,
+      ...(targetFormat === 'shadowrocket'
+        ? { fileName: `${String(subName || 'MiSub-Shadowrocket').replace(/\.conf$/i, '')}.conf` }
+        : {}),
     };
   }
 }

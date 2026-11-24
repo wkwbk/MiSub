@@ -16,15 +16,18 @@ export function resolveRequestContext(url, config) {
   const subPath = normalizeSubPath(config?.profileToken, 'sub');
   const pathSegments = url.pathname.split('/').filter(Boolean);
 
-  if (pathSegments.length !== 2 || pathSegments[0] !== subPath) {
-    return { token: '', profileIdentifier: null };
+  if (
+    pathSegments[0] === subPath &&
+    (pathSegments.length === 2 ||
+      (pathSegments.length === 3 && pathSegments[1] !== 'profiles' && /\.conf$/i.test(pathSegments[2])))
+  ) {
+    const identifier = pathSegments[1];
+    const myToken = typeof config?.myToken === 'string' ? config.myToken.trim() : '';
+    if (myToken && identifier === myToken) {
+      return { token: identifier, profileIdentifier: null };
+    }
+    return { token: subPath, profileIdentifier: identifier };
   }
 
-  const identifier = pathSegments[1];
-  const myToken = typeof config?.myToken === 'string' ? config.myToken.trim() : '';
-  if (myToken && identifier === myToken) {
-    return { token: identifier, profileIdentifier: null };
-  }
-
-  return { token: subPath, profileIdentifier: identifier };
+  return { token: '', profileIdentifier: null };
 }
