@@ -14,6 +14,180 @@ import {
   parseWireguardUrl,
 } from './clash-parsers/modern.js';
 import { parseHttpsUrl, parseSocks5Url } from './clash-parsers/basic.js';
+import { decodeV2raynNodeUrl } from './v2rayn-utils.js';
+
+const V2RAYN_CLASH_PROTOCOL_ALIAS = {
+  hy2: 'hysteria2',
+  hy: 'hysteria2',
+  hysteria: 'hysteria2',
+  hysteria2: 'hysteria2',
+  tuic: 'tuic',
+  trojan: 'trojan',
+  vless: 'vless',
+  anytls: 'anytls',
+  ss: 'ss',
+  shadowsocks: 'ss',
+};
+
+/**
+ * 解析 v2rayN 专有分享格式（v2rayn://）为 Clash (mihomo) 代理对象
+ */
+function parseV2raynClashProxy(url) {
+  const decoded = decodeV2raynNodeUrl(url);
+  if (!decoded) return null;
+
+  const { protocol: rawProtocol, config } = decoded;
+  const protocol = V2RAYN_CLASH_PROTOCOL_ALIAS[String(config.Protocol || config.protocol || rawProtocol || '').toLowerCase()];
+  if (!protocol) return null;
+
+  const server = String(config.Address || config.address || config.Server || config.server || '');
+  const port = Number(config.Port || config.port);
+  if (!server || !port) return null;
+
+  const name = String(config.Remarks || config.remarks || config.Name || '').trim() || `${protocol}-${server}`;
+  const shouldSkipCertVerify =
+    config.AllowInsecure === true ||
+    config.AllowInsecure === 'true' ||
+    config.AllowInsecure === 1 ||
+    config.AllowInsecure === '1' ||
+    Boolean(config.Cert || config.cert);
+
+  const rawNetwork = String(config.Network || config.network || '').toLowerCase();
+  const network = rawNetwork === 'raw' ? 'tcp' : rawNetwork;
+
+  const streamSecurity = String(config.StreamSecurity || config.streamSecurity || '').toLowerCase();
+  const tlsEnabled = streamSecurity === 'tls' || streamSecurity === 'reality';
+
+  let proxy = null;
+
+  switch (protocol) {
+    case 'hysteria2': {
+      const password = String(config.Password || config.password || config.Auth || config.auth || '');
+      if (!password) return null;
+      proxy = {
+        name,
+        type: 'hysteria2',
+        server,
+        port,
+        password,
+        auth: password,
+      };
+      const extra = config.ProtoExtraObj || {};
+      const upMbps = config.UpMbps ?? extra.UpMbps ?? config.upMbps;
+      const downMbps = config.DownMbps ?? extra.DownMbps ?? config.downMbps;
+      if (upMbps) proxy.up = `${upMbps} Mbps`;
+      if (downMbps) proxy.down = `${downMbps} Mbps`;
+      break;
+    }
+    case 'tuic': {
+      proxy = {
+        name,
+        type: 'tuic',
+        server,
+        port,
+        uuid: String(config.Username || config.Id || config.id || config.UUID || ''),
+        password: String(config.Password || config.password || ''),
+        udp: true,
+      };
+      if (config.Alpn) {
+        proxy.alpn = String(config.Alpn)
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean);
+      }
+      const congestion = config.ProtoExtraObj?.CongestionControl || config.CongestionControl || config.congestionControl;
+      if (congestion) proxy['congestion-controller'] = String(congestion);
+      break;
+    }
+    case 'trojan': {
+      proxy = {
+        name,
+        type: 'trojan',
+        server,
+        port,
+        password: String(config.Password || config.password || config.Id || ''),
+      };
+      break;
+    }
+    case 'vless': {
+      const uuid = String(config.Id || config.id || config.UUID || config.Password || '');
+      if (!uuid) return null;
+      proxy = {
+        name,
+        type: 'vless',
+        server,
+        port,
+        uuid,
+      };
+      if (config.Flow || config.flow) proxy.flow = String(config.Flow || config.flow);
+      if (network && network !== 'tcp') proxy.network = network;
+      if (network === 'ws') {
+        const wsOpts = {};
+        if (config.Path || config.path) wsOpts.path = String(config.Path || config.path);
+        const host = config.RequestHost || config.Host || config.host;
+        if (host) wsOpts.headers = { Host: String(host) };
+        if (Object.keys(wsOpts).length > 0) proxy['ws-opts'] = wsOpts;
+      } else if (network === 'grpc') {
+        const grpcOpts = {};
+        if (config.Path || config.path) grpcOpts['grpc-service-name'] = String(config.Path || config.path);
+        if (Object.keys(grpcOpts).length > 0) proxy['grpc-opts'] = grpcOpts;
+      }
+      if (streamSecurity === 'reality') {
+        proxy.tls = true;
+        const realityOpts = {};
+        if (config.PublicKey) realityOpts['public-key'] = String(config.PublicKey);
+        if (config.ShortId) realityOpts['short-id'] = String(config.ShortId);
+        if (Object.keys(realityOpts).length > 0) proxy['reality-opts'] = realityOpts;
+      } else if (tlsEnabled) {
+        proxy.tls = true;
+      }
+      break;
+    }
+    case 'anytls': {
+      proxy = {
+        name,
+        type: 'anytls',
+        server,
+        port,
+        password: String(config.Password || config.password || ''),
+        udp: true,
+      };
+      break;
+    }
+    case 'ss': {
+      const cipher = String(config.Method || config.method || '');
+      const password = String(config.Password || config.password || '');
+      if (!cipher || !password) return null;
+      proxy = {
+        name,
+        type: 'ss',
+        server,
+        port,
+        cipher,
+        password,
+        udp: true,
+      };
+      break;
+    }
+    default:
+      return null;
+  }
+
+  const sni = config.Sni || config.sni || config.ServerName;
+  if (sni) {
+    proxy.servername = String(sni);
+    proxy.sni = String(sni);
+  }
+  const fingerprint = config.Fingerprint || config.fingerprint;
+  if (fingerprint) {
+    proxy['client-fingerprint'] = String(fingerprint);
+  }
+  if (shouldSkipCertVerify) {
+    proxy['skip-cert-verify'] = true;
+  }
+
+  return proxy;
+}
 
 /**
  * 将节点 URL 转换为 Clash 代理对象
@@ -22,6 +196,10 @@ import { parseHttpsUrl, parseSocks5Url } from './clash-parsers/basic.js';
  */
 export function urlToClashProxy(url) {
   if (!url || typeof url !== 'string') return null;
+
+  if (/^v2rayn:\/\//i.test(url)) {
+    return parseV2raynClashProxy(url);
+  }
 
   if (/^mierus:\/\//i.test(url)) {
     try {

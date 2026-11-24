@@ -116,6 +116,7 @@ export function buildEdgeCacheRequest({
   requestUrl,
   targetFormat = 'base64',
   isMeta = false,
+  isChinaClient = false,
   cacheVersion = '0',
   isProfileExpired = false,
 }) {
@@ -133,6 +134,7 @@ export function buildEdgeCacheRequest({
 
   normalizedParams.set('__fmt', String(targetFormat || 'base64'));
   normalizedParams.set('__meta', isMeta ? '1' : '0');
+  normalizedParams.set('__cn', isChinaClient ? '1' : '0');
   normalizedParams.set('__exp', isProfileExpired ? '1' : '0');
   normalizedParams.set('__v', String(cacheVersion || '0'));
 

@@ -3,6 +3,7 @@
  * 提供节点地区识别和相关功能
  */
 import { REGION_EMOJI } from '../../shared/region-emoji.js';
+import { decodeV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 
 export { REGION_EMOJI };
 
@@ -474,7 +475,7 @@ export function parseNodeInfo(nodeUrl) {
 
   // 提取协议
   const protocolMatch = nodeUrl.match(/^(.*?):\/\//);
-  const protocol = protocolMatch ? protocolMatch[1].toLowerCase() : 'unknown';
+  let protocol = protocolMatch ? protocolMatch[1].toLowerCase() : 'unknown';
 
   // 提取节点名称
   let nodeName = '';
@@ -677,6 +678,21 @@ export function parseNodeInfo(nodeUrl) {
             port = parts[1];
           }
         }
+      }
+    } else if (protocol === 'v2rayn') {
+      const decoded = decodeV2raynNodeUrl(nodeUrl);
+      if (decoded) {
+        const innerProtocol = decoded.config?.Protocol || decoded.config?.protocol || decoded.protocol;
+        if (innerProtocol) protocol = String(innerProtocol).toLowerCase();
+        if (decoded.config?.Remarks) {
+          nodeName = String(decoded.config.Remarks).replace(/🇹🇼/g, '🇨🇳');
+        } else {
+          nodeName = `${protocol || 'v2rayn'} 节点`;
+        }
+        server = String(decoded.config?.Address ?? '');
+        port = String(decoded.config?.Port ?? '');
+      } else {
+        nodeName = 'v2rayn 节点';
       }
     } else {
       // 通用格式: protocol://user@host:port... 或 protocol://host:port...

@@ -26,6 +26,7 @@ const REAL_PROXY_PROTOCOLS = [
   'naive+quic://',
   'wireguard://',
   'mierus://',
+  'v2rayn://',
 ];
 
 /**

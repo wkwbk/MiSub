@@ -482,6 +482,8 @@ export function parseAnytlsUrl(url) {
     }
 
     if (params.get('alpn')) proxy.alpn = params.get('alpn').split(',');
+    const fingerprint = params.get('fp') || params.get('client-fingerprint');
+    if (fingerprint) proxy['client-fingerprint'] = fingerprint;
     if (params.get('insecure') === '1' || params.get('allowInsecure') === '1') proxy['skip-cert-verify'] = true;
     const pinnedPeerCertSha256 =
       params.get('pinnedPeerCertSha256') ||

@@ -18,5 +18,6 @@ export function generateBuiltinEgernConfig(nodeList, options = {}) {
     enableUdp: options.enableUdp,
     enableTfo: options.enableTfo,
     addFlagEmoji: options.addFlagEmoji,
+    isChinaClient: options.isChinaClient,
   });
 }

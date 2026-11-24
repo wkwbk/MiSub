@@ -4,6 +4,7 @@
  */
 
 import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
+import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 
 /**
  * 修复节点URL编码问题（支持多种协议）
@@ -304,6 +305,11 @@ export function applyManualNodeName(nodeUrl, customName) {
   if (!customName || !nodeUrl) return nodeUrl;
 
   const encodedName = encodeURIComponent(customName);
+
+  // v2rayn:// 的名称在 Base64 载荷的 Remarks 字段，改写载荷而不是拼接 # 片段
+  if (isV2raynUrl(nodeUrl)) {
+    return renameV2raynNodeUrl(nodeUrl, customName);
+  }
 
   if (nodeUrl.startsWith('vmess://')) {
     try {

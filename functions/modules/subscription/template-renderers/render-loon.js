@@ -1,5 +1,6 @@
 import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
+import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 
 function buildProxyLine(proxy) {
   const type = String(proxy.type || '').toLowerCase();
@@ -261,11 +262,11 @@ function buildRuleLine(rule) {
   return `${type},${rule.value},${rule.policy}`;
 }
 
-function buildRemoteRuleLine(rule) {
+function buildRemoteRuleLine(rule, { isChinaClient = false } = {}) {
   const type = String(rule.type || '').toUpperCase();
   if (type !== 'RULE-SET') return null;
   if (!rule.value || !rule.policy) return null;
-  return `${rule.value}, policy=${rule.policy}, enabled=true`;
+  return `${pinRemoteRuleUrl(rule.value, { isChinaClient })}, policy=${rule.policy}, enabled=true`;
 }
 
 export function renderLoonFromTemplateModel(model, options = {}) {
@@ -286,7 +287,7 @@ export function renderLoonFromTemplateModel(model, options = {}) {
 
   const remoteRuleLines = normalizedModel.rules
     .filter((rule) => rule.source === 'remote' || String(rule.type || '').toUpperCase() === 'RULE-SET')
-    .map(buildRemoteRuleLine)
+    .map((rule) => buildRemoteRuleLine(rule, { isChinaClient: options.isChinaClient }))
     .filter(Boolean);
 
   return [

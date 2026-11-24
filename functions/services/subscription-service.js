@@ -4,6 +4,7 @@
  */
 
 import { utf8ToBase64 } from '../../shared/base64.js';
+import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
@@ -655,6 +656,10 @@ async function decodeBase64Content(text) {
  */
 function applyManualNodeName(nodeUrl, customName) {
   if (!customName) return nodeUrl;
+
+  if (isV2raynUrl(nodeUrl)) {
+    return renameV2raynNodeUrl(nodeUrl, customName);
+  }
 
   // vmess 协议：修改 base64 解码后 JSON 中的 ps 字段
   if (nodeUrl.startsWith('vmess://')) {

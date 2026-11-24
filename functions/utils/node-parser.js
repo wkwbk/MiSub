@@ -18,7 +18,7 @@ import { parseV2rayNLink } from './v2rayn-parser.js';
  * 支持的节点协议正则表达式
  */
 export const NODE_PROTOCOL_REGEX =
-  /^(ss|ssr|vmess|vless|trojan|hysteria2|hy2|hysteria|tuic|snell|naive\+https?|naive\+quic|socks5|socks|http|anytls|wireguard|mierus):\/\//i;
+  /^(ss|ssr|vmess|vless|trojan|hysteria2|hy2|hysteria|tuic|snell|naive\+https?|naive\+quic|socks5|socks|http|anytls|wireguard|mierus|v2rayn):\/\//i;
 
 /**
  * 尝试解析 Surge 或 Quantumult X 格式的节点字符串
@@ -249,9 +249,11 @@ export function extractValidNodes(text) {
 
   for (const line of lines) {
     // v2rayN 私有分享格式：v2rayn://<protocol>/<base64url(JSON)>
+    // 优先转换为标准 URI（便于全客户端使用）；无法转换的协议（如 naive，
+    // mihomo 无对应出站）回退为原样透传，避免整条节点被丢弃
     if (/^v2rayn:\/\//i.test(line)) {
       const converted = parseV2rayNLink(line);
-      if (converted) nodes.push(converted);
+      nodes.push(converted || line);
       continue;
     }
 

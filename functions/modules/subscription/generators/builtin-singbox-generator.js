@@ -15,6 +15,7 @@ import {
   pruneProxyGroups,
 } from '../builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
+import { SINGBOX_SNIFF_RULE } from '../sniffing-config.js';
 import {
   applyGeneralGroupToggles,
   applySingboxBaseConfigOverride,
@@ -399,8 +400,8 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
   let ruleSets;
   let routeRules;
   if (useVisualRules) {
-    const visualOutput = buildVisualRulesAndProviders('singbox', { builtinTransform: bt });
-    const dnsCnRuleSet = getSingboxDnsRuleSet();
+    const visualOutput = buildVisualRulesAndProviders('singbox', { ...options, builtinTransform: bt });
+    const dnsCnRuleSet = getSingboxDnsRuleSet(options);
     const seenTags = new Set([dnsCnRuleSet.tag]);
     ruleSets = [
       dnsCnRuleSet,
@@ -411,6 +412,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
       }),
     ];
     routeRules = [
+      { ...SINGBOX_SNIFF_RULE },
       {
         ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
         outbound: 'DIRECT',
@@ -420,17 +422,19 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     ];
   } else {
     // 从统一规则库获取分流规则
-    const rawRules = getBuiltinRules(levelKey, 'singbox');
+    const rawRules = getBuiltinRules(levelKey, 'singbox', options);
 
     // 提取远程 Rule Set 定义 (Sing-Box 格式)
-    const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules);
+    const ruleSetsMap = getRemoteProviderDefinitions('singbox', rawRules, options);
     ruleSets = [
-      getSingboxDnsRuleSet(),
+      getSingboxDnsRuleSet(options),
       ...Object.values(ruleSetsMap).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
     ];
 
     // 转换路由规则：将中间对象映射为 Sing-Box 语法
+    // 首条为域名嗅探；国内域名直连由规则集内的 RULE-SET,CN_DOMAIN/DOMAIN-SUFFIX,cn 在 GEOIP 之前承载
     routeRules = [
+      { ...SINGBOX_SNIFF_RULE },
       {
         ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
         outbound: 'DIRECT',
@@ -440,7 +444,6 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
         if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
         return r; // 已经是 Sing-Box 格式的普通规则
       }),
-      { domain_suffix: ['cn'], outbound: 'DIRECT' },
     ];
   }
 

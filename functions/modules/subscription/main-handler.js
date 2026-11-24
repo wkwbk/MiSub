@@ -172,6 +172,13 @@ export async function handleMisubRequest(context) {
     request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
     'N/A';
 
+  // 按请求方地理位置决定规则源下载链路：国内走 gh-proxy 加速，国外直连 GitHub。
+  // 缺失地理位置（如本地开发）时按国内处理，gh-proxy 对国外请求同样可用。
+  const clientCountryCode = String(request.cf?.country || request.headers.get('CF-IPCountry') || '')
+    .trim()
+    .toUpperCase();
+  const isChinaClient = clientCountryCode ? clientCountryCode === 'CN' : true;
+
   let fetchGuardPolicy = resolveFetchGuardPolicy(null, config);
   let edgeCacheRequest = null;
   const bypassFetchGuard = forceRefresh || url.searchParams.has('callback_token') || shouldSkipLogging;
@@ -203,6 +210,7 @@ export async function handleMisubRequest(context) {
       requestUrl: request.url,
       targetFormat,
       isMeta: isMetaCore(userAgentHeader, url.searchParams),
+      isChinaClient,
       cacheVersion,
       isProfileExpired: expired,
     });
@@ -686,6 +694,7 @@ export async function handleMisubRequest(context) {
           isMeta: isMetaCore(userAgentHeader, url.searchParams),
           customDnsOverride: config.customDnsOverride || '',
           dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
+          isChinaClient,
           builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
         };
         const rendered = await ProcessorService.renderOutput({
@@ -862,6 +871,7 @@ export async function handleMisubRequest(context) {
     isMeta: isMetaCore(userAgentHeader, url.searchParams),
     customDnsOverride: config.customDnsOverride || '',
     dnsMode: url.searchParams.get('dns-mode') || url.searchParams.get('dnsMode') || config.dnsMode || 'clean',
+    isChinaClient,
     builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
   };
 

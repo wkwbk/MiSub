@@ -6,6 +6,7 @@
 import { extractNodeRegion, getRegionEmoji, parseNodeInfo, REGION_KEYWORDS } from './geo-utils.js';
 import { extractNodeMetadata } from './metadata-extractor.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
+import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 import { evaluateDslExpression, renderDslTemplate } from './expression-dsl.js'; // ============ 默认配置 ============
 
 // ============ 默认配置 ============
@@ -221,6 +222,11 @@ export function setNodeName(url, protocol, newName) {
   const proto = String(protocol || '').toLowerCase();
 
   try {
+    // 按 URL 本身判断 v2rayn 格式：record.protocol 可能已被 parseNodeInfo 改写为内层协议
+    if (proto === 'v2rayn' || isV2raynUrl(url)) {
+      return renameV2raynNodeUrl(url, newName);
+    }
+
     if (proto === 'vmess') {
       let base64Part = url.replace('vmess://', '');
       // 处理 URL-Safe Base64

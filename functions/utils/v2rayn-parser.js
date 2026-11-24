@@ -204,32 +204,55 @@ function v2rayNToUri(tag, cfg) {
     const params = new URLSearchParams();
     if (sni) params.set('sni', sni);
     if (insecure) params.set('insecure', '1');
+    if (cfg.Fingerprint || cfg.fingerprint) {
+      params.set('fp', cfg.Fingerprint || cfg.fingerprint);
+    }
     return `anytls://${encodeURIComponent(password)}@${host}:${port}?${params.toString()}#${encodeURIComponent(name)}`;
   }
 
   if (protocol === 'tuic') {
-    const uuid = cfg.Id || cfg.id || cfg.UUID || '';
+    // 部分面板把 tuic 的 uuid 放在 Username 而非 Id
+    const uuid = cfg.Username || cfg.Id || cfg.id || cfg.UUID || '';
     const params = new URLSearchParams();
     if (sni) params.set('sni', sni);
     if (insecure) params.set('allow_insecure', '1');
-    if (cfg.CongestionControl || cfg.congestionControl) {
-      params.set('congestion_control', cfg.CongestionControl || cfg.congestionControl);
+    if (cfg.Alpn) params.set('alpn', cfg.Alpn);
+    const congestion = extra.CongestionControl || cfg.CongestionControl || cfg.congestionControl;
+    if (congestion) {
+      params.set('congestion_control', congestion);
     }
     return `tuic://${encodeURIComponent(uuid)}:${encodeURIComponent(password)}@${host}:${port}?${params.toString()}#${encodeURIComponent(name)}`;
   }
 
   if (protocol === 'vless') {
-    const uuid = cfg.Id || cfg.id || cfg.UUID || '';
+    // 部分面板把 vless 的 uuid 放在 Password 而非 Id
+    const uuid = cfg.Id || cfg.id || cfg.UUID || cfg.Password || '';
     if (!uuid) return null;
     const params = new URLSearchParams();
     params.set('encryption', 'none');
     params.set('security', (cfg.StreamSecurity || cfg.streamSecurity || 'tls').toLowerCase());
     if (sni) params.set('sni', sni);
-    if (cfg.Network || cfg.network) params.set('type', String(cfg.Network || cfg.network).toLowerCase());
-    if (cfg.Path || cfg.path) params.set('path', cfg.Path || cfg.path);
-    if (cfg.Host || cfg.host) params.set('host', cfg.Host || cfg.host);
+    if (cfg.Flow || cfg.flow) params.set('flow', cfg.Flow || cfg.flow);
+    // v2rayN 的 "raw" 即 tcp，不需要输出 type 参数
+    const net = String(cfg.Network || cfg.network || 'tcp').toLowerCase();
+    if (net && net !== 'tcp' && net !== 'raw') params.set('type', net);
+    if (net === 'ws') {
+      if (cfg.Path || cfg.path) params.set('path', cfg.Path || cfg.path);
+      const hostHeader = cfg.RequestHost || cfg.Host || cfg.host;
+      if (hostHeader) params.set('host', hostHeader);
+    } else if (net === 'grpc') {
+      if (cfg.Path || cfg.path) params.set('serviceName', cfg.Path || cfg.path);
+    }
     if (insecure) params.set('allowInsecure', '1');
     if (pin) params.set('pinSHA256', pin);
+    if (params.get('security') === 'reality') {
+      if (cfg.PublicKey) params.set('pbk', cfg.PublicKey);
+      if (cfg.ShortId) params.set('sid', cfg.ShortId);
+      if (cfg.SpiderX) params.set('spx', cfg.SpiderX);
+    }
+    if (cfg.Fingerprint || cfg.fingerprint) {
+      params.set('fp', cfg.Fingerprint || cfg.fingerprint);
+    }
     return `vless://${uuid}@${host}:${port}?${params.toString()}#${encodeURIComponent(name)}`;
   }
 

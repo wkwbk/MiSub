@@ -2,6 +2,7 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../safe-dns.js';
 import { getSingboxDnsRuleSet, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
+import { SINGBOX_SNIFF_RULE } from '../sniffing-config.js';
 
 function sanitizeTag(value) {
   return String(value || '').trim() || 'Untitled';
@@ -326,7 +327,7 @@ function detectRuleSetFormat(url) {
   return raw.endsWith('.srs') ? 'binary' : 'source';
 }
 
-function buildRuleSets(rules) {
+function buildRuleSets(rules, { isChinaClient = false } = {}) {
   const seenRemote = new Set();
   const remoteRuleSets = [];
   rules.forEach((rule) => {
@@ -338,7 +339,7 @@ function buildRuleSets(rules) {
       tag,
       type: 'remote',
       format: detectRuleSetFormat(rule.value),
-      url: pinRemoteRuleUrl(rule.value),
+      url: pinRemoteRuleUrl(rule.value, { isChinaClient }),
       update_interval: '24h',
       download_detour: DNS_PROXY_GROUP,
     });
@@ -360,9 +361,12 @@ function buildRuleSets(rules) {
           format: 'binary',
           url:
             type === 'geoip'
-              ? pinRemoteRuleUrl(`https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-${value}.srs`)
+              ? pinRemoteRuleUrl(`https://raw.githubusercontent.com/SagerNet/sing-geoip/rule-set/geoip-${value}.srs`, {
+                  isChinaClient,
+                })
               : pinRemoteRuleUrl(
                   `https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-${value}.srs`,
+                  { isChinaClient },
                 ),
           update_interval: '24h',
           download_detour: DNS_PROXY_GROUP,
@@ -390,10 +394,13 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
     normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0),
   );
   const ruleSetObjects = [
-    getSingboxDnsRuleSet(),
-    ...buildRuleSets(normalizedModel.rules).filter((ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET),
+    getSingboxDnsRuleSet({ isChinaClient: options.isChinaClient }),
+    ...buildRuleSets(normalizedModel.rules, { isChinaClient: options.isChinaClient }).filter(
+      (ruleSet) => ruleSet.tag !== SINGBOX_CN_RULE_SET,
+    ),
   ];
-  const routeRules = normalizedModel.rules.map(mapRuleToSingbox).filter(Boolean);
+  // 首条为域名嗅探：还原硬编码 IP 直连流量的真实域名后再进入模板分流规则
+  const routeRules = [{ ...SINGBOX_SNIFF_RULE }, ...normalizedModel.rules.map(mapRuleToSingbox).filter(Boolean)];
   const defaultOutbound = normalizedModel.groups.find((group) => group.name !== DNS_PROXY_GROUP)?.name || 'DIRECT';
   const dnsConfig = buildSingboxDnsConfig(normalizedModel.settings?.customDnsOverride, {
     mode: normalizedModel.settings?.dnsMode,

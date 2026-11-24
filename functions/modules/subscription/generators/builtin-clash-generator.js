@@ -8,9 +8,11 @@ import { urlsToClashProxies } from '../../../utils/url-to-clash.js';
 import { cleanControlChars, getUniqueName } from '../name-utils.js';
 import { isMetaCore } from '../user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
+import { cloneSnifferConfig } from '../sniffing-config.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
+  GEOX_URLS,
   getBuiltinRules,
   getRemoteProviderDefinitions,
   POLICY_GROUPS,
@@ -198,11 +200,11 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
 
     if (useVisualRules) {
       proxyGroups = buildVisualPolicyGroups(proxies, { ...options, builtinTransform: bt });
-      const visualOutput = buildVisualRulesAndProviders('clash', { builtinTransform: bt });
+      const visualOutput = buildVisualRulesAndProviders('clash', { ...options, builtinTransform: bt });
       ruleProviders = visualOutput.clashProviders;
       clashRules = visualOutput.rules;
     } else {
-      const rawRules = isHiddifyClient ? ['MATCH,🚀 节点选择'] : getBuiltinRules(levelKey, 'clash');
+      const rawRules = isHiddifyClient ? ['MATCH,🚀 节点选择'] : getBuiltinRules(levelKey, 'clash', options);
 
       // 生成策略组并执行引用修剪
       const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
@@ -214,7 +216,7 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
 
       // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
       // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
-      ruleProviders = isHiddifyClient ? {} : getRemoteProviderDefinitions('clash', rawRules);
+      ruleProviders = isHiddifyClient ? {} : getRemoteProviderDefinitions('clash', rawRules, options);
 
       // 转换规则行为最终字符串
       clashRules = rawRules
@@ -265,6 +267,10 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
       mode: 'rule',
       'log-level': 'info',
       ...clashApiFields,
+      // GEO 数据库改走 jsDelivr 镜像，避免默认 GitHub 地址在大陆不可达时 GEOIP,CN,DIRECT 静默失效
+      'geox-url': { ...GEOX_URLS },
+      // 域名嗅探：还原硬编码 IP 直连流量（Telegram/Google 系）的真实域名，命中域名分流规则
+      sniffer: cloneSnifferConfig(),
 
       dns: dnsConfig,
 

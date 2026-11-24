@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/generators/builtin-surge-generator.js';
-import { PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+import { GH_PROXY_BASE, PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
 
 describe('Surge 内置生成器', () => {
   describe('基础功能', () => {
@@ -349,8 +349,21 @@ describe('Surge 内置生成器', () => {
       expect(result).toContain(
         `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Netflix.list,🎥 流媒体`,
       );
+      expect(result).toContain(
+        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,DIRECT`,
+      );
+      expect(result).toContain('DOMAIN-SUFFIX,cn,DIRECT');
       expect(result).toContain('GEOIP,CN,DIRECT');
       expect(result).toContain('FINAL,🚀 节点选择,dns-failed');
+      expect(result).not.toContain('gh-proxy.org');
+
+      const mainlandResult = generateBuiltinSurgeConfig(ss, {
+        ruleLevel: 'std',
+        isChinaClient: true,
+      });
+      expect(mainlandResult).toContain(
+        `RULE-SET,${GH_PROXY_BASE}https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,DIRECT`,
+      );
     });
   });
 

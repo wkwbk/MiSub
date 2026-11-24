@@ -17,6 +17,7 @@ const NODE_PROTOCOLS = [
   'naive+quic',
   'naive+http',
   'wireguard',
+  'v2rayn',
 ];
 
 const NODE_PROTOCOL_REGEX = new RegExp(

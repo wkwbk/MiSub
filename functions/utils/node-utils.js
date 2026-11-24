@@ -5,13 +5,19 @@
 
 // [修复] 使用正确的相对路径引用 modules/utils 下的 geo-utils
 import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
+import {
+  decodeV2raynNodeUrl,
+  getV2raynRemarks,
+  isV2raynUrl,
+  renameV2raynNodeUrl,
+} from '../../shared/v2rayn-utils.js';
 import { extractNodeMetadata } from './metadata-extractor.js';
 
 /**
  * 节点协议正则表达式
  */
 export const NODE_PROTOCOL_REGEX =
-  /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|snell|anytls|socks5|socks|wireguard|naive\+https?|naive\+quic|mierus):\/\//i;
+  /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|snell|anytls|socks5|socks|wireguard|naive\+https?|naive\+quic|mierus|v2rayn):\/\//i;
 
 /**
  * 判断代理是否指向本机/未指定地址。
@@ -22,6 +28,8 @@ export function isLocalProxyEndpoint(proxy) {
 
   if (proxy && typeof proxy === 'object') {
     host = proxy.server || proxy.host || '';
+  } else if (typeof proxy === 'string' && isV2raynUrl(proxy)) {
+    host = String(decodeV2raynNodeUrl(proxy)?.config?.Address || '');
   } else if (typeof proxy === 'string') {
     try {
       host = new URL(proxy).hostname;
@@ -101,6 +109,14 @@ export function prependNodeName(link, prefix) {
     });
   }
 
+  // v2rayn:// 的名称在 Base64 载荷的 Remarks 字段，改写载荷而不是拼接 # 片段
+  if (isV2raynUrl(link)) {
+    const originalName = getV2raynRemarks(link);
+    if (originalName.startsWith(prefix)) return link;
+    const newName = originalName ? `${prefix} - ${originalName}` : prefix;
+    return renameV2raynNodeUrl(link, newName);
+  }
+
   const appendToFragment = (baseLink, namePrefix) => {
     const hashIndex = baseLink.lastIndexOf('#');
     let originalName = '';
@@ -167,6 +183,15 @@ export function addFlagEmoji(link) {
 
   if (link.toLowerCase().startsWith('ssr://')) {
     return updateSsrRemarks(link, appendEmoji);
+  }
+
+  // v2rayn:// 的名称在 Remarks 字段；不处理会走通用分支往链接尾部拼 # 片段，破坏载荷
+  if (isV2raynUrl(link)) {
+    const originalName = getV2raynRemarks(link);
+    if (!originalName) return link;
+    const updatedName = appendEmoji(originalName);
+    if (updatedName === originalName) return link;
+    return renameV2raynNodeUrl(link, updatedName);
   }
 
   if (link.startsWith('vmess://')) {
@@ -260,6 +285,14 @@ export function removeFlagEmoji(link) {
       return null;
     }
   };
+
+  if (isV2raynUrl(link)) {
+    const originalName = getV2raynRemarks(link);
+    if (!originalName) return link;
+    const newName = stripFlagEmoji(originalName);
+    if (newName === originalName) return link;
+    return renameV2raynNodeUrl(link, newName);
+  }
 
   if (link.startsWith('vmess://')) {
     try {

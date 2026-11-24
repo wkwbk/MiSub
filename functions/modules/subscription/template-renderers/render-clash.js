@@ -2,6 +2,8 @@ import * as yaml from 'js-yaml';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../safe-dns.js';
 import { applyMihomoChainProxy } from '../mihomo-chain-proxy.js';
+import { GEOX_URLS, GH_PROXY_BASE, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
+import { cloneSnifferConfig } from '../sniffing-config.js';
 
 function mapGroupType(type) {
   const normalized = String(type || '')
@@ -63,11 +65,17 @@ const ACL4SSR_ROOT_LIST_ONLY_FILES = new Set([
   'unban',
 ]);
 
+function stripGhProxyPrefix(sourceUrl) {
+  const raw = String(sourceUrl || '');
+  return raw.startsWith(GH_PROXY_BASE) ? raw.slice(GH_PROXY_BASE.length) : raw;
+}
+
 function toClashRuleProviderUrl(sourceUrl) {
-  if (!/^https?:\/\//i.test(String(sourceUrl || ''))) return sourceUrl;
+  const cleanSourceUrl = stripGhProxyPrefix(sourceUrl);
+  if (!/^https?:\/\//i.test(cleanSourceUrl)) return sourceUrl;
 
   try {
-    const url = new URL(sourceUrl);
+    const url = new URL(cleanSourceUrl);
     // 兼容已被 CDN 镜像重写过的地址（cdn.jsdelivr.net/gh/OWNER/REPO@REF/PATH）。
     // 若只认 raw.githubusercontent.com，镜像后的链接会跳过 .list -> .yaml 映射，
     // 导致规则源指向不存在的 provider 文件。
@@ -117,7 +125,7 @@ function toClashRuleProviderUrl(sourceUrl) {
 
 function isMrsProviderUrl(providerUrl) {
   try {
-    return /\.mrs$/i.test(new URL(providerUrl).pathname);
+    return /\.mrs$/i.test(new URL(stripGhProxyPrefix(providerUrl)).pathname);
   } catch {
     return false;
   }
@@ -125,7 +133,7 @@ function isMrsProviderUrl(providerUrl) {
 
 function getRuleProviderBehavior(providerUrl) {
   try {
-    const pathname = new URL(providerUrl).pathname;
+    const pathname = new URL(stripGhProxyPrefix(providerUrl)).pathname;
     // Mihomo 的 mrs 仅支持 domain / ipcidr，配 classical 会在运行期报
     // ErrInvalidFormat，因此按规则来源路径推断：geoip 走 ipcidr，其余走 domain。
     if (/\.mrs$/i.test(pathname)) {
@@ -154,7 +162,8 @@ function mapRule(rule, ruleProviderMap) {
   return `${type},${rule.value},${rule.policy}`;
 }
 
-export function renderClashFromTemplateModel(model) {
+export function renderClashFromTemplateModel(model, options = {}) {
+  const { isChinaClient = false } = options;
   const normalizedModel = normalizeUnifiedTemplateModel(model);
 
   // 所有客户端都保留链式策略组；仅 Mihomo/Meta 展开节点级 dialer-proxy。
@@ -172,12 +181,13 @@ export function renderClashFromTemplateModel(model) {
     const type = String(rule.type || '').toUpperCase();
     if (type !== 'RULE-SET' || !rule.value || !/^https?:\/\//i.test(rule.value)) return;
 
-    const providerUrl = toClashRuleProviderUrl(rule.value);
+    // 按请求方地理位置解析规则源下载链路（国内 gh-proxy 加速 / 国外直连）
+    const providerUrl = pinRemoteRuleUrl(toClashRuleProviderUrl(rule.value), { isChinaClient });
     if (ruleProviderMap.has(providerUrl)) return;
 
     let nameHint = 'rs';
     try {
-      const urlPath = new URL(providerUrl).pathname;
+      const urlPath = new URL(stripGhProxyPrefix(providerUrl)).pathname;
       const fileName =
         urlPath
           .split('/')
@@ -212,6 +222,10 @@ export function renderClashFromTemplateModel(model) {
     mode: 'rule',
     'log-level': 'info',
     'external-controller': '127.0.0.1:9090',
+    // GEO 数据库走 jsDelivr 镜像，保证模板中 GEOIP/GEOSITE 规则与 geosite:* DNS 策略在大陆可用
+    'geox-url': { ...GEOX_URLS },
+    // 域名嗅探：还原硬编码 IP 直连流量的真实域名，命中模板中的域名分流规则
+    sniffer: cloneSnifferConfig(),
     dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
       mode: normalizedModel.settings?.dnsMode,
       proxyGroup: DNS_PROXY_GROUP,
@@ -242,7 +256,10 @@ export function renderClashFromTemplateModel(model) {
         if (String(rule.type || '').toUpperCase() !== 'RULE-SET' || !rule.value) {
           return mapRule(rule, ruleProviderMap);
         }
-        return mapRule({ ...rule, value: toClashRuleProviderUrl(rule.value) }, ruleProviderMap);
+        return mapRule(
+          { ...rule, value: pinRemoteRuleUrl(toClashRuleProviderUrl(rule.value), { isChinaClient }) },
+          ruleProviderMap,
+        );
       })
       .filter(Boolean),
     profile: {

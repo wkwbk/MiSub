@@ -30,10 +30,10 @@ const CLASH_PROTECTED_KEYS = new Set(['proxies', 'proxy-groups', 'rules', 'rule-
 const SINGBOX_PROTECTED_KEYS = new Set(['outbounds']);
 const SURGE_PROTECTED_SECTIONS = new Set(['proxy', 'proxy group', 'rule']);
 
-function resolveAcl4ssrUrl(relativePath) {
+function resolveAcl4ssrUrl(relativePath, options = {}) {
   if (!relativePath) return '';
   const stripped = String(relativePath).replace(/^ACL4SSR\//i, '');
-  return pinRemoteRuleUrl(`${ACL4SSR_BASE}/${stripped}`);
+  return pinRemoteRuleUrl(`${ACL4SSR_BASE}/${stripped}`, options);
 }
 
 function buildRegionGroupsForVisual(proxies, options = {}) {
@@ -177,7 +177,7 @@ export function buildVisualRulesAndProviders(format, options = {}) {
         tag,
         type: 'remote',
         format: 'binary',
-        url: pinRemoteRuleUrl(`${SING_GEOSITE_BASE}/geosite-${tagName}.srs`),
+        url: pinRemoteRuleUrl(`${SING_GEOSITE_BASE}/geosite-${tagName}.srs`, options),
         update_interval: '24h',
         download_detour: DNS_PROXY_GROUP,
       });
@@ -192,7 +192,7 @@ export function buildVisualRulesAndProviders(format, options = {}) {
         tag,
         type: 'remote',
         format: 'binary',
-        url: pinRemoteRuleUrl(`${SING_GEOIP_BASE}/geoip-${tagName}.srs`),
+        url: pinRemoteRuleUrl(`${SING_GEOIP_BASE}/geoip-${tagName}.srs`, options),
         update_interval: '24h',
         download_detour: DNS_PROXY_GROUP,
       });
@@ -256,7 +256,7 @@ export function buildVisualRulesAndProviders(format, options = {}) {
       }
     } else if (normalizedFormat === 'surge' || normalizedFormat === 'loon') {
       if (cat.surgeList) {
-        rules.push(`RULE-SET,${resolveAcl4ssrUrl(cat.surgeList)},${target}`);
+        rules.push(`RULE-SET,${resolveAcl4ssrUrl(cat.surgeList, options)},${target}`);
       } else {
         (cat.domains || []).forEach((d) => rules.push(`DOMAIN-SUFFIX,${d},${target}`));
         (cat.ipCidrs || []).forEach((cidr) => rules.push(`IP-CIDR,${cidr},${target},no-resolve`));
@@ -268,7 +268,7 @@ export function buildVisualRulesAndProviders(format, options = {}) {
         clashProviders[providerKey] = {
           type: 'http',
           behavior: 'classical',
-          url: resolveAcl4ssrUrl(cat.clashProvider),
+          url: resolveAcl4ssrUrl(cat.clashProvider, options),
           path: `./ruleset/${providerKey}.yaml`,
           interval: 86400,
         };

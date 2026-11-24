@@ -1,5 +1,6 @@
 import * as yaml from 'js-yaml';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
+import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 
 function s(val) {
   if (val === undefined || val === null) return '';
@@ -273,7 +274,7 @@ function mapPolicyGroup(group) {
   };
 }
 
-function mapRule(rule) {
+function mapRule(rule, { isChinaClient = false } = {}) {
   const type = s(rule.type).toLowerCase();
   const policy = s(rule.policy || 'DIRECT');
   const value = s(rule.value);
@@ -285,7 +286,7 @@ function mapRule(rule) {
   if (type === 'rule-set' && /^https?:\/\//i.test(value)) {
     return {
       rule_set: {
-        match: value,
+        match: pinRemoteRuleUrl(value, { isChinaClient }),
         policy,
         update_interval: 86400,
       },
@@ -302,7 +303,7 @@ function mapRule(rule) {
   };
 }
 
-export function renderEgernFromTemplateModel(model) {
+export function renderEgernFromTemplateModel(model, options = {}) {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
 
   const proxies = normalizedModel.proxies.map(mapProxy).filter(Boolean);
@@ -311,7 +312,9 @@ export function renderEgernFromTemplateModel(model) {
     .filter((group) => Array.isArray(group.members) && group.members.length > 0)
     .map(mapPolicyGroup);
 
-  const rules = normalizedModel.rules.map(mapRule).filter(Boolean);
+  const rules = normalizedModel.rules
+    .map((rule) => mapRule(rule, { isChinaClient: options.isChinaClient }))
+    .filter(Boolean);
 
   const config = {
     general: {

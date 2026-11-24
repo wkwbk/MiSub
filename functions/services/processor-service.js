@@ -239,6 +239,7 @@ export class ProcessorService {
           isMeta: builtinOptions.isMeta,
           customDnsOverride: builtinOptions.customDnsOverride || '',
           dnsMode: builtinOptions.dnsMode || 'clean',
+          isChinaClient: builtinOptions.isChinaClient,
         };
 
         if (targetFormat.startsWith('surge')) {

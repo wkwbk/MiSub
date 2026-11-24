@@ -68,7 +68,7 @@ function parseRuleLine(line) {
   };
 }
 
-function parseAclRuleSetLine(line) {
+function parseAclRuleSetLine(line, { isChinaClient = false } = {}) {
   const raw = line.replace(/^ruleset=/i, '');
   const parts = raw.split(',').map((part) => part.trim());
   if (parts.length < 2) return null;
@@ -96,7 +96,7 @@ function parseAclRuleSetLine(line) {
 
   return {
     type: 'rule-set',
-    value: pinRemoteRuleUrl(source),
+    value: pinRemoteRuleUrl(source, { isChinaClient }),
     policy,
     source: 'remote',
     extras: [],
@@ -185,7 +185,7 @@ export function parseIniTemplate(templateText, options = {}) {
     .filter(Boolean);
   const parsedAclRules = aclCustomLines
     .filter((line) => /^ruleset=/i.test(line.trim()))
-    .map(parseAclRuleSetLine)
+    .map((line) => parseAclRuleSetLine(line, options))
     .filter(Boolean);
   const parsedChainProxy = aclCustomLines
     .filter((line) => /^custom_chain_proxy=/i.test(line.trim()))
