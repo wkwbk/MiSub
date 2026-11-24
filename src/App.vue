@@ -61,6 +61,7 @@ const {
 
 const isLoggedIn = computed(() => sessionState.value === 'loggedIn');
 const isPublicRoute = computed(() => route.meta.isPublic);
+const isCustomPublicPageRoute = computed(() => route.name === 'Home' || route.name === 'Explore');
 const isSessionLoading = computed(() => sessionState.value === 'loading');
 
 const isRedirectingFromProtectedRoute = computed(
@@ -77,14 +78,14 @@ configureAuthGuard(() => ({
 
 const showModernNavBar = computed(() => isLoggedIn.value && layoutMode.value === 'modern');
 const shouldHidePublicBranding = computed(() => {
-  if (isLoggedIn.value || !isPublicRoute.value) return false;
+  if (isLoggedIn.value || !isCustomPublicPageRoute.value) return false;
   return (
     sessionStore.publicConfig?.customPage?.enabled === true &&
     sessionStore.publicConfig?.customPage?.hideBranding === true
   );
 });
 const shouldHidePublicHeader = computed(() => {
-  if (isLoggedIn.value || !isPublicRoute.value) return false;
+  if (isLoggedIn.value || !isCustomPublicPageRoute.value) return false;
   return (
     sessionStore.publicConfig?.customPage?.enabled === true &&
     sessionStore.publicConfig?.customPage?.hideHeader === true
@@ -92,7 +93,7 @@ const shouldHidePublicHeader = computed(() => {
 });
 
 const shouldHidePublicFooter = computed(() => {
-  if (isLoggedIn.value || !isPublicRoute.value) return false;
+  if (isLoggedIn.value || !isCustomPublicPageRoute.value) return false;
   return (
     sessionStore.publicConfig?.customPage?.enabled === true &&
     sessionStore.publicConfig?.customPage?.hideFooter === true
@@ -260,7 +261,7 @@ watch([sessionState, isLoggingOut, () => route.fullPath, loginPath], redirectUna
 });
 
 const isCustomPageFullWidth = computed(() => {
-  if (!isPublicRoute.value) return false;
+  if (!isCustomPublicPageRoute.value) return false;
   const cp = sessionStore.publicConfig?.customPage;
   return cp?.enabled === true && cp?.useDefaultLayout === false;
 });
