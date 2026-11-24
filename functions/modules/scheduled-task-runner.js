@@ -5,8 +5,10 @@ import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-t
 import { createJsonResponse } from './utils.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
+export const WEBDAV_LAST_CHECKED_CACHE_KEY = 'misub_webdav_backup_last_checked';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
 const LOCK_TTL_MS = 10 * 60 * 1000;
+const LAST_CHECKED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAINTENANCE_THROTTLE_MS = 6 * 60 * 60 * 1000;
 const lastMaintenanceMap = new WeakMap();
 
@@ -37,7 +39,7 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
   const env = context.env || context;
   if (!env) return { skipped: true, reason: 'missing-env' };
 
-  const storageAdapter = await getStorage(env);
+  const storageAdapter = context?.storage || (await getStorage(env));
   const now = Date.now();
 
   if (env?.MISUB_DB && typeof storageAdapter.cleanupMaintenance === 'function') {
@@ -55,7 +57,10 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     }
   }
 
-  const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
+  const settings =
+    context?.settings !== undefined && !options.forceCheck
+      ? context.settings || {}
+      : (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
 
   if (settings?.tokenAutoRotate?.enabled === true && isTokenRotationDue(settings, now)) {
     const rotatePromise = rotateSubscriptionToken(env, {
@@ -78,19 +83,21 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
     return { skipped: true, reason: 'disabled' };
   }
 
-  const lastCheckedAt = parseTime(config.lastCheckedAt);
+  const cachedCheck = await storageAdapter
+    .get(WEBDAV_LAST_CHECKED_CACHE_KEY, 'json', { fresh: true })
+    .catch(() => null);
+  const lastCheckedAt = Math.max(
+    parseTime(cachedCheck?.checkedAt || (typeof cachedCheck === 'string' ? cachedCheck : '')),
+    parseTime(config.lastCheckedAt),
+  );
   if (!options.forceCheck && lastCheckedAt && now - lastCheckedAt < CHECK_THROTTLE_MS) {
     return { skipped: true, reason: 'throttled' };
   }
 
-  const updatedSettings = {
-    ...settings,
-    webdavBackup: {
-      ...config,
-      lastCheckedAt: new Date(now).toISOString(),
-    },
-  };
-  await storageAdapter.put(STORAGE_KEY_SETTINGS, updatedSettings);
+  await storageAdapter.put(WEBDAV_LAST_CHECKED_CACHE_KEY, {
+    checkedAt: new Date(now).toISOString(),
+    expiresAt: now + LAST_CHECKED_TTL_MS,
+  });
 
   const lastBackupAt = parseTime(config.lastBackupAt);
   if (!options.forceRun && lastBackupAt && now - lastBackupAt < intervalMs(config.interval)) {

@@ -3,6 +3,8 @@
  * 包含各种通用的辅助函数
  */
 
+import { utf8ToBase64 } from '../../shared/base64.js';
+
 /**
  * 规范化自定义登录路径，确保始终以单个前导斜杠开头；无效时回退为 '/login'
  * @param {string} customLoginPath
@@ -339,9 +341,7 @@ export function generateId() {
 export function base64EncodeUtf8(str) {
   if (!str) return '';
   try {
-    const bytes = new TextEncoder().encode(str);
-    const binString = Array.from(bytes, (b) => String.fromCharCode(b)).join('');
-    return btoa(binString);
+    return utf8ToBase64(str);
   } catch (e) {
     console.error('[Utils] base64EncodeUtf8 failed:', e);
     return '';

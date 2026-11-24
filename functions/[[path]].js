@@ -194,6 +194,7 @@ export async function onRequest(context) {
       }
 
       const storageAdapter = StorageFactory.createAdapter(env);
+      context.storage = storageAdapter;
       const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
       context.settings = settings;
       const config = migrateConfigSettings({ ...defaultSettings, ...settings });

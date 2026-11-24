@@ -117,7 +117,7 @@ export async function handleMisubRequest(context) {
   console.log(`\n[MiSub Request] ${request.method} ${maskSensitiveLogValue(url.pathname)}${url.search ? ' ?…' : ''}`);
   console.log(`[MiSub UA] ${userAgentHeader}`);
 
-  const storageAdapter = StorageFactory.createAdapter(env);
+  const storageAdapter = context.storage || StorageFactory.createAdapter(env);
   context.storage = storageAdapter;
   const settingsData =
     context.settings !== undefined ? context.settings : await storageAdapter.get(STORAGE_KEY_SETTINGS);

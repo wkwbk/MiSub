@@ -14,7 +14,7 @@ import {
 import { checkAndNotify, sendTgNotification } from './notifications.js';
 import { clearAllNodeCaches } from '../services/node-cache-service.js';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
-import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
+import { maybeRunScheduledTasks, WEBDAV_LAST_CHECKED_CACHE_KEY } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
@@ -56,13 +56,15 @@ export function isStorageUnavailableError(error) {
   );
 }
 
-/**
- * 获取存储适配器实例
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Object>} 存储适配器实例
- */
-async function getStorageAdapter(env) {
-  return StorageFactory.createAdapter(env);
+function getRequestStorage(env, context = null) {
+  return context?.storage || StorageFactory.createAdapter(env);
+}
+
+async function getRequestSettings(storageAdapter, context = null) {
+  if (context?.settings !== undefined) {
+    return context.settings || {};
+  }
+  return (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
 }
 
 /**
@@ -76,11 +78,11 @@ export async function handleDataRequest(env, context = null) {
     if (!env?.MISUB_DB) {
       console.error('[API Error /data] D1 binding missing (MISUB_DB)');
     }
-    const storageAdapter = StorageFactory.createAdapter(env);
+    const storageAdapter = getRequestStorage(env, context);
     const [misubs, rawProfiles, rawSettings, ruleTemplates] = await Promise.all([
       storageAdapter.getAllSubscriptions(),
       storageAdapter.getAllProfiles(),
-      storageAdapter.get(STORAGE_KEY_SETTINGS),
+      getRequestSettings(storageAdapter, context),
       listRuleTemplates(storageAdapter).catch((error) => {
         console.warn('[API /data] Failed to load custom rule templates:', error?.message || error);
         return [];
@@ -109,7 +111,9 @@ export async function handleDataRequest(env, context = null) {
       { scope: 'data' },
     );
     try {
-      const taskContext = context || { env };
+      const taskContext = context
+        ? { ...context, storage: storageAdapter, settings }
+        : { env, storage: storageAdapter, settings };
       const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
       if (typeof taskContext.waitUntil !== 'function') {
         runPromise.catch((error) => console.warn('[ScheduledTasks] lazy check failed:', error?.message || error));
@@ -152,7 +156,7 @@ export async function handleMisubsSave(request, env, context = null) {
     }
 
     const { misubs, profiles } = requestData;
-    const storageAdapter = await getStorageAdapter(env);
+    const storageAdapter = getRequestStorage(env, context);
     if (!storageAdapter || storageAdapter.type === 'noop') {
       return createJsonResponse(
         {
@@ -394,11 +398,32 @@ function redactSettingsForResponse(settings = {}, env = null, options = {}) {
   return redacted;
 }
 
-export async function handleSettingsGet(env) {
+function pickLatestTimestamp(a, b) {
+  const tsA = Date.parse(a || '');
+  const tsB = Date.parse(b || '');
+  const validA = Number.isFinite(tsA) ? tsA : 0;
+  const validB = Number.isFinite(tsB) ? tsB : 0;
+  if (validB > validA && b) return b;
+  return a || b || null;
+}
+
+export async function handleSettingsGet(env, context = null) {
   try {
-    const storageAdapter = await getStorageAdapter(env);
-    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-    return createJsonResponse(redactSettingsForResponse({ ...defaultSettings, ...settings }, env));
+    const storageAdapter = getRequestStorage(env, context);
+    const [settings, cachedCheck] = await Promise.all([
+      getRequestSettings(storageAdapter, context),
+      storageAdapter.get(WEBDAV_LAST_CHECKED_CACHE_KEY, 'json').catch(() => null),
+    ]);
+    const merged = { ...defaultSettings, ...settings };
+    const cachedCheckedAt = cachedCheck?.checkedAt || (typeof cachedCheck === 'string' ? cachedCheck : null);
+    if (cachedCheckedAt) {
+      merged.webdavBackup = {
+        ...defaultSettings.webdavBackup,
+        ...merged.webdavBackup,
+        lastCheckedAt: pickLatestTimestamp(merged.webdavBackup?.lastCheckedAt, cachedCheckedAt),
+      };
+    }
+    return createJsonResponse(redactSettingsForResponse(merged, env));
   } catch (e) {
     if (isStorageUnavailableError(e)) {
       return createJsonResponse({
@@ -417,7 +442,7 @@ export async function handleSettingsGet(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsSave(request, env) {
+export async function handleSettingsSave(request, env, context = null) {
   try {
     const newSettings = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
@@ -475,7 +500,7 @@ export async function handleSettingsSave(request, env) {
       }
     }
 
-    const storageAdapter = await getStorageAdapter(env);
+    const storageAdapter = getRequestStorage(env, context);
     const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
     const {
       hasBotToken: _omitHasBotToken,
@@ -629,9 +654,9 @@ export async function handleSettingsSave(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsReset(env) {
+export async function handleSettingsReset(env, context = null) {
   try {
-    const storageAdapter = await getStorageAdapter(env);
+    const storageAdapter = getRequestStorage(env, context);
 
     await storageAdapter.resetAllSettings();
 
@@ -657,10 +682,10 @@ export async function handleSettingsReset(env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicProfilesRequest(request, env) {
+export async function handlePublicProfilesRequest(request, env, context = null) {
   try {
-    const storageAdapter = await getStorageAdapter(env);
-    const rawSettings = await storageAdapter.get(STORAGE_KEY_SETTINGS);
+    const storageAdapter = getRequestStorage(env, context);
+    const rawSettings = await getRequestSettings(storageAdapter, context);
     const settings = { ...defaultSettings, ...rawSettings };
     const blocked = await enforcePublicApiAccess(request, env, settings);
     if (blocked) return blocked;
@@ -762,10 +787,10 @@ export async function handlePublicProfilesRequest(request, env) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(request, env) {
+export async function handlePublicConfig(request, env, context = null) {
   try {
-    const storageAdapter = await getStorageAdapter(env);
-    const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+    const storageAdapter = getRequestStorage(env, context);
+    const settings = await getRequestSettings(storageAdapter, context);
 
     const mergedSettings = { ...defaultSettings, ...settings };
     const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);

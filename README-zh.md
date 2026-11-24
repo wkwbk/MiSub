@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Cloudflare Pages](https://img.shields.io/badge/Cloudflare-Pages-orange.svg)](https://pages.cloudflare.com/)
 [![Vue 3](https://img.shields.io/badge/Vue-3.x-green.svg)](https://vuejs.org/)
-[![Version](https://img.shields.io/badge/version-v2.8.0-indigo.svg)](#更新日志)
+[![Version](https://img.shields.io/badge/version-v2.8.6-indigo.svg)](#更新日志)
 
 [功能特性](#功能特性) • [快速开始](#快速开始) • [部署指南](#部署指南) • [使用说明](#使用说明) • [更新日志](#更新日志)
 
@@ -123,17 +123,12 @@
   - 到期时间提醒，颜色高亮
   - 自动更新节点数和流量信息
 
-### 双重存储支持
+### 纯 D1 八表行级存储
 
-- **Cloudflare KV 存储**
-  - 极快的查询速度
-  - 适合轻度使用
-  - 简单易配置
-
-- **Cloudflare D1 数据库**
-  - 不受 KV 每日写入次数限制
-  - 适合频繁更新
-  - 一键数据迁移
+- **Cloudflare D1 数据库（`MISUB_DB`）**
+  - 按 `subscriptions` / `nodes` / `profiles` / `guestbook` / `settings` / `cache` / `access_logs` / `error_reports` 八表职责分离存储
+  - 不受 KV 每日写入次数限制，支持高频率刷新与原子计数
+  - 配合单次请求内存缓存与 Edge Cache，大幅降低 D1 读写消耗
 
 ### 安全与定制
 
@@ -204,38 +199,27 @@
 
 ## 部署指南
 
-### 1. 绑定 KV 命名空间 (必需)
+### 1. 绑定 D1 数据库 (`MISUB_DB`，必需)
 
-部署完成后,进入项目设置:
+MiSub 已全面采用纯 **Cloudflare D1** 存储架构（不再使用 KV）。未绑定 `MISUB_DB` 时系统会进入只读空适配器状态，无法持久化保存数据。
 
-1. `设置` → `函数` → `KV 命名空间绑定`
-2. 点击 `添加绑定`
-3. **变量名称**: `MISUB_KV`
-4. **KV 命名空间**: 选择或创建一个 KV 命名空间
-
-### 2. 绑定 D1 数据库 (可选,推荐)
-
-**创建 D1 数据库:**
+**创建并初始化 D1 数据库:**
 ```bash
-wrangler d1 create misub
+npx wrangler d1 create misub
+npx wrangler d1 execute misub --file=schema.sql --remote
 ```
 
-**绑定数据库:**
-1. `设置` → `函数` → `D1 数据库绑定`
+> ⚠️ **Fork 用户提示**：若通过 `wrangler.toml` 部署 Workers，请务必将 `[[d1_databases]]` 中的 `database_id` 替换为你自己创建的 D1 数据库 ID。
+
+**绑定数据库（Pages 或 Workers Dashboard）:**
+1. `设置` → `绑定`（或 Pages 的 `设置` → `函数` → `D1 数据库绑定`）
 2. 点击 `添加绑定`
 3. **变量名称**: `MISUB_DB`
 4. **D1 数据库**: 选择刚创建的数据库
 
-**初始化表结构:**
-```bash
-wrangler d1 execute misub --file=schema.sql --remote
-```
+> 若 CLI 初始化失败，可在 Cloudflare 控制台 D1 控制台中手动执行 `schema.sql` 全部内容。
 
-> 若无法初始化,可在 Cloudflare 控制台手动执行 `schema.sql`
-
-说明 D1 表结构未更新，请在 D1 控制台执行最新 `schema.sql`。
-
-### 3. 设置环境变量
+### 2. 设置环境变量
 
 在 `设置` → `环境变量` 中添加 **生产环境** 变量：
 
@@ -260,6 +244,7 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
+| `CRON_SECRET` | 外部 `/cron/*` 定时任务校验密钥（Secret，可选；也可在管理后台「服务集成」中设置） | `your_cron_secret` |
 | `CORS_ORIGINS` | 允许跨域访问的来源(逗号分隔)，同域可不填 | `https://libk.top,http://localhost:5173` |
 | `MISUB_PUBLIC_URL` | 站点对外访问的公开域名，用于生成订阅转换回调地址 | `https://libk.top` |
 | `MISUB_CALLBACK_URL` | 订阅转换回调基础地址（优先级高于 MISUB_PUBLIC_URL），通常保持默认即可 | `https://libk.top` |
@@ -273,7 +258,7 @@ wrangler d1 execute misub --file=schema.sql --remote
 
 > 提示：启用错误上报后会发送页面地址与浏览器信息等运行数据，请根据隐私与合规要求进行评估与披露。
 
-### 4. 重新部署
+### 3. 重新部署
 
 完成配置后,在 `部署` 选项卡重新部署项目。
 
@@ -367,53 +352,48 @@ rules:
 <%rules%>
 ```
 
-### 数据迁移 (KV → D1)
+### 定时任务（Worker 原生 Cron & 外部 `/cron/*`）
 
-如果已在使用 KV 存储，想迁移到 D1:
-
-1. 配置 D1 数据库 (参考部署指南)
-2. 登录管理界面,进入 `设置`
-3. 点击 `迁移数据到 D1 数据库`
-4. 确认迁移,等待完成
-
-### 服务集成 Cron
-
-MiSub 提供 `/cron` 接口用于外部定时服务触发订阅刷新，适合 Cloudflare Pages 免费版无法直接使用 Cron Trigger 的场景。
-
-- **兼容链接**：在「设置」→「服务集成」复制 `/cron?secret=[REDACTED]` 链接，可直接配置到 UptimeRobot、Cron-Job.org 等外部监控服务。
-- **推荐方式**：如果定时服务支持自定义 Header，建议请求 `/cron` 并设置 Bearer Token Header，避免密钥出现在 URL、浏览器历史或第三方访问日志中。
-- **安全提示**：不要公开分享带 `secret` 的 Cron 链接；如果怀疑泄露，请在后台重置 Cron 密钥后更新外部定时任务。
+- **Cloudflare Workers 原生 Cron Triggers**：使用 `wrangler.toml` 部署时默认启用三项独立定时任务（每 6 小时同步订阅、每日 02:00 UTC WebDAV 备份、每日 03:30 UTC 维护清理），无需额外配置外部服务。
+- **外部 `/cron/*` 接口**：适合 Cloudflare Pages 等不支持原生 Cron Trigger 的场景，按业务拆分为 `/cron/subscriptions`、`/cron/backup`、`/cron/maintenance`、`/cron/rotate-token`。
+  - **推荐方式**：在请求头设置 `Authorization: Bearer <SECRET>`，避免密钥出现在 URL 和访问日志中。
+  - **兼容方式**：支持 `?secret=<SECRET>` 查询参数；密钥可在后台「服务集成」设置，或通过 `CRON_SECRET` Secret 环境变量注入。
 
 ### 代理抓取 (Vercel)
 
 如果由于网络限制导致订阅内容抓取失败，可以额外部署一个用于抓取转发的 Edge Functions 代理并在订阅设置中填写代理地址。
 
-> 说明：该代理仅作为可选的辅助抓取组件，不属于 MiSub 主站部署方式。MiSub 主站支持部署在 Cloudflare Pages 或 Cloudflare Workers。
+> 说明：该代理仅作为可选的辅助抓取组件，不属于 MiSub 主站部署方式。MiSub 主站支持部署在 Cloudflare Workers 或 Cloudflare Pages。
 
-## 存储类型对比
+## 本地开发
 
-| 特性 | KV 存储 | D1 数据库 |
-|------|---------|-----------|
-| **写入限制** | 每日写入次数有限 | 不受 KV 每日写入次数限制 |
-| **查询速度** | 极快 | 快 |
-| **适用场景** | 读多写少 | 频繁更新 |
-| **配置复杂度** | 简单 | 中等 |
-| **推荐使用** | 轻度使用 | 重度使用 |
+```bash
+pnpm install
+pnpm dev
+```
 
-**选择建议:**
-- **新用户**: 建议直接配置 D1，避免 KV 写入额度限制
-- **现有用户**: 遇到限制可使用迁移工具
-- **轻度使用**: KV 完全够用,速度更快
-- **重度使用**: D1 是最佳选择
+本地调试 Worker + D1（在 `.dev.vars` 中配置 `ADMIN_PASSWORD`）：
+
+```bash
+pnpm dev:worker
+```
+
+常用校验命令：
+
+```bash
+pnpm test:run
+pnpm lint --quiet
+pnpm build
+```
 
 ---
 
 ## 技术栈
 
-- **前端**: Vue 3 + Vite + Tailwind CSS
-- **后端**: Cloudflare Pages Functions
-- **存储**: Cloudflare KV + D1 数据库
-- **部署平台**: Cloudflare Pages / Workers
+- **前端**: Vue 3 + Vite + Tailwind CSS + Pinia
+- **后端**: Cloudflare Workers / Pages Functions
+- **存储**: Cloudflare D1 数据库（`MISUB_DB` 八表行级存储）
+- **部署平台**: Cloudflare Workers（推荐）/ Cloudflare Pages
 
 ---
 

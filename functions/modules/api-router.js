@@ -88,7 +88,7 @@ export async function handleApiRequest(request, env, context = null) {
   }
 
   if (path === '/public_config') {
-    return await handlePublicConfig(request, env);
+    return await handlePublicConfig(request, env, context);
   }
 
   // 动态生成外部 Subconverter 可用的 [custom] INI 配置（公开只读，供外部转换后端拉取）
@@ -104,8 +104,10 @@ export async function handleApiRequest(request, env, context = null) {
 
     if (!hasQueryOverrides) {
       try {
-        const storageAdapter = StorageFactory.createAdapter(env);
-        const savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+        const savedSettings =
+          context?.settings !== undefined
+            ? context.settings || {}
+            : (await (context?.storage || StorageFactory.createAdapter(env)).get(STORAGE_KEY_SETTINGS)) || {};
         if (savedSettings.builtinTransform) {
           options = savedSettings.builtinTransform;
         }
@@ -162,7 +164,7 @@ export async function handleApiRequest(request, env, context = null) {
   }
 
   if (path === '/public/profiles') {
-    return await handlePublicProfilesRequest(request, env);
+    return await handlePublicProfilesRequest(request, env, context);
   }
 
   if (path === '/public/preview') {
@@ -370,10 +372,10 @@ export async function handleApiRequest(request, env, context = null) {
 
     case '/settings':
       if (request.method === 'GET') {
-        return await handleSettingsGet(env);
+        return await handleSettingsGet(env, context);
       }
       if (request.method === 'POST') {
-        return await handleSettingsSave(request, env);
+        return await handleSettingsSave(request, env, context);
       }
       return createJsonResponse('Method Not Allowed', 405);
 

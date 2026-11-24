@@ -11,7 +11,11 @@ const textDecoder = new TextDecoder();
  * @returns {string}
  */
 export function utf8ToBase64(str) {
-  const bytes = textEncoder.encode(String(str ?? ''));
+  const input = String(str ?? '');
+  if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
+    return Buffer.from(input, 'utf8').toString('base64');
+  }
+  const bytes = textEncoder.encode(input);
   let binary = '';
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {

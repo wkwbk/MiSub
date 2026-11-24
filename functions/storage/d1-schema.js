@@ -112,6 +112,7 @@ export const D1_INDEX_STATEMENTS = [
 
 const D1_CACHE_KEYS = new Set([
   'misub_webdav_backup_lock',
+  'misub_webdav_backup_last_checked',
   'misub_restore_snapshot_latest',
   'cron_last_execution',
   'sub_edge_cache_version',
@@ -167,6 +168,10 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
   if (keyStr.startsWith('tg_push_rate:') || keyStr === 'misub_webdav_backup_lock') {
     const exp = parseTimestampMs(parsed?.expiresAt);
     return exp > 0 ? exp : now + 60 * 60 * 1000;
+  }
+  if (keyStr === 'misub_webdav_backup_last_checked') {
+    const exp = parseTimestampMs(parsed?.expiresAt);
+    return exp > 0 ? exp : now + 7 * 24 * 60 * 60 * 1000;
   }
   if (keyStr.startsWith('auth_login_rate:')) {
     const exp = parseTimestampMs(parsed?.expiresAt);

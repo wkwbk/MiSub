@@ -27,12 +27,14 @@ export function createMemoryD1(initial = {}) {
 
   const isCacheKey = (k) =>
     k === 'misub_webdav_backup_lock' ||
+    k === 'misub_webdav_backup_last_checked' ||
     k === 'misub_restore_snapshot_latest' ||
     k === 'cron_last_execution' ||
     k.startsWith('node_cache_') ||
     k.startsWith('github_release_') ||
     k.startsWith('tmp_external_nodes:') ||
     k.startsWith('tg_push_rate:') ||
+    k.startsWith('auth_login_rate:') ||
     k.startsWith('misub_test_');
 
   const isLegacyLogKey = (k) =>
