@@ -10,6 +10,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useI18n } from '@/i18n/index.js';
 import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
+import { ensureProfileLinkId, generateProfileLinkId } from '@shared/profile-link.js';
 import { normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
 
 const { t } = useI18n();
@@ -299,7 +300,7 @@ watch(
           ? profileCopy.fetchLimitMode
           : '';
 
-      localProfile.value = profileCopy;
+      localProfile.value = ensureProfileLinkId(profileCopy);
     } else {
       localProfile.value = {
         name: '',
@@ -309,6 +310,7 @@ watch(
         manualNodes: [],
         tags: [],
         customId: '',
+        linkId: generateProfileLinkId(),
         shortLink: '',
         expiresAt: '',
         fetchMinInterval: '',
@@ -403,7 +405,13 @@ const updateSelectedIds = (listName, newIds) => {
 </script>
 
 <template>
-  <Modal :show="show" size="7xl" @confirm="handleConfirm" @update:show="emit('update:show', $event)">
+  <Modal
+    :close-on-confirm="false"
+    :show="show"
+    size="7xl"
+    @confirm="handleConfirm"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex items-center gap-3">
         <Folder class="h-5 w-5 text-fg-muted shrink-0" />
@@ -422,6 +430,7 @@ const updateSelectedIds = (listName, newIds) => {
         <ProfileForm
           :global-settings="dataStore.settings"
           :local-profile="localProfile"
+          :original-custom-id="props.profile?.customId || ''"
           :prefix-toggle-options="prefixToggleOptions"
           :profile-tags="allProfileTags"
           :show-advanced="showAdvanced"

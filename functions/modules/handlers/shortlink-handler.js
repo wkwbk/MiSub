@@ -253,7 +253,9 @@ export async function handleShortLinkCreate(request, env) {
     if (body?.saveToProfile === true && profileId && storageAdapter && storageAdapter.type !== 'noop') {
       try {
         const profiles = await storageAdapter.getAllProfiles();
-        const targetIndex = profiles.findIndex((p) => p && (p.id === profileId || p.customId === profileId));
+        const targetIndex = profiles.findIndex(
+          (p) => p && (p.id === profileId || p.customId === profileId || p.linkId === profileId),
+        );
         if (targetIndex !== -1) {
           const updatedProfiles = profiles.map((p, idx) =>
             idx === targetIndex ? { ...p, shortLink: shortUrl, updatedAt: new Date().toISOString() } : p,

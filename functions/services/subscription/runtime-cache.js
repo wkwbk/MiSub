@@ -3,6 +3,7 @@
  */
 
 import { isRealProxyNode } from './airport-metadata.js';
+import { normalizeDisabledNodes } from '../../../shared/disabled-nodes.js';
 
 /**
  * 构建单机场订阅源的保护性缓存 key
@@ -28,7 +29,8 @@ export function buildSubscriptionFilterFingerprint(sub = {}) {
   const exclude = typeof sub.exclude === 'string' ? sub.exclude.trim() : '';
   const operators = Array.isArray(sub.operators) ? JSON.stringify(sub.operators) : '';
   const nodeTransform = sub.nodeTransform ? JSON.stringify(sub.nodeTransform) : '';
-  return JSON.stringify([exclude, operators, nodeTransform]);
+  const disabledNodes = JSON.stringify(normalizeDisabledNodes(sub.disabledNodes));
+  return JSON.stringify([exclude, operators, nodeTransform, disabledNodes]);
 }
 
 /**

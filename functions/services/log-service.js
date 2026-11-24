@@ -213,21 +213,31 @@ export const LogService = {
    * 清空日志
    * @param {Object} env - Cloudflare Environment
    * @param {Object} [options] - 可选过滤条件
-   * @param {string} [options.profileName] - 仅清空指定订阅组名称的日志
+   * @param {string} [options.profileId] - 优先按内部订阅组 ID 精确清空日志
+   * @param {string} [options.profileName] - 按订阅组名称清空日志（并用于匹配未记录 profileId 的历史日志）
    */
-  async clearLogs(env, { profileName = '' } = {}) {
+  async clearLogs(env, { profileId = '', profileName = '' } = {}) {
     try {
-      const targetProfileName = typeof profileName === 'string' ? profileName : '';
+      const targetProfileId = typeof profileId === 'string' ? profileId.trim() : '';
+      const targetProfileName = typeof profileName === 'string' ? profileName.trim() : '';
       const storage = resolveLogStorage(env);
       if (!storage) return false;
 
-      if (targetProfileName) {
+      if (targetProfileId) {
+        logBatch = logBatch.filter(
+          (log) =>
+            !(
+              log?.profileId === targetProfileId ||
+              (!log?.profileId && targetProfileName && log?.profileName === targetProfileName)
+            ),
+        );
+      } else if (targetProfileName) {
         logBatch = logBatch.filter((log) => log?.profileName !== targetProfileName);
       } else {
         logBatch = [];
       }
 
-      return await storage.clearAccessLogs(targetProfileName ? { profileName: targetProfileName } : {});
+      return await storage.clearAccessLogs({ profileId: targetProfileId, profileName: targetProfileName });
     } catch (error) {
       console.error('[LogService] Failed to clear logs:', error);
       return false;

@@ -27,6 +27,7 @@ import {
 } from './storage/d1-schema.js';
 import { invalidateD1CollectionCache, readCachedD1Collection } from './storage/d1-collection-cache.js';
 import { NoopStorageAdapter } from './storage/noop-adapter.js';
+import { resolvePublicProfile } from '../shared/profile-link.js';
 
 export { ensureD1Schema, isManualNodeRecord, STORAGE_TYPES };
 
@@ -368,7 +369,7 @@ class D1StorageAdapter {
   }
 
   /**
-   * 通过主键 id 或索引列 custom_id 单行精准查询订阅组（避免全表扫描）
+   * 通过主键 id 或索引列 custom_id / link_id 单行精准查询订阅组（供内部引用/管理使用）
    */
   async getProfileById(idOrCustomId) {
     if (!idOrCustomId) return null;
@@ -377,12 +378,49 @@ class D1StorageAdapter {
 
     try {
       const result = await this._withSchemaRetry(() =>
-        this.db.prepare('SELECT data FROM profiles WHERE id = ? OR custom_id = ? LIMIT 1').bind(target, target).first(),
+        this.db
+          .prepare('SELECT data FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
+          .bind(target, target, target)
+          .first(),
       );
       return result?.data ? JSON.parse(result.data) : null;
     } catch (error) {
       if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to get profile ${idOrCustomId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 通过公开订阅路径标识查找订阅组（严格执行 customId > linkId > 历史未迁移 id 的降级失效规则）
+   */
+  async getPublicProfileByIdentifier(identifier) {
+    if (!identifier) return null;
+    const target = String(identifier).trim();
+    if (!target) return null;
+
+    try {
+      const rows = await this._withSchemaRetry(() =>
+        this.db
+          .prepare(
+            'SELECT data FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? OR LOWER(custom_id) = LOWER(?) OR LOWER(link_id) = LOWER(?)',
+          )
+          .bind(target, target, target, target, target)
+          .all(),
+      );
+      const candidates = (rows?.results || [])
+        .map((row) => {
+          try {
+            return JSON.parse(row.data);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+      return resolvePublicProfile(candidates, target);
+    } catch (error) {
+      if (isSchemaMismatchError(error)) return null;
+      console.error(`[D1] Failed to resolve public profile ${identifier}:`, error);
       return null;
     }
   }
@@ -432,6 +470,42 @@ class D1StorageAdapter {
     };
     await this.putProfile(nextProfile);
     return nextProfile.downloadCount;
+  }
+
+  /**
+   * 重置订阅组下载计数（传入 profileId 时仅重置该订阅组，否则重置全部订阅组）
+   */
+  async resetProfileDownloadCounts({ profileId = '' } = {}) {
+    const trimmedId = typeof profileId === 'string' ? profileId.trim() : '';
+    try {
+      await this._withSchemaRetry(async () => {
+        if (trimmedId) {
+          await this.db
+            .prepare(
+              `UPDATE profiles
+               SET data = json_set(data, '$.downloadCount', 0),
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE id = ?`,
+            )
+            .bind(trimmedId)
+            .run();
+        } else {
+          await this.db
+            .prepare(
+              `UPDATE profiles
+               SET data = json_set(data, '$.downloadCount', 0),
+                   updated_at = CURRENT_TIMESTAMP`,
+            )
+            .run();
+        }
+      });
+      invalidateD1CollectionCache(this.db, 'profiles');
+      return true;
+    } catch (error) {
+      if (isSchemaMismatchError(error)) return false;
+      console.error('[D1] Failed to reset profile download counts:', error);
+      return false;
+    }
   }
 
   // ========== 留言板专用表操作 (guestbook) ==========
@@ -553,8 +627,25 @@ class D1StorageAdapter {
     }
   }
 
-  async clearAccessLogs({ profileName = '' } = {}) {
-    const targetProfileName = typeof profileName === 'string' ? profileName : '';
+  async clearAccessLogs({ profileId = '', profileName = '' } = {}) {
+    const targetProfileId = typeof profileId === 'string' ? profileId.trim() : '';
+    const targetProfileName = typeof profileName === 'string' ? profileName.trim() : '';
+    if (targetProfileId) {
+      try {
+        await this.db
+          .prepare(
+            `DELETE FROM access_logs
+             WHERE json_extract(data, '$.profileId') = ?
+                OR (json_extract(data, '$.profileId') IS NULL AND ? != '' AND json_extract(data, '$.profileName') = ?)`,
+          )
+          .bind(targetProfileId, targetProfileName, targetProfileName)
+          .run();
+      } catch (error) {
+        if (!isSchemaMismatchError(error)) throw error;
+      }
+      return true;
+    }
+
     if (targetProfileName) {
       try {
         await this.db
@@ -718,16 +809,17 @@ class D1StorageAdapter {
 
   async putProfile(item) {
     const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
+    const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
 
     await this._withSchemaRetry(async () => {
       await this.db
         .prepare(
           `
-                INSERT OR REPLACE INTO profiles (id, custom_id, data, updated_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
+                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
             `,
         )
-        .bind(item.id, customId, JSON.stringify(item))
+        .bind(item.id, customId, linkId, JSON.stringify(item))
         .run();
     });
     invalidateD1CollectionCache(this.db, 'profiles');
@@ -736,11 +828,13 @@ class D1StorageAdapter {
 
   async deleteProfileById(id) {
     let customId = '';
+    let linkId = '';
     try {
       const existingRow = await this.db.prepare('SELECT data FROM profiles WHERE id = ?').bind(id).first();
       if (existingRow?.data) {
         const parsed = JSON.parse(existingRow.data);
         customId = typeof parsed?.customId === 'string' ? parsed.customId.trim() : '';
+        linkId = typeof parsed?.linkId === 'string' ? parsed.linkId.trim() : '';
       }
     } catch {
     }
@@ -748,7 +842,7 @@ class D1StorageAdapter {
     const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
     invalidateD1CollectionCache(this.db, 'profiles');
 
-    const idsToClean = new Set([id, customId].filter(Boolean));
+    const idsToClean = new Set([id, customId, linkId].filter(Boolean));
     await Promise.all(
       Array.from(idsToClean).map((pid) => this.delete(`node_cache_profile_${pid}`).catch(() => undefined)),
     );
@@ -867,12 +961,13 @@ class D1StorageAdapter {
 
     const statements = validItems.map((item) => {
       const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
+      const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
       return this.db
         .prepare(
-          `INSERT OR REPLACE INTO profiles (id, custom_id, data, updated_at)
-                     VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+          `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
+                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         )
-        .bind(item.id, customId, JSON.stringify(item));
+        .bind(item.id, customId, linkId, JSON.stringify(item));
     });
 
     await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
@@ -989,20 +1084,22 @@ class D1StorageAdapter {
     const statements = [];
     for (const item of toUpsert) {
       const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
+      const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
       statements.push(
         this.db
           .prepare(
-            `INSERT OR REPLACE INTO profiles (id, custom_id, data, updated_at)
-                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+            `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
+                         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
           )
-          .bind(item.id, customId, JSON.stringify(item)),
+          .bind(item.id, customId, linkId, JSON.stringify(item)),
       );
     }
 
     for (const item of toDelete) {
       statements.push(this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(item.id));
       const customId = typeof item?.customId === 'string' ? item.customId.trim() : '';
-      const idsToClean = new Set([item.id, customId].filter(Boolean));
+      const linkId = typeof item?.linkId === 'string' ? item.linkId.trim() : '';
+      const idsToClean = new Set([item.id, customId, linkId].filter(Boolean));
       for (const pid of idsToClean) {
         statements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`));
       }
@@ -1038,6 +1135,7 @@ class D1StorageAdapter {
     profiles.forEach((p) => {
       if (p?.id) profileByIdentifier.set(String(p.id), p);
       if (p?.customId) profileByIdentifier.set(String(p.customId).trim(), p);
+      if (p?.linkId) profileByIdentifier.set(String(p.linkId).trim(), p);
     });
     const validSubIds = new Set(allSubAndNodes.map((s) => s?.id).filter(Boolean));
 

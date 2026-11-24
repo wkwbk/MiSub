@@ -7,14 +7,19 @@ import VisualTransformCard from '@/components/settings/sections/ServiceSettings/
 import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
 import DatePicker from '@/components/ui/DatePicker.vue';
 import Input from '@/components/ui/Input.vue';
+import ConfirmPopover from '@/components/ui/ConfirmPopover.vue';
 import Select from '@/components/ui/Select.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
+import { useToastStore } from '@/stores/toast.js';
 import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
 import { useI18n } from '@/i18n/index.js';
 import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
+import { getProfileShareIdentifier, normalizeProfileIdentifier, rotateProfileLinkId } from '@shared/profile-link.js';
+import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@shared/profile-alias.js';
+import { normalizeSubPath } from '@shared/reserved-paths.js';
 
 const { t } = useI18n();
 
@@ -47,11 +52,49 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  originalCustomId: {
+    type: String,
+    default: '',
+  },
 });
 
 const activePinia = getActivePinia();
-const ruleTemplates = activePinia ? storeToRefs(useDataStore()).ruleTemplates : ref([]);
+const dataStore = activePinia ? useDataStore() : null;
+const ruleTemplates = activePinia ? storeToRefs(dataStore).ruleTemplates : ref([]);
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
+const toastStore = activePinia ? useToastStore() : null;
+const showToast = (msg, type) => toastStore?.showToast?.(msg, type);
+
+const customIdError = computed(() => {
+  const currentAlias = normalizeProfileIdentifier(props.localProfile?.customId);
+  if (!currentAlias) return '';
+  const origAlias = normalizeProfileIdentifier(props.originalCustomId);
+  const legacyExempt = Boolean(props.localProfile?.id && origAlias && origAlias === currentAlias);
+  const check = validateSingleProfileAlias(currentAlias, {
+    currentProfileId: props.localProfile?.id || '',
+    profiles: dataStore?.profiles || [],
+    legacyExempt,
+  });
+  if (check.valid) return '';
+  if (check.code === 'duplicate') return t('profiles.customIdExists', { id: check.alias });
+  if (check.code === 'too_long') return t('profiles.customIdTooLong', { max: PROFILE_ALIAS_MAX_LENGTH });
+  if (check.code === 'invalid_chars') return t('profiles.customIdInvalidChars');
+  if (check.code === 'reserved') return t('profiles.customIdReserved', { id: check.alias });
+  return check.message || '';
+});
+
+const activeShareSuffix = computed(() => {
+  const subPath = normalizeSubPath(props.globalSettings?.profileToken, 'sub');
+  const identifier = getProfileShareIdentifier(props.localProfile) || 'link-id';
+  return `/${subPath}/${identifier}`;
+});
+
+const handleResetProfileLink = () => {
+  const rotated = rotateProfileLinkId(props.localProfile);
+  props.localProfile.linkId = rotated.linkId;
+  props.localProfile.customId = '';
+  showToast(t('profiles.linkResetPendingSave'), 'info');
+};
 
 const globalEngineLabel = computed(() => {
   const mode = props.globalSettings?.subconverter?.engineMode || 'builtin';
@@ -244,11 +287,35 @@ watch(
       <Input
         id="profile-custom-id"
         v-model="localProfile.customId"
+        :error="customIdError"
         :label="t('profiles.customIdLabel')"
         :placeholder="t('profiles.customIdPlaceholder')"
-      />
+      >
+        <template #suffix>
+          <ConfirmPopover
+            :confirm-text="t('profiles.resetLinkConfirmAction')"
+            :description="t('profiles.resetLinkConfirmDesc')"
+            :title="t('profiles.resetLinkConfirmTitle')"
+            @confirm="handleResetProfileLink"
+          >
+            <template #trigger="{ toggle }">
+              <button
+                :aria-label="t('profiles.resetLinkTitle')"
+                :title="t('profiles.resetLinkTitle')"
+                class="flex h-6 w-6 items-center justify-center rounded text-fg-subtle hover:bg-hover hover:text-fg transition-colors"
+                data-testid="reset-profile-link-btn"
+                type="button"
+                @click.stop="toggle"
+              >
+                <RotateCcw class="h-3.5 w-3.5" />
+              </button>
+            </template>
+          </ConfirmPopover>
+        </template>
+      </Input>
       <p class="text-xs text-fg-subtle mt-1">
         {{ t('profiles.customIdHint') }}
+        <span class="font-mono text-fg-muted ml-1">({{ activeShareSuffix }})</span>
       </p>
     </div>
   </div>

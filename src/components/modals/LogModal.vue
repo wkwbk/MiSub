@@ -1,8 +1,10 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue';
+import { getActivePinia } from 'pinia';
 import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/toast';
+import { useDataStore } from '@/stores/useDataStore.js';
 import { getClientInfo } from '@/lib/utils';
 import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
@@ -11,6 +13,10 @@ import { scrollToPaginationStart } from '@/utils/scroll.js';
 
 const props = defineProps({
   show: Boolean,
+  filterProfileId: {
+    type: String,
+    default: '',
+  },
   filterProfileName: {
     type: String,
     default: '',
@@ -19,7 +25,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show']);
 
-const { showToast } = useToastStore();
+const activePinia = getActivePinia();
+const toastStore = activePinia ? useToastStore() : null;
+const showToast = (msg, type) => toastStore?.showToast?.(msg, type);
+const dataStore = activePinia ? useDataStore() : null;
 const { t, locale } = useI18n();
 const logs = ref([]);
 const isLoading = ref(false);
@@ -30,6 +39,13 @@ const currentPage = ref(1);
 const pageSize = 20;
 
 const filteredLogs = computed(() => {
+  if (props.filterProfileId) {
+    return logs.value.filter((log) =>
+      log.profileId
+        ? log.profileId === props.filterProfileId
+        : props.filterProfileName && log.profileName === props.filterProfileName,
+    );
+  }
   if (!props.filterProfileName) return logs.value;
   return logs.value.filter((log) => log.profileName === props.filterProfileName);
 });
@@ -55,25 +71,65 @@ const fetchLogs = async () => {
   }
 };
 
-const canClearLogs = computed(() => !isLoading.value && !isClearing.value && filteredLogs.value.length > 0);
+const targetProfileDownloadCount = computed(() => {
+  const list = dataStore?.profiles || [];
+  if (props.filterProfileId) {
+    const p = list.find((item) => item?.id === props.filterProfileId);
+    return Number(p?.downloadCount) || 0;
+  }
+  if (props.filterProfileName) {
+    return list
+      .filter((item) => item?.name === props.filterProfileName)
+      .reduce((sum, item) => sum + (Number(item?.downloadCount) || 0), 0);
+  }
+  return list.reduce((sum, item) => sum + (Number(item?.downloadCount) || 0), 0);
+});
+
+const canClearLogs = computed(
+  () => !isLoading.value && !isClearing.value && (filteredLogs.value.length > 0 || targetProfileDownloadCount.value > 0),
+);
 
 const clearLogs = async () => {
   if (!canClearLogs.value) return;
+  const targetProfileId = props.filterProfileId || '';
   const targetProfileName = props.filterProfileName || '';
   const confirmed = await confirmAction({
-    message: targetProfileName ? t('logs.clearProfileConfirm', { name: targetProfileName }) : t('logs.clearConfirm'),
+    message:
+      targetProfileName || targetProfileId
+        ? t('logs.clearProfileConfirm', { name: targetProfileName || targetProfileId })
+        : t('logs.clearConfirm'),
     variant: 'danger',
   });
   if (!confirmed) return;
 
   isClearing.value = true;
   try {
-    const endpoint = targetProfileName ? `/api/logs?profileName=${encodeURIComponent(targetProfileName)}` : '/api/logs';
+    const queryParts = [];
+    if (targetProfileId) queryParts.push(`profileId=${encodeURIComponent(targetProfileId)}`);
+    if (targetProfileName) queryParts.push(`profileName=${encodeURIComponent(targetProfileName)}`);
+    const queryStr = queryParts.join('&');
+    const endpoint = queryStr ? `/api/logs?${queryStr}` : '/api/logs';
     await api.del(endpoint);
-    if (targetProfileName) {
+    if (targetProfileId) {
+      logs.value = logs.value.filter(
+        (log) =>
+          !(
+            log.profileId === targetProfileId ||
+            (!log.profileId && targetProfileName && log.profileName === targetProfileName)
+          ),
+      );
+      const target = (dataStore?.profiles || []).find((p) => p?.id === targetProfileId);
+      if (target) target.downloadCount = 0;
+    } else if (targetProfileName) {
       logs.value = logs.value.filter((log) => log.profileName !== targetProfileName);
+      (dataStore?.profiles || []).forEach((p) => {
+        if (p?.name === targetProfileName) p.downloadCount = 0;
+      });
     } else {
       logs.value = [];
+      (dataStore?.profiles || []).forEach((p) => {
+        if (p) p.downloadCount = 0;
+      });
     }
     currentPage.value = 1;
     showToast(t('logs.clearSuccess'), 'success');

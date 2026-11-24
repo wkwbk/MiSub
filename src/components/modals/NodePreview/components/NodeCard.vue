@@ -1,7 +1,8 @@
 <script setup>
-import { Check, Copy, Info } from '@lucide/vue';
+import { Check, Copy, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
+import Switch from '@/components/ui/Switch.vue';
 
 const { t } = useI18n();
 const props = defineProps({
@@ -29,9 +30,39 @@ const props = defineProps({
     type: Set,
     default: () => new Set(),
   },
+  showNodeSwitch: {
+    type: Boolean,
+    default: false,
+  },
+  allowPing: {
+    type: Boolean,
+    default: false,
+  },
+  nodeEnabledMap: {
+    type: Object,
+    default: () => ({}),
+  },
+  nodePingMap: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
-const emit = defineEmits(['copy', 'detail', 'toggle-select']);
+const emit = defineEmits(['copy', 'detail', 'toggle-select', 'toggle-enabled', 'ping']);
+
+const isNodeEnabled = (node) => props.nodeEnabledMap[node.url] ?? node.enabled !== false;
+const getPingInfo = (node) => props.nodePingMap[node.url] || null;
+const formatPingClass = (ping) => {
+  if (!ping) return 'border-line text-fg-subtle hover:border-line-strong hover:text-fg';
+  if (ping.status === 'ok') {
+    if (ping.latency < 200) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
+    if (ping.latency < 500) return 'border-amber-500/40 bg-amber-500/10 text-amber-400';
+    return 'border-rose-500/40 bg-rose-500/10 text-rose-400';
+  }
+  if (ping.status === 'unsupported') return 'border-line text-fg-subtle opacity-70';
+  if (ping.status === 'loading') return 'border-line-strong text-fg-muted';
+  return 'border-red-500/40 bg-red-500/10 text-red-400';
+};
 
 const handleCardClick = (node) => {
   if (props.selectionMode) {
@@ -79,11 +110,12 @@ const getProtocolDot = (protocol) => {
       <div
         v-for="(node, index) in nodes"
         :key="`${node.url}_${index}`"
-        :class="
+        :class="[
           selectionMode && selectedUrls.has(node.url)
             ? 'border-line-strong bg-active cursor-pointer'
-            : ['border-line bg-inset hover:bg-hover hover:border-line-strong', selectionMode ? 'cursor-pointer' : '']
-        "
+            : ['border-line bg-inset hover:bg-hover hover:border-line-strong', selectionMode ? 'cursor-pointer' : ''],
+          showNodeSwitch && !isNodeEnabled(node) ? 'opacity-55' : '',
+        ]"
         class="flex items-center justify-between gap-2 rounded-md border p-3 transition-colors duration-150"
         @click="handleCardClick(node)"
       >
@@ -129,6 +161,21 @@ const getProtocolDot = (protocol) => {
         <!-- 右侧：操作按钮 -->
         <div v-if="!selectionMode" class="flex shrink-0 items-center gap-1.5">
           <button
+            v-if="allowPing"
+            :class="formatPingClass(getPingInfo(node))"
+            :title="t('nodePreview.testSingleNode')"
+            class="inline-flex h-7 min-w-[44px] items-center justify-center rounded-md border px-1.5 font-mono text-xs transition-colors"
+            type="button"
+            @click.stop="emit('ping', node)"
+          >
+            <Loader2 v-if="getPingInfo(node)?.status === 'loading'" class="h-3 w-3 animate-spin" />
+            <span v-else-if="getPingInfo(node)?.status === 'ok'">{{ getPingInfo(node).latency }}ms</span>
+            <span v-else-if="getPingInfo(node)?.status === 'unsupported'">UDP</span>
+            <span v-else-if="getPingInfo(node)?.status === 'timeout'">{{ t('nodePreview.pingTimeout') }}</span>
+            <span v-else-if="getPingInfo(node)?.status === 'error'">{{ t('nodePreview.pingFailed') }}</span>
+            <span v-else>{{ t('nodePreview.pingAction') }}</span>
+          </button>
+          <button
             :aria-label="t('actions.viewDetail')"
             :title="t('actions.viewDetail')"
             class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-line bg-surface text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
@@ -148,6 +195,13 @@ const getProtocolDot = (protocol) => {
             <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
             <Check v-else class="w-3.5 h-3.5" />
           </button>
+          <div v-if="showNodeSwitch" @click.stop>
+            <Switch
+              :model-value="isNodeEnabled(node)"
+              size="sm"
+              @update:model-value="(val) => emit('toggle-enabled', node, val)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -157,11 +211,12 @@ const getProtocolDot = (protocol) => {
       <div
         v-for="(node, index) in nodes"
         :key="`${node.url}_${index}`"
-        :class="
+        :class="[
           selectionMode && selectedUrls.has(node.url)
             ? 'border-line-strong bg-active cursor-pointer'
-            : ['bg-inset border-line hover:border-line-strong', selectionMode ? 'cursor-pointer' : '']
-        "
+            : ['bg-inset border-line hover:border-line-strong', selectionMode ? 'cursor-pointer' : ''],
+          showNodeSwitch && !isNodeEnabled(node) ? 'opacity-55' : '',
+        ]"
         class="relative rounded-md border p-4 group transition-colors duration-150 shadow-none"
         @click="handleCardClick(node)"
       >
@@ -216,6 +271,21 @@ const getProtocolDot = (protocol) => {
               <!-- 操作按钮 -->
               <div v-if="!selectionMode" class="flex shrink-0 items-center gap-1.5">
                 <button
+                  v-if="allowPing"
+                  :class="formatPingClass(getPingInfo(node))"
+                  :title="t('nodePreview.testSingleNode')"
+                  class="inline-flex h-7 min-w-[44px] items-center justify-center rounded-md border px-1.5 font-mono text-xs transition-colors"
+                  type="button"
+                  @click.stop="emit('ping', node)"
+                >
+                  <Loader2 v-if="getPingInfo(node)?.status === 'loading'" class="h-3 w-3 animate-spin" />
+                  <span v-else-if="getPingInfo(node)?.status === 'ok'">{{ getPingInfo(node).latency }}ms</span>
+                  <span v-else-if="getPingInfo(node)?.status === 'unsupported'">UDP</span>
+                  <span v-else-if="getPingInfo(node)?.status === 'timeout'">{{ t('nodePreview.pingTimeout') }}</span>
+                  <span v-else-if="getPingInfo(node)?.status === 'error'">{{ t('nodePreview.pingFailed') }}</span>
+                  <span v-else>{{ t('nodePreview.pingAction') }}</span>
+                </button>
+                <button
                   :aria-label="t('actions.viewDetail')"
                   :title="t('actions.viewDetail')"
                   class="p-1.5 rounded-md border border-line bg-surface text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
@@ -235,6 +305,13 @@ const getProtocolDot = (protocol) => {
                   <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
                   <Check v-else class="w-3.5 h-3.5" />
                 </button>
+                <div v-if="showNodeSwitch" @click.stop>
+                  <Switch
+                    :model-value="isNodeEnabled(node)"
+                    size="sm"
+                    @update:model-value="(val) => emit('toggle-enabled', node, val)"
+                  />
+                </div>
               </div>
             </div>
           </div>

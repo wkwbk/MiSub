@@ -5,6 +5,7 @@ import { generateCombinedNodeList } from '../../services/subscription-service.js
 import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from '../config.js';
 import { normalizeSubPath } from '../../../shared/reserved-paths.js';
+import { resolvePublicProfile } from '../../../shared/profile-link.js';
 import { createBlockedResponse, isBrowserSubAccessAllowed } from '../access-control.js';
 import {
   generateCacheKey,
@@ -182,7 +183,8 @@ export async function handleMisubRequest(context) {
   let fetchGuardPolicy = resolveFetchGuardPolicy(null, config);
   let edgeCacheRequest = null;
   const bypassFetchGuard = forceRefresh || url.searchParams.has('callback_token') || shouldSkipLogging;
-  const fetchGuardScopeKey = profileIdentifier ? `profile:${profileIdentifier}` : `token:${token}`;
+  const fetchGuardScopeBase = profileIdentifier ? `profile:${profileIdentifier}` : `token:${token}`;
+  let fetchGuardScopeKey = fetchGuardScopeBase;
 
   const evaluateFetchGuard = async (activeProfile, expired) => {
     fetchGuardPolicy = resolveFetchGuardPolicy(activeProfile, config);
@@ -241,7 +243,13 @@ export async function handleMisubRequest(context) {
       // [伪装加固] 不使用裸 403 响应，统一走访问控制拦截响应
       return createBlockedResponse(config.disguise, request.url);
     }
-    currentProfile = await storageAdapter.getProfileById(profileIdentifier);
+    currentProfile =
+      typeof storageAdapter.getPublicProfileByIdentifier === 'function'
+        ? await storageAdapter.getPublicProfileByIdentifier(profileIdentifier)
+        : resolvePublicProfile((await storageAdapter.getAllProfiles()) || [], profileIdentifier);
+    if (currentProfile?.id) {
+      fetchGuardScopeKey = `profile:${currentProfile.id}`;
+    }
     initEngineFlags(currentProfile);
     const profile = currentProfile;
     if (profile && profile.enabled) {
@@ -362,7 +370,7 @@ export async function handleMisubRequest(context) {
       if (!url.searchParams.has('callback_token') && !shouldSkipLogging && config.enableAccessLog) {
         try {
           context.waitUntil(
-            Promise.resolve(storageAdapter.incrementProfileDownloadCount?.(profile.id || profile.customId)).catch(
+            Promise.resolve(storageAdapter.incrementProfileDownloadCount?.(profile.id)).catch(
               (err) => console.error('[Download Count] Failed to update:', err),
             ),
           );
@@ -835,6 +843,7 @@ export async function handleMisubRequest(context) {
           targetFormat,
           token,
           profileIdentifier,
+          profileId: currentProfile?.id || null,
           subName,
           domain,
         });
@@ -964,6 +973,7 @@ export async function handleMisubRequest(context) {
             targetFormat: `builtin-${targetFormat}`,
             token,
             profileIdentifier,
+            profileId: currentProfile?.id || null,
             subName,
             domain,
           });

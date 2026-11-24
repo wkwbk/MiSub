@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { FolderKanban, Layers, Server } from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useUIStore } from '@/stores/ui.js';
 import { useDataStore } from '@/stores/useDataStore.js';
@@ -99,7 +100,7 @@ const handleQRCode = (id, type = 'subscription') => {
     if (profile) {
       const token = (settings.value.profileToken || '').trim().replace(/^\/+|\/+$/g, '') || 'sub';
       const baseUrl = window.location.origin;
-      const idToUse = profile.customId || profile.id;
+      const idToUse = getProfileShareIdentifier(profile);
       qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;
       qrCodeTitle.value = profile.name || t('profiles.qrCodeTitle');
       showQRCodeModal.value = true;
@@ -277,6 +278,7 @@ const showDeleteNodesModal = ref(false);
 const showSubscriptionImportModal = ref(false);
 const showLogModal = ref(false);
 const logProfileName = ref('');
+const logProfileId = ref('');
 const showBatchDeleteModal = ref(false);
 const batchDeleteIds = ref([]);
 const batchDeleteType = ref('node');
@@ -614,8 +616,9 @@ const handlePreviewProfile = (profileId) => {
 };
 
 const handleViewLogs = (profileId) => {
-  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
+  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
+    logProfileId.value = profile.id;
     logProfileName.value = profile.name;
     showLogModal.value = true;
   }
@@ -634,6 +637,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     <DashboardHeader
       :formatted-total-remaining-traffic="formattedTotalRemainingTraffic"
       @open-log="
+        logProfileId = '';
         logProfileName = '';
         showLogModal = true;
       "
@@ -829,7 +833,7 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     v-model:show="showSubBulkImportModal"
     @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
   />
-  <LogModal v-model:show="showLogModal" :filter-profile-name="logProfileName" />
+  <LogModal v-model:show="showLogModal" :filter-profile-id="logProfileId" :filter-profile-name="logProfileName" />
   <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup"
     ><template #title>
       <h3 class="text-lg font-bold text-red-500">

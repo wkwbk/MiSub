@@ -85,7 +85,7 @@ describe('LogModal scoped clear', () => {
     await flushPromises();
 
     expect(confirmActionMock).toHaveBeenCalledWith({
-      message: '确定要清空「Share A」的订阅日志吗？',
+      message: '确定要清空「Share A」的订阅日志并重置其订阅计数吗？',
       variant: 'danger',
     });
     expect(apiDel).toHaveBeenCalledWith('/api/logs?profileName=Share%20A');
@@ -107,7 +107,7 @@ describe('LogModal scoped clear', () => {
     await flushPromises();
 
     expect(confirmActionMock).toHaveBeenCalledWith({
-      message: '确定要清空所有日志吗？',
+      message: '确定要清空所有日志吗？这将同时重置订阅组的订阅计数。',
       variant: 'danger',
     });
     expect(apiDel).toHaveBeenCalledWith('/api/logs');

@@ -1,6 +1,7 @@
 <script setup>
-import { Check, Copy, Info } from '@lucide/vue';
+import { Check, Copy, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
+import Switch from '@/components/ui/Switch.vue';
 
 const { t } = useI18n();
 
@@ -29,9 +30,39 @@ const props = defineProps({
     type: Set,
     default: () => new Set(),
   },
+  showNodeSwitch: {
+    type: Boolean,
+    default: false,
+  },
+  allowPing: {
+    type: Boolean,
+    default: false,
+  },
+  nodeEnabledMap: {
+    type: Object,
+    default: () => ({}),
+  },
+  nodePingMap: {
+    type: Object,
+    default: () => ({}),
+  },
 });
 
-const emit = defineEmits(['copy', 'detail', 'toggle-select']);
+const emit = defineEmits(['copy', 'detail', 'toggle-select', 'toggle-enabled', 'ping']);
+
+const isNodeEnabled = (node) => props.nodeEnabledMap[node.url] ?? node.enabled !== false;
+const getPingInfo = (node) => props.nodePingMap[node.url] || null;
+const formatPingClass = (ping) => {
+  if (!ping) return 'border-line text-fg-subtle hover:border-line-strong hover:text-fg';
+  if (ping.status === 'ok') {
+    if (ping.latency < 200) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
+    if (ping.latency < 500) return 'border-amber-500/40 bg-amber-500/10 text-amber-400';
+    return 'border-rose-500/40 bg-rose-500/10 text-rose-400';
+  }
+  if (ping.status === 'unsupported') return 'border-line text-fg-subtle opacity-70';
+  if (ping.status === 'loading') return 'border-line-strong text-fg-muted';
+  return 'border-red-500/40 bg-red-500/10 text-red-400';
+};
 
 const handleRowClick = (node) => {
   if (props.selectionMode) {
@@ -85,10 +116,10 @@ const getProtocolDot = (protocol) => {
               <div v-if="selectionMode" class="col-span-1 flex justify-center text-fg-subtle">
                 {{ t('nodePreview.columnPick') }}
               </div>
-              <div :class="selectionMode ? 'col-span-3' : 'col-span-4'">
+              <div :class="selectionMode ? 'col-span-3' : 'col-span-3'">
                 {{ t('nodePreview.columnName') }}
               </div>
-              <div class="col-span-3 hidden sm:block">
+              <div :class="selectionMode ? 'col-span-3' : 'col-span-2'" class="hidden sm:block">
                 {{ t('nodePreview.columnServer') }}
               </div>
               <div class="col-span-1 hidden md:block text-center">
@@ -100,7 +131,7 @@ const getProtocolDot = (protocol) => {
               <div class="col-span-2 hidden sm:block text-center">
                 {{ t('nodePreview.columnRegion') }}
               </div>
-              <div class="col-span-1 text-center">
+              <div :class="selectionMode ? 'col-span-1 text-center' : 'col-span-3 text-right pr-2'">
                 {{ t('nodePreview.columnAction') }}
               </div>
             </div>
@@ -114,6 +145,7 @@ const getProtocolDot = (protocol) => {
               :class="{
                 '!bg-active': selectionMode && selectedUrls.has(node.url),
                 'cursor-pointer': selectionMode,
+                'opacity-55': showNodeSwitch && !isNodeEnabled(node),
               }"
               class="group border-b last:border-b-0 border-line odd:bg-inset even:bg-surface/60 hover:bg-hover transition-colors"
               @click="handleRowClick(node)"
@@ -131,14 +163,14 @@ const getProtocolDot = (protocol) => {
                 </div>
 
                 <!-- 节点名称 -->
-                <div :class="selectionMode ? 'col-span-3' : 'col-span-4'" class="min-w-0">
+                <div :class="selectionMode ? 'col-span-3' : 'col-span-3'" class="min-w-0">
                   <span :title="parseNodeInfo(node).name" class="block truncate text-xs font-medium text-fg">
                     {{ parseNodeInfo(node).name }}
                   </span>
                 </div>
 
                 <!-- 服务器 (桌面端) -->
-                <div class="col-span-3 hidden min-w-0 sm:block">
+                <div :class="selectionMode ? 'col-span-3' : 'col-span-2'" class="hidden min-w-0 sm:block">
                   <span :title="parseNodeInfo(node).server" class="block truncate font-mono text-xs text-fg-subtle">
                     {{ parseNodeInfo(node).server }}
                   </span>
@@ -172,7 +204,25 @@ const getProtocolDot = (protocol) => {
                 </div>
 
                 <!-- 操作 (所有设备) -->
-                <div class="col-span-1 flex items-center justify-center gap-1">
+                <div
+                  :class="selectionMode ? 'col-span-1 justify-center' : 'col-span-3 justify-end'"
+                  class="flex items-center gap-1.5"
+                >
+                  <button
+                    v-if="!selectionMode && allowPing"
+                    :class="formatPingClass(getPingInfo(node))"
+                    :title="t('nodePreview.testSingleNode')"
+                    class="inline-flex h-6 min-w-[46px] items-center justify-center rounded border px-1.5 font-mono text-xs transition-colors"
+                    type="button"
+                    @click.stop="emit('ping', node)"
+                  >
+                    <Loader2 v-if="getPingInfo(node)?.status === 'loading'" class="h-3 w-3 animate-spin" />
+                    <span v-else-if="getPingInfo(node)?.status === 'ok'">{{ getPingInfo(node).latency }}ms</span>
+                    <span v-else-if="getPingInfo(node)?.status === 'unsupported'">UDP</span>
+                    <span v-else-if="getPingInfo(node)?.status === 'timeout'">{{ t('nodePreview.pingTimeout') }}</span>
+                    <span v-else-if="getPingInfo(node)?.status === 'error'">{{ t('nodePreview.pingFailed') }}</span>
+                    <span v-else>{{ t('nodePreview.pingAction') }}</span>
+                  </button>
                   <button
                     v-if="!selectionMode"
                     :aria-label="t('actions.viewDetail')"
@@ -195,6 +245,13 @@ const getProtocolDot = (protocol) => {
                     <Copy v-if="copiedNodeId !== node.url" class="w-3.5 h-3.5" />
                     <Check v-else class="w-3.5 h-3.5" />
                   </button>
+                  <div v-if="!selectionMode && showNodeSwitch" @click.stop>
+                    <Switch
+                      :model-value="isNodeEnabled(node)"
+                      size="sm"
+                      @update:model-value="(val) => emit('toggle-enabled', node, val)"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

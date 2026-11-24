@@ -9,6 +9,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
 import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 
 const { t } = useI18n();
 
@@ -46,7 +47,7 @@ const close = () => {
 
 const identifier = computed(() => {
   if (!props.profile) return '';
-  return props.profile.customId || props.profile.id;
+  return getProfileShareIdentifier(props.profile);
 });
 
 const subPath = computed(() => normalizeSubPath(props.token, 'sub'));

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { X } from '@lucide/vue';
+import { Gauge, Loader2, X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useDataStore } from '@/stores/useDataStore.js';
@@ -9,7 +9,10 @@ import { useI18n } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { isUdpOnlyProtocol, pingNode, tcpingNodes } from '@/utils/ping.js';
+import { getDisabledNodeSet, normalizeDisabledNodes } from '@shared/disabled-nodes.js';
 import Modal from '@/components/ui/Modal.vue';
+import Switch from '@/components/ui/Switch.vue';
 import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';
 import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
 import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
@@ -102,6 +105,294 @@ const clearSelection = () => {
 const { showToast } = useToastStore();
 const dataStore = useDataStore();
 const { addNodesFromBulk } = useManualNodes(dataStore.markDirty);
+
+// 单订阅节点开关 & 延迟测速状态
+const isPublicPreview = computed(() => props.apiEndpoint === '/api/public/preview');
+const canManageSubscriptionNodes = computed(() => Boolean(props.subscriptionId) && !props.profileId && !isPublicPreview.value);
+const allowPing = computed(() => !isPublicPreview.value);
+const nodeEnabledMap = ref({});
+const nodePingMap = ref({});
+const pingMode = ref('tcping');
+const isTestingLatency = ref(false);
+const autoDisableFailed = ref(false);
+let saveDisabledTimer = null;
+let hasPendingDisabledSave = false;
+
+const currentSubscriptionRecord = computed(() => {
+  if (!props.subscriptionId) return null;
+  return (dataStore.subscriptions || []).find((s) => s?.id === props.subscriptionId) || null;
+});
+
+const disabledCount = computed(() =>
+  allNodes.value.filter((node) => (nodeEnabledMap.value[node.url] ?? node.enabled !== false) === false).length,
+);
+
+const enabledCount = computed(() => Math.max(0, allNodes.value.length - disabledCount.value));
+
+const failedFilteredUrls = computed(() =>
+  filteredNodes.value
+    .filter((node) => {
+      if (isUdpOnlyProtocol(node.url)) return false;
+      const ping = nodePingMap.value[node.url];
+      return ping && (ping.status === 'timeout' || ping.status === 'error');
+    })
+    .map((node) => node.url),
+);
+
+const flushDisabledNodesSave = async () => {
+  if (saveDisabledTimer) {
+    clearTimeout(saveDisabledTimer);
+    saveDisabledTimer = null;
+  }
+  if (!hasPendingDisabledSave) return;
+  hasPendingDisabledSave = false;
+  await dataStore.saveData?.().catch((err) => {
+    console.warn('[NodePreview] Failed to save disabledNodes:', err);
+  });
+};
+
+const syncDisabledNodesToStore = (immediate = false) => {
+  const targetSub = currentSubscriptionRecord.value;
+  if (!targetSub) return;
+
+  const knownNodeUrls = new Set(allNodes.value.map((n) => String(n?.url || '').trim()).filter(Boolean));
+  const preservedExternal = normalizeDisabledNodes(targetSub.disabledNodes).filter((u) => !knownNodeUrls.has(u));
+  const nextLocalDisabled = allNodes.value
+    .filter((n) => (nodeEnabledMap.value[n.url] ?? n.enabled !== false) === false)
+    .map((n) => String(n.url || '').trim())
+    .filter(Boolean);
+  const nextDisabledNodes = Array.from(new Set([...preservedExternal, ...nextLocalDisabled]));
+
+  dataStore.updateSubscription(targetSub.id, {
+    ...targetSub,
+    disabledNodes: nextDisabledNodes,
+  });
+  dataStore.markDirty();
+  hasPendingDisabledSave = true;
+
+  if (saveDisabledTimer) {
+    clearTimeout(saveDisabledTimer);
+    saveDisabledTimer = null;
+  }
+  if (immediate) {
+    void flushDisabledNodesSave();
+  } else {
+    saveDisabledTimer = setTimeout(() => {
+      void flushDisabledNodesSave();
+    }, 600);
+  }
+};
+
+const handleToggleNodeEnabled = (node, enabled) => {
+  if (!canManageSubscriptionNodes.value || !node?.url) return;
+  nodeEnabledMap.value = {
+    ...nodeEnabledMap.value,
+    [node.url]: Boolean(enabled),
+  };
+  syncDisabledNodesToStore(false);
+};
+
+const setBatchNodesEnabled = (urls, enabled) => {
+  if (!canManageSubscriptionNodes.value || !Array.isArray(urls) || urls.length === 0) return;
+  const nextMap = { ...nodeEnabledMap.value };
+  let changed = false;
+  for (const url of urls) {
+    if (!url) continue;
+    if ((nextMap[url] ?? true) !== Boolean(enabled)) {
+      nextMap[url] = Boolean(enabled);
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  nodeEnabledMap.value = nextMap;
+  syncDisabledNodesToStore(false);
+};
+
+const disableFailedNodes = () => {
+  const targets = failedFilteredUrls.value;
+  if (targets.length === 0) return;
+  setBatchNodesEnabled(targets, false);
+  showToast(t('nodePreview.disabledFailedCount', { count: targets.length }), 'info');
+};
+
+const enableAllNodes = () => {
+  const targets = allNodes.value.map((n) => n.url).filter(Boolean);
+  if (targets.length === 0) return;
+  setBatchNodesEnabled(targets, true);
+  showToast(t('nodePreview.enabledAllNodes'), 'success');
+};
+
+const testSingleNode = async (node) => {
+  if (!node?.url || !allowPing.value) return;
+  if (isUdpOnlyProtocol(node.url)) {
+    nodePingMap.value = {
+      ...nodePingMap.value,
+      [node.url]: { status: 'unsupported', latency: -1, mode: pingMode.value },
+    };
+    return;
+  }
+  const info = parseNodeInfo(node);
+  const host = String(info.server || '').trim();
+  const port = Number(info.port) || 0;
+  if (!host || !port) {
+    nodePingMap.value = {
+      ...nodePingMap.value,
+      [node.url]: { status: 'error', latency: -1, mode: pingMode.value },
+    };
+    return;
+  }
+
+  nodePingMap.value = {
+    ...nodePingMap.value,
+    [node.url]: { status: 'loading', latency: 0, mode: pingMode.value },
+  };
+
+  let result;
+  if (pingMode.value === 'tcping') {
+    try {
+      const { results, unsupported } = await tcpingNodes([{ id: node.url, host, port }], 3000);
+      if (unsupported) {
+        pingMode.value = 'local';
+        showToast(t('manualNodes.tcpingUnsupportedFallback'), 'warning');
+        result = await pingNode(host, port, 3000, { url: node.url });
+      } else {
+        result = results[node.url] || { status: 'error', latency: -1, mode: 'tcping' };
+      }
+    } catch {
+      result = { status: 'error', latency: -1, mode: 'tcping' };
+    }
+  } else {
+    result = await pingNode(host, port, 3000, { url: node.url });
+  }
+
+  nodePingMap.value = {
+    ...nodePingMap.value,
+    [node.url]: result,
+  };
+
+  if (
+    autoDisableFailed.value &&
+    canManageSubscriptionNodes.value &&
+    !isUdpOnlyProtocol(node.url) &&
+    (result.status === 'timeout' || result.status === 'error')
+  ) {
+    setBatchNodesEnabled([node.url], false);
+  }
+};
+
+const testFilteredNodes = async () => {
+  if (isTestingLatency.value || !allowPing.value || filteredNodes.value.length === 0) return;
+  isTestingLatency.value = true;
+
+  try {
+    const candidates = [...filteredNodes.value];
+    const udpNodes = [];
+    const testable = [];
+
+    for (const node of candidates) {
+      if (isUdpOnlyProtocol(node.url)) {
+        udpNodes.push(node);
+      } else {
+        const info = parseNodeInfo(node);
+        const host = String(info.server || '').trim();
+        const port = Number(info.port) || 0;
+        if (host && port) {
+          testable.push({ node, host, port });
+        } else {
+          nodePingMap.value = {
+            ...nodePingMap.value,
+            [node.url]: { status: 'error', latency: -1, mode: pingMode.value },
+          };
+        }
+      }
+    }
+
+    if (udpNodes.length > 0) {
+      const udpUpdates = {};
+      udpNodes.forEach((n) => {
+        udpUpdates[n.url] = { status: 'unsupported', latency: -1, mode: pingMode.value };
+      });
+      nodePingMap.value = { ...nodePingMap.value, ...udpUpdates };
+    }
+
+    if (testable.length > 0) {
+      const loadingUpdates = {};
+      testable.forEach(({ node }) => {
+        loadingUpdates[node.url] = { status: 'loading', latency: 0, mode: pingMode.value };
+      });
+      nodePingMap.value = { ...nodePingMap.value, ...loadingUpdates };
+
+      if (pingMode.value === 'tcping') {
+        const CHUNK_SIZE = 15;
+        let fallbackToLocal = false;
+        for (let i = 0; i < testable.length; i += CHUNK_SIZE) {
+          const chunk = testable.slice(i, i + CHUNK_SIZE);
+          try {
+            const { results, unsupported } = await tcpingNodes(
+              chunk.map((item) => ({ id: item.node.url, host: item.host, port: item.port })),
+              3000,
+            );
+            if (unsupported) {
+              fallbackToLocal = true;
+              pingMode.value = 'local';
+              showToast(t('manualNodes.tcpingUnsupportedFallback'), 'warning');
+              break;
+            }
+            const nextResults = {};
+            chunk.forEach(({ node }) => {
+              nextResults[node.url] = results[node.url] || { status: 'error', latency: -1, mode: 'tcping' };
+            });
+            nodePingMap.value = { ...nodePingMap.value, ...nextResults };
+          } catch {
+            const nextResults = {};
+            chunk.forEach(({ node }) => {
+              nextResults[node.url] = { status: 'error', latency: -1, mode: 'tcping' };
+            });
+            nodePingMap.value = { ...nodePingMap.value, ...nextResults };
+          }
+        }
+        if (fallbackToLocal) {
+          const CONCURRENCY = 6;
+          for (let i = 0; i < testable.length; i += CONCURRENCY) {
+            const chunk = testable.slice(i, i + CONCURRENCY);
+            await Promise.all(
+              chunk.map(async ({ node, host, port }) => {
+                const res = await pingNode(host, port, 3000, { url: node.url });
+                nodePingMap.value = { ...nodePingMap.value, [node.url]: res };
+              }),
+            );
+          }
+        }
+      } else {
+        const CONCURRENCY = 6;
+        for (let i = 0; i < testable.length; i += CONCURRENCY) {
+          const chunk = testable.slice(i, i + CONCURRENCY);
+          await Promise.all(
+            chunk.map(async ({ node, host, port }) => {
+              const res = await pingNode(host, port, 3000, { url: node.url });
+              nodePingMap.value = { ...nodePingMap.value, [node.url]: res };
+            }),
+          );
+        }
+      }
+    }
+
+    if (autoDisableFailed.value && canManageSubscriptionNodes.value) {
+      const toDisable = testable
+        .filter(({ node }) => {
+          const ping = nodePingMap.value[node.url];
+          return ping && (ping.status === 'timeout' || ping.status === 'error');
+        })
+        .map(({ node }) => node.url);
+      if (toDisable.length > 0) {
+        setBatchNodesEnabled(toDisable, false);
+        showToast(t('nodePreview.autoDisabledFailedCount', { count: toDisable.length }), 'info');
+      }
+    }
+  } finally {
+    isTestingLatency.value = false;
+  }
+};
 
 const handleSaveSelection = async () => {
   if (selectedUrls.value.size === 0) {
@@ -206,9 +497,13 @@ const resetState = () => {
   copiedNodeId.value = '';
   pickingMode.value = false;
   selectedUrls.value.clear();
+  nodeEnabledMap.value = {};
+  nodePingMap.value = {};
+  isTestingLatency.value = false;
 };
 
 const closeModal = () => {
+  void flushDisabledNodesSave();
   emit('update:show', false);
 };
 
@@ -219,6 +514,7 @@ watch(
     if (newVal) {
       loadNodes();
     } else {
+      void flushDisabledNodesSave();
       showDetailModal.value = false;
       detailNode.value = null;
       resetState();
@@ -235,6 +531,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  void flushDisabledNodesSave();
 });
 
 // 监听筛选条件变化，重置页码
@@ -285,6 +582,14 @@ const loadNodes = async () => {
     }
 
     allNodes.value = data.nodes || [];
+    const disabledSet = getDisabledNodeSet(currentSubscriptionRecord.value);
+    const nextEnabledMap = {};
+    allNodes.value.forEach((node) => {
+      if (!node?.url) return;
+      nextEnabledMap[node.url] = node.enabled !== false && !disabledSet.has(String(node.url).trim());
+    });
+    nodeEnabledMap.value = nextEnabledMap;
+    nodePingMap.value = {};
     protocolStats.value = data.stats?.protocols || {};
     regionStats.value = data.stats?.regions || {};
 
@@ -532,6 +837,73 @@ const goToPage = (page) => {
         @update:show-processed="showProcessed = $event"
       />
 
+      <!-- 测速与节点启用控制栏（仅后台预览显示） -->
+      <div
+        v-if="!loading && !error && allNodes.length > 0 && allowPing"
+        class="mb-4 flex flex-wrap items-center justify-between gap-2.5 rounded-md border border-line bg-inset/60 px-3.5 py-2.5 text-xs"
+      >
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            :disabled="isTestingLatency || filteredNodes.length === 0"
+            class="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-2.5 py-1.5 font-medium text-fg hover:bg-hover disabled:opacity-50 transition-colors"
+            data-testid="preview-test-latency-btn"
+            type="button"
+            @click="testFilteredNodes"
+          >
+            <Loader2 v-if="isTestingLatency" class="h-3.5 w-3.5 animate-spin" />
+            <Gauge v-else class="h-3.5 w-3.5" />
+            <span>{{ isTestingLatency ? t('nodePreview.testingLatency') : t('nodePreview.testFilteredLatency') }}</span>
+          </button>
+
+          <div class="inline-flex items-center rounded-md border border-line overflow-hidden divide-x divide-line">
+            <button
+              :class="pingMode === 'tcping' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'"
+              class="px-2 py-1 transition-colors"
+              type="button"
+              @click="pingMode = 'tcping'"
+            >
+              TCPing
+            </button>
+            <button
+              :class="pingMode === 'local' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'"
+              class="px-2 py-1 transition-colors"
+              type="button"
+              @click="pingMode = 'local'"
+            >
+              Local
+            </button>
+          </div>
+
+          <button
+            v-if="canManageSubscriptionNodes && failedFilteredUrls.length > 0"
+            class="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-red-400 hover:bg-red-500/20 transition-colors"
+            type="button"
+            @click="disableFailedNodes"
+          >
+            {{ t('nodePreview.disableFailedAction', { count: failedFilteredUrls.length }) }}
+          </button>
+
+          <button
+            v-if="canManageSubscriptionNodes && disabledCount > 0"
+            class="inline-flex items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1 text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
+            type="button"
+            @click="enableAllNodes"
+          >
+            {{ t('nodePreview.enableAllAction') }}
+          </button>
+        </div>
+
+        <div v-if="canManageSubscriptionNodes" class="flex flex-wrap items-center gap-3">
+          <span class="font-mono text-fg-muted">
+            {{ t('nodePreview.enabledSummary', { enabled: enabledCount, total: allNodes.length }) }}
+          </span>
+          <label class="inline-flex items-center gap-2 text-fg-muted cursor-pointer">
+            <span>{{ t('nodePreview.autoDisableFailedLabel') }}</span>
+            <Switch v-model="autoDisableFailed" size="sm" />
+          </label>
+        </div>
+      </div>
+
       <!-- 节点列表 -->
       <div ref="nodeListStartRef" class="flex-1 overflow-hidden bg-transparent" style="min-height: 0">
         <div ref="nodeListScrollRef" class="h-full overflow-y-auto">
@@ -575,28 +947,40 @@ const goToPage = (page) => {
             <!-- 简洁列表视图 (仅大屏桌面端) -->
             <NodeList
               v-if="effectiveViewMode === 'list'"
+              :allow-ping="allowPing"
               :copied-node-id="copiedNodeId"
               :get-protocol-style="getProtocolStyle"
+              :node-enabled-map="nodeEnabledMap"
+              :node-ping-map="nodePingMap"
               :nodes="paginatedNodes"
               :parse-node-info="parseNodeInfo"
               :selected-urls="selectedUrls"
               :selection-mode="pickingMode"
+              :show-node-switch="canManageSubscriptionNodes"
               @copy="copyNodeUrl"
               @detail="openNodeDetail"
+              @ping="testSingleNode"
+              @toggle-enabled="handleToggleNodeEnabled"
               @toggle-select="toggleNodeSelection"
             />
 
             <!-- 卡片视图 container -->
             <NodeCard
               v-else
+              :allow-ping="allowPing"
               :copied-node-id="copiedNodeId"
               :get-protocol-style="getProtocolStyle"
+              :node-enabled-map="nodeEnabledMap"
+              :node-ping-map="nodePingMap"
               :nodes="paginatedNodes"
               :parse-node-info="parseNodeInfo"
               :selected-urls="selectedUrls"
               :selection-mode="pickingMode"
+              :show-node-switch="canManageSubscriptionNodes"
               @copy="copyNodeUrl"
               @detail="openNodeDetail"
+              @ping="testSingleNode"
+              @toggle-enabled="handleToggleNodeEnabled"
               @toggle-select="toggleNodeSelection"
             />
           </div>

@@ -360,8 +360,11 @@ export async function handleApiRequest(request, env, context = null) {
       }
       if (request.method === 'DELETE') {
         const { LogService } = await import('../services/log-service.js');
-        const profileName = url.searchParams.get('profileName') || '';
-        await LogService.clearLogs(env, profileName ? { profileName } : {});
+        const profileId = (url.searchParams.get('profileId') || '').trim();
+        const profileName = (url.searchParams.get('profileName') || '').trim();
+        await LogService.clearLogs(env, { profileId, profileName });
+        const storageAdapter = StorageFactory.createAdapter(env);
+        await storageAdapter.resetProfileDownloadCounts?.(profileId ? { profileId } : {});
         return createJsonResponse({ success: true });
       }
       return createErrorResponse('Method Not Allowed', 405);
@@ -380,6 +383,19 @@ export async function handleApiRequest(request, env, context = null) {
         return await handleSettingsReset(env);
       }
       return createErrorResponse('Method Not Allowed', 405);
+
+    case '/settings/rotate_token': {
+      if (request.method !== 'POST') {
+        return createErrorResponse('Method Not Allowed', 405);
+      }
+      const { rotateSubscriptionToken } = await import('./handlers/rotate-token.js');
+      const result = await rotateSubscriptionToken(env, {
+        request,
+        force: true,
+        source: 'admin-ui',
+      });
+      return createJsonResponse({ success: Boolean(result?.rotated), data: result }, result?.rotated ? 200 : 503);
+    }
 
     case '/guestbook/manage':
       if (request.method === 'GET') {

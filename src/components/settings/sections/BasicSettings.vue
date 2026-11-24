@@ -1,11 +1,12 @@
 <script setup>
-import { Globe, Info, Languages, RefreshCw, SlidersHorizontal } from '@lucide/vue';
+import { Globe, Info, Languages, RefreshCw, RotateCw, SlidersHorizontal } from '@lucide/vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import { computed, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/toast';
+import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@shared/reserved-paths.js';
 
@@ -44,6 +45,53 @@ const generateUuidToken = () => {
 const handleGenerateToken = (field) => {
   props.settings[field] = generateUuidToken();
   showToast(t('settings.tokenGenerated'), 'success');
+};
+
+watch(
+  () => props.settings,
+  (target) => {
+    if (!target || typeof target !== 'object') return;
+    if (!target.tokenAutoRotate || typeof target.tokenAutoRotate !== 'object') {
+      target.tokenAutoRotate = {
+        enabled: false,
+        intervalDays: 2,
+        lastRotatedAt: null,
+      };
+    }
+  },
+  { immediate: true },
+);
+
+const isRotatingNow = ref(false);
+const formattedLastRotated = computed(() => {
+  const raw = props.settings?.tokenAutoRotate?.lastRotatedAt;
+  if (!raw) return '';
+  const ts = Date.parse(raw);
+  return Number.isFinite(ts) ? new Date(ts).toLocaleString() : raw;
+});
+
+const handleRotateTokenNow = async () => {
+  if (isRotatingNow.value) return;
+  isRotatingNow.value = true;
+  try {
+    const res = await api.post('/api/settings/rotate_token', {});
+    if (res?.success && res.data?.myToken) {
+      props.settings.myToken = res.data.myToken;
+      if (props.settings.tokenAutoRotate) {
+        props.settings.tokenAutoRotate.lastRotatedAt = res.data.rotatedAt || new Date().toISOString();
+      }
+      showToast(
+        res.data.notified ? t('settings.rotateTokenNowSuccessNotified') : t('settings.rotateTokenNowSuccess'),
+        'success',
+      );
+    } else {
+      showToast(t('settings.rotateTokenNowFailed'), 'error');
+    }
+  } catch (err) {
+    showToast(err?.message || t('settings.rotateTokenNowFailed'), 'error');
+  } finally {
+    isRotatingNow.value = false;
+  }
 };
 
 const customLoginPathError = computed(() => {
@@ -331,6 +379,73 @@ const handleCustomSubFetchIntervalBlur = () => {
       <p class="mt-4 text-xs text-fg-muted leading-relaxed">
         {{ t('settings.subscriptionTokenRotationHint') }}
       </p>
+
+      <!-- 公开站点地址 & Token 自动轮换 -->
+      <div class="mt-5 pt-5 border-t border-line-subtle space-y-5">
+        <div class="max-w-lg">
+          <Input
+            id="setting-publicUrl"
+            v-model="settings.publicUrl"
+            :label="t('settings.publicUrlLabel')"
+            placeholder="https://sub.example.com"
+            class="rounded-md font-mono"
+          />
+          <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
+            {{ t('settings.publicUrlHint') }}
+          </p>
+        </div>
+
+        <div
+          v-if="settings.tokenAutoRotate"
+          class="flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+        >
+          <div class="space-y-1 flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-fg">{{ t('settings.tokenAutoRotateTitle') }}</span>
+              <span
+                v-if="formattedLastRotated"
+                class="inline-flex items-center rounded border border-line px-1.5 py-0.5 text-xs font-mono text-fg-subtle"
+              >
+                {{ t('settings.tokenLastRotated', { time: formattedLastRotated }) }}
+              </span>
+            </div>
+            <p class="text-xs text-fg-muted leading-relaxed">
+              {{ t('settings.tokenAutoRotateDesc') }}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 shrink-0">
+            <div class="flex items-center h-8 rounded-md border border-line bg-inset px-2.5">
+              <input
+                v-model.number="settings.tokenAutoRotate.intervalDays"
+                :aria-label="t('settings.tokenAutoRotateIntervalLabel')"
+                class="w-12 bg-transparent text-xs font-mono tabular-nums text-fg outline-none"
+                min="1"
+                type="number"
+              />
+              <span class="text-xs text-fg-subtle pl-2 ml-1 border-l border-line whitespace-nowrap">
+                {{ t('settings.daysUnit') }}
+              </span>
+            </div>
+
+            <button
+              :disabled="isRotatingNow"
+              class="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md border border-line bg-transparent text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 transition-colors"
+              data-testid="rotate-mytoken-now-btn"
+              type="button"
+              @click="handleRotateTokenNow"
+            >
+              <RotateCw :class="{ 'animate-spin': isRotatingNow }" class="h-3.5 w-3.5" />
+              <span>{{ isRotatingNow ? t('settings.rotatingTokenNow') : t('settings.rotateTokenNowBtn') }}</span>
+            </button>
+
+            <Switch
+              v-model="settings.tokenAutoRotate.enabled"
+              data-testid="token-auto-rotate-switch"
+            />
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- 功能开关区域 -->

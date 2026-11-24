@@ -18,6 +18,8 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
       name: '',
       url: '',
       enabled: true,
+      autoUpdate: true,
+      disabledNodes: [],
       exclude: '',
       customUserAgent: '',
       fetchProxy: '',
@@ -42,6 +44,8 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }) {
     isNew.value = false;
     try {
       const cloned = JSON.parse(JSON.stringify(sub));
+      cloned.autoUpdate = cloned.autoUpdate !== false;
+      cloned.disabledNodes = Array.isArray(cloned.disabledNodes) ? cloned.disabledNodes : [];
       cloned.tags = getItemTags(cloned);
       editingSubscription.value = cloned;
       showModal.value = true;

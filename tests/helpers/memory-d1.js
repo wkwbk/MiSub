@@ -16,6 +16,7 @@ export function createMemoryD1(initial = {}) {
     logs: new Map(),
   };
   const profileCustomIds = new Map();
+  const profileLinkIds = new Map();
   const cacheExpiresAt = new Map();
   let legacyLogsDropped = false;
 
@@ -82,8 +83,10 @@ export function createMemoryD1(initial = {}) {
           if (item) {
             const id = item.id || `profile-${idx + 1}`;
             const customId = typeof item.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
+            const linkId = typeof item.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
             tables.profiles.set(id, JSON.stringify({ ...item, id }));
             profileCustomIds.set(id, customId);
+            profileLinkIds.set(id, linkId);
           }
         });
       }
@@ -114,6 +117,11 @@ export function createMemoryD1(initial = {}) {
         return id;
       }
     }
+    for (const [id, lid] of profileLinkIds.entries()) {
+      if (lid && lid === target && tables.profiles.has(id)) {
+        return id;
+      }
+    }
     return null;
   };
 
@@ -135,7 +143,7 @@ export function createMemoryD1(initial = {}) {
           tables.profiles.set(matchedId, JSON.stringify(parsed));
           return { downloadCount: nextCount };
         }
-        if (/FROM profiles WHERE id = \? OR custom_id = \?/i.test(normalized)) {
+        if (/FROM profiles WHERE id = \? OR custom_id = \?(?: OR link_id = \?)?/i.test(normalized)) {
           const matchedId = findProfileIdByIdOrCustomId(args[0]);
           if (!matchedId) return null;
           return { data: tables.profiles.get(matchedId) };
@@ -161,6 +169,21 @@ export function createMemoryD1(initial = {}) {
       async all() {
         if (/FROM logs\b/i.test(normalized) && legacyLogsDropped) {
           throw new Error('D1_ERROR: no such table: logs');
+        }
+        if (/SELECT data FROM profiles WHERE id = \? OR custom_id = \? OR link_id = \?/i.test(normalized)) {
+          const targetLower = String(args[0] ?? '').trim().toLowerCase();
+          const rows = [];
+          for (const [id, data] of tables.profiles.entries()) {
+            const cid = String(profileCustomIds.get(id) || '').toLowerCase();
+            const lid = String(profileLinkIds.get(id) || '').toLowerCase();
+            if (
+              targetLower &&
+              (id.toLowerCase() === targetLower || cid === targetLower || lid === targetLower)
+            ) {
+              rows.push({ data });
+            }
+          }
+          return { results: rows };
         }
         if (/SELECT id,\s*data FROM profiles WHERE custom_id IS NULL/i.test(normalized)) {
           const rows = [];
@@ -275,10 +298,43 @@ export function createMemoryD1(initial = {}) {
           }
           return { success: true, meta: { changes: 0 } };
         }
+        if (/UPDATE profiles SET link_id =/i.test(normalized)) {
+          for (const [id, data] of tables.profiles.entries()) {
+            if (!profileLinkIds.get(id)) {
+              try {
+                const parsed = JSON.parse(data);
+                if (typeof parsed?.linkId === 'string' && parsed.linkId.trim()) {
+                  profileLinkIds.set(id, parsed.linkId.trim());
+                }
+              } catch {}
+            }
+          }
+          return { success: true, meta: { changes: 0 } };
+        }
+        if (/INSERT OR REPLACE INTO profiles \(id, custom_id, link_id, data/i.test(normalized)) {
+          tables.profiles.set(args[0], args[3]);
+          profileCustomIds.set(args[0], args[1] || null);
+          profileLinkIds.set(args[0], args[2] || null);
+          return { success: true, meta: { changes: 1 } };
+        }
         if (/INSERT OR REPLACE INTO profiles \(id, custom_id, data/i.test(normalized)) {
           tables.profiles.set(args[0], args[2]);
           profileCustomIds.set(args[0], args[1] || null);
           return { success: true, meta: { changes: 1 } };
+        }
+        if (/UPDATE profiles SET data = json_set\(data,\s*'\$\.downloadCount',\s*0\)/i.test(normalized)) {
+          let changes = 0;
+          const targetId = /WHERE id = \?/i.test(normalized) ? args[0] : null;
+          for (const [id, data] of Array.from(tables.profiles.entries())) {
+            if (targetId && id !== targetId) continue;
+            try {
+              const parsed = JSON.parse(data);
+              parsed.downloadCount = 0;
+              tables.profiles.set(id, JSON.stringify(parsed));
+              changes += 1;
+            } catch {}
+          }
+          return { success: true, meta: { changes } };
         }
         if (/INSERT OR REPLACE INTO cache \(key, value, expires_at/i.test(normalized)) {
           tables.cache.set(args[0], args[1]);
@@ -316,6 +372,26 @@ export function createMemoryD1(initial = {}) {
             if (entry.timestamp < cutoff) {
               tables.access_logs.delete(id);
               changes += 1;
+            }
+          }
+          return { success: true, meta: { changes } };
+        }
+        if (/DELETE FROM access_logs WHERE json_extract\(data,\s*'\$\.profileId'\)\s*=\s*\?/i.test(normalized)) {
+          const targetProfileId = String(args[0] ?? '');
+          const targetProfileName = String(args[2] ?? '');
+          let changes = 0;
+          for (const [id, entry] of Array.from(tables.access_logs.entries())) {
+            try {
+              const parsed = JSON.parse(entry.data);
+              if (
+                parsed?.profileId === targetProfileId ||
+                (!parsed?.profileId && targetProfileName && parsed?.profileName === targetProfileName)
+              ) {
+                tables.access_logs.delete(id);
+                changes += 1;
+              }
+            } catch {
+              // Ignore malformed JSON
             }
           }
           return { success: true, meta: { changes } };
@@ -388,7 +464,10 @@ export function createMemoryD1(initial = {}) {
         if (idDelete) {
           const tblName = idDelete[1].toLowerCase();
           tables[tblName].delete(args[0]);
-          if (tblName === 'profiles') profileCustomIds.delete(args[0]);
+          if (tblName === 'profiles') {
+            profileCustomIds.delete(args[0]);
+            profileLinkIds.delete(args[0]);
+          }
           return { success: true, meta: { changes: 1 } };
         }
         const clearMatch = normalized.match(
@@ -397,7 +476,10 @@ export function createMemoryD1(initial = {}) {
         if (clearMatch) {
           const tblName = clearMatch[1].toLowerCase();
           tables[tblName].clear();
-          if (tblName === 'profiles') profileCustomIds.clear();
+          if (tblName === 'profiles') {
+            profileCustomIds.clear();
+            profileLinkIds.clear();
+          }
           if (tblName === 'cache') cacheExpiresAt.clear();
           return { success: true, meta: { changes: 1 } };
         }

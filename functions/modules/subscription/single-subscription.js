@@ -3,6 +3,7 @@ import { createJsonResponse } from '../utils.js';
 import { parseNodeInfo } from '../../utils/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '../../utils/node-parser.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
+import { getDisabledNodeSet } from '../../../shared/disabled-nodes.js';
 
 /**
  * 处理单个订阅模式的节点获取
@@ -68,14 +69,22 @@ export async function handleSingleSubscriptionMode(request, env, subscriptionId,
     subscription,
   );
 
+  const disabledSet = getDisabledNodeSet(subscription);
+  const annotatedNodes = (result.nodes || []).map((node) => ({
+    ...node,
+    enabled: !disabledSet.has(String(node?.url || '').trim()),
+  }));
+  const disabledCount = annotatedNodes.filter((node) => node.enabled === false).length;
+
   return {
     success: true,
-    subscriptions: [result],
-    nodes: result.nodes,
-    totalCount: result.nodes.length,
+    subscriptions: [{ ...result, nodes: annotatedNodes }],
+    nodes: annotatedNodes,
+    totalCount: annotatedNodes.length,
+    disabledCount,
     stats: {
-      protocols: calculateProtocolStats(result.nodes),
-      regions: calculateRegionStats(result.nodes),
+      protocols: calculateProtocolStats(annotatedNodes),
+      regions: calculateRegionStats(annotatedNodes),
     },
   };
 }

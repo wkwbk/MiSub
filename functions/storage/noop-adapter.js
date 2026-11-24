@@ -32,11 +32,17 @@ export class NoopStorageAdapter {
   async getProfileById() {
     return null;
   }
+  async getPublicProfileByIdentifier() {
+    return null;
+  }
   async getAllProfiles() {
     return [];
   }
   async incrementProfileDownloadCount() {
     return null;
+  }
+  async resetProfileDownloadCounts() {
+    return false;
   }
   async getAllGuestbookMessages() {
     return [];

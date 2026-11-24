@@ -12,6 +12,7 @@ import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useToastStore } from '@/stores/toast.js';
 import { useI18n } from '@/i18n/index.js';
 import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
 const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
@@ -159,12 +160,13 @@ const CopyLinkModal = defineAsyncComponent(loadCopyLinkModal);
 
 const showLogModal = ref(false);
 const logProfileName = ref('');
+const logProfileId = ref('');
 
 const showCopyModal = ref(false);
 const showCopyModalProfile = ref(null);
 
 const handleOpenCopy = (profileId) => {
-  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
+  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     showCopyModalProfile.value = profile;
     showCopyModal.value = true;
@@ -172,8 +174,9 @@ const handleOpenCopy = (profileId) => {
 };
 
 const handleViewLogs = (profileId) => {
-  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
+  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
+    logProfileId.value = profile.id;
     logProfileName.value = profile.name;
     showLogModal.value = true;
   }
@@ -186,11 +189,11 @@ const qrCodeTitle = ref('');
 const { settings } = storeToRefs(dataStore);
 
 const handleQRCode = (profileId) => {
-  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
+  const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     const token = (settings.value.profileToken || '').trim().replace(/^\/+|\/+$/g, '') || 'sub';
     const baseUrl = window.location.origin;
-    const idToUse = profile.customId || profile.id;
+    const idToUse = getProfileShareIdentifier(profile);
     qrCodeUrl.value = `${baseUrl}/${token}/${idToUse}`;
     qrCodeTitle.value = profile.name || t('profiles.qrCodeTitle');
     showQRCodeModal.value = true;
@@ -257,7 +260,12 @@ const handleQRCode = (profileId) => {
       @reorder="handleTagReorder"
     />
 
-    <LogModal :filter-profile-name="logProfileName" :show="showLogModal" @update:show="showLogModal = $event" />
+    <LogModal
+      :filter-profile-id="logProfileId"
+      :filter-profile-name="logProfileName"
+      :show="showLogModal"
+      @update:show="showLogModal = $event"
+    />
 
     <ProfileModal
       v-if="showProfileModal"

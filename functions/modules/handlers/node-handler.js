@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 import { parseNodeList } from '../../utils/node-parser.js';
 import { getProcessedUserAgent } from '../../../shared/format-utils.js';
+import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.js';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.js'; // 创建用于全局匹配的协议正则表达式
 
@@ -475,18 +476,35 @@ export async function handleBatchUpdateNodesRequest(request, env) {
       }
     }
 
-    // 过滤出要更新的订阅
-    const targetSubscriptions = subscriptionIds
+    // 过滤出要更新的订阅（排除已停用及关闭自动刷新的订阅）
+    const candidateSubscriptions = subscriptionIds
       .map((id) => subscriptionMap.get(id))
       .filter((sub) => sub && sub.enabled && sub.url && sub.url.startsWith('http'));
 
-    if (targetSubscriptions.length === 0) {
+    if (candidateSubscriptions.length === 0) {
       return createJsonResponse(
         {
           error: '没有找到需要更新的有效订阅',
         },
         400,
       );
+    }
+
+    const targetSubscriptions = filterAutoUpdateSubscriptions(candidateSubscriptions);
+    const skippedSubscriptions = candidateSubscriptions.length - targetSubscriptions.length;
+
+    if (targetSubscriptions.length === 0) {
+      return createJsonResponse({
+        success: true,
+        results: [],
+        summary: {
+          totalSubscriptions: 0,
+          successfulUpdates: 0,
+          failedUpdates: 0,
+          skippedSubscriptions,
+          totalNodes: 0,
+        },
+      });
     }
 
     // 单个订阅超时时间（毫秒）
@@ -593,6 +611,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
         totalSubscriptions: targetSubscriptions.length,
         successfulUpdates: successfulUpdates.length,
         failedUpdates: targetSubscriptions.length - successfulUpdates.length,
+        skippedSubscriptions,
         totalNodes,
       },
     });

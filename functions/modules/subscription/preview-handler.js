@@ -47,7 +47,10 @@ export async function handlePublicPreviewRequest(request, env) {
     const blocked = await enforcePublicApiAccess(request, env, settings);
     if (blocked) return blocked;
 
-    const profile = await storageAdapter.getProfileById(profileId);
+    const profile =
+      typeof storageAdapter.getPublicProfileByIdentifier === 'function'
+        ? (await storageAdapter.getPublicProfileByIdentifier(profileId)) || (await storageAdapter.getProfileById(profileId))
+        : await storageAdapter.getProfileById(profileId);
 
     if (!profile || !profile.enabled || !profile.isPublic) {
       return createJsonResponse({ error: 'Profile not found or not public' }, 404);

@@ -131,7 +131,7 @@ export function validateProfile(profile) {
       maxLength: 100,
     },
     customId: {
-      maxLength: 50,
+      maxLength: 64,
     },
     transformConfig: {
       validator: (value) => {

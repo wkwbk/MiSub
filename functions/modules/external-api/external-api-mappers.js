@@ -50,6 +50,7 @@ export function toExternalSubscription(item) {
     name: item.name || '',
     url: item.url || '',
     enabled: item.enabled !== false,
+    autoUpdate: item.autoUpdate !== false,
     tags: Array.isArray(item.tags) ? item.tags : [],
     userAgent: item.userAgent || item.customUserAgent || '',
     proxy: item.proxy || item.fetchProxy || '',
@@ -79,6 +80,8 @@ export function toExternalManualNode(item) {
   };
 }
 
+import { getProfileShareIdentifier } from '../../../shared/profile-link.js';
+
 export function toExternalProfile(profile) {
   return {
     id: profile.id,
@@ -88,6 +91,8 @@ export function toExternalProfile(profile) {
     enabled: profile.enabled !== false,
     isPublic: profile.isPublic === true,
     customId: profile.customId || '',
+    linkId: profile.linkId || '',
+    shareId: getProfileShareIdentifier(profile),
     subscriptionIds: Array.isArray(profile.subscriptions)
       ? profile.subscriptions.map((item) => (typeof item === 'object' ? item?.id : item)).filter(Boolean)
       : [],

@@ -2,6 +2,7 @@
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { performWebdavBackup } from './handlers/webdav-backup-handler.js';
+import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
 import { createJsonResponse } from './utils.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
@@ -56,6 +57,22 @@ export async function maybeRunScheduledTasks(context = {}, options = {}) {
   }
 
   const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
+
+  if (settings?.tokenAutoRotate?.enabled === true && isTokenRotationDue(settings, now)) {
+    const rotatePromise = rotateSubscriptionToken(env, {
+      force: false,
+      source: options.source || 'lazy-cron',
+      now,
+    }).catch((err) => {
+      console.warn('[ScheduledTasks] Token auto-rotation failed:', err?.message || err);
+    });
+    if (typeof context.waitUntil === 'function' && !options.awaitRun) {
+      context.waitUntil(rotatePromise);
+    } else {
+      await rotatePromise;
+    }
+  }
+
   const config = settings.webdavBackup || {};
 
   if (!config.enabled || !config.autoBackup) {

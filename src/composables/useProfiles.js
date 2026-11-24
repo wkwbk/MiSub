@@ -4,6 +4,12 @@ import { useDataStore } from '@/stores/useDataStore';
 import { useSettingsStore } from '@/stores/settings.js';
 import { useToastStore } from '@/stores/toast';
 import { generateProfileId } from '@/utils/id.js';
+import {
+  ensureProfileLinkId,
+  generateProfileLinkId,
+  normalizeProfileIdentifier,
+} from '@shared/profile-link.js';
+import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@shared/profile-alias.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
   collectTags,
@@ -168,6 +174,7 @@ export function useProfiles(markDirty) {
       manualNodes: [],
       tags: [],
       customId: '',
+      linkId: generateProfileLinkId(),
       transformConfigMode: 'global',
       transformConfig: '',
       ruleLevel: '',
@@ -202,20 +209,32 @@ export function useProfiles(markDirty) {
       showToast(t('profiles.nameRequired'), 'error');
       return;
     }
-    if (profileData.customId) {
-      profileData.customId = profileData.customId.replace(/[^a-zA-Z0-9-_]/g, '');
-      if (
-        profileData.customId &&
-        profiles.value.some((p) => p.id !== profileData.id && p.customId === profileData.customId)
-      ) {
-        showToast(t('profiles.customIdExists', { id: profileData.customId }), 'error');
-        return;
-      }
+    const existingProfile = profileData.id
+      ? profiles.value.find((p) => p.id === profileData.id)
+      : null;
+    const prevAlias = normalizeProfileIdentifier(existingProfile?.customId);
+    const nextAlias = normalizeProfileIdentifier(profileData.customId);
+    const legacyExempt = Boolean(existingProfile && prevAlias && prevAlias === nextAlias);
+    const aliasCheck = validateSingleProfileAlias(nextAlias, {
+      currentProfileId: profileData.id || '',
+      profiles: profiles.value,
+      legacyExempt,
+    });
+    if (!aliasCheck.valid) {
+      let errorMsg = aliasCheck.message;
+      if (aliasCheck.code === 'duplicate') errorMsg = t('profiles.customIdExists', { id: aliasCheck.alias });
+      else if (aliasCheck.code === 'too_long') errorMsg = t('profiles.customIdTooLong', { max: PROFILE_ALIAS_MAX_LENGTH });
+      else if (aliasCheck.code === 'invalid_chars') errorMsg = t('profiles.customIdInvalidChars');
+      else if (aliasCheck.code === 'reserved') errorMsg = t('profiles.customIdReserved', { id: aliasCheck.alias });
+      showToast(errorMsg, 'error');
+      return;
     }
-    const normalizedProfile = {
+
+    const normalizedProfile = ensureProfileLinkId({
       ...profileData,
+      customId: aliasCheck.alias,
       tags: normalizeTagList(profileData.tags),
-    };
+    });
     if (isNewProfile.value) {
       dataStore.addProfile({ ...normalizedProfile, id: generateProfileId() });
     } else {

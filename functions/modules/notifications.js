@@ -5,6 +5,8 @@
  */
 
 import { formatBytes } from '../../shared/format-utils.js';
+import { isAutoUpdateEnabled } from '../../shared/auto-update.js';
+import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
 // 导入核心通知服务及工具
@@ -141,9 +143,44 @@ export async function handleCronTrigger(env) {
   const allSubs = JSON.parse(JSON.stringify(originalSubs));
   const settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || DEFAULT_SETTINGS;
 
-  const httpSubscriptions = allSubs.filter((sub) => sub.url.startsWith('http') && sub.enabled);
+  let tokenRotationResult = null;
+  if (settings?.tokenAutoRotate?.enabled === true && isTokenRotationDue(settings)) {
+    tokenRotationResult = await rotateSubscriptionToken(env, {
+      force: false,
+      source: 'cron-trigger',
+    }).catch((err) => {
+      console.warn('[Cron] Token auto-rotation failed:', err?.message || err);
+      return { rotated: false, error: err?.message || 'Rotation failed' };
+    });
+  }
+
+  const httpSubscriptions = allSubs.filter(
+    (sub) => sub.url && sub.url.startsWith('http') && sub.enabled && isAutoUpdateEnabled(sub),
+  );
 
   console.info(`[Cron] Starting parallel update for ${httpSubscriptions.length} subscriptions`);
+
+  if (httpSubscriptions.length === 0) {
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'No auto-updatable subscriptions found.',
+        ...(tokenRotationResult ? { tokenRotation: tokenRotationResult } : {}),
+        summary: {
+          total: 0,
+          updated: 0,
+          failed: 0,
+          changes: false,
+          failed_subscriptions: [],
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
   const startTime = Date.now();
 
   const CONCURRENCY = 6;
@@ -298,6 +335,7 @@ export async function handleCronTrigger(env) {
   const duration = Date.now() - startTime;
   const summary = {
     success: true,
+    ...(tokenRotationResult ? { tokenRotation: tokenRotationResult } : {}),
     summary: {
       total: httpSubscriptions.length,
       updated: updatedCount,

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
 import { utf8ToBase64 } from '@shared/base64.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 import { X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -57,7 +58,7 @@ const urlSchemeMap = {
 const getSubscriptionUrl = () => {
   if (!props.profile) return '';
   const token = props.profileToken || 'sub';
-  const identifier = props.profile.customId || props.profile.id;
+  const identifier = getProfileShareIdentifier(props.profile);
   return `${window.location.origin}/${token}/${identifier}`;
 };
 

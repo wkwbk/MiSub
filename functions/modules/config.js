@@ -12,6 +12,12 @@ export const DEFAULT_SETTINGS = {
   fileName: 'MiSub',
   myToken: '',
   profileToken: 'sub',
+  publicUrl: '',
+  tokenAutoRotate: {
+    enabled: false,
+    intervalDays: 2,
+    lastRotatedAt: null,
+  },
   defaultLocale: 'zh-CN',
   cronSecret: '',
   botToken: '',

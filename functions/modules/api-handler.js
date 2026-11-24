@@ -18,6 +18,8 @@ import { maybeRunScheduledTasks } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
+import { ensureProfileLinkId, getProfileShareIdentifier, normalizeProfileIdentifier } from '../../shared/profile-link.js';
+import { validateProfileAliases } from '../../shared/profile-alias.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
@@ -31,6 +33,8 @@ function normalizeProfile(profile = {}) {
   if (Array.isArray(profile.tags)) {
     normalized.tags = profile.tags.map((tag) => String(tag || '').trim()).filter(Boolean);
   }
+  normalized.customId = normalizeProfileIdentifier(profile.customId);
+  normalized.linkId = normalizeProfileIdentifier(profile.linkId);
   normalized.enabled = profile.enabled !== false;
   normalized.isPublic = profile.isPublic === true;
   normalized.downloadCount = Number(profile.downloadCount) || 0;
@@ -79,7 +83,15 @@ export async function handleDataRequest(env, context = null) {
       }),
     ]);
     const settings = rawSettings || {};
-    const profiles = Array.isArray(rawProfiles) ? rawProfiles.map(normalizeProfile) : [];
+    const rawList = Array.isArray(rawProfiles) ? rawProfiles : [];
+    const needsLinkIdMigration = rawList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
+    const migratedRawProfiles = needsLinkIdMigration ? rawList.map((p) => ensureProfileLinkId(p)) : rawList;
+    if (needsLinkIdMigration && storageAdapter?.type !== 'noop' && typeof storageAdapter.syncAllProfiles === 'function') {
+      await storageAdapter.syncAllProfiles(migratedRawProfiles).catch((err) => {
+        console.warn('[API /data] Failed to persist linkId migration:', err?.message || err);
+      });
+    }
+    const profiles = migratedRawProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
     const config = redactSettingsForResponse(
       {
         ...defaultSettings,
@@ -164,10 +176,33 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    const finalProfiles = profiles.map((p, index) => ({
-      ...normalizeProfile(p),
-      sortIndex: index,
-    }));
+    const previousProfiles =
+      typeof storageAdapter.getAllProfiles === 'function'
+        ? (await Promise.resolve(storageAdapter.getAllProfiles()).catch(() => [])) || []
+        : [];
+    const prevProfileMap = new Map(previousProfiles.filter((p) => p?.id).map((p) => [p.id, p]));
+
+    const finalProfiles = profiles.map((p, index) => {
+      const normalized = normalizeProfile(p);
+      const preservedLinkId = !normalized.linkId ? normalizeProfileIdentifier(prevProfileMap.get(normalized.id)?.linkId) : '';
+      return ensureProfileLinkId({
+        ...normalized,
+        ...(preservedLinkId ? { linkId: preservedLinkId } : {}),
+        sortIndex: index,
+      });
+    });
+
+    const aliasValidation = validateProfileAliases(finalProfiles, { previousProfiles });
+    if (!aliasValidation.valid) {
+      return createJsonResponse(
+        {
+          success: false,
+          message: aliasValidation.message || '自定义别名校验失败',
+          code: aliasValidation.code || 'invalid_custom_id',
+        },
+        400,
+      );
+    }
 
     const finalMisubs = misubs.map((s, index) => ({
       ...s,
@@ -584,9 +619,16 @@ export async function handlePublicProfilesRequest(request, env) {
       turnstile,
     };
 
+    const rawProfileList = Array.isArray(profiles) ? profiles : [];
+    const needsLinkIdMigration = rawProfileList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
+    const ensuredProfiles = needsLinkIdMigration ? rawProfileList.map((p) => ensureProfileLinkId(p)) : rawProfileList;
+    if (needsLinkIdMigration && storageAdapter?.type !== 'noop' && typeof storageAdapter.syncAllProfiles === 'function') {
+      await storageAdapter.syncAllProfiles(ensuredProfiles).catch(() => {});
+    }
+
     // 过滤出公开且启用的订阅组
-    const publicProfiles = profiles
-      .map(normalizeProfile)
+    const publicProfiles = ensuredProfiles
+      .map((p) => normalizeProfile(ensureProfileLinkId(p)))
       .filter((p) => p.isPublic && p.enabled)
       .map((p) => ({
         id: p.id,
@@ -594,6 +636,8 @@ export async function handlePublicProfilesRequest(request, env) {
         description: p.description || '',
         tags: Array.isArray(p.tags) ? p.tags : [],
         customId: p.customId,
+        linkId: p.linkId || '',
+        shareId: getProfileShareIdentifier(p),
         shortLink: p.shortLink || '',
         updatedAt: p.updatedAt,
         subscriptionCount: (p.subscriptions || []).length,

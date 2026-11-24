@@ -8,6 +8,7 @@ import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
 import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 
 const props = defineProps({
   config: Object,
@@ -143,7 +144,7 @@ const copyToClipboard = async () => {
 
 const selectedProfile = computed(() => {
   if (selectedId.value === 'default') return null;
-  return (props.profiles || []).find((p) => (p.customId || p.id) === selectedId.value) || null;
+  return (props.profiles || []).find((p) => getProfileShareIdentifier(p) === selectedId.value) || null;
 });
 
 const shortLinkEnabled = computed(() =>
@@ -267,7 +268,7 @@ onUnmounted(() => {
           :options="[
             { value: 'default', label: t('dashboard.linkCard.defaultSubscription') },
             ...(profiles || []).map((profile) => ({
-              value: profile.customId || profile.id,
+              value: getProfileShareIdentifier(profile),
               label: profile.name,
             })),
           ]"

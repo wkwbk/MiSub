@@ -9,6 +9,7 @@ import PublicCoresSection from '@/components/public/PublicCoresSection.vue';
 import PublicLinksSection from '@/components/public/PublicLinksSection.vue';
 import { AlertTriangle } from '@lucide/vue';
 import { normalizePublicClientsConfig } from '@shared/default-public-clients.js';
+import { getProfileShareIdentifier } from '@shared/profile-link.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
@@ -132,7 +133,7 @@ const fetchPublicProfiles = async () => {
 
 const copyLink = async (profile) => {
   const token = config.value.profileToken || 'sub';
-  const identifier = profile.customId || profile.id;
+  const identifier = profile.shareId || getProfileShareIdentifier(profile);
   const link = `${window.location.origin}/${token}/${identifier}`;
 
   const copied = await copyTextToClipboard(link);
@@ -232,7 +233,7 @@ const previewProfileId = ref(null);
 const previewProfileName = ref('');
 
 const handlePreview = (profile) => {
-  previewProfileId.value = profile.id;
+  previewProfileId.value = profile.shareId || getProfileShareIdentifier(profile);
   previewProfileName.value = profile.name;
   showPreviewModal.value = true;
 };
@@ -260,7 +261,7 @@ const toggleQRCode = async (profile) => {
     const canvas = qrCanvasRefs.value[profileId];
     if (canvas) {
       const token = config.value.profileToken || 'sub';
-      const identifier = profile.customId || profile.id;
+      const identifier = profile.shareId || getProfileShareIdentifier(profile);
       const link = `${window.location.origin}/${token}/${identifier}`;
       try {
         const { default: QRCode } = await import('qrcode');

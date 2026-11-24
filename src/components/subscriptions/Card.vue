@@ -15,6 +15,7 @@ import {
 } from '@lucide/vue';
 import { formatBytes } from '@shared/format-utils.js';
 import { getItemTags } from '@/utils/tags.js';
+import { isAutoUpdatePaused } from '@shared/auto-update.js';
 import { inferAirportRootDomain } from '@shared/airport-domain.js';
 import { lookupDomainName } from '@/utils/domain-name-memory.js';
 import { api } from '@/lib/http.js';
@@ -301,6 +302,16 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
           >
             <span :class="expiryInfo.dot" class="h-1.5 w-1.5 rounded-full shrink-0"></span>
             {{ expiryInfo.daysRemaining }}
+          </span>
+
+          <span
+            v-if="isAutoUpdatePaused(misub)"
+            :title="t('subscriptions.autoUpdatePausedHint')"
+            class="inline-flex h-5 items-center gap-1.5 shrink-0 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 text-xs font-medium leading-none text-amber-400"
+            data-testid="subscription-auto-update-paused-badge"
+          >
+            <span class="h-1.5 w-1.5 rounded-full shrink-0 bg-amber-400"></span>
+            {{ t('subscriptions.autoUpdatePausedBadge') }}
           </span>
         </div>
 

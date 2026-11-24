@@ -52,6 +52,7 @@ export const D1_TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS profiles (
         id TEXT PRIMARY KEY,
         custom_id TEXT,
+        link_id TEXT,
         data TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -91,6 +92,7 @@ export const D1_TABLE_STATEMENTS = [
 
 export const D1_COLUMN_MIGRATIONS = [
   `ALTER TABLE profiles ADD COLUMN custom_id TEXT;`,
+  `ALTER TABLE profiles ADD COLUMN link_id TEXT;`,
   `ALTER TABLE cache ADD COLUMN expires_at INTEGER;`,
 ];
 
@@ -98,6 +100,7 @@ export const D1_INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_nodes_updated_at ON nodes(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ON profiles(custom_id);`,
+  `CREATE INDEX IF NOT EXISTS idx_profiles_link_id ON profiles(link_id);`,
   `CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON profiles(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_guestbook_updated_at ON guestbook(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`,
@@ -202,13 +205,23 @@ export async function ensureD1Schema(d1Db) {
     } catch {}
   }
 
-  // 为存量 profiles 行一次性回填 custom_id 索引列
+  // 为存量 profiles 行一次性回填 custom_id / link_id 索引列
   try {
     await d1Db
       .prepare(
         `UPDATE profiles
                  SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
                  WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
+      )
+      .run();
+  } catch {}
+
+  try {
+    await d1Db
+      .prepare(
+        `UPDATE profiles
+                 SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
+                 WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
       )
       .run();
   } catch {}

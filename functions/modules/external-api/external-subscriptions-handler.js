@@ -12,6 +12,7 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { isRemoteSubscription, toExternalSubscription } from './external-api-mappers.js';
+import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
 import { handleNodeCountRequest } from '../handlers/node-handler.js';
 import { getProcessedUserAgent } from '../../../shared/format-utils.js';
 
@@ -183,8 +184,23 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
       return createExternalError('subscription_ids_required', 'subscriptionIds is required', 400);
 
     const all = await loadRemoteSubscriptions(storageAdapter);
-    const targets = all.filter((item) => subscriptionIds.includes(item.id));
-    if (!targets.length) return createExternalError('subscription_not_found', 'Subscription not found', 404);
+    const matchedTargets = all.filter((item) => subscriptionIds.includes(item.id));
+    if (!matchedTargets.length) return createExternalError('subscription_not_found', 'Subscription not found', 404);
+
+    const targets = filterAutoUpdateSubscriptions(matchedTargets);
+    const skippedCount = matchedTargets.length - targets.length;
+    if (!targets.length) {
+      return createExternalSuccess({
+        results: [],
+        summary: {
+          total: 0,
+          succeeded: 0,
+          failed: 0,
+          skipped: skippedCount,
+          totalNodes: 0,
+        },
+      });
+    }
 
     const results = [];
     for (const current of targets) {
@@ -207,6 +223,7 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
         total: results.length,
         succeeded: results.filter((item) => item.success).length,
         failed: results.filter((item) => !item.success).length,
+        skipped: skippedCount,
         totalNodes: results
           .filter((item) => item.success)
           .reduce((sum, item) => sum + (Number(item.nodeCount) || 0), 0),
@@ -276,6 +293,7 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
       name: String(payload.name).trim(),
       url: String(payload.url).trim(),
       enabled: payload.enabled !== false,
+      autoUpdate: payload.autoUpdate !== false,
       tags: normalizeStringArray(payload.tags),
       userAgent: String(payload.userAgent || '').trim(),
       customUserAgent: String(payload.userAgent || '').trim(),
@@ -298,6 +316,7 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
       ...(payload.name !== undefined ? { name: String(payload.name || '').trim() } : {}),
       ...(payload.url !== undefined ? { url: String(payload.url || '').trim() } : {}),
       ...(payload.enabled !== undefined ? { enabled: payload.enabled !== false } : {}),
+      ...(payload.autoUpdate !== undefined ? { autoUpdate: payload.autoUpdate !== false } : {}),
       ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
       ...(payload.userAgent !== undefined
         ? {

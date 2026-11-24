@@ -27,6 +27,7 @@ import { StorageFactory } from './storage-adapter.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './modules/config.js';
 import { handleCronTrigger } from './modules/notifications.js';
 import { handleCronBackupTrigger, handleCronMaintenanceTrigger } from './modules/scheduled-task-runner.js';
+import { rotateSubscriptionToken } from './modules/handlers/rotate-token.js';
 import { renewAuthSession } from './modules/auth-middleware.js';
 import { normalizeSubPath } from '../shared/reserved-paths.js';
 
@@ -245,11 +246,23 @@ export async function onRequest(context) {
             return await handleCronBackupTrigger(env);
           case '/cron/maintenance':
             return await handleCronMaintenanceTrigger(env);
+          case '/cron/rotate-token': {
+            const rotateResult = await rotateSubscriptionToken(env, {
+              request,
+              force: url.searchParams.get('force') === '1',
+              source: 'http-cron',
+            });
+            return createJsonResponse({
+              success: true,
+              task: 'rotate-token',
+              ...rotateResult,
+            });
+          }
           default:
             return createJsonResponse(
               {
                 error: '请指定具体的 Cron 任务路径',
-                availableTasks: ['/cron/subscriptions', '/cron/backup', '/cron/maintenance'],
+                availableTasks: ['/cron/subscriptions', '/cron/backup', '/cron/maintenance', '/cron/rotate-token'],
               },
               400,
             );

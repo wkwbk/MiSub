@@ -12,6 +12,9 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { isManualNode, isRemoteSubscription, toExternalProfile } from './external-api-mappers.js';
+import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
+import { ensureProfileLinkId, rotateProfileLinkId } from '../../../shared/profile-link.js';
+import { validateSingleProfileAlias } from '../../../shared/profile-alias.js';
 import { inspectRemoteSubscription } from './external-subscriptions-handler.js';
 
 function nowIso() {
@@ -58,9 +61,11 @@ function dedupe(values) {
 async function refreshProfileSubscriptions(storageAdapter, env, profile) {
   const allSubscriptions = await storageAdapter.getAllSubscriptions();
   const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
-  const remoteSubscriptions = (Array.isArray(profile.subscriptions) ? profile.subscriptions : [])
+  const allRemoteSubscriptions = (Array.isArray(profile.subscriptions) ? profile.subscriptions : [])
     .map((id) => byId.get(id))
     .filter((item) => item && isRemoteSubscription(item));
+  const remoteSubscriptions = filterAutoUpdateSubscriptions(allRemoteSubscriptions);
+  const skippedSubscriptions = allRemoteSubscriptions.length - remoteSubscriptions.length;
   const manualNodes = (Array.isArray(profile.manualNodes) ? profile.manualNodes : [])
     .map((id) => byId.get(id))
     .filter((item) => item && isManualNode(item));
@@ -96,6 +101,7 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
       totalSubscriptions: remoteSubscriptions.length,
       refreshedSubscriptions: results.filter((item) => item.success).length,
       failedSubscriptions: results.filter((item) => !item.success).length,
+      skippedSubscriptions,
       manualNodes: manualNodes.length,
       totalNodes:
         results.filter((item) => item.success).reduce((sum, item) => sum + (Number(item.nodeCount) || 0), 0) +
@@ -157,14 +163,19 @@ export async function handleExternalProfilesRequest(request, env, { id = null, r
     if (validationError) return validationError;
     const timestamp = nowIso();
     const allProfiles = await storageAdapter.getAllProfiles();
-    const profile = {
+    const customId = String(payload.customId || '').trim();
+    const aliasCheck = validateSingleProfileAlias(customId, { profiles: allProfiles });
+    if (!aliasCheck.valid) {
+      return createExternalError('invalid_custom_id', aliasCheck.message || 'Invalid customId', 400);
+    }
+    const profile = ensureProfileLinkId({
       id: generateId(),
       name: String(payload.name).trim(),
       description: String(payload.description || '').trim(),
       tags: normalizeStringArray(payload.tags),
       enabled: payload.enabled !== false,
       isPublic: payload.isPublic === true,
-      customId: String(payload.customId || '').trim(),
+      customId,
       subscriptions: subscriptionIds,
       manualNodes: manualNodeIds,
       target: String(payload.target || 'clash').trim() || 'clash',
@@ -173,7 +184,7 @@ export async function handleExternalProfilesRequest(request, env, { id = null, r
         : allProfiles.reduce((max, item) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1,
       createdAt: timestamp,
       updatedAt: timestamp,
-    };
+    });
     await storageAdapter.putProfile(profile);
     return createExternalSuccess(toExternalProfile(profile), 201);
   }
@@ -186,14 +197,35 @@ export async function handleExternalProfilesRequest(request, env, { id = null, r
     const manualNodeIds = payload.manualNodeIds !== undefined ? dedupe(payload.manualNodeIds) : undefined;
     const validationError = await validateProfileReferences(storageAdapter, subscriptionIds, manualNodeIds);
     if (validationError) return validationError;
+
+    const allProfiles = await storageAdapter.getAllProfiles();
+    const shouldRotate = payload.rotateLinkId === true;
+    const nextCustomId = shouldRotate
+      ? ''
+      : payload.customId !== undefined
+        ? String(payload.customId || '').trim()
+        : String(current.customId || '').trim();
+    const legacyExempt = Boolean(
+      current.customId && String(current.customId).trim() === nextCustomId,
+    );
+    const aliasCheck = validateSingleProfileAlias(nextCustomId, {
+      currentProfileId: current.id,
+      profiles: allProfiles,
+      legacyExempt,
+    });
+    if (!aliasCheck.valid) {
+      return createExternalError('invalid_custom_id', aliasCheck.message || 'Invalid customId', 400);
+    }
+
+    const baseProfile = shouldRotate ? rotateProfileLinkId(current) : ensureProfileLinkId(current);
     const updated = {
-      ...current,
+      ...baseProfile,
       ...(payload.name !== undefined ? { name: String(payload.name || '').trim() } : {}),
       ...(payload.description !== undefined ? { description: String(payload.description || '').trim() } : {}),
       ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
       ...(payload.enabled !== undefined ? { enabled: payload.enabled !== false } : {}),
       ...(payload.isPublic !== undefined ? { isPublic: payload.isPublic === true } : {}),
-      ...(payload.customId !== undefined ? { customId: String(payload.customId || '').trim() } : {}),
+      ...(shouldRotate || payload.customId !== undefined ? { customId: nextCustomId } : {}),
       ...(payload.target !== undefined ? { target: String(payload.target || 'clash').trim() || 'clash' } : {}),
       ...(payload.sortIndex !== undefined ? { sortIndex: Number(payload.sortIndex) || 0 } : {}),
       ...(subscriptionIds !== undefined ? { subscriptions: subscriptionIds } : {}),

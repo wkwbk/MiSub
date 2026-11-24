@@ -6,6 +6,7 @@ import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
 import { handleError } from '@/utils/error-handler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
+import { isAutoUpdateEnabled } from '@shared/auto-update.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
   applyItemTags,
@@ -442,7 +443,7 @@ export function useSubscriptions(markDirty) {
     }
 
     const subsToUpdate = subscriptions.value.filter(
-      (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && !sub.isUpdating,
+      (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && isAutoUpdateEnabled(sub) && !sub.isUpdating,
     );
 
     if (subsToUpdate.length === 0) {
@@ -465,6 +466,7 @@ export function useSubscriptions(markDirty) {
           name: sub.name,
           url: sub.url,
           enabled: sub.enabled,
+          autoUpdate: sub.autoUpdate !== false,
           fetchProxy: sub.fetchProxy,
           plusAsSpace: Boolean(sub.plusAsSpace),
           customUserAgent: sub.customUserAgent,
@@ -525,7 +527,7 @@ export function useSubscriptions(markDirty) {
   async function autoUpdateAllSubscriptions() {
     try {
       const subsToUpdate = subscriptions.value.filter(
-        (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && !sub.isUpdating,
+        (sub) => sub.enabled && sub.url && sub.url.startsWith('http') && isAutoUpdateEnabled(sub) && !sub.isUpdating,
       );
       for (const sub of subsToUpdate) {
         await handleUpdateNodeCount(sub.id, true);

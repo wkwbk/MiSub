@@ -12,6 +12,7 @@ export function logAccessSuccess({
   targetFormat,
   token,
   profileIdentifier,
+  profileId = null,
   subName,
   domain,
 }) {
@@ -24,6 +25,7 @@ export function logAccessSuccess({
   const country = request.headers.get('CF-IPCountry') || 'N/A';
 
   const payload = {
+    profileId: profileId || null,
     profileName: subName || 'Unknown Profile',
     clientIp,
     geoInfo: {

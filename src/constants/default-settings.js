@@ -5,6 +5,12 @@ export const DEFAULT_SETTINGS = {
   fileName: 'MiSub',
   myToken: '',
   profileToken: 'sub',
+  publicUrl: '',
+  tokenAutoRotate: {
+    enabled: false,
+    intervalDays: 2,
+    lastRotatedAt: null,
+  },
   defaultLocale: 'zh-CN',
   cronSecret: '',
   botToken: '',
@@ -150,6 +156,7 @@ export const DEFAULT_SETTINGS = {
 export const DEFAULT_PROFILE_FORM = {
   name: '',
   customId: '',
+  linkId: '',
   shortLink: '',
   transformConfigMode: 'global',
   transformConfig: '',

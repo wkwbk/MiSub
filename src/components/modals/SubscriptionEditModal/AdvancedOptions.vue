@@ -76,6 +76,20 @@ const props = defineProps({
   <div class="space-y-3 pt-3 border-t border-line">
     <div class="flex items-center justify-between gap-4">
       <div>
+        <span class="text-sm font-medium text-fg">{{ t('subscriptions.autoUpdateTitle') }}</span>
+        <p class="text-xs text-fg-subtle mt-0.5">
+          {{ t('subscriptions.autoUpdateDesc') }}
+        </p>
+      </div>
+      <Switch
+        :model-value="editingSubscription.autoUpdate !== false"
+        data-testid="subscription-auto-update-switch"
+        @update:model-value="editingSubscription.autoUpdate = $event"
+      />
+    </div>
+
+    <div class="flex items-center justify-between gap-4">
+      <div>
         <span class="text-sm font-medium text-fg">{{ t('subscriptions.nodeCacheTitle') }}</span>
         <p class="text-xs text-fg-subtle mt-0.5">
           {{ t('subscriptions.nodeCacheDesc') }}

@@ -4,6 +4,8 @@
  */
 
 import { utf8ToBase64 } from '../../shared/base64.js';
+import { isAutoUpdateEnabled } from '../../shared/auto-update.js';
+import { getDisabledNodeSet } from '../../shared/disabled-nodes.js';
 import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
 import { parseNodeList } from '../utils/node-parser.js';
 import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
@@ -248,6 +250,13 @@ export async function generateCombinedNodeList(
 
     let currentNodes = [...nodes];
 
+    // 0. 过滤用户在预览面板中手动停用的单节点（先于算子/过滤执行，且不影响上游真实节点数基线）
+    const disabledSet = getDisabledNodeSet(subSource);
+    if (disabledSet.size > 0) {
+      currentNodes = currentNodes.filter((nodeUrl) => !disabledSet.has(String(nodeUrl || '').trim()));
+      if (currentNodes.length === 0) return [];
+    }
+
     // 1. [配置水合] 执行 Workflow 算子 (操作符)
     let subOperators = ensureArray(subSource?.operators);
     if (!subOperators.length && subSource?.nodeTransform?.enabled && subSource.nodeTransform.operators) {
@@ -323,6 +332,7 @@ export async function generateCombinedNodeList(
    */
   const fetchSingleSubscription = async (sub) => {
     const cacheEnabled = sub?.enableNodeCache === true;
+    const shouldPersistRuntimeInfo = isAutoUpdateEnabled(sub);
     const storage = context?.storage;
     const recordEmptyRuntimeInfo = () => {
       if (cacheEnabled) return;
@@ -331,7 +341,9 @@ export async function generateCombinedNodeList(
         userInfo: null,
       };
       recordCurrentRequestRuntimeInfo(context, sub, runtimeInfo);
-      scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo);
+      if (shouldPersistRuntimeInfo) {
+        scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo);
+      }
     };
     const readCachedNodes = async () => {
       if (!cacheEnabled) return [];
@@ -457,7 +469,9 @@ export async function generateCombinedNodeList(
           ...(realNodes.length >= 10 ? { lastGoodNodeCount: realNodes.length } : {}),
         };
         recordCurrentRequestRuntimeInfo(context, sub, runtimeInfo);
-        scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo);
+        if (shouldPersistRuntimeInfo) {
+          scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo);
+        }
       }
 
       // 判断是否启用订阅前缀（智能重命名启用时跳过）

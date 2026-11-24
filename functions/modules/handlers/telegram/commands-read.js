@@ -3,6 +3,7 @@
  */
 
 import { utf8ToBase64 } from '../../../../shared/base64.js';
+import { getProfileShareIdentifier } from '../../../../shared/profile-link.js';
 import { escapeHtml } from '../../utils.js';
 import { createRequestCache, getCachedProfiles, getCachedSettings, } from './storage.js';
 import { editTelegramMessage, sendTelegramMessage } from './client.js';
@@ -437,7 +438,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
 
       let message = `🔗 <b>${profile.name}</b>\n\n`;
       if (baseUrl) {
-        message += `订阅链接：\n<code>${baseUrl}/${subPath}/${profile.customId || profile.id}</code>\n\n`;
+        message += `订阅链接：\n<code>${baseUrl}/${subPath}/${getProfileShareIdentifier(profile)}</code>\n\n`;
         message += `点击链接可复制`;
       } else {
         message += `订阅组 ID：<code>${profile.id}</code>\n\n`;
@@ -452,7 +453,7 @@ export async function handleSubCommand(chatId, args, env, request, requestCache 
       publicProfiles.forEach((profile, i) => {
         message += `<b>${i + 1}. ${profile.name}</b>\n`;
         if (baseUrl) {
-          message += `<code>${baseUrl}/${subPath}/${profile.customId || profile.id}</code>\n\n`;
+          message += `<code>${baseUrl}/${subPath}/${getProfileShareIdentifier(profile)}</code>\n\n`;
         } else {
           message += `ID: <code>${profile.id}</code>\n\n`;
         }
@@ -501,7 +502,7 @@ export async function handleSubCommandSimple(chatId, env, requestCache = null) {
       message += `<b>${i + 1}. ${profile.name}</b>\n`;
       message += `ID: <code>${profile.id}</code>\n`;
       if (customDomain) {
-        message += `链接: <code>${customDomain}/${subPath}/${profile.customId || profile.id}</code>\n`;
+        message += `链接: <code>${customDomain}/${subPath}/${getProfileShareIdentifier(profile)}</code>\n`;
       }
       message += '\n';
     });

@@ -48,6 +48,13 @@ const cronTasks = computed(() => {
       url: `${origin}/cron/maintenance?secret=${encoded}`,
       command: `curl -H "Authorization: Bearer ${escaped}" ${origin}/cron/maintenance`,
     },
+    {
+      key: 'rotateToken',
+      title: t('settings.cronTaskRotateTokenTitle'),
+      desc: t('settings.cronTaskRotateTokenDesc'),
+      url: `${origin}/cron/rotate-token?secret=${encoded}&force=1`,
+      command: `curl -H "Authorization: Bearer ${escaped}" "${origin}/cron/rotate-token?force=1"`,
+    },
   ];
 });
 

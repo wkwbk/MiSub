@@ -8,6 +8,7 @@ import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { fetchSubscriptionNodes } from './node-fetcher.js';
 import { applyManualNodeName } from '../../utils/node-cleaner.js';
 import { adaptLegacyTransform } from '../../services/subscription/node-filter-transform.js';
+import { getDisabledNodeSet } from '../../../shared/disabled-nodes.js';
 
 function ensureArray(data) {
   if (!data) return [];
@@ -134,7 +135,7 @@ export async function handleProfileMode(
   });
 
   // 并行获取HTTP订阅节点（开启保护性缓存时，上游失败回退缓存节点，与输出链路一致）
-  const subscriptionResults = await Promise.all(
+  const rawSubscriptionResults = await Promise.all(
     targetSubscriptions.map((sub) =>
       fetchSubscriptionNodes(
         sub.url,
@@ -152,6 +153,19 @@ export async function handleProfileMode(
       ),
     ),
   );
+
+  // 过滤订阅源内手动停用的节点
+  const subscriptionResults = rawSubscriptionResults.map((res, index) => {
+    const sub = targetSubscriptions[index];
+    const disabledSet = getDisabledNodeSet(sub);
+    if (!res?.success || !Array.isArray(res.nodes) || disabledSet.size === 0) {
+      return res;
+    }
+    return {
+      ...res,
+      nodes: res.nodes.filter((node) => !disabledSet.has(String(node?.url || '').trim())),
+    };
+  });
 
   // 3. 处理嵌套的组合订阅 (Sub-Profiles)
   const profileSubProfileIds = profile.subProfiles || [];

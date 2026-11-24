@@ -62,6 +62,7 @@ const updateValue = (event) => {
 const slots = useSlots();
 const hasIcon = computed(() => props.icon !== null || Boolean(slots.icon));
 const hasPrefix = computed(() => props.prefix !== '');
+const hasSuffix = computed(() => Boolean(slots.suffix));
 
 // 尺寸映射支持
 const sizeMap = {
@@ -117,6 +118,7 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
         :class="[
           currentSize.input,
           hasIcon || hasPrefix ? 'pl-9' : '',
+          hasSuffix ? 'pr-9' : '',
           error ? 'border-red-500 focus:border-red-500' : '',
         ]"
         :disabled="disabled"
@@ -127,6 +129,10 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
         class="w-full bg-inset border border-line text-fg placeholder:text-fg-subtle hover:border-line-strong focus:border-line-strong focus-visible:outline-none transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-none"
         @input="updateValue"
       />
+
+      <div v-if="hasSuffix" class="absolute inset-y-0 right-0 pr-2 flex items-center">
+        <slot name="suffix" />
+      </div>
     </div>
 
     <p v-if="error" class="mt-1 text-xs text-red-400">
