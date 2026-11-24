@@ -28,7 +28,7 @@ import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './mod
 import { handleCronTrigger } from './modules/notifications.js';
 import { handleCronBackupTrigger, handleCronMaintenanceTrigger } from './modules/scheduled-task-runner.js';
 import { rotateSubscriptionToken } from './modules/handlers/rotate-token.js';
-import { renewAuthSession } from './modules/auth-middleware.js';
+import { renewAuthSession, timingSafeStringEqual } from './modules/auth-middleware.js';
 import { normalizeSubPath } from '../shared/reserved-paths.js';
 
 function parseCorsOrigins(env, requestUrl) {
@@ -219,7 +219,7 @@ export async function onRequest(context) {
         return await handleMisubRequest(context);
       } else if (url.pathname === '/cron' || url.pathname.startsWith('/cron/')) {
         // 定时任务路由 (按业务拆分，统一校验 Cron Secret)
-        const expectedSecret = settings.cronSecret;
+        const expectedSecret = String(settings.cronSecret || env?.CRON_SECRET || '').trim();
 
         if (!expectedSecret) {
           return createJsonResponse(
@@ -231,9 +231,15 @@ export async function onRequest(context) {
           );
         }
 
-        const cronAuthHeader = request.headers.get('Authorization');
-        const cronSecretParam = url.searchParams.get('secret');
-        const isAuthorized = cronAuthHeader === `Bearer ${expectedSecret}` || cronSecretParam === expectedSecret;
+        const cronAuthHeader = request.headers.get('Authorization') || '';
+        const bearerMatch = cronAuthHeader.match(/^Bearer\s+(.+)$/i);
+        const bearerToken = bearerMatch ? bearerMatch[1].trim() : '';
+        const cronSecretParam = String(url.searchParams.get('secret') || '').trim();
+        const isBearerAuthorized = bearerToken ? await timingSafeStringEqual(bearerToken, expectedSecret) : false;
+        const isParamAuthorized = cronSecretParam
+          ? await timingSafeStringEqual(cronSecretParam, expectedSecret)
+          : false;
+        const isAuthorized = isBearerAuthorized || isParamAuthorized;
 
         if (!isAuthorized) {
           return createJsonResponse({ error: 'Unauthorized' }, 401);

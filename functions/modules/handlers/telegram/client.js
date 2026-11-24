@@ -167,8 +167,8 @@ export async function handleTelegramSetupRequest(request, env) {
     }
 
     const savedConfig = await getTelegramPushConfig(env);
-    const botToken = String(body.botToken ?? savedConfig.botToken ?? '').trim();
-    const webhookSecret = String(body.webhookSecret ?? savedConfig.webhookSecret ?? '').trim();
+    const botToken = String(body.botToken || '').trim() || String(savedConfig.botToken || '').trim();
+    const webhookSecret = String(body.webhookSecret || '').trim() || String(savedConfig.webhookSecret || '').trim();
 
     if (!botToken) {
       return createJsonResponse(

@@ -4,6 +4,7 @@ import { GripHorizontal, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
+import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
 
 const { t } = useI18n();
 
@@ -48,25 +49,34 @@ const searchModel = computed({
   set: (val) => emit('update:searchTerm', val),
 });
 
+const selectedIdSet = computed(
+  () => new Set(props.selectedIds.map((entry) => getProfileSubscriptionId(entry)).filter(Boolean)),
+);
+
 const orderedSelectedSubs = computed({
   get() {
     const subMap = new Map(props.subscriptions.map((s) => [s.id, s]));
-    return props.selectedIds.map((id) => subMap.get(id)).filter(Boolean);
+    return props.selectedIds.map((entry) => subMap.get(getProfileSubscriptionId(entry))).filter(Boolean);
   },
   set(newList) {
     const availableIds = new Set(props.subscriptions.map((sub) => sub.id));
+    const entryById = new Map(
+      props.selectedIds.map((entry) => [getProfileSubscriptionId(entry), entry]).filter(([id]) => Boolean(id)),
+    );
     const reorderedIds = newList.map((sub) => sub.id);
     let reorderedIndex = 0;
 
     const mergedIds = props.selectedIds
-      .map((id) => {
-        if (!availableIds.has(id)) return id;
-        return reorderedIds[reorderedIndex++];
+      .map((entry) => {
+        const id = getProfileSubscriptionId(entry);
+        if (!availableIds.has(id)) return entry;
+        const nextId = reorderedIds[reorderedIndex++];
+        return entryById.get(nextId) ?? nextId;
       })
       .filter(Boolean);
 
     if (reorderedIndex < reorderedIds.length) {
-      mergedIds.push(...reorderedIds.slice(reorderedIndex));
+      mergedIds.push(...reorderedIds.slice(reorderedIndex).map((nextId) => entryById.get(nextId) ?? nextId));
     }
 
     emit('update:selectedIds', mergedIds);
@@ -120,7 +130,7 @@ const orderedSelectedSubs = computed({
       <div v-for="sub in filteredSubscriptions" :key="sub.id">
         <label class="flex items-center space-x-3 cursor-pointer">
           <input
-            :checked="selectedIds.includes(sub.id)"
+            :checked="selectedIdSet.has(sub.id)"
             class="h-4 w-4 rounded-sm border-line-strong bg-inset text-fg focus:ring-0"
             type="checkbox"
             @change="emit('toggle-selection', sub.id)"

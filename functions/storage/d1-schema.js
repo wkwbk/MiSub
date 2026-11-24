@@ -124,6 +124,7 @@ const D1_CACHE_PREFIXES = [
   'github_release_',
   'appstore_release_',
   'tg_push_rate:',
+  'auth_login_rate:',
   'misub_test_',
 ];
 
@@ -166,6 +167,10 @@ export function computeCacheExpiresAt(keyStr, rawValue, now = Date.now()) {
   if (keyStr.startsWith('tg_push_rate:') || keyStr === 'misub_webdav_backup_lock') {
     const exp = parseTimestampMs(parsed?.expiresAt);
     return exp > 0 ? exp : now + 60 * 60 * 1000;
+  }
+  if (keyStr.startsWith('auth_login_rate:')) {
+    const exp = parseTimestampMs(parsed?.expiresAt);
+    return exp > 0 ? exp : now + 15 * 60 * 1000;
   }
   if (keyStr.startsWith('github_release_') || keyStr.startsWith('appstore_release_')) {
     const ts = parseTimestampMs(parsed?.timestamp) || now;

@@ -1275,6 +1275,7 @@ export default {
     telegramNotifyBotTitle: 'Telegram notification bot',
     telegramNotifyBotDesc: 'Sends normal notifications such as subscription updates.',
     telegramBotTokenHint: 'Used to push subscription update notifications.',
+    telegramBotTokenSavedPlaceholder: 'Token saved (leave blank to keep unchanged)',
     telegramChatIdHint: 'Telegram chat ID that receives notifications.',
     telegramTesting: 'Testing...',
     telegramSendTest: 'Send test notification',
@@ -1285,6 +1286,7 @@ export default {
     telegramPushBotDesc: 'Imports and manages nodes and subscriptions via Telegram.',
     telegramPushTokenHint: 'Separate bot used to receive node and subscription links from users.',
     telegramWebhookSecret: 'Webhook Secret (required)',
+    telegramWebhookSecretSavedPlaceholder: 'Webhook Secret saved (leave blank to keep unchanged)',
     telegramWebhookSecretHint:
       'Used to verify request origin. Only letters, numbers, underscores, and hyphens are allowed, length 1–256.',
     telegramWebhookSecretInvalid:

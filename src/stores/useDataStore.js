@@ -9,10 +9,49 @@ import { TIMING } from '@/constants/timing.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
 import { getItemTags, hydrateItemTags, normalizeTagList } from '@/utils/tags.js';
+import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
 
 const isDev = import.meta.env.DEV;
 
 const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
+
+function sanitizeConfigForCache(config = {}) {
+  if (!config || typeof config !== 'object') return {};
+  const sanitized = { ...config };
+  delete sanitized.botToken;
+  delete sanitized.cronSecret;
+
+  if (sanitized.webdavBackup && typeof sanitized.webdavBackup === 'object') {
+    const { password: _omitPassword, ...restWebdav } = sanitized.webdavBackup;
+    sanitized.webdavBackup = restWebdav;
+  }
+  if (sanitized.shortLink && typeof sanitized.shortLink === 'object') {
+    const { apiToken: _omitApiToken, ...restShortLink } = sanitized.shortLink;
+    sanitized.shortLink = restShortLink;
+  }
+  if (sanitized.turnstile && typeof sanitized.turnstile === 'object') {
+    const { secretKey: _omitSecretKey, ...restTurnstile } = sanitized.turnstile;
+    sanitized.turnstile = restTurnstile;
+  }
+  if (sanitized.telegramPushConfig && typeof sanitized.telegramPushConfig === 'object') {
+    const {
+      botToken: _omitPushBotToken,
+      webhookSecret: _omitWebhookSecret,
+      ...restPushConfig
+    } = sanitized.telegramPushConfig;
+    sanitized.telegramPushConfig = restPushConfig;
+  }
+  if (sanitized.externalApi && typeof sanitized.externalApi === 'object') {
+    sanitized.externalApi = {
+      ...sanitized.externalApi,
+      tokens: Array.isArray(sanitized.externalApi.tokens)
+        ? sanitized.externalApi.tokens.map(({ token: _omitToken, ...restToken }) => restToken)
+        : [],
+    };
+  }
+
+  return sanitized;
+}
 
 export const useDataStore = defineStore('data', () => {
   const { showToast } = useToastStore();
@@ -48,7 +87,10 @@ export const useDataStore = defineStore('data', () => {
       settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
 
       lastUpdated.value = new Date();
-      dataCache.set(data);
+      dataCache.set({
+        ...data,
+        config: sanitizeConfigForCache(data.config || settingsStore.config),
+      });
       return true;
     } catch (error) {
       console.error('hydrateFromData failed:', error);
@@ -161,7 +203,7 @@ export const useDataStore = defineStore('data', () => {
         }),
         profiles: profiles.value,
         ruleTemplates: ruleTemplates.value,
-        config: settingsStore.config,
+        config: sanitizeConfigForCache(settingsStore.config),
       });
 
       return true;
@@ -254,10 +296,10 @@ export const useDataStore = defineStore('data', () => {
 
     dataCache.set({
       ...cachedData,
-      config: {
+      config: sanitizeConfigForCache({
         ...cachedData.config,
         ...nextConfig,
-      },
+      }),
     });
   }
 
@@ -352,7 +394,9 @@ export const useDataStore = defineStore('data', () => {
     profiles.value.forEach((profile) => {
       if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
         const originalLength = profile.subscriptions.length;
-        profile.subscriptions = profile.subscriptions.filter((id) => !idsToRemove.has(id));
+        profile.subscriptions = profile.subscriptions.filter(
+          (entry) => !idsToRemove.has(getProfileSubscriptionId(entry)),
+        );
         if (profile.subscriptions.length !== originalLength) {
           modified = true;
         }
@@ -400,9 +444,10 @@ export const useDataStore = defineStore('data', () => {
       if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
         const originalLength = profile.subscriptions.length;
         const seenIds = new Set();
-        profile.subscriptions = profile.subscriptions.filter((id) => {
-          if (validIds.has(id) && !seenIds.has(id)) {
-            seenIds.add(id);
+        profile.subscriptions = profile.subscriptions.filter((entry) => {
+          const subId = getProfileSubscriptionId(entry);
+          if (subId && validIds.has(subId) && !seenIds.has(subId)) {
+            seenIds.add(subId);
             return true;
           }
           return false;

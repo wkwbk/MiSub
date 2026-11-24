@@ -245,10 +245,47 @@ export async function readJsonWithLimit(request, limitBytes = JSON_BODY_LIMITS.n
     }
   }
 
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > limitBytes) {
-    throw new RequestBodyTooLargeError(limitBytes);
+  let text = '';
+  if (request?.body && typeof request.body.getReader === 'function') {
+    const reader = request.body.getReader();
+    const chunks = [];
+    let totalBytes = 0;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+          totalBytes += bytes.byteLength;
+          if (totalBytes > limitBytes) {
+            await reader.cancel().catch(() => {});
+            throw new RequestBodyTooLargeError(limitBytes);
+          }
+          chunks.push(bytes);
+        }
+      }
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch {}
+    }
+
+    if (totalBytes > 0) {
+      const merged = new Uint8Array(totalBytes);
+      let offset = 0;
+      for (const chunk of chunks) {
+        merged.set(chunk, offset);
+        offset += chunk.byteLength;
+      }
+      text = new TextDecoder('utf-8').decode(merged);
+    }
+  } else {
+    text = await request.text();
+    if (new TextEncoder().encode(text).length > limitBytes) {
+      throw new RequestBodyTooLargeError(limitBytes);
+    }
   }
+
   return text ? JSON.parse(text) : {};
 }
 

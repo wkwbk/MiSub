@@ -58,7 +58,7 @@ import {
 import { handleAppStoreReleaseRequest, handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
-import { redactUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
+import { redactUrl, safeFetchPublicNetworkUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/main-handler.js';
 import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/visual-rules-builder.js';
 import { StorageFactory } from '../storage-adapter.js';
@@ -458,17 +458,15 @@ export async function handleSubconverterTestRequest(request, _env) {
     endpoint.searchParams.set('sort', 'false');
 
     const startedAt = Date.now();
-    const response = await fetch(
-      new Request(endpoint.toString(), {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'MiSub/Backend-Test',
-          Accept: '*/*',
-          'Cache-Control': 'no-cache',
-        },
-        signal: controller.signal,
-      }),
-    );
+    const response = await safeFetchPublicNetworkUrl(endpoint.toString(), {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'MiSub/Backend-Test',
+        Accept: '*/*',
+        'Cache-Control': 'no-cache',
+      },
+      signal: controller.signal,
+    });
     const elapsedMs = Date.now() - startedAt;
     clearTimeout(timeoutId);
 
@@ -493,6 +491,18 @@ export async function handleSubconverterTestRequest(request, _env) {
     );
   } catch (error) {
     clearTimeout(timeoutId);
+    if (error?.status === 400) {
+      return createJsonResponse(
+        {
+          success: false,
+          available: false,
+          endpoint: endpoint ? `${endpoint.origin}${endpoint.pathname}` : null,
+          error: error.message,
+          errorType: 'blocked',
+        },
+        400,
+      );
+    }
     const isTimeout = error.name === 'AbortError';
     console.error('[Subconverter Test] Error:', {
       backend: endpoint ? `${endpoint.origin}${endpoint.pathname}` : '[invalid]',
@@ -531,6 +541,7 @@ export async function handleExternalFetchRequest(request, _env) {
   }
 
   const { url: externalUrl, timeout = 15000 } = requestData;
+  const normalizedTimeout = Math.min(Math.max(Number(timeout) || 15000, 1000), 30000);
 
   if (!externalUrl || typeof externalUrl !== 'string') {
     return createErrorResponse('Invalid or missing URL parameter. Must be a valid HTTP/HTTPS URL.', 400);
@@ -549,7 +560,7 @@ export async function handleExternalFetchRequest(request, _env) {
   try {
     // 创建带超时的请求
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const timeoutId = setTimeout(() => controller.abort(), normalizedTimeout);
 
     const response = await safeFetchPublicUrl(urlValidation.url.toString(), {
       method: 'GET',
@@ -616,8 +627,8 @@ export async function handleExternalFetchRequest(request, _env) {
     let errorDetails = {};
 
     if (error.name === 'AbortError') {
-      errorMessage = `Request timeout after ${timeout}ms`;
-      errorDetails = { type: 'timeout', timeout };
+      errorMessage = `Request timeout after ${normalizedTimeout}ms`;
+      errorDetails = { type: 'timeout', timeout: normalizedTimeout };
     } else if (error.message.includes('network') || error.message.includes('fetch')) {
       errorMessage = 'Network error - unable to reach the server';
       errorDetails = { type: 'network', originalError: error.message };

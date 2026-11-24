@@ -3,6 +3,7 @@
  */
 
 import { parseNodeInfo } from '../../utils/geo-utils.js';
+import { isSafeUserRegexPattern } from '../../modules/security-utils.js';
 
 /**
  * 应用过滤规则
@@ -96,8 +97,19 @@ export function buildRuleSet(lines, stripKeepPrefix = false) {
 
 export function buildSafeRegex(patterns) {
   if (!patterns.length) return null;
+  const safePatterns = patterns.filter((pattern) => {
+    if (isSafeUserRegexPattern(pattern, 512)) return true;
+    console.warn('Unsafe or invalid include/exclude regex, skipped');
+    return false;
+  });
+  if (!safePatterns.length) return null;
+  const combined = safePatterns.join('|');
+  if (combined.length > 2048) {
+    console.warn('Combined include/exclude regex too long, skipped');
+    return null;
+  }
   try {
-    return new RegExp(patterns.join('|'), 'i');
+    return new RegExp(combined, 'i');
   } catch (e) {
     console.warn('Invalid include/exclude regex, skipped:', e.message);
     return null;

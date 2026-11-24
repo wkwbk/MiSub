@@ -1248,6 +1248,7 @@ export default {
     telegramNotifyBotTitle: 'Telegram 通知 Bot',
     telegramNotifyBotDesc: '用于发送订阅更新等普通通知。',
     telegramBotTokenHint: '用于推送订阅更新通知。',
+    telegramBotTokenSavedPlaceholder: '已配置 Token（留空保持不变）',
     telegramChatIdHint: '接收通知的 Telegram 聊天 ID。',
     telegramTesting: '测试中...',
     telegramSendTest: '发送测试通知',
@@ -1258,6 +1259,7 @@ export default {
     telegramPushBotDesc: '用于通过 Telegram 导入、管理节点和订阅。',
     telegramPushTokenHint: '独立的 Bot，用于接收用户发送的节点和订阅链接。',
     telegramWebhookSecret: 'Webhook Secret（必填）',
+    telegramWebhookSecretSavedPlaceholder: '已配置 Webhook Secret（留空保持不变）',
     telegramWebhookSecretHint: '用于校验请求来源。只允许字母、数字、下划线和连字符，长度 1-256。',
     telegramWebhookSecretInvalid:
       '当前 Secret 包含 Telegram 不允许的字符；请移除 #、@、+、空格等字符后重新保存并设置 Webhook。',

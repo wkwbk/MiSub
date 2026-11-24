@@ -11,6 +11,7 @@ import { useSettingsStore } from '@/stores/settings.js';
 import { useI18n } from '@/i18n/index.js';
 import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
 import { ensureProfileLinkId, generateProfileLinkId } from '@shared/profile-link.js';
+import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
 import { normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
 
 const { t } = useI18n();
@@ -380,6 +381,15 @@ const handleConfirm = () => {
 
 const toggleSelection = (listName, id) => {
   const list = localProfile.value[listName];
+  if (listName === 'subscriptions') {
+    const index = list.findIndex((item) => getProfileSubscriptionId(item) === id);
+    if (index > -1) {
+      list.splice(index, 1);
+    } else {
+      list.push(id);
+    }
+    return;
+  }
   const index = list.indexOf(id);
   if (index > -1) {
     list.splice(index, 1);
@@ -389,14 +399,33 @@ const toggleSelection = (listName, id) => {
 };
 
 const handleSelectAll = (listName, sourceArray) => {
+  if (listName === 'subscriptions') {
+    const currentList = Array.isArray(localProfile.value[listName]) ? localProfile.value[listName] : [];
+    const existingIds = new Set(currentList.map(getProfileSubscriptionId).filter(Boolean));
+    const nextList = [...currentList];
+    sourceArray.forEach((item) => {
+      if (item?.id && !existingIds.has(item.id)) {
+        existingIds.add(item.id);
+        nextList.push(item.id);
+      }
+    });
+    localProfile.value[listName] = nextList;
+    return;
+  }
   const currentSelection = new Set(localProfile.value[listName]);
   sourceArray.forEach((item) => currentSelection.add(item.id));
   localProfile.value[listName] = Array.from(currentSelection);
 };
 
 const handleDeselectAll = (listName, sourceArray) => {
-  const sourceIds = sourceArray.map((item) => item.id);
-  localProfile.value[listName] = localProfile.value[listName].filter((id) => !sourceIds.includes(id));
+  const sourceIdSet = new Set(sourceArray.map((item) => item.id));
+  if (listName === 'subscriptions') {
+    localProfile.value[listName] = localProfile.value[listName].filter(
+      (entry) => !sourceIdSet.has(getProfileSubscriptionId(entry)),
+    );
+    return;
+  }
+  localProfile.value[listName] = localProfile.value[listName].filter((id) => !sourceIdSet.has(id));
 };
 
 const updateSelectedIds = (listName, newIds) => {

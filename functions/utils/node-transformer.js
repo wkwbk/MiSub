@@ -7,6 +7,7 @@ import { extractNodeRegion, getRegionEmoji, parseNodeInfo, REGION_KEYWORDS } fro
 import { extractNodeMetadata } from './metadata-extractor.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
 import { isV2raynUrl, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
+import { isSafeUserRegexPattern } from '../modules/security-utils.js';
 import { evaluateDslExpression, renderDslTemplate } from './expression-dsl.js'; // ============ 默认配置 ============
 
 // ============ 默认配置 ============
@@ -152,6 +153,10 @@ export function matchesRegexRules(name, rules) {
     const flags = typeof rule === 'string' ? 'i' : rule.flags || 'i';
 
     if (!pattern) continue;
+    if (!isSafeUserRegexPattern(pattern, 512)) {
+      warnInvalidRegex(typeof rule === 'string' ? { pattern: rule } : rule, new Error('Unsafe regex pattern'));
+      continue;
+    }
 
     try {
       const re = new RegExp(pattern, flags);
@@ -268,6 +273,10 @@ export function applyRegexRename(name, rules, record = null) {
     const flags = typeof rule === 'string' ? 'gi' : rule.flags || 'gi';
 
     if (!pattern) continue;
+    if (!isSafeUserRegexPattern(pattern, 512)) {
+      warnInvalidRegex(typeof rule === 'string' ? { pattern: rule } : rule, new Error('Unsafe regex pattern'));
+      continue;
+    }
 
     try {
       const re = new RegExp(pattern, flags);

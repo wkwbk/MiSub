@@ -385,6 +385,29 @@ export async function authMiddleware(request, env) {
   }
 }
 
+export const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
+export const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+export const LOGIN_RATE_LIMIT_LOCKOUT_MS = 15 * 60 * 1000;
+
+function getLoginClientIp(request) {
+  const raw =
+    request?.headers?.get?.('CF-Connecting-IP') ||
+    request?.headers?.get?.('X-Real-IP') ||
+    request?.headers?.get?.('X-Forwarded-For')?.split(',')[0] ||
+    '';
+  return String(raw).trim() || 'unknown';
+}
+
+async function buildLoginRateLimitKey(request) {
+  const ip = getLoginClientIp(request);
+  const hashBytes = await sha256Bytes(`login-ip:${ip}`);
+  const hashPrefix = Array.from(hashBytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 32);
+  return `auth_login_rate:${hashPrefix}`;
+}
+
 /**
  * 处理用户登录
  * @param {Request} request - HTTP 请求对象
@@ -417,14 +440,50 @@ export async function handleLogin(request, env) {
   try {
     const { password, turnstileToken } = payload || {};
 
-    let savedSettings = {};
+    let storageAdapter = null;
     try {
-      const storageAdapter = StorageFactory.createAdapter(env);
-      if (storageAdapter && storageAdapter.type !== 'noop') {
-        savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+      storageAdapter = StorageFactory.createAdapter(env);
+    } catch {
+      storageAdapter = null;
+    }
+    const hasPersistentStorage = Boolean(storageAdapter && storageAdapter.type !== 'noop');
+    const rateKey = hasPersistentStorage ? await buildLoginRateLimitKey(request) : '';
+    let existingRateRecord = null;
+    const now = Date.now();
+
+    if (hasPersistentStorage && rateKey) {
+      try {
+        existingRateRecord = await storageAdapter.get(rateKey, 'json', { fresh: true });
+      } catch {
+        existingRateRecord = null;
       }
-    } catch (settingsError) {
-      console.warn('[API /login] Failed to load settings for Turnstile check:', settingsError?.message);
+
+      if (existingRateRecord?.lockedUntil && existingRateRecord.lockedUntil > now) {
+        const retryAfterSeconds = Math.max(1, Math.ceil((existingRateRecord.lockedUntil - now) / 1000));
+        return new Response(
+          JSON.stringify({
+            error: '登录尝试过于频繁，请稍后再试',
+            code: 'LOGIN_RATE_LIMITED',
+            retryAfterSeconds,
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'Retry-After': String(retryAfterSeconds),
+            },
+          },
+        );
+      }
+    }
+
+    let savedSettings = {};
+    if (hasPersistentStorage) {
+      try {
+        savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+      } catch (settingsError) {
+        console.warn('[API /login] Failed to load settings for Turnstile check:', settingsError?.message);
+      }
     }
 
     const turnstileConfig = resolveTurnstileConfig({ ...DEFAULT_SETTINGS, ...savedSettings }, env);
@@ -451,6 +510,9 @@ export async function handleLogin(request, env) {
     const isPasswordMatched = await timingSafeStringEqual(inputPassword, currentPassword);
 
     if (isPasswordMatched) {
+      if (hasPersistentStorage && rateKey) {
+        await storageAdapter.delete(rateKey).catch(() => {});
+      }
       const secret = await getSessionSigningSecret(env);
       const token = await createSignedToken(secret, String(Date.now()));
       const isSecure = request.url.startsWith('https');
@@ -463,7 +525,30 @@ export async function handleLogin(request, env) {
       response.headers.append('Set-Cookie', cookieString);
       return response;
     }
-    return new Response(JSON.stringify({ error: '密码错误' }), { status: 401 });
+
+    if (hasPersistentStorage && rateKey) {
+      const withinWindow =
+        existingRateRecord &&
+        Number.isFinite(existingRateRecord.windowStart) &&
+        now - existingRateRecord.windowStart < LOGIN_RATE_LIMIT_WINDOW_MS;
+      const windowStart = withinWindow ? existingRateRecord.windowStart : now;
+      const nextCount = (withinWindow ? Number(existingRateRecord.count) || 0 : 0) + 1;
+      const lockedUntil = nextCount >= LOGIN_RATE_LIMIT_MAX_ATTEMPTS ? now + LOGIN_RATE_LIMIT_LOCKOUT_MS : 0;
+      const expiresAt = Math.max(lockedUntil, windowStart + LOGIN_RATE_LIMIT_WINDOW_MS);
+      await storageAdapter
+        .put(rateKey, {
+          count: nextCount,
+          windowStart,
+          lockedUntil,
+          expiresAt,
+        })
+        .catch(() => {});
+    }
+
+    return new Response(JSON.stringify({ error: '密码错误' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (e) {
     if (e instanceof AdminPasswordMissingError) {
       console.error('[API Error /login] Admin password missing on initialized instance', logMeta);

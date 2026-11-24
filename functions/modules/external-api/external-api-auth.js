@@ -1,3 +1,4 @@
+import { timingSafeStringEqual } from '../auth-middleware.js';
 import { createExternalError, getExternalApiSettings } from './external-api-utils.js';
 
 export async function authenticateExternalApiRequest(request, env, storageAdapter = null) {
@@ -26,10 +27,15 @@ export async function authenticateExternalApiRequest(request, env, storageAdapte
     };
   }
   const tokens = Array.isArray(settings.tokens) ? settings.tokens : [];
-  const matchedToken = tokens.find((item) => {
+  let matchedToken = null;
+  for (const item of tokens) {
     const configured = String(item?.token || '').trim();
-    return configured.length > 0 && configured === token;
-  });
+    if (!configured) continue;
+    const isMatched = await timingSafeStringEqual(configured, token);
+    if (isMatched && !matchedToken) {
+      matchedToken = item;
+    }
+  }
   if (!matchedToken) {
     return {
       ok: false,

@@ -16,13 +16,28 @@ export { sendEnhancedTgNotification, sendTgNotification, tgEscape } from '../ser
 /**
  * 测试 Telegram 通知
  */
-export async function handleTestNotificationRequest(request) {
+export async function handleTestNotificationRequest(request, env = null) {
   if (request.method !== 'POST') {
     return createErrorResponse('Method Not Allowed', 405);
   }
 
   try {
-    const { botToken, chatId } = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+    const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+    let botToken = String(body?.botToken || '').trim();
+    let chatId = String(body?.chatId || '').trim();
+
+    if ((!botToken || !chatId) && env) {
+      try {
+        const { StorageFactory } = await import('../storage-adapter.js');
+        const storageAdapter = StorageFactory.createAdapter(env);
+        if (storageAdapter && storageAdapter.type !== 'noop') {
+          const savedSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
+          if (!botToken) botToken = String(savedSettings.botToken || '').trim();
+          if (!chatId) chatId = String(savedSettings.chatId || '').trim();
+        }
+      } catch {}
+    }
+
     const settings = { botToken, chatId };
 
     const result = await debugTgNotification(

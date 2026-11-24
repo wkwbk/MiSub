@@ -6,7 +6,9 @@ import { sendEnhancedTgNotification, tgEscape } from '../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from '../config.js';
 import { normalizeSubPath } from '../../../shared/reserved-paths.js';
 import { resolvePublicProfile } from '../../../shared/profile-link.js';
+import { getProfileSubscriptionId } from '../../../shared/profile-subscription-ref.js';
 import { createBlockedResponse, isBrowserSubAccessAllowed } from '../access-control.js';
+import { isSafeUserRegexPattern } from '../security-utils.js';
 import {
   generateCacheKey,
   getEdgeCacheVersion,
@@ -80,6 +82,27 @@ export {
   resolveAddFlagEmoji,
   shouldRenderClashYamlProfileTemplateLocally,
 };
+
+function sanitizeQueryRegexRuleText(rawRuleText, maxLineLength = 256) {
+  if (typeof rawRuleText !== 'string' || !rawRuleText.trim()) return rawRuleText;
+  const lines = rawRuleText.split(/\r?\n/);
+  return lines
+    .filter((line) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === '---') return true;
+      let body = trimmed;
+      if (body.toLowerCase().startsWith('keep:')) {
+        body = body.slice('keep:'.length).trim();
+      }
+      if (!body || body.toLowerCase().startsWith('proto:')) return true;
+      const safe = isSafeUserRegexPattern(body, maxLineLength);
+      if (!safe) {
+        console.warn('[MiSub] Rejected unsafe URL filter regex pattern');
+      }
+      return safe;
+    })
+    .join('\n');
+}
 
 /**
  * 处理MiSub订阅请求
@@ -284,7 +307,7 @@ export async function handleMisubRequest(context) {
         subName = profile.name;
         targetMisubs = [];
         const subSourceIds = Array.isArray(profile.subscriptions)
-          ? profile.subscriptions.map((item) => (typeof item === 'object' ? item.id : item)).filter(Boolean)
+          ? profile.subscriptions.map((item) => getProfileSubscriptionId(item)).filter(Boolean)
           : [];
         const manualNodeIds = Array.isArray(profile.manualNodes) ? profile.manualNodes.filter(Boolean) : [];
         let relatedSubs = [];
@@ -303,8 +326,8 @@ export async function handleMisubRequest(context) {
         if (Array.isArray(profileSubIds)) {
           profileSubIds.forEach((item) => {
             // 支持两种格式：纯字符串 ID 或 带有覆盖配置的对象 { id, exclude, operators, ... }
-            const isObject = item && typeof item === 'object';
-            const id = isObject ? item.id : item;
+            const isObject = Boolean(item && typeof item === 'object');
+            const id = getProfileSubscriptionId(item);
 
             const baseSub = misubMap.get(id);
             if (baseSub && baseSub.enabled && typeof baseSub.url === 'string' && baseSub.url.startsWith('http')) {
@@ -531,18 +554,22 @@ export async function handleMisubRequest(context) {
       nodeTransform: { ...effectiveNodeTransform },
       name: subName,
       operators: Array.isArray(activeProfile?.operators) ? [...activeProfile.operators] : [],
-      exclude: urlExclude || activeProfile?.exclude,
-      include: urlInclude || activeProfile?.include,
+      exclude: urlExclude ? sanitizeQueryRegexRuleText(urlExclude) : activeProfile?.exclude,
+      include: urlInclude ? sanitizeQueryRegexRuleText(urlInclude) : activeProfile?.include,
       // [Issue #345] 透传 emoji 开关到内置生成器
       addFlagEmoji: effectiveNodeTransform.addFlagEmoji,
     };
 
     // [Subconverter API] 动态注入更名算子 (rename=old@new|A@B)
     if (urlRename) {
-      const renameGroups = urlRename.split('|');
+      const renameGroups = urlRename.split('|').slice(0, 20);
       renameGroups.forEach((group) => {
         const [regex, replace] = group.split('@');
         if (regex) {
+          if (!isSafeUserRegexPattern(regex, 256)) {
+            console.warn('[MiSub] Rejected unsafe URL rename regex pattern');
+            return;
+          }
           generationSettings.operators.push({
             type: 'rename',
             enabled: true,

@@ -106,6 +106,7 @@ export async function handleDataRequest(env, context = null) {
         ...settings,
       },
       env,
+      { scope: 'data' },
     );
     try {
       const taskContext = context || { env };
@@ -308,7 +309,8 @@ export async function handleMisubsSave(request, env, context = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-function redactSettingsForResponse(settings = {}, env = null) {
+function redactSettingsForResponse(settings = {}, env = null, options = {}) {
+  const scope = options?.scope === 'data' ? 'data' : 'settings';
   const cleaned = { ...settings };
   delete cleaned.publicLinks;
   delete cleaned.publicCores;
@@ -342,12 +344,54 @@ function redactSettingsForResponse(settings = {}, env = null) {
         hasEnvKeys: hasEnvTurnstileKeys,
         loginDisabledByEnv,
       };
-  return {
+  const telegramPushConfig =
+    cleaned.telegramPushConfig && typeof cleaned.telegramPushConfig === 'object'
+      ? {
+          ...cleaned.telegramPushConfig,
+          botToken: '',
+          hasBotToken: Boolean(String(cleaned.telegramPushConfig.botToken || '').trim()),
+          webhookSecret: '',
+          hasWebhookSecret: Boolean(String(cleaned.telegramPushConfig.webhookSecret || '').trim()),
+        }
+      : cleaned.telegramPushConfig;
+  const webdavBackup =
+    cleaned.webdavBackup && typeof cleaned.webdavBackup === 'object'
+      ? {
+          ...cleaned.webdavBackup,
+          password: '',
+          hasPassword: Boolean(String(cleaned.webdavBackup.password || '').trim()),
+        }
+      : cleaned.webdavBackup;
+
+  const redacted = {
     ...cleaned,
-    webdavBackup: cleaned.webdavBackup ? { ...cleaned.webdavBackup, password: '' } : cleaned.webdavBackup,
+    botToken: '',
+    hasBotToken: Boolean(String(cleaned.botToken || '').trim()),
+    hasEnvCronSecret: Boolean(String(env?.CRON_SECRET || '').trim()),
+    webdavBackup,
     shortLink,
     turnstile,
+    ...(telegramPushConfig !== undefined ? { telegramPushConfig } : {}),
   };
+
+  if (scope === 'data') {
+    redacted.hasCronSecret = Boolean(String(cleaned.cronSecret || env?.CRON_SECRET || '').trim());
+    redacted.cronSecret = '';
+    if (cleaned.externalApi && typeof cleaned.externalApi === 'object') {
+      redacted.externalApi = {
+        ...cleaned.externalApi,
+        tokens: Array.isArray(cleaned.externalApi.tokens)
+          ? cleaned.externalApi.tokens.map((item) => ({
+              name: item?.name || '',
+              token: '',
+              hasToken: Boolean(String(item?.token || '').trim()),
+            }))
+          : [],
+      };
+    }
+  }
+
+  return redacted;
 }
 
 export async function handleSettingsGet(env) {
@@ -433,33 +477,57 @@ export async function handleSettingsSave(request, env) {
 
     const storageAdapter = await getStorageAdapter(env);
     const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
-    if (newSettings.webdavBackup && oldSettings.webdavBackup) {
-      const incomingPassword = newSettings.webdavBackup.password;
-      if (incomingPassword === '' || incomingPassword == null) {
-        newSettings.webdavBackup = {
-          ...newSettings.webdavBackup,
-          password: oldSettings.webdavBackup.password,
-        };
-      }
+    const {
+      hasBotToken: _omitHasBotToken,
+      hasCronSecret: _omitHasCronSecret,
+      hasEnvCronSecret: _omitHasEnvCronSecret,
+      ...incomingSettings
+    } = newSettings && typeof newSettings === 'object' ? newSettings : {};
+
+    if ('botToken' in incomingSettings) {
+      const incomingBotToken = String(incomingSettings.botToken || '').trim();
+      incomingSettings.botToken = incomingBotToken || String(oldSettings.botToken || '').trim();
     }
-    if (newSettings.shortLink && typeof newSettings.shortLink === 'object') {
-      const { hasToken: _omitHasToken, ...cleanShortLink } = newSettings.shortLink;
+    if (incomingSettings.telegramPushConfig && typeof incomingSettings.telegramPushConfig === 'object') {
+      const {
+        hasBotToken: _omitPushHasBotToken,
+        hasWebhookSecret: _omitPushHasWebhookSecret,
+        ...cleanPushConfig
+      } = incomingSettings.telegramPushConfig;
+      const incomingPushToken = String(cleanPushConfig.botToken || '').trim();
+      const incomingWebhookSecret = String(cleanPushConfig.webhookSecret || '').trim();
+      incomingSettings.telegramPushConfig = {
+        ...cleanPushConfig,
+        botToken: incomingPushToken || String(oldSettings.telegramPushConfig?.botToken || '').trim(),
+        webhookSecret: incomingWebhookSecret || String(oldSettings.telegramPushConfig?.webhookSecret || '').trim(),
+      };
+    }
+    if (incomingSettings.webdavBackup && typeof incomingSettings.webdavBackup === 'object') {
+      const { hasPassword: _omitHasPassword, ...cleanWebdav } = incomingSettings.webdavBackup;
+      const incomingPassword = cleanWebdav.password;
+      if ((incomingPassword === '' || incomingPassword == null) && oldSettings.webdavBackup) {
+        cleanWebdav.password = oldSettings.webdavBackup.password;
+      }
+      incomingSettings.webdavBackup = cleanWebdav;
+    }
+    if (incomingSettings.shortLink && typeof incomingSettings.shortLink === 'object') {
+      const { hasToken: _omitHasToken, ...cleanShortLink } = incomingSettings.shortLink;
       const incomingToken = String(cleanShortLink.apiToken || '').trim();
       const preservedToken = incomingToken || String(oldSettings.shortLink?.apiToken || '').trim();
-      newSettings.shortLink = {
+      incomingSettings.shortLink = {
         ...defaultSettings.shortLink,
         ...cleanShortLink,
         apiUrl: String(cleanShortLink.apiUrl || '').trim(),
         apiToken: preservedToken,
       };
     }
-    if (newSettings.turnstile && typeof newSettings.turnstile === 'object') {
+    if (incomingSettings.turnstile && typeof incomingSettings.turnstile === 'object') {
       const {
         hasSecretKey: _omitHasSecretKey,
         hasEnvKeys: _omitHasEnvKeys,
         loginDisabledByEnv: _omitLoginDisabledByEnv,
         ...cleanTurnstile
-      } = newSettings.turnstile;
+      } = incomingSettings.turnstile;
       const incomingSiteKey = String(cleanTurnstile.siteKey || '').trim();
       const incomingSecretKey = String(cleanTurnstile.secretKey || '').trim();
       const preservedSecretKey = incomingSecretKey || String(oldSettings.turnstile?.secretKey || '').trim();
@@ -474,7 +542,7 @@ export async function handleSettingsSave(request, env) {
           400,
         );
       }
-      newSettings.turnstile = {
+      incomingSettings.turnstile = {
         ...defaultSettings.turnstile,
         ...cleanTurnstile,
         enabled: Boolean(cleanTurnstile.enabled),
@@ -484,7 +552,7 @@ export async function handleSettingsSave(request, env) {
         enableForLogin: Boolean(cleanTurnstile.enableForLogin),
       };
     }
-    const finalSettings = { ...oldSettings, ...newSettings };
+    const finalSettings = { ...oldSettings, ...incomingSettings };
     delete finalSettings.publicLinks;
     delete finalSettings.publicCores;
 
