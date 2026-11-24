@@ -131,8 +131,16 @@ const loginComponent = computed(() => {
   return sessionStore.publicConfig?.hasCustomLoginPath ? NotFound : Login;
 });
 
+const handleBeforeUnload = (event) => {
+  if (isLoggedIn.value && layoutMode.value === 'modern' && isDirty.value) {
+    event.preventDefault();
+    event.returnValue = t('common.unsavedLeaveConfirm');
+  }
+};
+
 onMounted(async () => {
   window.addEventListener('misub:unauthorized', handleUnauthorized);
+  window.addEventListener('beforeunload', handleBeforeUnload);
   initTheme();
   await checkSession();
 });
@@ -140,6 +148,7 @@ onMounted(async () => {
 onUnmounted(() => {
   cancelRoutePrefetch();
   window.removeEventListener('misub:unauthorized', handleUnauthorized);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
 });
 
 watch(

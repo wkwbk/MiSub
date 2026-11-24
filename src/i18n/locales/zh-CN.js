@@ -570,6 +570,7 @@ export default {
     tooFrequent: '操作过于频繁，请稍候...',
     saveFailed: '保存失败',
     dataSaved: '数据已保存',
+    dataConflict: '数据已在其他终端或标签页更新，请刷新最新数据后再保存',
     saveDataFailed: '保存数据失败: {message}',
     saveSettingsFailed: '保存设置失败',
     settingsUpdated: '设置已更新',

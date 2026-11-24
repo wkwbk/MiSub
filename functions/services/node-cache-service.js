@@ -270,9 +270,15 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
     let cleared = 0;
     let failed = 0;
     let skipped = 0;
-    const preserveKeys = new Set(
-      Array.isArray(options?.preserveKeys) ? options.preserveKeys.filter(isSubscriptionNodeCacheKey) : [],
-    );
+    const preserveKeys = new Set([
+      ...(Array.isArray(options?.preserveKeys) ? options.preserveKeys.filter(isSubscriptionNodeCacheKey) : []),
+      ...(Array.isArray(options?.preserveProfileKeys)
+        ? options.preserveProfileKeys.filter(
+            (key) => typeof key === 'string' && key.startsWith(`${CACHE_CONFIG.KEY_PREFIX}profile_`),
+          )
+        : []),
+    ]);
+    const skipTokenCaches = Boolean(options?.skipTokenCaches);
 
     if (typeof storageAdapter.list !== 'function') {
       console.warn('[Cache] Storage adapter does not support list operation');
@@ -287,7 +293,7 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
     // 删除缓存
     for (const keyInfo of keys) {
       const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name || keyInfo;
-      if (preserveKeys.has(key)) {
+      if (preserveKeys.has(key) || (skipTokenCaches && key.startsWith(`${CACHE_CONFIG.KEY_PREFIX}token_`))) {
         skipped++;
         continue;
       }

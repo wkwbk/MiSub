@@ -417,7 +417,11 @@ const handleSave = async () => {
   saveState.value = 'saving';
 
   try {
-    await dataStore.saveData();
+    const ok = await dataStore.saveData();
+    if (!ok) {
+      saveState.value = 'idle';
+      return;
+    }
 
     saveState.value = 'success';
 
@@ -428,7 +432,7 @@ const handleSave = async () => {
     setTimeout(() => {
       saveState.value = 'idle';
     }, 1500);
-  } catch (error) {
+  } catch {
     saveState.value = 'idle';
   }
 };

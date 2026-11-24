@@ -66,6 +66,8 @@ export const useDataStore = defineStore('data', () => {
   const isLoading = ref(false);
   const saveState = ref('idle');
   const lastUpdated = ref(null);
+  const dataRevision = ref('');
+  const hasSaveConflict = ref(false);
   const hasDataLoaded = computed(() => !!lastUpdated.value);
 
   const isDirty = computed(() => editorStore.isDirty);
@@ -85,10 +87,15 @@ export const useDataStore = defineStore('data', () => {
       }));
       ruleTemplates.value = data.ruleTemplates || [];
       settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
+      if (typeof data.dataRevision === 'string') {
+        dataRevision.value = data.dataRevision;
+      }
+      hasSaveConflict.value = false;
 
       lastUpdated.value = new Date();
       dataCache.set({
         ...data,
+        dataRevision: dataRevision.value,
         config: sanitizeConfigForCache(data.config || settingsStore.config),
       });
       return true;
@@ -141,12 +148,13 @@ export const useDataStore = defineStore('data', () => {
     return fetchDataPromise;
   }
 
-  async function saveData() {
+  async function saveData(options = {}) {
     if (isLoading.value) {
       showToast(t('store.tooFrequent'), 'warning');
       return false;
     }
 
+    const force = Boolean(options?.force);
     isLoading.value = true;
     saveState.value = 'saving';
 
@@ -170,6 +178,8 @@ export const useDataStore = defineStore('data', () => {
           delete normalizedProfile.clashRuleLevel;
           return normalizedProfile;
         }),
+        ...(dataRevision.value ? { baseRevision: dataRevision.value } : {}),
+        ...(force ? { force: true } : {}),
       };
 
       const result = await api.post('/api/misubs', payload);
@@ -182,6 +192,10 @@ export const useDataStore = defineStore('data', () => {
         if (result.data.misubs) subscriptions.value = result.data.misubs;
         if (result.data.profiles) profiles.value = result.data.profiles;
       }
+      if (typeof result.dataRevision === 'string') {
+        dataRevision.value = result.dataRevision;
+      }
+      hasSaveConflict.value = false;
 
       showToast(t('store.dataSaved'), 'success');
       lastUpdated.value = new Date();
@@ -203,13 +217,19 @@ export const useDataStore = defineStore('data', () => {
         }),
         profiles: profiles.value,
         ruleTemplates: ruleTemplates.value,
+        dataRevision: dataRevision.value,
         config: sanitizeConfigForCache(settingsStore.config),
       });
 
       return true;
     } catch (error) {
       console.error('[Store] Failed to save data:', error);
-      showToast(t('store.saveDataFailed', { message: error.message }), 'error');
+      if (error?.status === 409 && error?.data?.code === 'DATA_CONFLICT') {
+        hasSaveConflict.value = true;
+        showToast(t('store.dataConflict'), 'warning');
+      } else {
+        showToast(t('store.saveDataFailed', { message: error.message }), 'error');
+      }
       saveState.value = 'idle';
       // 同 fetchData：提示一次即可，不再向上抛出避免二次弹窗
       return false;
@@ -495,6 +515,8 @@ export const useDataStore = defineStore('data', () => {
     isLoading,
     saveState,
     lastUpdated,
+    dataRevision,
+    hasSaveConflict,
     hasDataLoaded,
     isDirty,
 

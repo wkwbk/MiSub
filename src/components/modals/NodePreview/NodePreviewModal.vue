@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { Gauge, Loader2, X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
 import { useToastStore } from '@/stores/toast.js';
@@ -46,7 +46,7 @@ const handleResize = () => {
 // 响应式数据
 const loading = ref(false);
 const error = ref('');
-const allNodes = ref([]); // 存储所有节点
+const allNodes = shallowRef([]); // 存储所有节点
 const currentPage = ref(1);
 const pageSize = ref(24);
 const viewMode = ref('list'); // 'list' 或 'card'
@@ -670,8 +670,13 @@ const getProtocolStyle = () => {
   return 'bg-transparent text-fg-muted border border-line font-mono';
 };
 
+const parsedNodeInfoCache = new WeakMap();
+
 // 解析节点信息
 const parseNodeInfo = (node) => {
+  if (node && typeof node === 'object' && parsedNodeInfoCache.has(node)) {
+    return parsedNodeInfoCache.get(node);
+  }
   const result = {
     name: node.name,
     server: node.server || '',
@@ -682,6 +687,9 @@ const parseNodeInfo = (node) => {
 
   // 如果后端已经返回了服务器和端口，直接使用，不再前端解析
   if (result.server && result.port) {
+    if (node && typeof node === 'object') {
+      parsedNodeInfoCache.set(node, result);
+    }
     return result;
   }
 
@@ -720,6 +728,9 @@ const parseNodeInfo = (node) => {
     }
   }
 
+  if (node && typeof node === 'object') {
+    parsedNodeInfoCache.set(node, result);
+  }
   return result;
 };
 

@@ -23,6 +23,7 @@ import {
   getProfileShareIdentifier,
   normalizeProfileIdentifier,
 } from '../../shared/profile-link.js';
+import { getProfileSubscriptionId } from '../../shared/profile-subscription-ref.js';
 import { validateProfileAliases } from '../../shared/profile-alias.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
@@ -45,6 +46,160 @@ function normalizeProfile(profile = {}) {
   const rawShortLink = typeof profile.shortLink === 'string' ? profile.shortLink.trim() : '';
   normalized.shortLink = /^https?:\/\//i.test(rawShortLink) ? rawShortLink : '';
   return normalized;
+}
+
+function stableSerialize(value) {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableSerialize(item)).join(',')}]`;
+  }
+  const keys = Object.keys(value).sort();
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableSerialize(value[key])}`).join(',')}}`;
+}
+
+function stripTransientSubscriptionFields(sub) {
+  if (!sub || typeof sub !== 'object') return sub;
+  const { isUpdating: _omitIsUpdating, ...rest } = sub;
+  return rest;
+}
+
+async function computeDataRevision(misubs = [], profiles = []) {
+  const canonicalSubs = (Array.isArray(misubs) ? misubs : []).map(stripTransientSubscriptionFields);
+  const canonicalProfiles = Array.isArray(profiles) ? profiles : [];
+  const payload = stableSerialize({ misubs: canonicalSubs, profiles: canonicalProfiles });
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, 16);
+}
+
+function pickSubscriptionCacheRelevantFields(sub = {}) {
+  return {
+    id: sub.id || '',
+    url: sub.url || '',
+    enabled: sub.enabled !== false,
+    name: sub.name || '',
+    exclude: sub.exclude || '',
+    include: sub.include || '',
+    operators: sub.operators || null,
+    nodeTransform: sub.nodeTransform || null,
+    disabledNodes: sub.disabledNodes || null,
+    customUserAgent: sub.customUserAgent || '',
+    fetchProxy: sub.fetchProxy || '',
+    plusAsSpace: Boolean(sub.plusAsSpace),
+    tags: Array.isArray(sub.tags) ? sub.tags : [],
+    sortIndex: Number(sub.sortIndex) || 0,
+  };
+}
+
+function getChangedSubscriptionIds(previousMisubs = [], finalMisubs = []) {
+  const prevMap = new Map(
+    (Array.isArray(previousMisubs) ? previousMisubs : []).filter((s) => s?.id).map((s) => [s.id, s]),
+  );
+  const nextMap = new Map((Array.isArray(finalMisubs) ? finalMisubs : []).filter((s) => s?.id).map((s) => [s.id, s]));
+  const changed = new Set();
+
+  for (const [id, prevSub] of prevMap.entries()) {
+    const nextSub = nextMap.get(id);
+    if (!nextSub) {
+      changed.add(id);
+      continue;
+    }
+    if (
+      stableSerialize(pickSubscriptionCacheRelevantFields(prevSub)) !==
+      stableSerialize(pickSubscriptionCacheRelevantFields(nextSub))
+    ) {
+      changed.add(id);
+    }
+  }
+  for (const id of nextMap.keys()) {
+    if (!prevMap.has(id)) {
+      changed.add(id);
+    }
+  }
+  return changed;
+}
+
+function shouldCheckSubscriptionNotification(sub, prevSub) {
+  if (!sub?.enabled || typeof sub.url !== 'string' || !sub.url.startsWith('http')) {
+    return false;
+  }
+  if (!prevSub) return true;
+  if (prevSub.enabled !== sub.enabled || prevSub.url !== sub.url) {
+    return true;
+  }
+  return stableSerialize(prevSub.userInfo || null) !== stableSerialize(sub.userInfo || null);
+}
+
+function normalizeProfileForDiff(profile = {}) {
+  const normalized = normalizeProfile(profile);
+  delete normalized.downloadCount;
+  delete normalized.updatedAt;
+  return normalized;
+}
+
+function getAffectedProfileIds(previousProfiles = [], finalProfiles = [], changedSubIds = new Set()) {
+  const prevList = Array.isArray(previousProfiles) ? previousProfiles : [];
+  const nextList = Array.isArray(finalProfiles) ? finalProfiles : [];
+  const prevMap = new Map(prevList.filter((p) => p?.id).map((p) => [p.id, p]));
+  const nextMap = new Map(nextList.filter((p) => p?.id).map((p) => [p.id, p]));
+  const affected = new Set();
+
+  for (const [id, prevProfile] of prevMap.entries()) {
+    const nextProfile = nextMap.get(id);
+    if (!nextProfile) {
+      affected.add(id);
+      continue;
+    }
+    if (
+      stableSerialize(normalizeProfileForDiff(prevProfile)) !== stableSerialize(normalizeProfileForDiff(nextProfile))
+    ) {
+      affected.add(id);
+    }
+  }
+
+  const profileIdByIdentifier = new Map();
+  for (const profile of nextList) {
+    if (!profile?.id) continue;
+    profileIdByIdentifier.set(profile.id, profile.id);
+    if (profile.customId) profileIdByIdentifier.set(profile.customId, profile.id);
+    if (profile.linkId) profileIdByIdentifier.set(profile.linkId, profile.id);
+
+    if (!prevMap.has(profile.id)) {
+      affected.add(profile.id);
+      continue;
+    }
+    const referencesChangedSub =
+      (Array.isArray(profile.subscriptions) &&
+        profile.subscriptions.some((entry) => changedSubIds.has(getProfileSubscriptionId(entry)))) ||
+      (Array.isArray(profile.manualNodes) && profile.manualNodes.some((id) => changedSubIds.has(id)));
+    if (referencesChangedSub) {
+      affected.add(profile.id);
+    }
+  }
+
+  let propagated = true;
+  while (propagated) {
+    propagated = false;
+    for (const profile of nextList) {
+      if (!profile?.id || affected.has(profile.id)) continue;
+      if (
+        Array.isArray(profile.subProfiles) &&
+        profile.subProfiles.some((refId) => {
+          const resolvedId = profileIdByIdentifier.get(refId) || refId;
+          return affected.has(resolvedId);
+        })
+      ) {
+        affected.add(profile.id);
+        propagated = true;
+      }
+    }
+  }
+
+  return affected;
 }
 
 export function isStorageUnavailableError(error) {
@@ -102,6 +257,7 @@ export async function handleDataRequest(env, context = null) {
       });
     }
     const profiles = migratedRawProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
+    const dataRevision = await computeDataRevision(misubs, profiles);
     const config = redactSettingsForResponse(
       {
         ...defaultSettings,
@@ -121,7 +277,7 @@ export async function handleDataRequest(env, context = null) {
     } catch (taskError) {
       console.warn('[ScheduledTasks] lazy check init failed:', taskError?.message || taskError);
     }
-    return createJsonResponse({ misubs, profiles, ruleTemplates, config });
+    return createJsonResponse({ misubs, profiles, ruleTemplates, config, dataRevision });
   } catch (e) {
     console.error('[API Error /data] Failed to read from storage', {
       error: e?.message,
@@ -155,7 +311,7 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    const { misubs, profiles } = requestData;
+    const { misubs, profiles, baseRevision, force = false } = requestData;
     const storageAdapter = getRequestStorage(env, context);
     if (!storageAdapter || storageAdapter.type === 'noop') {
       return createJsonResponse(
@@ -189,11 +345,35 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    const previousProfiles =
+    const [previousMisubs, previousProfiles] = await Promise.all([
+      typeof storageAdapter.getAllSubscriptions === 'function'
+        ? Promise.resolve(storageAdapter.getAllSubscriptions()).catch(() => [])
+        : Promise.resolve([]),
       typeof storageAdapter.getAllProfiles === 'function'
-        ? (await Promise.resolve(storageAdapter.getAllProfiles()).catch(() => [])) || []
-        : [];
-    const prevProfileMap = new Map(previousProfiles.filter((p) => p?.id).map((p) => [p.id, p]));
+        ? Promise.resolve(storageAdapter.getAllProfiles()).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+    const safePrevMisubs = Array.isArray(previousMisubs) ? previousMisubs : [];
+    const safePrevProfiles = Array.isArray(previousProfiles) ? previousProfiles : [];
+    const normalizedPreviousProfiles = safePrevProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
+
+    if (typeof baseRevision === 'string' && baseRevision.trim() && !force) {
+      const currentRevision = await computeDataRevision(safePrevMisubs, normalizedPreviousProfiles);
+      if (baseRevision.trim() !== currentRevision) {
+        return createJsonResponse(
+          {
+            success: false,
+            code: 'DATA_CONFLICT',
+            message: '数据已在其他终端或标签页更新，请刷新最新数据后再保存',
+            currentRevision,
+          },
+          409,
+        );
+      }
+    }
+
+    const prevSubMap = new Map(safePrevMisubs.filter((s) => s?.id).map((s) => [s.id, s]));
+    const prevProfileMap = new Map(safePrevProfiles.filter((p) => p?.id).map((p) => [p.id, p]));
 
     const finalProfiles = profiles.map((p, index) => {
       const normalized = normalizeProfile(p);
@@ -207,7 +387,7 @@ export async function handleMisubsSave(request, env, context = null) {
       });
     });
 
-    const aliasValidation = validateProfileAliases(finalProfiles, { previousProfiles });
+    const aliasValidation = validateProfileAliases(finalProfiles, { previousProfiles: safePrevProfiles });
     if (!aliasValidation.valid) {
       return createJsonResponse(
         {
@@ -232,17 +412,17 @@ export async function handleMisubsSave(request, env, context = null) {
       settings = defaultSettings; // 使用默认设置继续
     }
 
-    // 步骤5: 处理通知（非阻塞，错误不影响保存）
-    // 仅在有订阅数据时处理
-    if (finalMisubs && finalMisubs.length > 0) {
+    // 步骤5: 增量处理通知（仅对新增或关键字段变更的启用订阅检查，非阻塞）
+    const subsToNotify = (finalMisubs || []).filter((sub) =>
+      shouldCheckSubscriptionNotification(sub, prevSubMap.get(sub?.id)),
+    );
+    if (subsToNotify.length > 0) {
       try {
-        const notificationPromises = finalMisubs
-          .filter((sub) => sub?.enabled && sub.url && sub.url.startsWith('http'))
-          .map((sub) =>
-            checkAndNotify(sub, settings, env).catch((notifyError) => {
-              console.warn('[API] Notification failed for subscription:', sub?.name || sub?.url, notifyError);
-            }),
-          );
+        const notificationPromises = subsToNotify.map((sub) =>
+          checkAndNotify(sub, settings, env).catch((notifyError) => {
+            console.warn('[API] Notification failed for subscription:', sub?.name || sub?.url, notifyError);
+          }),
+        );
 
         // 并行处理通知；在 Cloudflare Workers 中通过 waitUntil 防止响应返回后任务被中止
         const notificationBatch = Promise.allSettled(notificationPromises).catch((e) => {
@@ -273,12 +453,33 @@ export async function handleMisubsSave(request, env, context = null) {
       );
     }
 
-    // 步骤6.5: 清除节点缓存（订阅变动后确保拉取最新数据）
+    // 步骤6.5: 增量清除节点缓存（保留开启缓存的订阅及未受影响的订阅组缓存）
     try {
       const preserveKeys = (Array.isArray(finalMisubs) ? finalMisubs : [])
         .filter((sub) => sub?.enableNodeCache === true)
         .map((sub) => buildSubscriptionNodeCacheKey(sub));
-      const cacheResult = await clearAllNodeCaches(storageAdapter, { preserveKeys });
+      const changedSubIds = getChangedSubscriptionIds(safePrevMisubs, finalMisubs);
+      const affectedProfileIds = getAffectedProfileIds(normalizedPreviousProfiles, finalProfiles, changedSubIds);
+      const preserveProfileKeys = [];
+      for (const profile of finalProfiles) {
+        if (!profile?.id || affectedProfileIds.has(profile.id)) continue;
+        const identifiers = new Set(
+          [profile.id, profile.customId, profile.linkId].map((v) => String(v || '').trim()).filter(Boolean),
+        );
+        for (const pid of identifiers) {
+          preserveProfileKeys.push(`node_cache_profile_${pid}`);
+        }
+      }
+
+      const cacheOptions = { preserveKeys };
+      if (preserveProfileKeys.length > 0) {
+        cacheOptions.preserveProfileKeys = preserveProfileKeys;
+      }
+      if (safePrevMisubs.length > 0 && changedSubIds.size === 0) {
+        cacheOptions.skipTokenCaches = true;
+      }
+
+      const cacheResult = await clearAllNodeCaches(storageAdapter, cacheOptions);
       console.info(
         `[API] Cleared ${cacheResult.cleared} node caches after subscription update, preserved ${cacheResult.skipped || 0}`,
       );
@@ -287,10 +488,13 @@ export async function handleMisubsSave(request, env, context = null) {
       console.warn('[API] Failed to clear node caches:', cacheError.message);
     }
 
+    const nextRevision = await computeDataRevision(finalMisubs, finalProfiles);
+
     // 步骤7: 返回保存后的数据，确保前端能更新状态
     return createJsonResponse({
       success: true,
       message: '订阅源及订阅组已保存',
+      dataRevision: nextRevision,
       data: {
         misubs: finalMisubs,
         profiles: finalProfiles,

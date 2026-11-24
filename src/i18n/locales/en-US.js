@@ -576,6 +576,7 @@ export default {
     tooFrequent: 'Too many actions. Wait...',
     saveFailed: 'Save failed',
     dataSaved: 'Data saved',
+    dataConflict: 'Data was updated in another tab or device. Please refresh before saving.',
     saveDataFailed: 'Failed to save data: {message}',
     saveSettingsFailed: 'Failed to save settings',
     settingsUpdated: 'Settings updated',
