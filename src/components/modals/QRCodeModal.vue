@@ -6,6 +6,7 @@ import QRCode from 'qrcode';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { shadowrocketQrPayload } from '@misub/core/domain/shadowrocket-links.js';
+import { downloadDataUrlFile } from '@/utils/import-file.js';
 
 const { t } = useI18n();
 
@@ -85,10 +86,10 @@ watch(
 
 const downloadQRCode = () => {
   if (!canvasRef.value) return;
-  const link = document.createElement('a');
-  link.download = `${props.title || 'qrcode'}${props.subscription ? `-${importMode.value}` : ''}.png`;
-  link.href = canvasRef.value.toDataURL('image/png');
-  link.click();
+  downloadDataUrlFile(
+    canvasRef.value.toDataURL('image/png'),
+    `${props.title || 'qrcode'}${props.subscription ? `-${importMode.value}` : ''}.png`,
+  );
 };
 </script>
 

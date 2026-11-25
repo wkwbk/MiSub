@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="TItem extends CollectionItem = CollectionItem">
 import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -6,26 +6,42 @@ import { useToastStore } from '@/stores/useToastStore.js';
 import Modal from '@/components/ui/Modal.vue';
 import Switch from '@/components/ui/Switch.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
-import { api } from '@/lib/http.js';
+import { fetchPublicResource, initPublicResource, savePublicResource } from '@/lib/api.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
+import { readFileAsDataUrl } from '@/utils/import-file.js';
 
-interface CollectionItem {
+export interface CollectionItem {
   id: string;
   name?: string;
+  description?: string;
   url?: string;
   icon?: string;
   enabled?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
-interface CollectionConfig {
+export interface CollectionConfig<Item extends CollectionItem = CollectionItem> {
   enabled: boolean;
-  items: CollectionItem[];
-  [key: string]: any;
+  items: Item[];
 }
 
-interface CollectionTab {
+export interface CollectionTab {
   value: string;
   label: string;
+}
+
+export interface CollectionLabels {
+  resetBtn: string;
+  addBtn: string;
+  emptyText: string;
+  addModalTitle: string;
+  editModalTitle: string;
+  resetConfirmQuestion: string;
+  resetConfirmDesc: string;
+  deleteConfirmQuestion: string;
+  fetchErrorText?: string;
+  saveErrorText?: string;
+  saveErrorFormatter?: (message: string) => string;
 }
 
 const props = withDefaults(
@@ -34,18 +50,18 @@ const props = withDefaults(
     description?: string;
     tone?: string;
     endpoint: string;
-    defaultConfig: Record<string, any>;
-    normalizeConfig: (raw: any) => CollectionConfig;
+    defaultConfig: object;
+    normalizeConfig: (raw: unknown) => CollectionConfig<TItem>;
     tabs?: CollectionTab[];
-    filterItem: (item: CollectionItem, tab: string) => boolean;
-    resolveIcon: (item: CollectionItem) => string;
+    filterItem: (item: TItem, tab: string) => boolean;
+    resolveIcon: (item: TItem) => string;
     fallbackEmoji?: string;
     iconPlaceholder?: string;
-    getCategoryBadge?: ((item: CollectionItem) => string) | null;
-    createNewItem: (tab: string) => CollectionItem;
-    prepareEditItem?: (item: CollectionItem) => CollectionItem;
-    validateAndBuildItem: (item: CollectionItem) => { item: CollectionItem; error?: undefined } | { error: string; item?: undefined };
-    labels: Record<string, any>;
+    getCategoryBadge?: ((item: TItem) => string) | null;
+    createNewItem: (tab: string) => TItem;
+    prepareEditItem?: (item: TItem) => TItem;
+    validateAndBuildItem: (item: TItem) => { item: TItem; error?: undefined } | { error: string; item?: undefined };
+    labels: CollectionLabels;
   }>(),
   {
     description: '',
@@ -54,14 +70,14 @@ const props = withDefaults(
     fallbackEmoji: '🌐',
     iconPlaceholder: '',
     getCategoryBadge: null,
-    prepareEditItem: (item: CollectionItem) => item,
+    prepareEditItem: (item: TItem) => item,
   },
 );
 
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const config = ref<CollectionConfig>(props.normalizeConfig(props.defaultConfig));
+const config = ref<CollectionConfig<TItem>>(props.normalizeConfig(props.defaultConfig));
 const loading = ref(false);
 const activeTab = ref('all');
 const showEditModal = ref(false);
@@ -73,7 +89,7 @@ const saving = ref(false);
 const ordering = ref(false);
 const iconFileInput = ref<HTMLInputElement | null>(null);
 const uploadingIcon = ref(false);
-const editingItem = ref<CollectionItem>(props.createNewItem('all'));
+const editingItem = ref<TItem>(props.createNewItem('all'));
 
 const isDataIcon = computed(() => {
   const icon = editingItem.value?.icon;
@@ -95,12 +111,12 @@ const iconInputValue = computed({
 });
 
 const filteredItems = computed(() => {
-  const items = config.value.items || [];
+  const items = (config.value.items || []) as TItem[];
   if (activeTab.value === 'all') return items;
   return items.filter((item) => props.filterItem(item, activeTab.value));
 });
 
-const isImageIcon = (item: CollectionItem) => {
+const isImageIcon = (item: TItem) => {
   const resolved = props.resolveIcon(item);
   return Boolean(resolved && (resolved.includes('/') || resolved.startsWith('data:') || resolved.startsWith('http')));
 };
@@ -116,7 +132,7 @@ const getHostname = (rawUrl?: string) => {
 const fetchItems = async () => {
   loading.value = true;
   try {
-    const data = await api.get(props.endpoint);
+    const data = await fetchPublicResource(props.endpoint);
     if (data?.success && data.data) {
       config.value = props.normalizeConfig(data.data);
     } else if (data?.success === false) {
@@ -133,7 +149,7 @@ onMounted(fetchItems);
 
 const persistConfig = async (nextConfig = config.value) => {
   try {
-    const res = await api.post(props.endpoint, nextConfig);
+    const res = await savePublicResource(props.endpoint, nextConfig);
     if (res?.success === false) {
       showToast(res.message || props.labels.saveErrorText || t('settings.saveFailed'), 'error');
       return false;
@@ -142,10 +158,11 @@ const persistConfig = async (nextConfig = config.value) => {
       config.value = props.normalizeConfig(res.data);
     }
     return true;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const extracted = extractErrorMessage(error);
     const msg = props.labels.saveErrorFormatter
-      ? props.labels.saveErrorFormatter(error?.message || '')
-      : error?.message || t('settings.saveFailed');
+      ? props.labels.saveErrorFormatter(extracted)
+      : extracted || t('settings.saveFailed');
     showToast(msg, 'error');
     return false;
   }
@@ -155,9 +172,10 @@ const handleEnabledToggle = async () => {
   await persistConfig();
 };
 
-const handleIconFileSelect = (event: Event) => {
+const handleIconFileSelect = async (event: Event) => {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
+  input.value = '';
   if (!file) return;
 
   const allowedTypes = [
@@ -180,23 +198,19 @@ const handleIconFileSelect = (event: Event) => {
   }
 
   uploadingIcon.value = true;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const result = e.target?.result;
-    if (typeof result === 'string') {
+  try {
+    const dataUrl = await readFileAsDataUrl(file);
+    if (dataUrl) {
       editingItem.value = {
         ...editingItem.value,
-        icon: result,
+        icon: dataUrl,
       };
     }
-    uploadingIcon.value = false;
-  };
-  reader.onerror = () => {
+  } catch {
     showToast(t('settings.clientIconReadFailed'), 'error');
+  } finally {
     uploadingIcon.value = false;
-  };
-  reader.readAsDataURL(file);
-  input.value = '';
+  }
 };
 
 const triggerIconFileSelect = () => {
@@ -216,14 +230,14 @@ const handleAdd = () => {
   showEditModal.value = true;
 };
 
-const handleEdit = (item: CollectionItem) => {
+const handleEdit = (item: TItem) => {
   isNew.value = false;
-  editingItem.value = props.prepareEditItem(JSON.parse(JSON.stringify(item)));
+  editingItem.value = props.prepareEditItem(JSON.parse(JSON.stringify(item)) as TItem);
   showEditModal.value = true;
 };
 
 const moveItem = async (itemId: string, direction: number) => {
-  const fullList = [...(config.value.items || [])];
+  const fullList = [...((config.value.items || []) as TItem[])];
   const currentVisList = filteredItems.value;
   const visIdx = currentVisList.findIndex((item) => item.id === itemId);
   const targetVisIdx = visIdx + direction;
@@ -255,7 +269,7 @@ const moveItem = async (itemId: string, direction: number) => {
 };
 
 const handleSave = async () => {
-  const result = props.validateAndBuildItem(editingItem.value);
+  const result = props.validateAndBuildItem(editingItem.value as TItem);
   if (result?.error) {
     showToast(result.error, 'error');
     return;
@@ -265,7 +279,7 @@ const handleSave = async () => {
 
   saving.value = true;
   try {
-    const list = [...(config.value.items || [])];
+    const list = [...((config.value.items || []) as TItem[])];
     const existingIdx = list.findIndex((item) => item.id === nextItem.id);
     if (existingIdx !== -1) {
       list[existingIdx] = nextItem;
@@ -294,7 +308,7 @@ const handleDelete = (id: string) => {
 
 const executeDelete = async () => {
   if (!itemToDeleteId.value) return;
-  const nextItems = (config.value.items || []).filter((item) => item.id !== itemToDeleteId.value);
+  const nextItems = ((config.value.items || []) as TItem[]).filter((item) => item.id !== itemToDeleteId.value);
   config.value = {
     ...config.value,
     items: nextItems,
@@ -310,15 +324,15 @@ const executeReset = async () => {
   showResetConfirm.value = false;
   loading.value = true;
   try {
-    const res = await api.post<{ success?: boolean; data?: unknown; message?: string }>(`${props.endpoint}/init`);
+    const res = await initPublicResource(props.endpoint);
     if (res?.success && res.data) {
       config.value = props.normalizeConfig(res.data);
       showToast(t('settings.clientResetSuccess'), 'success');
     } else {
       showToast(res?.message || t('settings.clientResetFailed'), 'error');
     }
-  } catch (error: any) {
-    showToast(error?.message || t('settings.clientResetFailed'), 'error');
+  } catch (error: unknown) {
+    showToast(extractErrorMessage(error, t('settings.clientResetFailed')), 'error');
   } finally {
     loading.value = false;
   }
@@ -482,9 +496,9 @@ const executeReset = async () => {
                   class="aspect-square w-full max-w-[140px] mx-auto rounded-md flex items-center justify-center text-5xl bg-inset text-fg-muted border border-line overflow-hidden shadow-none"
                 >
                   <img
-                    v-if="isImageIcon(editingItem)"
+                    v-if="isImageIcon(editingItem as TItem)"
                     :alt="editingItem.name"
-                    :src="resolveIcon(editingItem)"
+                    :src="resolveIcon(editingItem as TItem)"
                     class="w-full h-full object-contain rounded-md p-3"
                   />
                   <span v-else>{{ editingItem.icon || editingItem.name?.slice(0, 1) || fallbackEmoji }}</span>
@@ -528,7 +542,7 @@ const executeReset = async () => {
                 </div>
 
                 <div class="space-y-2">
-                  <label class="block text-xs font-medium text-fg-muted">URL / Emoji</label>
+                  <label class="block text-xs font-medium text-fg-muted">{{ t('settings.clientIconUrlOrEmoji') }}</label>
                   <input
                     v-model="iconInputValue"
                     :placeholder="iconPlaceholder"
@@ -541,7 +555,7 @@ const executeReset = async () => {
           </div>
 
           <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-5">
-            <slot :editing-item="editingItem" :is-new="isNew" name="form" />
+            <slot :editing-item="(editingItem as TItem)" :is-new="isNew" name="form" />
           </div>
         </div>
       </template>

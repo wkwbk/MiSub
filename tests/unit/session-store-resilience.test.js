@@ -5,6 +5,7 @@ const apiMocks = vi.hoisted(() => ({
   fetchInitialData: vi.fn(),
   fetchPublicConfig: vi.fn(),
   login: vi.fn(),
+  logoutSession: vi.fn(),
   apiGet: vi.fn(),
 }));
 
@@ -93,7 +94,7 @@ describe('session store resilience', () => {
     const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
     store.sessionState = 'loggedIn';
-    apiMocks.apiGet.mockRejectedValue(new Error('network down'));
+    apiMocks.logoutSession.mockRejectedValueOnce(new Error('network down'));
     apiMocks.fetchInitialData.mockResolvedValue({ success: true, data: {} });
 
     const errorSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -208,7 +209,7 @@ describe('session store resilience', () => {
 
     store.sessionState = 'loggedIn';
     let resolveLogoutRequest;
-    apiMocks.apiGet.mockImplementation(
+    apiMocks.logoutSession.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveLogoutRequest = resolve;
@@ -218,11 +219,11 @@ describe('session store resilience', () => {
     const first = store.logout();
     const second = store.logout();
 
-    expect(apiMocks.apiGet).toHaveBeenCalledTimes(1);
+    expect(apiMocks.logoutSession).toHaveBeenCalledTimes(1);
 
     resolveLogoutRequest({ success: true });
     await Promise.all([first, second]);
-    expect(apiMocks.apiGet).toHaveBeenCalledTimes(1);
+    expect(apiMocks.logoutSession).toHaveBeenCalledTimes(1);
     expect(store.sessionState).toBe('loggedOut');
   });
 });

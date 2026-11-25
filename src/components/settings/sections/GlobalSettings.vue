@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
+import type { OperatorRule, ProfilePrefixSettings, RegionOverrideRule } from '@misub/core/types.js';
 import { List, Map, SlidersHorizontal } from '@lucide/vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
 import Input from '@/components/ui/Input.vue';
@@ -8,18 +9,52 @@ import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
-interface RegionOverrideRule {
-  pattern: string;
-  region: string;
-  flags: string;
-  [key: string]: unknown;
-}
-
 const { t } = useI18n();
 
 const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
+
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const buildDefaultPrefixSettings = (): ProfilePrefixSettings => ({
+  enableManualNodes: true,
+  enableSubscriptions: true,
+  manualNodePrefix: 'Manual Node',
+  subscriptionPrefix: '',
+  prependTagName: false,
+});
+
+const defaultPrefixSettings = computed<ProfilePrefixSettings>(() => ({
+  ...buildDefaultPrefixSettings(),
+  ...props.settings?.defaultPrefixSettings,
+}));
+
+const defaultOperators = computed<OperatorRule[]>(() =>
+  Array.isArray(props.settings?.defaultOperators) ? props.settings.defaultOperators : [],
+);
+
+const regionOverrides = computed<RegionOverrideRule[]>(() =>
+  Array.isArray(props.settings?.regionOverrides) ? props.settings.regionOverrides : [],
+);
+
+function patchSettings(patch: Partial<AppSettingsConfig>): void {
+  emit('update:settings', {
+    ...props.settings,
+    ...patch,
+  });
+}
+
+function patchPrefixSettings(patch: Partial<ProfilePrefixSettings>): void {
+  patchSettings({
+    defaultPrefixSettings: {
+      ...defaultPrefixSettings.value,
+      ...patch,
+    },
+  });
+}
 
 const prefixToggleOptions = [
   { labelKey: 'profiles.optionEnabled', value: true },
@@ -36,66 +71,37 @@ const resolvedPrefixToggleOptions = computed(() =>
 const globalSwitchSelects = computed(() => [
   {
     labelKey: 'settings.globalManualNodePrefixSwitch',
-    value: props.settings.defaultPrefixSettings.enableManualNodes,
-    update: (val: boolean) => {
-      props.settings.defaultPrefixSettings.enableManualNodes = val;
-    },
+    value: defaultPrefixSettings.value.enableManualNodes !== false,
+    update: (val: boolean) => patchPrefixSettings({ enableManualNodes: val }),
   },
   {
     labelKey: 'settings.globalSubscriptionPrefixSwitch',
-    value: props.settings.defaultPrefixSettings.enableSubscriptions,
-    update: (val: boolean) => {
-      props.settings.defaultPrefixSettings.enableSubscriptions = val;
-    },
+    value: defaultPrefixSettings.value.enableSubscriptions !== false,
+    update: (val: boolean) => patchPrefixSettings({ enableSubscriptions: val }),
   },
   {
     labelKey: 'settings.globalFlagEmojiSwitch',
-    value: props.settings.enableFlagEmoji,
-    update: (val: boolean) => {
-      props.settings.enableFlagEmoji = val;
-    },
+    value: props.settings.enableFlagEmoji !== false,
+    update: (val: boolean) => patchSettings({ enableFlagEmoji: val }),
   },
 ]);
 
-const regionOverrides = computed<RegionOverrideRule[]>(() =>
-  Array.isArray(props.settings.regionOverrides) ? (props.settings.regionOverrides as RegionOverrideRule[]) : [],
-);
-
-const buildDefaultPrefixSettings = () => ({
-  enableManualNodes: true,
-  enableSubscriptions: true,
-  manualNodePrefix: 'Manual Node',
-  subscriptionPrefix: '',
-  prependTagName: false,
-});
-
-function ensureDefaults(): void {
-  if (!props.settings) return;
-
-  if (!props.settings.defaultPrefixSettings) {
-    props.settings.defaultPrefixSettings = buildDefaultPrefixSettings();
-  }
-
-  if (!Array.isArray(props.settings.defaultOperators)) {
-    props.settings.defaultOperators = [];
-  }
-
-  if (!Array.isArray(props.settings.regionOverrides)) {
-    props.settings.regionOverrides = [];
-  }
+function addRegionOverride(): void {
+  patchSettings({
+    regionOverrides: [...regionOverrides.value, { pattern: '', region: '美国', flags: 'i' }],
+  });
 }
 
-function addRegionOverride(): void {
-  ensureDefaults();
-  props.settings.regionOverrides.push({ pattern: '', region: '美国', flags: 'i' });
+function updateRegionOverride(index: number, patch: Partial<RegionOverrideRule>): void {
+  const next = regionOverrides.value.map((rule, idx) => (idx === index ? { ...rule, ...patch } : rule));
+  patchSettings({ regionOverrides: next });
 }
 
 function removeRegionOverride(index: number): void {
-  ensureDefaults();
-  props.settings.regionOverrides.splice(index, 1);
+  patchSettings({
+    regionOverrides: regionOverrides.value.filter((_, idx) => idx !== index),
+  });
 }
-
-watch(() => props.settings, ensureDefaults, { immediate: true });
 </script>
 
 <template>
@@ -113,14 +119,19 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         <!-- 第一排：手动节点文本前缀 与 开关 -->
         <div>
           <Input
-            v-model="settings.defaultPrefixSettings.manualNodePrefix"
             :label="t('settings.globalManualNodePrefix')"
+            :model-value="defaultPrefixSettings.manualNodePrefix"
+            @update:model-value="patchPrefixSettings({ manualNodePrefix: String($event ?? '') })"
           />
         </div>
 
         <div v-for="item in globalSwitchSelects" :key="item.labelKey">
           <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t(item.labelKey) }}</label>
-          <Select :model-value="item.value" :options="resolvedPrefixToggleOptions" @update:model-value="item.update" />
+          <Select
+            :model-value="item.value"
+            :options="resolvedPrefixToggleOptions"
+            @update:model-value="item.update(Boolean($event))"
+          />
         </div>
       </div>
     </SettingCard>
@@ -154,16 +165,23 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
           class="grid grid-cols-1 gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[1fr_160px_96px_auto]"
         >
           <Input
-            v-model="rule.pattern"
             :label="t('settings.regionOverridePattern')"
+            :model-value="rule.pattern"
             :placeholder="t('settings.regionOverridePatternPlaceholder')"
+            @update:model-value="updateRegionOverride(index, { pattern: String($event ?? '') })"
           />
           <Input
-            v-model="rule.region"
             :label="t('settings.regionOverrideRegion')"
+            :model-value="rule.region"
             :placeholder="t('settings.regionOverrideRegionPlaceholder')"
+            @update:model-value="updateRegionOverride(index, { region: String($event ?? '') })"
           />
-          <Input v-model="rule.flags" :label="t('settings.regionOverrideFlags')" placeholder="i" />
+          <Input
+            :label="t('settings.regionOverrideFlags')"
+            :model-value="rule.flags"
+            placeholder="i"
+            @update:model-value="updateRegionOverride(index, { flags: String($event ?? '') })"
+          />
           <div class="flex items-end">
             <button
               class="w-full rounded-md border border-red-900/60 bg-transparent px-3 py-2 text-xs font-semibold text-red-400 hover:bg-red-950/40"
@@ -192,7 +210,10 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         >
       </template>
 
-      <OperatorChain v-model="settings.defaultOperators" />
+      <OperatorChain
+        :model-value="defaultOperators"
+        @update:model-value="patchSettings({ defaultOperators: $event })"
+      />
     </SettingCard>
   </div>
 </template>

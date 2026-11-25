@@ -21,11 +21,13 @@ interface RuleItem extends RuleTagOption {
   type: string;
 }
 
+type EditableSubscriptionModel = EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+
 const props = withDefaults(
   defineProps<{
     show?: boolean;
     isNew?: boolean;
-    editingSubscription?: EditableSubscriptionForm | StoreMisubItem | SubscriptionItem | null;
+    editingSubscription?: EditableSubscriptionModel | null;
   }>(),
   {
     show: false,
@@ -36,8 +38,26 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
+  'update:editingSubscription': [value: EditableSubscriptionModel];
   confirm: [];
 }>();
+
+const editingSubscriptionModel = computed<EditableSubscriptionModel | null>({
+  get: () => props.editingSubscription,
+  set: (value) => {
+    if (value) {
+      emit('update:editingSubscription', value);
+    }
+  },
+});
+
+const updateEditingSubscription = (patch: Partial<EditableSubscriptionModel>) => {
+  if (!props.editingSubscription) return;
+  emit('update:editingSubscription', {
+    ...props.editingSubscription,
+    ...patch,
+  } as EditableSubscriptionModel);
+};
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
@@ -185,29 +205,28 @@ const removeRule = (index: number, targetPool: string | null = null) => {
 };
 
 // 将可视化选择同步到文本格式（保留与剔除同时支持）
+const lastSyncedExclude = ref<string | null>(null);
+
 const syncToText = () => {
   if (!props.editingSubscription) return;
 
   const exPatterns = excludeRules.value.map((r) => r.pattern);
   const kpPatterns = keepRules.value.map((r) => r.pattern);
 
+  let nextExclude = '';
   if (exPatterns.length === 0 && kpPatterns.length === 0) {
-    props.editingSubscription.exclude = '';
-    return;
+    nextExclude = '';
+  } else if (kpPatterns.length === 0) {
+    nextExclude = exPatterns.join('\n');
+  } else if (exPatterns.length === 0) {
+    nextExclude = kpPatterns.map((p) => `keep:${p}`).join('\n');
+  } else {
+    // 两者并存：使用标准 --- 分隔线
+    nextExclude = [...exPatterns, '---', ...kpPatterns.map((p) => `keep:${p}`)].join('\n');
   }
 
-  if (kpPatterns.length === 0) {
-    props.editingSubscription.exclude = exPatterns.join('\n');
-    return;
-  }
-
-  if (exPatterns.length === 0) {
-    props.editingSubscription.exclude = kpPatterns.map((p) => `keep:${p}`).join('\n');
-    return;
-  }
-
-  // 两者并存：使用标准 --- 分隔线
-  props.editingSubscription.exclude = [...exPatterns, '---', ...kpPatterns.map((p) => `keep:${p}`)].join('\n');
+  lastSyncedExclude.value = nextExclude;
+  updateEditingSubscription({ exclude: nextExclude });
 };
 
 const resolvePreset = (pattern: string): RuleItem => {
@@ -298,9 +317,15 @@ const parseFromText = () => {
 watch(
   [() => props.show, () => props.editingSubscription],
   ([showVal, subVal]) => {
-    if (showVal && subVal) {
-      parseFromText();
+    if (!showVal || !subVal) {
+      lastSyncedExclude.value = null;
+      return;
     }
+    if (lastSyncedExclude.value !== null && (subVal.exclude ?? '') === lastSyncedExclude.value) {
+      return;
+    }
+    lastSyncedExclude.value = null;
+    parseFromText();
   },
   { immediate: true },
 );
@@ -421,13 +446,13 @@ const switchToVisual = () => {
       </div>
     </template>
     <template #body>
-      <div class="space-y-4">
-        <EditForm :editing-subscription="editingSubscription" />
+      <div v-if="editingSubscriptionModel" class="space-y-4">
+        <EditForm v-model:editing-subscription="editingSubscriptionModel" />
 
         <RuleSection
+          v-model:editing-subscription="editingSubscriptionModel"
           :add-custom-keyword="addCustomKeyword"
           :custom-keyword="customKeyword"
-          :editing-subscription="editingSubscription"
           :exclude-rule-state="excludeRuleState"
           :exclude-rules="excludeRules"
           :is-advanced-mode="isAdvancedMode"
@@ -451,7 +476,7 @@ const switchToVisual = () => {
           @update:custom-keyword="customKeyword = $event"
         />
 
-        <AdvancedOptions :editing-subscription="editingSubscription" />
+        <AdvancedOptions v-model:editing-subscription="editingSubscriptionModel" />
       </div>
     </template>
   </Modal>

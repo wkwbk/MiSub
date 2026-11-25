@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { nextTick, onActivated, onMounted, onUnmounted, ref, unref, watch } from 'vue';
+import { isRef, nextTick, onActivated, onMounted, onUnmounted, ref, unref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
-import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
+import { useSettingsLogic, type DisguiseConfig } from '@/composables/useSettingsLogic.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import SettingsContent from '@/components/settings/SettingsContent.vue';
 import {
   resolveSettingsFocusAnchor,
@@ -161,6 +162,21 @@ watch(
 onUnmounted(() => {
   if (highlightTimer !== null) clearTimeout(highlightTimer);
 });
+function handleSettingsUpdate(nextSettings: AppSettingsConfig): void {
+  if (isRef(settings)) {
+    settings.value = nextSettings;
+  } else if (settings && typeof settings === 'object') {
+    Object.assign(settings, nextSettings);
+  }
+}
+
+function handleDisguiseConfigUpdate(nextDisguise: DisguiseConfig): void {
+  if (isRef(disguiseConfig)) {
+    disguiseConfig.value = nextDisguise;
+  } else if (disguiseConfig && typeof disguiseConfig === 'object') {
+    Object.assign(disguiseConfig, nextDisguise);
+  }
+}
 </script>
 
 <template>
@@ -179,6 +195,8 @@ onUnmounted(() => {
       layout-class="h-full"
       @save="handleSave"
       @update:active-tab="handleActiveTabUpdate"
+      @update:disguise-config="handleDisguiseConfigUpdate"
+      @update:settings="handleSettingsUpdate"
     />
   </div>
 </template>

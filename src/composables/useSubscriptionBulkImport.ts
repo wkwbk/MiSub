@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { RemoteSubscriptionUrlSchema } from '@misub/core/schemas/entities.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
@@ -24,13 +25,7 @@ export function extractSubscriptionTagNames(subscriptions: Array<Partial<StoreMi
  * 校验单行是否为合法的 http:// 或 https:// 订阅链接。
  */
 export function isValidSubscriptionUrl(line: string): boolean {
-  if (!/^https?:\/\//i.test(line)) return false;
-  try {
-    const parsed = new URL(line);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
+  return RemoteSubscriptionUrlSchema.safeParse(line).success;
 }
 
 /**

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteLocationNormalizedLoaded, RouteRecordRaw } from 'vue-router';
 import { isChunkLoadError, shouldReloadForChunkError } from '@/utils/chunk-reload.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { prefetchLoader } from '@/utils/prefetch.js';
 import type { PrefetchLoader } from '@/utils/prefetch.js';
 import { t } from '@/i18n/index.js';
@@ -137,12 +138,7 @@ const router = createRouter({
 
 // 自动恢复动态 chunk 加载失败导致的白屏
 router.onError((error: unknown) => {
-  const message =
-    error instanceof Error
-      ? error.message
-      : typeof error === 'object' && error !== null
-        ? (error as { message?: unknown }).message
-        : error;
+  const message = extractErrorMessage(error);
   if (isChunkLoadError(message) && shouldReloadForChunkError()) {
     window.location.reload();
   }

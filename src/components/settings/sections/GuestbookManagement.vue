@@ -1,66 +1,57 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import { computed, onMounted, ref } from 'vue';
+import type { GuestbookConfig } from '@misub/core/types.js';
 import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
-import { api } from '@/lib/http.js';
+import { fetchGuestbookMessages, manageGuestbookMessage, type GuestbookManageItem } from '@/lib/api.js';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
-
-interface GuestbookItem {
-  id: string;
-  status: string;
-  reply?: string;
-  nickname?: string;
-  content?: string;
-  type?: string;
-  createdAt?: string;
-  [key: string]: any;
-}
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
+}>();
+
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
 }>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const messages = ref<GuestbookItem[]>([]);
+const messages = ref<GuestbookManageItem[]>([]);
 const loading = ref(false);
 const filterStatus = ref('all');
 const replyingId = ref<string | null>(null);
 const replyContent = ref('');
 
-const defaultGuestbookConfig = {
+const defaultGuestbookConfig: GuestbookConfig = {
   enabled: false,
   allowAnonymous: true,
 };
 
-const ensureGuestbookConfig = () => {
-  if (!props.settings.guestbook) {
-    props.settings.guestbook = { ...defaultGuestbookConfig };
-  }
+const guestbookConfig = computed<GuestbookConfig>(() => ({
+  ...defaultGuestbookConfig,
+  ...props.settings?.guestbook,
+}));
+
+const updateGuestbookConfig = (patch: Partial<GuestbookConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    guestbook: {
+      ...guestbookConfig.value,
+      ...patch,
+    },
+  });
 };
-
-ensureGuestbookConfig();
-
-watch(
-  () => props.settings.guestbook,
-  (val) => {
-    if (!val) ensureGuestbookConfig();
-  },
-);
-
-// 确保 guestbook settings 存在
-const guestbookConfig = computed(() => props.settings.guestbook || defaultGuestbookConfig);
 
 const fetchMessages = async () => {
   loading.value = true;
   try {
-    const data = await api.get<{ success?: boolean; data?: GuestbookItem[]; message?: string }>('/api/guestbook/manage');
+    const data = await fetchGuestbookMessages();
     if (data.success) {
       messages.value = Array.isArray(data.data) ? data.data : [];
     } else {
@@ -84,12 +75,12 @@ const filteredMessages = computed(() => {
   });
 });
 
-const handleAction = async (action: string, id: string, payload: Record<string, unknown> = {}) => {
+const handleAction = async (action: string, id: string, replyContentText?: string) => {
   try {
-    const data = await api.post<{ success?: boolean; data?: GuestbookItem; message?: string }>('/api/guestbook/manage', {
+    const data = await manageGuestbookMessage({
       action,
       id,
-      ...payload,
+      ...(replyContentText !== undefined ? { replyContent: replyContentText } : {}),
     });
 
     if (data.success) {
@@ -115,7 +106,7 @@ const handleAction = async (action: string, id: string, payload: Record<string, 
   }
 };
 
-const startReply = (msg: GuestbookItem) => {
+const startReply = (msg: GuestbookManageItem) => {
   replyingId.value = msg.id;
   replyContent.value = msg.reply || '';
 };
@@ -127,7 +118,7 @@ const cancelReply = () => {
 
 const submitReply = (id: string) => {
   if (!replyContent.value.trim()) return;
-  handleAction('reply', id, { replyContent: replyContent.value });
+  handleAction('reply', id, replyContent.value);
 };
 
 const formatDate = (isoString: string | null | undefined) => {
@@ -188,10 +179,13 @@ onMounted(() => {
       <MessageSquare class="h-4 w-4" />
     </template>
     <template #actions>
-      <Switch v-model="guestbookConfig.enabled" />
+      <Switch
+        :model-value="Boolean(guestbookConfig.enabled)"
+        @update:model-value="updateGuestbookConfig({ enabled: Boolean($event) })"
+      />
     </template>
 
-    <!-- {{ t('settings.guestbookTitle') }}区域 -->
+    <!-- 留言板区域 -->
     <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-line">
       <div class="pb-4 border-b border-line flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="flex items-center gap-2">

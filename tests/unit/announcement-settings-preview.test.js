@@ -51,7 +51,10 @@ describe('AnnouncementSettings 实时预览', () => {
       },
     };
     const wrapper = mount(AnnouncementSettings, {
-      props: { settings },
+      props: {
+        settings,
+        'onUpdate:settings': (next) => wrapper.setProps({ settings: next }),
+      },
       global: {
         stubs: {
           Select: true,

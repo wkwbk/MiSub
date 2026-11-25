@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Check, RefreshCw } from '@lucide/vue';
-import { api } from '@/lib/http.js';
+import type { GuestbookConfig, TurnstileConfig } from '@misub/core/types.js';
+import { submitPublicGuestbook } from '@/lib/api.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import Modal from '@/components/ui/Modal.vue';
 import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
@@ -16,7 +18,7 @@ const sessionStore = getActivePinia() ? useSessionStore() : null;
 const props = withDefaults(
   defineProps<{
     show?: boolean;
-    config?: Record<string, any>;
+    config?: Partial<GuestbookConfig> & { turnstile?: Partial<TurnstileConfig> | null };
   }>(),
   {
     show: false,
@@ -28,7 +30,9 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const turnstileConfig = computed(() => props.config?.turnstile || (sessionStore?.publicConfig as any)?.turnstile || null);
+const turnstileConfig = computed<Partial<TurnstileConfig> | null>(
+  () => props.config?.turnstile || sessionStore?.publicConfig?.turnstile || null,
+);
 const useTurnstile = computed(() =>
   Boolean(turnstileConfig.value?.enableForGuestbook && turnstileConfig.value?.siteKey),
 );
@@ -141,7 +145,12 @@ const submitMessage = async () => {
 
   submitting.value = true;
   try {
-    const payload: Record<string, any> = {
+    const payload: {
+      nickname: string;
+      content: string;
+      type: string;
+      turnstileToken?: string;
+    } = {
       nickname: form.value.nickname,
       content: form.value.content,
       type: form.value.type,
@@ -149,7 +158,7 @@ const submitMessage = async () => {
     if (useTurnstile.value) {
       payload.turnstileToken = turnstileToken.value;
     }
-    const data = await api.post<{ success?: boolean; message?: string }>('/api/public/guestbook', payload);
+    const data = await submitPublicGuestbook(payload);
 
     if (data.success) {
       showSuccess.value = true;
@@ -157,9 +166,9 @@ const submitMessage = async () => {
       errorMsg.value = data.message || t('guestbook.submitFailed');
       resetVerification();
     }
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('Submit guestbook error', e);
-    errorMsg.value = e?.data?.error || e?.data?.message || e?.message || t('guestbook.networkError');
+    errorMsg.value = extractErrorMessage(e, t('guestbook.networkError'));
     resetVerification();
   } finally {
     submitting.value = false;
@@ -230,7 +239,7 @@ const submitMessage = async () => {
           <TurnstileWidget
             v-if="useTurnstile"
             ref="turnstileRef"
-            :site-key="turnstileConfig.siteKey"
+            :site-key="turnstileConfig?.siteKey || ''"
             action="guestbook"
             @error="handleTurnstileError"
             @expire="handleTurnstileExpire"

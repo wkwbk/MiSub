@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
+import { computed, isRef, onMounted, ref, watch } from 'vue';
+import { useSettingsLogic, type DisguiseConfig } from '@/composables/useSettingsLogic.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import SettingsContent from '@/components/settings/SettingsContent.vue';
 import { resolveSettingsTab, SETTINGS_ACTIVE_TAB_STORAGE_KEY } from '@/utils/dashboard-deeplink.js';
 import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';
@@ -36,6 +37,22 @@ const handleSaveAndReturnStatus = async (): Promise<boolean> => {
   return handleSave();
 };
 
+function handleSettingsUpdate(nextSettings: AppSettingsConfig): void {
+  if (isRef(settings)) {
+    settings.value = nextSettings;
+  } else if (settings && typeof settings === 'object') {
+    Object.assign(settings, nextSettings);
+  }
+}
+
+function handleDisguiseConfigUpdate(nextDisguise: DisguiseConfig): void {
+  if (isRef(disguiseConfig)) {
+    disguiseConfig.value = nextDisguise;
+  } else if (disguiseConfig && typeof disguiseConfig === 'object') {
+    Object.assign(disguiseConfig, nextDisguise);
+  }
+}
+
 // 暴露 handleSave 与保存状态给父组件（SettingsModal）
 defineExpose({
   handleSave: handleSaveAndReturnStatus,
@@ -59,6 +76,8 @@ defineExpose({
       hide-footer
       in-modal
       @save="handleSave"
+      @update:disguise-config="handleDisguiseConfigUpdate"
+      @update:settings="handleSettingsUpdate"
     />
   </div>
 </template>

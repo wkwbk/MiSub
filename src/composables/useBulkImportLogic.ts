@@ -1,24 +1,19 @@
 import { ref } from 'vue';
-import type { ParseSubscriptionResponse } from '@misub/core';
+import { HttpUrlStringSchema, ManualNodeUrlSchema, RemoteSubscriptionUrlSchema } from '@misub/core/schemas/entities.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 import { generateNodeId, generateSubscriptionId } from '@misub/core/utils/id.js';
-import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@misub/core/protocols/constants.js';
 import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
 import { parseQuantumultXConfig, parseSurgeConfig } from '@misub/core/protocols/index.js';
-import { api } from '@/lib/http.js';
+import { parseSubscriptionContent } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 
 export interface UseBulkImportLogicOptions {
   addSubscriptionsFromBulk: (subs: StoreMisubItem[]) => void | Promise<void>;
   addNodesFromBulk: (nodes: StoreMisubItem[], tags?: string[]) => void;
 }
-
-const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS.filter((p) => p !== 'http' && p !== 'https' && p !== 'v2rayn');
-const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);
-const HTTP_PROXY_NODE_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
 export function needsServerParsing(text: string): boolean {
   if (/^v2rayn:\/\//im.test(text)) return true;
@@ -35,14 +30,14 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
   const convertViaServer = async (importText: string): Promise<string> => {
     try {
-      const parsed = (await api.post('/api/parse_subscription', { content: importText })) as ParseSubscriptionResponse | null;
+      const parsed = await parseSubscriptionContent(importText);
       const converted = (parsed?.data?.nodes || []).map((node) => node?.url).filter(Boolean);
       if (!parsed?.success || converted.length === 0) return importText;
 
       const keptLines = importText
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => /^https?:\/\//i.test(line));
+        .filter((line) => HttpUrlStringSchema.safeParse(line).success);
 
       return [...converted, ...keptLines].join('\n');
     } catch (error: unknown) {
@@ -116,13 +111,13 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         normalizedTags,
       );
 
-      if (/^https?:\/\//i.test(line) && !HTTP_PROXY_NODE_REGEX.test(line)) {
+      if (RemoteSubscriptionUrlSchema.safeParse(line).success) {
         if (!existingUrls.has(line)) {
           validSubs.push({ ...baseItem, id: generateSubscriptionId() });
         } else {
           duplicateCount++;
         }
-      } else if (BULK_IMPORT_NODE_REGEX.test(line) || HTTP_PROXY_NODE_REGEX.test(line)) {
+      } else if (!/^v2rayn:\/\//i.test(line) && ManualNodeUrlSchema.safeParse(line).success) {
         const alreadyParsed = validNodes.some((n) => n.url === line);
         if (!alreadyParsed) {
           if (!existingUrls.has(line)) {

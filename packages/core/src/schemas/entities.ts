@@ -4,7 +4,20 @@ import { NODE_PROTOCOL_REGEX } from '../protocols/constants.js';
 const HTTP_URL_REGEX = /^https?:\/\/.+/i;
 const HTTP_PROXY_AUTH_URL_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
-export const HttpUrlStringSchema = z.string().trim().regex(HTTP_URL_REGEX);
+const isValidHttpProtocolUrl = (value: string): boolean => {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
+
+export const HttpUrlStringSchema = z
+  .string()
+  .trim()
+  .regex(HTTP_URL_REGEX)
+  .refine(isValidHttpProtocolUrl, 'URL must be a valid http:// or https:// URL');
 
 export const RegexRuleObjectSchema = z
   .object({
@@ -179,6 +192,7 @@ export const RemoteSubscriptionUrlSchema = z
   .string()
   .trim()
   .regex(HTTP_URL_REGEX, 'Subscription URL must start with http:// or https://')
+  .refine(isValidHttpProtocolUrl, 'Subscription URL must be a valid http:// or https:// URL')
   .refine((value) => !HTTP_PROXY_AUTH_URL_REGEX.test(value), 'Authenticated HTTP proxy URLs belong to manual nodes');
 
 export const ManualNodeUrlSchema = z
@@ -211,7 +225,7 @@ export const SubscriptionSchema = z
     nodeTransform: z.record(z.string(), z.unknown()).nullable().optional(),
     disabledNodes: z.array(z.string()).optional(),
     userInfo: SubscriptionUserInfoSchema.optional(),
-    lastError: z.string().optional(),
+    lastError: z.string().nullable().optional(),
     lastUpdate: z.string().nullable().optional(),
     sortIndex: z.number().optional(),
     createdAt: z.string().nullable().optional(),
@@ -253,8 +267,8 @@ export const ProfileSubscriptionRefSchema = z.union([
 
 export const ProfilePrefixSettingsSchema = z
   .object({
-    enableManualNodes: z.boolean().optional(),
-    enableSubscriptions: z.boolean().optional(),
+    enableManualNodes: z.boolean().nullable().optional(),
+    enableSubscriptions: z.boolean().nullable().optional(),
     manualNodePrefix: z.string().optional(),
     subscriptionPrefix: z.string().optional(),
     prependTagName: z.boolean().nullable().optional(),
@@ -310,18 +324,198 @@ export const ProfileSchema = z
   })
   .passthrough();
 
+export const TokenAutoRotateConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    intervalDays: z.number().int().positive().default(2),
+    lastRotatedAt: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const DisguiseConfigSchema = z
+  .object({
+    pageType: z.enum(['default', 'redirect']).default('default'),
+    redirectUrl: z.string().default(''),
+  })
+  .passthrough();
+
+export const AnnouncementConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    title: z.string().default(''),
+    content: z.string().default(''),
+    type: z.enum(['info', 'warning', 'success', 'error']).default('info'),
+    dismissible: z.boolean().default(true),
+    updatedAt: z.string().nullable().optional(),
+  })
+  .passthrough();
+
+export const GuestbookConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    allowAnonymous: z.boolean().default(true),
+  })
+  .passthrough();
+
+export const WebdavBackupConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    endpoint: z.string().default(''),
+    username: z.string().default(''),
+    password: z.string().default(''),
+    remotePath: z.string().default('/MiSub'),
+    filenameTemplate: z.string().default('misub-backup-{datetime}.json'),
+    backupScope: z.enum(['dataOnly', 'dataAndSettings']).default('dataOnly'),
+    autoBackup: z.boolean().default(false),
+    interval: z.enum(['hourly', 'daily', 'weekly', 'monthly']).default('daily'),
+    retentionCount: z.number().int().min(1).max(100).default(7),
+    lastCheckedAt: z.string().nullable().optional(),
+    lastBackupAt: z.string().nullable().optional(),
+    lastBackupStatus: z.string().nullable().optional(),
+    lastBackupMessage: z.string().optional(),
+    lastBackupFile: z.string().optional(),
+  })
+  .passthrough();
+
+export const ExternalApiTokenSchema = z
+  .object({
+    name: z.string().default('default'),
+    token: z.string().default(''),
+  })
+  .passthrough();
+
+export const ExternalApiConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    tokens: z.array(ExternalApiTokenSchema).default([]),
+  })
+  .passthrough();
+
+export const SubconverterOptionsSchema = z
+  .object({
+    udp: z.boolean().optional(),
+    emoji: z.boolean().optional(),
+    scv: z.boolean().optional(),
+    tfo: z.boolean().optional(),
+    sort: z.boolean().optional(),
+    list: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const SubconverterConfigSchema = z
+  .object({
+    engineMode: z.string().optional(),
+    defaultBackend: z.string().optional(),
+    defaultOptions: SubconverterOptionsSchema.optional(),
+  })
+  .passthrough();
+
+export const ShortLinkConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    provider: z.string().default('sink'),
+    apiUrl: z.string().default(''),
+    apiToken: z.string().default(''),
+    hasToken: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const TurnstileConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    siteKey: z.string().default(''),
+    secretKey: z.string().default(''),
+    enableForGuestbook: z.boolean().default(true),
+    enableForLogin: z.boolean().default(false),
+    hasSecretKey: z.boolean().optional(),
+    hasEnvKeys: z.boolean().optional(),
+    loginDisabledByEnv: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const TelegramPushConfigSchema = z
+  .object({
+    enabled: z.boolean().default(true),
+    botToken: z.string().default(''),
+    webhookSecret: z.string().default(''),
+    allowedUserIds: z.array(z.string()).default([]),
+    allowAllUsers: z.boolean().default(false),
+    hasBotToken: z.boolean().optional(),
+    hasWebhookSecret: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const CustomPageConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    type: z.string().default('html'),
+    content: z.string().default(''),
+    css: z.string().default(''),
+    iframeUrl: z.string().optional(),
+    iframeHeight: z.string().optional(),
+    iframeFullWidth: z.boolean().optional(),
+    iframeAllowFullscreen: z.boolean().optional(),
+    iframeFillViewport: z.boolean().optional(),
+    iframePaddingY: z.string().optional(),
+    iframeRadius: z.string().optional(),
+    iframeShadow: z.boolean().optional(),
+    useDefaultLayout: z.boolean().default(true),
+    allowExternalStylesheets: z.boolean().default(false),
+    allowScripts: z.boolean().default(false),
+    hideBranding: z.boolean().default(false),
+    hideHeader: z.boolean().default(false),
+    hideFooter: z.boolean().default(false),
+  })
+  .passthrough();
+
+export const RegionOverrideRuleSchema = z
+  .object({
+    pattern: z.string().default(''),
+    region: z.string().default(''),
+    flags: z.string().default('i'),
+  })
+  .passthrough();
+
+export const HeroConfigSchema = z
+  .object({
+    title1: z.string().optional(),
+    title2: z.string().optional(),
+    description: z.string().optional(),
+  })
+  .passthrough();
+
+export const RuleTemplateSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    enabled: z.boolean().optional(),
+    content: z.string().optional(),
+    type: z.string().optional(),
+    createdAt: z.string().optional(),
+    updatedAt: z.string().optional(),
+  })
+  .passthrough();
+
 export const SettingsSchema = z
   .object({
     fileName: z.string().optional(),
     myToken: z.string().optional(),
     profileToken: z.string().optional(),
     publicUrl: z.string().optional(),
+    tokenAutoRotate: TokenAutoRotateConfigSchema.optional(),
     defaultLocale: z.string().optional(),
+    cronSecret: z.string().optional(),
+    botToken: z.string().optional(),
+    hasBotToken: z.boolean().optional(),
+    chatId: z.string().optional(),
+    customLoginPath: z.string().optional(),
     transformConfigMode: z.string().optional(),
     transformConfig: z.string().optional(),
     ruleLevel: z.string().optional(),
     builtinSkipCertVerify: z.boolean().optional(),
     builtinEnableUdp: z.boolean().optional(),
+    builtinTransform: z.record(z.string(), z.unknown()).optional(),
     enableAccessLog: z.boolean().optional(),
     accessLogPersistenceMode: z.string().optional(),
     mergeExpireStrategy: z.enum(['max', 'min']).optional(),
@@ -331,11 +525,33 @@ export const SettingsSchema = z
     enableFlagEmoji: z.boolean().optional(),
     enablePublicPage: z.boolean().optional(),
     allowBrowserSubAccess: z.boolean().optional(),
+    disguise: DisguiseConfigSchema.optional(),
     storageType: z.string().optional(),
     autoUpdateInterval: z.number().nonnegative().optional(),
     profileUpdateInterval: z.number().nonnegative().optional(),
     subFetchMinInterval: z.number().nonnegative().optional(),
     subFetchLimitMode: z.enum(['cache', 'strict']).optional(),
+    defaultPrefixSettings: ProfilePrefixSettingsSchema.optional(),
+    manualNodeTagOrder: z.array(z.string()).optional(),
+    subscriptionTagOrder: z.array(z.string()).optional(),
+    profileTagOrder: z.array(z.string()).optional(),
+    dismissedHealthItems: z.array(z.string()).optional(),
     defaultOperators: z.array(OperatorRuleSchema).optional(),
+    nodeTransformPresets: z.array(z.record(z.string(), z.unknown())).optional(),
+    regionOverrides: z.array(RegionOverrideRuleSchema).optional(),
+    announcement: AnnouncementConfigSchema.optional(),
+    guestbook: GuestbookConfigSchema.optional(),
+    webdavBackup: WebdavBackupConfigSchema.optional(),
+    externalApi: ExternalApiConfigSchema.optional(),
+    subconverter: SubconverterConfigSchema.optional(),
+    shortLink: ShortLinkConfigSchema.optional(),
+    turnstile: TurnstileConfigSchema.optional(),
+    telegramPushConfig: TelegramPushConfigSchema.optional(),
+    customDnsOverride: z.string().optional(),
+    customPage: CustomPageConfigSchema.optional(),
+    hero: HeroConfigSchema.optional(),
+    heroTitle1: z.string().optional(),
+    heroTitle2: z.string().optional(),
+    heroDescription: z.string().optional(),
   })
   .passthrough();

@@ -19,7 +19,8 @@ import { getItemTags } from '@/utils/tags.js';
 import { isAutoUpdatePaused } from '@misub/core/domain/auto-update.js';
 import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
 import { lookupDomainName } from '@/utils/domain-name-memory.js';
-import { api } from '@/lib/http.js';
+import { detectAirportName } from '@/lib/api.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { TIMING } from '@/constants/timing.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import Switch from '@/components/ui/Switch.vue';
@@ -29,7 +30,7 @@ import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = withDefaults(
   defineProps<{
-    misub: SubscriptionItem & Record<string, any>;
+    misub: StoreMisubItem | (SubscriptionItem & { detectedName?: string; website?: string; excludeTraffic?: boolean });
     isSelectionMode?: boolean;
     isSelected?: boolean;
   }>(),
@@ -41,7 +42,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   delete: [];
-  change: [value?: any];
+  change: [value?: unknown];
   update: [];
   edit: [];
   preview: [];
@@ -110,7 +111,7 @@ const handleDetect = async () => {
   if (detecting.value || !rootDomain.value) return;
   detecting.value = true;
   try {
-    const result = await api.post('/api/detect_airport_name', { url: props.misub.url });
+    const result = await detectAirportName(props.misub.url);
     const name = String(result?.name || '').trim();
     if (name) {
       localDetectedName.value = name;
@@ -482,7 +483,7 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         <div class="flex items-center gap-2">
           <button
             :aria-label="misub.isUpdating ? t('subscriptions.updating') : t('subscriptions.updateNodeInfo')"
-            :disabled="misub.isUpdating"
+            :disabled="Boolean(misub.isUpdating)"
             :title="misub.isUpdating ? t('subscriptions.updating') : t('subscriptions.updateNodeInfo')"
             class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50"
             @click.stop="emit('update')"

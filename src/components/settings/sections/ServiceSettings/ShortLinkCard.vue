@@ -1,41 +1,45 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { ShortLinkConfig } from '@misub/core/types.js';
 import { Link2, Loader2 } from '@lucide/vue';
 import SecretInput from '@/components/settings/SecretInput.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
+import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { testShortLinkConnection } from '@/lib/api.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import { useI18n } from '@/i18n/index.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 const { t } = useI18n();
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
+}>();
+
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
 }>();
 
 const isTesting = ref(false);
 const testResult = ref<{ success: boolean; message: string } | null>(null);
 
-const shortLinkConfig = computed({
+const shortLinkConfig = computed<ShortLinkConfig>({
   get() {
-    if (!props.settings.shortLink || typeof props.settings.shortLink !== 'object') {
-      return {
-        enabled: false,
-        provider: 'sink',
-        apiUrl: '',
-        apiToken: '',
-        hasToken: false,
-      };
-    }
-    return props.settings.shortLink;
+    return {
+      ...DEFAULT_SETTINGS.shortLink,
+      ...props.settings?.shortLink,
+    };
   },
-  set(value) {
-    props.settings.shortLink = value;
+  set(value: ShortLinkConfig) {
+    emit('update:settings', {
+      ...props.settings,
+      shortLink: value,
+    });
   },
 });
 
-function updateField(key: string, value: unknown) {
+function updateField<K extends keyof ShortLinkConfig>(key: K, value: ShortLinkConfig[K]): void {
   shortLinkConfig.value = {
     ...shortLinkConfig.value,
     [key]: value,
@@ -63,10 +67,10 @@ async function handleTestConnection() {
         message: result?.message || result?.error || t('settings.shortLinkTestFailed'),
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     testResult.value = {
       success: false,
-      message: error?.message || t('settings.shortLinkTestFailed'),
+      message: extractErrorMessage(error, t('settings.shortLinkTestFailed')),
     };
   } finally {
     isTesting.value = false;
@@ -83,7 +87,7 @@ async function handleTestConnection() {
       <Switch
         :aria-label="t('settings.shortLinkEnable')"
         :model-value="Boolean(shortLinkConfig.enabled)"
-        @update:model-value="updateField('enabled', $event)"
+        @update:model-value="updateField('enabled', Boolean($event))"
       />
     </template>
 
@@ -114,7 +118,7 @@ async function handleTestConnection() {
               ? t('settings.shortLinkTokenSavedPlaceholder')
               : t('settings.shortLinkTokenPlaceholder')
           "
-          @update:model-value="updateField('apiToken', $event)"
+          @update:model-value="updateField('apiToken', String($event ?? ''))"
         />
       </div>
 

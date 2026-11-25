@@ -1,40 +1,40 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { TurnstileConfig } from '@misub/core/types.js';
 import { ShieldCheck } from '@lucide/vue';
 import SecretInput from '@/components/settings/SecretInput.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
+import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { useI18n } from '@/i18n/index.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const { t } = useI18n();
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
 }>();
 
-const turnstileConfig = computed({
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const turnstileConfig = computed<TurnstileConfig>({
   get() {
-    if (!props.settings.turnstile || typeof props.settings.turnstile !== 'object') {
-      return {
-        enabled: false,
-        siteKey: '',
-        secretKey: '',
-        enableForGuestbook: true,
-        enableForLogin: false,
-        hasSecretKey: false,
-        hasEnvKeys: false,
-        loginDisabledByEnv: false,
-      };
-    }
-    return props.settings.turnstile;
+    return {
+      ...DEFAULT_SETTINGS.turnstile,
+      ...props.settings?.turnstile,
+    };
   },
-  set(value) {
-    props.settings.turnstile = value;
+  set(value: TurnstileConfig) {
+    emit('update:settings', {
+      ...props.settings,
+      turnstile: value,
+    });
   },
 });
 
-function updateField(key: string, value: unknown) {
+function updateField<K extends keyof TurnstileConfig>(key: K, value: TurnstileConfig[K]): void {
   turnstileConfig.value = {
     ...turnstileConfig.value,
     [key]: value,
@@ -51,7 +51,7 @@ function updateField(key: string, value: unknown) {
       <Switch
         :aria-label="t('settings.turnstileEnable')"
         :model-value="Boolean(turnstileConfig.enabled)"
-        @update:model-value="updateField('enabled', $event)"
+        @update:model-value="updateField('enabled', Boolean($event))"
       />
     </template>
 
@@ -93,7 +93,7 @@ function updateField(key: string, value: unknown) {
                 ? t('settings.turnstileEnvFallbackPlaceholder')
                 : t('settings.turnstileSecretPlaceholder')
           "
-          @update:model-value="updateField('secretKey', $event)"
+          @update:model-value="updateField('secretKey', String($event ?? ''))"
         />
       </div>
 
@@ -107,7 +107,7 @@ function updateField(key: string, value: unknown) {
             :aria-label="t('settings.turnstileGuestbookTitle')"
             :model-value="turnstileConfig.enableForGuestbook !== false"
             class="shrink-0"
-            @update:model-value="updateField('enableForGuestbook', $event)"
+            @update:model-value="updateField('enableForGuestbook', Boolean($event))"
           />
         </div>
 
@@ -121,7 +121,7 @@ function updateField(key: string, value: unknown) {
               :aria-label="t('settings.turnstileLoginTitle')"
               :model-value="Boolean(turnstileConfig.enableForLogin)"
               class="shrink-0"
-              @update:model-value="updateField('enableForLogin', $event)"
+              @update:model-value="updateField('enableForLogin', Boolean($event))"
             />
           </div>
           <p v-if="turnstileConfig.enableForLogin" class="callout-warning">

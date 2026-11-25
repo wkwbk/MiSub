@@ -1,9 +1,12 @@
-<script setup lang="ts">
+<script setup lang="ts" generic="T extends { builtinTransform?: BuiltinTransformConfig }">
 import { computed, ref, watch } from 'vue';
 import * as yaml from 'js-yaml';
+import type { BuiltinTransformConfig, CustomVisualRule } from '@misub/core/types.js';
 import { Check, Code2, Copy, Plus, Sliders, Trash2 } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
+import { copyTextToClipboard } from '@/utils/clipboard.js';
 import {
   DEFAULT_BUILTIN_TRANSFORM,
   detectVisualRulePreset,
@@ -17,7 +20,7 @@ const { t, locale } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    settings: Record<string, any>;
+    settings: T;
     section?: string; // 'rules' | 'advanced'
   }>(),
   {
@@ -25,33 +28,24 @@ const props = withDefaults(
   },
 );
 
-function ensureBuiltinTransform() {
-  if (!props.settings.builtinTransform || typeof props.settings.builtinTransform !== 'object') {
-    props.settings.builtinTransform = normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
-  } else {
-    const normalized = normalizeBuiltinTransform(props.settings.builtinTransform);
-    Object.assign(props.settings.builtinTransform, normalized);
-  }
-}
+const emit = defineEmits<{
+  'update:settings': [value: T];
+}>();
 
-ensureBuiltinTransform();
-
-watch(
-  () => props.settings.builtinTransform,
-  (val) => {
-    if (!val || typeof val !== 'object') {
-      ensureBuiltinTransform();
-    }
-  },
+const bt = computed<BuiltinTransformConfig>(() =>
+  normalizeBuiltinTransform(props.settings?.builtinTransform || DEFAULT_BUILTIN_TRANSFORM),
 );
 
-interface BuiltinTransformState {
-  selectedRules?: string[];
-  customRules?: Array<Record<string, any>>;
-  [key: string]: any;
+function updateBt(patch: Partial<BuiltinTransformConfig>): void {
+  emit('update:settings', {
+    ...props.settings,
+    builtinTransform: {
+      ...bt.value,
+      ...patch,
+    },
+  });
 }
 
-const bt = computed<BuiltinTransformState>(() => props.settings.builtinTransform);
 const isZh = computed(() => String(locale?.value || 'zh-CN').startsWith('zh'));
 
 // --- 1. 规则选择 ---
@@ -66,8 +60,10 @@ const currentPreset = computed({
   get: () => detectVisualRulePreset(bt.value.selectedRules),
   set: (preset: string) => {
     if (VISUAL_RULE_PRESETS[preset]) {
-      bt.value.selectedRules = [...VISUAL_RULE_PRESETS[preset]];
-      bt.value.rulePreset = preset;
+      updateBt({
+        selectedRules: [...VISUAL_RULE_PRESETS[preset]],
+        rulePreset: preset,
+      });
     }
   },
 });
@@ -84,8 +80,10 @@ function toggleRule(ruleId: string) {
   } else {
     current.push(ruleId);
   }
-  bt.value.selectedRules = current;
-  bt.value.rulePreset = detectVisualRulePreset(current);
+  updateBt({
+    selectedRules: current,
+    rulePreset: detectVisualRulePreset(current),
+  });
 }
 
 function getCategoryLabel(cat: { labelZh: string; labelEn: string }) {
@@ -115,40 +113,55 @@ watch(customRuleMode, (mode) => {
 });
 
 function addCustomRule() {
-  if (!Array.isArray(bt.value.customRules)) {
-    bt.value.customRules = [];
-  }
-  bt.value.customRules.push({
-    name: '',
-    action: 'proxy',
-    domainSuffix: [],
-    domainKeyword: [],
-    ipCidr: [],
-    srcIpCidr: [],
-    ruleSet: [],
-  });
+  const nextRules: CustomVisualRule[] = [
+    ...(bt.value.customRules || []),
+    {
+      name: '',
+      action: 'proxy',
+      domainSuffix: [],
+      domainKeyword: [],
+      ipCidr: [],
+      srcIpCidr: [],
+      ruleSet: [],
+    },
+  ];
+  updateBt({ customRules: nextRules });
 }
 
 function removeCustomRule(index: number) {
-  bt.value.customRules?.splice(index, 1);
+  updateBt({
+    customRules: (bt.value.customRules || []).filter((_, idx) => idx !== index),
+  });
+}
+
+function updateCustomRule(index: number, patch: Partial<CustomVisualRule>) {
+  const nextRules = (bt.value.customRules || []).map((rule, idx) =>
+    idx === index ? { ...rule, ...patch } : rule,
+  );
+  updateBt({ customRules: nextRules });
 }
 
 function formatListField(list: unknown) {
   return Array.isArray(list) ? list.join(', ') : '';
 }
 
-function updateListField(rule: Record<string, any>, key: string, rawValue: string) {
-  rule[key] = String(rawValue || '')
+function updateListField(
+  index: number,
+  key: 'domainSuffix' | 'domainKeyword' | 'ipCidr' | 'srcIpCidr',
+  rawValue: string,
+) {
+  const nextList = String(rawValue || '')
     .split(/[\n,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
+  updateCustomRule(index, { [key]: nextList } as Partial<CustomVisualRule>);
 }
 
 function handleCustomRuleJsonInput(event: Event) {
   const raw = (event.target as HTMLTextAreaElement).value;
   customRuleJsonText.value = raw;
   if (!raw.trim()) {
-    bt.value.customRules = [];
+    updateBt({ customRules: [] });
     customRuleJsonError.value = '';
     return;
   }
@@ -158,9 +171,10 @@ function handleCustomRuleJsonInput(event: Event) {
       customRuleJsonError.value = t('settings.visualCustomRulesJsonArrayError');
       return;
     }
-    bt.value.customRules = parsed
+    const normalized = parsed
       .map(normalizeCustomRule)
-      .filter((item): item is NonNullable<typeof item> => Boolean(item));
+      .filter((item): item is CustomVisualRule => Boolean(item));
+    updateBt({ customRules: normalized });
     customRuleJsonError.value = '';
   } catch {
     customRuleJsonError.value = t('settings.visualCustomRulesJsonInvalid');
@@ -183,27 +197,26 @@ const subconverterConfigUrl = computed(() => {
   params.set('group_by_country', bt.value.groupByCountry ? 'true' : 'false');
   params.set('include_auto_select', bt.value.includeAutoSelect ? 'true' : 'false');
 
-  const validCustom = (bt.value.customRules || []).filter((r: any) => r && String(r.name || '').trim());
+  const validCustom = (bt.value.customRules || []).filter((r) => r && String(r.name || '').trim());
   if (validCustom.length > 0) {
     params.set('customRules', JSON.stringify(validCustom));
   }
-  return `${origin}/api/subconverter-config?${params.toString()}`;
+  return `${origin}${API_ENDPOINTS.SUBCONVERTER_CONFIG}?${params.toString()}`;
 });
 
 async function copySubconverterUrl() {
-  try {
-    await navigator.clipboard.writeText(subconverterConfigUrl.value);
+  const copied = await copyTextToClipboard(subconverterConfigUrl.value);
+  if (copied) {
     copiedSubconverterUrl.value = true;
     setTimeout(() => {
       copiedSubconverterUrl.value = false;
     }, 2000);
-  } catch {
-    // 忽略无剪贴板权限时的错误
   }
 }
 
 // --- 4. 基础配置设置 ---
-const activeBaseConfigTarget = ref('singbox'); // 'singbox' | 'clash' | 'surge'
+type BaseConfigTarget = 'singbox' | 'clash' | 'surge';
+const activeBaseConfigTarget = ref<BaseConfigTarget>('singbox');
 
 const baseConfigTargetOptions = [
   { value: 'singbox', label: 'Sing-Box (JSON)' },
@@ -213,11 +226,14 @@ const baseConfigTargetOptions = [
 
 const activeBaseConfigText = computed({
   get: () => bt.value.baseConfig?.[activeBaseConfigTarget.value] || '',
-  set: (val) => {
-    if (!bt.value.baseConfig || typeof bt.value.baseConfig !== 'object') {
-      bt.value.baseConfig = { singbox: '', clash: '', surge: '' };
-    }
-    bt.value.baseConfig[activeBaseConfigTarget.value] = val;
+  set: (val: string) => {
+    const baseConfig = bt.value.baseConfig || { singbox: '', clash: '', surge: '' };
+    updateBt({
+      baseConfig: {
+        ...baseConfig,
+        [activeBaseConfigTarget.value]: val,
+      },
+    });
   },
 });
 
@@ -354,17 +370,25 @@ function clearActiveBaseConfig() {
                   {{ t('settings.visualCustomRuleName') }}
                 </label>
                 <input
-                  v-model="rule.name"
                   :placeholder="t('settings.visualCustomRuleNamePlaceholder')"
+                  :value="rule.name"
                   class="block h-8 w-full rounded-md border border-line bg-inset px-3 text-xs text-fg shadow-none focus:border-line-strong"
                   type="text"
+                  @input="updateCustomRule(index, { name: ($event.target as HTMLInputElement).value })"
                 />
               </div>
               <div class="sm:col-span-4">
                 <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualCustomRuleAction') }}
                 </label>
-                <Select v-model="rule.action" :options="actionOptions" size="sm" />
+                <Select
+                  :model-value="rule.action"
+                  :options="actionOptions"
+                  size="sm"
+                  @update:model-value="
+                    updateCustomRule(index, { action: String($event) as CustomVisualRule['action'] })
+                  "
+                />
               </div>
               <div class="flex justify-end sm:col-span-2">
                 <button
@@ -389,7 +413,7 @@ function clearActiveBaseConfig() {
                   class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="example.com, internal.local"
                   type="text"
-                  @input="updateListField(rule, 'domainSuffix', ($event.target as HTMLInputElement).value)"
+                  @input="updateListField(index, 'domainSuffix', ($event.target as HTMLInputElement).value)"
                 />
               </div>
               <div>
@@ -401,7 +425,7 @@ function clearActiveBaseConfig() {
                   class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="openai, company"
                   type="text"
-                  @input="updateListField(rule, 'domainKeyword', ($event.target as HTMLInputElement).value)"
+                  @input="updateListField(index, 'domainKeyword', ($event.target as HTMLInputElement).value)"
                 />
               </div>
               <div>
@@ -413,7 +437,7 @@ function clearActiveBaseConfig() {
                   class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="10.0.0.0/8, 192.168.1.0/24"
                   type="text"
-                  @input="updateListField(rule, 'ipCidr', ($event.target as HTMLInputElement).value)"
+                  @input="updateListField(index, 'ipCidr', ($event.target as HTMLInputElement).value)"
                 />
               </div>
               <div>
@@ -425,7 +449,7 @@ function clearActiveBaseConfig() {
                   class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="192.168.1.100/32"
                   type="text"
-                  @input="updateListField(rule, 'srcIpCidr', ($event.target as HTMLInputElement).value)"
+                  @input="updateListField(index, 'srcIpCidr', ($event.target as HTMLInputElement).value)"
                 />
               </div>
             </div>
@@ -444,9 +468,9 @@ function clearActiveBaseConfig() {
 
       <div v-else class="space-y-2">
         <textarea
+          :placeholder="t('settings.visualCustomRulesJsonPlaceholder')"
           :value="customRuleJsonText"
           class="block min-h-[140px] w-full rounded-md border border-line bg-inset p-3 font-mono text-xs text-fg focus:border-line-strong"
-          placeholder='[{"name":"公司内网","action":"direct","domainSuffix":["corp.local"],"ipCidr":["10.0.0.0/8"]}]'
           @input="handleCustomRuleJsonInput"
         />
         <p v-if="customRuleJsonError" class="text-xs text-status-danger">

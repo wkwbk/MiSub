@@ -7,7 +7,8 @@ import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
-import { collectNodeAttributeOptions } from '@/composables/manual-nodes/filters.js';
+import { collectNodeAttributeOptions, type NodeInspectMap } from '@/composables/manual-nodes/filters.js';
+import type { PingResult } from '@/composables/useManualNodes.js';
 
 interface NodeAttrFilters {
   protocol: string;
@@ -26,10 +27,10 @@ const props = withDefaults(
     tags?: string[];
     activeTagFilters?: string[];
     itemsPerPage?: number;
-    pingResults?: Record<string, any>;
+    pingResults?: Record<string, PingResult>;
     pingingNodes?: Set<string>;
     isPingingAll?: boolean;
-    nodeInspectMap?: Record<string, any>;
+    nodeInspectMap?: NodeInspectMap;
     isInspectingNodes?: boolean;
     pingMode?: string;
     attrFilters?: NodeAttrFilters;

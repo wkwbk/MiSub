@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from '@/i18n/index.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 const props = withDefaults(
   defineProps<{
@@ -34,7 +35,7 @@ const handleReload = () => {
 
 const errorCaptured = (error: unknown) => {
   hasError.value = true;
-  errorMessage.value = error instanceof Error ? error.message : t('common.routeRenderFailed');
+  errorMessage.value = extractErrorMessage(error, t('common.routeRenderFailed'));
   return false;
 };
 

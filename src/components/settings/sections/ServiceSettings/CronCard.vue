@@ -23,6 +23,20 @@ const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
 
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const cronSecretModel = computed({
+  get: () => props.settings.cronSecret || '',
+  set: (value: string) => {
+    emit('update:settings', {
+      ...props.settings,
+      cronSecret: value,
+    });
+  },
+});
+
 const showCronGuide = ref(false);
 
 const cronTasks = computed<CronTaskItem[]>(() => {
@@ -91,7 +105,7 @@ async function copyText(value: string): Promise<void> {
       <div>
         <label class="block text-xs font-medium text-fg-muted mb-1.5">Cron Secret</label>
         <input
-          v-model="settings.cronSecret"
+          v-model="cronSecretModel"
           :placeholder="t('settings.cronSecretPlaceholder')"
           class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
           type="text"

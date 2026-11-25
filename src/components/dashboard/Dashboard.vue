@@ -904,8 +904,8 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
   />
 
   <ManualNodeEditModal
+    v-model:editing-node="editingNode"
     v-model:show="showNodeModal"
-    :editing-node="editingNode"
     :is-new="isNewNode"
     :tags="manualNodeTags"
     @confirm="handleSaveNode"
@@ -948,8 +948,8 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
   />
 
   <SubscriptionEditModal
+    v-model:editing-subscription="editingSubscription"
     v-model:show="showSubModal"
-    :editing-subscription="editingSubscription"
     :is-new="isNewSubscription"
     @confirm="handleSaveSubscription"
   />

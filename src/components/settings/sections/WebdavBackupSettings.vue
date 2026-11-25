@@ -1,201 +1,190 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import { computed } from 'vue';
+import type { WebdavBackupConfig, WebdavRemoteFile } from '@misub/core/types.js';
+import { HttpUrlStringSchema } from '@misub/core/schemas/entities.js';
 import { CloudDownload } from '@lucide/vue';
-import { api } from '@/lib/http.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
+import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+import {
+  useLocalBackupRestoreMutation,
+  useWebdavRemoteFilesQuery,
+  useWebdavRestoreRemoteMutation,
+  useWebdavRunBackupMutation,
+  useWebdavTestMutation,
+} from '@/queries/useWebdavBackupQueries.js';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
+import { pickAndReadJsonFile } from '@/utils/import-file.js';
+
+interface BackupFilePayload {
+  scope?: string;
+  [key: string]: unknown;
+}
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
+}>();
+
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
 }>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
-const isTesting = ref(false);
-const isBackingUp = ref(false);
-const isRestoring = ref(false);
-const isLoadingRemoteFiles = ref(false);
-const remoteFiles = ref<Array<Record<string, any>>>([]);
 
-const ensureConfig = () => {
-  if (!props.settings.webdavBackup) {
-    props.settings.webdavBackup = {
-      enabled: false,
-      endpoint: '',
-      username: '',
-      password: '',
-      remotePath: '/MiSub',
-      filenameTemplate: 'misub-backup-{datetime}.json',
-      backupScope: 'dataOnly',
-      autoBackup: false,
-      interval: 'daily',
-      retentionCount: 7,
-      lastCheckedAt: null,
-      lastBackupAt: null,
-      lastBackupStatus: null,
-      lastBackupMessage: '',
-      lastBackupFile: '',
-    };
-  }
-  return props.settings.webdavBackup;
-};
+const webdavConfig = computed<WebdavBackupConfig>(() => ({
+  ...DEFAULT_SETTINGS.webdavBackup,
+  ...props.settings?.webdavBackup,
+}));
 
-const testConnection = async () => {
+function updateWebdav(patch: Partial<WebdavBackupConfig>): void {
+  emit('update:settings', {
+    ...props.settings,
+    webdavBackup: {
+      ...webdavConfig.value,
+      ...patch,
+    },
+  });
+}
+
+const testMutation = useWebdavTestMutation();
+const runBackupMutation = useWebdavRunBackupMutation();
+const restoreRemoteMutation = useWebdavRestoreRemoteMutation();
+const restoreLocalMutation = useLocalBackupRestoreMutation();
+const remoteFilesQuery = useWebdavRemoteFilesQuery();
+
+const isTesting = computed(() => testMutation.isPending.value);
+const isBackingUp = computed(() => runBackupMutation.isPending.value);
+const isRestoring = computed(() => restoreRemoteMutation.isPending.value || restoreLocalMutation.isPending.value);
+const isLoadingRemoteFiles = computed(() => remoteFilesQuery.isFetching.value);
+const remoteFiles = computed<WebdavRemoteFile[]>(() => remoteFilesQuery.data.value ?? []);
+
+const testConnection = async (): Promise<void> => {
   if (isTesting.value) return;
-  const config = ensureConfig();
-  isTesting.value = true;
+  const config = webdavConfig.value;
+  if (!HttpUrlStringSchema.safeParse(config.endpoint || '').success) {
+    showToast(t('settings.webdavInvalidEndpoint'), 'error');
+    return;
+  }
+
   try {
-    const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/webdav/test', {
-      webdavBackup: config,
-    });
-    if (!result.success) throw new Error(String(result.message || t('settings.webdavTestFailed')));
+    const result = await testMutation.mutateAsync(config);
     showToast(String(result.message || t('settings.webdavTestSuccess')), 'success');
   } catch (error: unknown) {
     showToast(
       t('settings.webdavTestFailedWithMessage', {
-        message: error instanceof Error ? error.message : String(error),
+        message: extractErrorMessage(error, t('settings.webdavTestFailed')),
       }),
       'error',
     );
-  } finally {
-    isTesting.value = false;
   }
 };
 
-const runBackup = async () => {
+const runBackup = async (): Promise<void> => {
   if (isBackingUp.value) return;
-  const config = ensureConfig();
+  const config = webdavConfig.value;
   const confirmed = await confirmAction({
     message: t('settings.webdavRunBackupConfirm'),
   });
   if (!confirmed) return;
-  isBackingUp.value = true;
+
   try {
-    const result = await api.post<{ success?: boolean; message?: string; timestamp?: string; file?: string }>(
-      '/api/backup/webdav/run',
-      { scope: config.backupScope },
-    );
-    if (!result.success) throw new Error(String(result.message || t('settings.webdavBackupFailed')));
-    config.lastBackupAt = result.timestamp;
-    config.lastBackupStatus = 'success';
-    config.lastBackupMessage = result.message;
-    config.lastBackupFile = result.file;
+    const result = await runBackupMutation.mutateAsync(config.backupScope || 'dataOnly');
+    updateWebdav({
+      lastBackupAt: result.timestamp ?? null,
+      lastBackupStatus: 'success',
+      lastBackupMessage: result.message || '',
+      lastBackupFile: result.file || '',
+    });
     showToast(t('settings.webdavBackupSuccess'), 'success');
   } catch (error: unknown) {
     showToast(
       t('settings.webdavBackupFailedWithMessage', {
-        message: error instanceof Error ? error.message : String(error),
+        message: extractErrorMessage(error, t('settings.webdavBackupFailed')),
       }),
       'error',
     );
-  } finally {
-    isBackingUp.value = false;
   }
 };
 
-const restoreFromLocalFile = () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
-  input.onchange = (event: Event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      isRestoring.value = true;
-      try {
-        const rawText = typeof e.target?.result === 'string' ? e.target.result : '';
-        const payload = JSON.parse(rawText);
-        const scope = payload?.scope || 'dataOnly';
-        const label =
-          scope === 'dataAndSettings' ? t('settings.webdavScopeDataAndSettings') : t('settings.webdavScopeDataOnly');
-        const confirmed = await confirmAction({
-          message: t('settings.webdavRestoreLocalConfirm', { scope: label }),
-          variant: 'danger',
-        });
-        if (!confirmed) return;
-        const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/restore', {
-          payload,
-          scope,
-        });
-        if (!result.success) throw new Error(String(result.message || t('settings.webdavRestoreFailed')));
-        showToast(t('settings.webdavRestoreSuccessReload'), 'success');
-        setTimeout(() => window.location.reload(), 800);
-      } catch (error: unknown) {
-        showToast(
-          t('settings.webdavRestoreFailedWithMessage', {
-            message: error instanceof Error ? error.message : String(error),
-          }),
-          'error',
-        );
-      } finally {
-        isRestoring.value = false;
-      }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
+const restoreFromLocalFile = async (): Promise<void> => {
+  if (isRestoring.value) return;
+  try {
+    const picked = await pickAndReadJsonFile<BackupFilePayload>('application/json');
+    if (!picked) return;
+
+    const payload = picked.data;
+    const scope = payload?.scope || 'dataOnly';
+    const label =
+      scope === 'dataAndSettings' ? t('settings.webdavScopeDataAndSettings') : t('settings.webdavScopeDataOnly');
+    const confirmed = await confirmAction({
+      message: t('settings.webdavRestoreLocalConfirm', { scope: label }),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    await restoreLocalMutation.mutateAsync({ payload, scope });
+    showToast(t('settings.webdavRestoreSuccessReload'), 'success');
+    setTimeout(() => window.location.reload(), 800);
+  } catch (error: unknown) {
+    showToast(
+      t('settings.webdavRestoreFailedWithMessage', {
+        message: extractErrorMessage(error, t('settings.webdavRestoreFailed')),
+      }),
+      'error',
+    );
+  }
 };
 
-const loadRemoteFiles = async () => {
+const loadRemoteFiles = async (): Promise<void> => {
   if (isLoadingRemoteFiles.value) return;
-  isLoadingRemoteFiles.value = true;
   try {
-    const result = await api.get<{
-      success?: boolean;
-      data?: Array<Record<string, unknown>>;
-      message?: string;
-    }>('/api/backup/webdav/list');
-    if (!result.success) throw new Error(String(result.message || t('settings.webdavLoadRemoteFailed')));
-    remoteFiles.value = Array.isArray(result.data) ? result.data : [];
-    showToast(t('settings.webdavLoadRemoteSuccess', { count: remoteFiles.value.length }), 'success');
-  } catch (error) {
+    const result = await remoteFilesQuery.refetch();
+    if (result.isError && result.error) {
+      throw result.error;
+    }
+    const files = result.data || [];
+    showToast(t('settings.webdavLoadRemoteSuccess', { count: files.length }), 'success');
+  } catch (error: unknown) {
     showToast(
       t('settings.webdavLoadRemoteFailedWithMessage', {
-        message: error instanceof Error ? error.message : String(error),
+        message: extractErrorMessage(error, t('settings.webdavLoadRemoteFailed')),
       }),
       'error',
     );
-  } finally {
-    isLoadingRemoteFiles.value = false;
   }
 };
 
-const restoreRemoteFile = async (file: { path?: string; name?: string }) => {
+const restoreRemoteFile = async (file: WebdavRemoteFile): Promise<void> => {
   if (!file?.path || isRestoring.value) return;
   const confirmed = await confirmAction({
     message: t('settings.webdavRestoreRemoteConfirm', { name: file.name }),
     variant: 'danger',
   });
   if (!confirmed) return;
-  isRestoring.value = true;
+
   try {
-    const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/webdav/restore', {
-      file: file.path,
-    });
-    if (!result.success) throw new Error(String(result.message || t('settings.webdavRestoreFailed')));
+    await restoreRemoteMutation.mutateAsync(file.path);
     showToast(t('settings.webdavRestoreRemoteSuccessReload'), 'success');
     setTimeout(() => window.location.reload(), 800);
-  } catch (error) {
+  } catch (error: unknown) {
     showToast(
       t('settings.webdavRestoreRemoteFailedWithMessage', {
-        message: error instanceof Error ? error.message : String(error),
+        message: extractErrorMessage(error, t('settings.webdavRestoreFailed')),
       }),
       'error',
     );
-  } finally {
-    isRestoring.value = false;
   }
 };
 
-const copyCronHint = async () => {
+const copyCronHint = async (): Promise<void> => {
   const secret = props.settings?.cronSecret;
   const text = secret
     ? `${window.location.origin}/cron/backup?secret=${encodeURIComponent(secret)}`
@@ -203,8 +192,6 @@ const copyCronHint = async () => {
   const copied = await copyTextToClipboard(text);
   showToast(copied ? t('settings.webdavCronCopied') : t('settings.webdavCronCopyFailed'), copied ? 'success' : 'error');
 };
-
-ensureConfig();
 </script>
 
 <template>
@@ -213,43 +200,53 @@ ensureConfig();
       <CloudDownload class="h-4 w-4" />
     </template>
     <template #actions>
-      <Switch v-model="settings.webdavBackup.enabled" :aria-label="t('settings.webdavEnable')" />
+      <Switch
+        :aria-label="t('settings.webdavEnable')"
+        :model-value="Boolean(webdavConfig.enabled)"
+        @update:model-value="updateWebdav({ enabled: Boolean($event) })"
+      />
     </template>
 
     <div class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
-          v-model="settings.webdavBackup.endpoint"
           :label="t('settings.webdavEndpoint')"
+          :model-value="webdavConfig.endpoint"
           placeholder="https://dav.example.com/remote.php/dav/files/user"
+          @update:model-value="updateWebdav({ endpoint: String($event ?? '') })"
         />
         <Input
-          v-model="settings.webdavBackup.remotePath"
           :label="t('settings.webdavRemotePath')"
+          :model-value="webdavConfig.remotePath"
           placeholder="/MiSub"
+          @update:model-value="updateWebdav({ remotePath: String($event ?? '') })"
         />
         <Input
-          v-model="settings.webdavBackup.username"
           :label="t('settings.webdavUsername')"
+          :model-value="webdavConfig.username"
           :placeholder="t('settings.webdavUsernamePlaceholder')"
+          @update:model-value="updateWebdav({ username: String($event ?? '') })"
         />
         <Input
-          v-model="settings.webdavBackup.password"
           :label="t('settings.webdavPassword')"
+          :model-value="webdavConfig.password"
           :placeholder="t('settings.webdavPasswordPlaceholder')"
           type="password"
+          @update:model-value="updateWebdav({ password: String($event ?? '') })"
         />
         <Input
-          v-model="settings.webdavBackup.filenameTemplate"
           :label="t('settings.webdavFilenameTemplate')"
+          :model-value="webdavConfig.filenameTemplate"
           placeholder="misub-backup-{datetime}.json"
+          @update:model-value="updateWebdav({ filenameTemplate: String($event ?? '') })"
         />
         <Input
-          v-model.number="settings.webdavBackup.retentionCount"
           :label="t('settings.webdavRetentionCount')"
+          :model-value="webdavConfig.retentionCount"
           max="100"
           min="1"
           type="number"
+          @update:model-value="updateWebdav({ retentionCount: Number($event) || 1 })"
         />
       </div>
 
@@ -261,17 +258,18 @@ ensureConfig();
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <label
               :class="
-                settings.webdavBackup.backupScope === 'dataOnly'
+                webdavConfig.backupScope === 'dataOnly'
                   ? 'border-line-strong bg-inset'
                   : 'border-line bg-inset/40 hover:border-line-strong'
               "
               class="flex items-start gap-2.5 rounded-md border p-3.5 text-sm text-fg cursor-pointer transition-colors"
             >
               <input
-                v-model="settings.webdavBackup.backupScope"
+                :checked="webdavConfig.backupScope === 'dataOnly'"
                 class="mt-1 border-line-strong bg-elevated-card text-fg"
                 type="radio"
                 value="dataOnly"
+                @change="updateWebdav({ backupScope: 'dataOnly' })"
               />
               <span class="space-y-0.5"
                 ><span class="block text-sm font-medium text-fg">{{ t('settings.webdavScopeDataOnly') }}</span
@@ -282,17 +280,18 @@ ensureConfig();
             </label>
             <label
               :class="
-                settings.webdavBackup.backupScope === 'dataAndSettings'
+                webdavConfig.backupScope === 'dataAndSettings'
                   ? 'border-line-strong bg-inset'
                   : 'border-line bg-inset/40 hover:border-line-strong'
               "
               class="flex items-start gap-2.5 rounded-md border p-3.5 text-sm text-fg cursor-pointer transition-colors"
             >
               <input
-                v-model="settings.webdavBackup.backupScope"
+                :checked="webdavConfig.backupScope === 'dataAndSettings'"
                 class="mt-1 border-line-strong bg-elevated-card text-fg"
                 type="radio"
                 value="dataAndSettings"
+                @change="updateWebdav({ backupScope: 'dataAndSettings' })"
               />
               <span class="space-y-0.5"
                 ><span class="block text-sm font-medium text-fg">{{ t('settings.webdavScopeDataAndSettings') }}</span
@@ -316,18 +315,25 @@ ensureConfig();
               <span class="text-xs font-medium text-fg-muted">
                 {{ t('settings.webdavEnableAutoBackup') }}
               </span>
-              <Switch v-model="settings.webdavBackup.autoBackup" size="sm" />
+              <Switch
+                :model-value="Boolean(webdavConfig.autoBackup)"
+                size="sm"
+                @update:model-value="updateWebdav({ autoBackup: Boolean($event) })"
+              />
             </div>
             <div>
               <Select
-                v-model="settings.webdavBackup.interval"
-                :disabled="!settings.webdavBackup.autoBackup"
+                :disabled="!webdavConfig.autoBackup"
+                :model-value="webdavConfig.interval"
                 :options="[
                   { value: 'hourly', label: t('settings.webdavIntervalHourly') },
                   { value: 'daily', label: t('settings.webdavIntervalDaily') },
                   { value: 'weekly', label: t('settings.webdavIntervalWeekly') },
                   { value: 'monthly', label: t('settings.webdavIntervalMonthly') },
                 ]"
+                @update:model-value="
+                  updateWebdav({ interval: String($event) as WebdavBackupConfig['interval'] })
+                "
               />
             </div>
           </div>
@@ -384,28 +390,28 @@ ensureConfig();
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
             <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastChecked') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
-              {{ settings.webdavBackup.lastCheckedAt || t('settings.webdavNotChecked') }}
+              {{ webdavConfig.lastCheckedAt || t('settings.webdavNotChecked') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
             <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastBackup') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
-              {{ settings.webdavBackup.lastBackupAt || t('settings.webdavNotBackedUp') }}
+              {{ webdavConfig.lastBackupAt || t('settings.webdavNotBackedUp') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
             <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastResult') }}</span>
             <span class="block font-mono text-xs text-fg truncate">
-              {{ settings.webdavBackup.lastBackupStatus || t('settings.webdavNone') }}
+              {{ webdavConfig.lastBackupStatus || t('settings.webdavNone') }}
             </span>
           </div>
           <div class="rounded-md border border-line bg-inset/40 px-3.5 py-2.5 space-y-1">
             <span class="block text-xs text-fg-muted">{{ t('settings.webdavLastFile') }}</span>
             <span
-              :title="settings.webdavBackup.lastBackupFile || t('settings.webdavNone')"
+              :title="webdavConfig.lastBackupFile || t('settings.webdavNone')"
               class="block font-mono text-xs text-fg truncate"
             >
-              {{ settings.webdavBackup.lastBackupFile || t('settings.webdavNone') }}
+              {{ webdavConfig.lastBackupFile || t('settings.webdavNone') }}
             </span>
           </div>
         </div>

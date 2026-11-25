@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Cpu } from '@lucide/vue';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
 import Textarea from '@/components/ui/Textarea.vue';
 import ResourceCollectionCard from '@/components/settings/ResourceCollectionCard.vue';
+import { normalizeWebsiteUrl } from '@/utils/url-origin.js';
+import { isValidHttpUrl } from '@/utils/validation-utils.js';
 import {
   DEFAULT_PUBLIC_CORES_CONFIG,
   normalizeCoreTags,
@@ -52,13 +55,6 @@ const getCategoryLabel = (category: unknown): string => {
   return found ? t(found.labelKey) : catValue || t('publicCores.categories.other');
 };
 
-const normalizeCoreUrl = (rawUrl: unknown): string => {
-  const trimmed = String(rawUrl || '').trim();
-  if (!trimmed) return '';
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
-};
-
 const filterItem = (item: CollectionCoreItem, activeTab: string): boolean => item.category === activeTab;
 
 const createNewItem = (activeTab: string): CollectionCoreItem => ({
@@ -85,15 +81,10 @@ const validateAndBuildItem = (
   const name = String(editingCore.name || '').trim();
   if (!name) return { error: t('publicCores.nameRequired') };
 
-  const normalizedUrl = normalizeCoreUrl(editingCore.url);
+  const normalizedUrl = normalizeWebsiteUrl(editingCore.url);
   if (!normalizedUrl) return { error: t('publicCores.urlRequired') };
 
-  try {
-    const parsed = new URL(normalizedUrl);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return { error: t('publicCores.invalidUrl') };
-    }
-  } catch {
+  if (!isValidHttpUrl(normalizedUrl)) {
     return { error: t('publicCores.invalidUrl') };
   }
 
@@ -119,17 +110,17 @@ const validateAndBuildItem = (
     :create-new-item="createNewItem"
     :default-config="DEFAULT_PUBLIC_CORES_CONFIG"
     :description="t('publicCores.managerDesc')"
+    :endpoint="API_ENDPOINTS.PUBLIC_CORES"
     :filter-item="filterItem"
     :get-category-badge="(item) => getCategoryLabel(item.category)"
     :icon-placeholder="t('publicCores.iconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicCoresConfig"
+    :normalize-config="normalizePublicCoresConfig as any"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicCoreIcon"
     :tabs="categoryTabs"
     :title="t('publicCores.managerTitle')"
     :validate-and-build-item="validateAndBuildItem"
-    endpoint="/api/public_cores"
     fallback-emoji="⚙️"
     tone="emerald"
   >

@@ -14,11 +14,21 @@ interface RuleTagOption {
   type?: string;
 }
 
+interface ExcludeRuleState {
+  tagKey?: string;
+  tag: string;
+  tagClass: string;
+  errors: Array<{ line: number; message: string }>;
+  errorsText: string;
+}
+
+type EditableSub = EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+
 const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    editingSubscription: EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+    editingSubscription: EditableSub;
     isRuleExpanded?: boolean;
     isAdvancedMode?: boolean;
     ruleMode?: string;
@@ -29,7 +39,7 @@ const props = withDefaults(
     presetRegions?: RuleTagOption[];
     presetProtocols?: RuleTagOption[];
     presetKeywords?: RuleTagOption[];
-    excludeRuleState: Record<string, any>;
+    excludeRuleState: ExcludeRuleState;
     toggleTag: (tag: RuleTagOption, type: string) => void;
     isSelected: (pattern: string) => boolean;
     isOtherSelected?: (pattern: string) => boolean;
@@ -61,7 +71,15 @@ const emit = defineEmits<{
   'toggle-expand': [];
   'update:ruleMode': [value: string];
   'update:customKeyword': [value: string];
+  'update:editingSubscription': [value: EditableSub];
 }>();
+
+const updateExcludeText = (exclude: string) => {
+  emit('update:editingSubscription', {
+    ...props.editingSubscription,
+    exclude,
+  } as EditableSub);
+};
 
 const ruleModeModel = computed({
   get: () => props.ruleMode,
@@ -368,7 +386,7 @@ const handleRemoveExclude = (index: number) => {
           </div>
           <Textarea
             id="sub-edit-exclude"
-            v-model="editingSubscription.exclude"
+            :model-value="editingSubscription.exclude ?? ''"
             :aria-describedby="excludeRuleState.errors.length ? 'sub-edit-exclude-error' : undefined"
             :aria-invalid="excludeRuleState.errors.length > 0 ? 'true' : 'false'"
             :invalid="excludeRuleState.errors.length > 0"
@@ -379,6 +397,7 @@ const handleRemoveExclude = (index: number) => {
             ]"
             class="px-3 py-2 sm:text-sm font-mono text-fg leading-6 resize-none"
             rows="8"
+            @update:model-value="updateExcludeText(String($event ?? ''))"
           />
           <div
             v-if="excludeRuleState.errors.length"

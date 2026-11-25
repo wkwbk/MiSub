@@ -4,6 +4,7 @@ import { AlertCircle, ArrowLeft, Eye, EyeOff, Globe, Lock } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import Button from '@/components/ui/Button.vue';
 import TurnstileWidget from '@/components/ui/TurnstileWidget.vue';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 interface TurnstileConfig {
   enableForLogin?: boolean;
@@ -78,7 +79,7 @@ const submitLogin = async () => {
       await props.login?.(password.value);
     }
   } catch (err: unknown) {
-    error.value = (err instanceof Error ? err.message : '') || t('login.unknownError');
+    error.value = extractErrorMessage(err, t('login.unknownError'));
     if (useTurnstile.value) {
       turnstileToken.value = '';
       turnstileRef.value?.reset?.();

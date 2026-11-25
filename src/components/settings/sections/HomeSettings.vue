@@ -17,25 +17,35 @@ const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
 
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const settingsModel = computed<AppSettingsConfig>({
+  get: () => props.settings,
+  set: (val: AppSettingsConfig) => emit('update:settings', val),
+});
+
+const patchSettings = (patch: Partial<AppSettingsConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    ...patch,
+  });
+};
+
 const heroTitle1 = computed({
   get: () => (typeof props.settings.heroTitle1 === 'string' ? props.settings.heroTitle1 : ''),
-  set: (val: string) => {
-    props.settings.heroTitle1 = val;
-  },
+  set: (val: string) => patchSettings({ heroTitle1: val }),
 });
 
 const heroTitle2 = computed({
   get: () => (typeof props.settings.heroTitle2 === 'string' ? props.settings.heroTitle2 : ''),
-  set: (val: string) => {
-    props.settings.heroTitle2 = val;
-  },
+  set: (val: string) => patchSettings({ heroTitle2: val }),
 });
 
 const heroDescription = computed({
   get: () => (typeof props.settings.heroDescription === 'string' ? props.settings.heroDescription : ''),
-  set: (val: string) => {
-    props.settings.heroDescription = val;
-  },
+  set: (val: string) => patchSettings({ heroDescription: val }),
 });
 </script>
 
@@ -76,8 +86,8 @@ const heroDescription = computed({
 
     <PublicLinksSettings />
 
-    <AnnouncementSettings :settings="settings" />
+    <AnnouncementSettings v-model:settings="settingsModel" />
 
-    <GuestbookManagement :settings="settings" />
+    <GuestbookManagement v-model:settings="settingsModel" />
   </div>
 </template>

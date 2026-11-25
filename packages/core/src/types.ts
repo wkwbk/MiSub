@@ -16,7 +16,14 @@ import type {
   NodeIRTransportTypeSchema,
 } from './schemas/node-ir.js';
 import type {
+  AnnouncementConfigSchema,
+  CustomPageConfigSchema,
+  DisguiseConfigSchema,
   DslStepSchema,
+  ExternalApiConfigSchema,
+  ExternalApiTokenSchema,
+  GuestbookConfigSchema,
+  HeroConfigSchema,
   ManualNodeSchema,
   MisubItemSchema,
   OperatorDedupParamsSchema,
@@ -32,10 +39,19 @@ import type {
   ProfileSubscriptionRefSchema,
   RegexRuleItemSchema,
   RegexRuleObjectSchema,
+  RegionOverrideRuleSchema,
+  RuleTemplateSchema,
   SettingsSchema,
+  ShortLinkConfigSchema,
+  SubconverterConfigSchema,
+  SubconverterOptionsSchema,
   SubscriptionSchema,
   SubscriptionUserInfoSchema,
+  TelegramPushConfigSchema,
+  TokenAutoRotateConfigSchema,
+  TurnstileConfigSchema,
   TypedOperatorRuleSchema,
+  WebdavBackupConfigSchema,
 } from './schemas/entities.js';
 import type {
   DataResponseSchema,
@@ -84,7 +100,30 @@ export type ProfileSubscriptionRef = z.infer<typeof ProfileSubscriptionRefSchema
 export type ProfilePrefixSettings = z.infer<typeof ProfilePrefixSettingsSchema>;
 export type ProfileSubconverter = z.infer<typeof ProfileSubconverterSchema>;
 export type ProfileConfig = z.infer<typeof ProfileSchema>;
+export type TokenAutoRotateConfig = z.infer<typeof TokenAutoRotateConfigSchema>;
+export type DisguiseConfig = z.infer<typeof DisguiseConfigSchema>;
+export type AnnouncementConfig = z.infer<typeof AnnouncementConfigSchema>;
+export type HeroConfig = z.infer<typeof HeroConfigSchema>;
+export type GuestbookConfig = z.infer<typeof GuestbookConfigSchema>;
+export type WebdavBackupConfig = z.infer<typeof WebdavBackupConfigSchema>;
+export type ExternalApiToken = z.infer<typeof ExternalApiTokenSchema>;
+export type ExternalApiConfig = z.infer<typeof ExternalApiConfigSchema>;
+export type SubconverterOptions = z.infer<typeof SubconverterOptionsSchema>;
+export type SubconverterConfig = z.infer<typeof SubconverterConfigSchema>;
+export type ShortLinkConfig = z.infer<typeof ShortLinkConfigSchema>;
+export type TurnstileConfig = z.infer<typeof TurnstileConfigSchema>;
+export type TelegramPushConfig = z.infer<typeof TelegramPushConfigSchema>;
+export type CustomPageConfig = z.infer<typeof CustomPageConfigSchema>;
+export type RegionOverrideRule = z.infer<typeof RegionOverrideRuleSchema>;
+export type RuleTemplate = z.infer<typeof RuleTemplateSchema>;
 export type SettingsConfig = z.infer<typeof SettingsSchema>;
+
+export interface WebdavRemoteFile {
+  name: string;
+  path: string;
+  size?: number;
+  lastModified?: string;
+}
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type MisubsSaveRequest = z.infer<typeof MisubsSaveRequestSchema>;

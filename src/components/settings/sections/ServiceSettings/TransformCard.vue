@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { Ref } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { BuiltinTransformConfig, RuleTemplate, SubconverterConfig, SubconverterOptions } from '@misub/core/types.js';
 import { ChevronDown, Cpu, FileText, Info, RotateCcw, Server, SlidersHorizontal, X } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
@@ -13,8 +13,10 @@ import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { DEFAULT_SUBCONVERTER_BACKEND, SUBCONVERTER_BACKENDS } from '@/constants/subconverter-backends.js';
 import { testSubconverterBackend } from '@/lib/api.js';
+import type { AppSettingsConfig, RuleTemplateItem } from '@/queries/useAppDataQueries.js';
 import { useI18n } from '@/i18n/index.js';
 import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 interface BackendTestStatus {
   success: boolean;
@@ -33,18 +35,77 @@ interface EngineSettingsSnapshot {
 const { t } = useI18n();
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
 }>();
 
-if (!props.settings.builtinTransform || typeof props.settings.builtinTransform !== 'object') {
-  props.settings.builtinTransform = normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
-} else {
-  Object.assign(props.settings.builtinTransform, normalizeBuiltinTransform(props.settings.builtinTransform));
-}
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const settingsModel = computed<AppSettingsConfig>({
+  get: () => props.settings,
+  set: (val: AppSettingsConfig) => emit('update:settings', val),
+});
+
+const patchSettings = (patch: Partial<AppSettingsConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    ...patch,
+  });
+};
+
+const defaultSubconverterOptions: SubconverterOptions = {
+  udp: true,
+  emoji: true,
+  scv: true,
+  tfo: false,
+  sort: false,
+  list: false,
+};
+
+const builtinTransform = computed<BuiltinTransformConfig>(() =>
+  normalizeBuiltinTransform(props.settings?.builtinTransform || DEFAULT_BUILTIN_TRANSFORM),
+);
+
+const patchBuiltinTransform = (patch: Partial<BuiltinTransformConfig>): void => {
+  patchSettings({
+    builtinTransform: {
+      ...builtinTransform.value,
+      ...patch,
+    },
+  });
+};
+
+const subconverter = computed<SubconverterConfig>(() => ({
+  engineMode: props.settings?.subconverter?.engineMode || 'builtin',
+  defaultBackend: props.settings?.subconverter?.defaultBackend || DEFAULT_SUBCONVERTER_BACKEND,
+  defaultOptions: {
+    ...defaultSubconverterOptions,
+    ...props.settings?.subconverter?.defaultOptions,
+  },
+}));
+
+const patchSubconverter = (patch: Partial<SubconverterConfig>): void => {
+  patchSettings({
+    subconverter: {
+      ...subconverter.value,
+      ...patch,
+    },
+  });
+};
+
+const patchSubconverterOption = (key: keyof SubconverterOptions, value: boolean): void => {
+  patchSubconverter({
+    defaultOptions: {
+      ...subconverter.value.defaultOptions,
+      [key]: value,
+    },
+  });
+};
 
 const showAdvancedDrawer = ref(false);
 const hasBaseConfigOverride = computed(() => {
-  const base = props.settings.builtinTransform?.baseConfig || {};
+  const base = builtinTransform.value.baseConfig || {};
   return Boolean(
     String(base.singbox || '').trim() || String(base.clash || '').trim() || String(base.surge || '').trim(),
   );
@@ -60,39 +121,61 @@ const ruleSourceSelection = computed({
   get: () => {
     const mode = props.settings.transformConfigMode || 'builtin';
     if (mode === 'builtin') {
-      return props.settings.builtinTransform?.visualRulesEnabled ? 'visual' : 'builtin';
+      return builtinTransform.value.visualRulesEnabled ? 'visual' : 'builtin';
     }
     // 兼容历史保存的 preset / custom / custom_template，全部统一归入「规则模板」
     return 'preset';
   },
   set: (val: string) => {
-    if (!props.settings.builtinTransform) {
-      props.settings.builtinTransform = normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
-    }
     if (val === 'visual') {
-      props.settings.transformConfigMode = 'builtin';
-      props.settings.builtinTransform.visualRulesEnabled = true;
+      patchSettings({
+        transformConfigMode: 'builtin',
+        builtinTransform: {
+          ...builtinTransform.value,
+          visualRulesEnabled: true,
+        },
+      });
     } else if (val === 'builtin') {
-      props.settings.transformConfigMode = 'builtin';
-      props.settings.builtinTransform.visualRulesEnabled = false;
+      patchSettings({
+        transformConfigMode: 'builtin',
+        builtinTransform: {
+          ...builtinTransform.value,
+          visualRulesEnabled: false,
+        },
+      });
     } else {
-      props.settings.transformConfigMode = 'preset';
-      props.settings.builtinTransform.visualRulesEnabled = false;
+      patchSettings({
+        transformConfigMode: 'preset',
+        builtinTransform: {
+          ...builtinTransform.value,
+          visualRulesEnabled: false,
+        },
+      });
     }
   },
 });
 
+const isBuiltinEngine = computed(
+  () => subconverter.value.engineMode === 'builtin' || subconverter.value.engineMode === '',
+);
+const isExternalEngine = computed(() => subconverter.value.engineMode === 'external');
 const isVisualMode = computed(() => ruleSourceSelection.value === 'visual' && isBuiltinEngine.value);
 const isTemplateMode = computed(() => ruleSourceSelection.value === 'preset');
 
-const selectedAsset = ref<Record<string, any> | null>(null);
+const selectedAsset = ref<{
+  id?: string | number;
+  name?: string;
+  url?: string;
+  group?: string;
+  sourceType?: string;
+  description?: string;
+} | null>(null);
 const showRuleTemplateModal = ref(false);
 const activePinia = getActivePinia();
 const ruleTemplates = activePinia
-  ? (storeToRefs(useDataStore()).ruleTemplates as Ref<Array<Record<string, any>>>)
-  : ref<Array<Record<string, any>>>([]);
+  ? (storeToRefs(useDataStore()).ruleTemplates as Ref<Array<RuleTemplateItem | RuleTemplate>>)
+  : ref<Array<RuleTemplateItem | RuleTemplate>>([]);
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
-const isCustomTemplateMode = computed(() => props.settings.transformConfigMode === 'custom_template');
 
 function handleRuleTemplatesSaved(savedTemplateId: string) {
   if (!isTemplateMode.value || !savedTemplateId) return;
@@ -101,11 +184,11 @@ function handleRuleTemplatesSaved(savedTemplateId: string) {
     (item) => item && item.enabled !== false && `custom:${item.id}` === current,
   );
   if (!current || (current.startsWith('custom:') && !stillExists)) {
-    props.settings.transformConfig = `custom:${savedTemplateId}`;
+    patchSettings({ transformConfig: `custom:${savedTemplateId}` });
   }
 }
 
-const flagOptions = computed(() => [
+const flagOptions = computed<Array<{ key: keyof SubconverterOptions; label: string }>>(() => [
   { key: 'udp', label: t('settings.transformUdp') },
   { key: 'emoji', label: t('settings.transformEmoji') },
   { key: 'scv', label: t('settings.transformSkipCert') },
@@ -113,29 +196,6 @@ const flagOptions = computed(() => [
   { key: 'tfo', label: 'TCP Fast Open' },
   { key: 'list', label: t('settings.transformList') },
 ]);
-
-if (!props.settings.subconverter) {
-  props.settings.subconverter = {
-    defaultBackend: DEFAULT_SUBCONVERTER_BACKEND,
-    defaultOptions: {
-      udp: true,
-      emoji: true,
-      scv: true,
-      tfo: false,
-      sort: false,
-      list: false,
-    },
-  };
-} else if (!props.settings.subconverter.defaultOptions) {
-  props.settings.subconverter.defaultOptions = {
-    udp: true,
-    emoji: true,
-    scv: true,
-    tfo: false,
-    sort: false,
-    list: false,
-  };
-}
 
 const isBuiltinMode = computed(() => props.settings.transformConfigMode === 'builtin');
 
@@ -151,10 +211,6 @@ const modeHint = computed(() => {
     : t('settings.transformTemplateUnifiedHint');
 });
 
-const isBuiltinEngine = computed(
-  () => props.settings.subconverter.engineMode === 'builtin' || props.settings.subconverter.engineMode === '',
-);
-const isExternalEngine = computed(() => props.settings.subconverter.engineMode === 'external');
 const backendTestStatus = ref<BackendTestStatus | null>(null);
 const isTestingBackend = ref(false);
 const previousEngineSettings = ref<EngineSettingsSnapshot | null>(null);
@@ -172,21 +228,21 @@ async function handleTestBackend() {
   if (isTestingBackend.value) return;
   isTestingBackend.value = true;
   backendTestStatus.value = null;
-  const backend = props.settings.subconverter.defaultBackend;
+  const backend = subconverter.value.defaultBackend || '';
   try {
     const result = await testSubconverterBackend(backend, 'clash');
-    if (props.settings.subconverter.defaultBackend !== backend) return;
+    if (subconverter.value.defaultBackend !== backend) return;
     backendTestStatus.value = {
       success: Boolean(result?.success || ('available' in result && result.available)),
       message: result?.message || result?.error || t('settings.transformBackendTestFailed'),
       endpoint: 'endpoint' in result && typeof result.endpoint === 'string' ? result.endpoint : '',
       elapsedMs: 'elapsedMs' in result && typeof result.elapsedMs === 'number' ? result.elapsedMs : undefined,
     };
-  } catch (error: any) {
-    if (props.settings.subconverter.defaultBackend === backend) {
+  } catch (error: unknown) {
+    if (subconverter.value.defaultBackend === backend) {
       backendTestStatus.value = {
         success: false,
-        message: error?.message || t('settings.transformBackendTestFailed'),
+        message: extractErrorMessage(error, t('settings.transformBackendTestFailed')),
         endpoint: '',
       };
     }
@@ -196,14 +252,23 @@ async function handleTestBackend() {
 }
 
 function switchToBuiltinEngine() {
-  props.settings.subconverter.engineMode = 'builtin';
+  const nextSubconverter: SubconverterConfig = {
+    ...subconverter.value,
+    engineMode: 'builtin',
+  };
   showEngineChangeWarning.value = false;
-  if (!restoreEngineSnapshot.value) return;
-  Object.assign(props.settings, restoreEngineSnapshot.value);
-  props.settings.subconverter.engineMode = 'builtin';
+  if (!restoreEngineSnapshot.value) {
+    patchSettings({ subconverter: nextSubconverter });
+    return;
+  }
+  const snapshot = restoreEngineSnapshot.value;
   selectedAsset.value = null;
   previousEngineSettings.value = null;
   restoreEngineSnapshot.value = null;
+  patchSettings({
+    ...snapshot,
+    subconverter: nextSubconverter,
+  });
 }
 
 function restorePreviousEngineSettings() {
@@ -211,7 +276,7 @@ function restorePreviousEngineSettings() {
 }
 
 watch(
-  () => props.settings.subconverter.defaultBackend,
+  () => subconverter.value.defaultBackend,
   () => {
     backendTestStatus.value = null;
   },
@@ -237,18 +302,22 @@ watch(
         };
         showEngineChangeWarning.value = !engineChangeNoticeDismissed.value;
       }
-      props.settings.builtinSkipCertVerify = false;
-      props.settings.builtinEnableUdp = false;
+
+      const patch: Partial<AppSettingsConfig> = {
+        builtinSkipCertVerify: false,
+        builtinEnableUdp: false,
+      };
       if (
         props.settings.transformConfigMode === 'builtin' ||
         props.settings.transformConfigMode === 'custom_template'
       ) {
-        props.settings.transformConfigMode = 'preset';
+        patch.transformConfigMode = 'preset';
       }
       if (/^(builtin|custom):/.test(String(props.settings.transformConfig || ''))) {
-        props.settings.transformConfig = '';
+        patch.transformConfig = '';
         selectedAsset.value = null;
       }
+      patchSettings(patch);
     }
   },
   { immediate: true },
@@ -283,7 +352,7 @@ watch(
             "
             class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
             type="button"
-            @click="settings.subconverter.engineMode = 'external'"
+            @click="patchSubconverter({ engineMode: 'external' })"
           >
             {{ t('settings.transformExternalEngine') }}
           </button>
@@ -360,13 +429,14 @@ watch(
             </label>
           </div>
           <Select
-            v-model="settings.ruleLevel"
+            :model-value="settings.ruleLevel"
             :options="[
               { value: 'base', label: t('settings.transformRuleBase') },
               { value: 'std', label: t('settings.transformRuleStd') },
               { value: 'full', label: t('settings.transformRuleFull') },
               { value: 'relay', label: t('settings.transformRuleRelay') },
             ]"
+            @update:model-value="patchSettings({ ruleLevel: String($event) })"
           />
         </div>
 
@@ -394,22 +464,23 @@ watch(
             </button>
           </div>
           <TransformSelector
-            v-model="settings.transformConfig"
             :allowEmpty="false"
             :custom-placeholder="t('settings.transformRemotePlaceholder')"
             :custom-templates-only="false"
             :exclude-builtin-assets="isExternalEngine"
             :force-custom="false"
+            :model-value="settings.transformConfig"
             :placeholder="t('settings.transformPresetPlaceholder')"
             type="config"
             @select-asset="selectedAsset = $event"
+            @update:model-value="patchSettings({ transformConfig: String($event ?? '') })"
           />
         </div>
       </div>
 
       <!-- 仅在选择「内置可视化规则」时原地展开，不占其余模式空间 -->
       <div v-if="isVisualMode" class="mt-6 border-t border-line pt-5">
-        <VisualTransformCard :settings="settings" section="rules" />
+        <VisualTransformCard v-model:settings="settingsModel" section="rules" />
       </div>
     </SettingCard>
 
@@ -429,33 +500,53 @@ watch(
         <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.transformBuiltinSkipCert') }}</span>
-            <Switch v-model="settings.builtinSkipCertVerify" size="sm" />
+            <Switch
+              :model-value="Boolean(settings.builtinSkipCertVerify)"
+              size="sm"
+              @update:model-value="patchSettings({ builtinSkipCertVerify: Boolean($event) })"
+            />
           </div>
 
           <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.transformBuiltinUdp') }}</span>
-            <Switch v-model="settings.builtinEnableUdp" size="sm" />
+            <Switch
+              :model-value="Boolean(settings.builtinEnableUdp)"
+              size="sm"
+              @update:model-value="patchSettings({ builtinEnableUdp: Boolean($event) })"
+            />
           </div>
 
           <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualGroupByCountry') }}</span>
-            <Switch v-model="settings.builtinTransform.groupByCountry" size="sm" />
+            <Switch
+              :model-value="Boolean(builtinTransform.groupByCountry)"
+              size="sm"
+              @update:model-value="patchBuiltinTransform({ groupByCountry: Boolean($event) })"
+            />
           </div>
 
           <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualIncludeAutoSelect') }}</span>
-            <Switch v-model="settings.builtinTransform.includeAutoSelect" size="sm" />
+            <Switch
+              :model-value="Boolean(builtinTransform.includeAutoSelect)"
+              size="sm"
+              @update:model-value="patchBuiltinTransform({ includeAutoSelect: Boolean($event) })"
+            />
           </div>
 
           <div class="setting-switch-card">
             <span class="text-xs font-medium text-fg-muted">{{ t('settings.visualEnableClashApi') }}</span>
-            <Switch v-model="settings.builtinTransform.enableClashApi" size="sm" />
+            <Switch
+              :model-value="Boolean(builtinTransform.enableClashApi)"
+              size="sm"
+              @update:model-value="patchBuiltinTransform({ enableClashApi: Boolean($event) })"
+            />
           </div>
         </div>
 
         <!-- Clash API 详细输入（仅开启时展开） -->
         <div
-          v-if="settings.builtinTransform.enableClashApi"
+          v-if="builtinTransform.enableClashApi"
           class="grid grid-cols-1 gap-4 rounded-md border border-line bg-inset/40 p-4 md:grid-cols-2"
         >
           <div>
@@ -463,10 +554,11 @@ watch(
               {{ t('settings.visualExternalController') }}
             </label>
             <input
-              v-model="settings.builtinTransform.externalController"
+              :value="builtinTransform.externalController"
               class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-xs text-fg shadow-none focus:border-line-strong"
               placeholder="0.0.0.0:9090"
               type="text"
+              @input="patchBuiltinTransform({ externalController: ($event.target as HTMLInputElement).value })"
             />
           </div>
           <div>
@@ -474,10 +566,11 @@ watch(
               {{ t('settings.visualExternalUiUrl') }}
             </label>
             <input
-              v-model="settings.builtinTransform.externalUiDownloadUrl"
               :placeholder="t('settings.visualExternalUiUrlPlaceholder')"
+              :value="builtinTransform.externalUiDownloadUrl"
               class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-xs text-fg shadow-none focus:border-line-strong"
               type="text"
+              @input="patchBuiltinTransform({ externalUiDownloadUrl: ($event.target as HTMLInputElement).value })"
             />
           </div>
         </div>
@@ -503,7 +596,7 @@ watch(
           </button>
 
           <div v-if="showAdvancedDrawer" class="mt-4">
-            <VisualTransformCard :settings="settings" section="advanced" />
+            <VisualTransformCard v-model:settings="settingsModel" section="advanced" />
           </div>
         </div>
       </div>
@@ -525,7 +618,7 @@ watch(
           <label class="mb-1.5 block text-xs font-medium text-fg-muted">{{ t('settings.transformBackend') }}</label>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select
-              v-model="settings.subconverter.defaultBackend"
+              :model-value="subconverter.defaultBackend"
               :options="
                 SUBCONVERTER_BACKENDS.map((backend) => ({
                   value: backend.value,
@@ -534,13 +627,15 @@ watch(
               "
               size="sm"
               trigger-class="font-mono"
+              @update:model-value="patchSubconverter({ defaultBackend: String($event ?? '') })"
             />
             <input
-              v-model="settings.subconverter.defaultBackend"
               :aria-label="t('settings.transformCustomBackend')"
+              :value="subconverter.defaultBackend"
               class="block w-full rounded-md border border-line bg-inset px-3 py-2 text-xs font-mono text-fg focus:border-line-strong focus-visible:ring-1 focus-visible:ring-line-strong"
               placeholder="subapi.cmliussss.net"
               type="text"
+              @input="patchSubconverter({ defaultBackend: ($event.target as HTMLInputElement).value })"
             />
           </div>
           <p class="mt-2 text-xs leading-relaxed text-fg-muted">
@@ -587,7 +682,11 @@ watch(
         <div class="pt-4 border-t border-line grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           <div v-for="flag in flagOptions" :key="flag.key" class="setting-switch-card">
             <span :title="flag.label" class="truncate text-xs font-medium text-fg-muted">{{ flag.label }}</span>
-            <Switch v-model="settings.subconverter.defaultOptions[flag.key]" size="xs" />
+            <Switch
+              :model-value="Boolean(subconverter.defaultOptions?.[flag.key])"
+              size="xs"
+              @update:model-value="patchSubconverterOption(flag.key, Boolean($event))"
+            />
           </div>
         </div>
       </div>

@@ -55,7 +55,7 @@ const addOperator = (type: OperatorRule['type']) => {
   expandedIndex.value = newList.length - 1;
 };
 
-const getInitialParams = (type: OperatorRule['type']): Record<string, any> => {
+const getInitialParams = (type: OperatorRule['type']): OperatorRule['params'] => {
   switch (type) {
     case 'filter':
       return {
@@ -128,9 +128,9 @@ const OPERATOR_ICONS: Record<OperatorRule['type'], Component> = {
 
 const getOperatorIcon = (type: OperatorRule['type']) => OPERATOR_ICONS[type] || Filter;
 
-const updateOperatorParams = (index: number, params: Record<string, any>) => {
+const updateOperatorParams = (index: number, params: object) => {
   const newList = [...props.modelValue];
-  newList[index] = { ...newList[index], params };
+  newList[index] = { ...newList[index], params: params as OperatorRule['params'] };
   emit('update:modelValue', newList);
 };
 </script>

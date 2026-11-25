@@ -1,11 +1,13 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
+import type { ExternalApiConfig } from '@misub/core/types.js';
 import type { AppSettingsConfig, SaveSettingsResponse } from '@/queries/useAppDataQueries.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { clearAllPreferences } from '@/utils/local-preference.js';
 
 export interface DisguiseConfig {
@@ -13,20 +15,10 @@ export interface DisguiseConfig {
   redirectUrl: string;
 }
 
-type ExternalApiConfig = AppSettingsConfig['externalApi'];
-
 interface ApiFailureShape {
   success?: boolean;
   error?: string;
   message?: string;
-}
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String((error as { message?: unknown }).message ?? '');
-  }
-  return String(error ?? '');
 }
 
 function normalizeExternalApiConfig(value: unknown): ExternalApiConfig {
@@ -197,7 +189,7 @@ export function useSettingsLogic() {
         throw new Error(result.error || result.message || t('settings.saveFailed'));
       }
     } catch (error: unknown) {
-      showToast(getErrorMessage(error), 'error');
+      showToast(extractErrorMessage(error, t('settings.saveFailed')), 'error');
       return false;
     } finally {
       isSaving.value = false;

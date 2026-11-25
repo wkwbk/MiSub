@@ -234,8 +234,8 @@ const handleTagReorder = (newOrder: string[]) => {
     />
 
     <ManualNodeEditModal
+      v-model:editing-node="editingNode"
       v-model:show="showNodeModal"
-      :editing-node="editingNode"
       :is-new="isNewNode"
       :tags="manualNodeTags"
       @confirm="handleSaveNode"

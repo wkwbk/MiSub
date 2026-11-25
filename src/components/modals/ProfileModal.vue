@@ -483,8 +483,8 @@ const updateSelectedIds = (listName: SelectionListName, newIds: any[]) => {
     <template #body>
       <div v-if="localProfile" class="space-y-6">
         <ProfileForm
+          v-model:local-profile="localProfile"
           :global-settings="dataStore.settings"
-          :local-profile="localProfile"
           :original-custom-id="props.profile?.customId || ''"
           :prefix-toggle-options="prefixToggleOptions"
           :profile-tags="allProfileTags"

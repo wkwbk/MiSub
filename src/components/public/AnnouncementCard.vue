@@ -11,7 +11,7 @@ export interface AnnouncementData {
   content?: string;
   type?: string;
   dismissible?: boolean;
-  updatedAt?: string | number;
+  updatedAt?: string | number | null;
   [key: string]: unknown;
 }
 

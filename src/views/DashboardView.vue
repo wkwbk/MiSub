@@ -120,7 +120,7 @@ const hiddenHealthItemsCount = computed(() =>
 );
 
 const showFullGuide = computed(() =>
-  (shouldShowFullGuide as (input: Record<string, any>) => boolean)({
+  (shouldShowFullGuide as (input: Record<string, unknown>) => boolean)({
     subscriptions: subscriptions.value || [],
     profiles: profiles.value || [],
   }),

@@ -28,12 +28,15 @@ const buildSettings = (settings = {}) => ({
   },
 });
 
-const mountSettings = (settings = {}) =>
-  mount(CustomPageSettings, {
+const mountSettings = (settings = {}) => {
+  const wrapper = mount(CustomPageSettings, {
     props: {
       settings: buildSettings(settings),
+      'onUpdate:settings': (next) => wrapper.setProps({ settings: next }),
     },
   });
+  return wrapper;
+};
 
 describe('CustomPageSettings safety messaging', () => {
   it('shows fixed-disabled security messaging instead of toggles for scripts and external stylesheets', () => {

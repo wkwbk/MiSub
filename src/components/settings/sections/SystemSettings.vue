@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { SettingsConfig } from '@misub/core/types.js';
+import { computed } from 'vue';
+import type { ExternalApiConfig, ExternalApiToken } from '@misub/core/types.js';
 import { AlertTriangle, Archive, Lock } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import Input from '@/components/ui/Input.vue';
@@ -7,39 +8,64 @@ import Switch from '@/components/ui/Switch.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
-  exportBackup?: ((...args: any[]) => any) | Function;
-  importBackup?: ((...args: any[]) => any) | Function;
-  handleReset?: ((...args: any[]) => any) | Function;
+  settings: AppSettingsConfig;
+  exportBackup?: (() => unknown) | undefined;
+  importBackup?: (() => unknown) | undefined;
+  handleReset?: (() => unknown) | undefined;
 }>();
 
-const onExportBackup = (event: MouseEvent) => (props.exportBackup as ((e: MouseEvent) => unknown) | undefined)?.(event);
-const onImportBackup = (event: MouseEvent) => (props.importBackup as ((e: MouseEvent) => unknown) | undefined)?.(event);
-const onHandleReset = (event: MouseEvent) => (props.handleReset as ((e: MouseEvent) => unknown) | undefined)?.(event);
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const onExportBackup = () => props.exportBackup?.();
+const onImportBackup = () => props.importBackup?.();
+const onHandleReset = () => props.handleReset?.();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const ensureExternalApiDefaults = (settings: Record<string, any>) => {
-  if (!settings.externalApi || typeof settings.externalApi !== 'object') {
-    settings.externalApi = { enabled: false, tokens: [{ name: 'default', token: '' }] };
-    return;
-  }
+const normalizeExternalApi = (raw?: Partial<ExternalApiConfig> | null): ExternalApiConfig => {
+  const tokens: ExternalApiToken[] =
+    Array.isArray(raw?.tokens) && raw.tokens.length > 0
+      ? raw.tokens.map((item, index) => ({
+          name: String(item?.name ?? '').trim() || `token-${index + 1}`,
+          token: String(item?.token ?? '').trim(),
+        }))
+      : [{ name: 'default', token: '' }];
 
-  if (!Array.isArray(settings.externalApi.tokens) || settings.externalApi.tokens.length === 0) {
-    settings.externalApi.tokens = [{ name: 'default', token: '' }];
-    return;
-  }
-
-  settings.externalApi.tokens = settings.externalApi.tokens.map((item: any, index: number) => ({
-    name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
-    token: String(item?.token || '').trim(),
-  }));
+  return {
+    enabled: Boolean(raw?.enabled),
+    tokens,
+  };
 };
 
-const buildExternalApiToken = () => {
+const externalApi = computed<ExternalApiConfig>(() => normalizeExternalApi(props.settings?.externalApi));
+const primaryToken = computed<ExternalApiToken>(() => externalApi.value.tokens[0] || { name: 'default', token: '' });
+
+const updateExternalApi = (patch: Partial<ExternalApiConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    externalApi: {
+      ...externalApi.value,
+      ...patch,
+    },
+  });
+};
+
+const updatePrimaryToken = (patch: Partial<ExternalApiToken>): void => {
+  const nextTokens = [...externalApi.value.tokens];
+  nextTokens[0] = {
+    ...primaryToken.value,
+    ...patch,
+  };
+  updateExternalApi({ tokens: nextTokens });
+};
+
+const buildExternalApiToken = (): string => {
   if (globalThis.crypto?.getRandomValues) {
     const bytes = new Uint8Array(18);
     globalThis.crypto.getRandomValues(bytes);
@@ -48,17 +74,13 @@ const buildExternalApiToken = () => {
   return `${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
 };
 
-ensureExternalApiDefaults(props.settings);
-
-const handleGenerateExternalApiToken = (settings: Record<string, any>) => {
-  ensureExternalApiDefaults(settings);
-  settings.externalApi.tokens[0].token = buildExternalApiToken();
+const handleGenerateExternalApiToken = (): void => {
+  updatePrimaryToken({ token: buildExternalApiToken() });
   showToast(t('systemSettings.externalApiTokenGenerated'), 'success');
 };
 
-const handleCopyExternalApiToken = async (settings: Record<string, any>) => {
-  ensureExternalApiDefaults(settings);
-  const token = settings.externalApi.tokens[0]?.token || '';
+const handleCopyExternalApiToken = async (): Promise<void> => {
+  const token = primaryToken.value.token || '';
   if (!token) {
     showToast(t('systemSettings.externalApiTokenEmpty'), 'error');
     return;
@@ -80,7 +102,10 @@ const handleCopyExternalApiToken = async (settings: Record<string, any>) => {
         <Lock class="h-4 w-4" />
       </template>
       <template #actions>
-        <Switch v-model="settings.externalApi.enabled" @update:modelValue="ensureExternalApiDefaults(settings)" />
+        <Switch
+          :model-value="Boolean(externalApi.enabled)"
+          @update:model-value="updateExternalApi({ enabled: Boolean($event) })"
+        />
       </template>
 
       <div class="space-y-5">
@@ -95,27 +120,29 @@ const handleCopyExternalApiToken = async (settings: Record<string, any>) => {
 
         <div class="grid gap-6 md:grid-cols-2">
           <Input
-            v-model="settings.externalApi.tokens[0].name"
             :label="t('systemSettings.externalApiTokenName')"
+            :model-value="primaryToken.name"
             :placeholder="t('systemSettings.externalApiTokenNamePlaceholder')"
+            @update:model-value="updatePrimaryToken({ name: String($event ?? '') })"
           />
           <Input
-            v-model="settings.externalApi.tokens[0].token"
             :label="t('systemSettings.externalApiTokenValue')"
+            :model-value="primaryToken.token"
             :placeholder="t('systemSettings.externalApiTokenValuePlaceholder')"
+            @update:model-value="updatePrimaryToken({ token: String($event ?? '') })"
           />
         </div>
 
         <div class="flex flex-wrap gap-2.5">
           <button
             class="px-3.5 py-1.5 text-xs font-semibold text-accent-fg rounded-md bg-accent border border-accent hover:opacity-90 transition-colors"
-            @click="handleGenerateExternalApiToken(settings)"
+            @click="handleGenerateExternalApiToken"
           >
             {{ t('systemSettings.externalApiGenerateToken') }}
           </button>
           <button
             class="px-3.5 py-1.5 text-xs font-medium rounded-md border border-line bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors"
-            @click="handleCopyExternalApiToken(settings)"
+            @click="handleCopyExternalApiToken"
           >
             {{ t('systemSettings.externalApiCopyToken') }}
           </button>

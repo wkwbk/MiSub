@@ -15,8 +15,10 @@ import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkIm
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useToastStore, type ToastType } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
-import { api, APIError } from '@/lib/http.js';
-import { handleError } from '@/utils/error-handler.js';
+import { APIError } from '@/lib/http.js';
+import { fetchExternalSubscriptionUrl, parseSubscriptionContent } from '@/lib/api.js';
+import { extractErrorMessage, handleError } from '@/utils/error-handler.js';
+import { isValidHttpUrl } from '@/utils/validation-utils.js';
 import { generateNodeId } from '@misub/core/utils/id.js';
 import { readFilesAsText } from '@/utils/import-file.js';
 import { buildAutoTagName } from '@/utils/auto-tag-name.js';
@@ -172,7 +174,7 @@ const normalizeAndDedupeParsedNodes = (
   const mapped: ManualNodeItem[] = (backendNodes || []).map((node) => {
     const base: ManualNodeItem = {
       id: generateNodeId(),
-      name: node.name || 'Unknown',
+      name: node.name || t('common.unknown'),
       url: cleanNodeUrl(node.url),
       enabled: true,
       tags: [],
@@ -266,10 +268,10 @@ const handleFiles = async (fileList: FileList | File[]) => {
     }
 
     parseStatus.value = t('importNodes.parsingFiles', { count: fileCount });
-    const parseResult = await api.post<ParseSubscriptionApiResponse>('/api/parse_subscription', { content: text });
+    const parseResult = await parseSubscriptionContent(text);
 
-    if (!parseResult.success) {
-      throw new Error(String(parseResult.error || t('importNodes.parseFileFailed')));
+    if (!parseResult?.success) {
+      throw new Error(String(parseResult?.error || t('importNodes.parseFileFailed')));
     }
 
     const backendNodes = parseResult.data?.nodes || [];
@@ -282,25 +284,17 @@ const handleFiles = async (fileList: FileList | File[]) => {
     commitParsedNodes(backendNodes, targetTags, 'File upload', {
       applyTagsDirectly: !isNodesMode.value,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('批量文件导入失败:', error);
     if (isNodesMode.value) {
       handleError(error, 'File Import Error', { parseStatus: parseStatus.value });
     }
     parseStatus.value = '';
-    errorMessage.value = error.message || t('importNodes.failed');
-    showToast(t('importNodes.failedWithMessage', { message: error.message }), 'error');
+    const msg = extractErrorMessage(error, t('importNodes.failed'));
+    errorMessage.value = msg;
+    showToast(t('importNodes.failedWithMessage', { message: msg }), 'error');
   } finally {
     isProcessing.value = false;
-  }
-};
-
-const isValidHttpUrl = (url: string) => {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
   }
 };
 
@@ -324,14 +318,9 @@ const importSubscriptionUrl = async () => {
 
     let responseData: FetchExternalApiResponse;
     try {
-      responseData = await api.post<FetchExternalApiResponse>(
-        '/api/fetch_external_url',
-        {
-          url: subscriptionUrl.value,
-          timeout: 15000,
-        },
-        { signal: controller.signal },
-      );
+      responseData = await fetchExternalSubscriptionUrl(subscriptionUrl.value, 15000, {
+        signal: controller.signal,
+      });
     } catch (error: unknown) {
       if (error instanceof APIError) {
         const errData = error.data;
@@ -361,12 +350,10 @@ const importSubscriptionUrl = async () => {
     }
 
     parseStatus.value = t('importNodes.parsingSubscription');
-    const parseResult = await api.post<ParseSubscriptionApiResponse>('/api/parse_subscription', {
-      content: responseData.content || '',
-    });
+    const parseResult = await parseSubscriptionContent(responseData.content || '');
 
-    if (!parseResult.success) {
-      throw new Error(String(parseResult.error || t('importNodes.parseSubscriptionFailed')));
+    if (!parseResult?.success) {
+      throw new Error(String(parseResult?.error || t('importNodes.parseSubscriptionFailed')));
     }
 
     const backendNodes = parseResult.data?.nodes || [];
@@ -376,14 +363,15 @@ const importSubscriptionUrl = async () => {
       parseStatus.value = '';
       throw new Error(t('importNodes.noValidNodesFromSubscription'));
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('导入订阅失败:', error);
     handleError(error, 'Subscription Import Error', {
       url: subscriptionUrl.value,
       parseStatus: parseStatus.value,
     });
-    errorMessage.value = error.message || t('importNodes.failed');
-    showToast(t('importNodes.failedWithMessage', { message: error.message }), 'error');
+    const msg = extractErrorMessage(error, t('importNodes.failed'));
+    errorMessage.value = msg;
+    showToast(t('importNodes.failedWithMessage', { message: msg }), 'error');
   } finally {
     isProcessing.value = false;
   }

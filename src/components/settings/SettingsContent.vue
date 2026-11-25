@@ -74,12 +74,24 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:activeTab': [value: string];
+  'update:settings': [value: AppSettingsConfig];
+  'update:disguiseConfig': [value: DisguiseConfig];
   save: [];
 }>();
 
 const activeTabModel = computed({
   get: () => props.activeTab,
   set: (value: string) => emit('update:activeTab', value),
+});
+
+const settingsModel = computed<AppSettingsConfig>({
+  get: () => props.settings,
+  set: (value: AppSettingsConfig) => emit('update:settings', value),
+});
+
+const disguiseConfigModel = computed<DisguiseConfig>({
+  get: () => props.disguiseConfig as DisguiseConfig,
+  set: (value: DisguiseConfig) => emit('update:disguiseConfig', value),
 });
 
 // 仅在首次访问对应 tab 时才挂载该分区组件，后续切换通过 v-show 保留内部状态
@@ -192,26 +204,38 @@ onUnmounted(() => {
       <BasicSettings
         v-if="visitedTabs.has('basic')"
         v-show="activeTab === 'basic'"
-        :disguiseConfig="disguiseConfig"
+        v-model:disguise-config="disguiseConfigModel"
+        v-model:settings="settingsModel"
         :highlighted-focus-id="highlightedFocusId"
-        :settings="settings"
       />
-      <HomeSettings v-if="visitedTabs.has('home')" v-show="activeTab === 'home'" :settings="settings" />
-      <GlobalSettings v-if="visitedTabs.has('global')" v-show="activeTab === 'global'" :settings="settings" />
-      <TransformSettings v-if="visitedTabs.has('transform')" v-show="activeTab === 'transform'" :settings="settings" />
-      <ServiceSettings v-if="visitedTabs.has('service')" v-show="activeTab === 'service'" :settings="settings" />
+      <HomeSettings v-if="visitedTabs.has('home')" v-show="activeTab === 'home'" v-model:settings="settingsModel" />
+      <GlobalSettings
+        v-if="visitedTabs.has('global')"
+        v-show="activeTab === 'global'"
+        v-model:settings="settingsModel"
+      />
+      <TransformSettings
+        v-if="visitedTabs.has('transform')"
+        v-show="activeTab === 'transform'"
+        v-model:settings="settingsModel"
+      />
+      <ServiceSettings
+        v-if="visitedTabs.has('service')"
+        v-show="activeTab === 'service'"
+        v-model:settings="settingsModel"
+      />
       <CustomPageSettings
         v-if="visitedTabs.has('custom-page')"
         v-show="activeTab === 'custom-page'"
-        :settings="settings"
+        v-model:settings="settingsModel"
       />
       <div v-if="visitedTabs.has('system')" v-show="activeTab === 'system'" class="space-y-4">
-        <WebdavBackupSettings :settings="settings" />
+        <WebdavBackupSettings v-model:settings="settingsModel" />
         <SystemSettings
+          v-model:settings="settingsModel"
           :exportBackup="exportBackup ?? undefined"
           :handleReset="handleReset ?? undefined"
           :importBackup="importBackup ?? undefined"
-          :settings="settings"
         />
       </div>
     </div>

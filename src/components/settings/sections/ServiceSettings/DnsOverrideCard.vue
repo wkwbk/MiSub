@@ -13,12 +13,19 @@ const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
 
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
 const inputValue = computed({
   get() {
     return props.settings.customDnsOverride || '';
   },
   set(value: string) {
-    props.settings.customDnsOverride = value;
+    emit('update:settings', {
+      ...props.settings,
+      customDnsOverride: value,
+    });
   },
 });
 

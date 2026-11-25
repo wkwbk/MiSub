@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Monitor } from '@lucide/vue';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
 import Textarea from '@/components/ui/Textarea.vue';
 import ResourceCollectionCard from '@/components/settings/ResourceCollectionCard.vue';
@@ -16,7 +17,7 @@ interface CollectionClientItem {
   name?: string;
   icon?: string;
   description?: string;
-  platforms?: string[];
+  platforms: string[];
   url?: string;
   repo?: string | null;
   enabled?: boolean;
@@ -103,16 +104,16 @@ const getPlatformClass = (platform: string): string => {
     :create-new-item="createNewItem"
     :default-config="DEFAULT_PUBLIC_CLIENTS_CONFIG"
     :description="t('settings.clientManagerDesc')"
+    :endpoint="API_ENDPOINTS.CLIENTS"
     :filter-item="filterItem"
     :icon-placeholder="t('settings.clientIconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicClientsConfig"
+    :normalize-config="normalizePublicClientsConfig as any"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicClientIcon"
     :tabs="platformTabs"
     :title="t('settings.clientManagerTitle')"
     :validate-and-build-item="validateAndBuildItem"
-    endpoint="/api/clients"
     fallback-emoji="💻"
     tone="blue"
   >
@@ -187,7 +188,7 @@ const getPlatformClass = (platform: string): string => {
           </div>
         </div>
         <div>
-          <label class="block text-xs font-medium text-fg-muted">GitHub Repo</label>
+          <label class="block text-xs font-medium text-fg-muted">{{ t('settings.clientRepoLabel') }}</label>
           <div class="mt-1 flex rounded-md shadow-none">
             <span
               class="inline-flex items-center px-2.5 rounded-l-md border border-r-0 border-line bg-elevated-card text-fg-subtle sm:text-xs"

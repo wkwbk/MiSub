@@ -1,9 +1,14 @@
-//
-//
-
-import type { SubscriptionItem, SubscriptionUserInfo } from '@misub/core/types.js';
+import type {
+  ParseSubscriptionResponse,
+  SubscriptionItem,
+  SubscriptionUserInfo,
+  WebdavBackupConfig,
+  WebdavRemoteFile,
+} from '@misub/core/types.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { api, APIError } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 export type ApiErrorType = 'auth' | 'server' | 'timeout' | 'network' | 'validation' | 'unknown';
 
@@ -56,6 +61,99 @@ export interface ConnectionTestResult {
   [key: string]: unknown;
 }
 
+export interface WebdavActionResponse {
+  success?: boolean;
+  message?: string;
+  error?: string;
+  timestamp?: string;
+  file?: string;
+}
+
+export interface WebdavRemoteListResponse {
+  success?: boolean;
+  data?: WebdavRemoteFile[];
+  message?: string;
+  error?: string;
+}
+
+export interface BackupExportResponse {
+  success?: boolean;
+  message?: string;
+  exportData?: {
+    scope?: string;
+    [key: string]: unknown;
+  };
+}
+
+export interface BackupRestoreResponse {
+  success?: boolean;
+  message?: string;
+  error?: string;
+}
+
+export interface TelegramActionApiResponse {
+  success?: boolean;
+  message?: string;
+  error?: string;
+  detail?: unknown;
+  webhook?: {
+    skipped?: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+export interface RotateTokenResponse {
+  success?: boolean;
+  message?: string;
+  data?: {
+    myToken?: string;
+    rotatedAt?: string;
+    notified?: boolean;
+  };
+}
+
+export interface GuestbookManageItem {
+  id: string;
+  status: string;
+  reply?: string;
+  replyAt?: string | null;
+  nickname?: string;
+  content?: string;
+  type?: string;
+  isVisible?: boolean;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
+export interface GuestbookListResponse {
+  success?: boolean;
+  data?: GuestbookManageItem[];
+  message?: string;
+}
+
+export interface GuestbookActionResponse {
+  success?: boolean;
+  data?: GuestbookManageItem;
+  message?: string;
+}
+
+export interface FetchExternalApiResponse {
+  success?: boolean;
+  error?: string;
+  content?: string;
+}
+
+export interface ReleaseMetaResponse {
+  tag_name?: string;
+  published_at?: string;
+  [key: string]: unknown;
+}
+
+function isApiErrorInstance(error: unknown): error is APIError {
+  return typeof APIError === 'function' && error instanceof APIError;
+}
+
 /**
  * 统一的 API 错误处理辅助函数
  * @param error - 错误对象
@@ -69,7 +167,7 @@ function handleApiError(error: unknown, context = ''): ApiFailureResult {
   let errorMessage = t('subscriptions.unknownError');
   let status: number | null = null;
 
-  if (error instanceof APIError) {
+  if (isApiErrorInstance(error)) {
     status = error.status;
     if (error.status === 401) {
       errorType = 'auth';
@@ -157,7 +255,7 @@ export async function fetchInitialData(): Promise<ApiResult<Record<string, unkno
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), 8000); // 8秒超时
 
-    const data = await api.get<Record<string, unknown>>('/api/data', { signal: controller.signal });
+    const data = await api.get<Record<string, unknown>>(API_ENDPOINTS.DATA, { signal: controller.signal });
 
     // 检查新的认证状态响应 (200 OK with authenticated: false)
     if (data && data.authenticated === false) {
@@ -181,10 +279,10 @@ export async function login(
     if (turnstileToken) {
       payload.turnstileToken = turnstileToken;
     }
-    const data = await api.post<Record<string, unknown>>('/api/login', payload);
+    const data = await api.post<Record<string, unknown>>(API_ENDPOINTS.LOGIN, payload);
     return { success: true, data };
   } catch (error) {
-    if (error instanceof APIError && (error.status === 401 || error.status === 400)) {
+    if (isApiErrorInstance(error) && (error.status === 401 || error.status === 400)) {
       return {
         success: false,
         error:
@@ -197,6 +295,10 @@ export async function login(
     }
     return handleApiError(error, 'login');
   }
+}
+
+export async function logoutSession(): Promise<void> {
+  await api.get(API_ENDPOINTS.LOGOUT);
 }
 
 // [核心修改] saveMisubs 现在接收并发送 profiles
@@ -227,7 +329,7 @@ export async function fetchNodeCount(
       payload.userAgent = userAgent;
     }
 
-    const data = await api.post<Record<string, unknown>>('/api/node_count', payload, {
+    const data = await api.post<Record<string, unknown>>(API_ENDPOINTS.NODE_COUNT, payload, {
       signal: controller.signal,
     });
 
@@ -247,7 +349,7 @@ export async function fetchNodeCount(
 
 export async function fetchSettings(): Promise<ApiResult<Record<string, unknown>>> {
   try {
-    const data = await api.get<Record<string, unknown>>(`/api/settings?t=${Date.now()}`);
+    const data = await api.get<Record<string, unknown>>(`${API_ENDPOINTS.SETTINGS}?t=${Date.now()}`);
     return { success: true, data };
   } catch (error) {
     return handleApiError(error, 'fetchSettings');
@@ -263,7 +365,7 @@ export async function fetchPublicConfig(): Promise<ApiResult<Record<string, unkn
       typeof window !== 'undefined' && window.location?.pathname
         ? { 'X-MiSub-Path': window.location.pathname }
         : undefined;
-    const data = await api.get<Record<string, unknown>>('/api/public_config', {
+    const data = await api.get<Record<string, unknown>>(API_ENDPOINTS.PUBLIC_CONFIG, {
       signal: controller.signal,
       headers,
     });
@@ -279,7 +381,7 @@ export async function saveSettings(
   settings: Record<string, unknown>,
 ): Promise<Record<string, unknown> | ApiFailureResult> {
   try {
-    return await api.post<Record<string, unknown>>('/api/settings', settings);
+    return await api.post<Record<string, unknown>>(API_ENDPOINTS.SETTINGS, settings);
   } catch (error) {
     return handleApiError(error, 'saveSettings');
   }
@@ -291,10 +393,14 @@ export async function saveSettings(
  */
 export async function resetSettings(): Promise<Record<string, unknown> | ApiFailureResult> {
   try {
-    return await api.post<Record<string, unknown>>('/api/settings/reset', undefined);
+    return await api.post<Record<string, unknown>>(API_ENDPOINTS.SETTINGS_RESET, undefined);
   } catch (error) {
     return handleApiError(error, 'resetSettings');
   }
+}
+
+export async function rotateMyToken(): Promise<RotateTokenResponse> {
+  return await api.post<RotateTokenResponse>(API_ENDPOINTS.SETTINGS_ROTATE_TOKEN, {});
 }
 
 /**
@@ -320,12 +426,12 @@ export async function batchUpdateNodes(
       payload.subscriptions = subscriptions;
     }
 
-    const result = await api.post<Record<string, unknown>>('/api/batch_update_nodes', payload, {
+    const result = await api.post<Record<string, unknown>>(API_ENDPOINTS.BATCH_UPDATE, payload, {
       signal: controller.signal,
     });
 
     if (result?.success === false) {
-      return normalizeApiFailure(result, '批量更新节点信息失败');
+      return normalizeApiFailure(result, t('settings.batchUpdateFailed'));
     }
 
     return result;
@@ -338,13 +444,26 @@ export async function batchUpdateNodes(
 
 export async function fetchGithubLatestRelease(
   repo: string,
-): Promise<Record<string, unknown> | ApiFailureResult> {
+): Promise<ReleaseMetaResponse | ApiFailureResult> {
   try {
-    return await api.get<Record<string, unknown>>(
-      `/api/github/release?repo=${encodeURIComponent(repo)}`,
+    return await api.get<ReleaseMetaResponse>(
+      `${API_ENDPOINTS.GITHUB_RELEASE}?repo=${encodeURIComponent(repo)}`,
     );
   } catch (error) {
     return handleApiError(error, 'fetchGithubLatestRelease');
+  }
+}
+
+export async function fetchAppStoreRelease(
+  id: string,
+  country: string,
+): Promise<ReleaseMetaResponse | ApiFailureResult> {
+  try {
+    return await api.get<ReleaseMetaResponse>(
+      `${API_ENDPOINTS.APPSTORE_RELEASE}?id=${encodeURIComponent(id)}&country=${encodeURIComponent(country)}`,
+    );
+  } catch (error) {
+    return handleApiError(error, 'fetchAppStoreRelease');
   }
 }
 
@@ -357,7 +476,7 @@ export async function testSubconverterBackend(
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), 30000);
     const data = await api.post<ConnectionTestResult>(
-      '/api/subconverter/test',
+      API_ENDPOINTS.SUBCONVERTER_TEST,
       { backend, target },
       { signal: controller.signal },
     );
@@ -377,7 +496,7 @@ export async function testShortLinkConnection(
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), 12000);
     const data = await api.post<ShortLinkResult>(
-      '/api/shortlink/test',
+      API_ENDPOINTS.SHORTLINK_TEST,
       { shortLink },
       { signal: controller.signal },
     );
@@ -400,7 +519,7 @@ export async function createShortLink({
     const controller = new AbortController();
     timeoutId = setTimeout(() => controller.abort(), 12000);
     const data = await api.post<ShortLinkResult>(
-      '/api/shortlink/create',
+      API_ENDPOINTS.SHORTLINK_CREATE,
       { url, slug, profileId, saveToProfile },
       { signal: controller.signal },
     );
@@ -410,4 +529,132 @@ export async function createShortLink({
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+export async function testWebdavConnection(webdavBackup: Partial<WebdavBackupConfig>): Promise<WebdavActionResponse> {
+  return await api.post<WebdavActionResponse>(API_ENDPOINTS.BACKUP_WEBDAV_TEST, { webdavBackup });
+}
+
+export async function runWebdavBackup(scope: string): Promise<WebdavActionResponse> {
+  return await api.post<WebdavActionResponse>(API_ENDPOINTS.BACKUP_WEBDAV_RUN, { scope });
+}
+
+export async function listWebdavBackups(): Promise<WebdavRemoteListResponse> {
+  return await api.get<WebdavRemoteListResponse>(API_ENDPOINTS.BACKUP_WEBDAV_LIST);
+}
+
+export async function restoreWebdavBackup(file: string): Promise<WebdavActionResponse> {
+  return await api.post<WebdavActionResponse>(API_ENDPOINTS.BACKUP_WEBDAV_RESTORE, { file });
+}
+
+export async function exportLocalBackup(scope: string): Promise<BackupExportResponse | null> {
+  return await api.post<BackupExportResponse | null>(API_ENDPOINTS.BACKUP_EXPORT, { scope });
+}
+
+export async function restoreLocalBackup(payload: unknown, scope: string): Promise<BackupRestoreResponse | null> {
+  return await api.post<BackupRestoreResponse | null>(API_ENDPOINTS.BACKUP_RESTORE, { payload, scope });
+}
+
+export async function testTelegramNotification(payload: {
+  botToken?: string;
+  chatId?: string;
+}): Promise<TelegramActionApiResponse> {
+  try {
+    return await api.post<TelegramActionApiResponse>(API_ENDPOINTS.TEST_NOTIFICATION, payload);
+  } catch (error) {
+    if (isApiErrorInstance(error)) {
+      return {
+        success: false,
+        error: extractErrorMessage(error, t('settings.telegramTestFailed')),
+        detail: error.data?.detail ?? error.data,
+      };
+    }
+    throw error;
+  }
+}
+
+export async function setupTelegramPushBot(payload: {
+  botToken: string;
+  webhookSecret: string;
+}): Promise<TelegramActionApiResponse> {
+  try {
+    return await api.post<TelegramActionApiResponse>(API_ENDPOINTS.TELEGRAM_SETUP, payload);
+  } catch (error) {
+    if (isApiErrorInstance(error)) {
+      return {
+        success: false,
+        error: extractErrorMessage(error, t('settings.telegramSyncFailed')),
+        detail: error.data ?? undefined,
+      };
+    }
+    throw error;
+  }
+}
+
+export async function submitPublicGuestbook(payload: {
+  nickname: string;
+  content: string;
+  type: string;
+  turnstileToken?: string;
+}): Promise<{ success?: boolean; message?: string }> {
+  return await api.post<{ success?: boolean; message?: string }>(API_ENDPOINTS.PUBLIC_GUESTBOOK, payload);
+}
+
+export async function fetchGuestbookMessages(): Promise<GuestbookListResponse> {
+  return await api.get<GuestbookListResponse>(API_ENDPOINTS.GUESTBOOK_MANAGE);
+}
+
+export async function manageGuestbookMessage(payload: {
+  action: string;
+  id: string;
+  replyContent?: string;
+}): Promise<GuestbookActionResponse> {
+  return await api.post<GuestbookActionResponse>(API_ENDPOINTS.GUESTBOOK_MANAGE, payload);
+}
+
+export async function parseSubscriptionContent(content: string): Promise<ParseSubscriptionResponse | null> {
+  return await api.post<ParseSubscriptionResponse | null>(API_ENDPOINTS.PARSE_SUBSCRIPTION, { content });
+}
+
+export async function fetchExternalSubscriptionUrl(
+  url: string,
+  timeout = 15000,
+  options: RequestInit = {},
+): Promise<FetchExternalApiResponse> {
+  return await api.post<FetchExternalApiResponse>(
+    API_ENDPOINTS.FETCH_EXTERNAL,
+    { url, timeout },
+    options,
+  );
+}
+
+export async function detectAirportName(url: string): Promise<{ name?: string; [key: string]: unknown }> {
+  return await api.post<{ name?: string; [key: string]: unknown }>(API_ENDPOINTS.DETECT_AIRPORT_NAME, { url });
+}
+
+export async function fetchPublicResource<T = unknown>(endpoint: string): Promise<{
+  success?: boolean;
+  data?: T;
+  message?: string;
+}> {
+  return await api.get<{ success?: boolean; data?: T; message?: string }>(endpoint);
+}
+
+export async function savePublicResource<T = unknown>(
+  endpoint: string,
+  payload: unknown,
+): Promise<{
+  success?: boolean;
+  data?: T;
+  message?: string;
+}> {
+  return await api.post<{ success?: boolean; data?: T; message?: string }>(endpoint, payload);
+}
+
+export async function initPublicResource<T = unknown>(endpoint: string): Promise<{
+  success?: boolean;
+  data?: T;
+  message?: string;
+}> {
+  return await api.post<{ success?: boolean; data?: T; message?: string }>(`${endpoint}/init`);
 }

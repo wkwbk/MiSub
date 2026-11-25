@@ -1,5 +1,6 @@
 import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/vue-query';
 import { api } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 
 export interface PublicProfileSummary {
@@ -46,7 +47,7 @@ export async function fetchPublicProfilesWithQuery(queryClient: QueryClient): Pr
   return await queryClient.fetchQuery({
     queryKey: QUERY_KEYS.publicProfiles,
     staleTime: 0,
-    queryFn: () => api.get('/api/public/profiles') as Promise<PublicProfilesResponse>,
+    queryFn: () => api.get(API_ENDPOINTS.PUBLIC_PROFILES) as Promise<PublicProfilesResponse>,
   });
 }
 
@@ -55,7 +56,7 @@ export function usePublicProfilesQuery(options: UsePublicProfilesQueryOptions = 
   return useQuery(
     {
       queryKey: QUERY_KEYS.publicProfiles,
-      queryFn: () => api.get('/api/public/profiles') as Promise<PublicProfilesResponse>,
+      queryFn: () => api.get(API_ENDPOINTS.PUBLIC_PROFILES) as Promise<PublicProfilesResponse>,
       ...options,
     },
     queryClient,

@@ -1,6 +1,7 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/vue-query';
 import { api } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 
 export interface AccessLogFilter {
@@ -41,7 +42,7 @@ function extractAccessLogs(response: unknown): AccessLogEntry[] {
 }
 
 export async function fetchAccessLogsWithQuery(queryClient?: QueryClient | null): Promise<AccessLogEntry[]> {
-  const response: unknown = await api.get(`/api/logs?t=${Date.now()}`);
+  const response: unknown = await api.get(`${API_ENDPOINTS.LOGS}?t=${Date.now()}`);
   const logs = extractAccessLogs(response);
   queryClient?.setQueryData?.(QUERY_KEYS.accessLogs(), logs);
   return logs;
@@ -55,7 +56,7 @@ export async function clearAccessLogsWithQuery(
   if (profileId) queryParts.push(`profileId=${encodeURIComponent(profileId)}`);
   if (profileName) queryParts.push(`profileName=${encodeURIComponent(profileName)}`);
   const queryStr = queryParts.join('&');
-  const endpoint = queryStr ? `/api/logs?${queryStr}` : '/api/logs';
+  const endpoint = queryStr ? `${API_ENDPOINTS.LOGS}?${queryStr}` : API_ENDPOINTS.LOGS;
   const result: unknown = await api.del(endpoint);
   await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.accessLogsRoot });
   return result;
@@ -71,7 +72,7 @@ export function useAccessLogsQuery(
     {
       queryKey,
       queryFn: async (): Promise<AccessLogEntry[]> => {
-        const res: unknown = await api.get(`/api/logs?t=${Date.now()}`);
+        const res: unknown = await api.get(`${API_ENDPOINTS.LOGS}?t=${Date.now()}`);
         return extractAccessLogs(res);
       },
       ...options,

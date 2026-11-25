@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { ArrowRight } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import { api } from '@/lib/http.js';
+import { fetchGithubLatestRelease } from '@/lib/api.js';
 import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
@@ -18,11 +18,6 @@ interface PublicCoreEntry extends PublicCoreItem {
 interface CoreReleaseMeta {
   version: string;
   publishedAt: string;
-}
-
-interface GithubReleaseResponse {
-  tag_name?: string;
-  published_at?: string;
 }
 
 const props = withDefaults(
@@ -103,8 +98,8 @@ const fetchCoreReleases = async (cores: PublicCoreEntry[] = []): Promise<void> =
     if (!repo || fetchedCoreRepos.has(repo)) return;
     fetchedCoreRepos.add(repo);
     try {
-      const data = await api.get<GithubReleaseResponse>(`/api/github/release?repo=${repo}`);
-      if (data?.tag_name || data?.published_at) {
+      const data = await fetchGithubLatestRelease(repo);
+      if (data && !('errorType' in data) && (data.tag_name || data.published_at)) {
         coreReleases.value = {
           ...coreReleases.value,
           [repo]: {

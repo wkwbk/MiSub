@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { CustomPageConfig } from '@misub/core/types.js';
 import { CUSTOM_PAGE_TEMPLATES } from '@/constants/custom-page-templates.js';
+import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
@@ -17,44 +19,38 @@ const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
 
-if (!props.settings.customPage) {
-  props.settings.customPage = {
-    enabled: false,
-    type: 'html',
-    content: '',
-    css: '',
-    iframeUrl: '',
-    iframeHeight: '100vh',
-    iframeFullWidth: true,
-    iframeAllowFullscreen: true,
-    iframeFillViewport: false,
-    iframePaddingY: '0px',
-    iframeRadius: '0px',
-    iframeShadow: false,
-    useDefaultLayout: true,
-    allowExternalStylesheets: false,
-    allowScripts: false,
-    hideBranding: false,
-    hideHeader: false,
-    hideFooter: false,
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const customPage = computed<CustomPageConfig>(() => {
+  const merged: CustomPageConfig = {
+    ...DEFAULT_SETTINGS.customPage,
+    ...props.settings?.customPage,
   };
+  merged.type = 'html';
+  merged.allowExternalStylesheets = false;
+  merged.allowScripts = false;
+  return merged;
+});
+
+function updateCustomPage(patch: Partial<CustomPageConfig>): void {
+  emit('update:settings', {
+    ...props.settings,
+    customPage: {
+      ...customPage.value,
+      ...patch,
+      type: 'html',
+      allowExternalStylesheets: false,
+      allowScripts: false,
+    },
+  });
 }
-
-if (props.settings.customPage.type !== 'html') {
-  props.settings.customPage.type = 'html';
-}
-
-const cp = props.settings.customPage;
-if (typeof cp.allowExternalStylesheets !== 'boolean') cp.allowExternalStylesheets = false;
-if (typeof cp.allowScripts !== 'boolean') cp.allowScripts = false;
-if (typeof cp.hideBranding !== 'boolean') cp.hideBranding = false;
-if (typeof cp.hideHeader !== 'boolean') cp.hideHeader = false;
-if (typeof cp.hideFooter !== 'boolean') cp.hideFooter = false;
-
-const customPage = computed(() => props.settings.customPage);
 
 const insertPlaceholder = (placeholder: string): void => {
-  props.settings.customPage.content = (customPage.value.content || '') + `{{${placeholder}}}`;
+  updateCustomPage({
+    content: (customPage.value.content || '') + `{{${placeholder}}}`,
+  });
 };
 
 const placeholderChips = [
@@ -114,26 +110,28 @@ const applyTemplate = async (tpl: CustomPageTemplate): Promise<void> => {
   });
   if (confirmed) {
     const parsed = parseCustomPageSource(tpl.content, tpl.css || '');
-    props.settings.customPage.type = 'html';
-    props.settings.customPage.content = parsed.html;
-    props.settings.customPage.css = parsed.css;
-
-    if (tpl.layoutPreset) {
-      props.settings.customPage.useDefaultLayout = tpl.layoutPreset.useDefaultLayout;
-      props.settings.customPage.hideHeader = tpl.layoutPreset.hideHeader;
-      props.settings.customPage.hideFooter = tpl.layoutPreset.hideFooter;
-      props.settings.customPage.hideBranding = tpl.layoutPreset.hideBranding;
-    }
-
-    props.settings.customPage.allowExternalStylesheets = false;
-    props.settings.customPage.allowScripts = false;
+    const layoutPatch = tpl.layoutPreset
+      ? {
+          useDefaultLayout: tpl.layoutPreset.useDefaultLayout,
+          hideHeader: tpl.layoutPreset.hideHeader,
+          hideFooter: tpl.layoutPreset.hideFooter,
+          hideBranding: tpl.layoutPreset.hideBranding,
+        }
+      : {};
+    updateCustomPage({
+      content: parsed.html,
+      css: parsed.css,
+      ...layoutPatch,
+    });
   }
 };
 
 const normalizeFullPageSource = (): void => {
-  const parsed = parseCustomPageSource(props.settings.customPage.content, props.settings.customPage.css);
-  props.settings.customPage.content = parsed.html;
-  props.settings.customPage.css = parsed.css;
+  const parsed = parseCustomPageSource(customPage.value.content, customPage.value.css);
+  updateCustomPage({
+    content: parsed.html,
+    css: parsed.css,
+  });
 };
 </script>
 
@@ -145,7 +143,10 @@ const normalizeFullPageSource = (): void => {
       :title="t('settings.customPageTitle')"
     >
       <template #actions>
-        <Switch v-model="props.settings.customPage.enabled" />
+        <Switch
+          :model-value="Boolean(customPage.enabled)"
+          @update:model-value="updateCustomPage({ enabled: Boolean($event) })"
+        />
       </template>
 
       <div v-if="customPage.enabled" class="space-y-6">
@@ -178,7 +179,10 @@ const normalizeFullPageSource = (): void => {
                 {{ t(row.descKey) }}
               </p>
             </div>
-            <Switch v-model="props.settings.customPage[row.key]" />
+            <Switch
+              :model-value="Boolean(customPage[row.key])"
+              @update:model-value="updateCustomPage({ [row.key]: Boolean($event) })"
+            />
           </div>
 
           <div
@@ -229,7 +233,7 @@ const normalizeFullPageSource = (): void => {
               </button>
             </div>
             <Textarea
-              v-model="props.settings.customPage.content"
+              :model-value="customPage.content"
               :placeholder="
                 t('settings.customPageSourcePlaceholder', {
                   action: t('settings.customPageNormalizeSource'),
@@ -237,13 +241,14 @@ const normalizeFullPageSource = (): void => {
               "
               class="px-3 py-2.5 font-mono text-xs leading-relaxed"
               rows="12"
+              @update:model-value="updateCustomPage({ content: String($event ?? '') })"
             />
           </div>
 
           <div>
             <label class="block text-xs font-semibold text-fg-muted mb-2.5">{{ t('settings.customPageCss') }}</label>
             <Textarea
-              v-model="props.settings.customPage.css"
+              :model-value="customPage.css"
               :placeholder="
                 t('settings.customPageCssPlaceholder', {
                   name: t('settings.customPageCss'),
@@ -251,6 +256,7 @@ const normalizeFullPageSource = (): void => {
               "
               class="px-3 py-2.5 font-mono text-xs leading-relaxed"
               rows="6"
+              @update:model-value="updateCustomPage({ css: String($event ?? '') })"
             />
           </div>
         </div>

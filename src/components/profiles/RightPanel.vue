@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
-import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
+import type { ProfileConfig } from '@misub/core/types.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import { ArrowRight, Check, Copy, Link2, Loader2, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -14,7 +15,7 @@ import { shadowrocketConfigUrl } from '@misub/core/domain/shadowrocket-links.js'
 
 const props = withDefaults(
   defineProps<{
-    config?: (Omit<SettingsConfig, 'mergeExpireStrategy'> & { mergeExpireStrategy?: string } & Record<string, any>) | null;
+    config?: Partial<AppSettingsConfig> | null;
     profiles?: ProfileConfig[];
     compact?: boolean;
   }>(),

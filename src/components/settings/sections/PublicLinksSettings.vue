@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Compass } from '@lucide/vue';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
 import Textarea from '@/components/ui/Textarea.vue';
 import ResourceCollectionCard from '@/components/settings/ResourceCollectionCard.vue';
 import { normalizeWebsiteUrl } from '@/utils/url-origin.js';
+import { isValidHttpUrl } from '@/utils/validation-utils.js';
 import {
   DEFAULT_PUBLIC_LINKS_CONFIG,
   normalizePublicLinksConfig,
@@ -76,12 +78,7 @@ const validateAndBuildItem = (
   const normalizedUrl = normalizeWebsiteUrl(editingLink.url);
   if (!normalizedUrl) return { error: t('publicLinks.urlRequired') };
 
-  try {
-    const parsed = new URL(normalizedUrl);
-    if (!['http:', 'https:'].includes(parsed.protocol)) {
-      return { error: t('publicLinks.invalidUrl') };
-    }
-  } catch {
+  if (!isValidHttpUrl(normalizedUrl)) {
     return { error: t('publicLinks.invalidUrl') };
   }
 
@@ -105,17 +102,17 @@ const validateAndBuildItem = (
     :create-new-item="createNewItem"
     :default-config="DEFAULT_PUBLIC_LINKS_CONFIG"
     :description="t('publicLinks.managerDesc')"
+    :endpoint="API_ENDPOINTS.PUBLIC_LINKS"
     :filter-item="filterItem"
     :get-category-badge="(item) => getCategoryLabel(item.category)"
     :icon-placeholder="t('settings.clientIconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicLinksConfig"
+    :normalize-config="normalizePublicLinksConfig as any"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicLinkIcon"
     :tabs="categoryTabs"
     :title="t('publicLinks.managerTitle')"
     :validate-and-build-item="validateAndBuildItem"
-    endpoint="/api/public_links"
     fallback-emoji="🌐"
     tone="blue"
   >

@@ -10,12 +10,27 @@ import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkIm
 import { getItemTags, normalizeTagList } from '@/utils/tags.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
+import type { SubscriptionItem } from '@misub/core/types.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
 
+type EditableSub = EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+
 const props = defineProps<{
-  editingSubscription: EditableSubscriptionForm | StoreMisubItem;
+  editingSubscription: EditableSub;
 }>();
+
+const emit = defineEmits<{
+  'update:editingSubscription': [value: EditableSub];
+}>();
+
+const updateField = (patch: Partial<EditableSub>) => {
+  emit('update:editingSubscription', {
+    ...props.editingSubscription,
+    ...patch,
+  } as EditableSub);
+};
 
 const { showToast } = useToastStore();
 const dataStore = useDataStore();
@@ -27,7 +42,7 @@ const selectedTags = computed<string[]>({
   get: () => getItemTags(props.editingSubscription),
   set: (val: string[]) => {
     if (!props.editingSubscription) return;
-    props.editingSubscription.tags = normalizeTagList(val);
+    updateField({ tags: normalizeTagList(val) });
   },
 });
 
@@ -45,8 +60,8 @@ watch(
 );
 
 watch(useFetchProxy, (val) => {
-  if (!val && props.editingSubscription) {
-    props.editingSubscription.fetchProxy = '';
+  if (!val && props.editingSubscription?.fetchProxy) {
+    updateField({ fetchProxy: '' });
   }
 });
 
@@ -69,7 +84,7 @@ const testProxyConnectivity = async (): Promise<void> => {
       showToast(t('subscriptions.proxyTestFailed', { message: res.error }), 'error');
     }
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err ?? '');
+    const message = extractErrorMessage(err);
     showToast(t('subscriptions.proxyTestError', { message }), 'error');
   } finally {
     isTestingProxy.value = false;
@@ -82,9 +97,10 @@ const testProxyConnectivity = async (): Promise<void> => {
   <div>
     <Input
       id="sub-edit-name"
-      v-model="editingSubscription.name"
+      :model-value="editingSubscription.name"
       :label="t('subscriptions.nameLabel')"
       :placeholder="t('subscriptions.nameAutoPlaceholder')"
+      @update:model-value="updateField({ name: String($event ?? '') })"
     />
   </div>
 
@@ -92,10 +108,11 @@ const testProxyConnectivity = async (): Promise<void> => {
   <div>
     <Input
       id="sub-edit-url"
-      v-model="editingSubscription.url"
+      :model-value="editingSubscription.url"
       :label="t('subscriptions.urlLabel')"
       class="font-mono"
       placeholder="https://..."
+      @update:model-value="updateField({ url: String($event ?? '') })"
     />
   </div>
 
@@ -125,9 +142,10 @@ const testProxyConnectivity = async (): Promise<void> => {
       <div class="flex gap-2">
         <Input
           id="sub-edit-proxy"
-          v-model="editingSubscription.fetchProxy"
+          :model-value="editingSubscription.fetchProxy"
           :placeholder="t('subscriptions.proxyPlaceholder')"
           class="font-mono text-sm flex-1"
+          @update:model-value="updateField({ fetchProxy: String($event ?? '') })"
         />
         <button
           :disabled="isTestingProxy || !editingSubscription.fetchProxy || !editingSubscription.url"

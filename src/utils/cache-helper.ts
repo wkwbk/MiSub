@@ -1,3 +1,9 @@
+import {
+  readSessionPreference,
+  removeSessionPreference,
+  writeSessionPreference,
+} from '@/utils/session-preference.js';
+
 const isDev = import.meta.env.DEV;
 
 export interface StorageCache<T = unknown> {
@@ -12,7 +18,7 @@ export function createStorageCache<T = unknown>(keyBase: string, ttlMs: number):
 
   function get(): T | null {
     try {
-      const timestamp = sessionStorage.getItem(TS_KEY);
+      const timestamp = readSessionPreference(TS_KEY);
       if (!timestamp) return null;
 
       const age = Date.now() - parseInt(timestamp, 10);
@@ -21,7 +27,7 @@ export function createStorageCache<T = unknown>(keyBase: string, ttlMs: number):
         return null;
       }
 
-      const raw = sessionStorage.getItem(DATA_KEY);
+      const raw = readSessionPreference(DATA_KEY);
       return raw ? (JSON.parse(raw) as T) : null;
     } catch (e) {
       console.warn(`[Cache] Failed to read ${DATA_KEY}`, e);
@@ -31,18 +37,16 @@ export function createStorageCache<T = unknown>(keyBase: string, ttlMs: number):
 
   function set(data: T): void {
     try {
-      sessionStorage.setItem(DATA_KEY, JSON.stringify(data));
-      sessionStorage.setItem(TS_KEY, String(Date.now()));
+      writeSessionPreference(DATA_KEY, JSON.stringify(data));
+      writeSessionPreference(TS_KEY, String(Date.now()));
     } catch (e) {
       if (isDev) console.warn(`[Cache] Failed to write ${DATA_KEY}`, e);
     }
   }
 
   function clear(): void {
-    try {
-      sessionStorage.removeItem(DATA_KEY);
-      sessionStorage.removeItem(TS_KEY);
-    } catch {}
+    removeSessionPreference(DATA_KEY);
+    removeSessionPreference(TS_KEY);
   }
 
   return { get, set, clear };

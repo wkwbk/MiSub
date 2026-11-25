@@ -27,17 +27,10 @@ import {
   removeSubscriptionRefsFromProfiles,
 } from '@/utils/profile-reference-pruner.js';
 import { t } from '@/i18n/index.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { getItemTags, hydrateItemTags, normalizeTagList } from '@/utils/tags.js';
 
 export type SaveState = 'idle' | 'saving' | 'success';
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String((error as { message?: unknown }).message ?? '');
-  }
-  return String(error ?? '');
-}
 
 function isDataConflictError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -108,7 +101,7 @@ export const useDataStore = defineStore('data', () => {
       return true;
     } catch (error: unknown) {
       console.error('Failed to fetch data:', error);
-      showToast(t('store.fetchDataFailed', { message: getErrorMessage(error) }), 'error');
+      showToast(t('store.fetchDataFailed', { message: extractErrorMessage(error) }), 'error');
       return false;
     } finally {
       isLoading.value = false;
@@ -182,7 +175,7 @@ export const useDataStore = defineStore('data', () => {
         hasSaveConflict.value = true;
         showToast(t('store.dataConflict'), 'warning');
       } else {
-        showToast(t('store.saveDataFailed', { message: getErrorMessage(error) }), 'error');
+        showToast(t('store.saveDataFailed', { message: extractErrorMessage(error) }), 'error');
       }
       saveState.value = 'idle';
       return false;
@@ -209,7 +202,7 @@ export const useDataStore = defineStore('data', () => {
     } catch (error: unknown) {
       console.error('Failed to save settings:', error);
       if (!silent) {
-        showToast(t('store.saveSettingsFailedWithMessage', { message: getErrorMessage(error) }), 'error');
+        showToast(t('store.saveSettingsFailedWithMessage', { message: extractErrorMessage(error) }), 'error');
       }
       throw error;
     } finally {
@@ -234,7 +227,7 @@ export const useDataStore = defineStore('data', () => {
       return savedList;
     } catch (error: unknown) {
       console.error('Failed to save rule templates:', error);
-      showToast(t('store.saveRuleTemplatesFailedWithMessage', { message: getErrorMessage(error) }), 'error');
+      showToast(t('store.saveRuleTemplatesFailedWithMessage', { message: extractErrorMessage(error) }), 'error');
       throw error;
     } finally {
       editorStore.setLoading(false);

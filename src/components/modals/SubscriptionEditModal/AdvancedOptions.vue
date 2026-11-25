@@ -3,14 +3,28 @@ import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { SubscriptionItem } from '@misub/core/types.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
 
+type EditableSub = EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+
 const { t } = useI18n();
 
-defineProps<{
-  editingSubscription: EditableSubscriptionForm | StoreMisubItem;
+const props = defineProps<{
+  editingSubscription: EditableSub;
 }>();
+
+const emit = defineEmits<{
+  'update:editingSubscription': [value: EditableSub];
+}>();
+
+const updateField = (patch: Partial<EditableSub>) => {
+  emit('update:editingSubscription', {
+    ...props.editingSubscription,
+    ...patch,
+  } as EditableSub);
+};
 </script>
 
 <template>
@@ -22,7 +36,7 @@ defineProps<{
     <div class="mt-1">
       <Select
         id="sub-edit-ua"
-        v-model="editingSubscription.customUserAgent"
+        :model-value="editingSubscription.customUserAgent"
         :options="[
           { value: '', label: t('subscriptions.defaultUa') },
           { value: 'MiSub', label: 'MiSub' },
@@ -33,6 +47,7 @@ defineProps<{
           { value: 'Mozilla/5.0', label: 'Mozilla' },
         ]"
         trigger-class="font-mono"
+        @update:model-value="updateField({ customUserAgent: String($event ?? '') })"
       />
     </div>
     <p v-if="editingSubscription.customUserAgent" class="text-xs font-mono text-fg-subtle mt-1">
@@ -48,11 +63,12 @@ defineProps<{
     </label>
     <input
       id="sub-edit-website"
-      v-model="editingSubscription.website"
+      :value="editingSubscription.website ?? ''"
       class="mt-1 block w-full px-3 py-2 bg-inset border border-line rounded-md text-fg font-mono text-sm focus:outline-hidden focus:border-line-strong"
       inputmode="url"
       placeholder="https://example.com"
       type="url"
+      @input="updateField({ website: ($event.target as HTMLInputElement).value })"
     />
     <p class="mt-1 text-xs text-fg-subtle">
       {{ t('subscriptions.websiteHint') }}
@@ -63,11 +79,12 @@ defineProps<{
   <div>
     <label class="block text-xs font-medium text-fg-muted">{{ t('subscriptions.notesLabel') }}</label>
     <Textarea
-      v-model="editingSubscription.notes"
+      :model-value="editingSubscription.notes"
       :placeholder="t('subscriptions.notesPlaceholder')"
       class="px-3 py-2 text-sm text-fg"
       rows="2"
       wrapperClass="mt-1 bg-inset border-line focus-within:ring-0"
+      @update:model-value="updateField({ notes: String($event ?? '') })"
     />
   </div>
 
@@ -83,7 +100,7 @@ defineProps<{
       <Switch
         :model-value="editingSubscription.autoUpdate !== false"
         data-testid="subscription-auto-update-switch"
-        @update:model-value="editingSubscription.autoUpdate = $event"
+        @update:model-value="updateField({ autoUpdate: Boolean($event) })"
       />
     </div>
 
@@ -94,7 +111,10 @@ defineProps<{
           {{ t('subscriptions.nodeCacheDesc') }}
         </p>
       </div>
-      <Switch v-model="editingSubscription.enableNodeCache" />
+      <Switch
+        :model-value="Boolean(editingSubscription.enableNodeCache)"
+        @update:model-value="updateField({ enableNodeCache: Boolean($event) })"
+      />
     </div>
 
     <div class="flex items-center justify-between gap-4">
@@ -104,7 +124,10 @@ defineProps<{
           {{ t('subscriptions.plusAsSpaceDesc') }}
         </p>
       </div>
-      <Switch v-model="editingSubscription.plusAsSpace" />
+      <Switch
+        :model-value="Boolean(editingSubscription.plusAsSpace)"
+        @update:model-value="updateField({ plusAsSpace: Boolean($event) })"
+      />
     </div>
 
     <div class="flex items-center justify-between gap-4">
@@ -114,7 +137,10 @@ defineProps<{
           {{ t('subscriptions.excludeTrafficDesc') }}
         </p>
       </div>
-      <Switch v-model="editingSubscription.excludeTraffic" />
+      <Switch
+        :model-value="Boolean(editingSubscription.excludeTraffic)"
+        @update:model-value="updateField({ excludeTraffic: Boolean($event) })"
+      />
     </div>
   </div>
 </template>

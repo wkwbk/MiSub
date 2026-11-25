@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { TokenAutoRotateConfig } from '@misub/core/types.js';
 import { Globe, Info, Languages, RefreshCw, RotateCw, SlidersHorizontal } from '@lucide/vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Input from '@/components/ui/Input.vue';
@@ -7,20 +7,60 @@ import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import { computed, reactive, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/useToastStore.js';
-import { api } from '@/lib/http.js';
+import { rotateMyToken } from '@/lib/api.js';
 import { useI18n } from '@/i18n/index.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
+import type { DisguiseConfig } from '@/composables/useSettingsLogic.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
-  disguiseConfig: Record<string, any>;
+  settings: AppSettingsConfig;
+  disguiseConfig: DisguiseConfig;
   highlightedFocusId?: string;
+}>();
+
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+  'update:disguiseConfig': [value: DisguiseConfig];
 }>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
 const hasInvalidTokenChars = (value: string) => /[\s/?#]/.test(value);
+
+const patchSettings = (patch: Partial<AppSettingsConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    ...patch,
+  });
+};
+
+const patchDisguiseConfig = (patch: Partial<DisguiseConfig>): void => {
+  emit('update:disguiseConfig', {
+    ...props.disguiseConfig,
+    ...patch,
+  });
+};
+
+const tokenAutoRotate = computed<TokenAutoRotateConfig>(() => {
+  const current = props.settings?.tokenAutoRotate;
+  return {
+    enabled: current?.enabled ?? false,
+    intervalDays: current?.intervalDays ?? 2,
+    lastRotatedAt: current?.lastRotatedAt ?? null,
+  };
+});
+
+const patchTokenAutoRotate = (patch: Partial<TokenAutoRotateConfig>): void => {
+  patchSettings({
+    tokenAutoRotate: {
+      ...tokenAutoRotate.value,
+      ...patch,
+    },
+  });
+};
 
 const generateUuidToken = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -34,29 +74,14 @@ const generateUuidToken = () => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 };
 
-const handleGenerateToken = (field: string) => {
-  props.settings[field] = generateUuidToken();
+const handleGenerateToken = (field: 'myToken' | 'profileToken') => {
+  patchSettings({ [field]: generateUuidToken() });
   showToast(t('settings.tokenGenerated'), 'success');
 };
 
-watch(
-  () => props.settings,
-  (target) => {
-    if (!target || typeof target !== 'object') return;
-    if (!target.tokenAutoRotate || typeof target.tokenAutoRotate !== 'object') {
-      target.tokenAutoRotate = {
-        enabled: false,
-        intervalDays: 2,
-        lastRotatedAt: null,
-      };
-    }
-  },
-  { immediate: true },
-);
-
 const isRotatingNow = ref(false);
 const formattedLastRotated = computed(() => {
-  const raw = props.settings?.tokenAutoRotate?.lastRotatedAt;
+  const raw = tokenAutoRotate.value.lastRotatedAt;
   if (!raw) return '';
   const ts = Date.parse(raw);
   return Number.isFinite(ts) ? new Date(ts).toLocaleString() : raw;
@@ -66,15 +91,15 @@ const handleRotateTokenNow = async () => {
   if (isRotatingNow.value) return;
   isRotatingNow.value = true;
   try {
-    const res = await api.post<{
-      success?: boolean;
-      data?: { myToken?: string; rotatedAt?: string; notified?: boolean };
-    }>('/api/settings/rotate_token', {});
+    const res = await rotateMyToken();
     if (res?.success && res.data?.myToken) {
-      props.settings.myToken = res.data.myToken;
-      if (props.settings.tokenAutoRotate) {
-        props.settings.tokenAutoRotate.lastRotatedAt = res.data.rotatedAt || new Date().toISOString();
-      }
+      patchSettings({
+        myToken: res.data.myToken,
+        tokenAutoRotate: {
+          ...tokenAutoRotate.value,
+          lastRotatedAt: res.data.rotatedAt || new Date().toISOString(),
+        },
+      });
       showToast(
         res.data.notified ? t('settings.rotateTokenNowSuccessNotified') : t('settings.rotateTokenNowSuccess'),
         'success',
@@ -83,7 +108,7 @@ const handleRotateTokenNow = async () => {
       showToast(t('settings.rotateTokenNowFailed'), 'error');
     }
   } catch (err) {
-    showToast((err instanceof Error ? err.message : '') || t('settings.rotateTokenNowFailed'), 'error');
+    showToast(extractErrorMessage(err, t('settings.rotateTokenNowFailed')), 'error');
   } finally {
     isRotatingNow.value = false;
   }
@@ -132,7 +157,7 @@ watch(
     const sanitized = val.replace(/[^a-zA-Z0-9-_/]/g, '');
 
     if (sanitized !== val) {
-      props.settings.customLoginPath = sanitized;
+      patchSettings({ customLoginPath: sanitized });
       showToast(t('settings.reservedPathCharsToast'), 'warning');
     }
   },
@@ -234,9 +259,7 @@ const intervalControls = [
     ],
     control: createIntervalControl({
       get: () => props.settings.autoUpdateInterval,
-      set: (val) => {
-        props.settings.autoUpdateInterval = val;
-      },
+      set: (val) => patchSettings({ autoUpdateInterval: val }),
       quickValues: [0, 30, 60],
       min: 5,
     }),
@@ -254,9 +277,7 @@ const intervalControls = [
     ],
     control: createIntervalControl({
       get: () => props.settings.profileUpdateInterval,
-      set: (val) => {
-        props.settings.profileUpdateInterval = val;
-      },
+      set: (val) => patchSettings({ profileUpdateInterval: val }),
       defaultValue: 24,
       quickValues: [0, 12, 24, 48],
       min: 1,
@@ -275,9 +296,7 @@ const intervalControls = [
     ],
     control: createIntervalControl({
       get: () => props.settings.subFetchMinInterval,
-      set: (val) => {
-        props.settings.subFetchMinInterval = val;
-      },
+      set: (val) => patchSettings({ subFetchMinInterval: val }),
       defaultValue: 15,
       quickValues: [0, 15, 30, 60],
       min: 1,
@@ -286,12 +305,20 @@ const intervalControls = [
   },
 ];
 
-const webAccessSwitchRows = [
+const webAccessSwitchRows: Array<{
+  key: 'enablePublicPage' | 'allowBrowserSubAccess';
+  titleKey: string;
+  descKey: string;
+}> = [
   { key: 'enablePublicPage', titleKey: 'settings.publicPageAccessTitle', descKey: 'settings.publicPageAccessDesc' },
   { key: 'allowBrowserSubAccess', titleKey: 'settings.disguisePageTitle', descKey: 'settings.disguisePageDesc' },
 ];
 
-const disguisePageTypeOptions = [
+const disguisePageTypeOptions: Array<{
+  value: DisguiseConfig['pageType'];
+  titleKey: string;
+  descKey: string;
+}> = [
   { value: 'default', titleKey: 'settings.disguiseDefault404', descKey: 'settings.disguiseDefault404Desc' },
   { value: 'redirect', titleKey: 'settings.disguiseRedirect', descKey: 'settings.disguiseRedirectDesc' },
 ];
@@ -310,11 +337,12 @@ const disguisePageTypeOptions = [
       </template>
       <div class="max-w-xs">
         <Select
-          v-model="settings.defaultLocale"
+          :model-value="settings.defaultLocale"
           :options="[
             { value: 'zh-CN', label: t('settings.defaultLanguageZh') },
             { value: 'en-US', label: t('settings.defaultLanguageEn') },
           ]"
+          @update:model-value="patchSettings({ defaultLocale: String($event) })"
         />
       </div>
     </SettingCard>
@@ -332,18 +360,24 @@ const disguisePageTypeOptions = [
         <div>
           <Input
             id="setting-profileToken"
-            v-model="settings.profileToken"
             :class="{
               'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-profileToken',
             }"
             :error="profileTokenError"
             :label="t('settings.profileToken')"
+            :model-value="settings.profileToken"
             :placeholder="t('settings.profileTokenPlaceholder')"
             class="rounded-md font-mono transition-shadow duration-300"
+            @update:model-value="patchSettings({ profileToken: String($event ?? '') })"
           />
         </div>
         <div>
-          <Input v-model="settings.fileName" :label="t('settings.customFileName')" class="rounded-md font-mono" />
+          <Input
+            :label="t('settings.customFileName')"
+            :model-value="settings.fileName"
+            class="rounded-md font-mono"
+            @update:model-value="patchSettings({ fileName: String($event ?? '') })"
+          />
         </div>
         <div>
           <div class="flex items-center justify-between mb-1.5">
@@ -362,13 +396,14 @@ const disguisePageTypeOptions = [
           </div>
           <Input
             id="setting-mytoken"
-            v-model="settings.myToken"
             :class="{
               'ring-1 ring-line-strong rounded-md': highlightedFocusId === 'setting-mytoken',
             }"
             :error="myTokenError"
+            :model-value="settings.myToken"
             :placeholder="t('settings.customTokenPlaceholder')"
             class="rounded-md font-mono transition-shadow duration-300"
+            @update:model-value="patchSettings({ myToken: String($event ?? '') })"
           />
         </div>
       </div>
@@ -381,17 +416,18 @@ const disguisePageTypeOptions = [
         <div class="max-w-lg">
           <Input
             id="setting-publicUrl"
-            v-model="settings.publicUrl"
             :label="t('settings.publicUrlLabel')"
-            placeholder="https://sub.example.com"
+            :model-value="settings.publicUrl"
             class="rounded-md font-mono"
+            placeholder="https://sub.example.com"
+            @update:model-value="patchSettings({ publicUrl: String($event ?? '') })"
           />
           <p class="mt-1.5 text-xs text-fg-subtle leading-relaxed">
             {{ t('settings.publicUrlHint') }}
           </p>
         </div>
 
-        <div v-if="settings.tokenAutoRotate" class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
+        <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
           <div class="space-y-1 flex-1 min-w-0">
             <div class="flex items-center gap-2">
               <span class="text-sm font-medium text-fg">{{ t('settings.tokenAutoRotateTitle') }}</span>
@@ -410,11 +446,16 @@ const disguisePageTypeOptions = [
           <div class="flex flex-wrap items-center gap-3 shrink-0">
             <div class="flex items-center h-8 rounded-md border border-line bg-inset px-2.5">
               <input
-                v-model.number="settings.tokenAutoRotate.intervalDays"
                 :aria-label="t('settings.tokenAutoRotateIntervalLabel')"
+                :value="tokenAutoRotate.intervalDays"
                 class="w-12 bg-transparent text-xs font-mono tabular-nums text-fg outline-none"
                 min="1"
                 type="number"
+                @input="
+                  patchTokenAutoRotate({
+                    intervalDays: Number.parseInt(($event.target as HTMLInputElement).value, 10) || 1,
+                  })
+                "
               />
               <span class="text-xs text-fg-subtle pl-2 ml-1 border-l border-line whitespace-nowrap">
                 {{ t('settings.daysUnit') }}
@@ -432,7 +473,11 @@ const disguisePageTypeOptions = [
               <span>{{ isRotatingNow ? t('settings.rotatingTokenNow') : t('settings.rotateTokenNowBtn') }}</span>
             </button>
 
-            <Switch v-model="settings.tokenAutoRotate.enabled" data-testid="token-auto-rotate-switch" />
+            <Switch
+              :model-value="Boolean(tokenAutoRotate.enabled)"
+              data-testid="token-auto-rotate-switch"
+              @update:model-value="patchTokenAutoRotate({ enabled: Boolean($event) })"
+            />
           </div>
         </div>
       </div>
@@ -527,12 +572,13 @@ const disguisePageTypeOptions = [
             </div>
             <div class="w-full xl:w-56 shrink-0">
               <Select
-                v-model="settings.subFetchLimitMode"
+                :model-value="settings.subFetchLimitMode"
                 :options="[
                   { value: 'cache', label: t('settings.subFetchLimitCache') },
                   { value: 'strict', label: t('settings.subFetchLimitStrict') },
                 ]"
                 size="sm"
+                @update:model-value="patchSettings({ subFetchLimitMode: $event as 'cache' | 'strict' })"
               />
             </div>
           </div>
@@ -549,7 +595,11 @@ const disguisePageTypeOptions = [
                 {{ t('settings.accessLogDesc') }}
               </p>
             </div>
-            <Switch v-model="settings.enableAccessLog" class="shrink-0 mt-0.5" />
+            <Switch
+              :model-value="Boolean(settings.enableAccessLog)"
+              class="shrink-0 mt-0.5"
+              @update:model-value="patchSettings({ enableAccessLog: Boolean($event) })"
+            />
           </div>
           <p class="callout-warning">
             {{ t('settings.accessLogQuotaHint') }}
@@ -569,11 +619,12 @@ const disguisePageTypeOptions = [
             </div>
             <div class="sm:w-56 shrink-0">
               <Select
-                v-model="settings.accessLogPersistenceMode"
+                :model-value="settings.accessLogPersistenceMode"
                 :options="[
                   { value: 'light', label: t('settings.accessLogLight') },
                   { value: 'full', label: t('settings.accessLogFull') },
                 ]"
+                @update:model-value="patchSettings({ accessLogPersistenceMode: String($event) })"
               />
             </div>
           </div>
@@ -589,7 +640,10 @@ const disguisePageTypeOptions = [
               {{ t('settings.trafficNodeDesc') }}
             </p>
           </div>
-          <Switch v-model="settings.enableTrafficNode" />
+          <Switch
+            :model-value="Boolean(settings.enableTrafficNode)"
+            @update:model-value="patchSettings({ enableTrafficNode: Boolean($event) })"
+          />
         </div>
 
         <!-- 合并到期时间策略 -->
@@ -604,11 +658,12 @@ const disguisePageTypeOptions = [
           </div>
           <div class="sm:w-56 shrink-0">
             <Select
-              v-model="settings.mergeExpireStrategy"
+              :model-value="settings.mergeExpireStrategy"
               :options="[
                 { value: 'max', label: t('settings.mergeExpireMax') },
                 { value: 'min', label: t('settings.mergeExpireMin') },
               ]"
+              @update:model-value="patchSettings({ mergeExpireStrategy: $event as 'max' | 'min' })"
             />
           </div>
         </div>
@@ -635,7 +690,11 @@ const disguisePageTypeOptions = [
               {{ t(row.descKey) }}
             </p>
           </div>
-          <Switch v-model="settings[row.key]" class="shrink-0" />
+          <Switch
+            :model-value="Boolean(settings[row.key])"
+            class="shrink-0"
+            @update:model-value="patchSettings({ [row.key]: Boolean($event) })"
+          />
         </div>
 
         <!-- 统一拦截响应方式 -->
@@ -656,10 +715,11 @@ const disguisePageTypeOptions = [
               class="flex items-center cursor-pointer group"
             >
               <input
-                v-model="disguiseConfig.pageType"
+                :checked="disguiseConfig.pageType === opt.value"
                 :value="opt.value"
                 class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
                 type="radio"
+                @change="patchDisguiseConfig({ pageType: opt.value })"
               />
               <div class="ml-3 space-y-0.5">
                 <span class="block text-sm font-medium text-fg group-hover:text-fg">{{ t(opt.titleKey) }}</span>
@@ -670,10 +730,11 @@ const disguisePageTypeOptions = [
 
           <div v-if="disguiseConfig.pageType === 'redirect'" class="animate-fade-in-down">
             <Input
-              v-model="disguiseConfig.redirectUrl"
               :label="t('settings.disguiseTargetUrl')"
+              :model-value="disguiseConfig.redirectUrl"
               placeholder="www.example.com"
               type="url"
+              @update:model-value="patchDisguiseConfig({ redirectUrl: String($event ?? '') })"
             />
           </div>
         </div>
@@ -699,14 +760,15 @@ const disguisePageTypeOptions = [
               type="password"
             />
             <Input
-              v-model="settings.customLoginPath"
               :error="customLoginPathError"
               :label="t('settings.customAdminPath')"
+              :model-value="settings.customLoginPath"
               :placeholder="t('settings.customAdminPathPlaceholder')"
               autocomplete="off"
               name="custom_admin_path_setting_no_autofill"
               prefix="/"
               type="search"
+              @update:model-value="patchSettings({ customLoginPath: String($event ?? '') })"
             />
           </div>
           <p class="text-xs text-fg-muted mt-2 leading-relaxed">

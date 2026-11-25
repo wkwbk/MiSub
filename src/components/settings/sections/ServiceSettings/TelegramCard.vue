@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { TelegramPushConfig } from '@misub/core/types.js';
 import { Loader2, Send } from '@lucide/vue';
 import CopyableInput from '@/components/settings/CopyableInput.vue';
 import SecretInput from '@/components/settings/SecretInput.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
+import { setupTelegramPushBot, testTelegramNotification } from '@/lib/api.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 
 interface TelegramActionResult {
   success: boolean;
@@ -19,32 +23,46 @@ interface TelegramActionResult {
 const { t } = useI18n();
 
 const props = defineProps<{
-  settings: SettingsConfig & Record<string, any>;
+  settings: AppSettingsConfig;
 }>();
 
-const updatePushConfigField = (key: string, value: unknown) => {
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const patchSettings = (patch: Partial<AppSettingsConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    ...patch,
+  });
+};
+
+const defaultTelegramPushConfig: TelegramPushConfig = {
+  enabled: true,
+  botToken: '',
+  webhookSecret: '',
+  allowedUserIds: [],
+  allowAllUsers: false,
+};
+
+const telegramPushConfig = computed<TelegramPushConfig>({
+  get() {
+    return {
+      ...defaultTelegramPushConfig,
+      ...props.settings?.telegramPushConfig,
+    };
+  },
+  set(value: TelegramPushConfig) {
+    patchSettings({ telegramPushConfig: value });
+  },
+});
+
+const updatePushConfigField = <K extends keyof TelegramPushConfig>(key: K, value: TelegramPushConfig[K]): void => {
   telegramPushConfig.value = {
     ...telegramPushConfig.value,
     [key]: value,
   };
 };
-
-const telegramPushConfig = computed({
-  get() {
-    return (
-      props.settings.telegramPushConfig || {
-        enabled: true,
-        botToken: '',
-        webhookSecret: '',
-        allowedUserIds: [],
-        allowAllUsers: false,
-      }
-    );
-  },
-  set(value) {
-    props.settings.telegramPushConfig = value;
-  },
-});
 
 const allowedUsersStr = computed({
   get() {
@@ -55,14 +73,11 @@ const allowedUsersStr = computed({
       .split(',')
       .map((id) => id.trim())
       .filter(Boolean);
-    telegramPushConfig.value = {
-      ...telegramPushConfig.value,
-      allowedUserIds: ids,
-    };
+    updatePushConfigField('allowedUserIds', ids);
   },
 });
 
-const webhookUrl = computed(() => `${window.location.origin}/api/telegram/webhook`);
+const webhookUrl = computed(() => `${window.location.origin}${API_ENDPOINTS.TELEGRAM_WEBHOOK}`);
 
 const webhookSecret = computed(() => telegramPushConfig.value.webhookSecret?.trim() || '');
 
@@ -109,16 +124,10 @@ async function testNotification() {
   testResult.value = null;
 
   try {
-    const response = await fetch('/api/test_notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        botToken: props.settings.botToken,
-        chatId: props.settings.chatId,
-      }),
+    const data = await testTelegramNotification({
+      botToken: props.settings.botToken,
+      chatId: props.settings.chatId,
     });
-
-    const data = await response.json();
     if (data.success) {
       testResult.value = { success: true, message: t('settings.telegramTestSuccess') };
     } else {
@@ -128,10 +137,10 @@ async function testNotification() {
         detail: data.detail,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     testResult.value = {
       success: false,
-      message: error.message || t('settings.telegramRequestFailed'),
+      message: extractErrorMessage(error, t('settings.telegramRequestFailed')),
     };
   } finally {
     isTesting.value = false;
@@ -146,16 +155,10 @@ async function syncPushBot() {
   syncBotResult.value = null;
 
   try {
-    const response = await fetch('/api/telegram/setup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        botToken,
-        webhookSecret: webhookSecret.value,
-      }),
+    const data = await setupTelegramPushBot({
+      botToken,
+      webhookSecret: webhookSecret.value,
     });
-
-    const data = await response.json();
     if (data.success) {
       const webhookSkipped = Boolean(data.webhook?.skipped);
       syncBotResult.value = {
@@ -170,10 +173,10 @@ async function syncPushBot() {
         detail: data,
       };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     syncBotResult.value = {
       success: false,
-      message: error.message || t('settings.telegramRequestFailed'),
+      message: extractErrorMessage(error, t('settings.telegramRequestFailed')),
     };
   } finally {
     isSyncingBot.value = false;
@@ -191,18 +194,22 @@ async function syncPushBot() {
       <div class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SecretInput
-            v-model="settings.botToken"
             :hint="t('settings.telegramBotTokenHint')"
+            :label="t('settings.telegramBotTokenLabel')"
+            :model-value="settings.botToken"
             :placeholder="settings.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'"
-            label="Bot Token"
+            @update:model-value="patchSettings({ botToken: String($event ?? '') })"
           />
           <div>
-            <label class="block text-xs font-medium text-fg-muted mb-1.5">Chat ID</label>
+            <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
+              t('settings.telegramChatIdLabel')
+            }}</label>
             <input
-              v-model="settings.chatId"
+              :value="settings.chatId"
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
               placeholder="123456789"
               type="text"
+              @input="patchSettings({ chatId: ($event.target as HTMLInputElement).value })"
             />
             <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
               {{ t('settings.telegramChatIdHint') }}
@@ -248,7 +255,7 @@ async function syncPushBot() {
     <SettingCard
       :description="t('settings.telegramPushBotDesc')"
       :no-margin="!telegramPushConfig.enabled"
-      title="Telegram Push Bot"
+      :title="t('settings.telegramPushBotTitle')"
     >
       <template #icon>
         <Send class="h-4 w-4" />
@@ -256,7 +263,7 @@ async function syncPushBot() {
       <template #actions>
         <Switch
           :model-value="telegramPushConfig.enabled"
-          @update:model-value="(val) => updatePushConfigField('enabled', val)"
+          @update:model-value="(val) => updatePushConfigField('enabled', Boolean(val))"
         />
       </template>
 
@@ -264,12 +271,12 @@ async function syncPushBot() {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <SecretInput
             :hint="t('settings.telegramPushTokenHint')"
+            :label="t('settings.telegramPushBotTokenLabel')"
             :model-value="telegramPushConfig.botToken"
             :placeholder="
               telegramPushConfig.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'
             "
-            label="Push Bot Token"
-            @update:model-value="(val) => updatePushConfigField('botToken', val)"
+            @update:model-value="(val) => updatePushConfigField('botToken', String(val ?? ''))"
           />
 
           <SecretInput
@@ -282,7 +289,7 @@ async function syncPushBot() {
                 ? t('settings.telegramWebhookSecretSavedPlaceholder')
                 : 'random_secret-token'
             "
-            @update:model-value="(val) => updatePushConfigField('webhookSecret', val)"
+            @update:model-value="(val) => updatePushConfigField('webhookSecret', String(val ?? ''))"
           >
             <template #extra>
               <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-status-danger">
@@ -322,15 +329,15 @@ async function syncPushBot() {
           </div>
           <Switch
             :model-value="telegramPushConfig.allowAllUsers"
-            @update:model-value="(val) => updatePushConfigField('allowAllUsers', val)"
+            @update:model-value="(val) => updatePushConfigField('allowAllUsers', Boolean(val))"
           />
         </div>
 
         <CopyableInput
           :button-text="copyStatus?.key === 'webhook' ? copyStatus.message : t('actions.copy')"
           :hint="t('settings.telegramWebhookUrlHint')"
+          :label="t('settings.telegramWebhookUrlLabel')"
           :value="webhookUrl"
-          label="Webhook URL"
           @copy="copyText(webhookUrl, 'webhook')"
         />
 

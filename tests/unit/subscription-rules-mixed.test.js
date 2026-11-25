@@ -126,6 +126,10 @@ describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {
           show: true,
           isNew: false,
           editingSubscription,
+          'onUpdate:editingSubscription': (next) => {
+            Object.assign(editingSubscription, next);
+            wrapper.setProps({ editingSubscription: { ...editingSubscription } });
+          },
         },
         global: {
           stubs: {
@@ -166,6 +170,10 @@ describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {
           show: true,
           isNew: false,
           editingSubscription,
+          'onUpdate:editingSubscription': (next) => {
+            Object.assign(editingSubscription, next);
+            wrapper.setProps({ editingSubscription: { ...editingSubscription } });
+          },
         },
         global: {
           stubs: {

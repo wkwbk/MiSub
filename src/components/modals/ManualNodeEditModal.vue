@@ -13,6 +13,7 @@ import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
 import { parseQuantumultXConfig, parseSurgeConfig } from '@misub/core/protocols/index.js';
 import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/import-file.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { buildAutoTagName } from '@/utils/auto-tag-name.js';
 import { normalizeTagList } from '@/utils/tags.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
@@ -34,9 +35,20 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
+  'update:editingNode': [value: ManualNodeItem | null];
   confirm: [];
   'input-url': [event: Event];
 }>();
+
+const updateEditingNode = (patch: Partial<ManualNodeItem>): ManualNodeItem | null => {
+  if (!props.editingNode) return null;
+  const nextNode: ManualNodeItem = {
+    ...props.editingNode,
+    ...patch,
+  };
+  emit('update:editingNode', nextNode);
+  return nextNode;
+};
 const dataStore = useDataStore();
 const { markDirty } = dataStore;
 const { t } = useI18n();
@@ -70,17 +82,19 @@ const onFilePicked = async (event: Event) => {
     }
     // 合并进编辑框（已有内容则追加），交给既有的多行解析逻辑
     const existing = (props.editingNode.url || '').trim();
-    props.editingNode.url = existing ? `${existing}\n${text}` : text;
+    const nextUrl = existing ? `${existing}\n${text}` : text;
     fileNameHint.value = fileCount > 1 ? t('manualNodes.fileImportPickedMulti', { count: fileCount }) : files[0].name;
 
     // 自动填充标签（用文件名），用户无需手填；已有标签时不覆盖
+    const patch: Partial<ManualNodeItem> = { url: nextUrl };
     if (normalizeTagList(props.editingNode.tags).length === 0) {
       const autoTag = buildAutoTagName({ fileName: files[0].name });
-      props.editingNode.tags = autoTag ? [autoTag] : [];
+      patch.tags = autoTag ? [autoTag] : [];
     }
-  } catch (error: any) {
+    updateEditingNode(patch);
+  } catch (error: unknown) {
     console.error('读取文件失败:', error);
-    fileNameHint.value = error.message || t('manualNodes.fileImportFailed');
+    fileNameHint.value = extractErrorMessage(error, t('manualNodes.fileImportFailed'));
   } finally {
     isReadingFile.value = false;
   }
@@ -145,7 +159,7 @@ const suggestedName = computed(() => {
 // 应用建议的名称
 const applySuggestedName = () => {
   if (suggestedName.value && props.editingNode) {
-    props.editingNode.name = suggestedName.value;
+    updateEditingNode({ name: suggestedName.value });
   }
 };
 
@@ -161,7 +175,7 @@ const handleConfirm = async () => {
     if (targetTags.length === 0) {
       const autoTag = buildAutoTagName();
       targetTags = autoTag ? [autoTag] : [];
-      props.editingNode.tags = targetTags;
+      updateEditingNode({ tags: targetTags });
     }
     await handleBulkImport(props.editingNode.url, targetTags);
     emit('update:show', false);
@@ -170,17 +184,21 @@ const handleConfirm = async () => {
 
   // 单行模式下检测 Surge/Quantumult X 配置格式并自动转换，并对节点链接做导入前清洗
   if (!isMultiLine.value && props.editingNode?.url) {
+    const patch: Partial<ManualNodeItem> = {
+      url: props.editingNode.url,
+    };
     if (props.isNew) {
       const surgeNodes = parseSurgeConfig(props.editingNode.url);
       const clientNodes = surgeNodes.length > 0 ? surgeNodes : parseQuantumultXConfig(props.editingNode.url);
       if (clientNodes && clientNodes.length === 1) {
-        props.editingNode.url = clientNodes[0].url;
+        patch.url = clientNodes[0].url;
         if (!props.editingNode.name && clientNodes[0].name) {
-          props.editingNode.name = clientNodes[0].name;
+          patch.name = clientNodes[0].name;
         }
       }
     }
-    props.editingNode.url = cleanNodeUrl(props.editingNode.url);
+    patch.url = cleanNodeUrl(patch.url || '');
+    updateEditingNode(patch);
   }
 
   emit('confirm');
@@ -219,10 +237,11 @@ const handleConfirm = async () => {
               </label>
               <Input
                 id="node-name"
-                v-model="editingNode.name"
+                :model-value="editingNode.name"
                 :placeholder="t('manualNodes.namePlaceholderOptional')"
                 @blur="nameFocused = false"
                 @focus="nameFocused = true"
+                @update:model-value="updateEditingNode({ name: String($event ?? '') })"
               >
                 <template #icon>
                   <Tag class="h-4 w-4" />
@@ -250,9 +269,10 @@ const handleConfirm = async () => {
                 {{ t('manualNodes.tagsOptional') }}
               </label>
               <TagInput
-                v-model="editingNode.tags"
+                :model-value="editingNode.tags"
                 :placeholder="t('manualNodes.tagsPlaceholder')"
                 :suggestions="tags"
+                @update:model-value="updateEditingNode({ tags: $event })"
               />
             </div>
           </div>
@@ -295,11 +315,12 @@ const handleConfirm = async () => {
 
           <LineNumberTextarea
             id="node-url"
-            v-model="editingNode.url"
+            :model-value="editingNode.url"
             :placeholder="t('manualNodes.urlPlaceholder')"
             :rows="8"
             textarea-class="pr-20"
             @input="$emit('input-url', $event)"
+            @update:model-value="updateEditingNode({ url: $event })"
           >
             <template #overlay>
               <!-- 协议检测徽章 - 显示在右上角 -->

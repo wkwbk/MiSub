@@ -297,8 +297,8 @@ const visibleSubscriptions = computed(() =>
     />
 
     <SubscriptionEditModal
+      v-model:editing-subscription="editingSubscription"
       v-model:show="showSubModal"
-      :editing-subscription="editingSubscription"
       :is-new="isNewSubscription"
       @confirm="handleSaveSubscription"
     />

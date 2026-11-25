@@ -148,6 +148,10 @@ describe('ProfileForm 与设置页规则方案对齐', () => {
         prefixToggleOptions: [{ label: '默认', value: null }],
         tagPrefixToggleOptions: [{ label: '默认', value: null }],
         profileTags: [],
+        'onUpdate:localProfile': (next) => {
+          Object.assign(localProfile, next);
+          wrapper.setProps({ localProfile: { ...localProfile } });
+        },
       },
       global: {
         stubs: {

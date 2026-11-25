@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type { Ref } from 'vue';
-import type { SettingsConfig } from '@misub/core/types.js';
+import type { BuiltinTransformConfig, RuleTemplate } from '@misub/core/types.js';
+import type { EditableProfile } from '@/composables/useProfiles.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 import { ChevronDown, RotateCcw, SlidersHorizontal } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
@@ -32,18 +34,30 @@ interface ToggleOption {
   value: boolean | null;
 }
 
+interface ProfileFormUiText {
+  prefixTitle?: string;
+  manualPrefixLabel?: string;
+  manualPrefixToggle?: string;
+  subscriptionPrefixToggle?: string;
+  enable?: string;
+  disable?: string;
+  [key: string]: string | undefined;
+}
+
+type ProfileGlobalSettings = Partial<AppSettingsConfig>;
+
+type SubconverterFlagKey = 'udp' | 'emoji' | 'scv' | 'sort' | 'tfo' | 'list';
+
 const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    localProfile: Record<string, any>;
+    localProfile: EditableProfile;
     showAdvanced?: boolean;
-    uiText: Record<string, any>;
+    uiText: ProfileFormUiText;
     prefixToggleOptions?: ToggleOption[];
     tagPrefixToggleOptions?: ToggleOption[];
-    globalSettings?: Omit<SettingsConfig, 'mergeExpireStrategy'> & {
-      mergeExpireStrategy?: string;
-    } & Record<string, any>;
+    globalSettings?: ProfileGlobalSettings;
     profileTags?: string[];
     originalCustomId?: string;
   }>(),
@@ -57,11 +71,57 @@ const props = withDefaults(
   },
 );
 
+const emit = defineEmits<{
+  'toggle-advanced': [];
+  'update:localProfile': [value: EditableProfile];
+}>();
+
+const updateLocalProfile = (patch: Partial<EditableProfile>) => {
+  emit('update:localProfile', {
+    ...props.localProfile,
+    ...patch,
+  });
+};
+
+const updatePrefixSettings = (patch: NonNullable<EditableProfile['prefixSettings']>) => {
+  updateLocalProfile({
+    prefixSettings: {
+      ...props.localProfile.prefixSettings,
+      ...patch,
+    },
+  });
+};
+
+const updateSubconverter = (patch: Partial<NonNullable<EditableProfile['subconverter']>>) => {
+  updateLocalProfile({
+    subconverter: {
+      ...props.localProfile.subconverter,
+      ...patch,
+    },
+  });
+};
+
+const updateSubconverterOption = (key: SubconverterFlagKey, value: boolean | null) => {
+  updateSubconverter({
+    options: {
+      ...props.localProfile.subconverter?.options,
+      [key]: value,
+    },
+  });
+};
+
+const visualSettingsModel = computed<EditableProfile & { builtinTransform?: BuiltinTransformConfig }>({
+  get: () => props.localProfile as EditableProfile & { builtinTransform?: BuiltinTransformConfig },
+  set: (value) => {
+    emit('update:localProfile', value);
+  },
+});
+
 const activePinia = getActivePinia();
 const dataStore = activePinia ? useDataStore() : null;
 const ruleTemplates = dataStore
-  ? (storeToRefs(dataStore).ruleTemplates as Ref<Array<Record<string, any>>>)
-  : ref<Array<Record<string, any>>>([]);
+  ? (storeToRefs(dataStore).ruleTemplates as Ref<RuleTemplate[]>)
+  : ref<RuleTemplate[]>([]);
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
 const toastStore = activePinia ? useToastStore() : null;
 const showToast = (msg: string, type: ToastType = 'info') => toastStore?.showToast?.(msg, type);
@@ -92,8 +152,10 @@ const activeShareSuffix = computed(() => {
 
 const handleResetProfileLink = () => {
   const rotated = rotateProfileLinkId(props.localProfile);
-  props.localProfile.linkId = rotated.linkId;
-  props.localProfile.customId = '';
+  updateLocalProfile({
+    linkId: rotated.linkId,
+    customId: '',
+  });
   showToast(t('profiles.linkResetPendingSave'), 'info');
 };
 
@@ -129,7 +191,7 @@ const engineOptions = computed(() => [
   { value: 'external', label: t('profileModal.externalBackendConvert') },
 ]);
 
-const flagOptions = computed(() => [
+const flagOptions = computed<Array<{ key: SubconverterFlagKey; label: string }>>(() => [
   { key: 'udp', label: t('profileModal.udpForward') },
   { key: 'emoji', label: t('profileModal.emojiSwitch') },
   { key: 'scv', label: t('profileModal.skipCert') },
@@ -145,7 +207,7 @@ const expiryPresets = computed(() => [
   { label: t('profileModal.expiresPreset1y'), years: 1 },
 ]);
 
-const selectedTransformAsset = ref<Record<string, any> | null>(null);
+const selectedTransformAsset = ref<{ id?: string; name?: string; url?: string } | null>(null);
 const showRuleTemplateModal = ref(false);
 
 const isExternalEngine = computed(() => {
@@ -155,7 +217,7 @@ const isExternalEngine = computed(() => {
   return (props.globalSettings?.subconverter?.engineMode || 'builtin') === 'external';
 });
 
-function createInitialVisualTransformFromGlobal() {
+function createInitialVisualTransformFromGlobal(): BuiltinTransformConfig {
   const source =
     props.globalSettings?.builtinTransform && typeof props.globalSettings.builtinTransform === 'object'
       ? props.globalSettings.builtinTransform
@@ -175,43 +237,46 @@ const ruleSourceSelection = computed({
     if (mode === 'global') return 'global';
     if (mode === 'visual') return 'visual';
     if (mode === 'builtin') {
-      return props.localProfile?.builtinTransform?.visualRulesEnabled ? 'visual' : 'builtin';
+      const bt = props.localProfile?.builtinTransform as BuiltinTransformConfig | undefined;
+      return bt?.visualRulesEnabled ? 'visual' : 'builtin';
     }
     // 兼容历史保存的 preset / custom / custom_template，全部统一归入「规则模板」
     return 'preset';
   },
   set: (val: string) => {
+    const currentBuiltin =
+      props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object'
+        ? (props.localProfile.builtinTransform as BuiltinTransformConfig)
+        : null;
+
     if (val === 'global') {
-      props.localProfile.transformConfigMode = 'global';
-      if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
-        props.localProfile.builtinTransform.visualRulesEnabled = false;
-      }
+      updateLocalProfile({
+        transformConfigMode: 'global',
+        ...(currentBuiltin ? { builtinTransform: { ...currentBuiltin, visualRulesEnabled: false } } : {}),
+      });
       return;
     }
     if (val === 'visual') {
-      props.localProfile.transformConfigMode = 'builtin';
-      if (!props.localProfile.builtinTransform || typeof props.localProfile.builtinTransform !== 'object') {
-        props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
-      } else {
-        Object.assign(
-          props.localProfile.builtinTransform,
-          normalizeBuiltinTransform(props.localProfile.builtinTransform),
-        );
-        props.localProfile.builtinTransform.visualRulesEnabled = true;
-      }
+      const nextBuiltin = currentBuiltin
+        ? { ...normalizeBuiltinTransform(currentBuiltin), visualRulesEnabled: true }
+        : createInitialVisualTransformFromGlobal();
+      updateLocalProfile({
+        transformConfigMode: 'builtin',
+        builtinTransform: nextBuiltin,
+      });
       return;
     }
     if (val === 'builtin') {
-      props.localProfile.transformConfigMode = 'builtin';
-      if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
-        props.localProfile.builtinTransform.visualRulesEnabled = false;
-      }
+      updateLocalProfile({
+        transformConfigMode: 'builtin',
+        ...(currentBuiltin ? { builtinTransform: { ...currentBuiltin, visualRulesEnabled: false } } : {}),
+      });
       return;
     }
-    props.localProfile.transformConfigMode = 'preset';
-    if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
-      props.localProfile.builtinTransform.visualRulesEnabled = false;
-    }
+    updateLocalProfile({
+      transformConfigMode: 'preset',
+      ...(currentBuiltin ? { builtinTransform: { ...currentBuiltin, visualRulesEnabled: false } } : {}),
+    });
   },
 });
 
@@ -224,7 +289,7 @@ const showRuleLevelSelector = computed(
 );
 
 function syncVisualRulesFromGlobal() {
-  props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
+  updateLocalProfile({ builtinTransform: createInitialVisualTransformFromGlobal() });
 }
 
 function handleRuleTemplatesSaved(savedTemplateId: string) {
@@ -234,32 +299,37 @@ function handleRuleTemplatesSaved(savedTemplateId: string) {
     (item) => item && item.enabled !== false && `custom:${item.id}` === current,
   );
   if (!current || (current.startsWith('custom:') && !stillExists)) {
-    props.localProfile.transformConfig = `custom:${savedTemplateId}`;
+    updateLocalProfile({ transformConfig: `custom:${savedTemplateId}` });
   }
 }
-
-const emit = defineEmits<{
-  'toggle-advanced': [];
-}>();
 
 const enforceExternalSchemeConstraints = () => {
   const enabled = isExternalEngine.value;
   if (!enabled) return;
 
+  const patch: Partial<EditableProfile> = {};
   if (
     props.localProfile.transformConfigMode === 'builtin' ||
     props.localProfile.transformConfigMode === 'visual' ||
     props.localProfile.transformConfigMode === 'custom_template'
   ) {
-    props.localProfile.transformConfigMode = 'preset';
+    patch.transformConfigMode = 'preset';
   }
-  if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
-    props.localProfile.builtinTransform.visualRulesEnabled = false;
+  const currentBuiltin =
+    props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object'
+      ? (props.localProfile.builtinTransform as BuiltinTransformConfig)
+      : null;
+  if (currentBuiltin?.visualRulesEnabled) {
+    patch.builtinTransform = { ...currentBuiltin, visualRulesEnabled: false };
   }
 
   if (/^(builtin|custom):/.test(String(props.localProfile.transformConfig || ''))) {
-    props.localProfile.transformConfig = '';
+    patch.transformConfig = '';
     selectedTransformAsset.value = null;
+  }
+
+  if (Object.keys(patch).length > 0) {
+    updateLocalProfile(patch);
   }
 };
 
@@ -281,18 +351,20 @@ watch(
     <div>
       <Input
         id="profile-name"
-        v-model="localProfile.name"
+        :model-value="localProfile.name"
         :label="t('profiles.nameLabel')"
         :placeholder="t('profiles.namePlaceholder')"
+        @update:model-value="updateLocalProfile({ name: String($event ?? '') })"
       />
     </div>
     <div>
       <Input
         id="profile-custom-id"
-        v-model="localProfile.customId"
+        :model-value="localProfile.customId"
         :error="customIdError"
         :label="t('profiles.customIdLabel')"
         :placeholder="t('profiles.customIdPlaceholder')"
+        @update:model-value="updateLocalProfile({ customId: String($event ?? '') })"
       >
         <template #suffix>
           <ConfirmPopover
@@ -327,7 +399,12 @@ watch(
     <label class="block text-xs font-medium text-fg-muted mb-1.5">
       {{ t('profiles.tagsLabel') }}
     </label>
-    <TagInput v-model="localProfile.tags" :placeholder="t('profiles.tagsPlaceholder')" :suggestions="profileTags" />
+    <TagInput
+      :model-value="localProfile.tags"
+      :placeholder="t('profiles.tagsPlaceholder')"
+      :suggestions="profileTags"
+      @update:model-value="updateLocalProfile({ tags: $event })"
+    />
   </div>
 
   <div class="bg-transparent rounded-md p-4 border border-line mt-4">
@@ -335,9 +412,10 @@ watch(
       <div class="flex items-center">
         <input
           id="profile-is-public"
-          v-model="localProfile.isPublic"
+          :checked="Boolean(localProfile.isPublic)"
           class="h-4 w-4 rounded-sm border-line-strong bg-inset text-fg focus:ring-0"
           type="checkbox"
+          @change="updateLocalProfile({ isPublic: ($event.target as HTMLInputElement).checked })"
         />
         <label class="ml-2 block text-xs font-medium text-fg" for="profile-is-public">
           {{ t('profiles.publicDisplay') }}
@@ -355,18 +433,20 @@ watch(
     <div v-if="localProfile.isPublic" class="animate-fade-in-down space-y-3">
       <Textarea
         id="profile-description"
-        v-model="localProfile.description"
+        :model-value="localProfile.description"
         :placeholder="t('profiles.descriptionPlaceholder')"
         class="px-3 py-2 text-xs text-fg placeholder:text-fg-subtle"
         rows="2"
         wrapperClass="focus-within:border-line-strong focus-within:ring-0"
+        @update:model-value="updateLocalProfile({ description: String($event ?? '') })"
       />
       <div v-if="globalSettings?.shortLink?.enabled || localProfile.shortLink">
         <Input
           id="profile-short-link"
-          v-model="localProfile.shortLink"
+          :model-value="localProfile.shortLink"
           :label="t('profiles.shortLinkLabel')"
           :placeholder="t('profiles.shortLinkPlaceholder')"
+          @update:model-value="updateLocalProfile({ shortLink: String($event ?? '') })"
         />
         <p class="text-xs text-fg-subtle mt-1">
           {{ t('profiles.shortLinkHint') }}
@@ -411,11 +491,12 @@ watch(
           <div class="space-y-1.5">
             <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.engineLabel') }}</label>
             <Select
-              v-model="localProfile.subconverter.engineMode"
+              :model-value="localProfile.subconverter?.engineMode ?? ''"
               :options="[{ value: '', label: t('profileModal.followGlobalConfig') }, ...engineOptions]"
               size="sm"
+              @update:model-value="updateSubconverter({ engineMode: ($event as '' | 'builtin' | 'external') ?? '' })"
             />
-            <div v-if="localProfile.subconverter.engineMode === ''" class="flex items-center gap-1.5 mt-1.5">
+            <div v-if="(localProfile.subconverter?.engineMode ?? '') === ''" class="flex items-center gap-1.5 mt-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
               <span class="text-xs text-fg-muted">
                 {{ t('profileModal.currentGlobal', { value: globalEngineLabel }) }}
@@ -464,15 +545,16 @@ watch(
               t('profileModal.backendOverride')
             }}</label>
             <input
-              v-model="localProfile.subconverter.backend"
+              :value="localProfile.subconverter?.backend ?? ''"
               :placeholder="t('profileModal.backendPlaceholder')"
               class="block w-full px-3 py-2 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle focus:border-line-strong focus-visible:outline-hidden"
               type="text"
+              @input="updateSubconverter({ backend: ($event.target as HTMLInputElement).value })"
             />
             <p class="mt-1.5 text-xs leading-relaxed text-fg-subtle">
               {{ t('profileModal.backendHint') }}
             </p>
-            <div v-if="!localProfile.subconverter.backend" class="flex items-center gap-1.5 mt-1.5">
+            <div v-if="!localProfile.subconverter?.backend" class="flex items-center gap-1.5 mt-1.5">
               <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
               <span class="text-xs text-fg-muted">
                 {{
@@ -488,7 +570,7 @@ watch(
           <div v-if="showRuleLevelSelector" class="sm:col-span-2 animate-fade-in-down border-t border-line pt-3">
             <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.ruleLevelLabel') }}</label>
             <Select
-              v-model="localProfile.ruleLevel"
+              :model-value="localProfile.ruleLevel ?? ''"
               :options="[
                 { value: '', label: t('profileModal.followGlobalLevel') },
                 { value: 'base', label: t('profileModal.ruleBase') },
@@ -497,6 +579,7 @@ watch(
                 { value: 'relay', label: t('profileModal.ruleRelay') },
               ]"
               size="sm"
+              @update:model-value="updateLocalProfile({ ruleLevel: String($event ?? '') })"
             />
           </div>
 
@@ -513,7 +596,7 @@ watch(
                 <span>{{ t('profileModal.syncGlobalVisualRules') }}</span>
               </button>
             </div>
-            <VisualTransformCard :settings="localProfile" section="rules" />
+            <VisualTransformCard v-model:settings="visualSettingsModel" section="rules" />
           </div>
 
           <!-- 规则模板：统一支持预设 / 自定义模板 / 远程 URL，与设置页一致 -->
@@ -535,7 +618,7 @@ watch(
               </button>
             </div>
             <TransformSelector
-              v-model="localProfile.transformConfig"
+              :model-value="localProfile.transformConfig"
               :allowEmpty="false"
               :custom-placeholder="t('profileModal.remoteTemplatePlaceholder')"
               :custom-templates-only="false"
@@ -544,6 +627,7 @@ watch(
               :placeholder="t('profileModal.presetPlaceholder')"
               type="config"
               @select-asset="selectedTransformAsset = $event"
+              @update:model-value="updateLocalProfile({ transformConfig: String($event ?? '') })"
             />
             <RuleTemplateModal
               v-if="showRuleTemplateModal"
@@ -568,11 +652,12 @@ watch(
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.expiresLabel') }}</label>
             <DatePicker
-              v-model="localProfile.expiresAt"
+              :model-value="localProfile.expiresAt"
               :aria-label="t('profileModal.expiresLabel')"
               :placeholder="t('profileModal.expiresPlaceholder')"
               :presets="expiryPresets"
               size="sm"
+              @update:model-value="updateLocalProfile({ expiresAt: $event })"
             />
           </div>
 
@@ -582,12 +667,13 @@ watch(
               t('profileModal.fetchMinIntervalLabel')
             }}</label>
             <input
-              v-model="localProfile.fetchMinInterval"
+              :value="localProfile.fetchMinInterval ?? ''"
               :placeholder="t('profileModal.fetchMinIntervalPlaceholder')"
               class="block h-8 w-full px-2.5 bg-inset border border-line rounded-md font-mono text-xs text-fg placeholder:text-fg-subtle hover:border-line-strong focus:border-line-strong focus-visible:outline-hidden transition-colors duration-200"
               max="1440"
               min="0"
               type="number"
+              @input="updateLocalProfile({ fetchMinInterval: ($event.target as HTMLInputElement).value })"
             />
           </div>
 
@@ -597,13 +683,14 @@ watch(
               t('profileModal.fetchLimitModeLabel')
             }}</label>
             <Select
-              v-model="localProfile.fetchLimitMode"
+              :model-value="localProfile.fetchLimitMode ?? ''"
               :options="[
                 { value: '', label: t('profileModal.followGlobal') },
                 { value: 'cache', label: t('profileModal.fetchLimitCache') },
                 { value: 'strict', label: t('profileModal.fetchLimitStrict') },
               ]"
               size="sm"
+              @update:model-value="updateLocalProfile({ fetchLimitMode: ($event as '' | 'cache' | 'strict') ?? '' })"
             />
           </div>
 
@@ -615,19 +702,21 @@ watch(
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- 手动节点文本前缀 -->
               <Input
-                v-model="localProfile.prefixSettings.manualNodePrefix"
+                :model-value="localProfile.prefixSettings?.manualNodePrefix ?? ''"
                 :label="t('profileModal.manualPrefixText')"
                 :placeholder="t('profileModal.followGlobalEmpty')"
                 size="sm"
+                @update:model-value="updatePrefixSettings({ manualNodePrefix: String($event ?? '') })"
               />
 
               <!-- {{ t('profileModal.manualNodeDisplay') }}开关 -->
               <div class="space-y-1">
                 <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.manualNodeDisplay') }}</label>
                 <Select
-                  v-model="localProfile.prefixSettings.enableManualNodes"
+                  :model-value="localProfile.prefixSettings?.enableManualNodes ?? null"
                   :options="prefixToggleOptions"
                   size="sm"
+                  @update:model-value="updatePrefixSettings({ enableManualNodes: $event as boolean | null })"
                 />
               </div>
 
@@ -637,9 +726,10 @@ watch(
                   t('profileModal.subscriptionPrefix')
                 }}</label>
                 <Select
-                  v-model="localProfile.prefixSettings.enableSubscriptions"
+                  :model-value="localProfile.prefixSettings?.enableSubscriptions ?? null"
                   :options="prefixToggleOptions"
                   size="sm"
+                  @update:model-value="updatePrefixSettings({ enableSubscriptions: $event as boolean | null })"
                 />
               </div>
 
@@ -647,9 +737,10 @@ watch(
               <div class="space-y-1">
                 <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.tagPrefix') }}</label>
                 <Select
-                  v-model="localProfile.prefixSettings.prependTagName"
+                  :model-value="localProfile.prefixSettings?.prependTagName ?? null"
                   :options="tagPrefixToggleOptions"
                   size="sm"
+                  @update:model-value="updatePrefixSettings({ prependTagName: $event as boolean | null })"
                 />
               </div>
             </div>
@@ -667,13 +758,14 @@ watch(
                   <span class="text-xs font-semibold text-fg-muted uppercase">{{ flag.label }}</span>
                 </div>
                 <Select
-                  v-model="localProfile.subconverter.options[flag.key]"
+                  :model-value="localProfile.subconverter?.options?.[flag.key] ?? null"
                   :options="[
                     { value: null, label: t('profileModal.followGlobal') },
                     { value: true, label: t('profileModal.on') },
                     { value: false, label: t('profileModal.off') },
                   ]"
                   size="xs"
+                  @update:model-value="updateSubconverterOption(flag.key, $event as boolean | null)"
                 />
               </div>
             </div>
@@ -690,7 +782,10 @@ watch(
           <span class="text-xs text-fg-subtle">{{ t('profileModal.pipelineDesc') }}</span>
         </div>
 
-        <OperatorChain v-model="localProfile.operators" />
+        <OperatorChain
+          :model-value="localProfile.operators || []"
+          @update:model-value="updateLocalProfile({ operators: $event })"
+        />
       </div>
     </div>
   </div>

@@ -8,7 +8,7 @@
  * 而真实原因是发版后旧页面请求了已删除的资源，检查网络永远解决不了。
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ErrorHandler } from '@/utils/error-handler.js';
+import { ErrorHandler, extractErrorMessage } from '@/utils/error-handler.js';
 import { messages } from '@/i18n/messages.js';
 import { setLocale } from '@/i18n/index.js';
 
@@ -70,5 +70,24 @@ describe('getUserFriendlyMessage 判定顺序', () => {
       expect(typeof errors.chunkLoadFailed).toBe('string');
       expect(errors.chunkLoadFailed.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('extractErrorMessage', () => {
+  it('优先提取接口返回体中的 data.error 或 data.message', () => {
+    expect(extractErrorMessage({ data: { error: '服务端拒绝' }, message: 'HTTP 400' })).toBe('服务端拒绝');
+    expect(extractErrorMessage({ data: { message: '参数无效' }, message: 'HTTP 422' })).toBe('参数无效');
+  });
+
+  it('支持标准 Error 实例与纯字符串', () => {
+    expect(extractErrorMessage(new Error('连接超时'))).toBe('连接超时');
+    expect(extractErrorMessage('直接错误信息')).toBe('直接错误信息');
+  });
+
+  it('对空值或未知对象返回 fallback', () => {
+    expect(extractErrorMessage(null, '默认兜底')).toBe('默认兜底');
+    expect(extractErrorMessage(undefined, '默认兜底')).toBe('默认兜底');
+    expect(extractErrorMessage({}, '默认兜底')).toBe('默认兜底');
+    expect(extractErrorMessage({})).toBe('');
   });
 });

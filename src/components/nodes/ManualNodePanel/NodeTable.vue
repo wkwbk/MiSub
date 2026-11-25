@@ -11,6 +11,8 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
+import type { NodeInspectMap } from '@/composables/manual-nodes/filters.js';
+import type { PingResult } from '@/composables/useManualNodes.js';
 
 const { t } = useI18n();
 const dataStore = useDataStore();
@@ -30,9 +32,9 @@ const props = withDefaults(
     baseTotalPages?: number;
     draggableManualNodes?: ManualNodeItem[];
     itemsPerPage?: number;
-    pingResults?: Record<string, any>;
+    pingResults?: Record<string, PingResult>;
     pingingNodes?: Set<string>;
-    nodeInspectMap?: Record<string, any>;
+    nodeInspectMap?: NodeInspectMap;
     attrFilters?: { protocol?: string; country?: string; network?: string };
     useLocalPagination?: boolean;
     compactGrid?: boolean;

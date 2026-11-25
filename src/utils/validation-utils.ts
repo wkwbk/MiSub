@@ -1,4 +1,4 @@
-import { NODE_PROTOCOL_PREFIXES } from '@misub/core/protocols/constants.js';
+import { HttpUrlStringSchema, ManualNodeUrlSchema } from '@misub/core/schemas/entities.js';
 import type { ProfileConfig } from '@misub/core/types.js';
 import { t } from '@/i18n/index.js';
 
@@ -18,27 +18,26 @@ export interface ValidationResult {
 }
 
 /**
- * 验证URL格式
+ * 复用 @misub/core Zod Schema 验证 HTTP/HTTPS URL 格式。
  */
-function isValidUrl(url: unknown): boolean {
-  if (!url || typeof url !== 'string') return false;
-
-  try {
-    const urlObj = new URL(url);
-    return ['http:', 'https:'].includes(urlObj.protocol);
-  } catch {
-    return false;
-  }
+export function isValidHttpUrl(url: unknown): boolean {
+  if (typeof url !== 'string') return false;
+  return HttpUrlStringSchema.safeParse(url).success;
 }
 
 /**
- * 验证节点URL格式
+ * 验证URL格式
+ */
+function isValidUrl(url: unknown): boolean {
+  return isValidHttpUrl(url);
+}
+
+/**
+ * 复用 @misub/core Zod Schema 验证节点URL格式
  */
 function isValidNodeUrl(nodeUrl: unknown): boolean {
-  if (!nodeUrl || typeof nodeUrl !== 'string') return false;
-
-  // 检查是否为支持的协议
-  return NODE_PROTOCOL_PREFIXES.some((protocol) => nodeUrl.startsWith(protocol));
+  if (typeof nodeUrl !== 'string') return false;
+  return ManualNodeUrlSchema.safeParse(nodeUrl).success;
 }
 
 /**

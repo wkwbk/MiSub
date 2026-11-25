@@ -5,11 +5,19 @@ import {
   type UseMutationOptions,
   type UseQueryOptions,
 } from '@tanstack/vue-query';
-import type { ProfileConfig, SettingsConfig, SubscriptionItem, SubscriptionUserInfo } from '@misub/core';
+import type {
+  BuiltinTransformConfig,
+  ProfileConfig,
+  SettingsConfig,
+  SubscriptionItem,
+  SubscriptionUserInfo,
+  TelegramPushConfig,
+} from '@misub/core';
 import { api } from '@/lib/http.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 import { createStorageCache } from '@/utils/cache-helper.js';
 import { TIMING } from '@/constants/timing.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { getItemTags, hydrateItemTags } from '@/utils/tags.js';
 
@@ -66,12 +74,38 @@ export interface RuleTemplateItem {
   [key: string]: unknown;
 }
 
-type DefaultSettingsShape = Omit<typeof DEFAULT_SETTINGS, 'mergeExpireStrategy' | 'subFetchLimitMode'>;
+type KnownKeys<T> = {
+  [K in keyof T as string extends K ? never : number extends K ? never : K]: T[K];
+};
 
-export type AppSettingsConfig = SettingsConfig &
+type DefaultSettingsShape = Omit<
+  typeof DEFAULT_SETTINGS,
+  | 'mergeExpireStrategy'
+  | 'subFetchLimitMode'
+  | 'builtinTransform'
+  | 'tokenAutoRotate'
+  | 'disguise'
+  | 'defaultPrefixSettings'
+  | 'announcement'
+  | 'guestbook'
+  | 'webdavBackup'
+  | 'externalApi'
+  | 'subconverter'
+  | 'shortLink'
+  | 'turnstile'
+  | 'customPage'
+  | 'regionOverrides'
+  | 'defaultOperators'
+>;
+
+export type AppSettingsConfig = Omit<
+  KnownKeys<SettingsConfig>,
+  'builtinTransform' | 'telegramPushConfig' | 'mergeExpireStrategy' | 'subFetchLimitMode'
+> &
   DefaultSettingsShape & {
     mergeExpireStrategy?: 'max' | 'min';
     subFetchLimitMode?: 'cache' | 'strict';
+    builtinTransform?: BuiltinTransformConfig;
     customLoginPath?: string;
     clashRuleLevel?: string;
     prefixConfig?: unknown;
@@ -79,11 +113,8 @@ export type AppSettingsConfig = SettingsConfig &
     nodeTransform?: unknown;
     publicLinks?: unknown;
     publicCores?: unknown;
-    telegramPushConfig?: {
-      botToken?: string;
-      webhookSecret?: string;
-      [key: string]: unknown;
-    };
+    telegramPushConfig?: TelegramPushConfig;
+    [key: string]: unknown;
   };
 
 export interface AppDataSnapshot {
@@ -278,7 +309,7 @@ function syncSessionCachedConfig(nextConfig: Partial<AppSettingsConfig>): void {
 }
 
 async function fetchAppDataPayload(): Promise<RawAppDataPayload> {
-  const data: unknown = await api.get('/api/data');
+  const data: unknown = await api.get(API_ENDPOINTS.DATA);
   if (isPlainRecord(data) && typeof data.error === 'string' && data.error) {
     throw new Error(data.error);
   }
@@ -344,7 +375,7 @@ export async function saveMisubsWithQueryClient(
   }
 
   try {
-    const rawResult: unknown = await api.post('/api/misubs', payload);
+    const rawResult: unknown = await api.post(API_ENDPOINTS.MISUBS, payload);
     const result = (isPlainRecord(rawResult) ? rawResult : {}) as SaveMisubsResponse;
     if (!result.success) {
       throw new Error(result.message || 'Save failed');
@@ -400,7 +431,7 @@ export async function saveSettingsWithQueryClient(
 
   try {
     const rawResult: unknown = await api.post(
-      '/api/settings',
+      API_ENDPOINTS.SETTINGS,
       newSettings,
       preferencesOnly ? { headers: { 'X-MiSub-Save-Scope': 'preferences' } } : {},
     );
@@ -423,7 +454,7 @@ export async function fetchRuleTemplatesWithQueryClient(queryClient: QueryClient
     queryKey: QUERY_KEYS.ruleTemplates,
     staleTime: 0,
     queryFn: async (): Promise<RuleTemplateItem[]> => {
-      const response: unknown = await api.get('/api/rule_templates');
+      const response: unknown = await api.get(API_ENDPOINTS.RULE_TEMPLATES);
       const data = isPlainRecord(response) ? response.data : undefined;
       return Array.isArray(data) ? (data as RuleTemplateItem[]) : [];
     },
@@ -442,7 +473,7 @@ export async function saveRuleTemplatesWithQueryClient(
   queryClient: QueryClient,
   templates: RuleTemplateItem[],
 ): Promise<RuleTemplateItem[]> {
-  const rawResult: unknown = await api.post('/api/rule_templates', { templates });
+  const rawResult: unknown = await api.post(API_ENDPOINTS.RULE_TEMPLATES, { templates });
   const result = isPlainRecord(rawResult) ? rawResult : {};
   if (!result.success) {
     throw new Error(typeof result.message === 'string' ? result.message : 'Failed to save rule templates');

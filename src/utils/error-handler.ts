@@ -67,22 +67,66 @@ export function configureErrorMonitoring({ endpoint, headers }: ErrorMonitoringO
   }
 }
 
+/**
+ * 从未知异常对象中安全提取可读的错误消息。
+ */
+export function extractErrorMessage(error: unknown, fallback = ''): string {
+  if (error instanceof Error) {
+    if (error.message) return error.message;
+    const errWithData = error as { data?: { error?: unknown; message?: unknown } };
+    if (typeof errWithData.data?.error === 'string' && errWithData.data.error) {
+      return errWithData.data.error;
+    }
+    if (typeof errWithData.data?.message === 'string' && errWithData.data.message) {
+      return errWithData.data.message;
+    }
+    return fallback;
+  }
+
+  if (typeof error === 'string') {
+    return error || fallback;
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const record = error as Record<string, unknown>;
+    const data = record.data && typeof record.data === 'object' ? (record.data as Record<string, unknown>) : null;
+    if (data) {
+      if (typeof data.error === 'string' && data.error) return data.error;
+      if (typeof data.message === 'string' && data.message) return data.message;
+    }
+    if (typeof record.message === 'string' && record.message) return record.message;
+    if (typeof record.error === 'string' && record.error) return record.error;
+    return fallback;
+  }
+
+  if (error !== null && error !== undefined) {
+    const text = String(error);
+    if (text && text !== '[object Object]') {
+      return text;
+    }
+  }
+
+  return fallback;
+}
+
 function normalizeErrorPayload(error: unknown): { message: string; stack?: string } {
+  const unknownFallback = t('errors.unknown');
   if (error instanceof Error) {
     return {
-      message: error.message || '未知错误',
+      message: extractErrorMessage(error, unknownFallback),
       stack: error.stack,
     };
   }
   if (typeof error === 'object' && error !== null) {
     const record = error as Record<string, unknown>;
+    const extracted = extractErrorMessage(error);
     return {
-      message: typeof record.message === 'string' && record.message ? record.message : String(error),
+      message: extracted || String(error),
       stack: typeof record.stack === 'string' ? record.stack : undefined,
     };
   }
   return {
-    message: typeof error === 'string' && error ? error : '未知错误',
+    message: typeof error === 'string' && error ? error : unknownFallback,
   };
 }
 
@@ -154,7 +198,7 @@ class ErrorHandler {
    * 生成错误的唯一键
    */
   getErrorKey(error: { message?: string; stack?: string }, context: string): string {
-    const message = error.message || '未知错误';
+    const message = error.message || t('errors.unknown');
     const stack = error.stack?.split('\n')[0] || '';
     return `${context}:${message}:${stack}`.substring(0, 100);
   }
@@ -208,7 +252,7 @@ class ErrorHandler {
     let message = this.getUserFriendlyMessage(errorInfo);
 
     if (errorInfo.count > 1) {
-      message += ` (已发生${errorInfo.count}次)`;
+      message += ` (${t('errors.occurredCount', { count: errorInfo.count })})`;
     }
 
     handler(message, 'error', 5000);

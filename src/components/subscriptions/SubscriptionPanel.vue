@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
-import type { SubscriptionItem } from '@misub/core/types.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { Plus, Search, Upload, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import Card from '@/components/subscriptions/Card.vue';
@@ -23,7 +23,7 @@ import {
   toggleTagFilterValue,
 } from '@/utils/tags.js';
 
-type PanelSubscription = SubscriptionItem & Record<string, any>;
+type PanelSubscription = StoreMisubItem;
 
 const { t } = useI18n();
 const dataStore = useDataStore();

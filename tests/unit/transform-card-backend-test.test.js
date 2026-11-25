@@ -46,8 +46,15 @@ describe('TransformCard third-party backend test button', () => {
       builtinEnableUdp: true,
       subconverter: { engineMode: 'builtin' },
     });
-    const wrapper = mount(TransformCard, {
-      props: { settings },
+    let wrapper;
+    wrapper = mount(TransformCard, {
+      props: {
+        settings,
+        'onUpdate:settings': (next) => {
+          Object.assign(settings, next);
+          wrapper?.setProps({ settings: { ...settings } });
+        },
+      },
       global: {
         stubs: { TransformSelector: true, RuleTemplateManager: true },
       },
@@ -126,8 +133,15 @@ describe('TransformCard third-party backend test button', () => {
       error: '测试失败',
     });
 
-    const wrapper = mount(TransformCard, {
-      props: { settings },
+    let wrapper;
+    wrapper = mount(TransformCard, {
+      props: {
+        settings,
+        'onUpdate:settings': (next) => {
+          Object.assign(settings, next);
+          wrapper?.setProps({ settings: { ...settings } });
+        },
+      },
       global: {
         stubs: {
           TransformSelector: true,

@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Layers, LayoutGrid, List, Search, Zap } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useI18n } from '@/i18n/index.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 
 const { t } = useI18n();
 
@@ -55,7 +56,7 @@ const regionModel = computed({
 });
 
 const isProcessedToggleVisible = computed(() => {
-  return Boolean(props.profileId) && props.apiEndpoint !== '/api/public/preview';
+  return Boolean(props.profileId) && props.apiEndpoint !== API_ENDPOINTS.PUBLIC_PREVIEW;
 });
 </script>
 

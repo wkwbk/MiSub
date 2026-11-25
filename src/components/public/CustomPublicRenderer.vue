@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
+import type { CustomPageConfig, HeroConfig, ProfileConfig } from '@misub/core/types.js';
 import { useRoute } from 'vue-router';
 import { Moon, Sun } from '@lucide/vue';
 import DOMPurify from 'dompurify';
@@ -19,7 +19,11 @@ const props = withDefaults(
   defineProps<{
     content?: string;
     css?: string;
-    config?: SettingsConfig & Record<string, any>;
+    config?: {
+      customPage?: Partial<CustomPageConfig>;
+      hero?: Partial<HeroConfig>;
+      [key: string]: unknown;
+    };
     profiles?: PublicProfile[];
   }>(),
   {
@@ -54,7 +58,7 @@ const removeScripts = () => {
 // 处理占位符
 // 我们将 {{placeholder}} 替换为 <div data-slot="placeholder"></div>
 // 然后在模板中使用 Teleport 将真正的组件传送到这些位置
-const customPageConfig = computed(() => props.config?.customPage || {});
+const customPageConfig = computed<Partial<CustomPageConfig>>(() => props.config?.customPage || {});
 const customPageType = computed(() => customPageConfig.value.type || 'html');
 const isIframeMode = computed(() => ['iframe-srcdoc', 'iframe-url'].includes(customPageType.value));
 const sanitizeHtml = (html: string) =>

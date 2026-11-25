@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { ArrowRight } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import { api } from '@/lib/http.js';
+import { fetchAppStoreRelease, fetchGithubLatestRelease } from '@/lib/api.js';
 import {
   CLIENT_PLATFORM_ORDER,
   CLIENT_PLATFORMS,
@@ -19,11 +19,6 @@ interface PublicClientEntry extends PublicClientItem {
 interface ClientReleaseMeta {
   version: string;
   publishedAt: string;
-}
-
-interface GithubOrAppStoreReleaseResponse {
-  tag_name?: string;
-  published_at?: string;
 }
 
 const props = withDefaults(
@@ -113,18 +108,17 @@ const fetchClientReleases = async (clients: PublicClientEntry[] = []): Promise<v
     if (!key || fetchedClientKeys.has(key)) return;
     fetchedClientKeys.add(key);
 
-    let endpoint = '';
-    if (client.repo) {
-      endpoint = `/api/github/release?repo=${client.repo}`;
-    } else {
-      const appStore = extractAppStoreInfo(client.url);
-      if (!appStore) return;
-      endpoint = `/api/appstore/release?id=${appStore.id}&country=${appStore.country}`;
-    }
-
     try {
-      const data = await api.get<GithubOrAppStoreReleaseResponse>(endpoint);
-      if (data?.tag_name || data?.published_at) {
+      let data: Awaited<ReturnType<typeof fetchGithubLatestRelease>>;
+      if (client.repo) {
+        data = await fetchGithubLatestRelease(client.repo);
+      } else {
+        const appStore = extractAppStoreInfo(client.url);
+        if (!appStore) return;
+        data = await fetchAppStoreRelease(appStore.id, appStore.country);
+      }
+
+      if (data && !('errorType' in data) && (data.tag_name || data.published_at)) {
         clientReleases.value = {
           ...clientReleases.value,
           [key]: {

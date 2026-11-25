@@ -1,4 +1,9 @@
-import type { OperatorRule, ProfileSubscriptionRef } from '@misub/core/types.js';
+import type {
+  BuiltinTransformConfig,
+  OperatorRule,
+  ProfileSubscriptionRef,
+  RegionOverrideRule,
+} from '@misub/core/types.js';
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
 import { DEFAULT_BUILTIN_TRANSFORM } from '@misub/core/domain/visual-rules-catalog.js';
 
@@ -21,7 +26,10 @@ export const DEFAULT_SETTINGS = {
   ruleLevel: 'std',
   builtinSkipCertVerify: false,
   builtinEnableUdp: true,
-  builtinTransform: { ...DEFAULT_BUILTIN_TRANSFORM, baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig } },
+  builtinTransform: {
+    ...DEFAULT_BUILTIN_TRANSFORM,
+    baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig },
+  } as BuiltinTransformConfig,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   mergeExpireStrategy: 'max' as 'max' | 'min',
@@ -32,7 +40,7 @@ export const DEFAULT_SETTINGS = {
   enablePublicPage: true,
   allowBrowserSubAccess: true,
   disguise: {
-    pageType: 'default',
+    pageType: 'default' as 'default' | 'redirect',
     redirectUrl: '',
   },
   storageType: 'd1',
@@ -56,16 +64,16 @@ export const DEFAULT_SETTINGS = {
   dismissedHealthItems: [] as string[],
   defaultOperators: [] as OperatorRule[],
   nodeTransformPresets: [] as Record<string, unknown>[],
-  regionOverrides: [] as Record<string, unknown>[],
+  regionOverrides: [] as RegionOverrideRule[],
   // 公告设置
   announcement: {
     enabled: true, // 是否启用公告
     title: '2.5 版本更新说明', // 公告标题
     content:
       '为降低 Cloudflare D1 免费额度超限的风险，本版本已进行一系列优化：<br><br>• 移除 VPS 探针功能<br>• 内置订阅转换能力，不再依赖第三方转换服务<br>• 优化数据结构与读写逻辑<br>• 降低高频请求场景下的存储与缓存压力<br><br>本次更新主要聚焦于项目的长期稳定运行与免费额度控制。', // 公告内容（支持富文本/Markdown）
-    type: 'info' as 'info' | 'warning' | 'success', // 类型: 'info' | 'warning' | 'success'
+    type: 'info' as 'info' | 'warning' | 'success' | 'error', // 类型: 'info' | 'warning' | 'success' | 'error'
     dismissible: true, // 是否可关闭
-    updatedAt: '2026-04-13T00:00:00.000Z', // 更新时间
+    updatedAt: '2026-04-13T00:00:00.000Z' as string | null, // 更新时间
   },
   // 留言板设置
   guestbook: {
@@ -79,9 +87,9 @@ export const DEFAULT_SETTINGS = {
     password: '',
     remotePath: '/MiSub',
     filenameTemplate: 'misub-backup-{datetime}.json',
-    backupScope: 'dataOnly',
+    backupScope: 'dataOnly' as 'dataOnly' | 'dataAndSettings',
     autoBackup: false,
-    interval: 'daily',
+    interval: 'daily' as 'hourly' | 'daily' | 'weekly' | 'monthly',
     retentionCount: 7,
     lastCheckedAt: null as string | null,
     lastBackupAt: null as string | null,

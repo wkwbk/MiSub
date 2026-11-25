@@ -168,7 +168,7 @@ async function renderWidget() {
   } catch (err) {
     if (!unmounted) {
       loadFailed.value = true;
-      emit('error', err instanceof Error ? err.message : 'turnstile_load_failed');
+      emit('error', err instanceof Error && err.message ? err.message : 'turnstile_load_failed');
     }
   }
 }

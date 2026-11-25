@@ -1,9 +1,20 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
+import type {
+  AnnouncementConfig,
+  CustomPageConfig,
+  GuestbookConfig,
+  HeroConfig,
+  ProfileConfig,
+} from '@misub/core/types.js';
+import type { PublicClientsConfig, PublicClientItem } from '@misub/core/domain/default-public-clients.js';
+import type { PublicCoresConfig } from '@misub/core/domain/default-public-cores.js';
+import type { PublicLinksConfig } from '@misub/core/domain/default-public-links.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { hasStoredLocale, useI18n } from '@/i18n/index.js';
-import { api } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
+import { fetchPublicResource } from '@/lib/api.js';
+import { downloadDataUrlFile } from '@/utils/import-file.js';
 import { resolveComponentQueryClient } from '@/lib/query-client.js';
 import { fetchPublicProfilesWithQuery } from '@/queries/usePublicProfilesQuery.js';
 import ProfileGrid from '@/components/public/ProfileGrid.vue';
@@ -30,13 +41,14 @@ interface PublicProfileItem extends ProfileConfig {
   [key: string]: unknown;
 }
 
-interface PublicPageConfig extends Partial<SettingsConfig> {
-  announcement?: Record<string, any>;
-  hero?: Record<string, any>;
-  guestbook?: Record<string, any>;
-  customPage?: Record<string, any>;
+interface PublicPageConfig {
+  profileToken?: string;
+  announcement?: Partial<AnnouncementConfig>;
+  hero?: Partial<HeroConfig>;
+  guestbook?: Partial<GuestbookConfig>;
+  customPage?: Partial<CustomPageConfig>;
   defaultLocale?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 const publicProfiles = ref<PublicProfileItem[]>([]);
@@ -46,7 +58,7 @@ const { showToast } = useToastStore();
 const { t, setLocale } = useI18n();
 const config = ref<PublicPageConfig>({});
 const announcement = computed(() => config.value.announcement);
-const heroConfig = computed(
+const heroConfig = computed<Partial<HeroConfig>>(
   () =>
     config.value.hero || {
       title1: t('publicProfiles.heroTitle1'),
@@ -54,8 +66,8 @@ const heroConfig = computed(
       description: t('publicProfiles.heroDescription'),
     },
 );
-const guestbookConfig = computed(() => config.value.guestbook || {});
-const customPageConfig = computed(() => config.value.customPage || {});
+const guestbookConfig = computed<Partial<GuestbookConfig>>(() => config.value.guestbook || {});
+const customPageConfig = computed<Partial<CustomPageConfig>>(() => config.value.customPage || {});
 const parsedCustomPageSource = computed(() =>
   parseCustomPageSource(customPageConfig.value.content || '', customPageConfig.value.css || ''),
 );
@@ -133,7 +145,7 @@ const fetchPublicProfiles = async () => {
     const data = await fetchPublicProfilesWithQuery(queryClient);
     if (data.success) {
       publicProfiles.value = (data.data || []) as unknown as PublicProfileItem[];
-      config.value = data.config || {};
+      config.value = (data.config || {}) as PublicPageConfig;
 
       // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
       const serverLocale = config.value.defaultLocale;
@@ -169,9 +181,9 @@ const copyShortLink = async (profile: PublicProfileItem) => {
   showToast(copied ? t('public.shortLinkCopied') : t('publicProfiles.copyFailedManual'), copied ? 'success' : 'error');
 };
 
-const publicClients = ref<Record<string, any>>({});
-const publicCores = ref<Record<string, any>>({});
-const publicLinks = ref<Record<string, any>>({});
+const publicClients = ref<PublicClientsConfig | PublicClientItem[] | Record<string, unknown>>({});
+const publicCores = ref<PublicCoresConfig | Record<string, unknown>>({});
+const publicLinks = ref<PublicLinksConfig | Record<string, unknown>>({});
 
 const enabledClientsForImport = computed(() => {
   const normalized = normalizePublicClientsConfig(publicClients.value);
@@ -180,7 +192,7 @@ const enabledClientsForImport = computed(() => {
 
 const fetchClients = async () => {
   try {
-    const data = await api.get('/api/clients');
+    const data = await fetchPublicResource<PublicClientsConfig | PublicClientItem[]>(API_ENDPOINTS.CLIENTS);
     if (data?.success && data.data && (typeof data.data === 'object' || Array.isArray(data.data))) {
       publicClients.value = data.data;
     }
@@ -193,7 +205,7 @@ const fetchClients = async () => {
 
 const fetchPublicCores = async () => {
   try {
-    const data = await api.get('/api/public_cores');
+    const data = await fetchPublicResource<PublicCoresConfig>(API_ENDPOINTS.PUBLIC_CORES);
     if (data?.success && data.data && typeof data.data === 'object') {
       publicCores.value = data.data;
     }
@@ -204,7 +216,7 @@ const fetchPublicCores = async () => {
 
 const fetchPublicLinks = async () => {
   try {
-    const data = await api.get('/api/public_links');
+    const data = await fetchPublicResource<PublicLinksConfig>(API_ENDPOINTS.PUBLIC_LINKS);
     if (data?.success && data.data && typeof data.data === 'object') {
       publicLinks.value = data.data;
     }
@@ -304,11 +316,7 @@ const isQRExpanded = (profileId: string) => expandedQRCards.value.has(profileId)
 const downloadQRCode = (profile: PublicProfileItem) => {
   const canvas = qrCanvasRefs.value[profile.id];
   if (!canvas) return;
-  const url = canvas.toDataURL('image/png');
-  const link = document.createElement('a');
-  link.download = `${profile.name || 'subscription'}-qrcode.png`;
-  link.href = url;
-  link.click();
+  downloadDataUrlFile(canvas.toDataURL('image/png'), `${profile.name || 'subscription'}-qrcode.png`);
   showToast(t('publicProfiles.qrDownloaded'), 'success');
 };
 
@@ -562,7 +570,7 @@ onUnmounted(() => {
       :profile-id="previewProfileId"
       :profile-name="previewProfileName"
       :show="showPreviewModal"
-      api-endpoint="/api/public/preview"
+      :api-endpoint="API_ENDPOINTS.PUBLIC_PREVIEW"
       @update:show="showPreviewModal = $event"
     />
 

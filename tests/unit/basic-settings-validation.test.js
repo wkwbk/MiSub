@@ -10,14 +10,18 @@ vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast }),
 }));
 
-const mountBasicSettings = (settings) =>
-  mount(BasicSettings, {
+const mountBasicSettings = (settings) => {
+  const wrapper = mount(BasicSettings, {
     props: {
       settings,
       disguiseConfig: {
         enabled: false,
         pageType: 'default',
         redirectUrl: '',
+      },
+      'onUpdate:settings': (next) => {
+        Object.assign(settings, next);
+        wrapper.setProps({ settings: { ...settings } });
       },
     },
     global: {
@@ -29,6 +33,8 @@ const mountBasicSettings = (settings) =>
       },
     },
   });
+  return wrapper;
+};
 
 describe('BasicSettings validation feedback', () => {
   beforeEach(() => {

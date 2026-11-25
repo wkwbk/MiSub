@@ -1,8 +1,7 @@
 import { computed, ref, shallowRef } from 'vue';
 import { defineStore } from 'pinia';
 import router from '@/router';
-import { fetchInitialData, fetchPublicConfig, login as apiLogin } from '@/lib/api.js';
-import { api } from '@/lib/http.js';
+import { fetchInitialData, fetchPublicConfig, login as apiLogin, logoutSession } from '@/lib/api.js';
 import { handleError } from '@/utils/error-handler.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import type { AppSettingsConfig, RawAppDataPayload } from '@/queries/useAppDataQueries.js';
@@ -189,7 +188,7 @@ export const useSessionStore = defineStore('session', () => {
     logoutInFlightPromise = (async (): Promise<boolean | undefined> => {
       let logoutConfirmed = false;
       try {
-        await api.get('/api/logout');
+        await logoutSession();
         logoutConfirmed = true;
       } catch (error: unknown) {
         console.warn('Logout request failed:', error);

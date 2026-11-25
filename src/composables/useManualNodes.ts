@@ -8,6 +8,7 @@ import { cleanNodeUrl, extractHostAndPort, extractNodeName } from '@/lib/utils.j
 import { isUdpOnlyProtocol, pingNode, tcpingNodes, type TcpingEntry } from '@/utils/ping.js';
 import { api } from '@/lib/http.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 import {
   filterManualNodes,
@@ -575,13 +576,7 @@ export function useManualNodes(markDirty: () => void) {
       }
     } catch (error: unknown) {
       if (!silent) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : error && typeof error === 'object' && 'message' in error
-              ? String((error as { message?: unknown }).message ?? '')
-              : '';
-        showToast(errorMessage || t('manualNodes.inspectFailed'), 'error');
+        showToast(extractErrorMessage(error, t('manualNodes.inspectFailed')), 'error');
       }
     } finally {
       isInspectingNodes.value = false;

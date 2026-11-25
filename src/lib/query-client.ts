@@ -18,6 +18,7 @@ export const QUERY_KEYS = {
   accessLogs: (filter: AccessLogsFilter = {}) =>
     ['app', 'accessLogs', filter?.profileId || '', filter?.profileName || ''] as const,
   githubRelease: (repo: string) => ['github', 'release', repo] as const,
+  webdavRemoteFiles: ['app', 'webdav', 'remoteFiles'] as const,
 };
 
 export function createAppQueryClient(): QueryClient {

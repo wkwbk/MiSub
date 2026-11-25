@@ -3,6 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } fr
 import type { NodeIR, SubscriptionItem } from '@misub/core/types.js';
 import { Gauge, Loader2, X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
@@ -29,7 +31,15 @@ interface PreviewNodeItem {
   port?: number | string;
   enabled?: boolean;
   ir?: NodeIR;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+interface NodePreviewRequestPayload {
+  userAgent: string;
+  profileId?: string;
+  applyTransform?: boolean;
+  subscriptionId?: string;
+  url?: string;
 }
 
 interface ParsedNodeInfo {
@@ -67,7 +77,7 @@ const props = withDefaults(
     subscriptionUrl: '',
     profileId: null,
     profileName: '',
-    apiEndpoint: '/api/subscription_nodes',
+    apiEndpoint: API_ENDPOINTS.SUB_NODES,
   },
 );
 
@@ -597,7 +607,7 @@ const loadNodes = async () => {
   error.value = '';
 
   try {
-    const requestData: Record<string, any> = {
+    const requestData: NodePreviewRequestPayload = {
       userAgent: 'v2rayN/7.23',
     };
 
@@ -684,19 +694,19 @@ const loadNodes = async () => {
 
     // 重置页码
     currentPage.value = 1;
-  } catch (err: any) {
+  } catch (err: unknown) {
     // 提供更友好的错误信息（文案与 useNodePreview.js 保持同一套 key）
     if (err instanceof APIError && err.status === 401) {
       try {
-        await api.get('/api/data');
+        await api.get(API_ENDPOINTS.DATA);
         error.value = t('nodePreview.authAbnormal');
       } catch {
         error.value = t('nodePreview.authFailed');
       }
-    } else if (isNetworkErrorMessage(err?.message)) {
+    } else if (isNetworkErrorMessage(extractErrorMessage(err))) {
       error.value = t('nodePreview.networkFailed');
     } else {
-      error.value = err.message || t('nodePreview.loadFailed');
+      error.value = extractErrorMessage(err, t('nodePreview.loadFailed'));
     }
 
     allNodes.value = [];
@@ -819,7 +829,7 @@ const goToPage = (page: number) => {
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <button
-            v-if="profileId && apiEndpoint !== '/api/public/preview'"
+            v-if="profileId && apiEndpoint !== API_ENDPOINTS.PUBLIC_PREVIEW"
             :class="
               pickingMode
                 ? 'bg-active text-fg border-line-strong'

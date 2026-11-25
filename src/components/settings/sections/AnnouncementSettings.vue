@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
+import type { AnnouncementConfig } from '@misub/core/types.js';
 import { Megaphone } from '@lucide/vue';
 import DOMPurify from 'dompurify';
 import Select from '@/components/ui/Select.vue';
@@ -9,22 +10,17 @@ import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
-interface AnnouncementState {
-  enabled: boolean;
-  title: string;
-  content: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  dismissible: boolean;
-  updatedAt: string | null;
-}
-
 const { t } = useI18n();
 
 const props = defineProps<{
   settings: AppSettingsConfig;
 }>();
 
-const defaultAnnouncement: AnnouncementState = {
+const emit = defineEmits<{
+  'update:settings': [value: AppSettingsConfig];
+}>();
+
+const defaultAnnouncement: AnnouncementConfig = {
   enabled: false,
   title: '',
   content: '',
@@ -33,25 +29,21 @@ const defaultAnnouncement: AnnouncementState = {
   updatedAt: null,
 };
 
-const ensureAnnouncement = (): void => {
-  if (!props.settings.announcement) {
-    props.settings.announcement = { ...defaultAnnouncement } as unknown as AppSettingsConfig['announcement'];
-  }
+const announcement = computed<AnnouncementConfig>(() => ({
+  ...defaultAnnouncement,
+  ...props.settings?.announcement,
+}));
+
+const updateAnnouncement = (patch: Partial<AnnouncementConfig>): void => {
+  emit('update:settings', {
+    ...props.settings,
+    announcement: {
+      ...announcement.value,
+      ...patch,
+      updatedAt: new Date().toISOString(),
+    },
+  });
 };
-
-ensureAnnouncement();
-
-watch(
-  () => props.settings.announcement,
-  (val) => {
-    if (!val) ensureAnnouncement();
-  },
-);
-
-// 确保 announcement 对象存在
-const announcement = computed<AnnouncementState>(
-  () => (props.settings.announcement as unknown as AnnouncementState | undefined) || defaultAnnouncement,
-);
 
 const allowedContentTags = ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'li'];
 const allowedContentAttrs = ['href', 'target', 'rel'];
@@ -65,10 +57,6 @@ const sanitizedContent = computed(() => {
     ALLOWED_ATTR: allowedContentAttrs,
   });
 });
-
-const handleContentUpdate = (): void => {
-  announcement.value.updatedAt = new Date().toISOString();
-};
 </script>
 
 <template>
@@ -82,7 +70,10 @@ const handleContentUpdate = (): void => {
       <Megaphone class="h-4 w-4" />
     </template>
     <template #actions>
-      <Switch v-model="announcement.enabled" @change="handleContentUpdate" />
+      <Switch
+        :model-value="Boolean(announcement.enabled)"
+        @update:model-value="updateAnnouncement({ enabled: Boolean($event) })"
+      />
     </template>
 
     <!-- 内容编辑 -->
@@ -94,11 +85,11 @@ const handleContentUpdate = (): void => {
             t('settings.announcementFieldTitle')
           }}</label>
           <input
-            v-model="announcement.title"
             :placeholder="t('settings.announcementTitlePlaceholder')"
+            :value="announcement.title"
             class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong sm:text-sm text-fg transition-colors"
             type="text"
-            @input="handleContentUpdate"
+            @input="updateAnnouncement({ title: ($event.target as HTMLInputElement).value })"
           />
         </div>
 
@@ -106,14 +97,14 @@ const handleContentUpdate = (): void => {
         <div>
           <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('settings.announcementType') }}</label>
           <Select
-            v-model="announcement.type"
+            :model-value="announcement.type"
             :options="[
               { value: 'info', label: t('settings.announcementInfo') },
               { value: 'success', label: t('settings.announcementSuccess') },
               { value: 'warning', label: t('settings.announcementWarning') },
               { value: 'error', label: t('settings.announcementError') },
             ]"
-            @change="handleContentUpdate"
+            @update:model-value="updateAnnouncement({ type: String($event) as AnnouncementConfig['type'] })"
           />
         </div>
       </div>
@@ -122,11 +113,11 @@ const handleContentUpdate = (): void => {
       <div>
         <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('settings.announcementContent') }}</label>
         <Textarea
-          v-model="announcement.content"
+          :model-value="announcement.content"
           :placeholder="t('settings.announcementContentPlaceholder')"
           class="px-3 py-2 sm:text-sm text-fg font-mono"
           rows="6"
-          @input="handleContentUpdate"
+          @update:model-value="updateAnnouncement({ content: String($event ?? '') })"
         >
           <template #overlay>
             <div class="pointer-events-none absolute bottom-2 right-2 text-xs text-fg-subtle font-mono">
@@ -142,7 +133,11 @@ const handleContentUpdate = (): void => {
       <!-- 选项 -->
       <div class="setting-switch-card max-w-sm">
         <span class="text-xs font-medium text-fg-muted">{{ t('settings.announcementDismissible') }}</span>
-        <Switch v-model="announcement.dismissible" size="sm" @change="handleContentUpdate" />
+        <Switch
+          :model-value="Boolean(announcement.dismissible)"
+          size="sm"
+          @update:model-value="updateAnnouncement({ dismissible: Boolean($event) })"
+        />
       </div>
 
       <!-- 预览区域 -->
