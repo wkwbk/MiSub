@@ -3,7 +3,7 @@
  * 这些路径会与前端路由或后端 API / 静态资源路径冲突，
  * 不允许用作自定义登录路径或订阅 URL 路径（默认订阅路径 /sub 除外）。
  */
-export const RESERVED_PATH_ROOTS = Object.freeze([
+const RESERVED_PATH_ROOTS = Object.freeze([
   'settings',
   'login',
   'groups',

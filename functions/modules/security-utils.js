@@ -8,7 +8,7 @@ const URL_KEY_PATTERN = /(url|uri|link|endpoint)$/i;
 const ALLOWED_FETCH_PROTOCOLS = new Set(['http:', 'https:']);
 const MAX_SAFE_REDIRECTS = 3;
 
-export function redactSensitiveValue(value) {
+function redactSensitiveValue(value) {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') return REDACTED;
   if (typeof value === 'number' || typeof value === 'boolean') return value;
@@ -17,7 +17,7 @@ export function redactSensitiveValue(value) {
   return REDACTED;
 }
 
-export function redactSensitiveObject(value, seen = new WeakSet()) {
+function redactSensitiveObject(value, seen = new WeakSet()) {
   if (value === null || value === undefined) return value;
   if (Array.isArray(value)) return value.map((item) => redactSensitiveObject(item, seen));
   if (typeof value !== 'object') return value;
@@ -149,7 +149,7 @@ export async function safeFetchPublicNetworkUrl(inputUrl, init = {}, options = {
 
 export { isSafeUserRegexPattern };
 
-export function validatePublicNetworkUrl(value) {
+function validatePublicNetworkUrl(value) {
   let url;
   try {
     url = new URL(String(value || '').trim());

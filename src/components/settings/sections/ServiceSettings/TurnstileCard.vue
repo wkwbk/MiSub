@@ -1,7 +1,8 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Eye, EyeOff, ShieldCheck } from '@lucide/vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import { computed } from 'vue';
+import { ShieldCheck } from '@lucide/vue';
+import SecretInput from '@/components/settings/SecretInput.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
 import { useI18n } from '@/i18n/index.js';
 
@@ -13,8 +14,6 @@ const props = defineProps({
     required: true,
   },
 });
-
-const showSecretKey = ref(false);
 
 const turnstileConfig = computed({
   get() {
@@ -46,19 +45,17 @@ function updateField(key, value) {
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <SectionHeader :description="t('settings.turnstileDesc')" :title="t('settings.turnstileTitle')" tone="blue">
-      <template #icon>
-        <ShieldCheck class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <Switch
-          :aria-label="t('settings.turnstileEnable')"
-          :model-value="Boolean(turnstileConfig.enabled)"
-          @update:model-value="updateField('enabled', $event)"
-        />
-      </template>
-    </SectionHeader>
+  <SettingCard :description="t('settings.turnstileDesc')" :title="t('settings.turnstileTitle')" tone="blue">
+    <template #icon>
+      <ShieldCheck class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <Switch
+        :aria-label="t('settings.turnstileEnable')"
+        :model-value="Boolean(turnstileConfig.enabled)"
+        @update:model-value="updateField('enabled', $event)"
+      />
+    </template>
 
     <div class="space-y-4">
       <p v-if="turnstileConfig.hasEnvKeys" class="text-xs text-fg-muted leading-relaxed">
@@ -87,39 +84,19 @@ function updateField(key, value) {
           </p>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">
-            {{ t('settings.turnstileSecretKey') }}
-          </label>
-          <div class="relative">
-            <input
-              :placeholder="
-                turnstileConfig.hasSecretKey
-                  ? t('settings.turnstileSecretSavedPlaceholder')
-                  : turnstileConfig.hasEnvKeys
-                    ? t('settings.turnstileEnvFallbackPlaceholder')
-                    : t('settings.turnstileSecretPlaceholder')
-              "
-              :type="showSecretKey ? 'text' : 'password'"
-              :value="turnstileConfig.secretKey"
-              autocomplete="off"
-              class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
-              @input="updateField('secretKey', $event.target.value)"
-            />
-            <button
-              :aria-label="showSecretKey ? t('actions.hide') : t('actions.show')"
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
-              type="button"
-              @click="showSecretKey = !showSecretKey"
-            >
-              <EyeOff v-if="showSecretKey" class="h-4 w-4" />
-              <Eye v-else class="h-4 w-4" />
-            </button>
-          </div>
-          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-            {{ t('settings.turnstileSecretKeyHint') }}
-          </p>
-        </div>
+        <SecretInput
+          :hint="t('settings.turnstileSecretKeyHint')"
+          :label="t('settings.turnstileSecretKey')"
+          :model-value="turnstileConfig.secretKey"
+          :placeholder="
+            turnstileConfig.hasSecretKey
+              ? t('settings.turnstileSecretSavedPlaceholder')
+              : turnstileConfig.hasEnvKeys
+                ? t('settings.turnstileEnvFallbackPlaceholder')
+                : t('settings.turnstileSecretPlaceholder')
+          "
+          @update:model-value="updateField('secretKey', $event)"
+        />
       </div>
 
       <div class="divide-y divide-line-subtle border-t border-line-subtle pt-2">
@@ -158,5 +135,5 @@ function updateField(key, value) {
         </div>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>

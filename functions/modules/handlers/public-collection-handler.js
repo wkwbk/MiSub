@@ -16,7 +16,7 @@ const MAX_ICON_DATA_URL_BYTES = 200 * 1024;
  * @param {Array<Object>} items
  * @returns {string|null}
  */
-export function validateIconsSize(items = []) {
+function validateIconsSize(items = []) {
   if (!Array.isArray(items)) return null;
   for (const item of items) {
     if (typeof item?.icon === 'string' && item.icon.startsWith('data:')) {
@@ -32,7 +32,7 @@ export function validateIconsSize(items = []) {
  * Build GET/POST/DELETE config reader + HTTP handler for array-backed public settings collections
  * (clients, public cores, public links).
  */
-export function createPublicCollectionHandler({
+function createPublicCollectionHandler({
   storageKey,
   defaultConfig,
   normalizeConfig,

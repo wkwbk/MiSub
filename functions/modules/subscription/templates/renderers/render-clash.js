@@ -3,7 +3,12 @@ import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../../security/safe-dns.js';
 import { applyMihomoChainProxy } from '../../core/mihomo-chain-proxy.js';
 import { GEOX_URLS, GH_PROXY_BASE, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
-import { cloneSnifferConfig } from '../../core/sniffing-config.js';
+import {
+  CLASH_YAML_DUMP_OPTIONS,
+  createBaseClashConfig,
+  filterAutoGroupMembers,
+  stripInternalProxyFields,
+} from '../../core/client-shared.js';
 
 function mapGroupType(type) {
   const normalized = String(type || '')
@@ -18,17 +23,6 @@ function mapGroupType(type) {
     return normalized;
   }
   return 'select';
-}
-
-function filterAutoSelectMembers(group) {
-  const type = mapGroupType(group.type);
-  const members = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
-  if (!['url-test', 'fallback', 'load-balance'].includes(type)) {
-    return members;
-  }
-  return members.filter(
-    (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
-  );
 }
 
 const ACL4SSR_ROOT_PROVIDER_FILES = new Set([
@@ -212,43 +206,29 @@ export function renderClashFromTemplateModel(model, options = {}) {
     };
   });
 
-  const config = {
-    'mixed-port': 7890,
-    'allow-lan': false,
-    'bind-address': '127.0.0.1',
-    ipv6: false,
-    mode: 'rule',
-    'log-level': 'info',
-    'external-controller': '127.0.0.1:9090',
-    // GEO 数据库走 jsDelivr 镜像，保证模板中 GEOIP/GEOSITE 规则与 geosite:* DNS 策略在大陆可用
-    'geox-url': { ...GEOX_URLS },
-    // 域名嗅探：还原硬编码 IP 直连流量的真实域名，命中模板中的域名分流规则
-    sniffer: cloneSnifferConfig(),
+  const config = createBaseClashConfig({
     dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
       mode: normalizedModel.settings?.dnsMode,
       proxyGroup: DNS_PROXY_GROUP,
     }),
-    proxies: (normalizedModel.proxies || []).map((proxy) => {
-      if (!proxy || typeof proxy !== 'object' || !('metadata' in proxy)) return proxy;
-      const { metadata: _metadata, ...cleanProxy } = proxy;
-      return cleanProxy;
-    }),
-    'proxy-groups': normalizedModel.groups
+    proxies: stripInternalProxyFields(normalizedModel.proxies || []),
+    proxyGroups: normalizedModel.groups
       .filter(
         (group) =>
           (Array.isArray(group.members) && group.members.length > 0) ||
           (Array.isArray(group.filters) && group.filters.length > 0),
       )
       .map((group) => {
+        const mappedType = mapGroupType(group.type);
         return {
           name: group.name,
-          type: mapGroupType(group.type),
-          proxies: filterAutoSelectMembers(group),
+          type: mappedType,
+          proxies: filterAutoGroupMembers(mappedType, group.members),
           filter: Array.isArray(group.filters) && group.filters.length > 0 ? group.filters.join('|') : undefined,
           ...group.options,
         };
       }),
-    'rule-providers': Object.keys(ruleProviders).length > 0 ? ruleProviders : undefined,
+    ruleProviders,
     rules: normalizedModel.rules
       .map((rule) => {
         if (String(rule.type || '').toUpperCase() !== 'RULE-SET' || !rule.value) {
@@ -260,17 +240,13 @@ export function renderClashFromTemplateModel(model, options = {}) {
         );
       })
       .filter(Boolean),
-    profile: {
-      'store-selected': true,
-      'subscription-url': normalizedModel.settings.managedConfigUrl || '',
+    managedConfigUrl: normalizedModel.settings.managedConfigUrl || '',
+    extraTopLevel: {
+      'external-controller': '127.0.0.1:9090',
+      // GEO 数据库走 jsDelivr 镜像，保证模板中 GEOIP/GEOSITE 规则与 geosite:* DNS 策略在大陆可用
+      'geox-url': { ...GEOX_URLS },
     },
-  };
-
-  return yaml.dump(config, {
-    indent: 2,
-    lineWidth: -1,
-    noRefs: true,
-    quotingType: '"',
-    forceQuotes: false,
   });
+
+  return yaml.dump(config, CLASH_YAML_DUMP_OPTIONS);
 }

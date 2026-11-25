@@ -170,9 +170,13 @@ export function nodeIRToUrl(ir) {
 }
 
 /**
+ * @typedef {{ enableTfo?: boolean, enableUdp?: boolean, skipCertVerify?: boolean, supportX25519mlkem768?: boolean, addFlagEmoji?: boolean, extractMetadata?: boolean }} NodeIRBatchParseOptions
+ */
+
+/**
  * 批量将节点 URL 列表解析并增强为标准 NodeIR 数组
  * @param {string[]} urls
- * @param {{ enableTfo?: boolean, enableUdp?: boolean, skipCertVerify?: boolean, supportX25519mlkem768?: boolean, addFlagEmoji?: boolean, extractMetadata?: boolean }} [options]
+ * @param {NodeIRBatchParseOptions} [options]
  * @returns {import('../types.js').NodeIR[]}
  */
 export function parseUrlsToNodeIRs(urls, options = {}) {
@@ -227,7 +231,7 @@ export function nodeIRsToUrls(irs) {
 /**
  * 从任意订阅文本（Clash YAML / Sing-box JSON / Base64 / Surge / Quantumult X / URI 列表）提取标准 NodeIR[]
  * @param {string} text
- * @param {{ enableTfo?: boolean, enableUdp?: boolean, skipCertVerify?: boolean, supportX25519mlkem768?: boolean, addFlagEmoji?: boolean }} [options]
+ * @param {NodeIRBatchParseOptions} [options]
  * @returns {import('../types.js').NodeIR[]}
  */
 export function parseTextToNodeIRs(text, options = {}) {

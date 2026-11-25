@@ -1,6 +1,6 @@
-import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
+import { formatIniProxyGroupLine, resolveModelProxies } from '../../core/client-shared.js';
 
 function buildProxyLine(proxy) {
   const type = String(proxy.type || '').toLowerCase();
@@ -218,35 +218,7 @@ function buildProxyLine(proxy) {
 }
 
 function buildGroupLine(group) {
-  const type = String(group.type || 'select').toLowerCase();
-  const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
-  const members = (
-    ['url-test', 'fallback', 'load-balance'].includes(type)
-      ? rawMembers.filter(
-          (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
-        )
-      : rawMembers
-  ).join(', ');
-  const filter = Array.isArray(group.filters) && group.filters.length > 0 ? group.filters.join('|') : '';
-  const tolerance = group.options?.tolerance;
-  if (type === 'url-test') {
-    const base = filter
-      ? `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}, filter=${filter}`
-      : `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
-    return tolerance ? `${base}, tolerance=${tolerance}` : base;
-  }
-  if (type === 'fallback') {
-    const base = filter
-      ? `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}, filter=${filter}`
-      : `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
-    return tolerance ? `${base}, tolerance=${tolerance}` : base;
-  }
-  if (type === 'load-balance') {
-    return filter
-      ? `${group.name} = load-balance, ${members}, filter=${filter}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`
-      : `${group.name} = load-balance, ${members}`;
-  }
-  return `${group.name} = select, ${members}`;
+  return formatIniProxyGroupLine(group, { includeFilters: true, useMembersField: true });
 }
 
 // }
@@ -271,15 +243,7 @@ function buildRemoteRuleLine(rule, { isChinaClient = false } = {}) {
 
 export function renderLoonFromTemplateModel(model, options = {}) {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
-  const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
-  const proxyUrls = nodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
-  const proxies =
-    Array.isArray(normalizedModel.proxies) && normalizedModel.proxies.length > 0
-      ? normalizedModel.proxies
-      : urlsToClashProxies(proxyUrls);
+  const proxies = resolveModelProxies(normalizedModel, options);
   const ruleLines = normalizedModel.rules
     .filter((rule) => String(rule.type || '').toUpperCase() !== 'RULE-SET')
     .map(buildRuleLine)

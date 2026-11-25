@@ -2,7 +2,7 @@ import { createDisguiseResponse, renderDisguisePage } from './disguise-page.js';
 import { authMiddleware } from './auth-middleware.js';
 import { createJsonResponse, normalizeLoginPath } from './utils.js';
 
-export const DEFAULT_DISGUISE_CONFIG = Object.freeze({
+const DEFAULT_DISGUISE_CONFIG = Object.freeze({
   pageType: 'default',
   redirectUrl: '',
 });
@@ -12,7 +12,7 @@ export const DEFAULT_DISGUISE_CONFIG = Object.freeze({
  * @param {Object|null|undefined} raw
  * @returns {{pageType: 'default'|'redirect', redirectUrl: string}}
  */
-export function normalizeDisguiseConfig(raw) {
+function normalizeDisguiseConfig(raw) {
   if (!raw || typeof raw !== 'object') {
     return { ...DEFAULT_DISGUISE_CONFIG };
   }

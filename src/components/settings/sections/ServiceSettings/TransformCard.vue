@@ -6,7 +6,7 @@ import TransformSelector from '@/components/forms/TransformSelector.vue';
 import VisualTransformCard from '@/components/settings/sections/ServiceSettings/VisualTransformCard.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import RuleTemplateModal from '@/components/modals/RuleTemplateModal.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { DEFAULT_SUBCONVERTER_BACKEND, SUBCONVERTER_BACKENDS } from '@/constants/subconverter-backends.js';
@@ -242,40 +242,38 @@ watch(
 
 <template>
   <div class="space-y-4">
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.transformRulesDesc')"
-        :title="t('settings.transformRulesTitle')"
-        tone="purple"
-      >
-        <template #icon>
-          <FileText class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <div class="flex rounded-md border border-line bg-inset p-0.5 shrink-0">
-            <button
-              :class="
-                isBuiltinEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
-              "
-              class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
-              type="button"
-              @click="switchToBuiltinEngine"
-            >
-              {{ t('settings.transformBuiltinEngine') }}
-            </button>
-            <button
-              :class="
-                isExternalEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
-              "
-              class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
-              type="button"
-              @click="settings.subconverter.engineMode = 'external'"
-            >
-              {{ t('settings.transformExternalEngine') }}
-            </button>
-          </div>
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.transformRulesDesc')"
+      :title="t('settings.transformRulesTitle')"
+      tone="purple"
+    >
+      <template #icon>
+        <FileText class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <div class="flex rounded-md border border-line bg-inset p-0.5 shrink-0">
+          <button
+            :class="
+              isBuiltinEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
+            "
+            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+            type="button"
+            @click="switchToBuiltinEngine"
+          >
+            {{ t('settings.transformBuiltinEngine') }}
+          </button>
+          <button
+            :class="
+              isExternalEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
+            "
+            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+            type="button"
+            @click="settings.subconverter.engineMode = 'external'"
+          >
+            {{ t('settings.transformExternalEngine') }}
+          </button>
+        </div>
+      </template>
 
       <div
         v-if="showEngineChangeWarning"
@@ -398,22 +396,18 @@ watch(
       <div v-if="isVisualMode" class="mt-6 border-t border-line pt-5">
         <VisualTransformCard :settings="settings" section="rules" />
       </div>
-    </section>
+    </SettingCard>
 
     <!-- 内置引擎参数 -->
-    <section
+    <SettingCard
       v-if="isBuiltinEngine"
-      class="rounded-lg border border-line bg-surface p-6"
+      :description="t('settings.transformBuiltinParamsDesc')"
+      :title="t('settings.transformBuiltinParams')"
       data-testid="builtin-engine-params"
     >
-      <SectionHeader
-        :description="t('settings.transformBuiltinParamsDesc')"
-        :title="t('settings.transformBuiltinParams')"
-      >
-        <template #icon>
-          <Cpu class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+      <template #icon>
+        <Cpu class="h-4 w-4" />
+      </template>
 
       <div class="space-y-5">
         <!-- 统一开关网格 -->
@@ -498,22 +492,18 @@ watch(
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <!-- 第三方后端参数 -->
-    <section
+    <SettingCard
       v-if="isExternalEngine"
-      class="rounded-lg border border-line bg-surface p-6"
+      :description="t('settings.transformExternalParamsDesc')"
+      :title="t('settings.transformExternalParams')"
       data-testid="external-backend-card"
     >
-      <SectionHeader
-        :description="t('settings.transformExternalParamsDesc')"
-        :title="t('settings.transformExternalParams')"
-      >
-        <template #icon>
-          <Server class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+      <template #icon>
+        <Server class="h-4 w-4" />
+      </template>
 
       <div class="space-y-6">
         <div>
@@ -586,7 +576,7 @@ watch(
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <RuleTemplateModal
       v-if="showRuleTemplateModal"

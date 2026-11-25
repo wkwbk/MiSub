@@ -4,8 +4,6 @@ import { renderSingboxFromTemplateModel } from './renderers/render-singbox.js';
 import { renderSurgeFromTemplateModel } from './renderers/render-surge.js';
 import { renderLoonFromTemplateModel } from './renderers/render-loon.js';
 import { renderQuanxFromTemplateModel } from './renderers/render-quanx.js';
-import { renderEgernFromTemplateModel } from './renderers/render-egern.js';
-import { renderShadowrocketFromTemplateModel } from './renderers/render-shadowrocket.js';
 
 export function renderClashFromIniTemplate(templateText, options = {}) {
   const model = buildOptimizedIniTemplateModel(templateText, options);
@@ -30,14 +28,4 @@ export function renderLoonFromIniTemplate(templateText, options = {}) {
 export function renderQuanxFromIniTemplate(templateText, options = {}) {
   const model = buildOptimizedIniTemplateModel(templateText, options);
   return renderQuanxFromTemplateModel(model, options);
-}
-
-export function renderEgernFromIniTemplate(templateText, options = {}) {
-  const model = buildOptimizedIniTemplateModel(templateText, options);
-  return renderEgernFromTemplateModel(model, { isChinaClient: options.isChinaClient });
-}
-
-export function renderShadowrocketFromIniTemplate(templateText, options = {}) {
-  const model = buildOptimizedIniTemplateModel(templateText, options);
-  return renderShadowrocketFromTemplateModel(model, options);
 }

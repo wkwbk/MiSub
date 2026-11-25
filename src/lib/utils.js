@@ -1,9 +1,9 @@
 import { t } from '@/i18n/index.js';
-import { cleanNodeUrl, cleanNodeUrlsText, prependNodeName } from '@misub/core/node/node-cleaner.js';
+import { cleanNodeUrl, cleanNodeUrlsText } from '@misub/core/node/node-cleaner.js';
 import { base64ToUtf8 } from '@misub/core/utils/base64.js';
 import { getV2raynRemarks, isV2raynUrl } from '@misub/core/protocols/v2rayn-utils.js';
 
-export { cleanNodeUrl, cleanNodeUrlsText, prependNodeName };
+export { cleanNodeUrl, cleanNodeUrlsText };
 
 const isDev = import.meta.env.DEV;
 

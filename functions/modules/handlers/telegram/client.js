@@ -27,7 +27,7 @@ export const TELEGRAM_BOT_COMMANDS = [
   { command: 'help', description: '帮助说明' },
 ];
 
-export function isValidWebhookSecret(secret) {
+function isValidWebhookSecret(secret) {
   return typeof secret === 'string' && WEBHOOK_SECRET_REGEX.test(secret.trim());
 }
 
@@ -76,7 +76,7 @@ async function callTelegramBotApi(botToken, method, payload, timeoutMs = TELEGRA
 /**
  * 注册 Telegram Bot 命令菜单（setMyCommands）
  */
-export async function setTelegramMyCommands(botToken, commands = TELEGRAM_BOT_COMMANDS) {
+async function setTelegramMyCommands(botToken, commands = TELEGRAM_BOT_COMMANDS) {
   const token = String(botToken || '').trim();
   if (!token) {
     return { ok: false, error: 'Bot token is required' };
@@ -87,7 +87,7 @@ export async function setTelegramMyCommands(botToken, commands = TELEGRAM_BOT_CO
 /**
  * 注册 Telegram Bot Webhook（setWebhook）
  */
-export async function setTelegramWebhook(botToken, webhookUrl, webhookSecret) {
+async function setTelegramWebhook(botToken, webhookUrl, webhookSecret) {
   const token = String(botToken || '').trim();
   const secret = String(webhookSecret || '').trim();
   if (!token) {

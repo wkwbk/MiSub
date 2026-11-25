@@ -75,7 +75,7 @@ export async function writeSubscriptionNodeCache(storage, sub, nodes) {
   }
 }
 
-export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {}, options = {}) {
+async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {}, options = {}) {
   if (!storage || !sub?.id) return false;
   const { nodeCount, userInfo, lastGoodNodeCount, detectedName } = runtimeInfo;
   const hasUserInfo = Object.prototype.hasOwnProperty.call(runtimeInfo, 'userInfo');

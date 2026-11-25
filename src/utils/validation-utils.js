@@ -11,7 +11,7 @@ import { t } from '@/i18n/index.js';
  * @param {string} url - 要验证的URL
  * @returns {boolean} 是否为有效的URL
  */
-export function isValidUrl(url) {
+function isValidUrl(url) {
   if (!url || typeof url !== 'string') return false;
 
   try {
@@ -27,7 +27,7 @@ export function isValidUrl(url) {
  * @param {string} nodeUrl - 节点URL
  * @returns {boolean} 是否为有效的节点URL
  */
-export function isValidNodeUrl(nodeUrl) {
+function isValidNodeUrl(nodeUrl) {
   if (!nodeUrl || typeof nodeUrl !== 'string') return false;
 
   // 检查是否为支持的协议
@@ -39,7 +39,7 @@ export function isValidNodeUrl(nodeUrl) {
  * @param {string} email - 邮箱地址
  * @returns {boolean} 是否为有效的邮箱格式
  */
-export function isValidEmail(email) {
+function isValidEmail(email) {
   if (!email || typeof email !== 'string') return false;
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,7 +52,7 @@ export function isValidEmail(email) {
  * @param {Object} rules - 验证规则
  * @returns {Object} 验证结果
  */
-export function validateForm(formData, rules) {
+function validateForm(formData, rules) {
   const errors = {};
 
   for (const [field, fieldRules] of Object.entries(rules)) {

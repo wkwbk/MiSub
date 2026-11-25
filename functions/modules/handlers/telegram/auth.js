@@ -12,7 +12,7 @@ export function verifyTelegramRequest(request, config) {
   return secretToken === config.webhookSecret;
 }
 
-export function getUserBindingKey(userId) {
+function getUserBindingKey(userId) {
   return userId?.toString().trim();
 }
 

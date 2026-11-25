@@ -4,6 +4,8 @@ import { NODE_PROTOCOL_REGEX } from '../protocols/constants.js';
 const HTTP_URL_REGEX = /^https?:\/\/.+/i;
 const HTTP_PROXY_AUTH_URL_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
+export const HttpUrlStringSchema = z.string().trim().regex(HTTP_URL_REGEX);
+
 export const RegexRuleObjectSchema = z
   .object({
     pattern: z.string().min(1),
@@ -173,13 +175,13 @@ export const SubscriptionUserInfoSchema = z
   .passthrough()
   .nullable();
 
-const RemoteSubscriptionUrlSchema = z
+export const RemoteSubscriptionUrlSchema = z
   .string()
   .trim()
   .regex(HTTP_URL_REGEX, 'Subscription URL must start with http:// or https://')
   .refine((value) => !HTTP_PROXY_AUTH_URL_REGEX.test(value), 'Authenticated HTTP proxy URLs belong to manual nodes');
 
-const ManualNodeUrlSchema = z
+export const ManualNodeUrlSchema = z
   .string()
   .trim()
   .refine((value) => {

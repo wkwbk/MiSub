@@ -1,7 +1,7 @@
 <script setup>
 import { Home } from '@lucide/vue';
 import Input from '@/components/ui/Input.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import AnnouncementSettings from '@/components/settings/sections/AnnouncementSettings.vue';
 import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
 import GuestbookManagement from '@/components/settings/sections/GuestbookManagement.vue';
@@ -21,12 +21,10 @@ defineProps({
 
 <template>
   <div v-if="settings" class="space-y-4">
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader :description="t('settings.homeHeroDesc')" :title="t('settings.homeHeroTitle')">
-        <template #icon>
-          <Home class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard :description="t('settings.homeHeroDesc')" :title="t('settings.homeHeroTitle')">
+      <template #icon>
+        <Home class="h-4 w-4" />
+      </template>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Input
@@ -50,7 +48,7 @@ defineProps({
           />
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <ClientSettings />
 

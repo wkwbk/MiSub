@@ -101,7 +101,7 @@ function normalizeYamlChainConfigs(config) {
     }));
 }
 
-export function renderClashYamlProfileTemplate(templateText, nodeList, options = {}) {
+function renderClashYamlProfileTemplate(templateText, nodeList, options = {}) {
   const config = /** @type {Record<string, any> | null} */ (yaml.load(templateText));
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
     return '';

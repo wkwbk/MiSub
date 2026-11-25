@@ -1,5 +1,5 @@
 import { computed, toValue } from 'vue';
-import { useMutation, useQuery } from '@tanstack/vue-query';
+import { useQuery } from '@tanstack/vue-query';
 import { api } from '@/lib/http.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 
@@ -31,17 +31,6 @@ export function useAccessLogsQuery(filterSource = {}, options = {}) {
         const res = await api.get(`/api/logs?t=${Date.now()}`);
         return Array.isArray(res?.data) ? res.data : [];
       },
-      ...options,
-    },
-    queryClient,
-  );
-}
-
-export function useClearAccessLogsMutation(options = {}) {
-  const queryClient = options.queryClient || resolveComponentQueryClient();
-  return useMutation(
-    {
-      mutationFn: (params) => clearAccessLogsWithQuery(queryClient, params),
       ...options,
     },
     queryClient,

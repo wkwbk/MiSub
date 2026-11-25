@@ -125,17 +125,6 @@ export function formatUrl(url, maxLength = 50) {
 }
 
 /**
- * 修复Clash配置中的WireGuard问题
- * @param {string} content - Clash配置内容
- * @returns {string} - 修复后的配置内容
- */
-export function clashFix(content) {
-  if (!content || !content.includes('wireguard')) return content;
-
-  return content;
-}
-
-/**
  * 检测字符串是否为有效的Base64格式
  * @param {string} str - 要检测的字符串
  * @returns {boolean} - 是否为有效Base64

@@ -13,8 +13,8 @@ import { NodeRepository } from '../repositories/node-repository.js';
 const DOH_ENDPOINT = 'https://cloudflare-dns.com/dns-query';
 const IP_API_BATCH_ENDPOINT = 'http://ip-api.com/batch?fields=status,message,query,countryCode,country,as,org,isp';
 
-export const DNS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
-export const IP_GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const DNS_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const IP_GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 const DNS_CACHE_PREFIX = 'node_inspect_dns:';
 const IP_CACHE_PREFIX = 'node_inspect_ip:';
@@ -138,14 +138,14 @@ const COUNTRY_NAME_ZH = {
   KP: '朝鲜',
 };
 
-export function isIPv4(value) {
+function isIPv4(value) {
   if (!value || typeof value !== 'string') return false;
   const parts = value.trim().split('.');
   if (parts.length !== 4) return false;
   return parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
 }
 
-export function isIPv6(value) {
+function isIPv6(value) {
   if (!value || typeof value !== 'string') return false;
   const cleaned = value.trim().replace(/^\[|\]$/g, '');
   if (!cleaned.includes(':')) return false;
@@ -156,13 +156,13 @@ export function isIpAddress(value) {
   return isIPv4(value) || isIPv6(value);
 }
 
-export function ipv4ToInt(ip) {
+function ipv4ToInt(ip) {
   if (!isIPv4(ip)) return null;
   const parts = ip.trim().split('.').map(Number);
   return (((parts[0] << 24) >>> 0) + (parts[1] << 16) + (parts[2] << 8) + parts[3]) >>> 0;
 }
 
-export function isIpInCidr(ip, cidr) {
+function isIpInCidr(ip, cidr) {
   const [network, prefixStr] = String(cidr || '').split('/');
   const prefix = Number(prefixStr);
   if (!Number.isInteger(prefix) || prefix < 0 || prefix > 32) return false;
@@ -250,7 +250,7 @@ export function detectCdnByCidr(ip) {
   return '';
 }
 
-export function extractAsnCode(asField) {
+function extractAsnCode(asField) {
   if (!asField || typeof asField !== 'string') return '';
   const match = asField.trim().match(/^(AS\d+)/i);
   return match ? match[1].toUpperCase() : '';
@@ -282,7 +282,7 @@ export function countryCodeToFlagEmoji(countryCode) {
   return String.fromCodePoint(...code.split('').map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
 }
 
-export function getCountryDisplayName(countryCode, fallbackName = '') {
+function getCountryDisplayName(countryCode, fallbackName = '') {
   const code = String(countryCode || '')
     .trim()
     .toUpperCase();
@@ -387,7 +387,7 @@ export function detectCdnByProtocolFeature(transportInfo) {
 /**
  * 通过 Cloudflare DoH 解析域名为 IP（优先 A，无结果时回退 AAAA）
  */
-export async function resolveDomainViaDoH(domain, fetchFn = fetch) {
+async function resolveDomainViaDoH(domain, fetchFn = fetch) {
   const cleanDomain = String(domain || '')
     .trim()
     .toLowerCase()
@@ -427,7 +427,7 @@ export async function resolveDomainViaDoH(domain, fetchFn = fetch) {
 /**
  * 批量查询 IP 地理与 ASN 信息（ip-api.com/batch 单次最多 100 个）
  */
-export async function queryIpGeoBatch(ips, fetchFn = fetch) {
+async function queryIpGeoBatch(ips, fetchFn = fetch) {
   const resultMap = new Map();
   const uniqueIps = Array.from(new Set((ips || []).filter((ip) => ip && !isPrivateOrReservedIp(ip))));
   if (uniqueIps.length === 0) return resultMap;

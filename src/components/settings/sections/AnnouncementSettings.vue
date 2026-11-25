@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
@@ -63,20 +63,18 @@ const handleContentUpdate = () => {
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <!-- 头部说明 & 开关 -->
-    <SectionHeader
-      :description="t('settings.announcementDesc')"
-      :no-margin="!announcement.enabled"
-      :title="t('settings.announcementTitle')"
-    >
-      <template #icon>
-        <Megaphone class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <Switch v-model="announcement.enabled" @change="handleContentUpdate" />
-      </template>
-    </SectionHeader>
+  <!-- 头部说明 & 开关 -->
+  <SettingCard
+    :description="t('settings.announcementDesc')"
+    :no-margin="!announcement.enabled"
+    :title="t('settings.announcementTitle')"
+  >
+    <template #icon>
+      <Megaphone class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <Switch v-model="announcement.enabled" @change="handleContentUpdate" />
+    </template>
 
     <!-- 内容编辑 -->
     <div v-if="announcement.enabled" class="space-y-6 animate-fade-in-down">
@@ -167,7 +165,7 @@ const handleContentUpdate = () => {
         </div>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>
 
 <style scoped>

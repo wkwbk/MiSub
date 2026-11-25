@@ -17,7 +17,7 @@ import {
 } from '@misub/core/node/node-cleaner.js';
 import { applyManualNodeName } from '@misub/core/node/node-cleaner.js';
 import { runOperatorChain } from '@misub/core/operators/operator-runner.js';
-import { fetchWithRetry } from './fetch-utils.js';
+import { createConcurrencyLimiter, fetchWithRetry } from './fetch-utils.js';
 import { assertPublicNetworkUrl } from '../modules/security-utils.js';
 import { isSuspiciousNodeCountDrop } from './node-cache-service.js';
 import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
@@ -52,7 +52,6 @@ const FETCH_CONFIG = {
 
 export {
   isRealProxyNode,
-  parseSubscriptionProfileTitle,
   fetchAirportSiteTitle,
   parseSubscriptionUserInfoHeader,
   buildSubscriptionNodeCacheKey,
@@ -76,38 +75,6 @@ function ensureArray(data) {
     }
   }
   return [];
-}
-
-/**
- * 并发控制器 - 限制同时进行的请求数量
- * @param {number} limit - 最大并发数
- * @returns {Function} - 包装函数
- */
-function createConcurrencyLimiter(limit) {
-  const safeLimit = Math.max(1, limit || 1); // 防御性检查，确保至少为 1
-  let running = 0;
-  const queue = [];
-
-  const runNext = () => {
-    if (running >= safeLimit || queue.length === 0) return;
-    running++;
-    const { task, resolve, reject } = queue.shift();
-    // 使用 Promise.resolve().then() 包装，确保同步异常也能被捕获
-    Promise.resolve()
-      .then(task)
-      .then(resolve)
-      .catch(reject)
-      .finally(() => {
-        running--;
-        runNext();
-      });
-  };
-
-  return (task) =>
-    new Promise((resolve, reject) => {
-      queue.push({ task, resolve, reject });
-      runNext();
-    });
 }
 
 /**

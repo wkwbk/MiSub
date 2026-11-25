@@ -9,7 +9,7 @@ export async function getExternalStorageAdapter(env) {
   return StorageFactory.createAdapter(env);
 }
 
-export function createRequestId() {
+function createRequestId() {
   return `req_${generateId()}`;
 }
 

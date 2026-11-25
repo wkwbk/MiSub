@@ -4,27 +4,23 @@
 
 import * as yaml from 'js-yaml';
 import {
-  DEFAULT_BUILTIN_TRANSFORM,
   normalizeBuiltinTransform,
-  VISUAL_RULE_CATEGORIES,
   VISUAL_RULE_MAP,
   VISUAL_RULE_PRESETS,
 } from '@misub/core/domain/visual-rules-catalog.js';
 import {
+  ACL4SSR_BASE,
   AUTO_SELECT_GROUP,
   DEFAULT_SELECT_GROUP,
   FALLBACK_GROUP,
   MANUAL_SELECT_GROUP,
-  PINNED_RULE_REVISIONS,
   pinRemoteRuleUrl,
   pruneProxyGroups,
+  SING_GEOIP_BASE,
+  SING_GEOSITE_BASE,
 } from '../templates/builtin-rules-provider.js';
-import { groupNodeLinesByRegion } from './region-groups.js';
+import { buildRegionPolicyGroups } from './region-groups.js';
 import { DNS_PROXY_GROUP } from '../security/safe-dns.js';
-
-const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
-const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
-const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
 
 const CLASH_PROTECTED_KEYS = new Set(['proxies', 'proxy-groups', 'rules', 'rule-providers']);
 const SINGBOX_PROTECTED_KEYS = new Set(['outbounds']);
@@ -34,37 +30,6 @@ function resolveAcl4ssrUrl(relativePath, options = {}) {
   if (!relativePath) return '';
   const stripped = String(relativePath).replace(/^ACL4SSR\//i, '');
   return pinRemoteRuleUrl(`${ACL4SSR_BASE}/${stripped}`, options);
-}
-
-function buildRegionGroupsForVisual(proxies, options = {}) {
-  const regions = groupNodeLinesByRegion(proxies, options);
-  const regionSelectGroups = [];
-  const regionSupportGroups = [];
-  const regionNames = [];
-
-  regions.forEach((region) => {
-    const autoGroupName = `⚡️ ${region.name.replace('节点', '')} - 自动测速`;
-    regionNames.push(region.name);
-
-    const includeAuto = options.includeAutoSelect !== false;
-    regionSelectGroups.push({
-      name: region.name,
-      type: 'select',
-      proxies: includeAuto ? [autoGroupName, ...region.tags] : [...region.tags],
-    });
-
-    if (includeAuto) {
-      regionSupportGroups.push({
-        name: autoGroupName,
-        type: 'url-test',
-        proxies: region.tags,
-        hidden: true,
-        options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
-      });
-    }
-  });
-
-  return { regionSelectGroups, regionSupportGroups, regionNames };
 }
 
 /**
@@ -91,7 +56,7 @@ export function buildVisualPolicyGroups(proxies, options = {}) {
   const nodeCandidates = proxyNames.length > 0 ? proxyNames : ['DIRECT'];
 
   const { regionSelectGroups, regionSupportGroups, regionNames } = bt.groupByCountry
-    ? buildRegionGroupsForVisual(proxies, { ...options, includeAutoSelect: bt.includeAutoSelect })
+    ? buildRegionPolicyGroups(proxies, { ...options, includeAutoSelect: bt.includeAutoSelect })
     : { regionSelectGroups: [], regionSupportGroups: [], regionNames: [] };
 
   /** @type {Array<Record<string, any>>} */
@@ -537,4 +502,4 @@ export function generateSubconverterIniConfig(options = {}) {
   return `${lines.join('\n')}\n`;
 }
 
-export { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform, VISUAL_RULE_CATEGORIES, VISUAL_RULE_PRESETS };
+export { normalizeBuiltinTransform, VISUAL_RULE_PRESETS };

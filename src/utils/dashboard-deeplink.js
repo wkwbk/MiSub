@@ -1,4 +1,4 @@
-export const SUBSCRIPTION_STATUS_FILTERS = {
+const SUBSCRIPTION_STATUS_FILTERS = {
   missing: 'all',
   disabled: 'disabled',
   error: 'error',
@@ -49,7 +49,7 @@ export function getSubscriptionTrafficState(sub, now = Date.now()) {
   return null;
 }
 
-export const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'transform', 'service', 'system'];
+const SETTINGS_TAB_IDS = ['basic', 'home', 'custom-page', 'global', 'transform', 'service', 'system'];
 
 export const SETTINGS_ACTIVE_TAB_STORAGE_KEY = 'misub:settings-active-tab';
 
@@ -61,12 +61,12 @@ export function resolveSettingsTab(tab) {
   return SETTINGS_TAB_IDS.includes(normalized) ? normalized : null;
 }
 
-export const SETTINGS_FOCUS_TABS = {
+const SETTINGS_FOCUS_TABS = {
   mytoken: 'basic',
   profiletoken: 'basic',
 };
 
-export const SETTINGS_FOCUS_ANCHORS = {
+const SETTINGS_FOCUS_ANCHORS = {
   mytoken: 'setting-mytoken',
   profiletoken: 'setting-profileToken',
 };

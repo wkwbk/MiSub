@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Clock, Copy } from '@lucide/vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import { Clock } from '@lucide/vue';
+import CopyableInput from '@/components/settings/CopyableInput.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
@@ -66,20 +67,18 @@ async function copyText(value) {
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <SectionHeader :description="t('settings.cronDesc')" :title="t('settings.cronTitle')">
-      <template #icon>
-        <Clock class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <button
-          class="shrink-0 text-fg-muted hover:text-fg text-xs font-medium border border-line bg-transparent hover:bg-hover px-3 py-1.5 rounded-md transition-colors"
-          @click="showCronGuide = !showCronGuide"
-        >
-          {{ showCronGuide ? t('settings.cronHideGuide') : t('settings.cronShowGuide') }}
-        </button>
-      </template>
-    </SectionHeader>
+  <SettingCard :description="t('settings.cronDesc')" :title="t('settings.cronTitle')">
+    <template #icon>
+      <Clock class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <button
+        class="shrink-0 text-fg-muted hover:text-fg text-xs font-medium border border-line bg-transparent hover:bg-hover px-3 py-1.5 rounded-md transition-colors"
+        @click="showCronGuide = !showCronGuide"
+      >
+        {{ showCronGuide ? t('settings.cronHideGuide') : t('settings.cronShowGuide') }}
+      </button>
+    </template>
 
     <div class="space-y-5">
       <!-- Cron Secret 输入框 -->
@@ -104,41 +103,14 @@ async function copyText(value) {
             <p class="text-xs text-fg-muted leading-relaxed">{{ task.desc }}</p>
           </div>
 
-          <div class="flex rounded-md shadow-none">
-            <input
-              :aria-label="`${task.title} URL`"
-              :value="task.url"
-              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-fg font-mono text-xs"
-              readonly
-              type="text"
-            />
-            <button
-              :aria-label="t('actions.copy')"
-              class="inline-flex shrink-0 items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
-              type="button"
-              @click="copyText(task.url)"
-            >
-              <Copy class="h-4 w-4" />
-            </button>
-          </div>
+          <CopyableInput :aria-label="`${task.title} URL`" :value="task.url" @copy="copyText(task.url)" />
 
-          <div class="flex rounded-md shadow-none">
-            <input
-              :aria-label="`${task.title} ${t('settings.cronCommandLabel')}`"
-              :value="task.command"
-              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg-muted"
-              readonly
-              type="text"
-            />
-            <button
-              :aria-label="t('actions.copy')"
-              class="inline-flex shrink-0 items-center px-3.5 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
-              type="button"
-              @click="copyText(task.command)"
-            >
-              <Copy class="h-4 w-4" />
-            </button>
-          </div>
+          <CopyableInput
+            :aria-label="`${task.title} ${t('settings.cronCommandLabel')}`"
+            :value="task.command"
+            muted
+            @copy="copyText(task.command)"
+          />
         </div>
 
         <div class="callout-success space-y-0.5">
@@ -163,5 +135,5 @@ async function copyText(value) {
         <p class="text-fg-subtle">{{ t('settings.cronGuideFrequency') }}</p>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>

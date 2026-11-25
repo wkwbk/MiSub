@@ -284,14 +284,10 @@ class ErrorHandler {
 
 const globalErrorHandler = new ErrorHandler();
 
-export { ErrorHandler, globalErrorHandler };
+export { ErrorHandler };
 
 export const handleError = (error, context, data) => {
   return globalErrorHandler.handleError(error, context, data);
-};
-
-export const getErrorStats = () => {
-  return globalErrorHandler.getErrorStats();
 };
 
 if (typeof window !== 'undefined') {

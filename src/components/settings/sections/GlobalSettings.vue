@@ -1,10 +1,10 @@
 <script setup>
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 import { List, Map, SlidersHorizontal } from '@lucide/vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
@@ -21,6 +21,36 @@ const prefixToggleOptions = [
   { labelKey: 'profiles.optionDisabled', value: false },
 ];
 
+const resolvedPrefixToggleOptions = computed(() =>
+  prefixToggleOptions.map((o) => ({
+    value: o.value,
+    label: t(o.labelKey),
+  })),
+);
+
+const globalSwitchSelects = computed(() => [
+  {
+    labelKey: 'settings.globalManualNodePrefixSwitch',
+    value: props.settings.defaultPrefixSettings.enableManualNodes,
+    update: (val) => {
+      props.settings.defaultPrefixSettings.enableManualNodes = val;
+    },
+  },
+  {
+    labelKey: 'settings.globalSubscriptionPrefixSwitch',
+    value: props.settings.defaultPrefixSettings.enableSubscriptions,
+    update: (val) => {
+      props.settings.defaultPrefixSettings.enableSubscriptions = val;
+    },
+  },
+  {
+    labelKey: 'settings.globalFlagEmojiSwitch',
+    value: props.settings.enableFlagEmoji,
+    update: (val) => {
+      props.settings.enableFlagEmoji = val;
+    },
+  },
+]);
 const buildDefaultPrefixSettings = () => ({
   enableManualNodes: true,
   enableSubscriptions: true,
@@ -59,16 +89,14 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
 
 <template>
   <div class="space-y-4">
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.globalNodeSettingsDesc')"
-        :title="t('settings.globalNodeSettingsTitle')"
-        tone="blue"
-      >
-        <template #icon>
-          <List class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.globalNodeSettingsDesc')"
+      :title="t('settings.globalNodeSettingsTitle')"
+      tone="blue"
+    >
+      <template #icon>
+        <List class="h-4 w-4" />
+      </template>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <!-- 第一排：手动节点文本前缀 与 开关 -->
@@ -79,73 +107,30 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
-            t('settings.globalManualNodePrefixSwitch')
-          }}</label>
-          <Select
-            v-model="settings.defaultPrefixSettings.enableManualNodes"
-            :options="
-              prefixToggleOptions.map((o) => ({
-                value: o.value,
-                label: t(o.labelKey),
-              }))
-            "
-          />
-        </div>
-
-        <!-- 第二排：机场订阅前缀 与 节点国旗 EMOJI -->
-        <div>
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
-            t('settings.globalSubscriptionPrefixSwitch')
-          }}</label>
-          <Select
-            v-model="settings.defaultPrefixSettings.enableSubscriptions"
-            :options="
-              prefixToggleOptions.map((o) => ({
-                value: o.value,
-                label: t(o.labelKey),
-              }))
-            "
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
-            t('settings.globalFlagEmojiSwitch')
-          }}</label>
-          <Select
-            v-model="settings.enableFlagEmoji"
-            :options="
-              prefixToggleOptions.map((o) => ({
-                value: o.value,
-                label: t(o.labelKey),
-              }))
-            "
-          />
+        <div v-for="item in globalSwitchSelects" :key="item.labelKey">
+          <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t(item.labelKey) }}</label>
+          <Select :model-value="item.value" :options="resolvedPrefixToggleOptions" @update:model-value="item.update" />
         </div>
       </div>
-    </section>
+    </SettingCard>
 
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.regionOverridesDesc')"
-        :title="t('settings.regionOverridesTitle')"
-        tone="purple"
-      >
-        <template #icon>
-          <Map class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <button
-            class="shrink-0 whitespace-nowrap rounded-md border border-accent bg-accent px-3.5 py-1.5 text-xs font-semibold leading-5 text-accent-fg transition-colors hover:opacity-90"
-            type="button"
-            @click="addRegionOverride"
-          >
-            {{ t('settings.regionOverrideAdd') }}
-          </button>
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.regionOverridesDesc')"
+      :title="t('settings.regionOverridesTitle')"
+      tone="purple"
+    >
+      <template #icon>
+        <Map class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <button
+          class="shrink-0 whitespace-nowrap rounded-md border border-accent bg-accent px-3.5 py-1.5 text-xs font-semibold leading-5 text-accent-fg transition-colors hover:opacity-90"
+          type="button"
+          @click="addRegionOverride"
+        >
+          {{ t('settings.regionOverrideAdd') }}
+        </button>
+      </template>
 
       <p v-if="!settings.regionOverrides.length" class="text-xs text-fg-muted">
         {{ t('settings.regionOverridesEmpty') }}
@@ -179,26 +164,24 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.globalDefaultOperatorsDesc')"
-        :title="t('settings.globalDefaultOperatorsTitle')"
-        tone="green"
-      >
-        <template #icon>
-          <SlidersHorizontal class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <span
-            class="rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-xs font-medium text-fg-muted"
-            >{{ t('settings.globalDefaultBadge') }}</span
-          >
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.globalDefaultOperatorsDesc')"
+      :title="t('settings.globalDefaultOperatorsTitle')"
+      tone="green"
+    >
+      <template #icon>
+        <SlidersHorizontal class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <span
+          class="rounded-md border border-line bg-transparent px-2 py-0.5 font-mono text-xs font-medium text-fg-muted"
+          >{{ t('settings.globalDefaultBadge') }}</span
+        >
+      </template>
 
       <OperatorChain v-model="settings.defaultOperators" />
-    </section>
+    </SettingCard>
   </div>
 </template>

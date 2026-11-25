@@ -19,7 +19,7 @@ const REGION_DISPLAY_CONFIG = {
   土耳其: { flag: '🇹🇷', name: '土耳其节点' },
 };
 
-export const REGION_GROUP_PATTERNS = [
+const REGION_GROUP_PATTERNS = [
   { name: '🇭🇰 香港节点', pattern: /港|HK|Hong Kong/i },
   { name: '🇹🇼 台湾节点', pattern: /台|TW|Taiwan/i },
   { name: '🇯🇵 日本节点', pattern: /日|JP|Japan/i },
@@ -103,4 +103,41 @@ export function groupNodeLinesByRegion(nodes = [], options = {}) {
   });
 
   return result;
+}
+
+/**
+ * 构建地区相关的策略组定义（选择组 + 隐藏自动测速组）
+ * @param {Object[]} proxies
+ * @param {Object} [options]
+ * @returns {{ regionSelectGroups: Object[], regionSupportGroups: Object[], regionNames: string[] }}
+ */
+export function buildRegionPolicyGroups(proxies, options = {}) {
+  const regions = groupNodeLinesByRegion(proxies, options);
+  const regionSelectGroups = [];
+  const regionSupportGroups = [];
+  const regionNames = [];
+  const includeAuto = options.includeAutoSelect !== false;
+
+  regions.forEach((region) => {
+    const autoGroupName = `⚡️ ${region.name.replace('节点', '')} - 自动测速`;
+    regionNames.push(region.name);
+
+    regionSelectGroups.push({
+      name: region.name,
+      type: 'select',
+      proxies: includeAuto ? [autoGroupName, ...region.tags] : [...region.tags],
+    });
+
+    if (includeAuto) {
+      regionSupportGroups.push({
+        name: autoGroupName,
+        type: 'url-test',
+        proxies: region.tags,
+        hidden: true,
+        options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
+      });
+    }
+  });
+
+  return { regionSelectGroups, regionSupportGroups, regionNames };
 }

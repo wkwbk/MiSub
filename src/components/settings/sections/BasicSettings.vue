@@ -1,10 +1,10 @@
 <script setup>
 import { Globe, Info, Languages, RefreshCw, RotateCw, SlidersHorizontal } from '@lucide/vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
@@ -167,149 +167,138 @@ watch(
   },
 );
 
-const QUICK_INTERVAL_VALUES = [0, 30, 60];
-const MIN_CUSTOM_INTERVAL = 5;
+const createIntervalControl = ({ get, set, defaultValue, quickValues, min, max = Number.POSITIVE_INFINITY }) => {
+  const readValue = () => (defaultValue !== undefined ? (get() ?? defaultValue) : get());
+  const isCustom = computed(() => !quickValues.includes(Number(readValue())));
+  const customInput = ref(isCustom.value ? String(readValue() ?? '') : '');
 
-const isCustomInterval = computed(() => !QUICK_INTERVAL_VALUES.includes(Number(props.settings.autoUpdateInterval)));
-
-const customIntervalInput = ref(isCustomInterval.value ? String(props.settings.autoUpdateInterval ?? '') : '');
-
-watch(
-  () => props.settings.autoUpdateInterval,
-  (val) => {
-    if (QUICK_INTERVAL_VALUES.includes(Number(val))) {
-      customIntervalInput.value = '';
+  watch(get, (val) => {
+    if (quickValues.includes(Number(val))) {
+      customInput.value = '';
     } else if (val !== undefined && val !== null) {
-      customIntervalInput.value = String(val);
+      customInput.value = String(val);
     }
-  },
-);
+  });
 
-const handleCustomIntervalInput = (event) => {
-  const raw = event.target.value;
-  customIntervalInput.value = raw;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_INTERVAL) {
-    props.settings.autoUpdateInterval = parsed;
-  }
-};
-
-const handleCustomIntervalBlur = () => {
-  const parsed = Number.parseInt(customIntervalInput.value, 10);
-  if (customIntervalInput.value === '' || Number.isNaN(parsed)) {
-    customIntervalInput.value = isCustomInterval.value ? String(props.settings.autoUpdateInterval) : '';
-    return;
-  }
-  if (parsed < MIN_CUSTOM_INTERVAL) {
-    props.settings.autoUpdateInterval = MIN_CUSTOM_INTERVAL;
-    customIntervalInput.value = String(MIN_CUSTOM_INTERVAL);
-  }
-};
-
-const QUICK_PROFILE_INTERVAL_VALUES = [0, 12, 24, 48];
-const MIN_CUSTOM_PROFILE_INTERVAL = 1;
-
-const isCustomProfileInterval = computed(
-  () => !QUICK_PROFILE_INTERVAL_VALUES.includes(Number(props.settings.profileUpdateInterval ?? 24)),
-);
-
-const customProfileIntervalInput = ref(
-  isCustomProfileInterval.value ? String(props.settings.profileUpdateInterval ?? '') : '',
-);
-
-watch(
-  () => props.settings.profileUpdateInterval,
-  (val) => {
-    if (QUICK_PROFILE_INTERVAL_VALUES.includes(Number(val))) {
-      customProfileIntervalInput.value = '';
-    } else if (val !== undefined && val !== null) {
-      customProfileIntervalInput.value = String(val);
+  const onInput = (event) => {
+    const raw = event.target.value;
+    customInput.value = raw;
+    const parsed = Number.parseInt(raw, 10);
+    if (!Number.isNaN(parsed) && parsed >= min) {
+      set(Math.min(max, parsed));
     }
-  },
-);
+  };
 
-const handleCustomProfileIntervalInput = (event) => {
-  const raw = event.target.value;
-  customProfileIntervalInput.value = raw;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_PROFILE_INTERVAL) {
-    props.settings.profileUpdateInterval = parsed;
-  }
-};
-
-const handleCustomProfileIntervalBlur = () => {
-  const parsed = Number.parseInt(customProfileIntervalInput.value, 10);
-  if (customProfileIntervalInput.value === '' || Number.isNaN(parsed)) {
-    customProfileIntervalInput.value = isCustomProfileInterval.value
-      ? String(props.settings.profileUpdateInterval ?? 24)
-      : '';
-    return;
-  }
-  if (parsed < MIN_CUSTOM_PROFILE_INTERVAL) {
-    props.settings.profileUpdateInterval = MIN_CUSTOM_PROFILE_INTERVAL;
-    customProfileIntervalInput.value = String(MIN_CUSTOM_PROFILE_INTERVAL);
-  }
-};
-
-const QUICK_SUB_FETCH_INTERVAL_VALUES = [0, 15, 30, 60];
-const MIN_CUSTOM_SUB_FETCH_INTERVAL = 1;
-const MAX_CUSTOM_SUB_FETCH_INTERVAL = 1440;
-
-const isCustomSubFetchInterval = computed(
-  () => !QUICK_SUB_FETCH_INTERVAL_VALUES.includes(Number(props.settings.subFetchMinInterval ?? 15)),
-);
-
-const customSubFetchIntervalInput = ref(
-  isCustomSubFetchInterval.value ? String(props.settings.subFetchMinInterval ?? '') : '',
-);
-
-watch(
-  () => props.settings.subFetchMinInterval,
-  (val) => {
-    if (QUICK_SUB_FETCH_INTERVAL_VALUES.includes(Number(val))) {
-      customSubFetchIntervalInput.value = '';
-    } else if (val !== undefined && val !== null) {
-      customSubFetchIntervalInput.value = String(val);
+  const onBlur = () => {
+    const parsed = Number.parseInt(customInput.value, 10);
+    if (customInput.value === '' || Number.isNaN(parsed)) {
+      customInput.value = isCustom.value ? String(readValue()) : '';
+      return;
     }
+    const clamped = Math.min(max, Math.max(min, parsed));
+    set(clamped);
+    customInput.value = String(clamped);
+  };
+
+  return reactive({
+    isCustom,
+    customInput,
+    min,
+    max: Number.isFinite(max) ? max : undefined,
+    readValue,
+    setValue: set,
+    onInput,
+    onBlur,
+  });
+};
+
+const intervalControls = [
+  {
+    key: 'autoUpdate',
+    titleKey: 'settings.autoUpdateInterval',
+    descKey: 'settings.autoUpdateDesc',
+    unitKey: 'settings.minutes',
+    quickOptions: [
+      { value: 0, labelKey: 'settings.disabledOption' },
+      { value: 30, labelKey: 'settings.option30Minutes' },
+      { value: 60, labelKey: 'settings.option1Hour' },
+    ],
+    control: createIntervalControl({
+      get: () => props.settings.autoUpdateInterval,
+      set: (val) => {
+        props.settings.autoUpdateInterval = val;
+      },
+      quickValues: [0, 30, 60],
+      min: 5,
+    }),
   },
-);
+  {
+    key: 'profileUpdate',
+    titleKey: 'settings.profileUpdateInterval',
+    descKey: 'settings.profileUpdateIntervalDesc',
+    unitKey: 'settings.hours',
+    quickOptions: [
+      { value: 0, labelKey: 'settings.disabledOption' },
+      { value: 12, labelKey: 'settings.option12Hours' },
+      { value: 24, labelKey: 'settings.option24Hours' },
+      { value: 48, labelKey: 'settings.option48Hours' },
+    ],
+    control: createIntervalControl({
+      get: () => props.settings.profileUpdateInterval,
+      set: (val) => {
+        props.settings.profileUpdateInterval = val;
+      },
+      defaultValue: 24,
+      quickValues: [0, 12, 24, 48],
+      min: 1,
+    }),
+  },
+  {
+    key: 'subFetch',
+    titleKey: 'settings.subFetchMinInterval',
+    descKey: 'settings.subFetchMinIntervalDesc',
+    unitKey: 'settings.minutes',
+    quickOptions: [
+      { value: 0, labelKey: 'settings.disabledOption' },
+      { value: 15, labelKey: 'settings.option15Minutes' },
+      { value: 30, labelKey: 'settings.option30Minutes' },
+      { value: 60, labelKey: 'settings.option1Hour' },
+    ],
+    control: createIntervalControl({
+      get: () => props.settings.subFetchMinInterval,
+      set: (val) => {
+        props.settings.subFetchMinInterval = val;
+      },
+      defaultValue: 15,
+      quickValues: [0, 15, 30, 60],
+      min: 1,
+      max: 1440,
+    }),
+  },
+];
 
-const handleCustomSubFetchIntervalInput = (event) => {
-  const raw = event.target.value;
-  customSubFetchIntervalInput.value = raw;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isNaN(parsed) && parsed >= MIN_CUSTOM_SUB_FETCH_INTERVAL) {
-    props.settings.subFetchMinInterval = Math.min(MAX_CUSTOM_SUB_FETCH_INTERVAL, parsed);
-  }
-};
+const webAccessSwitchRows = [
+  { key: 'enablePublicPage', titleKey: 'settings.publicPageAccessTitle', descKey: 'settings.publicPageAccessDesc' },
+  { key: 'allowBrowserSubAccess', titleKey: 'settings.disguisePageTitle', descKey: 'settings.disguisePageDesc' },
+];
 
-const handleCustomSubFetchIntervalBlur = () => {
-  const parsed = Number.parseInt(customSubFetchIntervalInput.value, 10);
-  if (customSubFetchIntervalInput.value === '' || Number.isNaN(parsed)) {
-    customSubFetchIntervalInput.value = isCustomSubFetchInterval.value
-      ? String(props.settings.subFetchMinInterval ?? 15)
-      : '';
-    return;
-  }
-  const clamped = Math.min(MAX_CUSTOM_SUB_FETCH_INTERVAL, Math.max(MIN_CUSTOM_SUB_FETCH_INTERVAL, parsed));
-  props.settings.subFetchMinInterval = clamped;
-  customSubFetchIntervalInput.value = String(clamped);
-};
+const disguisePageTypeOptions = [
+  { value: 'default', titleKey: 'settings.disguiseDefault404', descKey: 'settings.disguiseDefault404Desc' },
+  { value: 'redirect', titleKey: 'settings.disguiseRedirect', descKey: 'settings.disguiseRedirectDesc' },
+];
 </script>
 
 <template>
   <div class="space-y-4">
     <!-- 默认显示语言 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.defaultLanguageDesc')"
-        :title="t('settings.defaultLanguageTitle')"
-        tone="amber"
-      >
-        <template #icon>
-          <Languages class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.defaultLanguageDesc')"
+      :title="t('settings.defaultLanguageTitle')"
+      tone="amber"
+    >
+      <template #icon>
+        <Languages class="h-4 w-4" />
+      </template>
       <div class="max-w-xs">
         <Select
           v-model="settings.defaultLocale"
@@ -319,19 +308,17 @@ const handleCustomSubFetchIntervalBlur = () => {
           ]"
         />
       </div>
-    </section>
+    </SettingCard>
 
     <!-- 订阅基本信息配置 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.subscriptionConfigDesc')"
-        :title="t('settings.subscriptionConfigTitle')"
-        tone="indigo"
-      >
-        <template #icon>
-          <Info class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.subscriptionConfigDesc')"
+      :title="t('settings.subscriptionConfigTitle')"
+      tone="indigo"
+    >
+      <template #icon>
+        <Info class="h-4 w-4" />
+      </template>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div>
           <Input
@@ -440,210 +427,85 @@ const handleCustomSubFetchIntervalBlur = () => {
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <!-- 功能开关区域 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.featureControlDesc')"
-        :title="t('settings.featureControlTitle')"
-        tone="green"
-      >
-        <template #icon>
-          <SlidersHorizontal class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.featureControlDesc')"
+      :title="t('settings.featureControlTitle')"
+      tone="green"
+    >
+      <template #icon>
+        <SlidersHorizontal class="h-4 w-4" />
+      </template>
       <div class="divide-y divide-line-subtle">
-        <!-- 订阅自动更新间隔 -->
-        <div class="py-5 first:pt-0 last:pb-0">
+        <div
+          v-for="row in intervalControls"
+          :key="row.key"
+          :class="{ 'space-y-3': row.key === 'subFetch' }"
+          class="py-5 first:pt-0 last:pb-0"
+        >
           <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
             <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
               <p class="text-sm font-medium text-fg">
-                {{ t('settings.autoUpdateInterval') }}
+                {{ t(row.titleKey) }}
               </p>
               <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.autoUpdateDesc') }}
+                {{ t(row.descKey) }}
               </p>
             </div>
             <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
               <div
                 :class="[
                   'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
-                  isCustomInterval
+                  row.control.isCustom
                     ? 'border-line-strong'
                     : 'border-line hover:border-line-strong focus-within:border-line-strong',
                 ]"
               >
                 <input
-                  :aria-label="t('settings.autoUpdateInterval')"
-                  :min="MIN_CUSTOM_INTERVAL"
+                  :aria-label="t(row.titleKey)"
+                  :max="row.control.max"
+                  :min="row.control.min"
                   :placeholder="t('settings.customInterval')"
-                  :value="customIntervalInput"
+                  :value="row.control.customInput"
                   class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   inputmode="numeric"
                   type="number"
-                  @blur="handleCustomIntervalBlur"
-                  @input="handleCustomIntervalInput"
+                  @blur="row.control.onBlur"
+                  @input="row.control.onInput"
                 />
                 <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
-                  {{ t('settings.minutes') }}
+                  {{ t(row.unitKey) }}
                 </span>
               </div>
               <div class="flex min-w-0 flex-wrap items-center gap-1.5">
                 <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
                 <button
-                  v-for="option in [
-                    { value: 0, label: t('settings.disabledOption') },
-                    { value: 30, label: t('settings.option30Minutes') },
-                    { value: 60, label: t('settings.option1Hour') },
-                  ]"
+                  v-for="option in row.quickOptions"
                   :key="option.value"
-                  :aria-pressed="settings.autoUpdateInterval === option.value"
+                  :aria-pressed="row.control.readValue() === option.value"
                   :class="[
                     'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
-                    settings.autoUpdateInterval === option.value
+                    row.control.readValue() === option.value
                       ? 'bg-active text-fg border-line-strong font-semibold'
                       : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
                   ]"
                   type="button"
-                  @click="settings.autoUpdateInterval = option.value"
+                  @click="row.control.setValue(option.value)"
                 >
-                  {{ option.label }}
+                  {{ t(option.labelKey) }}
                 </button>
               </div>
             </div>
           </div>
-          <p v-if="settings.autoUpdateInterval === 0" class="callout-warning mt-2.5">
+
+          <p v-if="row.key === 'autoUpdate' && settings.autoUpdateInterval === 0" class="callout-warning mt-2.5">
             {{ t('settings.autoUpdateDisabledHint') }}
           </p>
-        </div>
-
-        <!-- 客户端订阅更新周期 (Profile-Update-Interval) -->
-        <div class="py-5 first:pt-0 last:pb-0">
-          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
-            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.profileUpdateInterval') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.profileUpdateIntervalDesc') }}
-              </p>
-            </div>
-            <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
-              <div
-                :class="[
-                  'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
-                  isCustomProfileInterval
-                    ? 'border-line-strong'
-                    : 'border-line hover:border-line-strong focus-within:border-line-strong',
-                ]"
-              >
-                <input
-                  :aria-label="t('settings.profileUpdateInterval')"
-                  :min="MIN_CUSTOM_PROFILE_INTERVAL"
-                  :placeholder="t('settings.customInterval')"
-                  :value="customProfileIntervalInput"
-                  class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  inputmode="numeric"
-                  type="number"
-                  @blur="handleCustomProfileIntervalBlur"
-                  @input="handleCustomProfileIntervalInput"
-                />
-                <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
-                  {{ t('settings.hours') }}
-                </span>
-              </div>
-              <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
-                <button
-                  v-for="option in [
-                    { value: 0, label: t('settings.disabledOption') },
-                    { value: 12, label: t('settings.option12Hours') },
-                    { value: 24, label: t('settings.option24Hours') },
-                    { value: 48, label: t('settings.option48Hours') },
-                  ]"
-                  :key="option.value"
-                  :aria-pressed="(settings.profileUpdateInterval ?? 24) === option.value"
-                  :class="[
-                    'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
-                    (settings.profileUpdateInterval ?? 24) === option.value
-                      ? 'bg-active text-fg border-line-strong font-semibold'
-                      : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
-                  ]"
-                  type="button"
-                  @click="settings.profileUpdateInterval = option.value"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 服务端最小拉取间隔与边缘缓存防刷 -->
-        <div class="py-5 first:pt-0 last:pb-0 space-y-3">
-          <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-3 sm:gap-4">
-            <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.subFetchMinInterval') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.subFetchMinIntervalDesc') }}
-              </p>
-            </div>
-            <div class="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3 shrink-0">
-              <div
-                :class="[
-                  'flex items-center h-8 rounded-md border bg-inset px-2.5 transition-colors',
-                  isCustomSubFetchInterval
-                    ? 'border-line-strong'
-                    : 'border-line hover:border-line-strong focus-within:border-line-strong',
-                ]"
-              >
-                <input
-                  :aria-label="t('settings.subFetchMinInterval')"
-                  :max="MAX_CUSTOM_SUB_FETCH_INTERVAL"
-                  :min="MIN_CUSTOM_SUB_FETCH_INTERVAL"
-                  :placeholder="t('settings.customInterval')"
-                  :value="customSubFetchIntervalInput"
-                  class="w-14 bg-transparent text-xs font-mono tabular-nums text-fg placeholder:text-fg-subtle outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  inputmode="numeric"
-                  type="number"
-                  @blur="handleCustomSubFetchIntervalBlur"
-                  @input="handleCustomSubFetchIntervalInput"
-                />
-                <span class="text-xs text-fg-subtle select-none pl-2 ml-1 border-l border-line whitespace-nowrap">
-                  {{ t('settings.minutes') }}
-                </span>
-              </div>
-              <div class="flex min-w-0 flex-wrap items-center gap-1.5">
-                <span class="text-xs text-fg-subtle mr-0.5 whitespace-nowrap">{{ t('settings.quickSelect') }}</span>
-                <button
-                  v-for="option in [
-                    { value: 0, label: t('settings.disabledOption') },
-                    { value: 15, label: t('settings.option15Minutes') },
-                    { value: 30, label: t('settings.option30Minutes') },
-                    { value: 60, label: t('settings.option1Hour') },
-                  ]"
-                  :key="option.value"
-                  :aria-pressed="(settings.subFetchMinInterval ?? 15) === option.value"
-                  :class="[
-                    'h-8 px-2.5 text-xs font-mono font-medium rounded-md border transition-colors whitespace-nowrap',
-                    (settings.subFetchMinInterval ?? 15) === option.value
-                      ? 'bg-active text-fg border-line-strong font-semibold'
-                      : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg',
-                  ]"
-                  type="button"
-                  @click="settings.subFetchMinInterval = option.value"
-                >
-                  {{ option.label }}
-                </button>
-              </div>
-            </div>
-          </div>
 
           <div
-            v-if="(settings.subFetchMinInterval ?? 15) > 0"
+            v-if="row.key === 'subFetch' && (settings.subFetchMinInterval ?? 15) > 0"
             class="pl-4 border-l-2 border-line flex flex-col xl:flex-row xl:items-center justify-between gap-4"
           >
             <div class="space-y-1 flex-1 min-w-0 pr-0 xl:pr-4">
@@ -742,41 +604,29 @@ const handleCustomSubFetchIntervalBlur = () => {
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <!-- Web 访问控制 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader :description="t('settings.webAccessDesc')" :title="t('settings.webAccessTitle')" tone="blue">
-        <template #icon>
-          <Globe class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard :description="t('settings.webAccessDesc')" :title="t('settings.webAccessTitle')" tone="blue">
+      <template #icon>
+        <Globe class="h-4 w-4" />
+      </template>
 
       <div class="divide-y divide-line-subtle">
-        <!-- 公开页访问 -->
-        <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+        <div
+          v-for="row in webAccessSwitchRows"
+          :key="row.key"
+          class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6"
+        >
           <div class="space-y-1">
             <p class="text-sm font-medium text-fg">
-              {{ t('settings.publicPageAccessTitle') }}
+              {{ t(row.titleKey) }}
             </p>
             <p class="text-xs text-fg-muted leading-relaxed">
-              {{ t('settings.publicPageAccessDesc') }}
+              {{ t(row.descKey) }}
             </p>
           </div>
-          <Switch v-model="settings.enablePublicPage" class="shrink-0" />
-        </div>
-
-        <!-- 允许浏览器打开订阅链接 -->
-        <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-fg">
-              {{ t('settings.disguisePageTitle') }}
-            </p>
-            <p class="text-xs text-fg-muted leading-relaxed">
-              {{ t('settings.disguisePageDesc') }}
-            </p>
-          </div>
-          <Switch v-model="settings.allowBrowserSubAccess" class="shrink-0" />
+          <Switch v-model="settings[row.key]" class="shrink-0" />
         </div>
 
         <!-- 统一拦截响应方式 -->
@@ -791,32 +641,20 @@ const handleCustomSubFetchIntervalBlur = () => {
           </div>
 
           <div class="flex flex-col sm:flex-row gap-6">
-            <label class="flex items-center cursor-pointer group">
+            <label
+              v-for="opt in disguisePageTypeOptions"
+              :key="opt.value"
+              class="flex items-center cursor-pointer group"
+            >
               <input
                 v-model="disguiseConfig.pageType"
+                :value="opt.value"
                 class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
                 type="radio"
-                value="default"
               />
               <div class="ml-3 space-y-0.5">
-                <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
-                  t('settings.disguiseDefault404')
-                }}</span>
-                <span class="block text-xs text-fg-muted">{{ t('settings.disguiseDefault404Desc') }}</span>
-              </div>
-            </label>
-            <label class="flex items-center cursor-pointer group">
-              <input
-                v-model="disguiseConfig.pageType"
-                class="h-4 w-4 text-fg focus-visible:ring-line-strong border-line-strong bg-elevated-card"
-                type="radio"
-                value="redirect"
-              />
-              <div class="ml-3 space-y-0.5">
-                <span class="block text-sm font-medium text-fg group-hover:text-fg">{{
-                  t('settings.disguiseRedirect')
-                }}</span>
-                <span class="block text-xs text-fg-muted">{{ t('settings.disguiseRedirectDesc') }}</span>
+                <span class="block text-sm font-medium text-fg group-hover:text-fg">{{ t(opt.titleKey) }}</span>
+                <span class="block text-xs text-fg-muted">{{ t(opt.descKey) }}</span>
               </div>
             </label>
           </div>
@@ -870,7 +708,7 @@ const handleCustomSubFetchIntervalBlur = () => {
           </p>
         </div>
       </div>
-    </section>
+    </SettingCard>
   </div>
 </template>
 

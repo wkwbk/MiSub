@@ -3,7 +3,7 @@ import { readRawPreference, writeRawPreference } from '@/utils/local-preference.
 import zhCN from '@/i18n/locales/zh-CN.js';
 
 export const DEFAULT_LOCALE = 'zh-CN';
-export const LOCALE_STORAGE_KEY = 'misub:locale';
+const LOCALE_STORAGE_KEY = 'misub:locale';
 export const SUPPORTED_LOCALES = [
   { code: 'zh-CN', label: '简体中文' },
   { code: 'en-US', label: 'English' },
@@ -67,7 +67,7 @@ export function hasStoredLocale() {
   return supportedCodes.has(readStoredLocale());
 }
 
-export function normalizeLocale(locale) {
+function normalizeLocale(locale) {
   if (!locale || typeof locale !== 'string') return DEFAULT_LOCALE;
   if (supportedCodes.has(locale)) return locale;
   const lower = locale.toLowerCase();

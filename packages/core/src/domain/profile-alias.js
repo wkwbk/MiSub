@@ -2,7 +2,7 @@ import { isReservedPathRoot } from './reserved-paths.js';
 import { normalizeProfileIdentifier } from './profile-link.js';
 
 export const PROFILE_ALIAS_MAX_LENGTH = 64;
-export const PROFILE_ALIAS_PATTERN = /^[A-Za-z0-9_-]+$/;
+const PROFILE_ALIAS_PATTERN = /^[A-Za-z0-9_-]+$/;
 
 const EXTRA_RESERVED_ALIASES = new Set(['sub', 'profile', 'profiles', 'token', 'default', 'all']);
 
@@ -11,7 +11,7 @@ const EXTRA_RESERVED_ALIASES = new Set(['sub', 'profile', 'profiles', 'token', '
  * @param {string} alias
  * @returns {boolean}
  */
-export function isReservedProfileAlias(alias) {
+function isReservedProfileAlias(alias) {
   const normalized = normalizeProfileIdentifier(alias).toLowerCase();
   if (!normalized) return false;
   return EXTRA_RESERVED_ALIASES.has(normalized) || isReservedPathRoot(normalized);

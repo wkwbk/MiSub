@@ -28,7 +28,7 @@ export const COMMON_NODE_PROTOCOLS = [
   'v2rayn',
 ];
 
-export const UDP_ONLY_SCHEMES = new Set(['hysteria', 'hysteria2', 'hy', 'hy2', 'tuic', 'wireguard', 'wg']);
+const UDP_ONLY_SCHEMES = new Set(['hysteria', 'hysteria2', 'hy', 'hy2', 'tuic', 'wireguard', 'wg']);
 
 export function createProtocolRegex(protocols, caseInsensitive = true) {
   const escaped = protocols.map((protocol) => protocol.replace(/\+/g, '\\+'));

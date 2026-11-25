@@ -75,7 +75,7 @@ export function isManualNodeEntry(item) {
   }
 }
 
-export const PROTOCOL_LABELS = {
+const PROTOCOL_LABELS = {
   anytls: 'AnyTLS',
   vless: 'VLESS',
   hysteria2: 'HY2',
@@ -116,7 +116,7 @@ export function getManualNodeProtocol(url) {
   return 'unknown';
 }
 
-export function getManualNodeProtocolLabel(protocol) {
+function getManualNodeProtocolLabel(protocol) {
   return PROTOCOL_LABELS[protocol] || String(protocol || 'LINK').toUpperCase();
 }
 

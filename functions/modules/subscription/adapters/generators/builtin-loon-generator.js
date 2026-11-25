@@ -11,56 +11,37 @@
  */
 
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
-import { cleanControlChars, getUniqueName } from '../../core/name-utils.js';
+import { getUniqueName } from '../../core/name-utils.js';
 import {
-  DEFAULT_RELAY_GROUP,
-  DEFAULT_SELECT_GROUP,
-  getBuiltinRules,
-  POLICY_GROUPS,
-  pruneProxyGroups,
-} from '../../templates/builtin-rules-provider.js';
+  applyIniRelayGroupPair,
+  formatIniProxyGroupLine,
+  parseNodeUrlLines,
+  POLICY_GROUP_ICONS,
+  QURE_ICON_REPO,
+  quoteIniValue,
+  resolveBuiltinPolicyGroups,
+  sanitizeIniNodeName,
+} from '../../core/client-shared.js';
+import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP, getBuiltinRules } from '../../templates/builtin-rules-provider.js';
 
-/**
- * 安全化节点名称
- */
-function sanitizeNodeName(name) {
-  if (!name) return 'Untitled';
-  let safe = cleanControlChars(name);
-  // 移除或替换可能破坏 INI 解析的字符
-  safe = safe.replace(/,/g, ' ').replace(/=/g, '-');
-  safe = safe.replace(/\s+/g, ' ').trim();
-  return safe || 'Untitled';
-}
-
-/**
- * 参数值加引号（如果包含特殊字符）
- */
 function loonQuote(value) {
-  if (value === undefined || value === null) return '';
-  const strValue = String(value);
-  // 如果包含逗号、空格、等号、引号，则需要加双引号并转义内部引号
-  // Loon 原生 INI 格式中，如果值包含等号或逗号，必须加引号
-  if (/[,\s"=]/.test(strValue)) {
-    return `"${strValue.replace(/"/g, '\\"')}"`;
-  }
-  return strValue;
+  return quoteIniValue(value, { emptyForFalsy: false });
 }
 
 /**
  * 根据节点名称获取对应的图标 URL
  */
 function getIconByNodeName(name) {
-  const iconRepo = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
-  if (/港|HK|Hong Kong/i.test(name)) return `${iconRepo}/Hong_Kong.png`;
-  if (/台|TW|Taiwan/i.test(name)) return `${iconRepo}/Taiwan.png`;
-  if (/日|JP|Japan/i.test(name)) return `${iconRepo}/Japan.png`;
-  if (/新|SG|Singapore|狮城/i.test(name)) return `${iconRepo}/Singapore.png`;
-  if (/美|US|America/i.test(name)) return `${iconRepo}/United_States.png`;
-  if (/韩|KR|Korea/i.test(name)) return `${iconRepo}/South_Korea.png`;
-  if (/英|UK|Great Britain/i.test(name)) return `${iconRepo}/United_Kingdom.png`;
-  if (/德|DE|Germany/i.test(name)) return `${iconRepo}/Germany.png`;
-  if (/法|FR|France/i.test(name)) return `${iconRepo}/France.png`;
-  if (/俄|RU|Russia/i.test(name)) return `${iconRepo}/Russia.png`;
+  if (/港|HK|Hong Kong/i.test(name)) return `${QURE_ICON_REPO}/Hong_Kong.png`;
+  if (/台|TW|Taiwan/i.test(name)) return `${QURE_ICON_REPO}/Taiwan.png`;
+  if (/日|JP|Japan/i.test(name)) return `${QURE_ICON_REPO}/Japan.png`;
+  if (/新|SG|Singapore|狮城/i.test(name)) return `${QURE_ICON_REPO}/Singapore.png`;
+  if (/美|US|America/i.test(name)) return `${QURE_ICON_REPO}/United_States.png`;
+  if (/韩|KR|Korea/i.test(name)) return `${QURE_ICON_REPO}/South_Korea.png`;
+  if (/英|UK|Great Britain/i.test(name)) return `${QURE_ICON_REPO}/United_Kingdom.png`;
+  if (/德|DE|Germany/i.test(name)) return `${QURE_ICON_REPO}/Germany.png`;
+  if (/法|FR|France/i.test(name)) return `${QURE_ICON_REPO}/France.png`;
+  if (/俄|RU|Russia/i.test(name)) return `${QURE_ICON_REPO}/Russia.png`;
   return null;
 }
 
@@ -70,7 +51,7 @@ function getIconByNodeName(name) {
 function clashProxyToLoonResult(proxy) {
   if (!proxy || !proxy.server || !proxy.port) return null;
 
-  const name = sanitizeNodeName(proxy.name);
+  const name = sanitizeIniNodeName(proxy.name);
   const type = (proxy.type || '').toLowerCase();
   const server = proxy.server;
   const port = proxy.port;
@@ -268,13 +249,8 @@ function appendTlsParams(parts, proxy) {
  */
 
 export function generateBuiltinLoonConfig(nodeList, options = {}) {
-  const { managedConfigUrl = '', interval = 86400, ruleLevel = 'std' } = options;
-
-  const cleanedNodeList = cleanControlChars(nodeList);
-  const nodeUrls = cleanedNodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
+  const { managedConfigUrl = '', interval = 86400 } = options;
+  const nodeUrls = parseNodeUrlLines(nodeList);
 
   const proxyLines = [];
   const proxiesWithMetadata = [];
@@ -283,13 +259,9 @@ export function generateBuiltinLoonConfig(nodeList, options = {}) {
   // 转换为 Clash 代理对象
   const proxies = urlsToClashProxies(nodeUrls, options);
 
-  // 应用 UDP 开关
-  // (已在 urlsToClashProxies 中全局处理)
-
   for (const clashProxy of proxies) {
-    const baseName = sanitizeNodeName(clashProxy.name);
-    const uniqueName = getUniqueName(baseName, usedNames);
-    clashProxy.name = uniqueName;
+    const baseName = sanitizeIniNodeName(clashProxy.name);
+    clashProxy.name = getUniqueName(baseName, usedNames);
 
     const line = clashProxyToLoonResult(clashProxy);
     if (line) {
@@ -316,58 +288,14 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
 
   sections.push(`[Proxy]\nDIRECT = direct\n${proxyLines.join('\n')}`);
 
-  const levelKey = (ruleLevel || 'std').toUpperCase();
-  const policyFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-  let abstractGroups = policyFactory(proxiesWithMetadata, options);
-  if (levelKey === 'RELAY') {
-    abstractGroups = abstractGroups.map((group) =>
-      group.name === '🔗 链式代理' ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] } : group,
-    );
-    if (!abstractGroups.some((group) => group.name === '落地节点')) {
-      const proxyNames = proxiesWithMetadata.map((proxy) => proxy.name);
-      abstractGroups.splice(abstractGroups.findIndex((group) => group.name === '入口节点') + 1, 0, {
-        name: '落地节点',
-        type: 'select',
-        proxies: ['♻️ 自动选择', '👋 手动切换', 'DIRECT', ...proxyNames],
-      });
-    }
-  }
-  abstractGroups = pruneProxyGroups(abstractGroups, proxiesWithMetadata);
-
-  const iconRepo = 'https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color';
-  const groupIcons = {
-    [DEFAULT_SELECT_GROUP]: `${iconRepo}/Proxy.png`,
-    [DEFAULT_RELAY_GROUP]: `${iconRepo}/Proxy.png`,
-    '♻️ 自动选择': `${iconRepo}/Speedtest.png`,
-    '🔯 故障转移': `${iconRepo}/Relay.png`,
-    '🎬 视频广告': `${iconRepo}/Reject.png`,
-    '🎥 流媒体': `${iconRepo}/Video.png`,
-    '🍎 Apple': `${iconRepo}/Apple.png`,
-    'Ⓜ️ Microsoft': `${iconRepo}/Microsoft.png`,
-    '📲 Telegram': `${iconRepo}/Telegram.png`,
-    '🎧 Spotify': `${iconRepo}/Spotify.png`,
-    '🇭🇰 香港节点': `${iconRepo}/Hong_Kong.png`,
-    '🇹🇼 台湾节点': `${iconRepo}/Taiwan.png`,
-    '🇯🇵 日本节点': `${iconRepo}/Japan.png`,
-    '🇸🇬 狮城节点': `${iconRepo}/Singapore.png`,
-    '🇺🇸 美国节点': `${iconRepo}/United_States.png`,
-    '🇰🇷 韩国节点': `${iconRepo}/South_Korea.png`,
-    '🇬🇧 英国节点': `${iconRepo}/United_Kingdom.png`,
-  };
-
-  const proxyGroupLines = abstractGroups.map((group) => {
-    let type = group.type === 'url-test' ? 'url-test' : 'select';
-    if (group.type === 'fallback') type = 'fallback';
-    if (group.type === 'relay') type = 'relay';
-
-    const proxies = group.proxies.join(', ');
-    const icon = groupIcons[group.name] ? `, icon=${groupIcons[group.name]}` : '';
-    const extra =
-      type === 'url-test' || type === 'fallback'
-        ? `, url=http://www.gstatic.com/generate_204, interval=300, tolerance=50`
-        : '';
-    return `${group.name} = ${type}, ${proxies}${extra}${icon}`;
+  const { levelKey, proxyGroups } = resolveBuiltinPolicyGroups(proxiesWithMetadata, options, {
+    allowVisualRules: false,
   });
+  const abstractGroups = levelKey === 'RELAY' ? applyIniRelayGroupPair(proxyGroups, proxiesWithMetadata) : proxyGroups;
+
+  const proxyGroupLines = abstractGroups.map((group) =>
+    formatIniProxyGroupLine(group, { iconMap: POLICY_GROUP_ICONS }),
+  );
 
   sections.push(`[Proxy Group]\n${proxyGroupLines.join('\n')}`);
 

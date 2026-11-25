@@ -1,9 +1,9 @@
 import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
-import { getUniqueName } from '../../core/name-utils.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { applyMihomoChainProxy } from '../../core/mihomo-chain-proxy.js';
 import { shadowrocketProxyNames, sortShadowrocketProxies } from '../../core/shadowrocket-order.js';
 import { formatShadowrocketRuleBundle } from '../../core/shadowrocket-rule-bundle.js';
+import { buildIniWireGuardSection, stripInternalProxyFields } from '../../core/client-shared.js';
 
 const YOUTUBE_API_HOSTS = new Set([
   'youtube.googleapis.com',
@@ -177,30 +177,16 @@ export function renderShadowrocketProxy(proxy, displayName = proxy?.name) {
     }
   } else if (type === 'wireguard') {
     const sectionName = `WG_${name.replace(/[^a-zA-Z0-9_\u4e00-\u9fa5]/g, '_')}`;
-    const wgLines = [`[WireGuard ${sectionName}]`];
-    if (proxy['private-key']) wgLines.push(`private-key = ${proxy['private-key']}`);
-    const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !String(ip).includes(':')) : proxy.ip;
-    if (ipv4) wgLines.push(`self-ip = ${ipv4}`);
-    const ipv6 = Array.isArray(proxy.ipv6) ? proxy.ipv6.find(Boolean) : proxy.ipv6;
-    if (ipv6) wgLines.push(`self-ip-v6 = ${ipv6}`);
-    const dnsServers = proxy.dns ? (Array.isArray(proxy.dns) ? proxy.dns.join(', ') : proxy.dns) : '8.8.8.8, 1.1.1.1';
-    wgLines.push(`dns-server = ${dnsServers}`);
-    if (proxy.mtu) wgLines.push(`mtu = ${proxy.mtu}`);
-    const peerParts = [];
-    if (proxy['public-key']) peerParts.push(`public-key = ${proxy['public-key']}`);
-    const allowedIps = proxy['allowed-ips']
-      ? Array.isArray(proxy['allowed-ips'])
-        ? proxy['allowed-ips'].join(', ')
-        : proxy['allowed-ips']
-      : '0.0.0.0/0, ::/0';
-    peerParts.push(`allowed-ips = "${allowedIps}"`);
-    peerParts.push(`endpoint = ${server}:${port}`);
-    if (proxy['preshared-key']) peerParts.push(`preshared-key = ${proxy['preshared-key']}`);
-    if (proxy['persistent-keepalive']) peerParts.push(`keepalive = ${proxy['persistent-keepalive']}`);
-    wgLines.push(`peer = (${peerParts.join(', ')})`);
     return {
       proxyLine: `${name} = wireguard, section-name=${sectionName}`,
-      wireguardSection: wgLines.join('\n'),
+      wireguardSection: buildIniWireGuardSection(proxy, {
+        name,
+        sectionName,
+        defaultDns: '8.8.8.8, 1.1.1.1',
+        defaultAllowedIps: '0.0.0.0/0, ::/0',
+        quoteSingleAllowedIp: true,
+        includeClientId: false,
+      }),
     };
   } else {
     return null;
@@ -537,11 +523,7 @@ export function renderShadowrocketFromTemplateModel(model, options = {}) {
   });
 
   const clashLikeConfig = {
-    proxies: (normalizedModel.proxies || []).map((proxy) => {
-      if (!proxy || typeof proxy !== 'object' || !('metadata' in proxy)) return proxy;
-      const { metadata: _metadata, ...cleanProxy } = proxy;
-      return cleanProxy;
-    }),
+    proxies: stripInternalProxyFields(normalizedModel.proxies || []),
     'proxy-groups': (normalizedModel.groups || [])
       .filter((group) => (Array.isArray(group.members) && group.members.length > 0) || group.filters?.length > 0)
       .map((group) => ({
@@ -568,12 +550,4 @@ export function renderShadowrocketFromTemplateModel(model, options = {}) {
     managedConfigUrl: normalizedModel.settings?.managedConfigUrl || options.managedConfigUrl || '',
     interval: normalizedModel.settings?.interval || options.interval || 86400,
   });
-}
-
-export function deduplicateShadowrocketProxyList(proxies) {
-  const used = new Map();
-  return (Array.isArray(proxies) ? proxies : []).map((proxy) => ({
-    ...proxy,
-    name: getUniqueName(proxy.name, used),
-  }));
 }

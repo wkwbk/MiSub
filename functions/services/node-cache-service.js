@@ -19,7 +19,7 @@ const CACHE_CONFIG = {
 const SHRINK_PROTECTION_MIN_CACHED_NODES = 10;
 const SHRINK_PROTECTION_MAX_RATIO = 0.3;
 
-export const EDGE_CACHE_VERSION_KEY = 'sub_edge_cache_version';
+const EDGE_CACHE_VERSION_KEY = 'sub_edge_cache_version';
 const EDGE_VERSION_MEMORY_TTL_MS = 10 * 1000;
 let edgeVersionCaches = new WeakMap();
 
@@ -55,7 +55,7 @@ export async function getEdgeCacheVersion(storageAdapter) {
   }
 }
 
-export async function bumpEdgeCacheVersion(storageAdapter) {
+async function bumpEdgeCacheVersion(storageAdapter) {
   try {
     if (typeof storageAdapter?.put === 'function') {
       const now = Date.now();

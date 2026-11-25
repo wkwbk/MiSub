@@ -14,7 +14,7 @@
 import { t } from '@/i18n/index.js';
 
 /** 单个文件大小上限（字节）——后端 JSON body 限制为 2MB，留出余量。 */
-export const MAX_IMPORT_FILE_SIZE = 1.5 * 1024 * 1024;
+const MAX_IMPORT_FILE_SIZE = 1.5 * 1024 * 1024;
 
 /** 允许的扩展名 / MIME 提示（仅用于 文件选择框 过滤，不做强校验）。 */
 export const IMPORT_FILE_ACCEPT = ['.txt', '.yaml', '.yml', '.json', '.conf', '.config', '.ini', '.list', '.text'].join(
@@ -26,7 +26,7 @@ export const IMPORT_FILE_ACCEPT = ['.txt', '.yaml', '.yml', '.json', '.conf', '.
  * @param {File} file
  * @returns {Promise<string>}
  */
-export function readFileAsText(file) {
+function readFileAsText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ''));
@@ -39,7 +39,7 @@ export function readFileAsText(file) {
  * 校验文件大小，超限时抛出可展示的错误。
  * @param {File} file
  */
-export function assertFileSize(file) {
+function assertFileSize(file) {
   if (file && typeof file.size === 'number' && file.size > MAX_IMPORT_FILE_SIZE) {
     const mb = (MAX_IMPORT_FILE_SIZE / 1024 / 1024).toFixed(1);
     throw new Error(

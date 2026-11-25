@@ -32,7 +32,7 @@ export function normalizeDisabledNodes(raw) {
 
 /**
  * 获取订阅源停用节点 URL 的 Set 集合
- * @param {Object} subscription
+ * @param {Partial<import('../types.js').SubscriptionItem> | null | undefined} subscription
  * @returns {Set<string>}
  */
 export function getDisabledNodeSet(subscription) {

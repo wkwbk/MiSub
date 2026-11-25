@@ -10,7 +10,7 @@ const ONE_DAY_MS = 24 * 60 * 60 * 1000;
  * @param {string} previousToken
  * @returns {string}
  */
-export function generateRotatedSubscriptionToken(previousToken = '') {
+function generateRotatedSubscriptionToken(previousToken = '') {
   const prev = String(previousToken || '').trim();
   let candidate = '';
   for (let i = 0; i < 5; i += 1) {

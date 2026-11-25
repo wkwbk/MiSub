@@ -3,9 +3,6 @@
  */
 
 import { isLocalProxyEndpoint } from '@misub/core/node/node-cleaner.js';
-import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
-
-export { inferAirportRootDomain };
 
 const REAL_PROXY_PROTOCOLS = [
   'ss://',

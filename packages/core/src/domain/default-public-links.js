@@ -10,7 +10,7 @@ export const PUBLIC_LINK_CATEGORIES = [
   { value: 'other', labelKey: 'publicLinks.categories.other' },
 ];
 
-export const DEFAULT_PUBLIC_LINKS = [
+const DEFAULT_PUBLIC_LINKS = [
   // 测速网站 (Speed Test)
   {
     id: 'fast-com',

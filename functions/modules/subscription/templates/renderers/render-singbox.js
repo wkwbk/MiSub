@@ -1,8 +1,15 @@
-import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../../security/safe-dns.js';
 import { getSingboxDnsRuleSet, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 import { SINGBOX_SNIFF_RULE } from '../../core/sniffing-config.js';
+import {
+  applySingboxShadowsocksPlugin,
+  applySingboxTuicExtraFields,
+  buildSingboxConfigEnvelope,
+  DEFAULT_TEST_URL,
+  filterAutoGroupMembers,
+  resolveModelProxies,
+} from '../../core/client-shared.js';
 
 function sanitizeTag(value) {
   return String(value || '').trim() || 'Untitled';
@@ -67,16 +74,7 @@ function buildOutbound(proxy) {
     };
     // sing-box 的 Shadowsocks 出站使用 SIP003 plugin/plugin_opts；
     // `transport` 仅属于 V2Ray 传输协议，SFA 会严格拒绝它。
-    const plugin = proxy.plugin || '';
-    const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
-    if (plugin === 'v2ray-plugin' || opts.mode === 'websocket') {
-      outbound.plugin = 'v2ray-plugin';
-      const pluginOptions = ['mode=websocket'];
-      if (opts.host) pluginOptions.push(`host=${opts.host}`);
-      if (opts.path) pluginOptions.push(`path=${opts.path}`);
-      if (opts.tls || opts.mode === 'websocket-tls') pluginOptions.push('tls');
-      outbound.plugin_opts = pluginOptions.join(';');
-    }
+    applySingboxShadowsocksPlugin(outbound, proxy);
     return outbound;
   }
 
@@ -215,14 +213,7 @@ function buildOutbound(proxy) {
       },
     };
     if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
-    const congestionControl = proxy['congestion-control'] || proxy['congestion-controller'] || proxy.congestion;
-    if (congestionControl) outbound.congestion_control = congestionControl;
-    if (proxy['udp-over-stream'] !== undefined) outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
-    if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {
-      outbound.zero_rtt_handshake = Boolean(proxy['zero-rtt-handshake'] ?? proxy['reduce-rtt']);
-    }
-    if (proxy.heartbeat) outbound.heartbeat = String(proxy.heartbeat);
-    if (proxy.network) outbound.network = proxy.network;
+    applySingboxTuicExtraFields(outbound, proxy);
     return outbound;
   }
 
@@ -253,19 +244,14 @@ function mapGroupType(type) {
 function buildGroupOutbounds(groups) {
   return groups.map((group) => {
     const mappedType = mapGroupType(group.type);
-    const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
     const outbound = {
       tag: sanitizeTag(group.name),
       type: mappedType,
-      outbounds: ['urltest'].includes(mappedType)
-        ? rawMembers.filter(
-            (member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()),
-          )
-        : rawMembers,
+      outbounds: filterAutoGroupMembers(mappedType, group.members),
     };
 
     if (mappedType === 'urltest') {
-      outbound.url = group.options?.url || 'http://www.gstatic.com/generate_204';
+      outbound.url = group.options?.url || DEFAULT_TEST_URL;
       outbound.interval = `${group.options?.interval || 300}s`;
     }
 
@@ -380,15 +366,7 @@ function buildRuleSets(rules, { isChinaClient = false } = {}) {
 
 export function renderSingboxFromTemplateModel(model, options = {}) {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
-  const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
-  const proxyUrls = nodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
-  const proxies =
-    Array.isArray(normalizedModel.proxies) && normalizedModel.proxies.length > 0
-      ? normalizedModel.proxies
-      : urlsToClashProxies(proxyUrls);
+  const proxies = resolveModelProxies(normalizedModel, options);
   const proxyOutbounds = proxies.map(buildOutbound).filter(Boolean);
   const groupOutbounds = buildGroupOutbounds(
     normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0),
@@ -407,33 +385,14 @@ export function renderSingboxFromTemplateModel(model, options = {}) {
     proxyGroup: DNS_PROXY_GROUP,
   });
 
-  const config = {
-    log: { level: 'info' },
-    dns: dnsConfig,
-    inbounds: [
-      {
-        type: 'tun',
-        tag: 'tun-in',
-        address: ['172.19.0.1/30'],
-        auto_route: true,
-        strict_route: true,
-        stack: 'mixed',
-      },
-    ],
-    outbounds: [
-      { tag: 'DIRECT', type: 'direct' },
-      { tag: 'REJECT', type: 'block' },
-      ...proxyOutbounds,
-      ...groupOutbounds,
-    ],
-    route: {
-      auto_detect_interface: true,
-      default_domain_resolver: dnsConfig.servers[0]?.tag || 'dns-cn-1',
-      final: defaultOutbound,
-      rule_set: ruleSetObjects,
-      rules: routeRules,
-    },
-  };
+  const config = buildSingboxConfigEnvelope({
+    dnsConfig,
+    proxyOutbounds,
+    groupOutbounds,
+    finalOutbound: defaultOutbound,
+    ruleSets: ruleSetObjects,
+    routeRules,
+  });
 
   return JSON.stringify(config, null, 2) + '\n';
 }

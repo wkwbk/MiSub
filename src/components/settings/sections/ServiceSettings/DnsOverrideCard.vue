@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import { Globe } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import * as yaml from 'js-yaml';
 
@@ -59,17 +59,15 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <SectionHeader :description="t('settings.dnsOverrideDesc')" :title="t('settings.dnsOverrideTitle')">
-      <template #icon>
-        <Globe class="h-4 w-4" />
-      </template>
-      <template v-if="hasValue" #actions>
-        <span class="badge-success">
-          {{ t('settings.dnsOverrideActive') }}
-        </span>
-      </template>
-    </SectionHeader>
+  <SettingCard :description="t('settings.dnsOverrideDesc')" :title="t('settings.dnsOverrideTitle')">
+    <template #icon>
+      <Globe class="h-4 w-4" />
+    </template>
+    <template v-if="hasValue" #actions>
+      <span class="badge-success">
+        {{ t('settings.dnsOverrideActive') }}
+      </span>
+    </template>
 
     <div>
       <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-fg-muted">
@@ -91,5 +89,5 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
         {{ t('settings.dnsOverrideHint') }}
       </p>
     </div>
-  </section>
+  </SettingCard>
 </template>

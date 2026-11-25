@@ -6,7 +6,7 @@ import { api } from '@/lib/http.js';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({
@@ -165,20 +165,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <!-- 头部说明 & 开关 -->
-    <SectionHeader
-      :description="t('settings.guestbookEnableDesc')"
-      :no-margin="!guestbookConfig.enabled"
-      :title="t('settings.guestbookTitle')"
-    >
-      <template #icon>
-        <MessageSquare class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <Switch v-model="guestbookConfig.enabled" />
-      </template>
-    </SectionHeader>
+  <!-- 头部说明 & 开关 -->
+  <SettingCard
+    :description="t('settings.guestbookEnableDesc')"
+    :no-margin="!guestbookConfig.enabled"
+    :title="t('settings.guestbookTitle')"
+  >
+    <template #icon>
+      <MessageSquare class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <Switch v-model="guestbookConfig.enabled" />
+    </template>
 
     <!-- {{ t('settings.guestbookTitle') }}区域 -->
     <div v-if="guestbookConfig.enabled" class="pt-6 border-t border-line">
@@ -306,5 +304,5 @@ onMounted(() => {
         </div>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>

@@ -1,4 +1,4 @@
-export const BUILTIN_TEMPLATE_REGISTRY = {
+const BUILTIN_TEMPLATE_REGISTRY = {
   clash_misub_minimal: {
     id: 'clash_misub_minimal',
     name: 'MiSub 极简默认分流',

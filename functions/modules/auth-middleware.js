@@ -120,7 +120,7 @@ export async function createSignedToken(key, data) {
  * @param {string} token - 要验证的令牌
  * @returns {Promise<string|null>} 验证成功返回数据，失败返回 null
  */
-export async function verifySignedToken(key, token) {
+async function verifySignedToken(key, token) {
   if (!key || !token) return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
@@ -386,8 +386,8 @@ export async function authMiddleware(request, env) {
 }
 
 export const LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
-export const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
-export const LOGIN_RATE_LIMIT_LOCKOUT_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT_LOCKOUT_MS = 15 * 60 * 1000;
 
 function getLoginClientIp(request) {
   const raw =
@@ -579,13 +579,4 @@ export async function handleLogout(request) {
   const secureFlag = isSecure ? 'Secure;' : '';
   headers.append('Set-Cookie', `${COOKIE_NAME}=; Path=/; HttpOnly; ${secureFlag} SameSite=Lax; Max-Age=0`);
   return new Response(JSON.stringify({ success: true }), { headers });
-}
-
-/**
- * 获取认证失败的响应
- * @param {string} message - 错误消息
- * @returns {Response} 401 响应
- */
-export function createUnauthorizedResponse(message = 'Unauthorized') {
-  return new Response(JSON.stringify({ error: message }), { status: 401 });
 }

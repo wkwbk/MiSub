@@ -1,15 +1,11 @@
 import { z } from 'zod';
-import { NODE_PROTOCOL_REGEX } from '../protocols/constants.js';
 import {
-  MisubItemSchema,
+  HttpUrlStringSchema,
+  ManualNodeUrlSchema,
   OperatorRuleSchema,
-  ProfileSchema,
+  RemoteSubscriptionUrlSchema,
   SettingsSchema,
-  SubscriptionUserInfoSchema,
 } from './entities.js';
-
-const HTTP_URL_REGEX = /^https?:\/\/.+/i;
-const HTTP_PROXY_AUTH_URL_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
 export const LoginRequestSchema = z
   .object({
@@ -18,28 +14,10 @@ export const LoginRequestSchema = z
   })
   .passthrough();
 
-export const LoginResponseSchema = z
-  .object({
-    success: z.boolean().optional(),
-    error: z.string().optional(),
-    code: z.string().optional(),
-    retryAfterSeconds: z.number().int().positive().optional(),
-  })
-  .passthrough();
-
 export const MisubsSaveRequestSchema = z
   .object({
     misubs: z.array(z.record(z.string(), z.unknown())),
     profiles: z.array(z.record(z.string(), z.unknown())),
-    baseRevision: z.string().optional(),
-    force: z.boolean().optional().default(false),
-  })
-  .passthrough();
-
-export const StrictMisubsSaveRequestSchema = z
-  .object({
-    misubs: z.array(MisubItemSchema),
-    profiles: z.array(ProfileSchema),
     baseRevision: z.string().optional(),
     force: z.boolean().optional().default(false),
   })
@@ -82,7 +60,7 @@ export const ParseSubscriptionResponseSchema = z
 
 export const NodeCountRequestSchema = z
   .object({
-    url: z.string().trim().regex(HTTP_URL_REGEX),
+    url: HttpUrlStringSchema,
     userAgent: z.string().optional(),
     fetchProxy: z.string().optional(),
     plusAsSpace: z.boolean().optional(),
@@ -97,11 +75,7 @@ export const PaginationQuerySchema = z.object({
 export const ExternalSubscriptionCreateSchema = z
   .object({
     name: z.string().trim().optional().default(''),
-    url: z
-      .string()
-      .trim()
-      .regex(HTTP_URL_REGEX)
-      .refine((v) => !HTTP_PROXY_AUTH_URL_REGEX.test(v)),
+    url: RemoteSubscriptionUrlSchema,
     enabled: z.boolean().optional().default(true),
     autoUpdate: z.boolean().optional().default(true),
     tags: z.array(z.string()).optional().default([]),
@@ -117,15 +91,10 @@ export const ExternalSubscriptionCreateSchema = z
   })
   .passthrough();
 
-export const ExternalSubscriptionUpdateSchema = ExternalSubscriptionCreateSchema.partial();
-
 export const ExternalManualNodeCreateSchema = z
   .object({
     name: z.string().trim().min(1),
-    url: z
-      .string()
-      .trim()
-      .refine((v) => (HTTP_URL_REGEX.test(v) ? HTTP_PROXY_AUTH_URL_REGEX.test(v) : NODE_PROTOCOL_REGEX.test(v))),
+    url: ManualNodeUrlSchema,
     enabled: z.boolean().optional().default(true),
     tags: z.array(z.string()).optional().default([]),
     remarks: z.string().optional().default(''),
@@ -133,15 +102,9 @@ export const ExternalManualNodeCreateSchema = z
   })
   .passthrough();
 
-export const ExternalManualNodeUpdateSchema = ExternalManualNodeCreateSchema.partial();
-
 export const ExternalManualNodeValidateSchema = z.object({
   name: z.string().trim().optional().default(''),
-  url: z
-    .string()
-    .trim()
-    .min(1)
-    .refine((v) => (HTTP_URL_REGEX.test(v) ? HTTP_PROXY_AUTH_URL_REGEX.test(v) : NODE_PROTOCOL_REGEX.test(v))),
+  url: z.string().trim().min(1).pipe(ManualNodeUrlSchema),
 });
 
 export const ExternalProfileCreateSchema = z
@@ -160,8 +123,6 @@ export const ExternalProfileCreateSchema = z
   })
   .passthrough();
 
-export const ExternalProfileUpdateSchema = ExternalProfileCreateSchema.partial();
-
 export const ExternalApiMetaSchema = z
   .object({
     page: z.number().int().min(1).optional(),
@@ -178,27 +139,6 @@ export const ExternalApiErrorEnvelopeSchema = z.object({
     message: z.string().min(1),
   }),
 });
-
-export const ExternalSubscriptionDtoSchema = z
-  .object({
-    id: z.string().min(1),
-    type: z.literal('subscription'),
-    name: z.string(),
-    url: z.string(),
-    enabled: z.boolean(),
-    autoUpdate: z.boolean(),
-    tags: z.array(z.string()),
-    userAgent: z.string(),
-    proxy: z.string(),
-    nodeCount: z.number().int().nonnegative(),
-    userInfo: SubscriptionUserInfoSchema,
-    lastError: z.string(),
-    lastUpdate: z.string().nullable(),
-    sortIndex: z.number(),
-    createdAt: z.string().nullable(),
-    updatedAt: z.string().nullable(),
-  })
-  .passthrough();
 
 /**
  * 构造对外 API 成功响应体校验 Schema

@@ -10,7 +10,7 @@ import { handleDirectUrlMode, handleSingleSubscriptionMode } from './single-subs
  * @param {Object} requestData - 请求数据
  * @returns {string} 请求模式
  */
-export function determineRequestMode(requestData) {
+function determineRequestMode(requestData) {
   if (requestData.profileId) {
     return 'profile';
   } else if (requestData.subscriptionId) {

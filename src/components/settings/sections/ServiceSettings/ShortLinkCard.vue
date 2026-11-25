@@ -1,7 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Eye, EyeOff, Link2, Loader2 } from '@lucide/vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import { Link2, Loader2 } from '@lucide/vue';
+import SecretInput from '@/components/settings/SecretInput.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
 import { testShortLinkConnection } from '@/lib/api.js';
 import { useI18n } from '@/i18n/index.js';
@@ -15,7 +16,6 @@ const props = defineProps({
   },
 });
 
-const showToken = ref(false);
 const isTesting = ref(false);
 const testResult = ref(null);
 
@@ -77,19 +77,17 @@ async function handleTestConnection() {
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <SectionHeader :description="t('settings.shortLinkDesc')" :title="t('settings.shortLinkTitle')">
-      <template #icon>
-        <Link2 class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <Switch
-          :aria-label="t('settings.shortLinkEnable')"
-          :model-value="Boolean(shortLinkConfig.enabled)"
-          @update:model-value="updateField('enabled', $event)"
-        />
-      </template>
-    </SectionHeader>
+  <SettingCard :description="t('settings.shortLinkDesc')" :title="t('settings.shortLinkTitle')">
+    <template #icon>
+      <Link2 class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <Switch
+        :aria-label="t('settings.shortLinkEnable')"
+        :model-value="Boolean(shortLinkConfig.enabled)"
+        @update:model-value="updateField('enabled', $event)"
+      />
+    </template>
 
     <div class="space-y-4">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -109,37 +107,17 @@ async function handleTestConnection() {
           </p>
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-fg-muted mb-1.5">
-            {{ t('settings.shortLinkApiToken') }}
-          </label>
-          <div class="relative">
-            <input
-              :placeholder="
-                shortLinkConfig.hasToken
-                  ? t('settings.shortLinkTokenSavedPlaceholder')
-                  : t('settings.shortLinkTokenPlaceholder')
-              "
-              :type="showToken ? 'text' : 'password'"
-              :value="shortLinkConfig.apiToken"
-              autocomplete="off"
-              class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
-              @input="updateField('apiToken', $event.target.value)"
-            />
-            <button
-              :aria-label="showToken ? t('actions.hide') : t('actions.show')"
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
-              type="button"
-              @click="showToken = !showToken"
-            >
-              <EyeOff v-if="showToken" class="h-4 w-4" />
-              <Eye v-else class="h-4 w-4" />
-            </button>
-          </div>
-          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-            {{ t('settings.shortLinkApiTokenHint') }}
-          </p>
-        </div>
+        <SecretInput
+          :hint="t('settings.shortLinkApiTokenHint')"
+          :label="t('settings.shortLinkApiToken')"
+          :model-value="shortLinkConfig.apiToken"
+          :placeholder="
+            shortLinkConfig.hasToken
+              ? t('settings.shortLinkTokenSavedPlaceholder')
+              : t('settings.shortLinkTokenPlaceholder')
+          "
+          @update:model-value="updateField('apiToken', $event)"
+        />
       </div>
 
       <div class="flex flex-wrap items-center gap-3 pt-1">
@@ -162,5 +140,5 @@ async function handleTestConnection() {
         </span>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>

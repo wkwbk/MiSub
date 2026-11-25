@@ -4,7 +4,7 @@
  * 推断常见代理客户端/内核（Xray、Sing-box、Mihomo、Surge、Loon、QuanX）的支持情况。
  */
 
-export const CLIENT_DEFINITIONS = [
+const CLIENT_DEFINITIONS = [
   { id: 'xray', label: 'Xray' },
   { id: 'singbox', label: 'Sing-box' },
   { id: 'mihomo', label: 'Mihomo' },

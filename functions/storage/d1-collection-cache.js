@@ -41,7 +41,7 @@ export function resetD1CollectionCaches() {
   }
 }
 
-export function getD1CollectionCache(database) {
+function getD1CollectionCache(database) {
   let cache = d1CollectionCaches.get(database);
   if (!cache) {
     cache = new Map();

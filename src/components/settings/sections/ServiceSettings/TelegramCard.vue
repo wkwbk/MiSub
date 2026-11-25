@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Eye, EyeOff, Loader2, Send } from '@lucide/vue';
+import { Loader2, Send } from '@lucide/vue';
+import CopyableInput from '@/components/settings/CopyableInput.vue';
+import SecretInput from '@/components/settings/SecretInput.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
@@ -77,9 +79,6 @@ const setWebhookUrl = computed(() => {
 const copyStatus = ref(null);
 const showSetupGuide = ref(false);
 const showUsageGuide = ref(false);
-const showNotifyBotToken = ref(false);
-const showPushBotToken = ref(false);
-const showWebhookSecret = ref(false);
 const isTesting = ref(false);
 const testResult = ref(null);
 const isSyncingBot = ref(false);
@@ -180,41 +179,19 @@ async function syncPushBot() {
 
 <template>
   <div class="space-y-4">
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader :description="t('settings.telegramNotifyBotDesc')" :title="t('settings.telegramNotifyBotTitle')">
-        <template #icon>
-          <Send class="h-4 w-4" />
-        </template>
-      </SectionHeader>
+    <SettingCard :description="t('settings.telegramNotifyBotDesc')" :title="t('settings.telegramNotifyBotTitle')">
+      <template #icon>
+        <Send class="h-4 w-4" />
+      </template>
 
       <div class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-xs font-medium text-fg-muted mb-1.5">Bot Token</label>
-            <div class="relative">
-              <input
-                v-model="settings.botToken"
-                :placeholder="
-                  settings.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'
-                "
-                :type="showNotifyBotToken ? 'text' : 'password'"
-                autocomplete="off"
-                class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
-              />
-              <button
-                :aria-label="showNotifyBotToken ? t('actions.hide') : t('actions.show')"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
-                type="button"
-                @click="showNotifyBotToken = !showNotifyBotToken"
-              >
-                <EyeOff v-if="showNotifyBotToken" class="h-4 w-4" />
-                <Eye v-else class="h-4 w-4" />
-              </button>
-            </div>
-            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-              {{ t('settings.telegramBotTokenHint') }}
-            </p>
-          </div>
+          <SecretInput
+            v-model="settings.botToken"
+            :hint="t('settings.telegramBotTokenHint')"
+            :placeholder="settings.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'"
+            label="Bot Token"
+          />
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">Chat ID</label>
             <input
@@ -262,88 +239,53 @@ async function syncPushBot() {
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.telegramPushBotDesc')"
-        :no-margin="!telegramPushConfig.enabled"
-        title="Telegram Push Bot"
-      >
-        <template #icon>
-          <Send class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <Switch
-            :model-value="telegramPushConfig.enabled"
-            @update:model-value="(val) => updatePushConfigField('enabled', val)"
-          />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.telegramPushBotDesc')"
+      :no-margin="!telegramPushConfig.enabled"
+      title="Telegram Push Bot"
+    >
+      <template #icon>
+        <Send class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <Switch
+          :model-value="telegramPushConfig.enabled"
+          @update:model-value="(val) => updatePushConfigField('enabled', val)"
+        />
+      </template>
 
       <div v-if="telegramPushConfig.enabled" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-xs font-medium text-fg-muted">Push Bot Token</label>
-            <div class="relative mt-1.5">
-              <input
-                :placeholder="
-                  telegramPushConfig.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'
-                "
-                :type="showPushBotToken ? 'text' : 'password'"
-                :value="telegramPushConfig.botToken"
-                autocomplete="off"
-                class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
-                @input="(e) => updatePushConfigField('botToken', e.target.value)"
-              />
-              <button
-                :aria-label="showPushBotToken ? t('actions.hide') : t('actions.show')"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
-                type="button"
-                @click="showPushBotToken = !showPushBotToken"
-              >
-                <EyeOff v-if="showPushBotToken" class="h-4 w-4" />
-                <Eye v-else class="h-4 w-4" />
-              </button>
-            </div>
-            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-              {{ t('settings.telegramPushTokenHint') }}
-            </p>
-          </div>
+          <SecretInput
+            :hint="t('settings.telegramPushTokenHint')"
+            :model-value="telegramPushConfig.botToken"
+            :placeholder="
+              telegramPushConfig.hasBotToken ? t('settings.telegramBotTokenSavedPlaceholder') : '123456:ABC-DEF...'
+            "
+            label="Push Bot Token"
+            @update:model-value="(val) => updatePushConfigField('botToken', val)"
+          />
 
-          <div>
-            <label class="block text-xs font-medium text-fg-muted">{{ t('settings.telegramWebhookSecret') }}</label>
-            <div class="relative mt-1.5">
-              <input
-                :aria-label="t('settings.telegramWebhookSecret')"
-                :placeholder="
-                  telegramPushConfig.hasWebhookSecret
-                    ? t('settings.telegramWebhookSecretSavedPlaceholder')
-                    : 'random_secret-token'
-                "
-                :type="showWebhookSecret ? 'text' : 'password'"
-                :value="telegramPushConfig.webhookSecret"
-                autocomplete="off"
-                class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg"
-                @input="(e) => updatePushConfigField('webhookSecret', e.target.value)"
-              />
-              <button
-                :aria-label="showWebhookSecret ? t('actions.hide') : t('actions.show')"
-                class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-fg-muted hover:text-fg transition-colors"
-                type="button"
-                @click="showWebhookSecret = !showWebhookSecret"
-              >
-                <EyeOff v-if="showWebhookSecret" class="h-4 w-4" />
-                <Eye v-else class="h-4 w-4" />
-              </button>
-            </div>
-            <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-              {{ t('settings.telegramWebhookSecretHint') }}
-            </p>
-            <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-status-danger">
-              {{ t('settings.telegramWebhookSecretInvalid') }}
-            </p>
-          </div>
+          <SecretInput
+            :aria-label="t('settings.telegramWebhookSecret')"
+            :hint="t('settings.telegramWebhookSecretHint')"
+            :label="t('settings.telegramWebhookSecret')"
+            :model-value="telegramPushConfig.webhookSecret"
+            :placeholder="
+              telegramPushConfig.hasWebhookSecret
+                ? t('settings.telegramWebhookSecretSavedPlaceholder')
+                : 'random_secret-token'
+            "
+            @update:model-value="(val) => updatePushConfigField('webhookSecret', val)"
+          >
+            <template #extra>
+              <p v-if="webhookSecret && !isWebhookSecretValid" class="mt-1.5 text-xs text-status-danger">
+                {{ t('settings.telegramWebhookSecretInvalid') }}
+              </p>
+            </template>
+          </SecretInput>
         </div>
 
         <div>
@@ -380,50 +322,23 @@ async function syncPushBot() {
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-medium text-fg-muted">Webhook URL</label>
-          <div class="mt-1.5 flex rounded-md shadow-none">
-            <input
-              :value="webhookUrl"
-              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg"
-              readonly
-              type="text"
-            />
-            <button
-              class="inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
-              type="button"
-              @click="copyText(webhookUrl, 'webhook')"
-            >
-              {{ copyStatus?.key === 'webhook' ? copyStatus.message : t('actions.copy') }}
-            </button>
-          </div>
-          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-            {{ t('settings.telegramWebhookUrlHint') }}
-          </p>
-        </div>
+        <CopyableInput
+          :button-text="copyStatus?.key === 'webhook' ? copyStatus.message : t('actions.copy')"
+          :hint="t('settings.telegramWebhookUrlHint')"
+          :value="webhookUrl"
+          label="Webhook URL"
+          @copy="copyText(webhookUrl, 'webhook')"
+        />
 
-        <div v-if="setWebhookUrl">
-          <label class="block text-xs font-medium text-fg-muted">{{ t('settings.telegramSetWebhookLink') }}</label>
-          <div class="mt-1.5 flex rounded-md shadow-none">
-            <input
-              :aria-label="t('settings.telegramPublicAccess')"
-              :value="setWebhookUrl"
-              class="flex-1 min-w-0 block w-full px-3 py-2 bg-inset border border-line rounded-l-md rounded-r-none text-xs font-mono text-fg"
-              readonly
-              type="text"
-            />
-            <button
-              class="inline-flex shrink-0 items-center whitespace-nowrap px-4 py-2 border border-l-0 border-line rounded-r-md rounded-l-none bg-transparent text-xs font-medium text-fg-muted hover:bg-hover hover:text-fg transition-colors focus-visible:outline-hidden"
-              type="button"
-              @click="copyText(setWebhookUrl, 'setWebhook')"
-            >
-              {{ copyStatus?.key === 'setWebhook' ? copyStatus.message : t('actions.copy') }}
-            </button>
-          </div>
-          <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
-            {{ t('settings.telegramSetWebhookHint') }}
-          </p>
-        </div>
+        <CopyableInput
+          v-if="setWebhookUrl"
+          :aria-label="t('settings.telegramPublicAccess')"
+          :button-text="copyStatus?.key === 'setWebhook' ? copyStatus.message : t('actions.copy')"
+          :hint="t('settings.telegramSetWebhookHint')"
+          :label="t('settings.telegramSetWebhookLink')"
+          :value="setWebhookUrl"
+          @copy="copyText(setWebhookUrl, 'setWebhook')"
+        />
 
         <p v-else class="callout-warning">
           {{ t('settings.telegramSetWebhookEmpty') }}
@@ -509,6 +424,6 @@ async function syncPushBot() {
           </div>
         </div>
       </div>
-    </section>
+    </SettingCard>
   </div>
 </template>

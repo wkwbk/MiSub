@@ -34,7 +34,7 @@ import {
 import { NoopStorageAdapter } from './storage/noop-adapter.js';
 import { resolvePublicProfile } from '@misub/core/domain/profile-link.js';
 
-export { ensureD1Schema, isManualNodeRecord, STORAGE_TYPES };
+export { STORAGE_TYPES };
 
 let settingsCaches = new WeakMap();
 const SETTINGS_CACHE_TTL_MS = 10 * 1000;

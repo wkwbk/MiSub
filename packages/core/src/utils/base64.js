@@ -21,8 +21,6 @@ export function utf8ToBase64(str) {
   return btoa(binary);
 }
 
-export const base64EncodeUtf8 = utf8ToBase64;
-
 /**
  * 规范化 Base64 字符串（兼容 URL-safe 字符与缺失 padding）
  * @param {string} str

@@ -5,26 +5,27 @@
  */
 
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
-import { cleanControlChars, getUniqueName } from '../../core/name-utils.js';
+import { cleanControlChars } from '../../core/name-utils.js';
 import { isMetaCore } from '../../core/user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../../security/safe-dns.js';
-import { cloneSnifferConfig } from '../../core/sniffing-config.js';
+import {
+  CLASH_YAML_DUMP_OPTIONS,
+  createBaseClashConfig,
+  deduplicateProxyNames,
+  DEFAULT_TEST_URL,
+  materializeRelayChainNodes,
+  parseNodeUrlLines,
+  resolveBuiltinPolicyGroups,
+  stripInternalProxyFields,
+} from '../../core/client-shared.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   GEOX_URLS,
   getBuiltinRules,
   getRemoteProviderDefinitions,
-  POLICY_GROUPS,
-  pruneProxyGroups,
 } from '../../templates/builtin-rules-provider.js';
-import {
-  applyClashBaseConfigOverride,
-  applyGeneralGroupToggles,
-  buildVisualPolicyGroups,
-  buildVisualRulesAndProviders,
-  normalizeBuiltinTransform,
-} from '../../core/visual-rules-builder.js';
+import { applyClashBaseConfigOverride, buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 import * as yaml from 'js-yaml';
 
 /**
@@ -55,29 +56,6 @@ function deepCleanControlChars(obj) {
 }
 
 /**
- * 处理重名节点，确保每个节点名称唯一
- * @param {Object[]} proxies - 代理对象数组
- */
-function deduplicateNames(proxies) {
-  const usedNames = new Map();
-  proxies.forEach((proxy) => {
-    proxy.name = getUniqueName(proxy.name, usedNames);
-  });
-}
-
-/**
- * 移除仅供内部分组使用、不能输出到 Clash/Mihomo 配置的字段。
- * @param {Object[]} proxies
- * @returns {Object[]}
- */
-function stripInternalProxyFields(proxies) {
-  return proxies.map((proxy) => {
-    const { metadata: _metadata, ...publicProxy } = proxy;
-    return publicProxy;
-  });
-}
-
-/**
  * 将内部策略组规范化为标准 Clash/Mihomo 顶层字段。
  * 内置策略组工厂使用 `options: { url, interval, tolerance }` 作为跨内核中间结构，
  * 输出到 Clash YAML 时必须拍平到顶层，且为 url-test / fallback 补齐默认测速参数。
@@ -99,53 +77,11 @@ function normalizeClashProxyGroups(proxyGroups) {
       if (groupOptions.lazy !== undefined && normalized.lazy === undefined) normalized.lazy = groupOptions.lazy;
     }
     if (normalized.type === 'url-test' || normalized.type === 'fallback') {
-      if (!normalized.url) normalized.url = 'http://www.gstatic.com/generate_204';
+      if (!normalized.url) normalized.url = DEFAULT_TEST_URL;
       if (!normalized.interval) normalized.interval = 300;
     }
     return normalized;
   });
-}
-
-/**
- * 为 Mihomo/Meta 生成链式代理节点。
- * 当前 Meta 内核不再支持 relay 策略组语义，应通过 dialer-proxy 让落地节点经由入口节点拨号。
- * @param {Object[]} proxies 原始代理对象（保留内部 metadata）
- * @param {Object[]} publicProxies 输出用代理对象（不含内部字段）
- * @param {Object[]} proxyGroups 策略组定义
- * @returns {{proxies: Object[], proxyGroups: Object[]}}
- */
-function applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups) {
-  const relayGroup = proxyGroups.find((group) => group.name === '🔗 链式代理');
-  if (!relayGroup) {
-    return { proxies: publicProxies, proxyGroups };
-  }
-
-  const chainProxies = publicProxies.map((proxy) => ({
-    ...proxy,
-    name: `🔗 链式代理 - ${proxy.name}`,
-    'dialer-proxy': '入口节点',
-  }));
-  const chainNames = chainProxies.map((proxy) => proxy.name);
-
-  const nextProxyGroups = proxyGroups
-    .map((group) => {
-      if (group.name === '🔗 链式代理') {
-        return {
-          ...group,
-          // Meta/Mihomo 不再使用 relay group。保持上一版可用结构：
-          // “链式代理”直接选择带 dialer-proxy 的落地副本；同时隐藏“落地节点”分组，避免多一层选择造成误解。
-          type: 'select',
-          proxies: chainNames,
-        };
-      }
-      return group;
-    })
-    .filter(Boolean);
-
-  return {
-    proxies: [...publicProxies, ...chainProxies],
-    proxyGroups: pruneProxyGroups(nextProxyGroups, [...proxies, ...chainProxies]),
-  };
 }
 
 /**
@@ -165,24 +101,9 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
   // Stash 通过 #SUBSCRIBED <url> 注释行识别订阅地址以支持自动更新
   const isStashClient = /stash/i.test(userAgent || '');
 
-  // 解析节点 URL 列表（先清理控制字符）。
-  const cleanedNodeList = cleanControlChars(nodeList);
-  const nodeUrls = String(cleanedNodeList || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
-
-  // URL 输入继续走既有转换逻辑。
-  let proxies = urlsToClashProxies(nodeUrls, options);
-
-  // 清理控制字符
-  proxies = deepCleanControlChars(proxies);
-
-  // 强制跳过证书验证
-  // (已在 urlsToClashProxies 中全局处理)
-
-  // 处理重名节点
-  deduplicateNames(proxies);
+  const nodeUrls = parseNodeUrlLines(nodeList);
+  let proxies = deepCleanControlChars(urlsToClashProxies(nodeUrls, options));
+  deduplicateProxyNames(proxies);
 
   if (proxies.length === 0) {
     return '# No valid proxies found\nproxies: []\n';
@@ -190,29 +111,23 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
 
   // 生成 YAML
   try {
-    const levelKey = (ruleLevel || 'std').toUpperCase();
-    const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
-    const useVisualRules = Boolean(bt?.visualRulesEnabled) && !isHiddifyClient;
+    const {
+      levelKey,
+      bt,
+      useVisualRules,
+      proxyGroups: resolvedGroups,
+    } = resolveBuiltinPolicyGroups(proxies, options, { allowVisualRules: !isHiddifyClient });
 
-    let proxyGroups;
+    let proxyGroups = resolvedGroups;
     let ruleProviders;
     let clashRules;
 
     if (useVisualRules) {
-      proxyGroups = buildVisualPolicyGroups(proxies, { ...options, builtinTransform: bt });
       const visualOutput = buildVisualRulesAndProviders('clash', { ...options, builtinTransform: bt });
       ruleProviders = visualOutput.clashProviders;
       clashRules = visualOutput.rules;
     } else {
       const rawRules = isHiddifyClient ? ['MATCH,🚀 节点选择'] : getBuiltinRules(levelKey, 'clash', options);
-
-      // 生成策略组并执行引用修剪
-      const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-      proxyGroups = policyGroupsFactory(proxies, options);
-      if (bt) {
-        proxyGroups = applyGeneralGroupToggles(proxyGroups, { builtinTransform: bt });
-      }
-      proxyGroups = pruneProxyGroups(proxyGroups, proxies);
 
       // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
       // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
@@ -230,9 +145,18 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
 
     let publicProxies = stripInternalProxyFields(proxies);
     if (!useVisualRules && levelKey === 'RELAY' && enableMihomoSyntax) {
-      const relayConfig = applyMihomoRelayDialerProxy(proxies, publicProxies, proxyGroups);
-      publicProxies = relayConfig.proxies;
-      proxyGroups = relayConfig.proxyGroups;
+      const relayGroup = proxyGroups.find((group) => group.name === '🔗 链式代理');
+      if (relayGroup) {
+        const relayConfig = materializeRelayChainNodes({
+          nameKey: 'name',
+          linkKey: 'dialer-proxy',
+          publicItems: publicProxies,
+          proxyGroups,
+          allProxiesForPrune: proxies,
+        });
+        publicProxies = relayConfig.items;
+        proxyGroups = relayConfig.proxyGroups;
+      }
     }
 
     if (options.customDnsOverride && String(options.customDnsOverride).trim()) {
@@ -259,43 +183,25 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
           'external-controller': '127.0.0.1:9090',
         };
 
-    let config = {
-      'mixed-port': 7890,
-      'allow-lan': false,
-      'bind-address': '127.0.0.1',
-      ipv6: false,
-      mode: 'rule',
-      'log-level': 'info',
-      ...clashApiFields,
-      // GEO 数据库改走 jsDelivr 镜像，避免默认 GitHub 地址在大陆不可达时 GEOIP,CN,DIRECT 静默失效
-      'geox-url': { ...GEOX_URLS },
-      // 域名嗅探：还原硬编码 IP 直连流量（Telegram/Google 系）的真实域名，命中域名分流规则
-      sniffer: cloneSnifferConfig(),
-
+    let config = createBaseClashConfig({
       dns: dnsConfig,
-
       proxies: publicProxies,
-      profile: {
-        'store-selected': true,
-        'subscription-url': options.managedConfigUrl || '',
-      },
-
-      'proxy-groups': normalizeClashProxyGroups(proxyGroups),
-      ...(Object.keys(ruleProviders).length ? { 'rule-providers': ruleProviders } : {}),
+      proxyGroups: normalizeClashProxyGroups(proxyGroups),
+      ruleProviders,
       rules: clashRules,
-    };
+      managedConfigUrl: options.managedConfigUrl,
+      extraTopLevel: {
+        ...clashApiFields,
+        // GEO 数据库改走 jsDelivr 镜像，避免默认 GitHub 地址在大陆不可达时 GEOIP,CN,DIRECT 静默失效
+        'geox-url': { ...GEOX_URLS },
+      },
+    });
 
     if (bt?.baseConfig?.clash) {
       config = applyClashBaseConfigOverride(config, bt.baseConfig.clash);
     }
 
-    let yamlStr = yaml.dump(config, {
-      indent: 2,
-      lineWidth: -1,
-      noRefs: true,
-      quotingType: '"',
-      forceQuotes: false,
-    });
+    let yamlStr = yaml.dump(config, CLASH_YAML_DUMP_OPTIONS);
 
     // Stash 首行输出 #SUBSCRIBED <订阅 URL> 以启用订阅自动更新
     if (isStashClient && options.managedConfigUrl && String(options.managedConfigUrl).trim()) {
@@ -323,19 +229,8 @@ export function generateBuiltinClashConfig(nodeList, options = {}) {
  * @returns {string} 仅包含 proxies 部分的 YAML
  */
 export function generateProxiesOnly(nodeList) {
-  const cleanedNodeList = cleanControlChars(nodeList);
-  const nodeUrls = cleanedNodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
-
-  let proxies = urlsToClashProxies(nodeUrls);
-
-  // 清理控制字符
-  proxies = deepCleanControlChars(proxies);
-
-  // 处理重名节点
-  deduplicateNames(proxies);
+  let proxies = deepCleanControlChars(urlsToClashProxies(parseNodeUrlLines(nodeList)));
+  deduplicateProxyNames(proxies);
 
   try {
     const publicProxies = stripInternalProxyFields(proxies);

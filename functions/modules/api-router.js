@@ -147,7 +147,7 @@ async function handleSubconverterConfigRequest(request, env, context) {
 /**
  * 构建 /api 子路由（不含 CORS/CSRF 外壳，便于单元测试直接调用与根 Hono 应用挂载）
  */
-export function createApiRouter() {
+function createApiRouter() {
   const apiApp = /** @type {Hono<{ Bindings: Record<string, any>; Variables: Record<string, any> }>} */ (new Hono());
 
   // 对外开放 API (/api/ext/v1/*) 使用独立 Bearer Token 鉴权

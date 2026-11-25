@@ -153,7 +153,7 @@ export function buildUserInfoHeaderFromSubscriptions(context, subscriptions, pro
     : null;
 }
 
-export function resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp = 0) {
+function resolveNotificationExpireDate(profileExpiresAt, mergedExpireTimestamp = 0) {
   let date = profileExpiresAt ? new Date(profileExpiresAt) : null;
   if (!date || Number.isNaN(date.getTime())) {
     const timestamp = Number(mergedExpireTimestamp);

@@ -5,9 +5,9 @@ import { STORAGE_KEY_SETTINGS } from '../config.js';
 import { listRuleTemplates, STORAGE_KEY_RULE_TEMPLATES } from './rule-template-handler.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
-export const BACKUP_TYPE = 'misub-backup';
-export const BACKUP_VERSION = 1;
-export const BACKUP_SCOPES = {
+const BACKUP_TYPE = 'misub-backup';
+const BACKUP_VERSION = 1;
+const BACKUP_SCOPES = {
   DATA_ONLY: 'dataOnly',
   DATA_AND_SETTINGS: 'dataAndSettings',
 };
@@ -65,11 +65,11 @@ function sanitizeRuntimeSecrets(settings = {}) {
   return sanitized;
 }
 
-export function sanitizeSettingsForBackup(settings = {}) {
+function sanitizeSettingsForBackup(settings = {}) {
   return sanitizeRuntimeSecrets(settings);
 }
 
-export function sanitizeSettingsForRestore(settings = {}) {
+function sanitizeSettingsForRestore(settings = {}) {
   return sanitizeRuntimeSecrets(settings);
 }
 
@@ -140,7 +140,7 @@ export async function buildBackupPayload(env, options = {}) {
   return payload;
 }
 
-export function normalizeBackupPayload(raw) {
+function normalizeBackupPayload(raw) {
   if (!raw || typeof raw !== 'object') {
     throw new Error('无效的备份文件格式');
   }

@@ -3,7 +3,7 @@ import { AlertTriangle, Archive, Lock } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import Input from '@/components/ui/Input.vue';
 import Switch from '@/components/ui/Switch.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
@@ -73,15 +73,13 @@ const handleCopyExternalApiToken = async (settings) => {
 <template>
   <div class="space-y-4">
     <!-- 外部管理 API -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader :description="t('systemSettings.externalApiDesc')" :title="t('systemSettings.externalApiTitle')">
-        <template #icon>
-          <Lock class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <Switch v-model="settings.externalApi.enabled" @update:modelValue="ensureExternalApiDefaults(settings)" />
-        </template>
-      </SectionHeader>
+    <SettingCard :description="t('systemSettings.externalApiDesc')" :title="t('systemSettings.externalApiTitle')">
+      <template #icon>
+        <Lock class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <Switch v-model="settings.externalApi.enabled" @update:modelValue="ensureExternalApiDefaults(settings)" />
+      </template>
 
       <div class="space-y-5">
         <div class="space-y-1.5">
@@ -121,42 +119,38 @@ const handleCopyExternalApiToken = async (settings) => {
           </button>
         </div>
       </div>
-    </section>
+    </SettingCard>
 
     <!-- 备份与恢复 -->
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('systemSettings.backupRestoreDesc')"
-        :title="t('systemSettings.backupRestoreTitle')"
-        no-margin
-      >
-        <template #icon>
-          <Archive class="h-4 w-4" />
-        </template>
-        <template #actions>
-          <button
-            class="px-4 py-1.5 text-xs font-semibold text-accent-fg rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-accent border border-accent hover:opacity-90"
-            @click="exportBackup"
-          >
-            {{ t('systemSettings.exportBackup') }}
-          </button>
-          <button
-            class="px-4 py-1.5 text-xs font-medium text-fg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-line hover:bg-hover hover:text-fg"
-            @click="importBackup"
-          >
-            {{ t('systemSettings.importBackup') }}
-          </button>
-        </template>
-      </SectionHeader>
-    </section>
+    <SettingCard
+      :description="t('systemSettings.backupRestoreDesc')"
+      :title="t('systemSettings.backupRestoreTitle')"
+      no-margin
+    >
+      <template #icon>
+        <Archive class="h-4 w-4" />
+      </template>
+      <template #actions>
+        <button
+          class="px-4 py-1.5 text-xs font-semibold text-accent-fg rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-accent border border-accent hover:opacity-90"
+          @click="exportBackup"
+        >
+          {{ t('systemSettings.exportBackup') }}
+        </button>
+        <button
+          class="px-4 py-1.5 text-xs font-medium text-fg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-line hover:bg-hover hover:text-fg"
+          @click="importBackup"
+        >
+          {{ t('systemSettings.importBackup') }}
+        </button>
+      </template>
+    </SettingCard>
 
     <!-- 危险区域 -->
-    <section class="rounded-lg border border-red-900/50 bg-surface p-6">
-      <SectionHeader :description="t('systemSettings.dangerZoneDesc')" :title="t('systemSettings.dangerZoneTitle')">
-        <template #icon>
-          <AlertTriangle class="h-4 w-4 text-red-400" />
-        </template>
-      </SectionHeader>
+    <SettingCard :description="t('systemSettings.dangerZoneDesc')" :title="t('systemSettings.dangerZoneTitle')" danger>
+      <template #icon>
+        <AlertTriangle class="h-4 w-4 text-red-400" />
+      </template>
 
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="space-y-1">
@@ -176,6 +170,6 @@ const handleCopyExternalApiToken = async (settings) => {
           </button>
         </div>
       </div>
-    </section>
+    </SettingCard>
   </div>
 </template>

@@ -40,8 +40,8 @@ export function generateProfileLinkId() {
 
 /**
  * 确保订阅组拥有 linkId（已有则规范化保留，缺失则生成且保证与 id 不同）
- * @param {Object} profile
- * @returns {Object}
+ * @param {Partial<import('../types.js').ProfileConfig>} profile
+ * @returns {Partial<import('../types.js').ProfileConfig>}
  */
 export function ensureProfileLinkId(profile) {
   if (!profile || typeof profile !== 'object') return profile;
@@ -62,8 +62,8 @@ export function ensureProfileLinkId(profile) {
 
 /**
  * 轮换订阅组 linkId 并清空 customId，使旧公开链接立即失效
- * @param {Object} profile
- * @returns {Object}
+ * @param {Partial<import('../types.js').ProfileConfig>} profile
+ * @returns {Partial<import('../types.js').ProfileConfig>}
  */
 export function rotateProfileLinkId(profile) {
   const prevLinkId = normalizeProfileIdentifier(profile?.linkId).toLowerCase();
@@ -81,7 +81,7 @@ export function rotateProfileLinkId(profile) {
 
 /**
  * 获取对外展示和拼接链接的标识：customId > linkId > id
- * @param {Object} profile
+ * @param {Partial<import('../types.js').ProfileConfig>} profile
  * @returns {string}
  */
 export function getProfileShareIdentifier(profile) {
@@ -94,7 +94,7 @@ export function getProfileShareIdentifier(profile) {
 
 /**
  * 判断公开订阅请求路径标识是否匹配该订阅组（严格执行降级失效隔离）。
- * @param {Object} profile
+ * @param {Partial<import('../types.js').ProfileConfig>} profile
  * @param {string} identifier
  * @returns {boolean}
  */
@@ -119,35 +119,11 @@ export function matchesPublicProfileIdentifier(profile, identifier) {
 
 /**
  * 从订阅组列表中按公开入口规则查找匹配项
- * @param {Array} profiles
+ * @param {Partial<import('../types.js').ProfileConfig>[]} profiles
  * @param {string} identifier
- * @returns {Object|null}
+ * @returns {Partial<import('../types.js').ProfileConfig>|null}
  */
 export function resolvePublicProfile(profiles, identifier) {
   if (!Array.isArray(profiles) || !identifier) return null;
   return profiles.find((profile) => matchesPublicProfileIdentifier(profile, identifier)) || null;
-}
-
-/**
- * 从订阅组列表中按内部管理/嵌套/短链查找匹配项（允许 id / customId / linkId 任一命中）
- * @param {Array} profiles
- * @param {string} identifier
- * @returns {Object|null}
- */
-export function resolveInternalProfile(profiles, identifier) {
-  const target = normalizeProfileIdentifier(identifier);
-  if (!Array.isArray(profiles) || !target) return null;
-  const exactMatch = profiles.find((p) => p && (p.id === target || p.customId === target || p.linkId === target));
-  if (exactMatch) return exactMatch;
-  const targetLower = target.toLowerCase();
-  return (
-    profiles.find((p) => {
-      if (!p) return false;
-      return (
-        normalizeProfileIdentifier(p.id).toLowerCase() === targetLower ||
-        normalizeProfileIdentifier(p.customId).toLowerCase() === targetLower ||
-        normalizeProfileIdentifier(p.linkId).toLowerCase() === targetLower
-      );
-    }) || null
-  );
 }

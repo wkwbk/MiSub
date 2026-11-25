@@ -5,9 +5,9 @@
  * - 严格模式 (strict)：按订阅 + 客户端 IP 维度限制最小拉取间隔，间隔内返回 429 Too Many Requests。
  */
 
-export const DEFAULT_SUB_FETCH_MIN_INTERVAL = 15; // 分钟
-export const MAX_SUB_FETCH_MIN_INTERVAL = 1440; // 24 小时
-export const DEFAULT_SUB_FETCH_LIMIT_MODE = 'cache';
+const DEFAULT_SUB_FETCH_MIN_INTERVAL = 15; // 分钟
+const MAX_SUB_FETCH_MIN_INTERVAL = 1440; // 24 小时
+const DEFAULT_SUB_FETCH_LIMIT_MODE = 'cache';
 
 const STRICT_COOLDOWN_MEMORY_LIMIT = 500;
 const ISOLATE_RESPONSE_CACHE_LIMIT = 64;

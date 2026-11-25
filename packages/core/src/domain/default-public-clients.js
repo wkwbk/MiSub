@@ -14,7 +14,7 @@ export const CLIENT_PLATFORMS = [
 
 export const CLIENT_PLATFORM_ORDER = CLIENT_PLATFORMS.map((p) => p.value);
 
-export const DEFAULT_PUBLIC_CLIENTS = [
+const DEFAULT_PUBLIC_CLIENTS = [
   {
     id: 'clash-verge-rev',
     name: 'Clash Verge Rev',

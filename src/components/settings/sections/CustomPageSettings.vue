@@ -6,7 +6,7 @@ import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 
 const { t } = useI18n();
 
@@ -60,6 +60,44 @@ const placeholderChips = [
   'version',
 ];
 
+const layoutSwitchRows = [
+  {
+    key: 'useDefaultLayout',
+    titleKey: 'settings.customPageUseDefaultLayout',
+    descKey: 'settings.customPageUseDefaultLayoutDesc',
+  },
+  { key: 'hideBranding', titleKey: 'settings.customPageHideBranding', descKey: 'settings.customPageHideBrandingDesc' },
+  { key: 'hideHeader', titleKey: 'settings.customPageHideHeader', descKey: 'settings.customPageHideHeaderDesc' },
+  { key: 'hideFooter', titleKey: 'settings.customPageHideFooter', descKey: 'settings.customPageHideFooterDesc' },
+];
+
+const fixedDisabledRows = [
+  { titleKey: 'settings.customPageExternalStylesDisabled', descKey: 'settings.customPageExternalStylesDisabledDesc' },
+  { titleKey: 'settings.customPageScriptsDisabled', descKey: 'settings.customPageScriptsDisabledDesc' },
+];
+
+const placeholderDocGroups = [
+  {
+    titleKey: 'settings.customPageComponentPlaceholders',
+    items: [
+      { key: 'profiles', hintKey: 'settings.customPageProfilesHint' },
+      { key: 'announcements', hintKey: 'settings.customPageAnnouncementsHint' },
+      { key: 'hero', hintKey: 'settings.customPageHeroHint' },
+      { key: 'guestbook', hintKey: 'settings.customPageGuestbookHint' },
+    ],
+  },
+  {
+    titleKey: 'settings.customPageDataPlaceholders',
+    items: [
+      { key: 'version', hintKey: 'settings.customPageVersionHint' },
+      { key: 'node_count', hintKey: 'settings.customPageNodeCountHint' },
+      { key: 'profile_count', hintKey: 'settings.customPageProfileCountHint' },
+      { key: 'title', hintKey: 'settings.customPageTitleHint' },
+      { key: 'description', hintKey: 'settings.customPageDescriptionHint' },
+    ],
+  },
+];
+
 const templates = CUSTOM_PAGE_TEMPLATES;
 
 const applyTemplate = async (tpl) => {
@@ -93,16 +131,14 @@ const normalizeFullPageSource = () => {
 
 <template>
   <div class="space-y-4 animate-fade-in">
-    <section class="rounded-lg border border-line bg-surface p-6">
-      <SectionHeader
-        :description="t('settings.customPageDesc')"
-        :no-margin="!customPage.enabled"
-        :title="t('settings.customPageTitle')"
-      >
-        <template #actions>
-          <Switch v-model="props.settings.customPage.enabled" />
-        </template>
-      </SectionHeader>
+    <SettingCard
+      :description="t('settings.customPageDesc')"
+      :no-margin="!customPage.enabled"
+      :title="t('settings.customPageTitle')"
+    >
+      <template #actions>
+        <Switch v-model="props.settings.customPage.enabled" />
+      </template>
 
       <div v-if="customPage.enabled" class="space-y-6">
         <div class="divide-y divide-line-subtle">
@@ -121,76 +157,33 @@ const normalizeFullPageSource = () => {
             >
           </div>
 
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+          <div
+            v-for="row in layoutSwitchRows"
+            :key="row.key"
+            class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6"
+          >
             <div class="space-y-1 flex-1">
               <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageUseDefaultLayout') }}
+                {{ t(row.titleKey) }}
               </p>
               <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageUseDefaultLayoutDesc') }}
+                {{ t(row.descKey) }}
               </p>
             </div>
-            <Switch v-model="props.settings.customPage.useDefaultLayout" />
+            <Switch v-model="props.settings.customPage[row.key]" />
           </div>
 
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
+          <div
+            v-for="row in fixedDisabledRows"
+            :key="row.titleKey"
+            class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6"
+          >
             <div class="space-y-1 flex-1">
               <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageHideBranding') }}
+                {{ t(row.titleKey) }}
               </p>
               <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageHideBrandingDesc') }}
-              </p>
-            </div>
-            <Switch v-model="props.settings.customPage.hideBranding" />
-          </div>
-
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-            <div class="space-y-1 flex-1">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageHideHeader') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageHideHeaderDesc') }}
-              </p>
-            </div>
-            <Switch v-model="props.settings.customPage.hideHeader" />
-          </div>
-
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-            <div class="space-y-1 flex-1">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageHideFooter') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageHideFooterDesc') }}
-              </p>
-            </div>
-            <Switch v-model="props.settings.customPage.hideFooter" />
-          </div>
-
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-            <div class="space-y-1 flex-1">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageExternalStylesDisabled') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageExternalStylesDisabledDesc') }}
-              </p>
-            </div>
-            <span
-              class="shrink-0 px-2 py-0.5 rounded-md border border-line bg-transparent text-fg-muted text-xs font-mono"
-              >{{ t('settings.customPageFixedDisabled') }}</span
-            >
-          </div>
-
-          <div class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6">
-            <div class="space-y-1 flex-1">
-              <p class="text-sm font-medium text-fg">
-                {{ t('settings.customPageScriptsDisabled') }}
-              </p>
-              <p class="text-xs text-fg-muted leading-relaxed">
-                {{ t('settings.customPageScriptsDisabledDesc') }}
+                {{ t(row.descKey) }}
               </p>
             </div>
             <span
@@ -325,56 +318,19 @@ const normalizeFullPageSource = () => {
             {{ t('settings.customPagePlaceholdersTitle') }}
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
-            <ul class="list-disc list-inside space-y-1">
+            <ul v-for="group in placeholderDocGroups" :key="group.titleKey" class="list-disc list-inside space-y-1">
               <li class="font-semibold text-fg">
-                {{ t('settings.customPageComponentPlaceholders') }}
+                {{ t(group.titleKey) }}
               </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;profiles&#125;}</strong>:
-                {{ t('settings.customPageProfilesHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;announcements&#125;}</strong>:
-                {{ t('settings.customPageAnnouncementsHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;hero&#125;}</strong>:
-                {{ t('settings.customPageHeroHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;guestbook&#125;}</strong>:
-                {{ t('settings.customPageGuestbookHint') }}
-              </li>
-            </ul>
-            <ul class="list-disc list-inside space-y-1">
-              <li class="font-semibold text-fg">
-                {{ t('settings.customPageDataPlaceholders') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;version&#125;}</strong>:
-                {{ t('settings.customPageVersionHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;node_count&#125;}</strong>:
-                {{ t('settings.customPageNodeCountHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;profile_count&#125;}</strong>:
-                {{ t('settings.customPageProfileCountHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;title&#125;}</strong>:
-                {{ t('settings.customPageTitleHint') }}
-              </li>
-              <li>
-                <strong class="font-mono text-fg-muted">{&#123;description&#125;}</strong>:
-                {{ t('settings.customPageDescriptionHint') }}
+              <li v-for="item in group.items" :key="item.key">
+                <strong class="font-mono text-fg-muted">{&#123;{{ item.key }}&#125;}</strong>:
+                {{ t(item.hintKey) }}
               </li>
             </ul>
           </div>
           <p class="text-fg-muted">{{ t('settings.customPageModeHint') }}</p>
         </div>
       </div>
-    </section>
+    </SettingCard>
   </div>
 </template>

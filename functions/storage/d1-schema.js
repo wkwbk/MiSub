@@ -23,8 +23,8 @@ export const DATA_KEYS = {
 export const KEY_VALUE_TABLES = new Set(['settings', 'cache']);
 export const ID_DATA_TABLES = new Set(['subscriptions', 'nodes', 'profiles', 'guestbook']);
 
-export const GITHUB_RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-export const NODE_CACHE_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
+const GITHUB_RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const NODE_CACHE_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
 export const ACCESS_LOG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const initializedSchemas = new WeakSet();
@@ -36,7 +36,7 @@ export function isManualNodeRecord(item) {
   return !/^https?:\/\//i.test(url);
 }
 
-export const D1_TABLE_STATEMENTS = [
+const D1_TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS subscriptions (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL,
@@ -90,13 +90,13 @@ export const D1_TABLE_STATEMENTS = [
     );`,
 ];
 
-export const D1_COLUMN_MIGRATIONS = [
+const D1_COLUMN_MIGRATIONS = [
   `ALTER TABLE profiles ADD COLUMN custom_id TEXT;`,
   `ALTER TABLE profiles ADD COLUMN link_id TEXT;`,
   `ALTER TABLE cache ADD COLUMN expires_at INTEGER;`,
 ];
 
-export const D1_INDEX_STATEMENTS = [
+const D1_INDEX_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_nodes_updated_at ON nodes(updated_at);`,
   `CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ON profiles(custom_id);`,

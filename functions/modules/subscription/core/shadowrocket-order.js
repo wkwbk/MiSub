@@ -10,7 +10,7 @@ const flagPattern = /^([\u{1F1E6}-\u{1F1FF}]{2})\s*/u;
 const shortRegions = { HK: '香港', MO: '澳门' };
 const multiplierPattern = /(?:^|[-\s✨])(\d+(?:\.\d+)?\s*(?:x|×|倍))\s*[-–—]?\s*$/iu;
 
-export function compactShadowrocketNodeName(original) {
+function compactShadowrocketNodeName(original) {
   const text = String(original || '').trim();
   if (!text) return '节点';
   if (/到期|剩余流量|流量剩余/.test(text))
@@ -54,7 +54,7 @@ export function compactShadowrocketNodeName(original) {
   return [shownFlag, name || '节点', multiplier].filter(Boolean).join(' ');
 }
 
-export function safeShadowrocketName(rawName) {
+function safeShadowrocketName(rawName) {
   const clean = String(rawName || 'Untitled')
     .replace(/[\r\n]/g, ' ')
     .replace(/[,="\\]/g, ' ')

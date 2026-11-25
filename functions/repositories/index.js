@@ -3,25 +3,14 @@
  */
 
 import { StorageFactory } from '../storage-adapter.js';
-import { defaultMultiTierCache, MultiTierCache, resetAllMultiTierCaches } from './multi-tier-cache.js';
-import { BaseRepository } from './base-repository.js';
+import { defaultMultiTierCache, MultiTierCache } from './multi-tier-cache.js';
 import { SubscriptionRepository } from './subscription-repository.js';
 import { NodeRepository } from './node-repository.js';
 import { ProfileRepository } from './profile-repository.js';
 import { SettingsRepository } from './settings-repository.js';
 import { AccessLogRepository } from './access-log-repository.js';
 
-export {
-  MultiTierCache,
-  defaultMultiTierCache,
-  resetAllMultiTierCaches,
-  BaseRepository,
-  SubscriptionRepository,
-  NodeRepository,
-  ProfileRepository,
-  SettingsRepository,
-  AccessLogRepository,
-};
+export { MultiTierCache };
 
 /**
  * 为当前请求或任务创建共享同一 StorageAdapter 的全套 Repository 实例

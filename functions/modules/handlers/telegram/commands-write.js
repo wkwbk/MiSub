@@ -237,7 +237,7 @@ export async function handleDisableCommand(chatId, userId, args, env) {
 /**
  * 切换节点启用状态
  */
-export async function handleToggleCommand(chatId, userId, args, env, enable) {
+async function handleToggleCommand(chatId, userId, args, env, enable) {
   try {
     const target = parseTargetArgs(args);
     const action = enable ? '启用' : '禁用';

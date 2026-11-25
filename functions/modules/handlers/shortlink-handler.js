@@ -45,7 +45,7 @@ export function validateShortSlug(rawSlug) {
   return slug;
 }
 
-export function normalizeTargetUrl(rawUrl) {
+function normalizeTargetUrl(rawUrl) {
   const trimmed = String(rawUrl || '').trim();
   if (!trimmed) {
     throw new Error('目标链接不能为空');

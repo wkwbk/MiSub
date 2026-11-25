@@ -49,7 +49,7 @@ export function decodeV2raynNodeUrl(url) {
  * @param {Object} config - ProfileItem 配置对象
  * @returns {string} v2rayn:// 链接
  */
-export function encodeV2raynNodeUrl(protocol, config) {
+function encodeV2raynNodeUrl(protocol, config) {
   return `${V2RAYN_SCHEME}${protocol}/${utf8ToBase64(JSON.stringify(config))}`;
 }
 

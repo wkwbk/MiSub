@@ -8,7 +8,7 @@ import { getItemTags, hydrateItemTags } from '@/utils/tags.js';
 
 const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
 
-export function sanitizeConfigForCache(config = {}) {
+function sanitizeConfigForCache(config = {}) {
   if (!config || typeof config !== 'object') return {};
   const sanitized = { ...config };
   delete sanitized.botToken;
@@ -46,7 +46,7 @@ export function sanitizeConfigForCache(config = {}) {
   return sanitized;
 }
 
-export function normalizeAppDataSnapshot(rawData, fallbackConfig = null) {
+function normalizeAppDataSnapshot(rawData, fallbackConfig = null) {
   if (!rawData || typeof rawData !== 'object') return null;
 
   const misubs = (rawData.misubs || []).map((sub) => hydrateItemTags({ ...sub, isUpdating: false }));
@@ -72,7 +72,7 @@ export function normalizeAppDataSnapshot(rawData, fallbackConfig = null) {
   };
 }
 
-export function persistAppDataToSessionCache(snapshot) {
+function persistAppDataToSessionCache(snapshot) {
   if (!snapshot) return;
   dataCache.set({
     misubs: (snapshot.misubs || []).map((s) => {
@@ -86,11 +86,11 @@ export function persistAppDataToSessionCache(snapshot) {
   });
 }
 
-export function readSessionCachedAppData() {
+function readSessionCachedAppData() {
   return dataCache.get();
 }
 
-export function syncSessionCachedConfig(nextConfig) {
+function syncSessionCachedConfig(nextConfig) {
   const cachedData = dataCache.get();
   if (!cachedData) return;
 
@@ -103,7 +103,7 @@ export function syncSessionCachedConfig(nextConfig) {
   });
 }
 
-export async function fetchAppDataPayload() {
+async function fetchAppDataPayload() {
   const data = await api.get('/api/data');
   if (data?.error) {
     throw new Error(data.error);
@@ -301,32 +301,6 @@ export function useSaveSettingsMutation(options = {}) {
     {
       mutationFn: ({ settings, preferencesOnly = false, currentConfig = {} }) =>
         saveSettingsWithQueryClient(queryClient, settings, { preferencesOnly, currentConfig }),
-      ...options,
-    },
-    queryClient,
-  );
-}
-
-export function useRuleTemplatesQuery(options = {}) {
-  const queryClient = options.queryClient || resolveComponentQueryClient();
-  return useQuery(
-    {
-      queryKey: QUERY_KEYS.ruleTemplates,
-      queryFn: async () => {
-        const res = await api.get('/api/rule_templates');
-        return Array.isArray(res?.data) ? res.data : [];
-      },
-      ...options,
-    },
-    queryClient,
-  );
-}
-
-export function useSaveRuleTemplatesMutation(options = {}) {
-  const queryClient = options.queryClient || resolveComponentQueryClient();
-  return useMutation(
-    {
-      mutationFn: (templates) => saveRuleTemplatesWithQueryClient(queryClient, templates),
       ...options,
     },
     queryClient,

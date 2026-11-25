@@ -1,6 +1,6 @@
-import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
 import { normalizeUnifiedTemplateModel } from '../template-model.js';
 import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
+import { buildIniWireGuardSection, formatIniProxyGroupLine, resolveModelProxies } from '../../core/client-shared.js';
 
 function buildProxyLine(proxy) {
   const type = String(proxy.type || '').toLowerCase();
@@ -149,105 +149,18 @@ function buildWireGuardSection(proxy) {
   }
 
   const name = proxy.name || 'Untitled';
-  const sectionName = getWireGuardSectionName(name);
-
-  const lines = [`[WireGuard ${sectionName}]`, `private-key = ${proxy['private-key']}`];
-
-  if (proxy.ip) {
-    const ipv4 = Array.isArray(proxy.ip) ? proxy.ip.find((ip) => !String(ip).includes(':')) : proxy.ip;
-
-    if (ipv4) {
-      lines.push(`self-ip = ${ipv4}`);
-    }
-  }
-
-  if (proxy.ipv6) {
-    const ipv6 = Array.isArray(proxy.ipv6) ? proxy.ipv6.find(Boolean) : proxy.ipv6;
-
-    if (ipv6) {
-      lines.push(`self-ip-v6 = ${ipv6}`);
-    }
-  }
-
-  // DNS：有就输出，没有则不主动添加
-  if (proxy.dns) {
-    const dns = Array.isArray(proxy.dns) ? proxy.dns.join(', ') : proxy.dns;
-
-    if (dns) {
-      lines.push(`dns-server = ${dns}`);
-    }
-  }
-
-  if (proxy.mtu) {
-    lines.push(`mtu = ${proxy.mtu}`);
-  }
-
-  const peerParts = [];
-
-  peerParts.push(`public-key = ${proxy['public-key']}`);
-
-  let allowedIps;
-
-  if (proxy['allowed-ips']) {
-    allowedIps = Array.isArray(proxy['allowed-ips']) ? proxy['allowed-ips'].join(', ') : proxy['allowed-ips'];
-  } else {
-    // 没有显式 allowed-ips 时，根据是否有 IPv6 自动生成
-    allowedIps = proxy.ipv6 ? '0.0.0.0/0, ::/0' : '0.0.0.0/0';
-  }
-
-  if (allowedIps.includes(',')) {
-    peerParts.push(`allowed-ips = "${allowedIps}"`);
-  } else {
-    peerParts.push(`allowed-ips = ${allowedIps}`);
-  }
-
-  // IPv6 endpoint 需要加 []
-  const server = String(proxy.server);
-  const endpointHost = server.includes(':') && !server.startsWith('[') ? `[${server}]` : server;
-
-  peerParts.push(`endpoint = ${endpointHost}:${proxy.port}`);
-
-  // 可选 PSK
-  if (proxy['preshared-key']) {
-    peerParts.push(`preshared-key = ${proxy['preshared-key']}`);
-  }
-
-  // 可选 keepalive
-  if (proxy['persistent-keepalive']) {
-    peerParts.push(`keepalive = ${proxy['persistent-keepalive']}`);
-  }
-
-  if (proxy.reserved) {
-    const clientId = Array.isArray(proxy.reserved) ? proxy.reserved.join('/') : proxy.reserved;
-
-    peerParts.push(`client-id = ${clientId}`);
-  }
-
-  lines.push(`peer = (${peerParts.join(', ')})`);
-
-  return lines.join('\n');
+  return buildIniWireGuardSection(proxy, {
+    name,
+    sectionName: getWireGuardSectionName(name),
+    defaultDns: null,
+    defaultAllowedIps: proxy.ipv6 ? '0.0.0.0/0, ::/0' : '0.0.0.0/0',
+    quoteSingleAllowedIp: false,
+    includeClientId: true,
+  });
 }
 
 function buildProxyGroupLine(group) {
-  const type = String(group.type || 'select').toLowerCase();
-  const rawMembers = Array.isArray(group.members) ? group.members.filter(Boolean) : [];
-  const filteredMembers = ['url-test', 'fallback', 'load-balance'].includes(type)
-    ? rawMembers.filter((member) => !['DIRECT', 'REJECT', 'REJECT-DROP', 'PASS'].includes(String(member).toUpperCase()))
-    : rawMembers;
-  const members = (filteredMembers.length > 0 ? filteredMembers : ['DIRECT']).join(', ');
-  const tolerance = group.options?.tolerance;
-  if (type === 'url-test') {
-    const base = `${group.name} = url-test, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
-    return tolerance ? `${base}, tolerance=${tolerance}` : base;
-  }
-  if (type === 'fallback') {
-    const base = `${group.name} = fallback, ${members}, url=${group.options?.url || 'http://www.gstatic.com/generate_204'}, interval=${group.options?.interval || 300}`;
-    return tolerance ? `${base}, tolerance=${tolerance}` : base;
-  }
-  if (type === 'load-balance') {
-    return `${group.name} = load-balance, ${members}`;
-  }
-  return `${group.name} = select, ${members}`;
+  return formatIniProxyGroupLine(group, { fallbackEmptyDirect: true, useMembersField: true });
 }
 
 function buildRuleLine(rule, { isChinaClient = false } = {}) {
@@ -261,15 +174,7 @@ function buildRuleLine(rule, { isChinaClient = false } = {}) {
 
 export function renderSurgeFromTemplateModel(model, options = {}) {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
-  const nodeList = typeof options.nodeList === 'string' ? options.nodeList : '';
-  const proxyUrls = nodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
-  const proxies =
-    Array.isArray(normalizedModel.proxies) && normalizedModel.proxies.length > 0
-      ? normalizedModel.proxies
-      : urlsToClashProxies(proxyUrls);
+  const proxies = resolveModelProxies(normalizedModel, options);
 
   const proxyLines = proxies.map(buildProxyLine).filter(Boolean);
 

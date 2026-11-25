@@ -1,6 +1,6 @@
 import * as yaml from 'js-yaml';
 
-export const DNS_MODES = Object.freeze({
+const DNS_MODES = Object.freeze({
   CLEAN: 'clean',
   POLLUTED: 'polluted',
 });
@@ -8,7 +8,7 @@ export const DNS_MODES = Object.freeze({
 export const DNS_PROXY_GROUP = '🌐 DNS 出口';
 export const SINGBOX_CN_RULE_SET = 'geosite-cn';
 
-export const DEFAULT_DNS_POLICY = Object.freeze({
+const DEFAULT_DNS_POLICY = Object.freeze({
   domestic: ['223.5.5.5', '119.29.29.29'],
   // 境外解析统一使用 IP 型 DoH：免引导解析（无需先解析域名），
   // TCP 承载比明文 UDP:53 更抗污染、在代理链路上更稳定
@@ -116,7 +116,7 @@ function withProxy(value, proxyGroup) {
   return `${raw}#${proxyGroup}`;
 }
 
-export const DEFAULT_DNS_CONFIG = {
+const DEFAULT_DNS_CONFIG = {
   enable: true,
   ipv6: false,
   'enhanced-mode': 'fake-ip',
@@ -144,7 +144,7 @@ export const DEFAULT_DNS_CONFIG = {
   },
 };
 
-export function isExplicitDnsBlock(override) {
+function isExplicitDnsBlock(override) {
   if (!isObject(override)) return false;
   return (
     override.enable !== undefined ||

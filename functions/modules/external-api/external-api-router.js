@@ -29,7 +29,7 @@ function externalParseErrorResponse(error) {
 /**
  * 构建对外 API (/api/ext/v1/*) Hono 路由实例
  */
-export function createExternalApiRouter() {
+function createExternalApiRouter() {
   const externalApp = /** @type {Hono<{ Bindings: Record<string, any>; Variables: Record<string, any> }>} */ (
     new Hono()
   );
@@ -188,7 +188,7 @@ export function createExternalApiRouter() {
   return externalApp;
 }
 
-export const externalApiApp = createExternalApiRouter();
+const externalApiApp = createExternalApiRouter();
 
 function buildNormalizedExternalRequest(request) {
   const stdReq = ensureStandardRequest(request);

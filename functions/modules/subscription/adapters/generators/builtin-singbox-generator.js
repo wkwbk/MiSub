@@ -11,18 +11,20 @@ import {
   getBuiltinRules,
   getRemoteProviderDefinitions,
   getSingboxDnsRuleSet,
-  POLICY_GROUPS,
-  pruneProxyGroups,
 } from '../../templates/builtin-rules-provider.js';
 import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../../security/safe-dns.js';
 import { SINGBOX_SNIFF_RULE } from '../../core/sniffing-config.js';
+import { applySingboxBaseConfigOverride, buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 import {
-  applyGeneralGroupToggles,
-  applySingboxBaseConfigOverride,
-  buildVisualPolicyGroups,
-  buildVisualRulesAndProviders,
-  normalizeBuiltinTransform,
-} from '../../core/visual-rules-builder.js';
+  applySingboxShadowsocksPlugin,
+  applySingboxTuicExtraFields,
+  buildSingboxConfigEnvelope,
+  DEFAULT_TEST_URL,
+  materializeRelayChainNodes,
+  parseNodeUrlLines,
+  resolveBuiltinPolicyGroups,
+  SINGBOX_LOCAL_ROUTE_RULES,
+} from '../../core/client-shared.js';
 
 function sanitizeName(name) {
   if (!name) return 'Untitled';
@@ -60,16 +62,7 @@ function buildOutbound(proxy) {
 
     // sing-box 的 Shadowsocks 出站使用 SIP003 plugin/plugin_opts；
     // `transport` 仅属于 V2Ray 传输协议，SFA 会严格拒绝它。
-    const plugin = proxy.plugin || '';
-    const opts = proxy['plugin-opts'] || proxy.pluginOpts || {};
-    if (plugin === 'v2ray-plugin' || opts.mode === 'websocket') {
-      outbound.plugin = 'v2ray-plugin';
-      const pluginOptions = ['mode=websocket'];
-      if (opts.host) pluginOptions.push(`host=${opts.host}`);
-      if (opts.path) pluginOptions.push(`path=${opts.path}`);
-      if (opts.tls || opts.mode === 'websocket-tls') pluginOptions.push('tls');
-      outbound.plugin_opts = pluginOptions.join(';');
-    }
+    applySingboxShadowsocksPlugin(outbound, proxy);
   } else if (type === 'vmess') {
     outbound.type = 'vmess';
     outbound.server = server;
@@ -202,14 +195,7 @@ function buildOutbound(proxy) {
     outbound.uuid = proxy.uuid || '';
     outbound.password = proxy.password || '';
 
-    const congestionControl = proxy['congestion-controller'] || proxy['congestion-control'] || proxy.congestion;
-    if (congestionControl) outbound.congestion_control = congestionControl;
-    if (proxy['udp-over-stream'] !== undefined) outbound.udp_over_stream = Boolean(proxy['udp-over-stream']);
-    if (proxy['zero-rtt-handshake'] !== undefined || proxy['reduce-rtt'] !== undefined) {
-      outbound.zero_rtt_handshake = Boolean(proxy['zero-rtt-handshake'] ?? proxy['reduce-rtt']);
-    }
-    if (proxy.heartbeat) outbound.heartbeat = String(proxy.heartbeat);
-    if (proxy.network) outbound.network = proxy.network;
+    applySingboxTuicExtraFields(outbound, proxy);
 
     outbound.tls = {
       enabled: true,
@@ -303,13 +289,7 @@ function buildOutbound(proxy) {
 }
 
 export function generateBuiltinSingboxConfig(nodeList, options = {}) {
-  const { ruleLevel = 'std' } = options;
-
-  const cleanedNodeList = cleanControlChars(nodeList);
-  const nodeUrls = cleanedNodeList
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'));
+  const nodeUrls = parseNodeUrlLines(nodeList);
 
   const outbounds = [];
   const usedNames = new Map();
@@ -335,46 +315,20 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     outbounds.push({ tag: 'DIRECT', type: 'direct' });
   }
 
-  const levelKey = (ruleLevel || 'std').toUpperCase();
-  const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
-  const useVisualRules = Boolean(bt?.visualRulesEnabled);
-
-  let proxyGroups;
-  if (useVisualRules) {
-    proxyGroups = buildVisualPolicyGroups(outbounds, { ...options, builtinTransform: bt });
-  } else {
-    // 获取内置策略组
-    const policyGroupsFactory = POLICY_GROUPS[levelKey] || POLICY_GROUPS.STD;
-    proxyGroups = policyGroupsFactory(outbounds, options);
-    if (bt) {
-      proxyGroups = applyGeneralGroupToggles(proxyGroups, { builtinTransform: bt });
-    }
-    proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
-  }
+  let { levelKey, bt, useVisualRules, proxyGroups } = resolveBuiltinPolicyGroups(outbounds, options);
 
   if (!useVisualRules && levelKey === 'RELAY') {
-    const chainOutbounds = nodeEntries.map(({ tag, outbound }) => ({
-      ...outbound,
-      tag: `🔗 链式代理 - ${tag}`,
-      detour: '入口节点',
-    }));
-    const chainTags = chainOutbounds.map((outbound) => outbound.tag);
-    outbounds.push(...chainOutbounds);
-    proxyGroups = proxyGroups
-      .map((group) => {
-        if (group.name === '🔗 链式代理') {
-          return {
-            ...group,
-            // Sing-box 通过 detour 表达链式出站。保持上一版可用结构：
-            // “链式代理”直接选择带 detour 的落地副本；同时隐藏“落地节点”分组。
-            type: 'select',
-            proxies: chainTags,
-          };
-        }
-        return group;
-      })
-      .filter(Boolean);
-    proxyGroups = pruneProxyGroups(proxyGroups, outbounds);
+    const relay = materializeRelayChainNodes({
+      nameKey: 'tag',
+      linkKey: 'detour',
+      publicItems: nodeEntries.map(({ outbound }) => outbound),
+      proxyGroups,
+      allProxiesForPrune: outbounds,
+    });
+    if (relay.items.length > 0) {
+      outbounds.splice(0, outbounds.length, ...relay.items);
+    }
+    proxyGroups = relay.proxyGroups;
   }
 
   // 将抽象分组转换为 Sing-Box Outbounds
@@ -389,7 +343,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
       outbounds: group.proxies,
       ...(type === 'urltest'
         ? {
-            url: 'http://www.gstatic.com/generate_204',
+            url: DEFAULT_TEST_URL,
             interval: '10m',
             tolerance: 50,
           }
@@ -411,15 +365,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
         return true;
       }),
     ];
-    routeRules = [
-      { ...SINGBOX_SNIFF_RULE },
-      {
-        ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
-        outbound: 'DIRECT',
-      },
-      { domain_suffix: ['localhost'], outbound: 'DIRECT' },
-      ...visualOutput.rules,
-    ];
+    routeRules = [{ ...SINGBOX_SNIFF_RULE }, ...SINGBOX_LOCAL_ROUTE_RULES, ...visualOutput.rules];
   } else {
     // 从统一规则库获取分流规则
     const rawRules = getBuiltinRules(levelKey, 'singbox', options);
@@ -435,11 +381,7 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     // 首条为域名嗅探；国内域名直连由规则集内的 RULE-SET,CN_DOMAIN/DOMAIN-SUFFIX,cn 在 GEOIP 之前承载
     routeRules = [
       { ...SINGBOX_SNIFF_RULE },
-      {
-        ip_cidr: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
-        outbound: 'DIRECT',
-      },
-      { domain_suffix: ['localhost'], outbound: 'DIRECT' },
+      ...SINGBOX_LOCAL_ROUTE_RULES,
       ...rawRules.map((r) => {
         if (r.type === 'rule_set') return { rule_set: [r.tag], outbound: r.outbound };
         return r; // 已经是 Sing-Box 格式的普通规则
@@ -452,39 +394,21 @@ export function generateBuiltinSingboxConfig(nodeList, options = {}) {
     proxyGroup: DNS_PROXY_GROUP,
   });
 
-  let config = {
-    log: { level: 'info' },
-    dns: dnsConfig,
-    inbounds: [
-      {
-        type: 'tun',
-        tag: 'tun-in',
-        address: ['172.19.0.1/30'],
-        auto_route: true,
-        strict_route: true,
-        stack: 'mixed',
-      },
-    ],
-    outbounds: [{ tag: 'DIRECT', type: 'direct' }, { tag: 'REJECT', type: 'block' }, ...outbounds, ...groupOutbounds],
-    route: {
-      auto_detect_interface: true,
-      default_domain_resolver: dnsConfig.servers[0]?.tag || 'dns-cn-1',
-      final: !useVisualRules && levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP,
-      rule_set: ruleSets,
-      rules: routeRules,
-    },
-    ...(bt?.enableClashApi
+  let config = buildSingboxConfigEnvelope({
+    dnsConfig,
+    proxyOutbounds: outbounds,
+    groupOutbounds,
+    finalOutbound: !useVisualRules && levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP,
+    ruleSets,
+    routeRules,
+    clashApi: bt?.enableClashApi
       ? {
-          experimental: {
-            clash_api: {
-              external_controller: bt.externalController || '0.0.0.0:9090',
-              external_ui: 'ui',
-              ...(bt.externalUiDownloadUrl ? { external_ui_download_url: bt.externalUiDownloadUrl } : {}),
-            },
-          },
+          external_controller: bt.externalController || '0.0.0.0:9090',
+          external_ui: 'ui',
+          ...(bt.externalUiDownloadUrl ? { external_ui_download_url: bt.externalUiDownloadUrl } : {}),
         }
-      : {}),
-  };
+      : null,
+  });
 
   if (bt?.baseConfig?.singbox) {
     config = applySingboxBaseConfigOverride(config, bt.baseConfig.singbox);

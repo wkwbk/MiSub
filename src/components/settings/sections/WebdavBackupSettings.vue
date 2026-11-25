@@ -8,7 +8,7 @@ import { confirmAction } from '@/composables/useConfirm.js';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
-import SectionHeader from '@/components/settings/SectionHeader.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
 const props = defineProps({
@@ -170,15 +170,13 @@ ensureConfig();
 </script>
 
 <template>
-  <section class="rounded-lg border border-line bg-surface p-6">
-    <SectionHeader :description="t('settings.webdavDesc')" :title="t('settings.webdavTitle')">
-      <template #icon>
-        <CloudDownload class="h-4 w-4" />
-      </template>
-      <template #actions>
-        <Switch v-model="settings.webdavBackup.enabled" :aria-label="t('settings.webdavEnable')" />
-      </template>
-    </SectionHeader>
+  <SettingCard :description="t('settings.webdavDesc')" :title="t('settings.webdavTitle')">
+    <template #icon>
+      <CloudDownload class="h-4 w-4" />
+    </template>
+    <template #actions>
+      <Switch v-model="settings.webdavBackup.enabled" :aria-label="t('settings.webdavEnable')" />
+    </template>
 
     <div class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -393,5 +391,5 @@ ensureConfig();
         </div>
       </div>
     </div>
-  </section>
+  </SettingCard>
 </template>

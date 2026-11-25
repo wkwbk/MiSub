@@ -5,7 +5,7 @@ import { authMiddleware, renewAuthSession } from '../modules/auth-middleware.js'
 import { authenticateExternalApiRequest } from '../modules/external-api/external-api-auth.js';
 import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../modules/utils.js';
 
-export function parseCorsOrigins(env, requestUrl) {
+function parseCorsOrigins(env, requestUrl) {
   const configured = (env?.CORS_ORIGINS || '')
     .split(',')
     .map((origin) => origin.trim())

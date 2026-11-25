@@ -10,7 +10,7 @@
  * 有误判风险，通过 skip-domain 排除米家局域网发现与 APNs 推送。
  */
 
-export const DEFAULT_SNIFFER_CONFIG = Object.freeze({
+const DEFAULT_SNIFFER_CONFIG = Object.freeze({
   enable: true,
   'force-dns-mapping': true,
   'parse-pure-ip': true,

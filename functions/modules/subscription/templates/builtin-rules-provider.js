@@ -1,4 +1,4 @@
-import { groupNodeLinesByRegion } from '../core/region-groups.js';
+import { buildRegionPolicyGroups } from '../core/region-groups.js';
 import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../security/safe-dns.js';
 
 /**
@@ -52,7 +52,7 @@ export const AI_SERVICE_RULES = Object.freeze([
   },
 ]);
 
-export const AI_DOMAIN_RULE_LINES = AI_SERVICE_RULES.flatMap((service) =>
+const AI_DOMAIN_RULE_LINES = AI_SERVICE_RULES.flatMap((service) =>
   service.domains.map((domain) => `DOMAIN-SUFFIX,${domain},🤖 ${service.name}`),
 );
 
@@ -96,16 +96,6 @@ function aiPolicyGroups(proxyNames, regionNames, { relay = false } = {}) {
       proxies: candidates,
     })),
   ];
-}
-
-/**
- * 自动生成地区策略组（通用中间格式）
- * @param {Object[]} proxies
- * @returns {Array} 地区分组数据
- */
-function generateRegionData(proxies, options = {}) {
-  // [智能升级] 直接传递代理对象数组，region-groups 现在能识别 metadata
-  return groupNodeLinesByRegion(proxies, options);
 }
 
 /**
@@ -167,34 +157,7 @@ export function pruneProxyGroups(proxyGroups, proxies) {
  * 内部辅助：生成地区相关的策略组定义
  */
 function _generateRegionGroups(proxies, options = {}) {
-  const regions = generateRegionData(proxies, options);
-  const regionSelectGroups = []; // 地区选择组（顶级按钮）
-  const regionSupportGroups = []; // 地区辅助组（隐藏/末尾）
-  const regionNames = [];
-
-  regions.forEach((r) => {
-    // 为每个地区生成一个更简洁的辅助测速组名
-    const autoGroupName = `⚡️ ${r.name.replace('节点', '')} - 自动测速`;
-    regionNames.push(r.name);
-
-    // [地区选择组] 内部包含测速组和具体节点
-    regionSelectGroups.push({
-      name: r.name,
-      type: 'select',
-      proxies: [autoGroupName, ...r.tags],
-    });
-
-    // [地区辅助测速组]
-    regionSupportGroups.push({
-      name: autoGroupName,
-      type: 'url-test',
-      proxies: r.tags,
-      hidden: true,
-      options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
-    });
-  });
-
-  return { regionSelectGroups, regionSupportGroups, regionNames };
+  return buildRegionPolicyGroups(proxies, { ...options, includeAutoSelect: true });
 }
 
 /**
@@ -400,9 +363,9 @@ export const PINNED_RULE_REVISIONS = Object.freeze({
   BLACKMATRIX: '538b8a79532c44dfbcb8e694d2f43e753c60b157',
 });
 
-const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
-const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
-const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
+export const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
+export const SING_GEOSITE_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`;
+export const SING_GEOIP_BASE = `https://raw.githubusercontent.com/SagerNet/sing-geoip/${PINNED_RULE_REVISIONS.SING_GEOIP}`;
 
 // 国内网络直连 raw.githubusercontent.com 长期不可达。gh-proxy.org 为公开双栈
 // GitHub 加速代理，对国内外均可服务：生成订阅时按请求方地理位置（Cloudflare
@@ -617,7 +580,7 @@ export const RULE_SETS = {
  */
 
 // 转换单行规则到目标格式
-export function translateRuleLine(line, format, options = {}) {
+function translateRuleLine(line, format, options = {}) {
   const parts = line.split(',');
   const type = parts[0];
   const value = parts[1];
