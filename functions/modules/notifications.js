@@ -4,8 +4,8 @@
  * 核心发送逻辑已抽离至 functions/services/notification-service.js
  */
 
-import { formatBytes } from '../../shared/format-utils.js';
-import { isAutoUpdateEnabled } from '../../shared/auto-update.js';
+import { formatBytes } from '@misub/core/utils/format-utils.js';
+import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
 import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
@@ -15,6 +15,8 @@ export { sendEnhancedTgNotification, sendTgNotification, tgEscape } from '../ser
 
 /**
  * 测试 Telegram 通知
+ * @param {Request} request
+ * @param {Record<string, any> | null} [env]
  */
 export async function handleTestNotificationRequest(request, env = null) {
   if (request.method !== 'POST') {
@@ -81,7 +83,7 @@ export async function checkAndNotify(sub, settings, _env) {
   // 1. 检查订阅到期
   if (sub.userInfo.expire) {
     const expiryDate = new Date(sub.userInfo.expire * 1000);
-    const daysRemaining = Math.ceil((expiryDate - now) / ONE_DAY_MS);
+    const daysRemaining = Math.ceil((expiryDate.getTime() - now) / ONE_DAY_MS);
 
     if (daysRemaining <= (settings.notifyThresholdDays || 7)) {
       if (!sub.lastNotifiedExpire || now - sub.lastNotifiedExpire > ONE_DAY_MS) {

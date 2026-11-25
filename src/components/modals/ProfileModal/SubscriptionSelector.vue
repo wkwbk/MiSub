@@ -4,7 +4,7 @@ import { GripHorizontal, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useI18n } from '@/i18n/index.js';
-import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
+import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
 
 const { t } = useI18n();
 

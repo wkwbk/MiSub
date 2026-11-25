@@ -12,8 +12,8 @@ import {
   renewAuthSession,
 } from '../../functions/modules/auth-middleware.js';
 import { SESSION_DURATION, SESSION_RENEW_THRESHOLD } from '../../functions/modules/config.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
-import { logAccessSuccess } from '../../functions/modules/subscription/access-logger.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
+import { logAccessSuccess } from '../../functions/modules/subscription/cache/access-logger.js';
 import { LogService } from '../../functions/services/log-service.js';
 import { onRequest } from '../../functions/[[path]].js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';

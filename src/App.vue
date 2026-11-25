@@ -6,12 +6,12 @@ import RouteProgressBar from '@/components/ui/RouteProgressBar.vue';
 import ConfirmDialog from '@/components/ui/ConfirmDialog.vue';
 import { useRouteLoading } from '@/composables/useRouteLoading.js';
 import { useRoute, useRouter } from 'vue-router';
-import { useThemeStore } from '@/stores/theme';
-import { useSessionStore } from '@/stores/session';
-import { useToastStore } from '@/stores/toast';
-import { useDataStore } from '@/stores/useDataStore';
-import { useUIStore } from '@/stores/ui';
-import { useVersionStore } from '@/stores/version';
+import { useThemeStore } from '@/stores/useThemeStore.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { useDataStore } from '@/stores/useDataStore.js';
+import { useUIStore } from '@/stores/useUiStore.js';
+import { useVersionStore } from '@/stores/useVersionStore.js';
 import { storeToRefs } from 'pinia';
 import NavBar from '@/components/layout/NavBar.vue';
 import { useI18n } from '@/i18n/index.js';
@@ -145,12 +145,6 @@ onMounted(async () => {
   await checkSession();
 });
 
-onUnmounted(() => {
-  cancelRoutePrefetch();
-  window.removeEventListener('misub:unauthorized', handleUnauthorized);
-  window.removeEventListener('beforeunload', handleBeforeUnload);
-});
-
 watch(
   () => [
     route.fullPath,
@@ -194,6 +188,7 @@ watch(
   },
 );
 
+/** @type {ReturnType<typeof setTimeout> | null} */
 let versionCheckTimer = null;
 
 function clearVersionCheckTimer() {
@@ -204,6 +199,9 @@ function clearVersionCheckTimer() {
 }
 
 onUnmounted(() => {
+  cancelRoutePrefetch();
+  window.removeEventListener('misub:unauthorized', handleUnauthorized);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
   stopAutoUpdate();
   clearVersionCheckTimer();
 });

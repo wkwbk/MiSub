@@ -8,7 +8,7 @@ import Textarea from '@/components/ui/Textarea.vue';
 import TurnstileWidget from '@/components/ui/TurnstileWidget.vue';
 import { useI18n } from '@/i18n/index.js';
 import { getActivePinia } from 'pinia';
-import { useSessionStore } from '@/stores/session.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 
 const { t } = useI18n();
 const sessionStore = getActivePinia() ? useSessionStore() : null;

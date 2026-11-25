@@ -2,7 +2,7 @@
 import { useI18n } from '@/i18n/index.js';
 import { computed } from 'vue';
 import { ExternalLink } from '@lucide/vue';
-import { useVersionStore } from '@/stores/version';
+import { useVersionStore } from '@/stores/useVersionStore.js';
 import Modal from '@/components/ui/Modal.vue';
 import { renderChangelogMarkdown } from '@/utils/changelog-markdown.js';
 

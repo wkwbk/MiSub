@@ -3,7 +3,8 @@
  */
 
 import { isRealProxyNode } from './airport-metadata.js';
-import { normalizeDisabledNodes } from '../../../shared/disabled-nodes.js';
+import { normalizeDisabledNodes } from '@misub/core/domain/disabled-nodes.js';
+import { SubscriptionRepository } from '../../repositories/subscription-repository.js';
 
 /**
  * 构建单机场订阅源的保护性缓存 key
@@ -74,7 +75,7 @@ export async function writeSubscriptionNodeCache(storage, sub, nodes) {
   }
 }
 
-export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {}) {
+export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {}, options = {}) {
   if (!storage || !sub?.id) return false;
   const { nodeCount, userInfo, lastGoodNodeCount, detectedName } = runtimeInfo;
   const hasUserInfo = Object.prototype.hasOwnProperty.call(runtimeInfo, 'userInfo');
@@ -98,8 +99,12 @@ export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {
       };
     };
 
+    const subRepo = new SubscriptionRepository({ storage });
+    if (options?.coalesce && typeof storage.batchUpdateItemsById === 'function') {
+      return Boolean(await subRepo.enqueueRuntimeStateUpdate(sub.id, applyUpdate));
+    }
     if (typeof storage.updateSubscriptionById === 'function') {
-      return Boolean(await storage.updateSubscriptionById(sub.id, applyUpdate));
+      return Boolean(await subRepo.updateRuntimeState(sub.id, applyUpdate));
     }
   } catch (error) {
     console.warn('[SubscriptionRuntimeInfo] Failed to write subscription info:', error);
@@ -109,7 +114,7 @@ export async function writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo = {
 }
 
 export function scheduleSubscriptionRuntimeInfoUpdate(context, storage, sub, runtimeInfo) {
-  const promise = writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo);
+  const promise = writeSubscriptionRuntimeInfo(storage, sub, runtimeInfo, { coalesce: true });
 
   if (context && typeof context.waitUntil === 'function') {
     context.waitUntil(

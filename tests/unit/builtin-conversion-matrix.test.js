@@ -5,7 +5,7 @@ import {
   resolveEffectiveEngine,
   resolveExternalTemplateConfigUrl,
   resolveTemplateSource,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/core/main-handler.js';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
 const HIDDIFY_UA = 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box';

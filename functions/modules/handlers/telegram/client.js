@@ -127,13 +127,15 @@ export async function syncTelegramPushBot(pushConfig, origin = '') {
     setTelegramMyCommands(botToken),
     canSetWebhook
       ? setTelegramWebhook(botToken, webhookUrl, webhookSecret)
-      : Promise.resolve({
-          ok: false,
-          skipped: true,
-          error: !/^https:\/\//i.test(normalizedOrigin)
-            ? 'Webhook requires HTTPS origin'
-            : 'Valid webhook secret is required',
-        }),
+      : Promise.resolve(
+          /** @type {{ ok: boolean; status?: number; error?: any; skipped?: boolean }} */ ({
+            ok: false,
+            skipped: true,
+            error: !/^https:\/\//i.test(normalizedOrigin)
+              ? 'Webhook requires HTTPS origin'
+              : 'Valid webhook secret is required',
+          }),
+        ),
   ]);
 
   const webhookOkOrSkipped = webhookResult.ok || webhookResult.skipped === true;

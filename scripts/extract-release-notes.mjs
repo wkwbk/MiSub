@@ -13,7 +13,7 @@ function normalizeVersion(raw) {
 }
 
 /**
- * 从 src/stores/version.js 源码中提取 localChangelog 模板字符串文本。
+ * 从 src/stores/useVersionStore.js 源码中提取 localChangelog 模板字符串文本。
  * @param {string} source
  * @returns {string}
  */
@@ -38,7 +38,7 @@ export function extractLocalChangelog(source) {
 export function getReleaseNotesForTag(targetTag, rootDir = ROOT_DIR) {
   const normalizedTarget = normalizeVersion(targetTag);
   const pkgPath = path.join(rootDir, 'package.json');
-  const versionStorePath = path.join(rootDir, 'src', 'stores', 'version.js');
+  const versionStorePath = path.join(rootDir, 'src', 'stores', 'useVersionStore.js');
 
   if (!fs.existsSync(pkgPath) || !fs.existsSync(versionStorePath)) {
     return '';

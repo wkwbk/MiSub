@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useVersionStore } from '@/stores/version.js';
+import { useVersionStore } from '@/stores/useVersionStore.js';
 
 vi.mock('@/lib/api.js', () => ({
   fetchGithubLatestRelease: vi.fn(),

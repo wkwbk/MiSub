@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import { Check, Copy, X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { parseNodeDetail } from '@/utils/node-detail.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 

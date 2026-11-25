@@ -12,9 +12,10 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { isRemoteSubscription, toExternalSubscription } from './external-api-mappers.js';
-import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
+import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js';
 import { handleNodeCountRequest } from '../handlers/node-handler.js';
-import { getProcessedUserAgent } from '../../../shared/format-utils.js';
+import { getProcessedUserAgent } from '@misub/core/utils/format-utils.js';
+import { SubscriptionRepository } from '../../repositories/subscription-repository.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -127,9 +128,9 @@ export async function inspectRemoteSubscription(env, payload = {}) {
   };
 }
 
-async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
+function buildRefreshedSubscription(current, inspection) {
   const timestamp = nowIso();
-  const updated = {
+  return {
     ...current,
     nodeCount: inspection.ok ? inspection.nodeCount : 0,
     userInfo: inspection.ok ? inspection.userInfo : inspection.userInfo || null,
@@ -137,11 +138,19 @@ async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
     lastUpdate: timestamp,
     updatedAt: timestamp,
   };
+}
+
+async function persistSubscriptionRefresh(storageAdapter, current, inspection) {
+  const updated = buildRefreshedSubscription(current, inspection);
   await storageAdapter.putSubscription(updated);
   return updated;
 }
 
-export async function handleExternalSubscriptionsRequest(request, env, selector = null) {
+export async function handleExternalSubscriptionsRequest(
+  request,
+  env,
+  selector = /** @type {string | Record<string, any> | null} */ (null),
+) {
   const storageAdapter = await getExternalStorageAdapter(env);
   const url = new URL(request.url);
   const action = typeof selector === 'object' && selector ? selector.action || null : null;
@@ -203,9 +212,11 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
     }
 
     const results = [];
+    const updatedSubscriptions = [];
     for (const current of targets) {
       const inspection = await inspectRemoteSubscription(env, current);
-      const updated = await persistSubscriptionRefresh(storageAdapter, current, inspection);
+      const updated = buildRefreshedSubscription(current, inspection);
+      updatedSubscriptions.push(updated);
       results.push({
         id: updated.id,
         name: updated.name || '',
@@ -215,6 +226,11 @@ export async function handleExternalSubscriptionsRequest(request, env, selector 
         lastError: updated.lastError || '',
         lastUpdated: updated.lastUpdate || null,
       });
+    }
+
+    if (updatedSubscriptions.length > 0) {
+      const subRepo = new SubscriptionRepository({ env, storage: storageAdapter });
+      await subRepo.putMany(updatedSubscriptions);
     }
 
     return createExternalSuccess({

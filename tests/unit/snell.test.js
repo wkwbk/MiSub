@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  extractValidNodes,
-  parseNodeList,
-  parseSnellUrl,
-  validateSnellNode,
-} from '../../functions/utils/node-parser.js';
-import { parseSurgeConfig } from '@/utils/protocols/index.js';
+import { extractValidNodes, parseNodeList, parseSnellUrl, validateSnellNode } from '@misub/core/node/node-parser.js';
+import { parseSurgeConfig } from '@misub/core/protocols/index.js';
 
 describe('Snell 协议支持', () => {
   describe('parseSnellUrl', () => {

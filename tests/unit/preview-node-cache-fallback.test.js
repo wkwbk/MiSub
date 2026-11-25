@@ -56,7 +56,7 @@ describe('preview node fetch protective cache fallback', () => {
   let fetchSubscriptionNodes;
 
   beforeEach(async () => {
-    const module = await import('../../functions/modules/subscription/node-fetcher.js');
+    const module = await import('../../functions/modules/subscription/security/node-fetcher.js');
     fetchSubscriptionNodes = module.fetchSubscriptionNodes;
   });
 
@@ -223,7 +223,7 @@ describe('handleSingleSubscriptionMode preview fallback', () => {
     );
 
     const { handleSingleSubscriptionMode } =
-      await import('../../functions/modules/subscription/single-subscription.js');
+      await import('../../functions/modules/subscription/core/single-subscription.js');
     const result = await handleSingleSubscriptionMode(
       new Request('https://example.com/api/subscription_nodes'),
       {},

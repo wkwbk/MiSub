@@ -3,7 +3,7 @@ import {
   determineTargetFormat,
   isBrowserAgent,
   isMetaCore,
-} from '../../functions/modules/subscription/user-agent-utils.js';
+} from '../../functions/modules/subscription/core/user-agent-utils.js';
 
 describe('User-Agent Utils', () => {
   describe('isBrowserAgent', () => {

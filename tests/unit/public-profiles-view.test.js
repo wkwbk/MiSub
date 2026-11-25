@@ -12,7 +12,7 @@ vi.mock('@/lib/http.js', () => ({
   },
 }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({
     showToast: vi.fn(),
   }),

@@ -1,4 +1,4 @@
-import { base64ToUtf8 } from '@shared/base64.js';
+import { base64ToUtf8 } from '@misub/core/utils/base64.js';
 import { getItemTags } from '@/utils/tags.js';
 
 const safeBase64Decode = (input) => {

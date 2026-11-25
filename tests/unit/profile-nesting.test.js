@@ -5,8 +5,8 @@ import { wouldCreateCycle } from '@/utils/profile-graph.js';
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';
 import { createI18n } from '@/i18n/index.js';
-import { handleProfileMode } from '../../functions/modules/subscription/profile-handler.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
+import { handleProfileMode } from '../../functions/modules/subscription/core/profile-handler.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 

@@ -119,10 +119,21 @@ Update `database_id` in `wrangler.toml` (for Workers) or bind the database in Pa
 
 Never commit real tokens, cookies, UUID/private keys, webhook secrets, bot tokens, subscription URLs, or airport domains.
 
+## Architecture & Workspace Layout
+
+MiSub is organized as a `pnpm` monorepo with strict separation between shared domain logic, edge runtime, and UI:
+
+- **`packages/core` (`@misub/core`)**: Environment-agnostic protocol parsers, `NodeIR` intermediate representation, Zod schemas, JSDoc `@typedef` contracts, and operator/expression DSL shared by both frontend and backend.
+- **`functions/` & `worker.js`**: Cloudflare Workers / Pages Functions backend built with **Hono**, onion CORS/CSRF/auth middlewares, Zod request validation, lazy-loaded `ClientAdapter` subscription generators/renderers (`await import(...)`), and a **Repository + 3-tier cache (`Memory -> Cache API -> D1`)** layer with `db.batch(...)` coalesced writes.
+- **`src/`**: Vue 3 + Vite 8 + Tailwind CSS 4 frontend using **`@tanstack/vue-query`** for server state, canonical `useXxxStore.js` Pinia stores, and the unified [ImportModal.vue](src/components/modals/ImportModal.vue).
+
+See [docs/architecture.md](docs/architecture.md) for the full module map and request pipeline.
+
 ## Local Development
 
 ```bash
 pnpm install
+npx wrangler d1 execute misub --file=schema.sql --local
 pnpm dev
 ```
 
@@ -132,11 +143,19 @@ For local Cloudflare Worker + D1 testing (configure `ADMIN_PASSWORD` in `.dev.va
 pnpm dev:worker
 ```
 
+To test the production static build through Cloudflare Pages Functions locally:
+
+```bash
+pnpm build
+npx wrangler pages dev dist --d1 MISUB_DB=misub
+```
+
 Useful commands:
 
 ```bash
-pnpm test:run
-pnpm lint --quiet
+pnpm exec oxlint
+pnpm test
+pnpm run test:e2e
 pnpm build
 pnpm preview
 ```
@@ -171,6 +190,7 @@ Profiles can inherit a global default operator chain or define their own process
 
 ## Documentation
 
+- [Architecture Guide](docs/architecture.md)
 - [Chinese README](README-zh.md)
 
 ## Version

@@ -3,7 +3,8 @@
  * 处理各种API请求
  */
 
-import { STORAGE_TYPES, StorageFactory } from '../storage-adapter.js';
+import { STORAGE_TYPES } from '../storage-adapter.js';
+import { createRepositories } from '../repositories/index.js';
 import {
   createErrorResponse,
   createJsonResponse,
@@ -16,21 +17,21 @@ import { clearAllNodeCaches } from '../services/node-cache-service.js';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
 import { maybeRunScheduledTasks, WEBDAV_LAST_CHECKED_CACHE_KEY } from './scheduled-task-runner.js';
 
-import { DEFAULT_SETTINGS as defaultSettings, STORAGE_KEY_SETTINGS } from './config.js';
-import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '../../shared/reserved-paths.js';
+import { DEFAULT_SETTINGS as defaultSettings } from './config.js';
+import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
 import {
   ensureProfileLinkId,
   getProfileShareIdentifier,
   normalizeProfileIdentifier,
-} from '../../shared/profile-link.js';
-import { getProfileSubscriptionId } from '../../shared/profile-subscription-ref.js';
-import { validateProfileAliases } from '../../shared/profile-alias.js';
+} from '@misub/core/domain/profile-link.js';
+import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
+import { validateProfileAliases } from '@misub/core/domain/profile-alias.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
 import { getPublicTurnstileConfig } from './turnstile.js';
 
-function normalizeProfile(profile = {}) {
+function normalizeProfile(profile = /** @type {Record<string, any>} */ ({})) {
   const normalized = { ...profile };
   normalized.subscriptions = Array.isArray(profile.subscriptions) ? profile.subscriptions : [];
   normalized.manualNodes = Array.isArray(profile.manualNodes) ? profile.manualNodes : [];
@@ -211,33 +212,24 @@ export function isStorageUnavailableError(error) {
   );
 }
 
-function getRequestStorage(env, context = null) {
-  return context?.storage || StorageFactory.createAdapter(env);
-}
-
-async function getRequestSettings(storageAdapter, context = null) {
-  if (context?.settings !== undefined) {
-    return context.settings || {};
-  }
-  return (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || {};
-}
-
 /**
  * 处理数据获取API
- * @param {Object} env - Cloudflare环境对象
+ * @param {Record<string, any>} env - Cloudflare环境对象
+ * @param {Record<string, any> | null} [context] - 可选请求上下文
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleDataRequest(env, context = null) {
+export async function handleDataRequest(env, context = /** @type {Record<string, any> | null} */ (null)) {
   const storageType = STORAGE_TYPES.D1;
   try {
     if (!env?.MISUB_DB) {
       console.error('[API Error /data] D1 binding missing (MISUB_DB)');
     }
-    const storageAdapter = getRequestStorage(env, context);
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
     const [misubs, rawProfiles, rawSettings, ruleTemplates] = await Promise.all([
-      storageAdapter.getAllSubscriptions(),
-      storageAdapter.getAllProfiles(),
-      getRequestSettings(storageAdapter, context),
+      repos.subscriptions.getAll(),
+      repos.profiles.getAll(),
+      repos.settings.getMain(),
       listRuleTemplates(storageAdapter).catch((error) => {
         console.warn('[API /data] Failed to load custom rule templates:', error?.message || error);
         return [];
@@ -252,7 +244,7 @@ export async function handleDataRequest(env, context = null) {
       storageAdapter?.type !== 'noop' &&
       typeof storageAdapter.syncAllProfiles === 'function'
     ) {
-      await storageAdapter.syncAllProfiles(migratedRawProfiles).catch((err) => {
+      await repos.profiles.syncAll(migratedRawProfiles).catch((err) => {
         console.warn('[API /data] Failed to persist linkId migration:', err?.message || err);
       });
     }
@@ -267,9 +259,9 @@ export async function handleDataRequest(env, context = null) {
       { scope: 'data' },
     );
     try {
-      const taskContext = context
-        ? { ...context, storage: storageAdapter, settings }
-        : { env, storage: storageAdapter, settings };
+      const taskContext = /** @type {Record<string, any>} */ (
+        context ? { ...context, storage: storageAdapter, settings } : { env, storage: storageAdapter, settings }
+      );
       const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
       if (typeof taskContext.waitUntil !== 'function') {
         runPromise.catch((error) => console.warn('[ScheduledTasks] lazy check failed:', error?.message || error));
@@ -290,11 +282,12 @@ export async function handleDataRequest(env, context = null) {
 
 /**
  * 处理订阅和配置保存API
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
+ * @param {Request} request - HTTP请求对象
+ * @param {Record<string, any>} env - Cloudflare环境对象
+ * @param {Record<string, any> | null} [context] - 可选请求上下文
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleMisubsSave(request, env, context = null) {
+export async function handleMisubsSave(request, env, context = /** @type {Record<string, any> | null} */ (null)) {
   try {
     // 步骤1: 解析请求体
     let requestData;
@@ -312,7 +305,8 @@ export async function handleMisubsSave(request, env, context = null) {
     }
 
     const { misubs, profiles, baseRevision, force = false } = requestData;
-    const storageAdapter = getRequestStorage(env, context);
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
     if (!storageAdapter || storageAdapter.type === 'noop') {
       return createJsonResponse(
         {
@@ -347,14 +341,16 @@ export async function handleMisubsSave(request, env, context = null) {
 
     const [previousMisubs, previousProfiles] = await Promise.all([
       typeof storageAdapter.getAllSubscriptions === 'function'
-        ? Promise.resolve(storageAdapter.getAllSubscriptions()).catch(() => [])
+        ? Promise.resolve(repos.subscriptions.getAll({ fresh: true })).catch(() => [])
         : Promise.resolve([]),
       typeof storageAdapter.getAllProfiles === 'function'
-        ? Promise.resolve(storageAdapter.getAllProfiles()).catch(() => [])
+        ? Promise.resolve(repos.profiles.getAll({ fresh: true })).catch(() => [])
         : Promise.resolve([]),
     ]);
-    const safePrevMisubs = Array.isArray(previousMisubs) ? previousMisubs : [];
-    const safePrevProfiles = Array.isArray(previousProfiles) ? previousProfiles : [];
+    const safePrevMisubs = /** @type {Record<string, any>[]} */ (Array.isArray(previousMisubs) ? previousMisubs : []);
+    const safePrevProfiles = /** @type {Record<string, any>[]} */ (
+      Array.isArray(previousProfiles) ? previousProfiles : []
+    );
     const normalizedPreviousProfiles = safePrevProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
 
     if (typeof baseRevision === 'string' && baseRevision.trim() && !force) {
@@ -407,7 +403,8 @@ export async function handleMisubsSave(request, env, context = null) {
     // 步骤4: 获取设置（带错误处理）
     let settings;
     try {
-      settings = (await storageAdapter.get(STORAGE_KEY_SETTINGS)) || defaultSettings;
+      const loadedSettings = await repos.settings.getMain();
+      settings = loadedSettings && Object.keys(loadedSettings).length > 0 ? loadedSettings : defaultSettings;
     } catch {
       settings = defaultSettings; // 使用默认设置继续
     }
@@ -436,12 +433,9 @@ export async function handleMisubsSave(request, env, context = null) {
       }
     }
 
-    // 步骤6: 保存数据到存储（复用 D1StorageAdapter 行级差异同步）
+    // 步骤6: 保存数据到存储（通过仓储层触发差异同步与多级缓存失效）
     try {
-      await Promise.all([
-        storageAdapter.syncAllSubscriptions(finalMisubs),
-        storageAdapter.syncAllProfiles(finalProfiles),
-      ]);
+      await Promise.all([repos.subscriptions.syncAll(finalMisubs), repos.profiles.syncAll(finalProfiles)]);
     } catch (storageError) {
       console.error('[API Error /misubs] Storage put failed:', storageError);
       return createJsonResponse(
@@ -513,12 +507,19 @@ export async function handleMisubsSave(request, env, context = null) {
 }
 
 /**
- * 处理设置获取API
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
+ * 脱敏设置对象以便返回给客户端
+ * @param {Record<string, any>} [settings]
+ * @param {Record<string, any> | null} [env]
+ * @param {{ scope?: string }} [options]
+ * @returns {Record<string, any>}
  */
-function redactSettingsForResponse(settings = {}, env = null, options = {}) {
+function redactSettingsForResponse(
+  settings = /** @type {Record<string, any>} */ ({}),
+  env = /** @type {Record<string, any> | null} */ (null),
+  options = /** @type {{ scope?: string }} */ ({}),
+) {
   const scope = options?.scope === 'data' ? 'data' : 'settings';
+  /** @type {Record<string, any>} */
   const cleaned = { ...settings };
   delete cleaned.publicLinks;
   delete cleaned.publicCores;
@@ -571,6 +572,7 @@ function redactSettingsForResponse(settings = {}, env = null, options = {}) {
         }
       : cleaned.webdavBackup;
 
+  /** @type {Record<string, any>} */
   const redacted = {
     ...cleaned,
     botToken: '',
@@ -611,11 +613,12 @@ function pickLatestTimestamp(a, b) {
   return a || b || null;
 }
 
-export async function handleSettingsGet(env, context = null) {
+export async function handleSettingsGet(env, context = /** @type {Record<string, any> | null} */ (null)) {
   try {
-    const storageAdapter = getRequestStorage(env, context);
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
     const [settings, cachedCheck] = await Promise.all([
-      getRequestSettings(storageAdapter, context),
+      repos.settings.getMain(),
       storageAdapter.get(WEBDAV_LAST_CHECKED_CACHE_KEY, 'json').catch(() => null),
     ]);
     const merged = { ...defaultSettings, ...settings };
@@ -646,7 +649,7 @@ export async function handleSettingsGet(env, context = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handleSettingsSave(request, env, context = null) {
+export async function handleSettingsSave(request, env, context = /** @type {Record<string, any> | null} */ (null)) {
   try {
     const newSettings = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
 
@@ -704,8 +707,9 @@ export async function handleSettingsSave(request, env, context = null) {
       }
     }
 
-    const storageAdapter = getRequestStorage(env, context);
-    const oldSettings = (await storageAdapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true })) || {};
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
+    const oldSettings = (await repos.settings.getMain({ fresh: true })) || {};
     const {
       hasBotToken: _omitHasBotToken,
       hasCronSecret: _omitHasCronSecret,
@@ -795,7 +799,7 @@ export async function handleSettingsSave(request, env, context = null) {
         503,
       );
     }
-    await storageAdapter.put(STORAGE_KEY_SETTINGS, finalSettings);
+    await repos.settings.saveMain(finalSettings);
 
     // 纯界面偏好的保存（客户端用 X-MiSub-Save-Scope: preferences 声明，
     // 目前只有「忽略的待处理项」走这条路）不需要让整站节点缓存失效，
@@ -860,9 +864,10 @@ export async function handleSettingsSave(request, env, context = null) {
  */
 export async function handleSettingsReset(env, context = null) {
   try {
-    const storageAdapter = getRequestStorage(env, context);
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
 
-    await storageAdapter.resetAllSettings();
+    await repos.settings.resetAll();
 
     try {
       await clearAllNodeCaches(storageAdapter);
@@ -886,15 +891,20 @@ export async function handleSettingsReset(env, context = null) {
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicProfilesRequest(request, env, context = null) {
+export async function handlePublicProfilesRequest(
+  request,
+  env,
+  context = /** @type {Record<string, any> | null} */ (null),
+) {
   try {
-    const storageAdapter = getRequestStorage(env, context);
-    const rawSettings = await getRequestSettings(storageAdapter, context);
+    const repos = createRepositories(env, context);
+    const storageAdapter = repos.storage;
+    const rawSettings = await repos.settings.getMain();
     const settings = { ...defaultSettings, ...rawSettings };
     const blocked = await enforcePublicApiAccess(request, env, settings);
     if (blocked) return blocked;
 
-    const profiles = await storageAdapter.getAllProfiles();
+    const profiles = await repos.profiles.getAll();
 
     const profileToken = settings.profileToken || 'sub';
     const defaultLocale = settings.defaultLocale || 'zh-CN';
@@ -934,7 +944,7 @@ export async function handlePublicProfilesRequest(request, env, context = null) 
       storageAdapter?.type !== 'noop' &&
       typeof storageAdapter.syncAllProfiles === 'function'
     ) {
-      await storageAdapter.syncAllProfiles(ensuredProfiles).catch(() => {});
+      await repos.profiles.syncAll(ensuredProfiles).catch(() => {});
     }
 
     // 过滤出公开且启用的订阅组
@@ -991,10 +1001,10 @@ export async function handlePublicProfilesRequest(request, env, context = null) 
  * @param {Object} env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
-export async function handlePublicConfig(request, env, context = null) {
+export async function handlePublicConfig(request, env, context = /** @type {Record<string, any> | null} */ (null)) {
   try {
-    const storageAdapter = getRequestStorage(env, context);
-    const settings = await getRequestSettings(storageAdapter, context);
+    const repos = createRepositories(env, context);
+    const settings = await repos.settings.getMain();
 
     const mergedSettings = { ...defaultSettings, ...settings };
     const configuredLoginPath = normalizeLoginPath(mergedSettings.customLoginPath);

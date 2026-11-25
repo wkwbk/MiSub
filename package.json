@@ -9,25 +9,33 @@
     "deploy:worker": "npx wrangler deploy",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest --passWithNoTests",
+    "test": "vitest run --passWithNoTests",
     "test:run": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
     "test:coverage": "vitest run --coverage --passWithNoTests",
+    "test:e2e": "vite build && playwright test",
     "lint": "oxlint",
     "release": "node scripts/release.mjs",
-    "format": "prettier --write \"functions/**/*.js\" \"shared/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\"",
-    "format:check": "prettier --check \"functions/**/*.js\" \"shared/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\""
+    "format": "prettier --write \"functions/**/*.js\" \"packages/core/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"functions/**/*.js\" \"packages/core/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\""
   },
   "dependencies": {
+    "@hono/zod-validator": "^0.9.1",
     "@lucide/vue": "^1.73.0",
+    "@misub/core": "workspace:*",
+    "@tanstack/vue-query": "^5.108.4",
     "dompurify": "3.4.5",
+    "hono": "^4.13.21",
     "js-yaml": "^5.5.0",
     "pinia": "^4.1.0",
     "qrcode": "^1.5.4",
     "vue": "^3.5.45",
     "vue-router": "^5.5.1",
-    "vuedraggable": "^4.1.0"
+    "vuedraggable": "^4.1.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/vite": "^4.3.5",
     "@vitejs/plugin-vue": "^6.0.11",
     "@vue/test-utils": "^2.4.6",

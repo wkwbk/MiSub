@@ -3,14 +3,14 @@ import { useI18n } from '@/i18n/index.js';
 import { computed, markRaw, ref, watch } from 'vue';
 import { Box, Code2, Copy, Link2, Loader2, Monitor, Send, Zap } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
-import { useToastStore } from '@/stores/toast';
-import { useSettingsStore } from '@/stores/settings.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
-import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
-import { shadowrocketConfigUrl } from '@shared/shadowrocket-links.js';
+import { isReservedSubPath, normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
+import { shadowrocketConfigUrl } from '@misub/core/domain/shadowrocket-links.js';
 
 const { t } = useI18n();
 

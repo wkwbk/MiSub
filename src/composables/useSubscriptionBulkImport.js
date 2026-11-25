@@ -1,8 +1,8 @@
 import { ref } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { extractNodeName } from '@/lib/utils.js';
-import { generateSubscriptionId } from '@/utils/id.js';
+import { generateSubscriptionId } from '@misub/core/utils/id.js';
 import { applyItemTags, collectTags } from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 

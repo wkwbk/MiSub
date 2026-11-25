@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
-import { resolveEffectiveNodeTransform } from '../../functions/modules/subscription/main-handler.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
+import { resolveEffectiveNodeTransform } from '../../functions/modules/subscription/core/main-handler.js';
 
 // 模拟 mihomo config.go:892 slices.Sort(AllProxies) —— Go string 是字节序
 const goSort = (a) => [...a].sort((x, y) => Buffer.compare(Buffer.from(x, 'utf8'), Buffer.from(y, 'utf8')));

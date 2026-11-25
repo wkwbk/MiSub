@@ -1,9 +1,10 @@
 /**
- * API路由处理模块
- * 处理所有API请求的路由分发
+ * API路由处理模块 (基于 Hono + Zod 契约校验)
  */
 
-import { encodeArrayBufferToBase64 } from '../../shared/base64.js';
+import { Hono } from 'hono';
+import { MisubsSaveRequestSchema, NodeCountRequestSchema, ParseSubscriptionRequestSchema } from '@misub/core/schemas';
+import { encodeArrayBufferToBase64 } from '@misub/core/utils/base64.js';
 import {
   createErrorResponse,
   createJsonResponse,
@@ -28,7 +29,7 @@ import {
   handleSettingsSave,
 } from './api-handler.js';
 import { handleRuleTemplatesRequest } from './handlers/rule-template-handler.js';
-import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription/preview-handler.js';
+import { handlePublicPreviewRequest, handleSubscriptionNodesRequest } from './subscription/core/preview-handler.js';
 import {
   handleBackupExport,
   handleBackupRestore,
@@ -59,357 +60,351 @@ import { handleAppStoreReleaseRequest, handleGithubReleaseRequest } from './hand
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
 import { redactUrl, safeFetchPublicNetworkUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
-import { normalizeSubconverterBackend } from './subscription/main-handler.js';
-import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/visual-rules-builder.js';
+import { normalizeSubconverterBackend } from './subscription/core/main-handler.js';
+import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/core/visual-rules-builder.js';
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';
+import { ensureStandardRequest, getBoundContext, setBoundContext } from '../middleware/request-context-store.js';
+import { adminAuthMiddleware, zodJsonValidator } from '../middleware/hono-middlewares.js';
 
 function isAuthDiagnosticsEnabled(env) {
   return String(env?.ENABLE_AUTH_DIAGNOSTICS || '').toLowerCase() === 'true';
 }
 
-/**
- * 处理主要的API请求
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
- * @returns {Promise<Response>} HTTP响应
- */
-export async function handleApiRequest(request, env, context = null) {
+async function handleSubconverterConfigRequest(request, env, context) {
   const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/api/, '');
+  const rawSelected = url.searchParams.get('selectedRules');
+  const rawCustom = url.searchParams.get('customRules');
+  const rawGroupByCountry = url.searchParams.get('group_by_country');
+  const rawIncludeAuto = url.searchParams.get('include_auto_select');
 
-  if (path.startsWith('/ext/v1')) {
-    return await handleExternalApiRequest(request, env);
-  }
+  let options = {};
+  const hasQueryOverrides =
+    rawSelected !== null || rawCustom !== null || rawGroupByCountry !== null || rawIncludeAuto !== null;
 
-  if (path === '/login') {
-    return await handleLogin(request, env);
-  }
-
-  if (path === '/public_config') {
-    return await handlePublicConfig(request, env, context);
-  }
-
-  // 动态生成外部 Subconverter 可用的 [custom] INI 配置（公开只读，供外部转换后端拉取）
-  if (path === '/subconverter-config' && request.method === 'GET') {
-    const rawSelected = url.searchParams.get('selectedRules');
-    const rawCustom = url.searchParams.get('customRules');
-    const rawGroupByCountry = url.searchParams.get('group_by_country');
-    const rawIncludeAuto = url.searchParams.get('include_auto_select');
-
-    let options = {};
-    const hasQueryOverrides =
-      rawSelected !== null || rawCustom !== null || rawGroupByCountry !== null || rawIncludeAuto !== null;
-
-    if (!hasQueryOverrides) {
-      try {
-        const savedSettings =
-          context?.settings !== undefined
-            ? context.settings || {}
-            : (await (context?.storage || StorageFactory.createAdapter(env)).get(STORAGE_KEY_SETTINGS)) || {};
-        if (savedSettings.builtinTransform) {
-          options = savedSettings.builtinTransform;
-        }
-      } catch {
-        // 无存储绑定时回退默认配置
+  if (!hasQueryOverrides) {
+    try {
+      const savedSettings =
+        context?.settings !== undefined
+          ? context.settings || {}
+          : (await (context?.storage || StorageFactory.createAdapter(env)).get(STORAGE_KEY_SETTINGS)) || {};
+      if (savedSettings.builtinTransform) {
+        options = savedSettings.builtinTransform;
       }
+    } catch {
+      // 无存储绑定时回退默认配置
+    }
+  } else {
+    let selectedRules;
+    if (!rawSelected) {
+      selectedRules = VISUAL_RULE_PRESETS.balanced;
+    } else if (VISUAL_RULE_PRESETS[rawSelected]) {
+      selectedRules = VISUAL_RULE_PRESETS[rawSelected];
     } else {
-      let selectedRules;
-      if (!rawSelected) {
-        selectedRules = VISUAL_RULE_PRESETS.balanced;
-      } else if (VISUAL_RULE_PRESETS[rawSelected]) {
-        selectedRules = VISUAL_RULE_PRESETS[rawSelected];
-      } else {
-        try {
-          const parsed = JSON.parse(rawSelected);
-          if (!Array.isArray(parsed)) {
-            return new Response('Invalid selectedRules parameter', { status: 400 });
-          }
-          selectedRules = parsed;
-        } catch {
-          selectedRules = rawSelected
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean);
+      try {
+        const parsed = JSON.parse(rawSelected);
+        if (!Array.isArray(parsed)) {
+          return new Response('Invalid selectedRules parameter', { status: 400 });
         }
+        selectedRules = parsed;
+      } catch {
+        selectedRules = rawSelected
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
       }
+    }
 
-      let customRules = [];
-      if (rawCustom) {
-        try {
-          const parsedCustom = JSON.parse(rawCustom);
-          if (Array.isArray(parsedCustom)) customRules = parsedCustom;
-        } catch {
-          return new Response('Invalid customRules JSON parameter', { status: 400 });
-        }
+    let customRules = [];
+    if (rawCustom) {
+      try {
+        const parsedCustom = JSON.parse(rawCustom);
+        if (Array.isArray(parsedCustom)) customRules = parsedCustom;
+      } catch {
+        return new Response('Invalid customRules JSON parameter', { status: 400 });
       }
-
-      options = {
-        selectedRules,
-        customRules,
-        groupByCountry: rawGroupByCountry !== 'false',
-        includeAutoSelect: rawIncludeAuto !== 'false',
-      };
     }
 
-    const iniContent = generateSubconverterIniConfig(options);
-    return new Response(iniContent, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/plain; charset=utf-8',
-        'Cache-Control': 'no-cache',
-      },
-    });
+    options = {
+      selectedRules,
+      customRules,
+      groupByCountry: rawGroupByCountry !== 'false',
+      includeAutoSelect: rawIncludeAuto !== 'false',
+    };
   }
 
-  if (path === '/public/profiles') {
-    return await handlePublicProfilesRequest(request, env, context);
-  }
+  const iniContent = generateSubconverterIniConfig(options);
+  return new Response(iniContent, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    },
+  });
+}
 
-  if (path === '/public/preview') {
-    return await handlePublicPreviewRequest(request, env);
-  }
+/**
+ * 构建 /api 子路由（不含 CORS/CSRF 外壳，便于单元测试直接调用与根 Hono 应用挂载）
+ */
+export function createApiRouter() {
+  const apiApp = /** @type {Hono<{ Bindings: Record<string, any>; Variables: Record<string, any> }>} */ (new Hono());
 
-  // 留言板公开接口
-  if (path === '/public/guestbook') {
-    if (request.method === 'GET') {
-      return await handleGuestbookGet(request, env);
-    }
-    if (request.method === 'POST') {
-      return await handleGuestbookPost(request, env);
-    }
-    return createErrorResponse('Method Not Allowed', 405);
-  }
+  // 对外开放 API (/api/ext/v1/*) 使用独立 Bearer Token 鉴权
+  apiApp.all('/ext/v1', (c) => handleExternalApiRequest(c.req.raw, c.env));
+  apiApp.all('/ext/v1/*', (c) => handleExternalApiRequest(c.req.raw, c.env));
 
-  // Telegram Push Bot Webhook (公开接口，内部验证)
-  if (path === '/telegram/webhook') {
+  // --- 公开接口 ---
+  apiApp.all('/login', (c) => handleLogin(c.req.raw, c.env));
+  apiApp.all('/logout', (c) => handleLogout(c.req.raw));
+  apiApp.all('/public_config', (c) => handlePublicConfig(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.get('/subconverter-config', (c) =>
+    handleSubconverterConfigRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/public/profiles', (c) =>
+    handlePublicProfilesRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/public/preview', (c) => handlePublicPreviewRequest(c.req.raw, c.env));
+
+  apiApp.get('/public/guestbook', (c) => handleGuestbookGet(c.req.raw, c.env));
+  apiApp.post('/public/guestbook', (c) => handleGuestbookPost(c.req.raw, c.env));
+  apiApp.all('/public/guestbook', () => createErrorResponse('Method Not Allowed', 405));
+
+  apiApp.all('/telegram/webhook', async (c) => {
     const { handleTelegramWebhook } = await import('./handlers/telegram-webhook-handler.js');
-    return await handleTelegramWebhook(request, env);
-  }
+    return await handleTelegramWebhook(c.req.raw, c.env);
+  });
 
-  if (path === '/system/error_report') {
-    return await handleErrorReportRequest(request, env);
-  }
+  apiApp.all('/system/error_report', (c) => handleErrorReportRequest(c.req.raw, c.env));
+  apiApp.get('/clients', (c) => handleClientRequest(c.req.raw, c.env));
+  apiApp.get('/clients/*', (c) => handleClientRequest(c.req.raw, c.env));
+  apiApp.get('/public_cores', (c) => handlePublicCoresRequest(c.req.raw, c.env));
+  apiApp.get('/public_cores/*', (c) => handlePublicCoresRequest(c.req.raw, c.env));
+  apiApp.get('/public_links', (c) => handlePublicLinksRequest(c.req.raw, c.env));
+  apiApp.get('/public_links/*', (c) => handlePublicLinksRequest(c.req.raw, c.env));
 
-  if (path.startsWith('/clients') && request.method === 'GET') {
-    return await handleClientRequest(request, env);
-  }
-
-  if (path.startsWith('/public_cores') && request.method === 'GET') {
-    return await handlePublicCoresRequest(request, env);
-  }
-
-  if (path.startsWith('/public_links') && request.method === 'GET') {
-    return await handlePublicLinksRequest(request, env);
-  }
-
-  if (path === '/data') {
-    if (!(await authMiddleware(request, env))) {
+  apiApp.all('/data', async (c) => {
+    if (!(await authMiddleware(c.req.raw, c.env))) {
       return createJsonResponse({
         authenticated: false,
         message: 'Not logged in',
       });
     }
+    return await handleDataRequest(c.env, getBoundContext(c.req.raw, c.env) || { env: c.env });
+  });
 
-    return await handleDataRequest(env, context || { env });
-  }
+  apiApp.all('/github/release', (c) => handleGithubReleaseRequest(c.req.raw, c.env));
+  apiApp.all('/appstore/release', (c) => handleAppStoreReleaseRequest(c.req.raw, c.env));
 
-  if (path === '/github/release') {
-    return await handleGithubReleaseRequest(request, env);
-  }
-
-  if (path === '/appstore/release') {
-    return await handleAppStoreReleaseRequest(request, env);
-  }
-
-  // Logout 无需认证（cookie 过期时也需能正常登出）
-  if (path === '/logout') {
-    return await handleLogout(request);
-  }
-
-  // 认证调试端点（默认关闭，不返回敏感值）
-  if (path === '/auth_debug') {
-    if (!isAuthDiagnosticsEnabled(env)) {
+  apiApp.all('/auth_debug', async (c) => {
+    if (!isAuthDiagnosticsEnabled(c.env)) {
       return createErrorResponse('Not Found', 404);
     }
-    const debugInfo = await getAuthDebugInfo(env);
-    const authDiagnostic = await getAuthSessionDiagnostic(request, env);
-
+    const debugInfo = await getAuthDebugInfo(c.env);
+    const authDiagnostic = await getAuthSessionDiagnostic(c.req.raw, c.env);
     return createJsonResponse({
       success: true,
       auth: authDiagnostic,
       runtime: debugInfo,
     });
-  }
+  });
 
-  // 登录密码调试端点（默认关闭，不返回敏感值）
-  if (path === '/auth_check') {
-    if (!isAuthDiagnosticsEnabled(env)) {
+  apiApp.post('/auth_check', async (c) => {
+    if (!isAuthDiagnosticsEnabled(c.env)) {
       return createErrorResponse('Not Found', 404);
     }
-    if (request.method !== 'POST') {
-      return createJsonResponse({ error: 'Method Not Allowed' }, 405);
-    }
-    const diagnostic = await getLoginPasswordDiagnostic(request, env);
+    const diagnostic = await getLoginPasswordDiagnostic(c.req.raw, c.env);
     return createJsonResponse(diagnostic, diagnostic.success ? 200 : 400);
-  }
+  });
+  apiApp.all('/auth_check', (c) => {
+    if (!isAuthDiagnosticsEnabled(c.env)) {
+      return createErrorResponse('Not Found', 404);
+    }
+    return createJsonResponse({ error: 'Method Not Allowed' }, 405);
+  });
 
-  if (!(await authMiddleware(request, env))) {
-    return createJsonResponse({ error: 'Unauthorized' }, 401);
-  }
+  // --- 以下为管理员会话保护路由 ---
+  apiApp.use('*', adminAuthMiddleware);
 
-  if (path.startsWith('/clients')) {
-    return await handleClientRequest(request, env);
-  }
+  apiApp.all('/clients', (c) => handleClientRequest(c.req.raw, c.env));
+  apiApp.all('/clients/*', (c) => handleClientRequest(c.req.raw, c.env));
+  apiApp.all('/public_cores', (c) => handlePublicCoresRequest(c.req.raw, c.env));
+  apiApp.all('/public_cores/*', (c) => handlePublicCoresRequest(c.req.raw, c.env));
+  apiApp.all('/public_links', (c) => handlePublicLinksRequest(c.req.raw, c.env));
+  apiApp.all('/public_links/*', (c) => handlePublicLinksRequest(c.req.raw, c.env));
 
-  if (path.startsWith('/public_cores')) {
-    return await handlePublicCoresRequest(request, env);
-  }
-
-  if (path.startsWith('/public_links')) {
-    return await handlePublicLinksRequest(request, env);
-  }
-
-  if (path === '/test_notification') {
-    return await handleTestNotificationRequest(request, env);
-  }
-
-  if (path === '/telegram/setup') {
+  apiApp.all('/test_notification', (c) => handleTestNotificationRequest(c.req.raw, c.env));
+  apiApp.all('/telegram/setup', async (c) => {
     const { handleTelegramSetupRequest } = await import('./handlers/telegram/client.js');
-    return await handleTelegramSetupRequest(request, env);
-  }
+    return await handleTelegramSetupRequest(c.req.raw, c.env);
+  });
 
-  switch (path) {
-    case '/misubs':
-      return await handleMisubsSave(request, env, context);
-
-    case '/rule_templates':
-      return await handleRuleTemplatesRequest(request, env);
-
-    case '/backup/export':
-      return await handleBackupExport(request, env);
-
-    case '/backup/restore':
-      return await handleBackupRestore(request, env);
-
-    case '/backup/webdav/test':
-      return await handleWebdavBackupTest(request, env);
-
-    case '/backup/webdav/run':
-      return await handleManualWebdavBackup(request, env);
-
-    case '/backup/webdav/list':
-      return await handleWebdavBackupList(request, env);
-
-    case '/backup/webdav/restore':
-      return await handleWebdavRestore(request, env);
-
-    case '/node_count':
-      return await handleLegacyNodeCountRequest(request, env);
-
-    case '/detect_airport_name': {
-      if (request.method !== 'POST') return createErrorResponse('Method Not Allowed', 405);
-      try {
-        const body = await readJsonWithLimit(request, JSON_BODY_LIMITS.normal);
-        const { inferAirportRootDomain, fetchAirportSiteTitle } = await import('../services/subscription-service.js');
-        const rootDomain = inferAirportRootDomain(body?.url || '');
-        if (!rootDomain) {
-          return createJsonResponse({ success: true, name: '', rootDomain: '' });
+  apiApp.post(
+    '/misubs',
+    zodJsonValidator(MisubsSaveRequestSchema, {
+      maxBytes: JSON_BODY_LIMITS.large,
+      skipIf: (c) => {
+        const ctx = getBoundContext(c.req.raw, c.env);
+        const storage = ctx?.storage || StorageFactory.createAdapter(c.env);
+        return !storage || storage.type === 'noop';
+      },
+      onParseError: (parseError) =>
+        createJsonResponse(
+          {
+            success: false,
+            message: parseError.status === 413 ? parseError.message : '请求数据格式错误，请检查数据格式',
+          },
+          parseError.status || 400,
+        ),
+      onValidationError: (_error, /** @type {Record<string, any>} */ raw) => {
+        if (
+          !raw ||
+          typeof raw !== 'object' ||
+          typeof raw.misubs === 'undefined' ||
+          typeof raw.profiles === 'undefined'
+        ) {
+          return createJsonResponse(
+            {
+              success: false,
+              message: '请求体中缺少 misubs 或 profiles 字段',
+            },
+            400,
+          );
         }
-        const name = await fetchAirportSiteTitle(rootDomain, { timeout: 5000 });
-        return createJsonResponse({ success: true, name, rootDomain });
-      } catch (error) {
-        return createErrorResponse(`识别失败: ${error.message}`, 400);
+        return createJsonResponse(
+          {
+            success: false,
+            message: 'misubs 和 profiles 必须是数组格式',
+          },
+          400,
+        );
+      },
+    }),
+    (c) => handleMisubsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/misubs', (c) => handleMisubsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+
+  apiApp.all('/rule_templates', (c) => handleRuleTemplatesRequest(c.req.raw, c.env));
+  apiApp.all('/backup/export', (c) => handleBackupExport(c.req.raw, c.env));
+  apiApp.all('/backup/restore', (c) => handleBackupRestore(c.req.raw, c.env));
+  apiApp.all('/backup/webdav/test', (c) => handleWebdavBackupTest(c.req.raw, c.env));
+  apiApp.all('/backup/webdav/run', (c) => handleManualWebdavBackup(c.req.raw, c.env));
+  apiApp.all('/backup/webdav/list', (c) => handleWebdavBackupList(c.req.raw, c.env));
+  apiApp.all('/backup/webdav/restore', (c) => handleWebdavRestore(c.req.raw, c.env));
+
+  apiApp.post(
+    '/node_count',
+    zodJsonValidator(NodeCountRequestSchema, {
+      maxBytes: JSON_BODY_LIMITS.normal,
+      onValidationError: () => createErrorResponse('Invalid or missing subscription URL', 400),
+    }),
+    (c) => handleLegacyNodeCountRequest(c.req.raw, c.env),
+  );
+  apiApp.all('/node_count', (c) => handleLegacyNodeCountRequest(c.req.raw, c.env));
+
+  apiApp.post('/detect_airport_name', async (c) => {
+    try {
+      const body = await readJsonWithLimit(c.req.raw, JSON_BODY_LIMITS.normal);
+      const { inferAirportRootDomain, fetchAirportSiteTitle } = await import('../services/subscription-service.js');
+      const rootDomain = inferAirportRootDomain(body?.url || '');
+      if (!rootDomain) {
+        return createJsonResponse({ success: true, name: '', rootDomain: '' });
       }
+      const name = await fetchAirportSiteTitle(rootDomain, { timeout: 5000 });
+      return createJsonResponse({ success: true, name, rootDomain });
+    } catch (error) {
+      return createErrorResponse(`识别失败: ${error.message}`, 400);
     }
+  });
+  apiApp.all('/detect_airport_name', () => createErrorResponse('Method Not Allowed', 405));
 
-    case '/nodes/inspect':
-      return await handleNodeInspectRequest(request, env);
+  apiApp.all('/nodes/inspect', (c) => handleNodeInspectRequest(c.req.raw, c.env));
+  apiApp.all('/nodes/tcping', (c) => handleNodeTcpingRequest(c.req.raw, c.env));
+  apiApp.all('/fetch_external_url', (c) => handleExternalFetchRequest(c.req.raw, c.env));
+  apiApp.all('/batch_update_nodes', (c) => handleBatchUpdateNodesRequest(c.req.raw, c.env));
+  apiApp.all('/subscription_nodes', (c) => handleSubscriptionNodesRequest(c.req.raw, c.env));
 
-    case '/nodes/tcping':
-      return await handleNodeTcpingRequest(request, env);
+  apiApp.post(
+    '/parse_subscription',
+    zodJsonValidator(ParseSubscriptionRequestSchema, {
+      maxBytes: JSON_BODY_LIMITS.large,
+      onParseError: (err) =>
+        createJsonResponse({ success: false, error: `解析失败: ${err.message}` }, err.status || 400),
+      onValidationError: () => createJsonResponse({ success: false, error: '请提供有效的订阅内容' }, 400),
+    }),
+    (c) => handleParseSubscription(c.req.raw, c.env),
+  );
+  apiApp.all('/parse_subscription', (c) => handleParseSubscription(c.req.raw, c.env));
 
-    case '/fetch_external_url':
-      return await handleExternalFetchRequest(request, env);
+  apiApp.all('/subconverter/test', (c) => handleSubconverterTestRequest(c.req.raw, c.env));
+  apiApp.all('/shortlink/test', (c) => handleShortLinkTest(c.req.raw, c.env));
+  apiApp.all('/shortlink/create', (c) => handleShortLinkCreate(c.req.raw, c.env));
 
-    case '/batch_update_nodes':
-      return await handleBatchUpdateNodesRequest(request, env);
+  apiApp.get('/logs', async (c) => {
+    const { LogService } = await import('../services/log-service.js');
+    const logs = await LogService.getLogs(c.env);
+    return createJsonResponse({ success: true, data: logs }, 200, {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    });
+  });
+  apiApp.delete('/logs', async (c) => {
+    const { LogService } = await import('../services/log-service.js');
+    const profileId = (c.req.query('profileId') || '').trim();
+    const profileName = (c.req.query('profileName') || '').trim();
+    await LogService.clearLogs(c.env, { profileId, profileName });
+    const storageAdapter = StorageFactory.createAdapter(c.env);
+    await storageAdapter.resetProfileDownloadCounts?.(profileId ? { profileId } : {});
+    return createJsonResponse({ success: true });
+  });
+  apiApp.all('/logs', () => createErrorResponse('Method Not Allowed', 405));
 
-    case '/subscription_nodes':
-      return await handleSubscriptionNodesRequest(request, env);
+  apiApp.get('/settings', (c) => handleSettingsGet(c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.post('/settings', (c) => handleSettingsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/settings', () => createJsonResponse('Method Not Allowed', 405));
 
-    case '/parse_subscription':
-      return await handleParseSubscription(request, env);
+  apiApp.post('/settings/reset', (c) => handleSettingsReset(c.env));
+  apiApp.all('/settings/reset', () => createErrorResponse('Method Not Allowed', 405));
 
-    case '/subconverter/test':
-      return await handleSubconverterTestRequest(request, env);
+  apiApp.post('/settings/rotate_token', async (c) => {
+    const { rotateSubscriptionToken } = await import('./handlers/rotate-token.js');
+    const result = await rotateSubscriptionToken(c.env, {
+      request: c.req.raw,
+      force: true,
+      source: 'admin-ui',
+    });
+    return createJsonResponse({ success: Boolean(result?.rotated), data: result }, result?.rotated ? 200 : 503);
+  });
+  apiApp.all('/settings/rotate_token', () => createErrorResponse('Method Not Allowed', 405));
 
-    case '/shortlink/test':
-      return await handleShortLinkTest(request, env);
+  apiApp.get('/guestbook/manage', (c) => handleGuestbookManageGet(c.env));
+  apiApp.post('/guestbook/manage', (c) => handleGuestbookManageAction(c.req.raw, c.env));
+  apiApp.all('/guestbook/manage', () => createErrorResponse('Method Not Allowed', 405));
 
-    case '/shortlink/create':
-      return await handleShortLinkCreate(request, env);
+  apiApp.notFound(() => createErrorResponse('API route not found', 404));
+  apiApp.onError((/** @type {any} */ error) => {
+    console.error('[API Router Error]', error);
+    return createErrorResponse(error, error?.status || 500);
+  });
 
-    case '/logs':
-      if (request.method === 'GET') {
-        const { LogService } = await import('../services/log-service.js');
-        const logs = await LogService.getLogs(env);
-        return createJsonResponse({ success: true, data: logs }, 200, {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-        });
-      }
-      if (request.method === 'DELETE') {
-        const { LogService } = await import('../services/log-service.js');
-        const profileId = (url.searchParams.get('profileId') || '').trim();
-        const profileName = (url.searchParams.get('profileName') || '').trim();
-        await LogService.clearLogs(env, { profileId, profileName });
-        const storageAdapter = StorageFactory.createAdapter(env);
-        await storageAdapter.resetProfileDownloadCounts?.(profileId ? { profileId } : {});
-        return createJsonResponse({ success: true });
-      }
-      return createErrorResponse('Method Not Allowed', 405);
+  return apiApp;
+}
 
-    case '/settings':
-      if (request.method === 'GET') {
-        return await handleSettingsGet(env, context);
-      }
-      if (request.method === 'POST') {
-        return await handleSettingsSave(request, env, context);
-      }
-      return createJsonResponse('Method Not Allowed', 405);
+export const apiApp = createApiRouter();
+const apiRootApp = new Hono().route('/api', apiApp);
 
-    case '/settings/reset':
-      if (request.method === 'POST') {
-        return await handleSettingsReset(env);
-      }
-      return createErrorResponse('Method Not Allowed', 405);
-
-    case '/settings/rotate_token': {
-      if (request.method !== 'POST') {
-        return createErrorResponse('Method Not Allowed', 405);
-      }
-      const { rotateSubscriptionToken } = await import('./handlers/rotate-token.js');
-      const result = await rotateSubscriptionToken(env, {
-        request,
-        force: true,
-        source: 'admin-ui',
-      });
-      return createJsonResponse({ success: Boolean(result?.rotated), data: result }, result?.rotated ? 200 : 503);
-    }
-
-    case '/guestbook/manage':
-      if (request.method === 'GET') {
-        return await handleGuestbookManageGet(env);
-      }
-      if (request.method === 'POST') {
-        return await handleGuestbookManageAction(request, env);
-      }
-      return createErrorResponse('Method Not Allowed', 405);
-
-    default:
-      return createErrorResponse('API route not found', 404);
+/**
+ * 处理主要的API请求（向后兼容直接调用入口）
+ * @param {Object} request - HTTP请求对象
+ * @param {Object} env - Cloudflare环境对象
+ * @param {Object|null} [context] - 可选请求上下文
+ * @returns {Promise<Response>} HTTP响应
+ */
+export async function handleApiRequest(request, env, context = null) {
+  const stdReq = ensureStandardRequest(request);
+  if (context) {
+    setBoundContext(stdReq, context);
   }
+  return await apiRootApp.fetch(stdReq, env);
 }
 
 export async function handleSubconverterTestRequest(request, _env) {
@@ -425,6 +420,7 @@ export async function handleSubconverterTestRequest(request, _env) {
   }
 
   const { backend, target = 'clash', timeout = 15000 } = requestData || {};
+  /** @type {URL | undefined} */
   let endpoint;
   try {
     endpoint = normalizeSubconverterBackend(backend);
@@ -527,7 +523,7 @@ export async function handleSubconverterTestRequest(request, _env) {
 /**
  * 处理外部URL获取请求
  * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
+ * @param {Object} _env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
 export async function handleExternalFetchRequest(request, _env) {
@@ -555,8 +551,8 @@ export async function handleExternalFetchRequest(request, _env) {
   }
 
   const urlValidation = validatePublicFetchUrl(externalUrl);
-  if (!urlValidation.ok) {
-    return createErrorResponse(urlValidation.error, 400);
+  if (!urlValidation.ok || !urlValidation.url) {
+    return createErrorResponse(urlValidation.error || 'Invalid URL', 400);
   }
 
   try {

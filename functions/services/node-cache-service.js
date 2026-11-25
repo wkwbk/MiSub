@@ -263,7 +263,8 @@ export function getCacheConfig() {
 /**
  * 清除所有节点缓存
  * @param {Object} storageAdapter - 存储适配器
- * @returns {Promise<{cleared: number, failed: number}>}
+ * @param {Record<string, any>} [options]
+ * @returns {Promise<{cleared: number, failed: number, skipped: number}>}
  */
 export async function clearAllNodeCaches(storageAdapter, options = {}) {
   try {
@@ -289,19 +290,40 @@ export async function clearAllNodeCaches(storageAdapter, options = {}) {
 
     const result = await storageAdapter.list(CACHE_CONFIG.KEY_PREFIX);
     const keys = Array.isArray(result) ? result : result?.keys || [];
+    const keysToDelete = [];
 
-    // 删除缓存
     for (const keyInfo of keys) {
       const key = typeof keyInfo === 'string' ? keyInfo : keyInfo.name || keyInfo;
       if (preserveKeys.has(key) || (skipTokenCaches && key.startsWith(`${CACHE_CONFIG.KEY_PREFIX}token_`))) {
         skipped++;
         continue;
       }
-      try {
-        await storageAdapter.delete(key);
-        cleared++;
-      } catch {
-        failed++;
+      keysToDelete.push(key);
+    }
+
+    if (keysToDelete.length > 0) {
+      if (typeof storageAdapter.deleteManyKeys === 'function') {
+        try {
+          cleared = await storageAdapter.deleteManyKeys(keysToDelete);
+        } catch {
+          for (const key of keysToDelete) {
+            try {
+              await storageAdapter.delete(key);
+              cleared++;
+            } catch {
+              failed++;
+            }
+          }
+        }
+      } else {
+        for (const key of keysToDelete) {
+          try {
+            await storageAdapter.delete(key);
+            cleared++;
+          } catch {
+            failed++;
+          }
+        }
       }
     }
 

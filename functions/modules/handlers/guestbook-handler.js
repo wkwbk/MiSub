@@ -59,7 +59,7 @@ export async function handleGuestbookGet(request, env) {
     // 按时间倒序排列
     const publicMessages = messages
       .filter((msg) => msg.isVisible)
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map((msg) => ({
         id: msg.id,
         nickname: msg.nickname,
@@ -110,7 +110,7 @@ export async function handleGuestbookPost(request, env) {
         secretKey: turnstileConfig.secretKey,
       });
       if (!verification.success) {
-        return createErrorResponse(verification.error, 400);
+        return createErrorResponse(verification.error || 'Turnstile verification failed', 400);
       }
     }
 
@@ -181,7 +181,7 @@ export async function handleGuestbookManageGet(env) {
     const messages = await loadGuestbookMessages(storageAdapter);
 
     // 管理端返回所有字段，按时间倒序
-    const sortedMessages = messages.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const sortedMessages = messages.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return createJsonResponse({
       success: true,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
-import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/generators/builtin-surge-generator.js';
-import { generateSubconverterIniConfig } from '../../functions/modules/subscription/visual-rules-builder.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-singbox-generator.js';
+import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/adapters/generators/builtin-surge-generator.js';
+import { generateSubconverterIniConfig } from '../../functions/modules/subscription/core/visual-rules-builder.js';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 
 const SAMPLE_NODES = [

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { addFlagEmoji, fixNodeUrlEncoding, prependNodeName } from '../../functions/utils/node-utils.js';
-import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
-import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
+import { addFlagEmoji, fixNodeUrlEncoding, prependNodeName } from '@misub/core/node/node-cleaner.js';
+import { convertClashProxyToUrl } from '@misub/core/protocols/clash-to-url.js';
+import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
 import { cleanNodeUrl, cleanNodeUrlsText } from '../../src/lib/utils.js';
 
 function buildSsrUrl(name = '台湾 1') {

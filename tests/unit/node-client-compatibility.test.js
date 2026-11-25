@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
-import { getNodeClientCompatibility, parseNodeFeatures } from '@/utils/node-client-compatibility.js';
+import { getNodeClientCompatibility, parseNodeFeatures } from '@misub/core/node/client-compatibility.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
 import { createI18n } from '@/i18n/index.js';

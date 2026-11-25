@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { resolveNodeListWithCache } from '../../functions/modules/subscription/cache-manager.js';
+import { resolveNodeListWithCache } from '../../functions/modules/subscription/cache/cache-manager.js';
 
 function createStorage(cachedData) {
   return {

@@ -1,4 +1,4 @@
-import { NODE_PROTOCOL_REGEX } from '@/constants/node-protocols.js';
+import { NODE_PROTOCOL_REGEX } from '@misub/core/protocols/constants.js';
 import { getItemTags, matchesTagFilter } from '@/utils/tags.js';
 
 export const countryCodeMap = {

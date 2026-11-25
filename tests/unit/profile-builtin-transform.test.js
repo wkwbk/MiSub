@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import {
   resolveEffectiveBuiltinTransform,
   resolveTemplateUrl,
-} from '../../functions/modules/subscription/engine-options.js';
+} from '../../functions/modules/subscription/core/engine-options.js';
 import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
 import { setLocale } from '@/i18n/index.js';
 

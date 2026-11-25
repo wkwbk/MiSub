@@ -4,8 +4,8 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { Download } from '@lucide/vue';
 import QRCode from 'qrcode';
 import Modal from '@/components/ui/Modal.vue';
-import { useToastStore } from '@/stores/toast.js';
-import { shadowrocketQrPayload } from '@shared/shadowrocket-links.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { shadowrocketQrPayload } from '@misub/core/domain/shadowrocket-links.js';
 
 const { t } = useI18n();
 

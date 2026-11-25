@@ -2,8 +2,8 @@
  * 机场订阅元信息解析（Profile-Title / Subscription-Userinfo / 官网标题探测 / 真实代理协议判定）
  */
 
-import { isLocalProxyEndpoint } from '../../utils/node-utils.js';
-import { inferAirportRootDomain } from '../../../shared/airport-domain.js';
+import { isLocalProxyEndpoint } from '@misub/core/node/node-cleaner.js';
+import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
 
 export { inferAirportRootDomain };
 

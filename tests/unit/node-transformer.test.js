@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { applyNodeTransformPipeline, makeComparator } from '../../functions/utils/node-transformer.js';
+import { applyNodeTransformPipeline, makeComparator } from '@misub/core/operators/node-transformer.js';
 
 describe('applyNodeTransformPipeline filters', () => {
   const nodes = [

@@ -4,12 +4,12 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useNodeForms } from '@/composables/useNodeForms.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
 import Modal from '@/components/ui/Modal.vue';
 import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
 import ManualNodeDedupModal from '@/components/modals/ManualNodeDedupModal.vue';
-import SubscriptionImportModal from '@/components/modals/SubscriptionImportModal.vue';
+import ImportModal from '@/components/modals/ImportModal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
@@ -283,10 +283,11 @@ const handleTagReorder = (newOrder) => {
       </template>
     </Modal>
 
-    <SubscriptionImportModal
+    <ImportModal
       :add-nodes-from-bulk="addNodesFromBulk"
       :show="showSubscriptionImportModal"
       :tags="manualNodeTags"
+      mode="nodes"
       @update:show="showSubscriptionImportModal = $event"
     />
   </div>

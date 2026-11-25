@@ -1,5 +1,5 @@
 import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';

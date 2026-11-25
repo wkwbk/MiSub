@@ -1,12 +1,14 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import { VueQueryPlugin } from '@tanstack/vue-query';
 import '@/assets/main.css';
 import App from '@/App.vue';
 import router from '@/router';
 import { configureErrorMonitoring, handleError, setToastHandler } from '@/utils/error-handler.js';
 import { isAppScriptError, isForeignRejection } from '@/utils/error-source.js';
 import { ensureLocaleLoaded, i18n } from '@/i18n/index.js';
-import { useToastStore } from '@/stores/toast.js';
+import { appQueryClient, bindPiniaQueryClient } from '@/lib/query-client.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { configureUnauthorizedHandler } from '@/lib/http.js';
 import { isCriticalAssetPath, isLocalHost, isSameOriginUrl } from '@/utils/url-origin.js';
 import { isChunkLoadError, shouldReloadForChunkError } from '@/utils/chunk-reload.js';
@@ -171,7 +173,9 @@ app.config.errorHandler = (error, instance, info) => {
   });
 };
 
+bindPiniaQueryClient(pinia, appQueryClient);
 app.use(pinia);
+app.use(VueQueryPlugin, { queryClient: appQueryClient });
 app.use(i18n);
 const toastStore = useToastStore(pinia);
 setToastHandler(toastStore.showToast);

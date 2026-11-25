@@ -3,13 +3,13 @@
  * 用于前端导入订阅功能
  */
 
-import { parseNodeList } from '../../utils/node-parser.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
 import { createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
 /**
  * 处理订阅内容解析请求
- * @param {Object} request - HTTP请求对象
- * @param {Object} env - Cloudflare环境对象
+ * @param {Request} request - HTTP请求对象
+ * @param {Record<string, any>} _env - Cloudflare环境对象
  * @returns {Promise<Response>} HTTP响应
  */
 export async function handleParseSubscription(request, _env) {

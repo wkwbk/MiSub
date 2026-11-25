@@ -3,10 +3,11 @@ import { computed, nextTick, ref, watch } from 'vue';
 import { getActivePinia } from 'pinia';
 import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
-import { useToastStore } from '@/stores/toast';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { getClientInfo } from '@/lib/utils';
-import { api } from '@/lib/http.js';
+import { resolveComponentQueryClient } from '@/lib/query-client.js';
+import { clearAccessLogsWithQuery, fetchAccessLogsWithQuery } from '@/queries/useAccessLogsQuery.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
@@ -57,14 +58,15 @@ const paginatedLogs = computed(() => {
   return filteredLogs.value.slice(start, end);
 });
 
+const queryClient = resolveComponentQueryClient();
+
 const fetchLogs = async () => {
   if (isLoading.value) return;
   isLoading.value = true;
   try {
-    const data = await api.get(`/api/logs?t=${Date.now()}`);
-    logs.value = data.data || [];
+    logs.value = await fetchAccessLogsWithQuery(queryClient);
     currentPage.value = 1;
-  } catch (e) {
+  } catch {
     showToast(t('logs.fetchFailed'), 'error');
   } finally {
     isLoading.value = false;
@@ -105,12 +107,10 @@ const clearLogs = async () => {
 
   isClearing.value = true;
   try {
-    const queryParts = [];
-    if (targetProfileId) queryParts.push(`profileId=${encodeURIComponent(targetProfileId)}`);
-    if (targetProfileName) queryParts.push(`profileName=${encodeURIComponent(targetProfileName)}`);
-    const queryStr = queryParts.join('&');
-    const endpoint = queryStr ? `/api/logs?${queryStr}` : '/api/logs';
-    await api.del(endpoint);
+    await clearAccessLogsWithQuery(queryClient, {
+      profileId: targetProfileId,
+      profileName: targetProfileName,
+    });
     if (targetProfileId) {
       logs.value = logs.value.filter(
         (log) =>

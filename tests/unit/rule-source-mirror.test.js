@@ -3,7 +3,7 @@ import {
   GH_PROXY_BASE,
   PINNED_RULE_REVISIONS,
   pinRemoteRuleUrl,
-} from '../../functions/modules/subscription/builtin-rules-provider.js';
+} from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
 
 /**
  * 规则源下载链路解析测试。

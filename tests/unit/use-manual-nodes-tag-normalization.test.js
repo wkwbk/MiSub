@@ -4,11 +4,12 @@ import { nextTick } from 'vue';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast: vi.fn() }),
 }));
 
-vi.mock('@/utils/ping.js', () => ({
+vi.mock('@/utils/ping.js', async (importOriginal) => ({
+  ...(await importOriginal()),
   pingNode: vi.fn(),
 }));
 

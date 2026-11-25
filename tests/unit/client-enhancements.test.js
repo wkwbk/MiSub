@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
-import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
-import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.js';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
-import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-singbox-generator.js';
+import { renderClashFromTemplateModel } from '../../functions/modules/subscription/templates/renderers/render-clash.js';
+import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/templates/renderers/render-singbox.js';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/templates/builtin-template-registry.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/templates/parsers/ini-template-parser.js';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/templates/template-processor.js';
+import { renderClashFromIniTemplate } from '../../functions/modules/subscription/templates/template-pipeline.js';
 
 const NODES = 'ss://YWVzLTEyOC1nY206cGFzcw@hk.example.com:8388#香港01';
 

@@ -1,6 +1,6 @@
 <script setup>
 import { AlertTriangle, Archive, Lock } from '@lucide/vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import Input from '@/components/ui/Input.vue';
 import Switch from '@/components/ui/Switch.vue';
 import SectionHeader from '@/components/settings/SectionHeader.vue';

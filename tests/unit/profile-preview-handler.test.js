@@ -9,7 +9,7 @@ vi.mock('../../functions/storage-adapter.js', () => ({
   },
 }));
 
-vi.mock('../../functions/modules/subscription/node-fetcher.js', () => ({
+vi.mock('../../functions/modules/subscription/security/node-fetcher.js', () => ({
   fetchSubscriptionNodes: (...args) => fetchSubscriptionNodes(...args),
 }));
 
@@ -63,7 +63,7 @@ describe('handleProfileMode preview transforms', () => {
       ],
     });
 
-    const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.js');
+    const { handleProfileMode } = await import('../../functions/modules/subscription/core/profile-handler.js');
     const result = await handleProfileMode(
       new Request('https://example.com/api/subscription_nodes'),
       {},
@@ -106,7 +106,7 @@ describe('handleProfileMode preview transforms', () => {
       get: vi.fn().mockResolvedValue({ defaultOperators: [] }),
     });
 
-    const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.js');
+    const { handleProfileMode } = await import('../../functions/modules/subscription/core/profile-handler.js');
     const result = await handleProfileMode(
       new Request('https://example.com/api/subscription_nodes'),
       {},
@@ -161,7 +161,7 @@ describe('handleProfileMode preview transforms', () => {
       get: vi.fn().mockResolvedValue({ defaultOperators: [] }),
     });
 
-    const { handleProfileMode } = await import('../../functions/modules/subscription/profile-handler.js');
+    const { handleProfileMode } = await import('../../functions/modules/subscription/core/profile-handler.js');
     const result = await handleProfileMode(
       new Request('https://example.com/api/subscription_nodes'),
       {},

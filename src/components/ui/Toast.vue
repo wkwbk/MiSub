@@ -1,6 +1,6 @@
 <script setup>
 import { X } from '@lucide/vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 
 const toastStore = useToastStore();

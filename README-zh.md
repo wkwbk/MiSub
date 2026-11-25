@@ -365,10 +365,21 @@ rules:
 
 > 说明：该代理仅作为可选的辅助抓取组件，不属于 MiSub 主站部署方式。MiSub 主站支持部署在 Cloudflare Workers 或 Cloudflare Pages。
 
+## 项目架构与目录结构
+
+MiSub 采用 `pnpm` Monorepo 工作区结构，前后端职责边界清晰：
+
+- **`packages/core`（`@misub/core` 共享核心包）**：零 DOM/Node/Worker API 依赖，统一承载协议解析与互转、统一节点中间表示（`NodeIR`）、Zod v4 数据契约及 JSDoc `@typedef`、操作符链与表达式 DSL 引擎。
+- **`functions/` 与 `worker.js`（边缘计算后端）**：基于 **Hono** 构建统一路由与洋葱中间件（会话续期、CORS/CSRF、Cookie/Bearer 鉴权、Zod 入参校验与 `onError`）；订阅转换管线按 `User-Agent` **按需动态懒加载 (`await import(...)`)** 各客户端 `ClientAdapter` 生成器与模板渲染器；通过 `Repository` 仓储层封装 **内存 -> Cloudflare Cache API -> D1** 三级缓存及 `db.batch([...])` 批量写入合并。
+- **`src/`（Vue 3 管理前端）**：使用 **`@tanstack/vue-query`** 接管后端异步数据请求与失效刷新，Pinia Store 统一规范为 `useXxxStore.js`（如 `useDataStore.js`、`useSessionStore.js`、`useSettingsStore.js`），导入入口统一收敛至 [ImportModal.vue](src/components/modals/ImportModal.vue)。
+
+完整架构与请求链路说明请见 [docs/architecture.md](docs/architecture.md)。
+
 ## 本地开发
 
 ```bash
 pnpm install
+npx wrangler d1 execute misub --file=schema.sql --local
 pnpm dev
 ```
 
@@ -378,11 +389,19 @@ pnpm dev
 pnpm dev:worker
 ```
 
+使用 Cloudflare Pages Functions 本地验证完整构建产物：
+
+```bash
+pnpm build
+npx wrangler pages dev dist --d1 MISUB_DB=misub
+```
+
 常用校验命令：
 
 ```bash
-pnpm test:run
-pnpm lint --quiet
+pnpm exec oxlint
+pnpm test
+pnpm run test:e2e
 pnpm build
 ```
 
@@ -390,9 +409,11 @@ pnpm build
 
 ## 技术栈
 
-- **前端**: Vue 3 + Vite + Tailwind CSS + Pinia
-- **后端**: Cloudflare Workers / Pages Functions
-- **存储**: Cloudflare D1 数据库（`MISUB_DB` 八表行级存储）
+- **前端**: Vue 3 + Vite 8 + Tailwind CSS 4 + TanStack Vue Query + Pinia
+- **共享核心**: `@misub/core` (`pnpm` Monorepo Workspace + Zod + NodeIR + Operator DSL)
+- **后端**: Cloudflare Workers / Pages Functions + Hono
+- **存储**: Cloudflare D1 数据库（`MISUB_DB` 八表行级存储 + Repository 多级缓存）
+- **质量与测试**: Oxlint + Vitest + Playwright
 - **部署平台**: Cloudflare Workers（推荐）/ Cloudflare Pages
 
 ---

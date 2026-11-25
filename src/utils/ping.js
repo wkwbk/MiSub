@@ -1,7 +1,9 @@
 import { t } from '@/i18n/index.js';
-import { isUdpOnlyProtocol, tcpingNodes } from '@/utils/tcping.js';
+import { api } from '@/lib/http.js';
+import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
+import { isUdpOnlyProtocol } from '@misub/core/protocols/constants.js';
 
-export { isUdpOnlyProtocol, tcpingNodes };
+export { isUdpOnlyProtocol };
 
 /**
  * 代理节点连通性测试工具
@@ -81,4 +83,32 @@ export async function pingNode(host, port, timeoutMs = 3000, options = {}) {
         }
       });
   });
+}
+
+/**
+ * 通过 CF Workers `cloudflare:sockets` 批量执行服务端 TCPing
+ * @param {Array<{id: string, host: string, port: number|string}>} targets
+ * @param {number} timeoutMs
+ * @returns {Promise<{results: Record<string, any>, unsupported?: boolean}>}
+ */
+export async function tcpingNodes(targets, timeoutMs = 3000) {
+  if (!Array.isArray(targets) || targets.length === 0) {
+    return { results: {} };
+  }
+
+  try {
+    const data = await api.post(API_ENDPOINTS.NODES_TCPING, {
+      targets,
+      timeoutMs,
+    });
+    return {
+      results: data?.results || {},
+      unsupported: Boolean(data?.unsupported),
+    };
+  } catch (error) {
+    if (error?.status === 501 || error?.data?.unsupported) {
+      return { results: {}, unsupported: true };
+    }
+    throw error;
+  }
 }

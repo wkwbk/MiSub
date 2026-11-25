@@ -1,27 +1,17 @@
 import { generateCombinedNodeList } from './subscription-service.js';
-import { transformBuiltinSubscription } from '../modules/subscription/transformer-factory.js';
-import {
-  renderClashFromIniTemplate,
-  renderEgernFromIniTemplate,
-  renderLoonFromIniTemplate,
-  renderQuanxFromIniTemplate,
-  renderShadowrocketFromIniTemplate,
-  renderSingboxFromIniTemplate,
-  renderSurgeFromIniTemplate,
-} from '../modules/subscription/template-pipeline.js';
-import { renderShadowrocketConfigFromClash } from '../modules/subscription/template-renderers/render-shadowrocket.js';
+import { getClientAdapter } from '../modules/subscription/adapters/adapter-registry.js';
 import {
   loadShadowrocketRuleBundle,
   usesShadowrocketRuleBundle,
-} from '../modules/subscription/shadowrocket-rule-bundle.js';
-import { getBuiltinTemplate } from '../modules/subscription/builtin-template-registry.js';
-import { fetchTransformTemplate } from '../modules/subscription/transform-template-cache.js';
+} from '../modules/subscription/core/shadowrocket-rule-bundle.js';
+import { getBuiltinTemplate } from '../modules/subscription/templates/builtin-template-registry.js';
+import { fetchTransformTemplate } from '../modules/subscription/cache/transform-template-cache.js';
 import { resolveRuleTemplateSource } from '../modules/handlers/rule-template-handler.js';
 import { base64EncodeUtf8 } from '../modules/utils.js';
 import * as yaml from 'js-yaml';
-import { urlsToClashProxies } from '../utils/url-to-clash.js';
-import { resolveSafeDnsConfig } from '../modules/subscription/safe-dns.js';
-import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/mihomo-chain-proxy.js';
+import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
+import { resolveSafeDnsConfig } from '../modules/subscription/security/safe-dns.js';
+import { applyMihomoChainProxyToClashConfig } from '../modules/subscription/core/mihomo-chain-proxy.js';
 
 function getTemplateExtension(templateUrl) {
   const raw = typeof templateUrl === 'string' ? templateUrl.trim() : '';
@@ -36,7 +26,10 @@ function getTemplateExtension(templateUrl) {
   }
 }
 
-export function isIniTemplateSource(templateSource, builtinTemplateEntry = null) {
+export function isIniTemplateSource(
+  templateSource,
+  builtinTemplateEntry = /** @type {Record<string, any> | null} */ (null),
+) {
   if (builtinTemplateEntry?.format === 'ini') return true;
   if (templateSource?.kind === 'custom') return true;
   return getTemplateExtension(templateSource?.value) === 'ini';
@@ -65,7 +58,7 @@ export function isClashYamlProfileTemplate(templateText) {
   if (typeof templateText !== 'string' || templateText.trim() === '') return false;
 
   try {
-    const parsed = yaml.load(templateText);
+    const parsed = /** @type {Record<string, any> | null} */ (yaml.load(templateText));
     return Boolean(
       parsed &&
       typeof parsed === 'object' &&
@@ -109,7 +102,7 @@ function normalizeYamlChainConfigs(config) {
 }
 
 export function renderClashYamlProfileTemplate(templateText, nodeList, options = {}) {
-  const config = yaml.load(templateText);
+  const config = /** @type {Record<string, any> | null} */ (yaml.load(templateText));
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
     return '';
   }
@@ -194,12 +187,15 @@ export class ProcessorService {
       };
     }
 
-    const builtinProxyContent = transformBuiltinSubscription(combinedNodeList, targetFormat, {
-      ...builtinOptions,
-      managedConfigUrl,
-    });
+    const adapter = getClientAdapter(targetFormat);
+    const builtinProxyContent = adapter
+      ? await adapter.generateBuiltin(combinedNodeList, {
+          ...builtinOptions,
+          managedConfigUrl,
+        })
+      : null;
 
-    if (!builtinProxyContent) {
+    if (!adapter || !builtinProxyContent) {
       return {
         content: base64EncodeUtf8(combinedNodeList),
         contentType: 'text/plain; charset=utf-8',
@@ -248,61 +244,41 @@ export class ProcessorService {
           isChinaClient: builtinOptions.isChinaClient,
         };
 
-        if (targetFormat.startsWith('surge')) {
-          finalContent = renderSurgeFromIniTemplate(templateText, renderParams);
-        } else {
-          switch (targetFormat) {
-            case 'clash':
-              finalContent = renderClashFromIniTemplate(templateText, renderParams);
-              contentType = 'application/x-yaml; charset=utf-8';
-              break;
-            case 'singbox':
-            case 'sing-box':
-              finalContent = renderSingboxFromIniTemplate(templateText, renderParams);
-              contentType = 'application/json; charset=utf-8';
-              break;
-            case 'loon':
-              finalContent = renderLoonFromIniTemplate(templateText, renderParams);
-              break;
-            case 'quanx':
-              finalContent = renderQuanxFromIniTemplate(templateText, renderParams);
-              break;
-            case 'egern':
-              finalContent = renderEgernFromIniTemplate(templateText, renderParams);
-              contentType = 'application/x-yaml; charset=utf-8';
-              break;
-            case 'shadowrocket': {
-              const wantsRuleBundle = Boolean(
-                (customTemplateEntry || templateSource.kind === 'custom') && usesShadowrocketRuleBundle(templateText),
-              );
-              const ruleBundle = wantsRuleBundle
-                ? await loadShadowrocketRuleBundle(
-                    ruleBundleContext || { storageAdapter, isChinaClient: builtinOptions.isChinaClient },
-                  )
-                : null;
-              finalContent = renderShadowrocketFromIniTemplate(templateText, {
-                ...renderParams,
-                preferredProxyKeys: builtinOptions.preferredProxyKeys,
-                compactNames: builtinOptions.compactNames,
-                ruleBundle,
-              });
-              if (wantsRuleBundle) {
-                headers['X-MiSub-Shadowrocket-Rules'] = finalContent.includes('\n# Shadowrocket-Rule-Sets v1\n')
-                  ? 'aggregated'
-                  : 'local-fallback';
-              }
-              break;
-            }
+        if (adapter.id === 'shadowrocket') {
+          const wantsRuleBundle = Boolean(
+            (customTemplateEntry || templateSource.kind === 'custom') && usesShadowrocketRuleBundle(templateText),
+          );
+          const ruleBundle = wantsRuleBundle
+            ? await loadShadowrocketRuleBundle(
+                ruleBundleContext || { storageAdapter, isChinaClient: builtinOptions.isChinaClient },
+              )
+            : null;
+          finalContent = await adapter.renderIniTemplate(templateText, {
+            ...renderParams,
+            preferredProxyKeys: builtinOptions.preferredProxyKeys,
+            compactNames: builtinOptions.compactNames,
+            ruleBundle,
+          });
+          if (wantsRuleBundle) {
+            headers['X-MiSub-Shadowrocket-Rules'] = finalContent.includes('\n# Shadowrocket-Rule-Sets v1\n')
+              ? 'aggregated'
+              : 'local-fallback';
           }
+        } else {
+          finalContent = await adapter.renderIniTemplate(templateText, renderParams);
+          contentType = adapter.contentType || contentType;
         }
       } else if (
         templateText &&
-        (targetFormat === 'clash' || targetFormat === 'shadowrocket') &&
+        (adapter.id === 'clash' || adapter.id === 'shadowrocket') &&
         isClashYamlProfileTemplate(templateText)
       ) {
         const renderedYaml = renderClashYamlProfileTemplate(templateText, combinedNodeList, builtinOptions);
-        if (targetFormat === 'shadowrocket') {
-          finalContent = renderShadowrocketConfigFromClash(yaml.load(renderedYaml), builtinOptions);
+        if (adapter.id === 'shadowrocket' && typeof adapter.renderFromClashConfig === 'function') {
+          finalContent = await adapter.renderFromClashConfig(
+            /** @type {Record<string, any>} */ (yaml.load(renderedYaml)),
+            builtinOptions,
+          );
         } else {
           finalContent = renderedYaml;
           contentType = 'application/x-yaml; charset=utf-8';
@@ -311,17 +287,15 @@ export class ProcessorService {
       }
     }
 
-    if (contentType === 'text/plain; charset=utf-8') {
-      if (targetFormat === 'clash' || targetFormat === 'egern') contentType = 'application/x-yaml; charset=utf-8';
-      else if (targetFormat === 'singbox' || targetFormat === 'sing-box')
-        contentType = 'application/json; charset=utf-8';
+    if (contentType === 'text/plain; charset=utf-8' && adapter.contentType) {
+      contentType = adapter.contentType;
     }
 
     return {
       content: finalContent,
       contentType,
       headers,
-      ...(targetFormat === 'shadowrocket'
+      ...(adapter.id === 'shadowrocket'
         ? { fileName: `${String(subName || 'MiSub-Shadowrocket').replace(/\.conf$/i, '')}.conf` }
         : {}),
     };

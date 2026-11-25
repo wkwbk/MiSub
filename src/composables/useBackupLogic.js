@@ -1,4 +1,4 @@
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';

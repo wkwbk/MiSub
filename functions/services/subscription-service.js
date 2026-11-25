@@ -3,10 +3,10 @@
  * @author MiSub Team
  */
 
-import { isAutoUpdateEnabled } from '../../shared/auto-update.js';
-import { getDisabledNodeSet } from '../../shared/disabled-nodes.js';
-import { parseNodeList } from '../utils/node-parser.js';
-import { getProcessedUserAgent, isValidBase64 } from '../../shared/format-utils.js';
+import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
+import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
+import { getProcessedUserAgent, isValidBase64 } from '@misub/core/utils/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {
   addFlagEmoji,
@@ -14,13 +14,13 @@ import {
   prependNodeName,
   removeFlagEmoji,
   sanitizeNodeForYaml,
-} from '../utils/node-utils.js';
-import { applyManualNodeName } from '../utils/node-cleaner.js';
-import { runOperatorChain } from '../utils/operator-runner.js';
+} from '@misub/core/node/node-cleaner.js';
+import { applyManualNodeName } from '@misub/core/node/node-cleaner.js';
+import { runOperatorChain } from '@misub/core/operators/operator-runner.js';
 import { fetchWithRetry } from './fetch-utils.js';
 import { assertPublicNetworkUrl } from '../modules/security-utils.js';
 import { isSuspiciousNodeCountDrop } from './node-cache-service.js';
-import { inferAirportRootDomain } from '../../shared/airport-domain.js';
+import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
 import {
   fetchAirportSiteTitle,
   isRealProxyNode,
@@ -35,7 +35,7 @@ import {
   scheduleSubscriptionRuntimeInfoUpdate,
   writeSubscriptionNodeCache,
 } from './subscription/runtime-cache.js';
-import { adaptLegacyTransform, applyFilterRules } from './subscription/node-filter-transform.js';
+import { adaptLegacyTransform, applyFilterRules } from '@misub/core/operators/legacy-adapter.js';
 
 export { inferAirportRootDomain };
 
@@ -370,8 +370,10 @@ export async function generateCombinedNodeList(
       } else if (cacheEnabled) {
         const cached = await readCacheEntry();
         if (
+          cached &&
+          Array.isArray(cached.nodes) &&
           !hasFilterConfigChanged(cached) &&
-          isSuspiciousNodeCountDrop(cached?.nodes?.length || 0, realNodes.length)
+          isSuspiciousNodeCountDrop(cached.nodes.length || 0, realNodes.length)
         ) {
           console.warn(
             `[SubscriptionCache] Refusing suspicious node-count drop for ${sub.id || sub.url} (${cached.nodes.length} -> ${realNodes.length})`,
@@ -389,7 +391,7 @@ export async function generateCombinedNodeList(
 
       if (realNodes.length > 0) {
         upstreamSuccessCount++;
-        const userInfo = parseSubscriptionUserInfoHeader(response.headers.get('subscription-userinfo'));
+        const userInfo = parseSubscriptionUserInfoHeader(response.headers.get('subscription-userinfo') || '');
         // 机场识别：仅使用响应头自报名称（零额外请求）。
         // 官网标题兜底改为「按需触发」——见 /api/detect_airport_name，
         // 避免每次刷新订阅都多发一次外部请求（拖慢整体、增加失败面）。

@@ -13,14 +13,14 @@ import {
   RefreshCw,
   Trash2,
 } from '@lucide/vue';
-import { formatBytes } from '@shared/format-utils.js';
+import { formatBytes } from '@misub/core/utils/format-utils.js';
 import { getItemTags } from '@/utils/tags.js';
-import { isAutoUpdatePaused } from '@shared/auto-update.js';
-import { inferAirportRootDomain } from '@shared/airport-domain.js';
+import { isAutoUpdatePaused } from '@misub/core/domain/auto-update.js';
+import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
 import { lookupDomainName } from '@/utils/domain-name-memory.js';
 import { api } from '@/lib/http.js';
 import { TIMING } from '@/constants/timing.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import Switch from '@/components/ui/Switch.vue';
 import { useI18n } from '@/i18n/index.js';
 import { normalizeWebsiteUrl } from '@/utils/url-origin.js';

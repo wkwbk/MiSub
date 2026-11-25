@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useUIStore } from '@/stores/ui.js';
-import { useSessionStore } from '@/stores/session.js';
+import { useUIStore } from '@/stores/useUiStore.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 import BrandLogo from '@/components/layout/BrandLogo.vue';
 import NavActionGroup from '@/components/layout/NavActionGroup.vue';
 import { useI18n } from '@/i18n/index.js';

@@ -11,7 +11,7 @@ import {
   normalizeCustomRule,
   VISUAL_RULE_CATEGORIES,
   VISUAL_RULE_PRESETS,
-} from '@shared/visual-rules-catalog.js';
+} from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t, locale } = useI18n();
 

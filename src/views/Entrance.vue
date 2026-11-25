@@ -7,7 +7,7 @@
 <script setup>
 import { computed, defineAsyncComponent, markRaw, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSessionStore } from '@/stores/session';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));

@@ -2,10 +2,10 @@
  * Telegram Bot 变更与导入类命令处理器
  */
 
-import { base64ToUtf8 } from '../../../../shared/base64.js';
+import { base64ToUtf8 } from '@misub/core/utils/base64.js';
 import { clearAllNodeCaches } from '../../../services/node-cache-service.js';
 import { createJsonResponse, escapeHtml, generateId } from '../../utils.js';
-import { extractValidNodes } from '../../../utils/node-parser.js';
+import { extractValidNodes } from '@misub/core/node/node-parser.js';
 import {
   createRequestCache,
   getCachedProfiles,
@@ -57,10 +57,7 @@ export async function handleFileInput(chatId, message, userId, config, env, requ
     const nodes = extractValidNodes(text);
     if (nodes.length > 0) {
       // extractValidNodes 返回节点链接字符串数组
-      const nodeLines = nodes
-        .map((n) => (typeof n === 'string' ? n : n?.url))
-        .filter(Boolean)
-        .join('\n');
+      const nodeLines = nodes.filter(Boolean).join('\n');
       await sendTelegramMessage(
         chatId,
         `📄 解析文件 <b>${fileName}</b>，识别到 <b>${nodes.length}</b> 个节点，正在导入…`,

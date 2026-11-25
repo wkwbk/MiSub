@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { transformBuiltinSubscription } from '../../functions/modules/subscription/transformer-factory.js';
+import { transformBuiltinSubscription } from '../../functions/modules/subscription/adapters/transformer-factory.js';
 
 const NODE_LIST = [
   'trojan://password@1.2.3.4:443?sni=example.com#HK-01',
@@ -8,8 +8,8 @@ const NODE_LIST = [
 ].join('\n');
 
 describe('Builtin target smoke output', () => {
-  it('renders parseable Clash YAML with core sections', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'clash', {
+  it('renders parseable Clash YAML with core sections', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'clash', {
       fileName: 'Smoke Clash',
       ruleLevel: 'std',
       managedConfigUrl: 'https://example.com/sub?target=clash&builtin=1',
@@ -24,8 +24,8 @@ describe('Builtin target smoke output', () => {
     expect(parsed.rules.length).toBeGreaterThan(0);
   });
 
-  it('renders parseable Sing-box JSON with outbounds and route', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'singbox', {
+  it('renders parseable Sing-box JSON with outbounds and route', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'singbox', {
       fileName: 'Smoke Singbox',
       ruleLevel: 'std',
     });
@@ -38,8 +38,8 @@ describe('Builtin target smoke output', () => {
     expect(typeof parsed.route.final).toBe('string');
   });
 
-  it('renders Surge sections with proxy, policy group, and rules', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'surge&ver=4', {
+  it('renders Surge sections with proxy, policy group, and rules', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'surge&ver=4', {
       fileName: 'Smoke Surge',
       ruleLevel: 'std',
       managedConfigUrl: 'https://example.com/sub?target=surge&ver=4&builtin=1',
@@ -51,8 +51,8 @@ describe('Builtin target smoke output', () => {
     expect(rendered).toContain('HK-01 = trojan');
   });
 
-  it('renders Loon sections with proxy, policy group, and rules', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'loon', {
+  it('renders Loon sections with proxy, policy group, and rules', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'loon', {
       fileName: 'Smoke Loon',
       ruleLevel: 'std',
       managedConfigUrl: 'https://example.com/sub?target=loon&builtin=1',
@@ -64,8 +64,8 @@ describe('Builtin target smoke output', () => {
     expect(rendered).toContain('HK-01 = trojan');
   });
 
-  it('renders Quantumult X sections without pseudo DIRECT node entries', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'quanx', {
+  it('renders Quantumult X sections without pseudo DIRECT node entries', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'quanx', {
       fileName: 'Smoke QuanX',
       ruleLevel: 'std',
       managedConfigUrl: 'https://example.com/sub?target=quanx&builtin=1',
@@ -79,8 +79,8 @@ describe('Builtin target smoke output', () => {
     expect(rendered).not.toContain('DIRECT = direct');
   });
 
-  it('renders parseable Egern YAML with proxies, policy groups, and rules', () => {
-    const rendered = transformBuiltinSubscription(NODE_LIST, 'egern', {
+  it('renders parseable Egern YAML with proxies, policy groups, and rules', async () => {
+    const rendered = await transformBuiltinSubscription(NODE_LIST, 'egern', {
       fileName: 'Smoke Egern',
       ruleLevel: 'std',
       managedConfigUrl: 'https://example.com/sub?target=egern&builtin=1',
@@ -96,12 +96,12 @@ describe('Builtin target smoke output', () => {
     expect(parsed.rules.length).toBeGreaterThan(0);
   });
 
-  it('honors addFlagEmoji=false across builtin targets including Egern', () => {
+  it('honors addFlagEmoji=false across builtin targets including Egern', async () => {
     const node = 'ss://YWVzLTEyOC1nY206cGFzc3dvcmQ=@1.2.3.4:443#HKNode';
     const targets = ['clash', 'surge&ver=4', 'loon', 'quanx', 'singbox', 'egern'];
 
     for (const target of targets) {
-      const rendered = transformBuiltinSubscription(node, target, {
+      const rendered = await transformBuiltinSubscription(node, target, {
         fileName: `Emoji ${target}`,
         ruleLevel: 'std',
         addFlagEmoji: false,

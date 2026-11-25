@@ -10,14 +10,14 @@ import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue'
 import Modal from '@/components/ui/Modal.vue';
 import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { matchesSubscriptionStatus, resolveSubscriptionStatusFilter } from '@/utils/dashboard-deeplink.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
 const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');
 const loadNodePreviewModal = () => import('@/components/modals/NodePreview/NodePreviewModal.vue');
-const loadSubscriptionBulkImportModal = () => import('@/components/modals/SubscriptionBulkImportModal.vue');
+const loadImportModal = () => import('@/components/modals/ImportModal.vue');
 const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
 
 const TagManagementModal = defineAsyncComponent(loadTagManagementModal);
@@ -158,7 +158,7 @@ const handlePreviewSubscription = (subscriptionId) => {
   }
 };
 
-const SubscriptionBulkImportModal = defineAsyncComponent(loadSubscriptionBulkImportModal);
+const ImportModal = defineAsyncComponent(loadImportModal);
 
 const QRCodeModal = defineAsyncComponent(loadQRCodeModal);
 const showQRCodeModal = ref(false);
@@ -211,7 +211,7 @@ let cancelModalPrefetch = () => {};
 onMounted(() => {
   applyStatusFromQuery();
   cancelModalPrefetch = scheduleIdlePrefetch([
-    loadSubscriptionBulkImportModal,
+    loadImportModal,
     loadQRCodeModal,
     loadTagManagementModal,
     loadNodePreviewModal,
@@ -311,9 +311,10 @@ const visibleSubscriptions = computed(() =>
       >
     </Modal>
 
-    <SubscriptionBulkImportModal
+    <ImportModal
       v-if="showBulkImportModal"
       :show="showBulkImportModal"
+      mode="subscriptions"
       @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
       @update:show="showBulkImportModal = $event"
     />

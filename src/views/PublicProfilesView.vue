@@ -1,15 +1,17 @@
 <script setup>
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { hasStoredLocale, useI18n } from '@/i18n/index.js';
 import { api } from '@/lib/http.js';
+import { resolveComponentQueryClient } from '@/lib/query-client.js';
+import { fetchPublicProfilesWithQuery } from '@/queries/usePublicProfilesQuery.js';
 import ProfileGrid from '@/components/public/ProfileGrid.vue';
 import PublicClientsSection from '@/components/public/PublicClientsSection.vue';
 import PublicCoresSection from '@/components/public/PublicCoresSection.vue';
 import PublicLinksSection from '@/components/public/PublicLinksSection.vue';
 import { AlertTriangle } from '@lucide/vue';
-import { normalizePublicClientsConfig } from '@shared/default-public-clients.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import { normalizePublicClientsConfig } from '@misub/core/domain/default-public-clients.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
@@ -106,11 +108,13 @@ const handleGuestbookEvent = () => {
   handleGuestbookTrigger();
 };
 
+const queryClient = resolveComponentQueryClient();
+
 const fetchPublicProfiles = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const data = await api.get('/api/public/profiles');
+    const data = await fetchPublicProfilesWithQuery(queryClient);
     if (data.success) {
       publicProfiles.value = data.data;
       config.value = data.config || {};

@@ -2,7 +2,7 @@
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
-import { useVersionStore } from '@/stores/version';
+import { useVersionStore } from '@/stores/useVersionStore.js';
 import packageJson from '../../../package.json';
 
 defineProps({

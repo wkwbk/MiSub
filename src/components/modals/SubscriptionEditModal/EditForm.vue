@@ -14,7 +14,7 @@ import { fetchNodeCount } from '@/lib/api.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkImport.js';
 import { getItemTags, normalizeTagList } from '@/utils/tags.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 
 const { showToast } = useToastStore();

@@ -6,6 +6,7 @@
 
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 import { inspectNodes, isIpAddress, isPrivateOrReservedIp } from '../../services/node-inspect-service.js';
+import { NodeRepository } from '../../repositories/node-repository.js';
 
 const MAX_INSPECT_NODES = 200;
 const MAX_TCPING_TARGETS = 30;
@@ -77,6 +78,7 @@ async function probeTcpOnce(connectFn, host, port, timeoutMs) {
 
     const timeoutPromise = new Promise((_, reject) => {
       timer = setTimeout(() => {
+        /** @type {Error & { code?: string }} */
         const err = new Error('TCPing timeout');
         err.code = 'TIMEOUT';
         reject(err);
@@ -106,7 +108,7 @@ async function probeTcpOnce(connectFn, host, port, timeoutMs) {
   }
 }
 
-export async function handleNodeTcpingRequest(request, _env, options = {}) {
+export async function handleNodeTcpingRequest(request, env, options = {}) {
   if (request.method !== 'POST') {
     return createErrorResponse('Method Not Allowed', 405);
   }
@@ -178,8 +180,30 @@ export async function handleNodeTcpingRequest(request, _env, options = {}) {
 
   await Promise.allSettled(workers);
 
+  let persistedCount = 0;
+  if (body?.persist === true && env) {
+    const updates = Object.entries(results).map(([id, item]) => ({
+      id,
+      latency: item.latency,
+      status: item.status,
+      mode: item.mode,
+    }));
+    if (updates.length > 0) {
+      try {
+        const nodeRepo = new NodeRepository({ env });
+        if (nodeRepo.isAvailable()) {
+          const updated = await nodeRepo.batchUpdateLatencyStatus(updates);
+          persistedCount = updated.length;
+        }
+      } catch (persistError) {
+        console.warn('[NodeInspect] Failed to batch persist tcping results:', persistError?.message || persistError);
+      }
+    }
+  }
+
   return createJsonResponse({
     success: true,
     results,
+    ...(body?.persist === true ? { persistedCount } : {}),
   });
 }

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { getNodeClientCompatibility } from '@/utils/node-client-compatibility.js';
+import { getNodeClientCompatibility } from '@misub/core/node/client-compatibility.js';
 import { useI18n } from '@/i18n/index.js';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 

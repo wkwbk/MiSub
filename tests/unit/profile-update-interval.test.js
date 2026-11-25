@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { handleMisubRequest, resolveProfileUpdateInterval } from '../../functions/modules/subscription/main-handler.js';
+import {
+  handleMisubRequest,
+  resolveProfileUpdateInterval,
+} from '../../functions/modules/subscription/core/main-handler.js';
 
 const createAdapter = vi.fn();
 

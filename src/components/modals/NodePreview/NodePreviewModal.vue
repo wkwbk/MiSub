@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import { Gauge, Loader2, X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
@@ -10,7 +10,7 @@ import { isNetworkErrorMessage } from '@/utils/network-error.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { isUdpOnlyProtocol, pingNode, tcpingNodes } from '@/utils/ping.js';
-import { getDisabledNodeSet, normalizeDisabledNodes } from '@shared/disabled-nodes.js';
+import { getDisabledNodeSet, normalizeDisabledNodes } from '@misub/core/domain/disabled-nodes.js';
 import Modal from '@/components/ui/Modal.vue';
 import Switch from '@/components/ui/Switch.vue';
 import NodeFilters from '@/components/modals/NodePreview/components/NodeFilters.vue';

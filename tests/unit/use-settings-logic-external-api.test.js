@@ -14,7 +14,7 @@ vi.mock('@/lib/api.js', () => ({
   resetSettings,
 }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast }),
 }));
 

@@ -1,11 +1,15 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
-import { useSettingsStore } from '@/stores/settings.js';
-import { useToastStore } from '@/stores/toast';
-import { generateProfileId } from '@/utils/id.js';
-import { ensureProfileLinkId, generateProfileLinkId, normalizeProfileIdentifier } from '@shared/profile-link.js';
-import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@shared/profile-alias.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { generateProfileId } from '@misub/core/utils/id.js';
+import {
+  ensureProfileLinkId,
+  generateProfileLinkId,
+  normalizeProfileIdentifier,
+} from '@misub/core/domain/profile-link.js';
+import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
   collectTags,

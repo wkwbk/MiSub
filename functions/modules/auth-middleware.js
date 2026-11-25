@@ -188,8 +188,8 @@ export async function getAuthSessionDiagnostic(request, env) {
     verify: {
       success: false,
       hasTimestamp: false,
-      isExpired: null,
-      sessionAgeMs: null,
+      isExpired: /** @type {boolean | null} */ (null),
+      sessionAgeMs: /** @type {number | null} */ (null),
     },
     shouldRenew: false,
   };
@@ -440,6 +440,7 @@ export async function handleLogin(request, env) {
   try {
     const { password, turnstileToken } = payload || {};
 
+    /** @type {any} */
     let storageAdapter = null;
     try {
       storageAdapter = StorageFactory.createAdapter(env);

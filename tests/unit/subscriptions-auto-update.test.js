@@ -18,7 +18,7 @@ vi.mock('@/stores/useDataStore', () => ({
   useDataStore: () => mocks.dataStore,
 }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast: vi.fn() }),
 }));
 

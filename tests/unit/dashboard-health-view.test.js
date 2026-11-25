@@ -7,13 +7,13 @@ import DashboardView from '@/views/DashboardView.vue';
 import { createI18n } from '@/i18n/index.js';
 import { messages } from '@/i18n/messages.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useSettingsStore } from '@/stores/settings.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 
 // VTU 为匹配 stub 名称会触发 defineAsyncComponent 的 loader，stub 并不能阻止真实模块被动态加载；
 // 在 CI 这类更快的机器上，这些在途 import 会在 runner 关闭后 reject。这里直接 mock 视图实际用到的懒加载弹窗。
-vi.mock('@/components/modals/BulkImportModal.vue', () => ({
-  default: { name: 'BulkImportModal', template: '<div />' },
+vi.mock('@/components/modals/ImportModal.vue', () => ({
+  default: { name: 'ImportModal', template: '<div />' },
 }));
 vi.mock('@/components/modals/ProfileModal.vue', () => ({ default: { name: 'ProfileModal', template: '<div />' } }));
 vi.mock('@/components/modals/LogModal.vue', () => ({ default: { name: 'LogModal', template: '<div />' } }));
@@ -72,6 +72,7 @@ function mountDashboard(locale = 'zh-CN') {
         SkeletonLoader: true,
         StatCards: true,
         RightPanel: true,
+        ImportModal: true,
         BulkImportModal: true,
         ProfileModal: true,
         QRCodeModal: true,

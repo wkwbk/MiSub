@@ -80,7 +80,7 @@ export function toExternalManualNode(item) {
   };
 }
 
-import { getProfileShareIdentifier } from '../../../shared/profile-link.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 
 export function toExternalProfile(profile) {
   return {

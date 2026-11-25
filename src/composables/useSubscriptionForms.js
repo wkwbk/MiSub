@@ -1,7 +1,7 @@
 import { ref } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { applyItemTags, getItemTags } from '@/utils/tags.js';
-import { generateSubscriptionId } from '@/utils/id.js';
+import { generateSubscriptionId } from '@misub/core/utils/id.js';
 import { t } from '@/i18n/index.js';
 
 const isDev = import.meta.env.DEV;

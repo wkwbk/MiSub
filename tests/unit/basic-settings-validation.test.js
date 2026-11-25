@@ -6,7 +6,7 @@ import { createI18n } from '@/i18n/index.js';
 
 const showToast = vi.fn();
 
-vi.mock('@/stores/toast', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast }),
 }));
 

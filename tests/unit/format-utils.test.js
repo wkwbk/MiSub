@@ -10,7 +10,7 @@ import {
   getProcessedUserAgent,
   isValidBase64,
   truncateText,
-} from '../../shared/format-utils.js';
+} from '@misub/core/utils/format-utils.js';
 
 describe('shared/format-utils', () => {
   it('formatBytes / formatNumber / formatPercentage / formatDuration / truncateText / formatUrl 工作正常', () => {

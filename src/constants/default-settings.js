@@ -1,5 +1,5 @@
 import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
-import { DEFAULT_BUILTIN_TRANSFORM } from '@shared/visual-rules-catalog.js';
+import { DEFAULT_BUILTIN_TRANSFORM } from '@misub/core/domain/visual-rules-catalog.js';
 
 export const DEFAULT_SETTINGS = {
   fileName: 'MiSub',

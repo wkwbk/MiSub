@@ -1,63 +1,19 @@
 import { t } from '@/i18n/index.js';
-//
-//
+import { cleanNodeUrl, cleanNodeUrlsText, prependNodeName } from '@misub/core/node/node-cleaner.js';
+import { base64ToUtf8 } from '@misub/core/utils/base64.js';
+import { getV2raynRemarks, isV2raynUrl } from '@misub/core/protocols/v2rayn-utils.js';
+
+export { cleanNodeUrl, cleanNodeUrlsText, prependNodeName };
+
 const isDev = import.meta.env.DEV;
-
-/**
- * 导入节点前对单条节点链接做清洗：
- * - 去除首尾空白
- * - 恢复 @ 前面（userinfo 段）被错误 URL 编码的冒号（%3A / %3a -> :）
- *   例如 v2rayN 导出的 TUIC v5 链接会把 `uuid:password` 转成 `uuid%3Apassword`，
- *   导致订阅转换器把整串当成账号、密码为空。
- *
- * @param {string} url - 原始节点链接
- * @returns {string} - 清洗后的链接
- */
-export function cleanNodeUrl(url) {
-  if (!url || typeof url !== 'string') return '';
-  const trimmed = url.trim();
-  if (!trimmed) return '';
-
-  const protocolEnd = trimmed.indexOf('://');
-  if (protocolEnd === -1) return trimmed;
-
-  const protocol = trimmed.slice(0, protocolEnd).toLowerCase();
-  // vmess / ssr 为纯 Base64 载荷，不包含 userinfo@host 结构
-  if (protocol === 'vmess' || protocol === 'ssr') return trimmed;
-
-  const rest = trimmed.slice(protocolEnd + 3);
-  const authorityEnd = rest.search(/[/?#]/);
-  const authority = authorityEnd === -1 ? rest : rest.slice(0, authorityEnd);
-  const atIndex = authority.lastIndexOf('@');
-  if (atIndex === -1) return trimmed;
-
-  const userInfo = authority.slice(0, atIndex);
-  const cleanedUserInfo = userInfo.replace(/%3a/gi, ':');
-  if (cleanedUserInfo === userInfo) return trimmed;
-
-  return `${trimmed.slice(0, protocolEnd + 3)}${cleanedUserInfo}${rest.slice(atIndex)}`;
-}
-
-/**
- * 对多行导入文本中的每行链接进行清洗
- * @param {string} text - 多行节点文本
- * @returns {string} - 清洗后的多行文本
- */
-export function cleanNodeUrlsText(text) {
-  if (!text || typeof text !== 'string') return '';
-  return text
-    .split(/\r?\n/)
-    .map((line) => {
-      const trimmed = line.trim();
-      return trimmed ? cleanNodeUrl(trimmed) : '';
-    })
-    .join('\n');
-}
 
 export function extractNodeName(url) {
   if (!url) return '';
   url = url.trim();
   try {
+    if (isV2raynUrl(url)) {
+      return getV2raynRemarks(url) || '';
+    }
     const hashIndex = url.indexOf('#');
     if (hashIndex !== -1 && hashIndex < url.length - 1) {
       return decodeURIComponent(url.substring(hashIndex + 1)).trim();
@@ -68,29 +24,12 @@ export function extractNodeName(url) {
     const mainPart = url.substring(protocolIndex + 3).split('#')[0];
     switch (protocol) {
       case 'vmess': {
-        // 修正：使用现代方法正确解码包含UTF-8字符的Base64
-        let padded = mainPart.padEnd(mainPart.length + ((4 - (mainPart.length % 4)) % 4), '=');
         let ps = '';
         try {
-          // 1. 使用 atob 将 Base64 解码为二进制字符串
-          const binaryString = atob(padded);
-
-          // 2. 将二进制字符串转换为 Uint8Array 字节数组
-          const bytes = new Uint8Array(binaryString.length);
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i);
-          }
-
-          // 3. 使用 TextDecoder 将字节解码为正确的 UTF-8 字符串
-          const jsonString = new TextDecoder('utf-8').decode(bytes);
-
-          // 4. 解析 JSON
+          const jsonString = base64ToUtf8(mainPart);
           const node = JSON.parse(jsonString);
-
-          // 5. 直接获取节点名称，此时已是正确解码的字符串，无需再次处理
           ps = node.ps || '';
         } catch (e) {
-          // 如果解码失败，可以保留一个回退逻辑，或者直接返回空字符串
           console.error('Failed to decode vmess link:', e);
         }
         return ps;
@@ -98,11 +37,10 @@ export function extractNodeName(url) {
       case 'trojan':
       case 'vless':
         return mainPart.substring(mainPart.indexOf('@') + 1).split(':')[0] || '';
-      case 'ss':
+      case 'ss': {
         const atIndexSS = mainPart.indexOf('@');
         if (atIndexSS !== -1) return mainPart.substring(atIndexSS + 1).split(':')[0] || '';
         try {
-          // 处理URL编码的base64部分
           let base64Part = mainPart;
           if (base64Part.includes('%')) {
             base64Part = decodeURIComponent(base64Part);
@@ -116,6 +54,7 @@ export function extractNodeName(url) {
           }
         }
         return '';
+      }
       default:
         if (url.startsWith('http')) return new URL(url).hostname;
         return '';
@@ -123,34 +62,6 @@ export function extractNodeName(url) {
   } catch {
     return url.substring(0, 50);
   }
-}
-
-/**
- * 为节点链接添加名称前缀
- * @param {string} link - 原始节点链接
- * @param {string} prefix - 要添加的前缀 (通常是订阅名)
- * @returns {string} - 添加了前缀的新链接
- */
-export function prependNodeName(link, prefix) {
-  if (!prefix) return link; // 如果没有前缀，直接返回原链接
-
-  const hashIndex = link.lastIndexOf('#');
-
-  // 如果链接没有 #fragment
-  if (hashIndex === -1) {
-    return `${link}#${encodeURIComponent(prefix)}`;
-  }
-
-  const baseLink = link.substring(0, hashIndex);
-  const originalName = decodeURIComponent(link.substring(hashIndex + 1));
-
-  // 如果原始名称已经包含了前缀，则不再重复添加
-  if (originalName.startsWith(prefix)) {
-    return link;
-  }
-
-  const newName = `${prefix} - ${originalName}`;
-  return `${baseLink}#${encodeURIComponent(newName)}`;
 }
 
 /**

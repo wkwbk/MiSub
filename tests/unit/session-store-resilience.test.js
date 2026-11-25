@@ -26,7 +26,7 @@ describe('session store resilience', () => {
   });
 
   it('falls back to the default login entry when public config cannot be fetched', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
 
     apiMocks.fetchInitialData.mockResolvedValue({
@@ -48,7 +48,7 @@ describe('session store resilience', () => {
   });
 
   it('does not let a failed public config request mask a successful authenticated session', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
 
     const data = {
@@ -72,7 +72,7 @@ describe('session store resilience', () => {
   });
 
   it('preserves the last known public config after a later fetch failure', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
     const data = { config: {}, misubs: [], profiles: [] };
     apiMocks.fetchInitialData.mockResolvedValue({ success: true, data });
@@ -90,7 +90,7 @@ describe('session store resilience', () => {
   });
 
   it('keeps a failed logout from claiming the session was cleared', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
     store.sessionState = 'loggedIn';
     apiMocks.apiGet.mockRejectedValue(new Error('network down'));
@@ -106,7 +106,7 @@ describe('session store resilience', () => {
   });
 
   it('waits for session confirmation before redirecting after login', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
     apiMocks.login.mockResolvedValue({ success: true, data: {} });
     apiMocks.fetchInitialData.mockResolvedValue({ success: true, data: {} });
@@ -118,7 +118,7 @@ describe('session store resilience', () => {
   });
 
   it('keeps sessionState as loggedOut without switching to loading when post-login session check fails', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
     store.sessionState = 'loggedOut';
 
@@ -141,7 +141,7 @@ describe('session store resilience', () => {
 
   it('keeps custom login path verified and flags isLoggingOut while logout navigates to home', async () => {
     const router = (await import('@/router')).default;
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
 
     store.sessionState = 'loggedIn';
@@ -181,7 +181,7 @@ describe('session store resilience', () => {
   });
 
   it('marks custom login path as verified on unauthorized session expiry', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
 
     store.sessionState = 'loggedIn';
@@ -203,7 +203,7 @@ describe('session store resilience', () => {
   });
 
   it('deduplicates concurrent logout calls while a logout request is in flight', async () => {
-    const { useSessionStore } = await import('@/stores/session.js');
+    const { useSessionStore } = await import('@/stores/useSessionStore.js');
     const store = useSessionStore();
 
     store.sessionState = 'loggedIn';

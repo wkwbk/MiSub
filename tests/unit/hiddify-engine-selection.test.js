@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { determineTargetFormat, isHiddifyAgent } from '../../functions/modules/subscription/user-agent-utils.js';
+import { determineTargetFormat, isHiddifyAgent } from '../../functions/modules/subscription/core/user-agent-utils.js';
 import {
   resolveBuiltinRequestOptions,
   resolveEffectiveEngine,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/core/main-handler.js';
 
 const hiddifyUa = 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box';
 

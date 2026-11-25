@@ -25,7 +25,7 @@ vi.mock('@/stores/useDataStore', () => ({
   }),
 }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({
     showToast: mocks.showToast,
   }),

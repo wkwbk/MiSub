@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchTransformTemplate } from '../../functions/modules/subscription/transform-template-cache.js';
+import { fetchTransformTemplate } from '../../functions/modules/subscription/cache/transform-template-cache.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
 import { handleSubconverterTestRequest } from '../../functions/modules/api-router.js';
 

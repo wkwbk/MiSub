@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
-import { getPathRootSegment, isReservedPathRoot } from '@shared/reserved-paths.js';
+import { getPathRootSegment, isReservedPathRoot } from '@misub/core/domain/reserved-paths.js';
 
 describe('shared reserved path validation', () => {
   it('extracts normalized first path segment', () => {

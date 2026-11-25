@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { extractNodeRegion, getRegionEmoji } from '../../functions/utils/geo-utils.js';
-import { addFlagEmoji } from '../../functions/utils/node-utils.js';
+import { extractNodeRegion, getRegionEmoji } from '@misub/core/node/geo-utils.js';
+import { addFlagEmoji } from '@misub/core/node/node-cleaner.js';
 
 function ss(name) {
   return `ss://YWVzLTI1Ni1nY206cGFzcw@example.com:443#${encodeURIComponent(name)}`;

@@ -4,7 +4,7 @@ import { Check, Copy, CornerDownRight, Info, Pencil, Trash2, Zap } from '@lucide
 import { extractHostAndPort } from '@/lib/utils.js';
 import { getItemTags } from '@/utils/tags.js';
 import { getManualNodeProtocol } from '@/composables/manual-nodes/filters.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';

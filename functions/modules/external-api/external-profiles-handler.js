@@ -12,10 +12,11 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { isManualNode, isRemoteSubscription, toExternalProfile } from './external-api-mappers.js';
-import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
-import { ensureProfileLinkId, rotateProfileLinkId } from '../../../shared/profile-link.js';
-import { validateSingleProfileAlias } from '../../../shared/profile-alias.js';
+import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js';
+import { ensureProfileLinkId, rotateProfileLinkId } from '@misub/core/domain/profile-link.js';
+import { validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import { inspectRemoteSubscription } from './external-subscriptions-handler.js';
+import { SubscriptionRepository } from '../../repositories/subscription-repository.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -29,7 +30,11 @@ async function getProfileById(storageAdapter, id) {
   return await storageAdapter.getProfileById(id);
 }
 
-async function validateProfileReferences(storageAdapter, subscriptionIds = undefined, manualNodeIds = undefined) {
+async function validateProfileReferences(
+  storageAdapter,
+  subscriptionIds = /** @type {string[] | undefined} */ (undefined),
+  manualNodeIds = /** @type {string[] | undefined} */ (undefined),
+) {
   const allSubscriptions = await storageAdapter.getAllSubscriptions();
   const byId = new Map(allSubscriptions.map((item) => [item.id, item]));
 
@@ -71,6 +76,7 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
     .filter((item) => item && isManualNode(item));
 
   const results = [];
+  const updatedSubscriptions = [];
   for (const current of remoteSubscriptions) {
     const inspection = await inspectRemoteSubscription(env, current);
     const timestamp = nowIso();
@@ -82,7 +88,7 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
       lastUpdate: timestamp,
       updatedAt: timestamp,
     };
-    await storageAdapter.putSubscription(updated);
+    updatedSubscriptions.push(updated);
     results.push({
       id: updated.id,
       name: updated.name || '',
@@ -92,6 +98,11 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
       lastError: updated.lastError || '',
       lastUpdated: updated.lastUpdate || null,
     });
+  }
+
+  if (updatedSubscriptions.length > 0) {
+    const subRepo = new SubscriptionRepository({ env, storage: storageAdapter });
+    await subRepo.putMany(updatedSubscriptions);
   }
 
   return {
@@ -110,7 +121,15 @@ async function refreshProfileSubscriptions(storageAdapter, env, profile) {
   };
 }
 
-export async function handleExternalProfilesRequest(request, env, { id = null, relation = null, action = null } = {}) {
+export async function handleExternalProfilesRequest(
+  request,
+  env,
+  {
+    id = null,
+    relation = null,
+    action = null,
+  } = /** @type {{ id?: string | null; relation?: string | null; action?: string | null }} */ ({}),
+) {
   const storageAdapter = await getExternalStorageAdapter(env);
   const url = new URL(request.url);
 

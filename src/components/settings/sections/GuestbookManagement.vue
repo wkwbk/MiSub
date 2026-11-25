@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
 import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from '@lucide/vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { api } from '@/lib/http.js';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';

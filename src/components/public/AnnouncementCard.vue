@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue';
 import DOMPurify from 'dompurify';
 import { X } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
 const { t } = useI18n();

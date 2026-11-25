@@ -1,3 +1,5 @@
+import { isSafeUserRegexPattern } from '@misub/core/utils/regex-safety.js';
+
 const REDACTED = '[REDACTED]';
 
 const SENSITIVE_KEY_PATTERN =
@@ -89,8 +91,9 @@ export function validatePublicFetchUrl(value) {
 async function safeFetchWithValidator(inputUrl, validateFn, init = {}, options = {}) {
   const maxRedirects = options.maxRedirects ?? MAX_SAFE_REDIRECTS;
   const validation = validateFn(inputUrl);
-  if (!validation.ok) {
-    const error = new Error(validation.error);
+  if (!validation.ok || !validation.url) {
+    /** @type {Error & { status?: number }} */
+    const error = new Error(validation.error || 'Invalid URL');
     error.status = 400;
     throw error;
   }
@@ -113,6 +116,7 @@ async function safeFetchWithValidator(inputUrl, validateFn, init = {}, options =
       return response;
     }
     if (redirectCount >= maxRedirects) {
+      /** @type {Error & { status?: number }} */
       const error = new Error('Too many redirects');
       error.status = 400;
       throw error;
@@ -120,14 +124,16 @@ async function safeFetchWithValidator(inputUrl, validateFn, init = {}, options =
 
     const nextUrl = new URL(location, currentUrl);
     const nextValidation = validateFn(nextUrl.toString());
-    if (!nextValidation.ok) {
-      const error = new Error(nextValidation.error);
+    if (!nextValidation.ok || !nextValidation.url) {
+      /** @type {Error & { status?: number }} */
+      const error = new Error(nextValidation.error || 'Invalid redirect URL');
       error.status = 400;
       throw error;
     }
     currentUrl = nextValidation.url.toString();
   }
 
+  /** @type {Error & { status?: number }} */
   const error = new Error('Too many redirects');
   error.status = 400;
   throw error;
@@ -141,98 +147,7 @@ export async function safeFetchPublicNetworkUrl(inputUrl, init = {}, options = {
   return safeFetchWithValidator(inputUrl, validatePublicNetworkUrl, init, options);
 }
 
-function readRepeatingQuantifierEnd(pattern, startIndex) {
-  const ch = pattern[startIndex];
-  if (ch === '+' || ch === '*') {
-    return pattern[startIndex + 1] === '?' ? startIndex + 2 : startIndex + 1;
-  }
-  if (ch === '{') {
-    const match = pattern.slice(startIndex).match(/^\{(\d+)(?:,(\d*))?\}\??/);
-    if (!match) return -1;
-    const min = Number(match[1]);
-    const maxRaw = match[2];
-    const isMultiRepeat = maxRaw === undefined ? min > 1 : maxRaw === '' || Number(maxRaw) > 1;
-    if (isMultiRepeat) {
-      return startIndex + match[0].length;
-    }
-  }
-  return -1;
-}
-
-export function isSafeUserRegexPattern(pattern, maxLength = 256) {
-  if (typeof pattern !== 'string' || pattern.length === 0 || pattern.length > maxLength) {
-    return false;
-  }
-
-  const groupStack = [];
-  let inCharClass = false;
-
-  for (let i = 0; i < pattern.length; i++) {
-    const ch = pattern[i];
-    if (ch === '\\') {
-      i++;
-      continue;
-    }
-    if (inCharClass) {
-      if (ch === ']') {
-        inCharClass = false;
-      }
-      continue;
-    }
-    if (ch === '[') {
-      inCharClass = true;
-      continue;
-    }
-    if (ch === '(') {
-      if (groupStack.length >= 16) {
-        return false;
-      }
-      groupStack.push({ hasInnerQuantifier: false, hasAlternation: false });
-      continue;
-    }
-    if (ch === '|') {
-      if (groupStack.length > 0) {
-        groupStack[groupStack.length - 1].hasAlternation = true;
-      }
-      continue;
-    }
-    if (ch === ')') {
-      if (groupStack.length === 0) {
-        return false;
-      }
-      const closed = groupStack.pop();
-      const quantifierEnd = readRepeatingQuantifierEnd(pattern, i + 1);
-      if (quantifierEnd !== -1) {
-        if (closed.hasInnerQuantifier || closed.hasAlternation) {
-          return false;
-        }
-        if (groupStack.length > 0) {
-          groupStack[groupStack.length - 1].hasInnerQuantifier = true;
-        }
-        i = quantifierEnd - 1;
-      } else if (closed.hasInnerQuantifier && groupStack.length > 0) {
-        groupStack[groupStack.length - 1].hasInnerQuantifier = true;
-      }
-      continue;
-    }
-    if (ch === '+' || ch === '*' || ch === '{') {
-      const quantifierEnd = readRepeatingQuantifierEnd(pattern, i);
-      if (quantifierEnd !== -1) {
-        if (groupStack.length > 0) {
-          groupStack[groupStack.length - 1].hasInnerQuantifier = true;
-        }
-        i = quantifierEnd - 1;
-      }
-    }
-  }
-
-  try {
-    new RegExp(pattern);
-    return true;
-  } catch {
-    return false;
-  }
-}
+export { isSafeUserRegexPattern };
 
 export function validatePublicNetworkUrl(value) {
   let url;
@@ -259,8 +174,9 @@ export function validatePublicNetworkUrl(value) {
 
 export function assertPublicNetworkUrl(inputUrl) {
   const validation = validatePublicNetworkUrl(inputUrl);
-  if (!validation.ok) {
-    const error = new Error(validation.error);
+  if (!validation.ok || !validation.url) {
+    /** @type {Error & { status?: number }} */
+    const error = new Error(validation.error || 'Invalid URL');
     error.status = 400;
     throw error;
   }

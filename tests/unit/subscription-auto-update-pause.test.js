@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { filterAutoUpdateSubscriptions, isAutoUpdateEnabled, isAutoUpdatePaused } from '../../shared/auto-update.js';
+import {
+  filterAutoUpdateSubscriptions,
+  isAutoUpdateEnabled,
+  isAutoUpdatePaused,
+} from '@misub/core/domain/auto-update.js';
 import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/node-handler.js';
 import { handleCronTrigger } from '../../functions/modules/notifications.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';

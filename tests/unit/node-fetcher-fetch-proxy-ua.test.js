@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
+import { fetchSubscriptionNodes } from '../../functions/modules/subscription/security/node-fetcher.js';
 
 const encoder = new TextEncoder();
 

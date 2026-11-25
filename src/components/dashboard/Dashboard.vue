@@ -1,10 +1,10 @@
 <script setup>
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { FolderKanban, Layers, Server } from '@lucide/vue';
-import { formatBytes } from '@shared/format-utils.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
-import { useToastStore } from '@/stores/toast.js';
-import { useUIStore } from '@/stores/ui.js';
+import { formatBytes } from '@misub/core/utils/format-utils.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { useUIStore } from '@/stores/useUiStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
@@ -16,7 +16,7 @@ import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImpo
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
-import { inferAirportRootDomain } from '@shared/airport-domain.js';
+import { inferAirportRootDomain } from '@misub/core/domain/airport-domain.js';
 import { rememberDomainName } from '@/utils/domain-name-memory.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 import { readSessionPreference, writeSessionPreference } from '@/utils/session-preference.js';

@@ -14,9 +14,9 @@ vi.mock('@/components/modals/NodePreview/NodePreviewModal.vue', () => ({
   __esModule: true,
   default: { name: 'NodePreviewModal', render: () => null },
 }));
-vi.mock('@/components/modals/SubscriptionBulkImportModal.vue', () => ({
+vi.mock('@/components/modals/ImportModal.vue', () => ({
   __esModule: true,
-  default: { name: 'SubscriptionBulkImportModal', render: () => null },
+  default: { name: 'ImportModal', render: () => null },
 }));
 vi.mock('@/components/modals/QRCodeModal.vue', () => ({
   __esModule: true,
@@ -79,6 +79,7 @@ function mountView(locale = 'zh-CN') {
         SubscriptionPanel: false,
         Modal: true,
         SubscriptionEditModal: true,
+        ImportModal: true,
         BulkImportModal: true,
         NodePreviewModal: true,
         QRCodeModal: true,

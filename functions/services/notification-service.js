@@ -146,17 +146,21 @@ async function fetchIpGeolocation(clientIp) {
   )
     return null;
 
+  /** @type {Record<string, any>} */
   let result = {};
   for (const provider of IP_GEOLOCATION_PROVIDERS) {
     if (provider.supports && !provider.supports(clientIp)) continue;
     try {
-      const response = await fetch(provider.buildUrl(clientIp), {
-        cf: { timeout: 3000 },
-        ...provider.requestInit,
-      });
+      const response = await fetch(
+        provider.buildUrl(clientIp),
+        /** @type {RequestInit} */ ({
+          cf: { timeout: 3000 },
+          ...provider.requestInit,
+        }),
+      );
       if (!response.ok) continue;
       const body = provider.read ? await provider.read(response) : await response.json();
-      const info = provider.parse(body);
+      const info = /** @type {Record<string, any>} */ (provider.parse(body));
       if (!hasGeolocationValue(info)) continue;
 
       result = mergeMissingGeolocationValues(result, info);

@@ -7,8 +7,8 @@ import ThemeToggle from '@/components/layout/ThemeToggle.vue';
 import LoginEntryButton from '@/components/layout/LoginEntryButton.vue';
 import ExternalRepoButton from '@/components/layout/ExternalRepoButton.vue';
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher.vue';
-import { useUIStore } from '@/stores/ui.js';
-import { useSessionStore } from '@/stores/session.js';
+import { useUIStore } from '@/stores/useUiStore.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 import { useI18n } from '@/i18n/index.js';
 
 const props = defineProps({

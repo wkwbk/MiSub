@@ -1,8 +1,11 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
-import { DEFAULT_PUBLIC_CLIENTS_CONFIG, normalizePublicClientsConfig } from '../../../shared/default-public-clients.js';
-import { DEFAULT_PUBLIC_CORES_CONFIG, normalizePublicCoresConfig } from '../../../shared/default-public-cores.js';
-import { DEFAULT_PUBLIC_LINKS_CONFIG, normalizePublicLinksConfig } from '../../../shared/default-public-links.js';
+import {
+  DEFAULT_PUBLIC_CLIENTS_CONFIG,
+  normalizePublicClientsConfig,
+} from '@misub/core/domain/default-public-clients.js';
+import { DEFAULT_PUBLIC_CORES_CONFIG, normalizePublicCoresConfig } from '@misub/core/domain/default-public-cores.js';
+import { DEFAULT_PUBLIC_LINKS_CONFIG, normalizePublicLinksConfig } from '@misub/core/domain/default-public-links.js';
 import { isStorageUnavailableError } from '../api-handler.js';
 import { createErrorResponse, createJsonResponse, generateId, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 

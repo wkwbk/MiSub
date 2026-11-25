@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Monitor, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import { useToastStore } from '@/stores/toast';
+import { useToastStore } from '@/stores/useToastStore.js';
 import Modal from '@/components/ui/Modal.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
@@ -13,7 +13,7 @@ import {
   DEFAULT_PUBLIC_CLIENTS_CONFIG,
   normalizePublicClientsConfig,
   resolvePublicClientIcon,
-} from '@shared/default-public-clients.js';
+} from '@misub/core/domain/default-public-clients.js';
 
 const { showToast } = useToastStore();
 const { t } = useI18n();

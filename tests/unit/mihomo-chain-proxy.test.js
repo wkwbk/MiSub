@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
-import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
-import { renderClashFromIniTemplate } from '../../functions/modules/subscription/template-pipeline.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/templates/parsers/ini-template-parser.js';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/templates/template-processor.js';
+import { renderClashFromTemplateModel } from '../../functions/modules/subscription/templates/renderers/render-clash.js';
+import { renderClashFromIniTemplate } from '../../functions/modules/subscription/templates/template-pipeline.js';
 
 const PROXIES = [
   { name: 'HK-01', type: 'trojan', server: '1.1.1.1', port: 443, password: 'pass' },

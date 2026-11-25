@@ -4,7 +4,7 @@ import {
   DNS_PROXY_GROUP,
   resolveDnsPolicy,
   resolveSafeDnsConfig,
-} from '../../functions/modules/subscription/safe-dns.js';
+} from '../../functions/modules/subscription/security/safe-dns.js';
 
 describe('shared split DNS policy', () => {
   it('routes domestic names directly and foreign names through the proxy group in clean mode', () => {

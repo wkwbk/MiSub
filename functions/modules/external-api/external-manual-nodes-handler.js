@@ -12,7 +12,7 @@ import {
   sortBySortIndex,
 } from './external-api-utils.js';
 import { detectNodeProtocol, isManualNode, toExternalManualNode } from './external-api-mappers.js';
-import { parseNodeList } from '../../utils/node-parser.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
 
 function nowIso() {
   return new Date().toISOString();
@@ -53,7 +53,11 @@ async function removeManualNodeIdFromProfiles(storageAdapter, id) {
   return affected;
 }
 
-export async function handleExternalManualNodesRequest(request, env, selector = null) {
+export async function handleExternalManualNodesRequest(
+  request,
+  env,
+  selector = /** @type {string | Record<string, any> | null} */ (null),
+) {
   const storageAdapter = await getExternalStorageAdapter(env);
   const url = new URL(request.url);
   const action = typeof selector === 'object' && selector ? selector.action || null : null;

@@ -5,7 +5,7 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import Toast from '@/components/ui/Toast.vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 
 const readZIndexToken = (css, token) => {
   const match = css.match(new RegExp(`${token}\\s*:\\s*(\\d+)\\s*;`));

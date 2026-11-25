@@ -6,7 +6,7 @@ import {
   normalizePublicLinksConfig,
   PUBLIC_LINK_CATEGORIES,
   resolvePublicLinkIcon,
-} from '@shared/default-public-links.js';
+} from '@misub/core/domain/default-public-links.js';
 
 const props = defineProps({
   publicLinks: {

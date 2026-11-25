@@ -6,9 +6,9 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
-import { parseNodeList } from '../../utils/node-parser.js';
-import { getProcessedUserAgent } from '../../../shared/format-utils.js';
-import { filterAutoUpdateSubscriptions } from '../../../shared/auto-update.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
+import { getProcessedUserAgent } from '@misub/core/utils/format-utils.js';
+import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.js';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.js'; // 创建用于全局匹配的协议正则表达式
 
@@ -47,6 +47,7 @@ function detectSubscriptionBodyError(text) {
     summary.match(/\b(?:status|http)\s*[:=]?\s*(\d{3})\b/i) || summary.match(/\b(400|401|403|404|429|5\d\d)\b/);
   const status = statusMatch ? Number(statusMatch[1]) : undefined;
   const message = status ? `HTTP ${status}: ${summary}` : summary;
+  /** @type {Error & { status?: number }} */
   const error = new Error(message);
   if (status) error.status = status;
   return error;
@@ -197,6 +198,7 @@ export async function handleNodeCountRequest(request, env) {
       return createErrorResponse('Invalid or missing url', 400);
     }
 
+    /** @type {{ count: number; userInfo: Record<string, any> | null; protected?: boolean; lastGoodNodeCount?: number }} */
     const result = { count: 0, userInfo: null };
     let nodeCountRequestSucceeded = false;
     let fetchError = null;
@@ -209,18 +211,19 @@ export async function handleNodeCountRequest(request, env) {
     }
 
     try {
-      // 使用统一的User-Agent策略
+      /** @type {RequestInit} */
       const fetchOptions = {
         headers: { 'User-Agent': processedUserAgent },
         redirect: 'follow',
       };
+      /** @type {RequestInit} */
       const trafficFetchOptions = {
         headers: { 'User-Agent': 'clash-verge/v2.4.3' },
         redirect: 'follow',
       };
 
       // cf 选项需传给 fetch() 而非 Request()：仅在用户显式启用跳过证书验证时传递
-      const cfOptions = await resolveNodeCountFetchCfOptions(env);
+      const cfOptions = /** @type {RequestInit} */ (await resolveNodeCountFetchCfOptions(env));
       const trafficRequest = fetch(new Request(requestUrl, trafficFetchOptions), cfOptions);
       const nodeCountRequest = fetch(new Request(requestUrl, fetchOptions), cfOptions);
 
@@ -509,7 +512,7 @@ export async function handleBatchUpdateNodesRequest(request, env) {
 
     // 单个订阅超时时间（毫秒）
     const SINGLE_SUB_TIMEOUT = 15000;
-    const fetchCfOptions = await resolveNodeCountFetchCfOptions(env);
+    const fetchCfOptions = /** @type {RequestInit} */ (await resolveNodeCountFetchCfOptions(env));
 
     // 并行获取所有订阅的节点（带超时）
     const updatePromises = targetSubscriptions.map(async (subscription) => {

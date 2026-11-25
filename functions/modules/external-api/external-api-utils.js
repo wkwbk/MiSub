@@ -13,13 +13,24 @@ export function createRequestId() {
   return `req_${generateId()}`;
 }
 
-export function createExternalSuccess(data, status = 200, meta = undefined) {
+export function createExternalSuccess(
+  data,
+  status = 200,
+  meta = /** @type {Record<string, any> | undefined} */ (undefined),
+) {
+  /** @type {Record<string, any>} */
   const body = { success: true, data };
   if (meta) body.meta = meta;
   return createJsonResponse(body, status);
 }
 
-export function createExternalError(code, message, status = 400, details = undefined) {
+export function createExternalError(
+  code,
+  message,
+  status = 400,
+  details = /** @type {Record<string, any> | undefined} */ (undefined),
+) {
+  /** @type {Record<string, any>} */
   const error = { code, message };
   if (details !== undefined) error.details = details;
   return createJsonResponse({ success: false, error }, status);

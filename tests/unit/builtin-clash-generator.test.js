@@ -3,7 +3,7 @@ import * as yaml from 'js-yaml';
 import {
   generateBuiltinClashConfig,
   generateProxiesOnly,
-} from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
+} from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
 
 describe('Clash 内置生成器', () => {
   it('应将无认证 HTTP URL 转换为 Clash HTTP 代理', () => {

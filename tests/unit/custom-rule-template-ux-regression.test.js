@@ -19,14 +19,14 @@ vi.mock('../../src/services/api.js', () => ({
   },
 }));
 
-vi.mock('@/stores/settings.js', () => ({
+vi.mock('@/stores/useSettingsStore.js', () => ({
   useSettingsStore: () => ({
     config: {},
     setConfig: vi.fn(),
   }),
 }));
 
-vi.mock('@/stores/editor.js', () => ({
+vi.mock('@/stores/useEditorStore.js', () => ({
   useEditorStore: () => ({
     setLoading: vi.fn(),
   }),

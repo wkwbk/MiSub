@@ -2,14 +2,14 @@
 import { computed, onUnmounted, ref, watch } from 'vue';
 import { ArrowRight, Check, Copy, Link2, Loader2, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { createShortLink } from '@/lib/api.js';
-import { isReservedSubPath, normalizeSubPath } from '@shared/reserved-paths.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
-import { shadowrocketConfigUrl } from '@shared/shadowrocket-links.js';
+import { isReservedSubPath, normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
+import { shadowrocketConfigUrl } from '@misub/core/domain/shadowrocket-links.js';
 
 const props = defineProps({
   config: Object,

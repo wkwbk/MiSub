@@ -1,12 +1,12 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
 import { handleError } from '@/utils/error-handler.js';
 import { TIMING } from '@/constants/timing.js';
 import { t } from '@/i18n/index.js';
-import { isAutoUpdateEnabled } from '@shared/auto-update.js';
+import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
   applyItemTags,

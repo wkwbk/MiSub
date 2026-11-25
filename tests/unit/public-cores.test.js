@@ -5,7 +5,7 @@ import {
   normalizeCoreTags,
   normalizePublicCoresConfig,
   resolvePublicCoreIcon,
-} from '../../shared/default-public-cores.js';
+} from '@misub/core/domain/default-public-cores.js';
 
 describe('default-public-cores', () => {
   it('includes mainstream proxy cores by default', () => {

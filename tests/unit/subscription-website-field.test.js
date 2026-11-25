@@ -12,7 +12,7 @@ function withZhI18n(stubs = {}) {
   };
 }
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({
     showToast: vi.fn(),
   }),

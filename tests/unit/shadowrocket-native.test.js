@@ -4,18 +4,22 @@ import {
   manualProxyKeys,
   sortShadowrocketNodeList,
   sortShadowrocketProxies,
-} from '../../functions/modules/subscription/shadowrocket-order.js';
+} from '../../functions/modules/subscription/core/shadowrocket-order.js';
 import {
   renderShadowrocketConfigFromClash,
   renderShadowrocketProxy,
-} from '../../functions/modules/subscription/template-renderers/render-shadowrocket.js';
+} from '../../functions/modules/subscription/templates/renderers/render-shadowrocket.js';
 import {
   loadShadowrocketRuleBundle,
   parseShadowrocketRuleBundle,
   resetShadowrocketRuleBundleState,
-} from '../../functions/modules/subscription/shadowrocket-rule-bundle.js';
-import { resolveRequestContext } from '../../functions/modules/subscription/request-context.js';
-import { shadowrocketConfigUrl, shadowrocketNodesUrl, shadowrocketQrPayload } from '../../shared/shadowrocket-links.js';
+} from '../../functions/modules/subscription/core/shadowrocket-rule-bundle.js';
+import { resolveRequestContext } from '../../functions/modules/subscription/core/request-context.js';
+import {
+  shadowrocketConfigUrl,
+  shadowrocketNodesUrl,
+  shadowrocketQrPayload,
+} from '@misub/core/domain/shadowrocket-links.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 import { StorageFactory } from '../../functions/storage-adapter.js';
 import { mount } from '@vue/test-utils';

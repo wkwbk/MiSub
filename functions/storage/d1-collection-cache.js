@@ -3,7 +3,43 @@
  */
 
 const D1_COLLECTION_CACHE_TTL_MS = 30 * 1000;
-const d1CollectionCaches = new WeakMap();
+let d1CollectionCaches = new WeakMap();
+const cacheInvalidationListeners = new Set();
+const cacheResetListeners = new Set();
+
+export function registerCacheInvalidationListener(listener) {
+  if (typeof listener !== 'function') return () => {};
+  cacheInvalidationListeners.add(listener);
+  return () => cacheInvalidationListeners.delete(listener);
+}
+
+export function registerCacheResetListener(listener) {
+  if (typeof listener !== 'function') return () => {};
+  cacheResetListeners.add(listener);
+  return () => cacheResetListeners.delete(listener);
+}
+
+/**
+ * @param {any} database
+ * @param {string} namespace
+ * @param {string | null} [key]
+ */
+export function notifyCacheInvalidation(database, namespace, key = null) {
+  for (const listener of cacheInvalidationListeners) {
+    try {
+      listener(database, namespace, key);
+    } catch {}
+  }
+}
+
+export function resetD1CollectionCaches() {
+  d1CollectionCaches = new WeakMap();
+  for (const listener of cacheResetListeners) {
+    try {
+      listener();
+    } catch {}
+  }
+}
 
 export function getD1CollectionCache(database) {
   let cache = d1CollectionCaches.get(database);
@@ -16,6 +52,7 @@ export function getD1CollectionCache(database) {
 
 export function invalidateD1CollectionCache(database, table) {
   getD1CollectionCache(database).delete(table);
+  notifyCacheInvalidation(database, table, null);
 }
 
 export async function readCachedD1Collection(database, table, loader) {

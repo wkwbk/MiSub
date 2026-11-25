@@ -6,9 +6,9 @@
  * - 综合 ASN、主流 CDN CIDR 段与协议特征判定 CDN / 中转 / 直连
  */
 
-import { urlToClashProxy } from '../../shared/url-to-clash.js';
-import { parseNodeInfo } from '../utils/geo-utils.js';
-import { StorageFactory } from '../storage-adapter.js';
+import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
+import { parseNodeInfo } from '@misub/core/node/geo-utils.js';
+import { NodeRepository } from '../repositories/node-repository.js';
 
 const DOH_ENDPOINT = 'https://cloudflare-dns.com/dns-query';
 const IP_API_BATCH_ENDPOINT = 'http://ip-api.com/batch?fields=status,message,query,countryCode,country,as,org,isp';
@@ -468,25 +468,6 @@ export async function queryIpGeoBatch(ips, fetchFn = fetch) {
   return resultMap;
 }
 
-async function readCacheSafe(storageAdapter, key, now) {
-  if (!storageAdapter || storageAdapter.type === 'noop') return null;
-  try {
-    const cached = await storageAdapter.get(key);
-    if (!cached || typeof cached !== 'object') return null;
-    if (cached.expiresAt && Number(cached.expiresAt) <= now) return null;
-    return cached;
-  } catch {
-    return null;
-  }
-}
-
-async function writeCacheSafe(storageAdapter, key, payload) {
-  if (!storageAdapter || storageAdapter.type === 'noop') return;
-  try {
-    await storageAdapter.put(key, payload);
-  } catch {}
-}
-
 async function runWithConcurrency(items, concurrency, worker) {
   let index = 0;
   const limit = Math.min(concurrency, items.length);
@@ -510,11 +491,11 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
   const forceRefresh = Boolean(options.forceRefresh);
   const now = Date.now();
 
-  let storageAdapter = null;
+  let nodeRepo = null;
   try {
-    storageAdapter = StorageFactory.createAdapter(env);
+    nodeRepo = new NodeRepository({ env });
   } catch {
-    storageAdapter = null;
+    nodeRepo = null;
   }
 
   // 1. 解析每个节点的地址与传输层特征
@@ -528,16 +509,20 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
     };
   });
 
-  // 2. 域名去重 -> 读缓存 -> DoH 并发解析 -> 写缓存
+  // 2. 域名去重 -> 批量读缓存 -> DoH 并发解析 -> 批量写缓存 (db.batch)
   const uniqueDomains = Array.from(
     new Set(parsedEntries.filter((e) => e.isDomain && e.server).map((e) => e.server.toLowerCase())),
   );
   const domainResolutionMap = new Map();
   const uncachedDomains = [];
 
-  if (!forceRefresh && storageAdapter && uniqueDomains.length > 0) {
-    await runWithConcurrency(uniqueDomains, 10, async (domain) => {
-      const cached = await readCacheSafe(storageAdapter, `${DNS_CACHE_PREFIX}${domain}`, now);
+  if (!forceRefresh && nodeRepo?.isAvailable() && uniqueDomains.length > 0) {
+    const dnsCacheHits = await nodeRepo.getInspectCacheBatch(
+      uniqueDomains.map((domain) => `${DNS_CACHE_PREFIX}${domain}`),
+      now,
+    );
+    for (const domain of uniqueDomains) {
+      const cached = dnsCacheHits.get(`${DNS_CACHE_PREFIX}${domain}`);
       if (cached && typeof cached.ip === 'string') {
         domainResolutionMap.set(domain, {
           ip: cached.ip,
@@ -547,26 +532,34 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
       } else {
         uncachedDomains.push(domain);
       }
-    });
+    }
   } else {
     uncachedDomains.push(...uniqueDomains);
   }
 
   if (uncachedDomains.length > 0) {
+    const dnsCacheEntries = [];
     await runWithConcurrency(uncachedDomains, 10, async (domain) => {
       const resolved = await resolveDomainViaDoH(domain, fetchFn);
       domainResolutionMap.set(domain, resolved);
       if (resolved.ip) {
-        await writeCacheSafe(storageAdapter, `${DNS_CACHE_PREFIX}${domain}`, {
-          ...resolved,
-          cachedAt: now,
+        dnsCacheEntries.push({
+          key: `${DNS_CACHE_PREFIX}${domain}`,
           expiresAt: now + DNS_CACHE_TTL_MS,
+          value: {
+            ...resolved,
+            cachedAt: now,
+            expiresAt: now + DNS_CACHE_TTL_MS,
+          },
         });
       }
     });
+    if (dnsCacheEntries.length > 0 && nodeRepo?.isAvailable()) {
+      await nodeRepo.putInspectCacheBatch(dnsCacheEntries, Math.floor(DNS_CACHE_TTL_MS / 1000)).catch(() => {});
+    }
   }
 
-  // 3. 汇总所有解析后的公网 IP -> 读缓存 -> ip-api.com/batch 查询 -> 写缓存
+  // 3. 汇总所有解析后的公网 IP -> 批量读缓存 -> ip-api.com/batch 查询 -> 批量写缓存 (db.batch)
   const uniquePublicIps = Array.from(
     new Set(
       parsedEntries
@@ -582,34 +575,40 @@ export async function inspectNodes(nodes, env = {}, options = {}) {
   const ipGeoMap = new Map();
   const uncachedIps = [];
 
-  if (!forceRefresh && storageAdapter && uniquePublicIps.length > 0) {
-    await runWithConcurrency(uniquePublicIps, 10, async (ip) => {
-      const cached = await readCacheSafe(storageAdapter, `${IP_CACHE_PREFIX}${ip}`, now);
+  if (!forceRefresh && nodeRepo?.isAvailable() && uniquePublicIps.length > 0) {
+    const ipCacheHits = await nodeRepo.getInspectCacheBatch(
+      uniquePublicIps.map((ip) => `${IP_CACHE_PREFIX}${ip}`),
+      now,
+    );
+    for (const ip of uniquePublicIps) {
+      const cached = ipCacheHits.get(`${IP_CACHE_PREFIX}${ip}`);
       if (cached && cached.countryCode !== undefined) {
         ipGeoMap.set(ip, cached);
       } else {
         uncachedIps.push(ip);
       }
-    });
+    }
   } else {
     uncachedIps.push(...uniquePublicIps);
   }
 
   if (uncachedIps.length > 0) {
     const freshGeoMap = await queryIpGeoBatch(uncachedIps, fetchFn);
-    const cacheWrites = [];
+    const ipCacheEntries = [];
     for (const [ip, geo] of freshGeoMap.entries()) {
       ipGeoMap.set(ip, geo);
-      cacheWrites.push({ ip, geo });
-    }
-    if (cacheWrites.length > 0 && storageAdapter) {
-      await runWithConcurrency(cacheWrites, 10, async ({ ip, geo }) => {
-        await writeCacheSafe(storageAdapter, `${IP_CACHE_PREFIX}${ip}`, {
+      ipCacheEntries.push({
+        key: `${IP_CACHE_PREFIX}${ip}`,
+        expiresAt: now + IP_GEO_CACHE_TTL_MS,
+        value: {
           ...geo,
           cachedAt: now,
           expiresAt: now + IP_GEO_CACHE_TTL_MS,
-        });
+        },
       });
+    }
+    if (ipCacheEntries.length > 0 && nodeRepo?.isAvailable()) {
+      await nodeRepo.putInspectCacheBatch(ipCacheEntries, Math.floor(IP_GEO_CACHE_TTL_MS / 1000)).catch(() => {});
     }
   }
 

@@ -1,9 +1,9 @@
 /**
  * 日志服务模块
- * 处理订阅访问日志的存储和检索（纯 D1 行级表 access_logs）
+ * 处理订阅访问日志的存储和检索（纯 D1 行级表 access_logs，经由 AccessLogRepository 收口）
  */
 
-import { StorageFactory } from '../storage-adapter.js';
+import { AccessLogRepository } from '../repositories/access-log-repository.js';
 
 const MAX_LOG_ENTRIES = 200;
 const MAX_LOG_AGE_DAYS = 30;
@@ -43,21 +43,9 @@ function sanitizeLogEntry(logEntry = {}) {
   };
 }
 
-function resolveLogStorage(env) {
-  const storage = StorageFactory.createAdapter(env);
-  if (!storage || storage.type === 'noop') {
-    return null;
-  }
-  const hasRowLogMethods =
-    typeof storage.insertAccessLogs === 'function' &&
-    typeof storage.getAccessLogs === 'function' &&
-    typeof storage.clearAccessLogs === 'function';
-
-  if (!hasRowLogMethods) {
-    return null;
-  }
-
-  return storage;
+function resolveLogRepository(env) {
+  const repo = new AccessLogRepository({ env });
+  return repo.isRowLogSupported() ? repo : null;
 }
 
 // 全局内存队列，用于削峰填谷和防写竞争
@@ -119,8 +107,8 @@ export const LogService = {
    * @param {Object} logEntry - 日志内容
    */
   async addLog(env, logEntry) {
-    const storage = resolveLogStorage(env);
-    if (!storage) return;
+    const logRepo = resolveLogRepository(env);
+    if (!logRepo) return;
     const sanitizedLogEntry = sanitizeLogEntry(logEntry);
     if (!shouldPersistLog(sanitizedLogEntry)) return null;
 
@@ -159,12 +147,12 @@ export const LogService = {
     logBatch = [];
 
     try {
-      const storage = resolveLogStorage(env);
-      if (!storage) {
+      const logRepo = resolveLogRepository(env);
+      if (!logRepo) {
         return;
       }
 
-      await storage.insertAccessLogs(batchToFlush, {
+      await logRepo.insertBatch(batchToFlush, {
         maxAgeMs: MAX_LOG_AGE_MS,
         maxEntries: MAX_LOG_ENTRIES,
       });
@@ -198,10 +186,10 @@ export const LogService = {
    */
   async getLogs(env) {
     try {
-      const storage = resolveLogStorage(env);
-      if (!storage) return [];
+      const logRepo = resolveLogRepository(env);
+      if (!logRepo) return [];
 
-      return await storage.getAccessLogs({
+      return await logRepo.getRecent({
         limit: MAX_LOG_ENTRIES,
         minTimestamp: Date.now() - MAX_LOG_AGE_MS,
       });
@@ -222,8 +210,8 @@ export const LogService = {
     try {
       const targetProfileId = typeof profileId === 'string' ? profileId.trim() : '';
       const targetProfileName = typeof profileName === 'string' ? profileName.trim() : '';
-      const storage = resolveLogStorage(env);
-      if (!storage) return false;
+      const logRepo = resolveLogRepository(env);
+      if (!logRepo) return false;
 
       if (targetProfileId) {
         logBatch = logBatch.filter(
@@ -239,7 +227,7 @@ export const LogService = {
         logBatch = [];
       }
 
-      return await storage.clearAccessLogs({ profileId: targetProfileId, profileName: targetProfileName });
+      return await logRepo.clear({ profileId: targetProfileId, profileName: targetProfileName });
     } catch (error) {
       console.error('[LogService] Failed to clear logs:', error);
       return false;

@@ -7,12 +7,12 @@ import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionS
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
 import NodeSelector from '@/components/modals/ProfileModal/NodeSelector.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useSettingsStore } from '@/stores/settings.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
-import { ensureProfileLinkId, generateProfileLinkId } from '@shared/profile-link.js';
-import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
-import { normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
+import { ensureProfileLinkId, generateProfileLinkId } from '@misub/core/domain/profile-link.js';
+import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
+import { normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t } = useI18n();
 const dataStore = useDataStore();

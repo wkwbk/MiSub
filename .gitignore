@@ -19,7 +19,7 @@ dist-ssr
 dev-dist
 
 # Dependencies
-/node_modules/
+node_modules/
 .pnp
 .pnp.js
 
@@ -78,6 +78,8 @@ coverage/
 
 # Temporary folders
 tmp/
+playwright-report/
+test-results/
 temp/
 
 # Claude Code
@@ -93,7 +95,6 @@ local-server-full.js
 test-chrome-mcp.js
 test-new-protocols.js
 test-screenshots/
-.wrangler/
 .ace-tool/
 .agent/
 .shared/

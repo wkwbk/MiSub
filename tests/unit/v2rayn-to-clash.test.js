@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { urlToClashProxy } from '../../shared/url-to-clash.js';
-import { urlsToClashProxies } from '../../functions/utils/url-to-clash.js';
-import { parseV2rayNLink } from '../../functions/utils/v2rayn-parser.js';
+import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
+import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
+import { parseV2rayNLink } from '@misub/core/protocols/v2rayn-parser.js';
 
 function makeV2raynUrl(protocol, config) {
   const b64 = Buffer.from(JSON.stringify(config), 'utf-8')

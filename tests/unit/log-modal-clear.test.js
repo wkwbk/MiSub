@@ -21,7 +21,7 @@ vi.mock('@/composables/useConfirm.js', () => ({
   confirmAction: confirmActionMock,
 }));
 
-vi.mock('@/stores/toast', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast: showToastMock }),
 }));
 

@@ -9,7 +9,7 @@ import {
   resolveTemplateSource,
   resolveTemplateUrl,
   shouldRenderClashYamlProfileTemplateLocally,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/core/main-handler.js';
 
 describe('Main handler template url', () => {
   it('formats Telegram expiration with profile priority and merged fallback', () => {

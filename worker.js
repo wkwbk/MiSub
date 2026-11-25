@@ -1,9 +1,10 @@
 /**
  * MiSub Cloudflare Worker 入口适配器
- * 桥接 Cloudflare Workers (Static Assets + Cron Triggers) 与 Pages Functions 主入口
+ * 桥接 Cloudflare Workers (Static Assets + Cron Triggers) 与 Hono 根应用
  */
 
-import { onRequest } from './functions/[[path]].js';
+import { app } from './functions/app.js';
+import { setBoundContext } from './functions/middleware/request-context-store.js';
 import { handleCronTrigger } from './functions/modules/notifications.js';
 import { handleCronBackupTrigger, handleCronMaintenanceTrigger } from './functions/modules/scheduled-task-runner.js';
 
@@ -22,7 +23,7 @@ export function createWorkerContext(request, env, ctx = {}) {
     waitUntil: typeof ctx?.waitUntil === 'function' ? ctx.waitUntil.bind(ctx) : () => {},
     passThroughOnException:
       typeof ctx?.passThroughOnException === 'function' ? ctx.passThroughOnException.bind(ctx) : () => {},
-    // 置为 undefined，使 [[path]].js 自动走 env.ASSETS.fetch 静态资源分支
+    // 置为 undefined，使 app.js 自动走 env.ASSETS.fetch 静态资源分支
     next: undefined,
   };
 }
@@ -37,7 +38,8 @@ export default {
    */
   async fetch(request, env, ctx) {
     const context = createWorkerContext(request, env, ctx);
-    return await onRequest(context);
+    setBoundContext(request, context);
+    return await app.fetch(request, env, /** @type {any} */ (ctx));
   },
 
   /**

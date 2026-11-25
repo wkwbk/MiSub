@@ -3,7 +3,7 @@
  * 包含各种通用的辅助函数
  */
 
-import { utf8ToBase64 } from '../../shared/base64.js';
+import { utf8ToBase64 } from '@misub/core/utils/base64.js';
 
 /**
  * 规范化自定义登录路径，确保始终以单个前导斜杠开头；无效时回退为 '/login'
@@ -96,10 +96,11 @@ export async function getAuthDebugInfo(env) {
 }
 
 /**
- * 名称前缀辅助函数
- * @param {string} link - 节点链接
- * @param {string} prefix - 前缀文本
- * @returns {string} 添加前缀后的链接
+ * 带超时控制的 fetch 封装
+ * @param {RequestInfo | URL} input
+ * @param {RequestInit} [init]
+ * @param {number} [timeout]
+ * @returns {Promise<Response>}
  */
 export function createTimeoutFetch(input, init = {}, timeout = 10000) {
   const controller = new AbortController();

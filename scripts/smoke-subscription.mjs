@@ -1,7 +1,7 @@
 import yaml from 'js-yaml';
 import { pathToFileURL } from 'node:url';
-import { PINNED_RULE_REVISIONS } from '../functions/modules/subscription/builtin-rules-provider.js';
-import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../functions/modules/subscription/safe-dns.js';
+import { PINNED_RULE_REVISIONS } from '../functions/modules/subscription/templates/builtin-rules-provider.js';
+import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../functions/modules/subscription/security/safe-dns.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);

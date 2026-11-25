@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { extractValidNodes, parseNodeList } from '../../functions/utils/node-parser.js';
-import { decodeV2raynNodeUrl, getV2raynRemarks, renameV2raynNodeUrl } from '../../shared/v2rayn-utils.js';
-import { parseNodeInfo } from '../../functions/utils/geo-utils.js';
+import { extractValidNodes, parseNodeList } from '@misub/core/node/node-parser.js';
+import { decodeV2raynNodeUrl, getV2raynRemarks, renameV2raynNodeUrl } from '@misub/core/protocols/v2rayn-utils.js';
+import { parseNodeInfo } from '@misub/core/node/geo-utils.js';
 import { isRealProxyNode } from '../../functions/services/subscription/airport-metadata.js';
-import { addFlagEmoji, prependNodeName, removeFlagEmoji } from '../../functions/utils/node-utils.js';
-import { setNodeName } from '../../functions/utils/node-transformer.js';
+import { addFlagEmoji, prependNodeName, removeFlagEmoji } from '@misub/core/node/node-cleaner.js';
+import { setNodeName } from '@misub/core/operators/node-transformer.js';
 
 /** 构造 v2rayn:// 链接（URL-Safe Base64，模拟 v2rayN 导出格式） */
 function makeV2raynUrl(protocol, config) {

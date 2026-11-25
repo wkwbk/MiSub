@@ -9,13 +9,18 @@ export function useRouteLoading(router, options = {}) {
   const progress = ref(0);
   const isFadingOut = ref(false);
   const showSlowIndicator = ref(false);
-  const pendingPath = ref(null);
+  const pendingPath = ref(/** @type {string | null} */ (null));
 
   let navigationToken = 0;
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let showTimer = null;
+  /** @type {ReturnType<typeof setInterval> | null} */
   let progressTimer = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let slowTimer = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let fadeTimer = null;
+  /** @type {ReturnType<typeof setTimeout> | null} */
   let finishTimer = null;
 
   const clearTimers = () => {

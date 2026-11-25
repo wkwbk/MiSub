@@ -2,8 +2,8 @@
  * Telegram Bot 只读查询类命令处理器
  */
 
-import { utf8ToBase64 } from '../../../../shared/base64.js';
-import { getProfileShareIdentifier } from '../../../../shared/profile-link.js';
+import { utf8ToBase64 } from '@misub/core/utils/base64.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import { escapeHtml } from '../../utils.js';
 import { resolvePublicBaseUrl } from '../rotate-token.js';
 import { createRequestCache, getCachedProfiles, getCachedSettings } from './storage.js';

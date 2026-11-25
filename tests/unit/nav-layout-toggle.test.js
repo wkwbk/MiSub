@@ -3,7 +3,7 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import { createMemoryHistory, createRouter } from 'vue-router';
 import NavActionGroup from '@/components/layout/NavActionGroup.vue';
-import { useUIStore } from '@/stores/ui.js';
+import { useUIStore } from '@/stores/useUiStore.js';
 
 function makeRouter() {
   return createRouter({

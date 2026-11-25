@@ -7,7 +7,7 @@ import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
-} from '@shared/default-public-cores.js';
+} from '@misub/core/domain/default-public-cores.js';
 
 const props = defineProps({
   publicCores: {

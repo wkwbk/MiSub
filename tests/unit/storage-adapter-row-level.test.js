@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StorageFactory } from '../../functions/storage-adapter.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
 import { handleErrorReportRequest } from '../../functions/modules/handlers/error-report-handler.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 

@@ -25,9 +25,14 @@ import {
   parseTimestampMs,
   STORAGE_TYPES,
 } from './storage/d1-schema.js';
-import { invalidateD1CollectionCache, readCachedD1Collection } from './storage/d1-collection-cache.js';
+import {
+  invalidateD1CollectionCache,
+  notifyCacheInvalidation,
+  readCachedD1Collection,
+  resetD1CollectionCaches,
+} from './storage/d1-collection-cache.js';
 import { NoopStorageAdapter } from './storage/noop-adapter.js';
-import { resolvePublicProfile } from '../shared/profile-link.js';
+import { resolvePublicProfile } from '@misub/core/domain/profile-link.js';
 
 export { ensureD1Schema, isManualNodeRecord, STORAGE_TYPES };
 
@@ -36,6 +41,7 @@ const SETTINGS_CACHE_TTL_MS = 10 * 1000;
 
 export function clearSettingsCache() {
   settingsCaches = new WeakMap();
+  resetD1CollectionCaches();
 }
 
 function stableStringify(value) {
@@ -185,6 +191,11 @@ class D1StorageAdapter {
       if (key === DATA_KEYS.SETTINGS) {
         settingsCaches.delete(this.db);
       }
+      if (table === 'settings') {
+        notifyCacheInvalidation(this.db, 'settings', String(queryValue || ''));
+      } else if (table === 'cache') {
+        notifyCacheInvalidation(this.db, 'inspect_cache', String(queryValue || ''));
+      }
       if (ID_DATA_TABLES.has(table)) {
         invalidateD1CollectionCache(this.db, table);
       }
@@ -224,6 +235,11 @@ class D1StorageAdapter {
 
       if (key === DATA_KEYS.SETTINGS) {
         settingsCaches.delete(this.db);
+      }
+      if (table === 'settings') {
+        notifyCacheInvalidation(this.db, 'settings', String(queryValue || ''));
+      } else if (table === 'cache') {
+        notifyCacheInvalidation(this.db, 'inspect_cache', String(queryValue || ''));
       }
       if (ID_DATA_TABLES.has(table)) {
         invalidateD1CollectionCache(this.db, table);
@@ -1209,14 +1225,191 @@ class D1StorageAdapter {
     return stats;
   }
 
+  // ========== 批量读写与事务合并原语 (db.batch) ==========
+
+  async getManyCacheEntries(keys = [], now = Date.now()) {
+    const uniqueKeys = Array.from(
+      new Set((Array.isArray(keys) ? keys : []).filter((key) => typeof key === 'string' && key.trim())),
+    );
+    const result = new Map();
+    if (uniqueKeys.length === 0) return result;
+
+    const CHUNK_SIZE = 90;
+    try {
+      for (let i = 0; i < uniqueKeys.length; i += CHUNK_SIZE) {
+        const chunk = uniqueKeys.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(',');
+        const queryResult = await this.db
+          .prepare(`SELECT key, value, expires_at FROM cache WHERE key IN (${placeholders})`)
+          .bind(...chunk)
+          .all();
+        for (const row of queryResult?.results || []) {
+          if (!row?.key) continue;
+          const exp = row.expires_at;
+          if (exp !== null && exp !== undefined && Number(exp) <= now) {
+            continue;
+          }
+          try {
+            result.set(row.key, JSON.parse(row.value));
+          } catch {
+            result.set(row.key, row.value);
+          }
+        }
+      }
+    } catch (error) {
+      if (!isSchemaMismatchError(error)) {
+        console.error('[D1] Failed to batch get cache entries:', error);
+      }
+    }
+    return result;
+  }
+
+  async putManyCacheEntries(entries = []) {
+    const validEntries = (Array.isArray(entries) ? entries : []).filter(
+      (entry) => entry && typeof entry.key === 'string' && entry.key.trim(),
+    );
+    if (validEntries.length === 0) return true;
+
+    await this._withSchemaRetry(async () => {
+      const statements = validEntries.map((entry) => {
+        const data = typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);
+        const expiresAt =
+          entry.expiresAt !== undefined ? entry.expiresAt : computeCacheExpiresAt(entry.key, entry.value);
+        return this.db
+          .prepare(
+            `INSERT OR REPLACE INTO cache (key, value, expires_at, updated_at)
+             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+          )
+          .bind(entry.key, data, expiresAt);
+      });
+      await this._runBatchOrSequential(statements);
+    });
+
+    notifyCacheInvalidation(this.db, 'inspect_cache');
+    return true;
+  }
+
+  async deleteManyKeys(keys = []) {
+    const uniqueKeys = Array.from(
+      new Set((Array.isArray(keys) ? keys : []).filter((key) => typeof key === 'string' && key.trim())),
+    );
+    if (uniqueKeys.length === 0) return 0;
+
+    let touchedSettings = false;
+    let touchedCache = false;
+    const touchedIdTables = new Set();
+    const statements = [];
+
+    for (const key of uniqueKeys) {
+      const { table, queryField, queryValue } = this._parseKey(key);
+      if (table === 'settings') touchedSettings = true;
+      if (table === 'cache') touchedCache = true;
+      if (ID_DATA_TABLES.has(table)) touchedIdTables.add(table);
+      statements.push(this.db.prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue));
+    }
+
+    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+
+    if (touchedSettings) {
+      settingsCaches.delete(this.db);
+      notifyCacheInvalidation(this.db, 'settings');
+    }
+    if (touchedCache) {
+      notifyCacheInvalidation(this.db, 'inspect_cache');
+    }
+    for (const tbl of touchedIdTables) {
+      invalidateD1CollectionCache(this.db, tbl);
+    }
+    return uniqueKeys.length;
+  }
+
+  async batchUpdateItemsById(updates = [], options = {}) {
+    const groupedUpdaters = new Map();
+    for (const entry of Array.isArray(updates) ? updates : []) {
+      const id = typeof entry?.id === 'string' ? entry.id.trim() : '';
+      if (!id || typeof entry?.updater !== 'function') continue;
+      if (!groupedUpdaters.has(id)) groupedUpdaters.set(id, []);
+      groupedUpdaters.get(id).push(entry.updater);
+    }
+
+    const ids = Array.from(groupedUpdaters.keys());
+    if (ids.length === 0) return [];
+
+    const primaryTable = options?.preferredTable === 'nodes' ? 'nodes' : 'subscriptions';
+    const secondaryTable = primaryTable === 'nodes' ? 'subscriptions' : 'nodes';
+
+    const foundById = new Map();
+    const primaryHits = await this._queryByIdsChunked(primaryTable, ids);
+    for (const item of primaryHits) {
+      if (item?.id) foundById.set(item.id, { item, sourceTable: primaryTable });
+    }
+    const missingIds = ids.filter((id) => !foundById.has(id));
+    if (missingIds.length > 0) {
+      const secondaryHits = await this._queryByIdsChunked(secondaryTable, missingIds);
+      for (const item of secondaryHits) {
+        if (item?.id) foundById.set(item.id, { item, sourceTable: secondaryTable });
+      }
+    }
+
+    if (foundById.size === 0) return [];
+
+    const updatedItems = [];
+    const statements = [];
+    const touchedTables = new Set();
+
+    for (const id of ids) {
+      const record = foundById.get(id);
+      if (!record) continue;
+
+      let current = { ...record.item };
+      for (const updater of groupedUpdaters.get(id)) {
+        const next = updater({ ...current });
+        if (next && typeof next === 'object') {
+          current = next;
+        }
+      }
+      if (!current.id) current.id = id;
+
+      const targetTable = isManualNodeRecord(current) ? 'nodes' : 'subscriptions';
+      const otherTable = targetTable === 'nodes' ? 'subscriptions' : 'nodes';
+      touchedTables.add(targetTable);
+
+      statements.push(
+        this.db
+          .prepare(
+            `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
+             VALUES (?, ?, CURRENT_TIMESTAMP)`,
+          )
+          .bind(current.id, JSON.stringify(current)),
+      );
+      if (record.sourceTable !== targetTable) {
+        touchedTables.add(otherTable);
+        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(current.id));
+      }
+
+      updatedItems.push(current);
+    }
+
+    if (statements.length > 0) {
+      await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+      for (const tbl of touchedTables) {
+        invalidateD1CollectionCache(this.db, tbl);
+      }
+    }
+
+    return updatedItems;
+  }
+
   async resetAllSettings() {
     try {
       await this.db.prepare('DELETE FROM settings').run();
       settingsCaches.delete(this.db);
+      notifyCacheInvalidation(this.db, 'settings');
       return true;
     } catch (error) {
       if (isNoSuchTableError(error)) {
         settingsCaches.delete(this.db);
+        notifyCacheInvalidation(this.db, 'settings');
         return true;
       }
       console.error('[D1] Failed to reset settings:', error);

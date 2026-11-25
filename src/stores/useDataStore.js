@@ -1,57 +1,26 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { useToastStore } from '@/stores/toast';
-import { useSettingsStore } from '@/stores/settings';
-import { useEditorStore } from '@/stores/editor';
-import { createStorageCache } from '@/utils/cache-helper.js';
-import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
-import { TIMING } from '@/constants/timing.js';
-import { api } from '@/lib/http.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useEditorStore } from '@/stores/useEditorStore.js';
+import { resolvePiniaQueryClient } from '@/lib/query-client.js';
+import {
+  clearAppDataQueryCache,
+  fetchAppDataWithQueryClient,
+  fetchRuleTemplatesWithQueryClient,
+  hydrateAppDataInQueryClient,
+  saveMisubsWithQueryClient,
+  saveRuleTemplatesWithQueryClient,
+  saveSettingsWithQueryClient,
+} from '@/queries/useAppDataQueries.js';
+import {
+  pruneInvalidProfileReferences,
+  removeManualNodeRefsFromProfiles,
+  removeProfileRefsFromProfiles,
+  removeSubscriptionRefsFromProfiles,
+} from '@/utils/profile-reference-pruner.js';
 import { t } from '@/i18n/index.js';
 import { getItemTags, hydrateItemTags, normalizeTagList } from '@/utils/tags.js';
-import { getProfileSubscriptionId } from '@shared/profile-subscription-ref.js';
-
-const isDev = import.meta.env.DEV;
-
-const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
-
-function sanitizeConfigForCache(config = {}) {
-  if (!config || typeof config !== 'object') return {};
-  const sanitized = { ...config };
-  delete sanitized.botToken;
-  delete sanitized.cronSecret;
-
-  if (sanitized.webdavBackup && typeof sanitized.webdavBackup === 'object') {
-    const { password: _omitPassword, ...restWebdav } = sanitized.webdavBackup;
-    sanitized.webdavBackup = restWebdav;
-  }
-  if (sanitized.shortLink && typeof sanitized.shortLink === 'object') {
-    const { apiToken: _omitApiToken, ...restShortLink } = sanitized.shortLink;
-    sanitized.shortLink = restShortLink;
-  }
-  if (sanitized.turnstile && typeof sanitized.turnstile === 'object') {
-    const { secretKey: _omitSecretKey, ...restTurnstile } = sanitized.turnstile;
-    sanitized.turnstile = restTurnstile;
-  }
-  if (sanitized.telegramPushConfig && typeof sanitized.telegramPushConfig === 'object') {
-    const {
-      botToken: _omitPushBotToken,
-      webhookSecret: _omitWebhookSecret,
-      ...restPushConfig
-    } = sanitized.telegramPushConfig;
-    sanitized.telegramPushConfig = restPushConfig;
-  }
-  if (sanitized.externalApi && typeof sanitized.externalApi === 'object') {
-    sanitized.externalApi = {
-      ...sanitized.externalApi,
-      tokens: Array.isArray(sanitized.externalApi.tokens)
-        ? sanitized.externalApi.tokens.map(({ token: _omitToken, ...restToken }) => restToken)
-        : [],
-    };
-  }
-
-  return sanitized;
-}
 
 export const useDataStore = defineStore('data', () => {
   const { showToast } = useToastStore();
@@ -69,83 +38,57 @@ export const useDataStore = defineStore('data', () => {
   const dataRevision = ref('');
   const hasSaveConflict = ref(false);
   const hasDataLoaded = computed(() => !!lastUpdated.value);
-
   const isDirty = computed(() => editorStore.isDirty);
 
   const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
   const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
 
+  function applyNormalizedSnapshot(snapshot) {
+    if (!snapshot) return false;
+    subscriptions.value = snapshot.misubs;
+    profiles.value = snapshot.profiles;
+    ruleTemplates.value = snapshot.ruleTemplates;
+    settingsStore.setConfig(snapshot.config);
+    if (typeof snapshot.dataRevision === 'string') {
+      dataRevision.value = snapshot.dataRevision;
+    }
+    hasSaveConflict.value = false;
+    lastUpdated.value = new Date();
+    return true;
+  }
+
   function hydrateFromData(data) {
     if (!data) return false;
-
     try {
-      const cleanSubs = (data.misubs || []).map((sub) => hydrateItemTags({ ...sub, isUpdating: false }));
-      subscriptions.value = cleanSubs;
-      profiles.value = (data.profiles || []).map((profile) => ({
-        ...profile,
-        tags: getItemTags(profile),
-      }));
-      ruleTemplates.value = data.ruleTemplates || [];
-      settingsStore.setConfig({ ...DEFAULT_SETTINGS, ...data.config });
-      if (typeof data.dataRevision === 'string') {
-        dataRevision.value = data.dataRevision;
-      }
-      hasSaveConflict.value = false;
-
-      lastUpdated.value = new Date();
-      dataCache.set({
-        ...data,
-        dataRevision: dataRevision.value,
-        config: sanitizeConfigForCache(data.config || settingsStore.config),
-      });
-      return true;
+      const queryClient = resolvePiniaQueryClient();
+      const snapshot = hydrateAppDataInQueryClient(queryClient, data, settingsStore.config);
+      return applyNormalizedSnapshot(snapshot);
     } catch (error) {
       console.error('hydrateFromData failed:', error);
       return false;
     }
   }
 
-  let fetchDataPromise = null;
-
   async function fetchData(forceRefresh = false) {
-    if (fetchDataPromise) return fetchDataPromise;
-
     if (hasDataLoaded.value && !forceRefresh) return true;
 
-    if (!forceRefresh) {
-      const cachedData = dataCache.get();
-      if (cachedData) {
-        hydrateFromData(cachedData);
-        return true;
-      }
-    }
-
-    fetchDataPromise = (async () => {
-      isLoading.value = true;
-      try {
-        const data = await api.get('/api/data');
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
-
-        hydrateFromData(data);
-        pruneInvalidReferences(); // 数据拉取后执行自愈
+    isLoading.value = true;
+    try {
+      const queryClient = resolvePiniaQueryClient();
+      const { data: snapshot, fromCache } = await fetchAppDataWithQueryClient(queryClient, { forceRefresh });
+      applyNormalizedSnapshot(snapshot);
+      if (!fromCache) {
+        pruneInvalidReferences();
         clearDirty();
-        return true;
-      } catch (error) {
-        console.error('Failed to fetch data:', error);
-        showToast(t('store.fetchDataFailed', { message: error.message }), 'error');
-        // 不向调用方抛出：所有调用点都没有 try/catch，rejection 会冒泡成
-        // 全局 unhandledrejection，被 main.js 处理器再提示一次，
-        // 用户会看到两个「操作失败」弹窗。
-        return false;
-      } finally {
-        isLoading.value = false;
-        fetchDataPromise = null;
       }
-    })();
-    return fetchDataPromise;
+      return true;
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      showToast(t('store.fetchDataFailed', { message: error.message }), 'error');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   async function saveData(options = {}) {
@@ -157,11 +100,10 @@ export const useDataStore = defineStore('data', () => {
     const force = Boolean(options?.force);
     isLoading.value = true;
     saveState.value = 'saving';
-
-    // 保存前执行数据自愈，确保发往后端的数据是干净的
     pruneInvalidReferences();
 
     try {
+      const queryClient = resolvePiniaQueryClient();
       const sanitizedSubs = subscriptions.value.map((sub) => {
         const { isUpdating: _isUpdating, ...rest } = sub;
         return hydrateItemTags(rest);
@@ -182,11 +124,9 @@ export const useDataStore = defineStore('data', () => {
         ...(force ? { force: true } : {}),
       };
 
-      const result = await api.post('/api/misubs', payload);
-
-      if (!result.success) {
-        throw new Error(result.message || t('store.saveFailed'));
-      }
+      const result = await saveMisubsWithQueryClient(queryClient, payload, {
+        fallbackConfig: settingsStore.config,
+      });
 
       if (result.data) {
         if (result.data.misubs) subscriptions.value = result.data.misubs;
@@ -210,17 +150,6 @@ export const useDataStore = defineStore('data', () => {
         }
       }, 2000);
 
-      dataCache.set({
-        misubs: subscriptions.value.map((s) => {
-          const { isUpdating: _isUpdating, ...rest } = s;
-          return rest;
-        }),
-        profiles: profiles.value,
-        ruleTemplates: ruleTemplates.value,
-        dataRevision: dataRevision.value,
-        config: sanitizeConfigForCache(settingsStore.config),
-      });
-
       return true;
     } catch (error) {
       console.error('[Store] Failed to save data:', error);
@@ -231,43 +160,22 @@ export const useDataStore = defineStore('data', () => {
         showToast(t('store.saveDataFailed', { message: error.message }), 'error');
       }
       saveState.value = 'idle';
-      // 同 fetchData：提示一次即可，不再向上抛出避免二次弹窗
       return false;
     } finally {
       isLoading.value = false;
     }
   }
 
-  /**
-   * 保存设置（服务端会做 { ...oldSettings, ...newSettings } 合并，
-   * 所以可以只传变化的那几个字段）。
-   * @param {Object} newSettings
-   * @param {{ silent?: boolean, preferencesOnly?: boolean }} [options]
-   *        - silent=true 时不弹任何提示，由调用方给出更贴切的文案
-   *          （例如「忽略待处理项」不该弹「设置已更新」）。
-   *        - preferencesOnly=true 表示这次只改界面偏好：服务端会跳过
-   *          「清空节点缓存」和「发 TG 设置更新通知」这两个副作用。
-   *          仅当本次载荷确实不影响节点处理时才可传 true。
-   *          （请求头名字与 functions/modules/api-handler.js 里的读取一一对应）
-   * @returns {Promise<boolean>} 成功时为 true；失败时**抛出**（沿用既有约定，
-   *          调用方自行 catch，静默模式下尤其需要）
-   */
   async function saveSettings(newSettings, options = {}) {
     const { silent = false, preferencesOnly = false } = options;
     editorStore.setLoading(true);
     try {
-      const result = await api.post(
-        '/api/settings',
-        newSettings,
-        preferencesOnly ? { headers: { 'X-MiSub-Save-Scope': 'preferences' } } : {},
-      );
-
-      if (!result.success) {
-        throw new Error(result.message || t('store.saveSettingsFailed'));
-      }
-
+      const queryClient = resolvePiniaQueryClient();
+      await saveSettingsWithQueryClient(queryClient, newSettings, {
+        preferencesOnly,
+        currentConfig: settingsStore.config,
+      });
       settingsStore.updateConfig(newSettings);
-      syncCachedConfig(settingsStore.config);
       if (!silent) showToast(t('store.settingsUpdated'), 'success');
       return true;
     } catch (error) {
@@ -282,21 +190,20 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function fetchRuleTemplates() {
-    const result = await api.get('/api/rule_templates');
-    ruleTemplates.value = Array.isArray(result?.data) ? result.data : [];
-    return ruleTemplates.value;
+    const queryClient = resolvePiniaQueryClient();
+    const list = await fetchRuleTemplatesWithQueryClient(queryClient);
+    ruleTemplates.value = list;
+    return list;
   }
 
   async function saveRuleTemplates(items = ruleTemplates.value) {
     editorStore.setLoading(true);
     try {
-      const result = await api.post('/api/rule_templates', { templates: items });
-      if (!result.success) {
-        throw new Error(result.message || t('store.saveRuleTemplatesFailed'));
-      }
-      ruleTemplates.value = Array.isArray(result.data) ? result.data : [];
+      const queryClient = resolvePiniaQueryClient();
+      const savedList = await saveRuleTemplatesWithQueryClient(queryClient, items);
+      ruleTemplates.value = savedList;
       showToast(t('store.ruleTemplatesSaved'), 'success');
-      return ruleTemplates.value;
+      return savedList;
     } catch (error) {
       console.error('Failed to save rule templates:', error);
       showToast(t('store.saveRuleTemplatesFailedWithMessage', { message: error.message }), 'error');
@@ -307,20 +214,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function clearCachedData() {
-    dataCache.clear();
-  }
-
-  function syncCachedConfig(nextConfig) {
-    const cachedData = dataCache.get();
-    if (!cachedData) return;
-
-    dataCache.set({
-      ...cachedData,
-      config: sanitizeConfigForCache({
-        ...cachedData.config,
-        ...nextConfig,
-      }),
-    });
+    clearAppDataQueryCache(resolvePiniaQueryClient());
   }
 
   function addSubscription(subscription) {
@@ -364,126 +258,23 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function removeProfileFromProfiles(profileIds) {
-    const idsToRemove = Array.isArray(profileIds) ? new Set(profileIds) : new Set([profileIds]);
-    if (idsToRemove.size === 0) return;
-
-    let modified = false;
-    profiles.value.forEach((profile) => {
-      if (Array.isArray(profile.subProfiles) && profile.subProfiles.length > 0) {
-        const originalLength = profile.subProfiles.length;
-        profile.subProfiles = profile.subProfiles.filter((id) => !idsToRemove.has(id));
-        if (profile.subProfiles.length !== originalLength) {
-          modified = true;
-        }
-      }
-    });
-
-    if (modified) {
-      profiles.value = [...profiles.value];
-    }
+    const { profiles: next, modified } = removeProfileRefsFromProfiles(profiles.value, profileIds);
+    if (modified) profiles.value = next;
   }
 
   function removeManualNodeFromProfiles(nodeIds) {
-    const idsToRemove = Array.isArray(nodeIds) ? new Set(nodeIds) : new Set([nodeIds]);
-    if (idsToRemove.size === 0) return;
-
-    let modified = false;
-    profiles.value.forEach((profile) => {
-      if (Array.isArray(profile.manualNodes) && profile.manualNodes.length > 0) {
-        const originalLength = profile.manualNodes.length;
-        profile.manualNodes = profile.manualNodes.filter((id) => !idsToRemove.has(id));
-        if (profile.manualNodes.length !== originalLength) {
-          modified = true;
-        }
-      }
-    });
-
-    if (modified) {
-      profiles.value = [...profiles.value]; // 强制触发响应式更新
-      if (isDev) {
-        console.debug('[DataStore] Cleaned up manual node references from profiles');
-      }
-    }
+    const { profiles: next, modified } = removeManualNodeRefsFromProfiles(profiles.value, nodeIds);
+    if (modified) profiles.value = next;
   }
 
   function removeSubscriptionFromProfiles(subIds) {
-    const idsToRemove = Array.isArray(subIds) ? new Set(subIds) : new Set([subIds]);
-    if (idsToRemove.size === 0) return;
-
-    let modified = false;
-    profiles.value.forEach((profile) => {
-      if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
-        const originalLength = profile.subscriptions.length;
-        profile.subscriptions = profile.subscriptions.filter(
-          (entry) => !idsToRemove.has(getProfileSubscriptionId(entry)),
-        );
-        if (profile.subscriptions.length !== originalLength) {
-          modified = true;
-        }
-      }
-    });
-
-    if (modified) {
-      profiles.value = [...profiles.value]; // 强制触发响应式更新
-      if (isDev) {
-        console.debug('[DataStore] Cleaned up subscription references from profiles');
-      }
-    }
+    const { profiles: next, modified } = removeSubscriptionRefsFromProfiles(profiles.value, subIds);
+    if (modified) profiles.value = next;
   }
 
-  /**
-   * 数据自愈：清理订阅组中不存在的节点/订阅引用
-   * 同时处理可能存在的重复 ID
-   */
   function pruneInvalidReferences() {
-    if (!profiles.value || profiles.value.length === 0) return;
-
-    // 收集所有当前存在的订阅和手动节点 ID
-    const validIds = new Set(subscriptions.value.map((item) => item.id));
-
-    let modified = false;
-    profiles.value.forEach((profile) => {
-      // 1. 处理手动节点引用
-      if (Array.isArray(profile.manualNodes) && profile.manualNodes.length > 0) {
-        const originalLength = profile.manualNodes.length;
-        const seenIds = new Set();
-        profile.manualNodes = profile.manualNodes.filter((id) => {
-          // ID 必须存在且未被重复记录
-          if (validIds.has(id) && !seenIds.has(id)) {
-            seenIds.add(id);
-            return true;
-          }
-          return false;
-        });
-        if (profile.manualNodes.length !== originalLength) {
-          modified = true;
-        }
-      }
-
-      // 2. 处理机场订阅引用
-      if (Array.isArray(profile.subscriptions) && profile.subscriptions.length > 0) {
-        const originalLength = profile.subscriptions.length;
-        const seenIds = new Set();
-        profile.subscriptions = profile.subscriptions.filter((entry) => {
-          const subId = getProfileSubscriptionId(entry);
-          if (subId && validIds.has(subId) && !seenIds.has(subId)) {
-            seenIds.add(subId);
-            return true;
-          }
-          return false;
-        });
-        if (profile.subscriptions.length !== originalLength) {
-          modified = true;
-        }
-      }
-    });
-
-    if (modified) {
-      profiles.value = [...profiles.value]; // 强制触发响应式
-      if (isDev) {
-        console.info('[DataStore] Cleaned up stale IDs or duplicates in profiles');
-      }
-    }
+    const { profiles: next, modified } = pruneInvalidProfileReferences(profiles.value, subscriptions.value);
+    if (modified) profiles.value = next;
   }
 
   let saveStateResetTimer = null;

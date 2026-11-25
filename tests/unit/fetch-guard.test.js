@@ -3,9 +3,9 @@ import {
   buildEdgeCacheRequest,
   resetStrictCooldownMemoryForTests,
   resolveFetchGuardPolicy,
-} from '../../functions/modules/subscription/fetch-guard.js';
+} from '../../functions/modules/subscription/security/fetch-guard.js';
 import { clearAllNodeCaches, getCache } from '../../functions/services/node-cache-service.js';
-import { handleMisubRequest } from '../../functions/modules/subscription/main-handler.js';
+import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
 
 const createAdapter = vi.fn();
 

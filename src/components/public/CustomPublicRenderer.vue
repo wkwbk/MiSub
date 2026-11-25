@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { Moon, Sun } from '@lucide/vue';
 import DOMPurify from 'dompurify';
-import { useThemeStore } from '@/stores/theme.js';
+import { useThemeStore } from '@/stores/useThemeStore.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { useI18n } from '@/i18n/index.js';
 import packageJson from '../../../package.json';

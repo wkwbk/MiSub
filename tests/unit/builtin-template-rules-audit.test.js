@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { getBuiltinTemplate } from '../../functions/modules/subscription/builtin-template-registry.js';
-import { parseIniTemplate } from '../../functions/modules/subscription/template-parsers/ini-template-parser.js';
-import { applySmartModelOptimizations } from '../../functions/modules/subscription/template-processor.js';
+import { getBuiltinTemplate } from '../../functions/modules/subscription/templates/builtin-template-registry.js';
+import { parseIniTemplate } from '../../functions/modules/subscription/templates/parsers/ini-template-parser.js';
+import { applySmartModelOptimizations } from '../../functions/modules/subscription/templates/template-processor.js';
 import { TRANSFORM_ASSETS } from '@/constants/transform-assets.js';
 import {
   getBuiltinRules,
   getRemoteProviderDefinitions,
   REMOTE_SOURCES,
-} from '../../functions/modules/subscription/builtin-rules-provider.js';
-import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/safe-dns.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
-import { renderClashFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-clash.js';
-import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/template-renderers/render-singbox.js';
+} from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
+import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/security/safe-dns.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-singbox-generator.js';
+import { renderClashFromTemplateModel } from '../../functions/modules/subscription/templates/renderers/render-clash.js';
+import { renderSingboxFromTemplateModel } from '../../functions/modules/subscription/templates/renderers/render-singbox.js';
 import * as yaml from 'js-yaml';
 
 const sampleProxies = [

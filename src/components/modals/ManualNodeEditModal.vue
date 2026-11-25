@@ -10,11 +10,11 @@ import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { needsServerParsing, useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
-import { parseSurgeConfig } from '@/utils/protocols/index.js';
+import { parseQuantumultXConfig, parseSurgeConfig } from '@misub/core/protocols/index.js';
 import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/import-file.js';
 import { buildAutoTagName } from '@/utils/auto-tag-name.js';
 import { normalizeTagList } from '@/utils/tags.js';
-import { cleanNodeUrl } from '@/lib/utils.js';
+import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 
 const props = defineProps({
   show: Boolean,
@@ -99,27 +99,6 @@ const getProtocol = (url) => {
   return null;
 };
 
-// 从链接提取节点名称
-const extractNodeName = (url) => {
-  if (!url) return null;
-  try {
-    // VMess 特殊处理
-    if (url.toLowerCase().startsWith('vmess://')) {
-      const decoded = atob(url.slice(8));
-      const config = JSON.parse(decoded);
-      return config.ps || config.remarks || null;
-    }
-    // 其他协议尝试从 fragment 或参数中提取
-    const hashIndex = url.indexOf('#');
-    if (hashIndex !== -1) {
-      return decodeURIComponent(url.slice(hashIndex + 1)) || null;
-    }
-  } catch {
-    return null;
-  }
-  return null;
-};
-
 // 解析批量导入的节点列表
 const parsedNodes = computed(() => {
   if (!props.editingNode?.url) return [];
@@ -178,14 +157,15 @@ const handleConfirm = async () => {
     return;
   }
 
-  // 单行模式下检测 Surge 配置格式并自动转换，并对节点链接做导入前清洗
+  // 单行模式下检测 Surge/Quantumult X 配置格式并自动转换，并对节点链接做导入前清洗
   if (!isMultiLine.value && props.editingNode?.url) {
     if (props.isNew) {
       const surgeNodes = parseSurgeConfig(props.editingNode.url);
-      if (surgeNodes && surgeNodes.length === 1) {
-        props.editingNode.url = surgeNodes[0].url;
-        if (!props.editingNode.name && surgeNodes[0].name) {
-          props.editingNode.name = surgeNodes[0].name;
+      const clientNodes = surgeNodes.length > 0 ? surgeNodes : parseQuantumultXConfig(props.editingNode.url);
+      if (clientNodes && clientNodes.length === 1) {
+        props.editingNode.url = clientNodes[0].url;
+        if (!props.editingNode.name && clientNodes[0].name) {
+          props.editingNode.name = clientNodes[0].name;
         }
       }
     }

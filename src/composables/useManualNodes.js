@@ -1,11 +1,10 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useSettingsStore } from '@/stores/settings.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { cleanNodeUrl, extractHostAndPort, extractNodeName } from '@/lib/utils.js';
-import { pingNode } from '@/utils/ping.js';
-import { isUdpOnlyProtocol, tcpingNodes } from '@/utils/tcping.js';
+import { isUdpOnlyProtocol, pingNode, tcpingNodes } from '@/utils/ping.js';
 import { api } from '@/lib/http.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';

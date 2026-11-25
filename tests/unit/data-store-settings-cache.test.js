@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useSettingsStore } from '@/stores/settings.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
 
 function jsonResponse(body, status = 200) {
   return new Response(JSON.stringify(body), {

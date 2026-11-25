@@ -5,10 +5,10 @@ import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import { computed, ref, watch } from 'vue';
-import { useToastStore } from '@/stores/toast';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
-import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@shared/reserved-paths.js';
+import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
 
 const props = defineProps({
   settings: {

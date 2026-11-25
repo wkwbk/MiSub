@@ -1,4 +1,4 @@
-import { utf8ToBase64 } from '../../../shared/base64.js';
+import { utf8ToBase64 } from '@misub/core/utils/base64.js';
 import { StorageFactory } from '../../storage-adapter.js';
 import { SETTINGS_KEYS } from '../../storage/d1-schema.js';
 import { STORAGE_KEY_SETTINGS } from '../config.js';
@@ -416,7 +416,10 @@ export async function performWebdavBackup(env, options = {}) {
           const xml = await listResponse.text();
           const existingFiles = Array.from(xml.matchAll(/<[^:>]*:?href[^>]*>([^<]+)<\/[^:>]*:?href>/gi))
             .map((match) => normalizeWebdavHref(config.endpoint, match[1]))
-            .filter((href) => href && href.endsWith('.json') && href.includes(BACKUP_FILENAME_PREFIX))
+            .filter(
+              /** @returns {href is string} */
+              (href) => typeof href === 'string' && href.endsWith('.json') && href.includes(BACKUP_FILENAME_PREFIX),
+            )
             .map((href) => ({ path: href, name: href.split('/').filter(Boolean).pop() }))
             .sort((a, b) => String(b.name).localeCompare(String(a.name)));
           const staleFiles = existingFiles.slice(retentionCount);
@@ -535,7 +538,7 @@ export async function listWebdavBackupFiles(env) {
   const xml = await response.text();
   const hrefs = Array.from(xml.matchAll(/<[^:>]*:?href[^>]*>([^<]+)<\/[^:>]*:?href>/gi))
     .map((match) => normalizeWebdavHref(config.endpoint, match[1]))
-    .filter(Boolean);
+    .filter(/** @returns {href is string} */ (href) => typeof href === 'string' && href.length > 0);
   const files = hrefs
     .filter((href) => href.endsWith('.json') && href.includes(BACKUP_FILENAME_PREFIX))
     .map((href) => ({

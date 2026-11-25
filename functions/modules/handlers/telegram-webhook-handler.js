@@ -42,7 +42,7 @@ import { handleCallbackQuery } from './telegram/callbacks.js'; // ==============
 /**
  * 处理命令
  */
-async function handleCommand(chatId, text, userId, env, request, requestCache = null) {
+async function handleCommand(chatId, text, userId, env, request, requestCache = /** @type {any} */ (null)) {
   const parts = text.split(/\s+/);
   const command = parts[0].toLowerCase().split('@')[0]; // 移除 @botname
   const args = parts.slice(1);
@@ -183,7 +183,7 @@ async function handleCommand(chatId, text, userId, env, request, requestCache = 
  */
 export async function handleTelegramWebhook(request, env) {
   try {
-    const requestCache = createRequestCache();
+    const requestCache = /** @type {any} */ (createRequestCache());
     // 获取配置
     const config = await getTelegramPushConfig(env, requestCache);
 

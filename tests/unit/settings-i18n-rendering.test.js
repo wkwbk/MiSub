@@ -35,7 +35,7 @@ vi.mock('@/lib/http.js', () => ({
   },
 }));
 
-vi.mock('@/stores/toast', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast: vi.fn() }),
 }));
 

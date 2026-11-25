@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useThemeStore } from '@/stores/theme.js';
+import { useThemeStore } from '@/stores/useThemeStore.js';
 
 describe('useThemeStore', () => {
   let originalStartViewTransition;

@@ -12,7 +12,7 @@ import { useDataStore } from '@/stores/useDataStore.js';
 import { DEFAULT_SUBCONVERTER_BACKEND, SUBCONVERTER_BACKENDS } from '@/constants/subconverter-backends.js';
 import { testSubconverterBackend } from '@/lib/api.js';
 import { useI18n } from '@/i18n/index.js';
-import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
+import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t } = useI18n();
 

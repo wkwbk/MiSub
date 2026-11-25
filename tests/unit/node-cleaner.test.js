@@ -6,7 +6,7 @@ import {
   fixNodeUrlEncoding,
   fixSSEncoding,
   parseFilterRuleText,
-} from '../../functions/utils/node-cleaner.js';
+} from '@misub/core/node/node-cleaner.js';
 
 describe('Node Cleaner Utils', () => {
   describe('fixNodeUrlEncoding', () => {

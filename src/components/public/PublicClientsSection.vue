@@ -8,7 +8,7 @@ import {
   CLIENT_PLATFORMS,
   normalizePublicClientsConfig,
   resolvePublicClientIcon,
-} from '@shared/default-public-clients.js';
+} from '@misub/core/domain/default-public-clients.js';
 
 const props = defineProps({
   publicClients: {

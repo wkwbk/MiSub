@@ -95,7 +95,7 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
 
   it('useDataStore sends baseRevision and handles 409 DATA_CONFLICT gracefully with single toast', async () => {
     const showToast = vi.fn();
-    vi.doMock('@/stores/toast.js', () => ({
+    vi.doMock('@/stores/useToastStore.js', () => ({
       useToastStore: () => ({ showToast }),
     }));
     const apiPost = vi.fn();

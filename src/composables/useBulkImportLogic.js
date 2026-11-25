@@ -1,15 +1,15 @@
 import { ref } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
-import { generateNodeId, generateSubscriptionId } from '@/utils/id.js';
-import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@/constants/node-protocols.js';
+import { generateNodeId, generateSubscriptionId } from '@misub/core/utils/id.js';
+import { COMMON_NODE_PROTOCOLS, createProtocolRegex } from '@misub/core/protocols/constants.js';
 import { applyItemTags, normalizeTagList } from '@/utils/tags.js';
-import { parseSurgeConfig } from '@/utils/protocols/index.js';
+import { parseQuantumultXConfig, parseSurgeConfig } from '@misub/core/protocols/index.js';
 import { api } from '@/lib/http.js';
 import { t } from '@/i18n/index.js';
 
-const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS.filter((p) => p !== 'http' && p !== 'https');
+const BULK_IMPORT_NODE_PROTOCOLS = COMMON_NODE_PROTOCOLS.filter((p) => p !== 'http' && p !== 'https' && p !== 'v2rayn');
 const BULK_IMPORT_NODE_REGEX = createProtocolRegex(BULK_IMPORT_NODE_PROTOCOLS, false);
 const HTTP_PROXY_NODE_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
 
@@ -56,7 +56,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
 
     const existingUrls = new Set((dataStore.subscriptions || []).map((s) => s.url).filter(Boolean));
 
-    const surgeNodes = parseSurgeConfig(text);
+    const parsedClientNodes = [...parseSurgeConfig(text), ...parseQuantumultXConfig(text)];
 
     const lines = text
       .split('\n')
@@ -66,8 +66,8 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     const validNodes = [];
     let duplicateCount = 0;
 
-    if (surgeNodes && surgeNodes.length > 0) {
-      surgeNodes.forEach((node) => {
+    if (parsedClientNodes.length > 0) {
+      parsedClientNodes.forEach((node) => {
         const cleanedUrl = cleanNodeUrl(node.url);
         if (!existingUrls.has(cleanedUrl)) {
           validNodes.push(

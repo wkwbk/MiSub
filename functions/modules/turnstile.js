@@ -86,12 +86,16 @@ function getClientIp(request) {
  *
  * @param {string} token
  * @param {Request} request
- * @param {Object} options
- * @param {string} options.secretKey
+ * @param {Object} [options]
+ * @param {string} [options.secretKey]
  * @param {Function} [options.fetchImpl]
  * @returns {Promise<{ success: boolean, error?: string, code?: string, errorCodes?: string[] }>}
  */
-export async function verifyTurnstileToken(token, request, { secretKey, fetchImpl = fetch } = {}) {
+export async function verifyTurnstileToken(
+  token,
+  request,
+  { secretKey = '', fetchImpl = fetch } = /** @type {{ secretKey?: string, fetchImpl?: Function }} */ ({}),
+) {
   const normalizedToken = normalizeString(token);
   const normalizedSecret = normalizeString(secretKey);
 

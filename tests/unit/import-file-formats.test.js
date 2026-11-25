@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseNodeList } from '../../functions/utils/node-parser.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
 
 /**
  * 覆盖 /api/parse_subscription 的后端解析能力：

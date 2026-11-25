@@ -16,7 +16,7 @@ import { createPinia, setActivePinia } from 'pinia';
 const { showToast } = vi.hoisted(() => ({ showToast: vi.fn() }));
 const { apiGet, apiPost } = vi.hoisted(() => ({ apiGet: vi.fn(), apiPost: vi.fn() }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({ showToast }),
 }));
 

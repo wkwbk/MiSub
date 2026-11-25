@@ -1,7 +1,7 @@
 import { ref } from 'vue';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
-import { generateNodeId } from '@/utils/id.js';
+import { generateNodeId } from '@misub/core/utils/id.js';
 import { getItemTags, normalizeTagList } from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 

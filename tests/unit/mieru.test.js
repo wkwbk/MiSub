@@ -3,11 +3,11 @@ import * as yaml from 'js-yaml';
 import {
   generateBuiltinClashConfig,
   generateProxiesOnly,
-} from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
-import { parseNodeList } from '../../functions/utils/node-parser.js';
-import { fetchSubscriptionNodes } from '../../functions/modules/subscription/node-fetcher.js';
-import { convertClashProxyToUrl } from '../../shared/clash-to-url.js';
-import { urlToClashProxy } from '../../shared/url-to-clash.js';
+} from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
+import { parseNodeList } from '@misub/core/node/node-parser.js';
+import { fetchSubscriptionNodes } from '../../functions/modules/subscription/security/node-fetcher.js';
+import { convertClashProxyToUrl } from '@misub/core/protocols/clash-to-url.js';
+import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
 
 const MIHOMO_MIERU_YAML = `proxies:
   - name: Mieru 文档节点

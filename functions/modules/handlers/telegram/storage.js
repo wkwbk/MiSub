@@ -78,6 +78,8 @@ export async function saveSingleProfile(storageAdapter, profile, fallbackAll) {
 
 /**
  * 获取 Telegram Bot 推送配置
+ * @param {Record<string, any>} env
+ * @param {Record<string, any> | null} [cache]
  */
 export async function getTelegramPushConfig(env, cache = null) {
   let settings;

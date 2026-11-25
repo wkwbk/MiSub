@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, Cpu, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import Modal from '@/components/ui/Modal.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
@@ -14,7 +14,7 @@ import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
-} from '@shared/default-public-cores.js';
+} from '@misub/core/domain/default-public-cores.js';
 
 const { t } = useI18n();
 const { showToast } = useToastStore();

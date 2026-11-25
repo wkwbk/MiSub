@@ -9,10 +9,10 @@ import Modal from '@/components/ui/Modal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { storeToRefs } from 'pinia';
 import { useManualNodes } from '@/composables/useManualNodes.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
 const loadTagManagementModal = () => import('@/components/modals/TagManagementModal.vue');

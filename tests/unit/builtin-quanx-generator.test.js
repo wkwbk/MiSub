@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/generators/builtin-quanx-generator.js';
-import { parseQuantumultXConfig } from '@/utils/protocols/quantumultx-parser.js';
+import { generateBuiltinQuanxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-quanx-generator.js';
+import { parseQuantumultXConfig } from '@misub/core/protocols/quantumultx-parser.js';
 
 describe('Quantumult X 内置生成器', () => {
   it('should generate managed config and proxy sections', () => {

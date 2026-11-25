@@ -1,6 +1,6 @@
 import { StorageFactory } from '../../storage-adapter.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
-import { normalizeSubPath } from '../../../shared/reserved-paths.js';
+import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
 import { sendTgNotification, tgEscape } from '../notifications.js';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;

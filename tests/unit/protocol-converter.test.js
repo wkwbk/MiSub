@@ -5,9 +5,9 @@
 
 import { describe, expect, it, vi } from 'vitest';
 // 导入被测试模块
-import { convertClashProxyToUrl } from '@shared/clash-to-url.js';
-import { parseSurgeConfig } from '@/utils/protocols/index.js';
-import { parseQuantumultXConfig } from '@/utils/protocols/quantumultx-parser.js';
+import { convertClashProxyToUrl } from '@misub/core/protocols/clash-to-url.js';
+import { parseSurgeConfig } from '@misub/core/protocols/index.js';
+import { parseQuantumultXConfig } from '@misub/core/protocols/quantumultx-parser.js';
 
 // 创建mock crypto.randomUUID (在Node环境下可能不存在)
 vi.stubGlobal('crypto', {

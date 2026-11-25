@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
 import {
   resolveAddFlagEmoji,
   resolveEffectiveNodeTransform,
-} from '../../functions/modules/subscription/main-handler.js';
+} from '../../functions/modules/subscription/core/main-handler.js';
 
 const NODE = 'trojan://pass@example.com:443#US-AAA-BBB-01';
 

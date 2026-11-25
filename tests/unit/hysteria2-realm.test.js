@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as yaml from 'js-yaml';
-import { extractValidNodes } from '../../functions/utils/node-parser.js';
-import { urlToClashProxy } from '../../shared/url-to-clash.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
+import { extractValidNodes } from '@misub/core/node/node-parser.js';
+import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
 
 const realmProxyYaml = `
 proxies:

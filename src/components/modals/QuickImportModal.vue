@@ -1,11 +1,11 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { utf8ToBase64 } from '@shared/base64.js';
-import { getProfileShareIdentifier } from '@shared/profile-link.js';
+import { utf8ToBase64 } from '@misub/core/utils/base64.js';
+import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import {
   shadowrocketConfigUrl as buildShadowrocketConfigUrl,
   shadowrocketQrPayload,
-} from '@shared/shadowrocket-links.js';
+} from '@misub/core/domain/shadowrocket-links.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { base64ToUtf8, normalizeBase64String, utf8ToBase64 } from '@shared/base64.js';
+import { base64ToUtf8, normalizeBase64String, utf8ToBase64 } from '@misub/core/utils/base64.js';
 
 describe('shared/base64', () => {
   it('encodes and decodes ASCII and UTF-8 (Chinese + emoji) round-trip', () => {

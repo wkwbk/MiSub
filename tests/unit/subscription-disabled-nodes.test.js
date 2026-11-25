@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDisabledNodeSet, normalizeDisabledNodes } from '../../shared/disabled-nodes.js';
+import { getDisabledNodeSet, normalizeDisabledNodes } from '@misub/core/domain/disabled-nodes.js';
 import { buildSubscriptionFilterFingerprint } from '../../functions/services/subscription/runtime-cache.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
-import { handleSingleSubscriptionMode } from '../../functions/modules/subscription/single-subscription.js';
+import { handleSingleSubscriptionMode } from '../../functions/modules/subscription/core/single-subscription.js';
 import { StorageFactory } from '../../functions/storage-adapter.js';
-import { isUdpOnlyProtocol } from '../../src/utils/tcping.js';
+import { isUdpOnlyProtocol } from '@misub/core/protocols/constants.js';
 
 describe('subscription preview disabledNodes & latency exclusions (B.7)', () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { getActivePinia } from 'pinia';
-import { useThemeStore } from '@/stores/theme.js';
+import { useThemeStore } from '@/stores/useThemeStore.js';
 
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 

@@ -13,13 +13,17 @@ import TagInput from '@/components/ui/TagInput.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
 import { useI18n } from '@/i18n/index.js';
-import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@shared/visual-rules-catalog.js';
-import { getProfileShareIdentifier, normalizeProfileIdentifier, rotateProfileLinkId } from '@shared/profile-link.js';
-import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@shared/profile-alias.js';
-import { normalizeSubPath } from '@shared/reserved-paths.js';
+import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
+import {
+  getProfileShareIdentifier,
+  normalizeProfileIdentifier,
+  rotateProfileLinkId,
+} from '@misub/core/domain/profile-link.js';
+import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
+import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
 
 const { t } = useI18n();
 

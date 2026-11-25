@@ -8,7 +8,7 @@ import {
 } from '../../functions/modules/scheduled-task-runner.js';
 import { base64EncodeUtf8 } from '../../functions/modules/utils.js';
 import { clearSettingsCache } from '../../functions/storage-adapter.js';
-import { base64ToUtf8, utf8ToBase64 } from '../../shared/base64.js';
+import { base64ToUtf8, utf8ToBase64 } from '@misub/core/utils/base64.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 
 function createMockRequest(url, { method = 'GET', headers = {} } = {}) {

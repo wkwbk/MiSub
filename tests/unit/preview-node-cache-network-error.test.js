@@ -46,7 +46,7 @@ describe('preview node fetch network error fallback', () => {
       },
     });
 
-    const { fetchSubscriptionNodes } = await import('../../functions/modules/subscription/node-fetcher.js');
+    const { fetchSubscriptionNodes } = await import('../../functions/modules/subscription/security/node-fetcher.js');
     const result = await fetchSubscriptionNodes(
       SUB.url,
       SUB.name,

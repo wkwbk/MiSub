@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/generators/builtin-surge-generator.js';
-import { GH_PROXY_BASE, PINNED_RULE_REVISIONS } from '../../functions/modules/subscription/builtin-rules-provider.js';
+import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/adapters/generators/builtin-surge-generator.js';
+import {
+  GH_PROXY_BASE,
+  PINNED_RULE_REVISIONS,
+} from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
 
 describe('Surge 内置生成器', () => {
   describe('基础功能', () => {

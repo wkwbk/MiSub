@@ -223,6 +223,17 @@ export function createMemoryD1(initial = {}) {
           }
           return { results: rows };
         }
+        if (/SELECT key,\s*value,\s*expires_at FROM cache WHERE key IN/i.test(normalized)) {
+          return {
+            results: args
+              .filter((key) => tables.cache.has(key))
+              .map((key) => ({
+                key,
+                value: tables.cache.get(key),
+                expires_at: cacheExpiresAt.get(key) ?? null,
+              })),
+          };
+        }
         const idInMatch = normalized.match(/SELECT data FROM (subscriptions|nodes|profiles|guestbook) WHERE id IN/i);
         if (idInMatch) {
           const tbl = tables[idInMatch[1].toLowerCase()];

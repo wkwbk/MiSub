@@ -10,7 +10,7 @@ import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useRouter } from 'vue-router';
 import { useProfiles } from '@/composables/useProfiles.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
-import { formatBytes } from '@shared/format-utils.js';
+import { formatBytes } from '@misub/core/utils/format-utils.js';
 import StatCards from '@/components/dashboard/StatCards.vue';
 import {
   addDismissedHealthItem,
@@ -21,11 +21,11 @@ import {
   readLegacyDismissedHealthItemIds,
 } from '@/utils/health-item-dismissal.js';
 import { getDashboardHealthItems, resolveHealthItemCopy, shouldShowFullGuide } from '@/utils/dashboard-health.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { prefetchLoader, scheduleIdlePrefetch } from '@/utils/prefetch.js';
 
-const loadBulkImportModal = () => import('@/components/modals/BulkImportModal.vue');
+const loadImportModal = () => import('@/components/modals/ImportModal.vue');
 const loadProfileModal = () => import('@/components/modals/ProfileModal.vue');
 const loadLogModal = () => import('@/components/modals/LogModal.vue');
 const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
@@ -166,7 +166,7 @@ const openBulkImportModal = () => {
   showBulkImportModal.value = true;
 };
 
-const BulkImportModal = defineAsyncComponent(loadBulkImportModal);
+const ImportModal = defineAsyncComponent(loadImportModal);
 
 const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } = useProfiles(markDirty);
 
@@ -244,7 +244,7 @@ let cancelModalPrefetch = () => {};
 // 否则会把用户在别的设备上「全部恢复」掉的项又塞回来。
 // 无论走哪条分支都要清掉旧键，否则每次启动都会重复迁移。
 onMounted(async () => {
-  cancelModalPrefetch = scheduleIdlePrefetch([loadProfileModal, loadBulkImportModal, loadLogModal, loadQRCodeModal]);
+  cancelModalPrefetch = scheduleIdlePrefetch([loadProfileModal, loadImportModal, loadLogModal, loadQRCodeModal]);
 
   const legacy = readLegacyDismissedHealthItemIds();
   if (legacy.length === 0) return;
@@ -320,8 +320,8 @@ const handleQRCode = (url, title) => {
             <button
               class="min-h-10 inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-medium bg-transparent text-fg-muted hover:bg-hover hover:text-fg hover:border-line-strong rounded-md transition-colors border border-line shadow-none"
               @click="openBulkImportModal"
-              @focus="prefetchLoader(loadBulkImportModal)"
-              @mouseenter="prefetchLoader(loadBulkImportModal)"
+              @focus="prefetchLoader(loadImportModal)"
+              @mouseenter="prefetchLoader(loadImportModal)"
             >
               <Upload class="h-4 w-4 shrink-0" stroke-width="1.5" />
               {{ t('dashboard.actions.bulkImport') }}
@@ -528,9 +528,10 @@ const handleQRCode = (url, title) => {
         </div>
       </div>
 
-      <BulkImportModal
+      <ImportModal
         v-if="showBulkImportModal"
         :show="showBulkImportModal"
+        mode="bulk"
         @import="(txt, tag) => handleBulkImport(txt, tag)"
         @update:show="showBulkImportModal = $event"
         @files-imported="(nodes, group) => addNodesFromBulk(nodes, group)"

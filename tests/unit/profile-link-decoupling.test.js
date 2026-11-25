@@ -5,8 +5,8 @@ import {
   matchesPublicProfileIdentifier,
   resolvePublicProfile,
   rotateProfileLinkId,
-} from '../../shared/profile-link.js';
-import { validateProfileAliases, validateSingleProfileAlias } from '../../shared/profile-alias.js';
+} from '@misub/core/domain/profile-link.js';
+import { validateProfileAliases, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import { handleDataRequest, handleMisubsSave } from '../../functions/modules/api-handler.js';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { LogService } from '../../functions/services/log-service.js';

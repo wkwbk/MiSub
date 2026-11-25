@@ -7,9 +7,9 @@ import {
   RULE_SETS,
   getBuiltinRules,
   getRemoteProviderDefinitions,
-} from '../../functions/modules/subscription/builtin-rules-provider.js';
-import { generateBuiltinClashConfig } from '../../functions/modules/subscription/generators/builtin-clash-generator.js';
-import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/generators/builtin-singbox-generator.js';
+} from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
+import { generateBuiltinClashConfig } from '../../functions/modules/subscription/adapters/generators/builtin-clash-generator.js';
+import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-singbox-generator.js';
 
 const LEVELS = ['BASE', 'STD', 'FULL', 'RELAY'];
 const SAMPLE_NODES = 'ss://YWVzLTEyOC1nY206cGFzcw@example.com:8388#HKNode';

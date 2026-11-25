@@ -13,16 +13,20 @@ const { mockPingNode, mockFetchNodeCount, mockShowToast } = vi.hoisted(() => ({
   mockShowToast: vi.fn(),
 }));
 
-vi.mock('@/utils/ping.js', () => ({
-  pingNode: (...args) => mockPingNode(...args),
-}));
+vi.mock('@/utils/ping.js', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    pingNode: (...args) => mockPingNode(...args),
+  };
+});
 
 vi.mock('@/lib/api.js', () => ({
   fetchNodeCount: (...args) => mockFetchNodeCount(...args),
   batchUpdateNodes: vi.fn(),
 }));
 
-vi.mock('@/stores/toast.js', () => ({
+vi.mock('@/stores/useToastStore.js', () => ({
   useToastStore: () => ({
     showToast: mockShowToast,
   }),

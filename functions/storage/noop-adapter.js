@@ -98,11 +98,29 @@ export class NoopStorageAdapter {
   async putAllSubscriptions() {
     return true;
   }
+  async syncAllSubscriptions() {
+    return { upserted: 0, deleted: 0 };
+  }
   async putAllProfiles() {
     return true;
   }
+  async syncAllProfiles() {
+    return { upserted: 0, deleted: 0 };
+  }
   async resetAllSettings() {
     return true;
+  }
+  async getManyCacheEntries() {
+    return new Map();
+  }
+  async putManyCacheEntries() {
+    return true;
+  }
+  async deleteManyKeys() {
+    return 0;
+  }
+  async batchUpdateItemsById() {
+    return [];
   }
   async cleanupMaintenance() {
     return {

@@ -79,7 +79,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@', replacement: '/src' },
-      { find: '@shared', replacement: '/shared' },
+      { find: '@misub/core', replacement: '/packages/core/src' },
       {
         // vuedraggable 的 package.json main 指向 dist/vuedraggable.umd.min.js，
         // 该 UMD 构建把 Vue 完整版（含 runtime compiler）一并打包，并在运行时

@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import { CloudDownload } from '@lucide/vue';
 import { api } from '@/lib/http.js';
-import { useToastStore } from '@/stores/toast.js';
+import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import Input from '@/components/ui/Input.vue';
