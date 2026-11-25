@@ -73,7 +73,6 @@ function mountDashboard(locale = 'zh-CN') {
         StatCards: true,
         RightPanel: true,
         ImportModal: true,
-        BulkImportModal: true,
         ProfileModal: true,
         QRCodeModal: true,
         LogModal: true,

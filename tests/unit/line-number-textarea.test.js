@@ -3,8 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
-import BulkImportModal from '@/components/modals/BulkImportModal.vue';
-import SubscriptionBulkImportModal from '@/components/modals/SubscriptionBulkImportModal.vue';
+import ImportModal from '@/components/modals/ImportModal.vue';
 import ManualNodeEditModal from '@/components/modals/ManualNodeEditModal.vue';
 import { createI18n } from '@/i18n/index.js';
 
@@ -43,16 +42,16 @@ describe('LineNumberTextarea', () => {
       stubs: { Teleport: true },
     };
 
-    const bulkWrapper = mount(BulkImportModal, {
-      props: { show: true },
+    const bulkWrapper = mount(ImportModal, {
+      props: { show: true, mode: 'bulk' },
       global,
     });
     const bulkTextarea = bulkWrapper.findComponent(LineNumberTextarea);
     expect(bulkTextarea.find('textarea').attributes('wrap')).toBe('off');
     expect(bulkTextarea.find('[aria-hidden="true"]').text()).toContain('1');
 
-    const subBulkWrapper = mount(SubscriptionBulkImportModal, {
-      props: { show: true },
+    const subBulkWrapper = mount(ImportModal, {
+      props: { show: true, mode: 'subscriptions' },
       global,
     });
     const subBulkTextarea = subBulkWrapper.findComponent(LineNumberTextarea);

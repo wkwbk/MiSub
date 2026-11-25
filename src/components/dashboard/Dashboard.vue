@@ -34,7 +34,7 @@ const isDev = import.meta.env.DEV;
 const loadSubscriptionEditModal = () => import('@/components/modals/SubscriptionEditModal.vue');
 const loadManualNodeEditModal = () => import('@/components/modals/ManualNodeEditModal.vue');
 const loadProfileModal = () => import('@/components/modals/ProfileModal.vue');
-const loadBulkImportModal = () => import('@/components/modals/BulkImportModal.vue');
+const loadImportModal = () => import('@/components/modals/ImportModal.vue');
 const loadCopyLinkModal = () => import('@/components/modals/CopyLinkModal.vue');
 const loadQRCodeModal = () => import('@/components/modals/QRCodeModal.vue');
 
@@ -43,12 +43,8 @@ const ManualNodeEditModal = defineAsyncComponent(loadManualNodeEditModal);
 const ManualNodeDedupModal = defineAsyncComponent(() => import('@/components/modals/ManualNodeDedupModal.vue'));
 
 const SettingsModal = defineAsyncComponent(() => import('@/components/modals/SettingsModal.vue'));
-const BulkImportModal = defineAsyncComponent(loadBulkImportModal);
-const SubscriptionBulkImportModal = defineAsyncComponent(
-  () => import('@/components/modals/SubscriptionBulkImportModal.vue'),
-);
+const ImportModal = defineAsyncComponent(loadImportModal);
 const ProfileModal = defineAsyncComponent(loadProfileModal);
-const SubscriptionImportModal = defineAsyncComponent(() => import('@/components/modals/SubscriptionImportModal.vue'));
 const LogModal = defineAsyncComponent(() => import('@/components/modals/LogModal.vue'));
 const NodePreviewModal = defineAsyncComponent(() => import('@/components/modals/NodePreview/NodePreviewModal.vue'));
 
@@ -371,7 +367,7 @@ onMounted(() => {
     loadSubscriptionEditModal,
     loadManualNodeEditModal,
     loadProfileModal,
-    loadBulkImportModal,
+    loadImportModal,
     loadCopyLinkModal,
     loadQRCodeModal,
   ]);
@@ -832,13 +828,15 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     </div>
   </div>
 
-  <BulkImportModal
+  <ImportModal
     v-model:show="showBulkImportModal"
+    mode="bulk"
     @import="(txt, tags) => handleBulkImport(txt, tags)"
     @files-imported="(nodes, tags) => addNodesFromBulk(nodes, tags)"
   />
-  <SubscriptionBulkImportModal
+  <ImportModal
     v-model:show="showSubBulkImportModal"
+    mode="subscriptions"
     @import="(txt, tags) => handleSubscriptionBulkImport(txt, tags)"
   />
   <LogModal v-model:show="showLogModal" :filter-profile-id="logProfileId" :filter-profile-name="logProfileName" />
@@ -954,10 +952,11 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     :export-backup="exportBackup"
     :import-backup="importBackup"
   />
-  <SubscriptionImportModal
+  <ImportModal
     :add-nodes-from-bulk="addNodesFromBulk"
     :show="showSubscriptionImportModal"
     :tags="manualNodeTags"
+    mode="nodes"
     @update:show="showSubscriptionImportModal = $event"
   />
 

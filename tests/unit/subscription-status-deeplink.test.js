@@ -80,7 +80,6 @@ function mountView(locale = 'zh-CN') {
         Modal: true,
         SubscriptionEditModal: true,
         ImportModal: true,
-        BulkImportModal: true,
         NodePreviewModal: true,
         QRCodeModal: true,
         draggable: true,
