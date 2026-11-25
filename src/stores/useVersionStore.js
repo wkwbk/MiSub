@@ -22,11 +22,12 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  const localChangelog = `✨ **内置转换路由升级、防刷与短链接入及版本更新体验优化**
-- **转换与路由设置升级**：拆分独立的「转换与路由」设置页，新增可视化规则集选择、自定义规则与基础配置覆盖；支持 ECH 解析并完善 Sing-Box / Clash / Surge 生成器协议兼容。
-- **防刷保护与 Sink 短链**：新增服务端最小拉取间隔与边缘缓存防刷保护（支持温和缓存与严格 429 模式）；接入自建 Sink 短链服务，支持随机/自定义后缀与公开页只读展示。
-- **版本更新与自动发版**：优化新版本提示（按版本持久化忽略、延迟检查、1 小时客户端缓存与页脚红点），修复本地版本高于上游时的误报；新增版本号同步与 Tag 自动发布 GitHub Release 流程。
-- **架构与界面细节修复**：拆分 \`public_cores\` 与 \`public_links\` 独立存储键，统一明暗语义色板与表单样式，修复节点重命名地区重算、Surge 分组渲染及菜单动画等细节问题。`;
+  // 当前版本本地更新日志 (v2.8.7)
+  const localChangelog = `🚀 **核心架构升级、订阅协议扩展、安全加固与代码瘦身**
+- **核心架构与性能**：升级 \`@misub/core\` 工作区架构、Hono 路由与多级缓存，新增乐观并发保存锁（\`baseRevision\`）、增量缓存失效与虚拟化节点预览。
+- **订阅协议与规则**：新增原生 Shadowrocket \`.conf\` 生成器与 \`v2rayn://\` 协议转换，支持域名嗅探、安全 DoH 与国内直连分流；支持按订阅暂停自动更新、订阅组 \`linkId\` 解耦与 Token 自动轮换。
+- **安全加固与公开页**：接入 Cloudflare Turnstile 登录与留言板人机验证，强化鉴权速率限制、敏感凭据脱敏与 SSRF/ReDoS 防护；新增自定义公开页预设模板。
+- **全仓瘦身与类型统一**：清理孤立死代码与冗余导出，抽取 \`client-shared\` 合并多客户端生成器与渲染器重复逻辑，统一 Zod 到 JSDoc 类型推导并收敛设置页公共组件。`;
 
   function normalizeVersion(version) {
     return String(version || '')
