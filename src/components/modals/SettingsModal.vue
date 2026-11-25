@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useI18n } from '@/i18n/index.js';
 import Modal from '@/components/ui/Modal.vue';
@@ -6,15 +6,24 @@ import SettingsPanel from '@/components/modals/SettingsPanel.vue';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  show: Boolean,
-  exportBackup: Function,
-  importBackup: Function,
-});
+withDefaults(
+  defineProps<{
+    show?: boolean;
+    exportBackup?: () => void;
+    importBackup?: () => void;
+  }>(),
+  {
+    show: false,
+    exportBackup: undefined,
+    importBackup: undefined,
+  },
+);
 
-const emit = defineEmits(['update:show']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 
-const settingsPanelRef = ref(null);
+const settingsPanelRef = ref<InstanceType<typeof SettingsPanel> | null>(null);
 const isSaving = computed(() => Boolean(settingsPanelRef.value?.isSaving));
 const saveDisabled = computed(() => Boolean(settingsPanelRef.value?.saveDisabled));
 

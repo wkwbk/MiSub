@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { GripHorizontal, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
@@ -8,70 +9,58 @@ import { wouldCreateCycle } from '@/utils/profile-graph.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  profiles: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    profiles?: ProfileConfig[];
+    filteredProfiles?: ProfileConfig[];
+    searchTerm?: string;
+    activeTagFilters?: string[];
+    tags?: string[];
+    selectedIds?: string[];
+    targetProfileId?: string;
+    allProfiles?: ProfileConfig[];
+  }>(),
+  {
+    profiles: () => [],
+    filteredProfiles: () => [],
+    searchTerm: '',
+    activeTagFilters: () => [],
+    tags: () => [],
+    selectedIds: () => [],
+    targetProfileId: '',
+    allProfiles: () => [],
   },
-  filteredProfiles: {
-    type: Array,
-    default: () => [],
-  },
-  searchTerm: {
-    type: String,
-    default: '',
-  },
-  activeTagFilters: {
-    type: Array,
-    default: () => [],
-  },
-  tags: {
-    type: Array,
-    default: () => [],
-  },
-  selectedIds: {
-    type: Array,
-    default: () => [],
-  },
-  targetProfileId: {
-    type: String,
-    default: '',
-  },
-  allProfiles: {
-    type: Array,
-    default: () => [],
-  },
-});
+);
 
-const emit = defineEmits([
-  'update:searchTerm',
-  'update:tagFilters',
-  'update:selectedIds',
-  'toggle-selection',
-  'select-all',
-  'deselect-all',
-]);
+const emit = defineEmits<{
+  'update:searchTerm': [value: string];
+  'update:tagFilters': [value: string[]];
+  'update:selectedIds': [value: string[]];
+  'toggle-selection': [id: string];
+  'select-all': [profiles: ProfileConfig[]];
+  'deselect-all': [];
+}>();
 
 const searchModel = computed({
   get: () => props.searchTerm,
-  set: (val) => emit('update:searchTerm', val),
+  set: (val: string) => emit('update:searchTerm', val),
 });
 
-const isCycleCandidate = (profileId) => {
+const isCycleCandidate = (profileId: string) => {
   return wouldCreateCycle(props.targetProfileId, profileId, props.allProfiles);
 };
 
 const orderedSelectedProfiles = computed({
-  get() {
-    const profileMap = new Map();
+  get(): ProfileConfig[] {
+    const profileMap = new Map<string, ProfileConfig>();
     props.allProfiles.forEach((p) => {
       if (p.id) profileMap.set(p.id, p);
       if (p.customId) profileMap.set(p.customId, p);
     });
-    return props.selectedIds.map((id) => profileMap.get(id)).filter(Boolean);
+    return props.selectedIds.map((id) => profileMap.get(id)).filter((p): p is ProfileConfig => Boolean(p));
   },
-  set(newList) {
-    const reorderedIds = newList.map((p) => p.id || p.customId);
+  set(newList: ProfileConfig[]) {
+    const reorderedIds = newList.map((p) => p.id || p.customId || '').filter(Boolean);
     emit('update:selectedIds', reorderedIds);
   },
 });

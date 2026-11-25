@@ -1,17 +1,17 @@
-<script setup>
+<script setup lang="ts">
 import { X } from '@lucide/vue';
-import { useToastStore } from '@/stores/useToastStore.js';
+import { useToastStore, type ToastType } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 
 const toastStore = useToastStore();
 const { t } = useI18n();
 
-const getToastRole = (type) => (type === 'error' ? 'alert' : 'status');
-const getToastAriaLive = (type) => (type === 'error' ? 'assertive' : 'polite');
+const getToastRole = (type: ToastType): 'alert' | 'status' => (type === 'error' ? 'alert' : 'status');
+const getToastAriaLive = (type: ToastType): 'assertive' | 'polite' => (type === 'error' ? 'assertive' : 'polite');
 
 // 🆕 增强的 Toast 配置
-const getToastConfig = (type) => {
-  const configs = {
+const getToastConfig = (type: ToastType): { dot: string } => {
+  const configs: Record<ToastType, { dot: string }> = {
     success: {
       dot: 'bg-emerald-500',
     },
@@ -28,7 +28,7 @@ const getToastConfig = (type) => {
   return configs[type] || configs.info;
 };
 
-const handleClose = (id) => {
+const handleClose = (id: string): void => {
   toastStore.removeToast(id);
 };
 </script>

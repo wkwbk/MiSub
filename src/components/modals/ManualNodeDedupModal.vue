@@ -1,17 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { DedupNodeItem, DedupPlan } from '@/composables/manual-nodes/dedup.js';
 
-const props = defineProps({
-  show: Boolean,
-  plan: Object,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    plan?: DedupPlan | null;
+  }>(),
+  {
+    show: false,
+    plan: null,
+  },
+);
 
-const emit = defineEmits(['update:show', 'confirm']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [];
+}>();
 const { t } = useI18n();
 
-const previewList = computed(() => {
+const previewList = computed<DedupNodeItem[]>(() => {
   const list = props.plan?.removeNodes || [];
   return list.slice(0, 20);
 });

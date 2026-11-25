@@ -1,17 +1,17 @@
-<script setup>
+<script setup lang="ts">
 // 统一的设置界面布局容器，供独立设置页与悬浮模态框复用：
 // - 独立页面：桌面端采用分栏吸顶侧边栏卡片 + 主内容卡片流；移动端采用顶部吸顶单行导航栏 + 避让底部主导航的悬浮保存栏
 // - 悬浮模态框：适配弹窗内滚动容器的紧凑分栏布局
-defineProps({
-  hideFooter: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    hideFooter?: boolean;
+    inModal?: boolean;
+  }>(),
+  {
+    hideFooter: false,
+    inModal: false,
   },
-  inModal: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 </script>
 
 <template>

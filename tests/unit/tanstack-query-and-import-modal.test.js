@@ -51,11 +51,11 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
     vi.restoreAllMocks();
   });
 
-  it('enforces canonical useXxxStore.js naming across all files in src/stores/', () => {
+  it('enforces canonical useXxxStore naming across all files in src/stores/', () => {
     const storeFiles = fs.readdirSync(path.resolve('src/stores'));
     expect(storeFiles.length).toBeGreaterThanOrEqual(8);
     for (const file of storeFiles) {
-      expect(file).toMatch(/^use[A-Z][A-Za-z]+Store\.js$/);
+      expect(file).toMatch(/^use[A-Z][A-Za-z]+Store\.ts$/);
     }
   });
 

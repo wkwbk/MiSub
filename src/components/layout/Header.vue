@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useUIStore } from '@/stores/useUiStore.js';
@@ -18,20 +18,25 @@ const shouldHideLoginButton = computed(() => {
   return Boolean(sessionStore.publicConfig?.hasCustomLoginPath);
 });
 
-const props = defineProps({
-  isLoggedIn: Boolean,
-  hideBranding: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    isLoggedIn?: boolean;
+    hideBranding?: boolean;
+  }>(),
+  {
+    isLoggedIn: false,
+    hideBranding: false,
   },
-});
+);
 
 const brandTarget = computed(() => {
   if (props.isLoggedIn) return '/dashboard';
   return sessionStore.publicConfig?.enablePublicPage !== false ? '/' : route.path;
 });
 
-const emit = defineEmits(['logout']);
+const emit = defineEmits<{
+  logout: [];
+}>();
 </script>
 
 <template>

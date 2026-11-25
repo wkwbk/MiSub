@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { SubscriptionItem } from '@misub/core/types.js';
 import {
   Check,
   Copy,
@@ -26,32 +27,29 @@ import { useI18n } from '@/i18n/index.js';
 import { normalizeWebsiteUrl } from '@/utils/url-origin.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
-const props = defineProps({
-  misub: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    misub: SubscriptionItem & Record<string, any>;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+  }>(),
+  {
+    isSelectionMode: false,
+    isSelected: false,
   },
-  isSelectionMode: {
-    type: Boolean,
-    default: false,
-  },
-  isSelected: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits([
-  'delete',
-  'change',
-  'update',
-  'edit',
-  'preview',
-  'qrcode',
-  'applyDetectedName',
-  'filter-tag',
-  'toggle-select',
-]);
+const emit = defineEmits<{
+  delete: [];
+  change: [value?: any];
+  update: [];
+  edit: [];
+  preview: [];
+  qrcode: [];
+  applyDetectedName: [name: string];
+  'filter-tag': [tag: string];
+  'toggle-select': [];
+}>();
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
@@ -74,7 +72,7 @@ const subTags = computed(() => getItemTags(props.misub));
 const visibleTags = computed(() => subTags.value.slice(0, 2));
 const overflowCount = computed(() => Math.max(0, subTags.value.length - 2));
 
-const getProtocol = (url) => {
+const getProtocol = (url?: string) => {
   try {
     if (!url) return 'unknown';
     const lowerUrl = url.toLowerCase();
@@ -185,7 +183,7 @@ const expiryInfo = computed(() => {
   const now = new Date();
   expiryDate.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
-  const diffDays = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays > REASONABLE_EXPIRY_LIMIT_DAYS) {
     return null;
   }

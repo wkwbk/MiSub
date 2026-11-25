@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
+import type { NodeIR, SubscriptionItem } from '@misub/core/types.js';
 import { Gauge, Loader2, X } from '@lucide/vue';
 import { api, APIError } from '@/lib/http.js';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -19,24 +20,60 @@ import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
 import NodePagination from '@/components/modals/NodePreview/components/NodePagination.vue';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
 
+interface PreviewNodeItem {
+  url: string;
+  name?: string;
+  protocol?: string;
+  region?: string;
+  server?: string;
+  port?: number | string;
+  enabled?: boolean;
+  ir?: NodeIR;
+  [key: string]: any;
+}
+
+interface ParsedNodeInfo {
+  name?: string;
+  server?: string;
+  port?: number | string;
+  protocol?: string;
+  region?: string;
+}
+
+interface PingState {
+  status: string;
+  latency?: number;
+  mode?: string;
+  message?: string;
+}
+
 const isDev = import.meta.env.DEV;
 const { t } = useI18n();
 
-const props = defineProps({
-  show: Boolean,
-  // 订阅信息
-  subscriptionId: String,
-  subscriptionName: String,
-  subscriptionUrl: String,
-  profileId: String,
-  profileName: String,
-  apiEndpoint: {
-    type: String,
-    default: '/api/subscription_nodes',
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    subscriptionId?: string | null;
+    subscriptionName?: string | null;
+    subscriptionUrl?: string | null;
+    profileId?: string | null;
+    profileName?: string | null;
+    apiEndpoint?: string;
+  }>(),
+  {
+    show: false,
+    subscriptionId: null,
+    subscriptionName: '',
+    subscriptionUrl: '',
+    profileId: null,
+    profileName: '',
+    apiEndpoint: '/api/subscription_nodes',
   },
-});
+);
 
-const emit = defineEmits(['update:show']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 const viewportWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1440);
 
 const handleResize = () => {
@@ -46,7 +83,7 @@ const handleResize = () => {
 // 响应式数据
 const loading = ref(false);
 const error = ref('');
-const allNodes = shallowRef([]); // 存储所有节点
+const allNodes = shallowRef<PreviewNodeItem[]>([]); // 存储所有节点
 const currentPage = ref(1);
 const pageSize = ref(24);
 const viewMode = ref('list'); // 'list' 或 'card'
@@ -67,26 +104,26 @@ const regionFilter = ref('all');
 const searchQuery = ref('');
 
 // 统计信息
-const protocolStats = ref({});
-const regionStats = ref({});
-const availableProtocols = ref([]);
-const availableRegions = ref([]);
+const protocolStats = ref<Record<string, number>>({});
+const regionStats = ref<Record<string, number>>({});
+const availableProtocols = ref<string[]>([]);
+const availableRegions = ref<string[]>([]);
 
 // 复制状态
 const copiedNodeId = ref('');
 
 // 节点详情弹窗状态
-const detailNode = ref(null);
+const detailNode = ref<PreviewNodeItem | null>(null);
 const showDetailModal = ref(false);
-const openNodeDetail = (node) => {
+const openNodeDetail = (node: PreviewNodeItem) => {
   detailNode.value = node;
   showDetailModal.value = true;
 };
 
 const pickingMode = ref(false);
-const selectedUrls = ref(new Set());
+const selectedUrls = ref(new Set<string>());
 
-const toggleNodeSelection = (url) => {
+const toggleNodeSelection = (url: string) => {
   if (selectedUrls.value.has(url)) {
     selectedUrls.value.delete(url);
   } else {
@@ -112,17 +149,17 @@ const canManageSubscriptionNodes = computed(
   () => Boolean(props.subscriptionId) && !props.profileId && !isPublicPreview.value,
 );
 const allowPing = computed(() => !isPublicPreview.value);
-const nodeEnabledMap = ref({});
-const nodePingMap = ref({});
+const nodeEnabledMap = ref<Record<string, boolean>>({});
+const nodePingMap = ref<Record<string, PingState>>({});
 const pingMode = ref('tcping');
 const isTestingLatency = ref(false);
 const autoDisableFailed = ref(false);
-let saveDisabledTimer = null;
+let saveDisabledTimer: ReturnType<typeof setTimeout> | null = null;
 let hasPendingDisabledSave = false;
 
-const currentSubscriptionRecord = computed(() => {
+const currentSubscriptionRecord = computed<SubscriptionItem | null>(() => {
   if (!props.subscriptionId) return null;
-  return (dataStore.subscriptions || []).find((s) => s?.id === props.subscriptionId) || null;
+  return ((dataStore.subscriptions || []) as SubscriptionItem[]).find((s) => s?.id === props.subscriptionId) || null;
 });
 
 const disabledCount = computed(
@@ -148,7 +185,7 @@ const flushDisabledNodesSave = async () => {
   }
   if (!hasPendingDisabledSave) return;
   hasPendingDisabledSave = false;
-  await dataStore.saveData?.().catch((err) => {
+  await dataStore.saveData?.().catch((err: unknown) => {
     console.warn('[NodePreview] Failed to save disabledNodes:', err);
   });
 };
@@ -185,7 +222,7 @@ const syncDisabledNodesToStore = (immediate = false) => {
   }
 };
 
-const handleToggleNodeEnabled = (node, enabled) => {
+const handleToggleNodeEnabled = (node: PreviewNodeItem, enabled: boolean) => {
   if (!canManageSubscriptionNodes.value || !node?.url) return;
   nodeEnabledMap.value = {
     ...nodeEnabledMap.value,
@@ -194,7 +231,7 @@ const handleToggleNodeEnabled = (node, enabled) => {
   syncDisabledNodesToStore(false);
 };
 
-const setBatchNodesEnabled = (urls, enabled) => {
+const setBatchNodesEnabled = (urls: string[], enabled: boolean) => {
   if (!canManageSubscriptionNodes.value || !Array.isArray(urls) || urls.length === 0) return;
   const nextMap = { ...nodeEnabledMap.value };
   let changed = false;
@@ -224,7 +261,7 @@ const enableAllNodes = () => {
   showToast(t('nodePreview.enabledAllNodes'), 'success');
 };
 
-const testSingleNode = async (node) => {
+const testSingleNode = async (node: PreviewNodeItem) => {
   if (!node?.url || !allowPing.value) return;
   if (isUdpOnlyProtocol(node.url)) {
     nodePingMap.value = {
@@ -249,7 +286,7 @@ const testSingleNode = async (node) => {
     [node.url]: { status: 'loading', latency: 0, mode: pingMode.value },
   };
 
-  let result;
+  let result: PingState;
   if (pingMode.value === 'tcping') {
     try {
       const { results, unsupported } = await tcpingNodes([{ id: node.url, host, port }], 3000);
@@ -258,7 +295,10 @@ const testSingleNode = async (node) => {
         showToast(t('manualNodes.tcpingUnsupportedFallback'), 'warning');
         result = await pingNode(host, port, 3000, { url: node.url });
       } else {
-        result = results[node.url] || { status: 'error', latency: -1, mode: 'tcping' };
+        const entry = results[node.url];
+        result = entry
+          ? { ...entry, status: entry.status || 'error' }
+          : { status: 'error', latency: -1, mode: 'tcping' };
       }
     } catch {
       result = { status: 'error', latency: -1, mode: 'tcping' };
@@ -288,8 +328,8 @@ const testFilteredNodes = async () => {
 
   try {
     const candidates = [...filteredNodes.value];
-    const udpNodes = [];
-    const testable = [];
+    const udpNodes: PreviewNodeItem[] = [];
+    const testable: Array<{ node: PreviewNodeItem; host: string; port: number }> = [];
 
     for (const node of candidates) {
       if (isUdpOnlyProtocol(node.url)) {
@@ -310,7 +350,7 @@ const testFilteredNodes = async () => {
     }
 
     if (udpNodes.length > 0) {
-      const udpUpdates = {};
+      const udpUpdates: Record<string, PingState> = {};
       udpNodes.forEach((n) => {
         udpUpdates[n.url] = { status: 'unsupported', latency: -1, mode: pingMode.value };
       });
@@ -318,7 +358,7 @@ const testFilteredNodes = async () => {
     }
 
     if (testable.length > 0) {
-      const loadingUpdates = {};
+      const loadingUpdates: Record<string, PingState> = {};
       testable.forEach(({ node }) => {
         loadingUpdates[node.url] = { status: 'loading', latency: 0, mode: pingMode.value };
       });
@@ -340,13 +380,16 @@ const testFilteredNodes = async () => {
               showToast(t('manualNodes.tcpingUnsupportedFallback'), 'warning');
               break;
             }
-            const nextResults = {};
+            const nextResults: Record<string, PingState> = {};
             chunk.forEach(({ node }) => {
-              nextResults[node.url] = results[node.url] || { status: 'error', latency: -1, mode: 'tcping' };
+              const entry = results[node.url];
+              nextResults[node.url] = entry
+                ? { ...entry, status: entry.status || 'error' }
+                : { status: 'error', latency: -1, mode: 'tcping' };
             });
             nodePingMap.value = { ...nodePingMap.value, ...nextResults };
           } catch {
-            const nextResults = {};
+            const nextResults: Record<string, PingState> = {};
             chunk.forEach(({ node }) => {
               nextResults[node.url] = { status: 'error', latency: -1, mode: 'tcping' };
             });
@@ -421,7 +464,7 @@ const handleSaveSelection = async () => {
 
     pickingMode.value = false;
     selectedUrls.value.clear();
-  } catch (err) {
+  } catch (err: any) {
     showToast(t('nodePreview.saveSelectionFailed', { message: err.message }), 'error');
   }
 };
@@ -457,9 +500,9 @@ const filteredNodes = computed(() => {
     const query = searchQuery.value.toLowerCase().trim();
     result = result.filter(
       (node) =>
-        node.name.toLowerCase().includes(query) ||
-        node.protocol.toLowerCase().includes(query) ||
-        node.region.toLowerCase().includes(query),
+        (node.name || '').toLowerCase().includes(query) ||
+        (node.protocol || '').toLowerCase().includes(query) ||
+        (node.region || '').toLowerCase().includes(query),
     );
   }
 
@@ -554,7 +597,7 @@ const loadNodes = async () => {
   error.value = '';
 
   try {
-    const requestData = {
+    const requestData: Record<string, any> = {
       userAgent: 'v2rayN/7.23',
     };
 
@@ -574,18 +617,26 @@ const loadNodes = async () => {
       console.debug('[Preview] Sending request to:', props.apiEndpoint, requestData);
     }
 
-    const data = await api.post(props.apiEndpoint, requestData);
+    const data = await api.post<{
+      success?: boolean;
+      error?: string;
+      nodes?: PreviewNodeItem[];
+      stats?: {
+        protocols?: Record<string, number>;
+        regions?: Record<string, number>;
+      };
+    }>(props.apiEndpoint, requestData);
     if (isDev) {
       console.debug('[Preview] Data received:', data);
     }
 
     if (!data.success) {
-      throw new Error(data.error || t('nodePreview.fetchFailed'));
+      throw new Error(String(data.error || t('nodePreview.fetchFailed')));
     }
 
-    allNodes.value = data.nodes || [];
+    allNodes.value = Array.isArray(data.nodes) ? data.nodes : [];
     const disabledSet = getDisabledNodeSet(currentSubscriptionRecord.value);
-    const nextEnabledMap = {};
+    const nextEnabledMap: Record<string, boolean> = {};
     allNodes.value.forEach((node) => {
       if (!node?.url) return;
       nextEnabledMap[node.url] = node.enabled !== false && !disabledSet.has(String(node.url).trim());
@@ -633,13 +684,13 @@ const loadNodes = async () => {
 
     // 重置页码
     currentPage.value = 1;
-  } catch (err) {
+  } catch (err: any) {
     // 提供更友好的错误信息（文案与 useNodePreview.js 保持同一套 key）
     if (err instanceof APIError && err.status === 401) {
       try {
         await api.get('/api/data');
         error.value = t('nodePreview.authAbnormal');
-      } catch (testErr) {
+      } catch {
         error.value = t('nodePreview.authFailed');
       }
     } else if (isNetworkErrorMessage(err?.message)) {
@@ -655,7 +706,7 @@ const loadNodes = async () => {
 };
 
 // 复制节点链接
-const copyNodeUrl = async (node, nodeId) => {
+const copyNodeUrl = async (node: PreviewNodeItem, nodeId: string) => {
   const copied = await copyTextToClipboard(node.url);
   if (copied) {
     copiedNodeId.value = nodeId;
@@ -670,14 +721,14 @@ const getProtocolStyle = () => {
   return 'bg-transparent text-fg-muted border border-line font-mono';
 };
 
-const parsedNodeInfoCache = new WeakMap();
+const parsedNodeInfoCache = new WeakMap<PreviewNodeItem, ParsedNodeInfo>();
 
 // 解析节点信息
-const parseNodeInfo = (node) => {
+const parseNodeInfo = (node: PreviewNodeItem): ParsedNodeInfo => {
   if (node && typeof node === 'object' && parsedNodeInfoCache.has(node)) {
-    return parsedNodeInfoCache.get(node);
+    return parsedNodeInfoCache.get(node)!;
   }
-  const result = {
+  const result: ParsedNodeInfo = {
     name: node.name,
     server: node.server || '',
     port: node.port || '',
@@ -734,11 +785,11 @@ const parseNodeInfo = (node) => {
   return result;
 };
 
-const nodeListStartRef = ref(null);
-const nodeListScrollRef = ref(null);
+const nodeListStartRef = ref<HTMLElement | null>(null);
+const nodeListScrollRef = ref<HTMLElement | null>(null);
 
 // 分页控件
-const goToPage = (page) => {
+const goToPage = (page: number) => {
   if (page >= 1 && page <= totalPages.value && page !== currentPage.value) {
     currentPage.value = page;
     nextTick(() => {
@@ -1064,5 +1115,5 @@ const goToPage = (page) => {
     </template>
   </Modal>
 
-  <NodeDetailModal v-model:show="showDetailModal" :node="detailNode" />
+  <NodeDetailModal v-model:show="showDetailModal" :node="detailNode!" />
 </template>

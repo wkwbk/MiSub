@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { ProfileSubscriptionRef, SubscriptionItem } from '@misub/core/types.js';
 import { GripHorizontal, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
@@ -8,45 +9,37 @@ import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscriptio
 
 const { t } = useI18n();
 
-const props = defineProps({
-  subscriptions: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    subscriptions?: SubscriptionItem[];
+    filteredSubscriptions?: SubscriptionItem[];
+    searchTerm?: string;
+    activeTagFilters?: string[];
+    tags?: string[];
+    selectedIds?: ProfileSubscriptionRef[];
+  }>(),
+  {
+    subscriptions: () => [],
+    filteredSubscriptions: () => [],
+    searchTerm: '',
+    activeTagFilters: () => [],
+    tags: () => [],
+    selectedIds: () => [],
   },
-  filteredSubscriptions: {
-    type: Array,
-    default: () => [],
-  },
-  searchTerm: {
-    type: String,
-    default: '',
-  },
-  activeTagFilters: {
-    type: Array,
-    default: () => [],
-  },
-  tags: {
-    type: Array,
-    default: () => [],
-  },
-  selectedIds: {
-    type: Array,
-    default: () => [],
-  },
-});
+);
 
-const emit = defineEmits([
-  'update:searchTerm',
-  'update:tagFilters',
-  'update:selectedIds',
-  'toggle-selection',
-  'select-all',
-  'deselect-all',
-]);
+const emit = defineEmits<{
+  'update:searchTerm': [value: string];
+  'update:tagFilters': [value: string[]];
+  'update:selectedIds': [value: ProfileSubscriptionRef[]];
+  'toggle-selection': [id: string];
+  'select-all': [];
+  'deselect-all': [];
+}>();
 
 const searchModel = computed({
   get: () => props.searchTerm,
-  set: (val) => emit('update:searchTerm', val),
+  set: (val: string) => emit('update:searchTerm', val),
 });
 
 const selectedIdSet = computed(
@@ -54,14 +47,18 @@ const selectedIdSet = computed(
 );
 
 const orderedSelectedSubs = computed({
-  get() {
+  get(): SubscriptionItem[] {
     const subMap = new Map(props.subscriptions.map((s) => [s.id, s]));
-    return props.selectedIds.map((entry) => subMap.get(getProfileSubscriptionId(entry))).filter(Boolean);
+    return props.selectedIds
+      .map((entry) => subMap.get(getProfileSubscriptionId(entry)))
+      .filter((s): s is SubscriptionItem => Boolean(s));
   },
-  set(newList) {
+  set(newList: SubscriptionItem[]) {
     const availableIds = new Set(props.subscriptions.map((sub) => sub.id));
-    const entryById = new Map(
-      props.selectedIds.map((entry) => [getProfileSubscriptionId(entry), entry]).filter(([id]) => Boolean(id)),
+    const entryById = new Map<string, ProfileSubscriptionRef>(
+      props.selectedIds
+        .map((entry) => [getProfileSubscriptionId(entry), entry] as [string, ProfileSubscriptionRef])
+        .filter(([id]) => Boolean(id)),
     );
     const reorderedIds = newList.map((sub) => sub.id);
     let reorderedIndex = 0;
@@ -73,7 +70,7 @@ const orderedSelectedSubs = computed({
         const nextId = reorderedIds[reorderedIndex++];
         return entryById.get(nextId) ?? nextId;
       })
-      .filter(Boolean);
+      .filter((entry): entry is ProfileSubscriptionRef => Boolean(entry));
 
     if (reorderedIndex < reorderedIds.length) {
       mergedIds.push(...reorderedIds.slice(reorderedIndex).map((nextId) => entryById.get(nextId) ?? nextId));

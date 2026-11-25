@@ -1,15 +1,14 @@
-<script setup>
-defineProps({
-  type: {
-    type: String,
-    default: 'card',
-    validator: (value) => ['card', 'list', 'dashboard'].includes(value),
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    type?: 'card' | 'list' | 'dashboard';
+    count?: number;
+  }>(),
+  {
+    type: 'card',
+    count: 1,
   },
-  count: {
-    type: Number,
-    default: 1,
-  },
-});
+);
 </script>
 
 <template>

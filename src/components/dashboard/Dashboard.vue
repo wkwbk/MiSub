@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { ManualNodeItem, ProfileConfig, SubscriptionItem } from '@misub/core/types.js';
 import { FolderKanban, Layers, Server } from '@lucide/vue';
 import { formatBytes } from '@misub/core/utils/format-utils.js';
 import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
@@ -7,7 +9,8 @@ import { useToastStore } from '@/stores/useToastStore.js';
 import { useUIStore } from '@/stores/useUiStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
-import { useManualNodes } from '@/composables/useManualNodes.js';
+import { useManualNodes, type TagBatchMode } from '@/composables/useManualNodes.js';
+import type { DedupPlan } from '@/composables/manual-nodes/dedup.js';
 import { useProfiles } from '@/composables/useProfiles.js';
 import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
 import { useNodeForms } from '@/composables/useNodeForms.js';
@@ -64,7 +67,7 @@ if (isDev) {
   console.debug('Dashboard: setup running');
 }
 
-const saveState = ref('idle');
+const saveState = ref<'idle' | 'saving' | 'success'>('idle');
 const isDiscarding = ref(false);
 let cancelModalPrefetch = () => {};
 
@@ -82,9 +85,9 @@ const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
 const qrCodeIsSubscription = ref(false);
 const showCopyModal = ref(false);
-const showCopyModalProfile = ref(null);
+const showCopyModalProfile = ref<ProfileConfig | null>(null);
 
-const handleQRCode = (id, type = 'subscription') => {
+const handleQRCode = (id: string, type: 'subscription' | 'profile' = 'subscription') => {
   if (type === 'subscription') {
     const sub = subscriptions.value.find((s) => s.id === id);
     if (sub) {
@@ -107,7 +110,7 @@ const handleQRCode = (id, type = 'subscription') => {
   }
 };
 
-const handleOpenCopy = (profileId) => {
+const handleOpenCopy = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
   if (profile) {
     showCopyModalProfile.value = profile;
@@ -116,7 +119,7 @@ const handleOpenCopy = (profileId) => {
 };
 
 const {
-  subscriptions,
+  subscriptions: rawSubscriptions,
   subscriptionTags,
   activeTagFilters: subscriptionTagFilters,
   setTagFilters: setSubscriptionTagFilters,
@@ -146,9 +149,10 @@ const {
   restartAutoUpdate,
   reorderSubscriptions,
 } = useSubscriptions(markDirty);
+const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
 const {
-  manualNodes,
+  manualNodes: rawManualNodes,
   manualNodesCurrentPage,
   manualNodesPerPage,
   manualNodesTotalPages,
@@ -190,6 +194,7 @@ const {
   pingAllNodes,
   sortNodesByLatency,
 } = useManualNodes(markDirty);
+const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 watch(
   () => manualNodes.value.map((n) => `${n.id}:${n.url}`).join('|'),
@@ -206,12 +211,12 @@ const handleSortByLatency = () => {
   showToast(ok ? t('manualNodes.sortByLatencyDone') : t('manualNodes.sortByLatencyNoData'), ok ? 'success' : 'warning');
 };
 
-const handleSearchTermUpdate = (val) => {
+const handleSearchTermUpdate = (val: string) => {
   searchTerm.value = val;
 };
 
 const {
-  profiles,
+  profiles: rawProfiles,
   profileTags,
   activeTagFilters: profileTagFilters,
   setTagFilters: setProfileTagFilters,
@@ -239,6 +244,7 @@ const {
   paginatedProfiles,
   changeProfilesPage,
 } = useProfiles(markDirty);
+const profiles = rawProfiles as unknown as Ref<ProfileConfig[]>;
 
 const {
   showModal: showSubModal,
@@ -279,20 +285,20 @@ const showLogModal = ref(false);
 const logProfileName = ref('');
 const logProfileId = ref('');
 const showBatchDeleteModal = ref(false);
-const batchDeleteIds = ref([]);
-const batchDeleteType = ref('node');
+const batchDeleteIds = ref<string[]>([]);
+const batchDeleteType = ref<'node' | 'subscription' | 'profile'>('node');
 const showDedupModal = ref(false);
-const dedupPlan = ref(null);
+const dedupPlan = ref<DedupPlan | null>(null);
 const showBatchTagModal = ref(false);
-const batchTagIds = ref([]);
-const batchTagType = ref('node');
+const batchTagIds = ref<string[]>([]);
+const batchTagType = ref<'node' | 'subscription' | 'profile'>('node');
 const showNodeTagManagementModal = ref(false);
 const showProfileTagManagementModal = ref(false);
 
 // 节点预览相关状态
 const showNodePreviewModal = ref(false);
-const previewSubscriptionId = ref(null);
-const previewProfileId = ref(null);
+const previewSubscriptionId = ref<string | null>(null);
+const previewProfileId = ref<string | null>(null);
 const previewSubscriptionName = ref('');
 const previewSubscriptionUrl = ref('');
 const previewProfileName = ref('');
@@ -317,7 +323,7 @@ const initializeState = async () => {
   }
 };
 
-const handleBeforeUnload = (event) => {
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
   if (isDirty.value) {
     event.preventDefault();
     event.returnValue = t('common.unsavedLeaveConfirm');
@@ -329,7 +335,7 @@ const VALID_CLASSIC_TABS = ['nodes', 'subscriptions', 'profiles'];
 
 const readInitialClassicTab = () => {
   const saved = readSessionPreference(CLASSIC_TAB_STORAGE_KEY);
-  return VALID_CLASSIC_TABS.includes(saved) ? saved : 'nodes';
+  return saved && VALID_CLASSIC_TABS.includes(saved) ? saved : 'nodes';
 };
 
 const activeTab = ref(readInitialClassicTab());
@@ -355,7 +361,7 @@ const classicTabs = computed(() => [
   },
 ]);
 
-const setActiveTab = (tabId) => {
+const setActiveTab = (tabId: string) => {
   if (!VALID_CLASSIC_TABS.includes(tabId) || activeTab.value === tabId) return;
   activeTab.value = tabId;
   writeSessionPreference(CLASSIC_TAB_STORAGE_KEY, tabId);
@@ -433,11 +439,11 @@ const handleSave = async () => {
   }
 };
 
-const handleDeleteSubscriptionWithCleanup = (subId) => {
+const handleDeleteSubscriptionWithCleanup = (subId: string) => {
   deleteSubscription(subId);
   // cleanup 已在 deleteSubscription 内部通过 removeSubscriptionFromProfiles 实现
 };
-const handleDeleteNodeWithCleanup = (nodeId) => {
+const handleDeleteNodeWithCleanup = (nodeId: string) => {
   deleteNode(nodeId);
   // cleanup 已在 deleteNode 内部通过 removeManualNodeFromProfiles 实现
 };
@@ -466,7 +472,7 @@ const handleDeduplicateNodes = () => {
   showDedupModal.value = true;
 };
 
-const handleBatchDeleteRequest = (ids, type = 'node') => {
+const handleBatchDeleteRequest = (ids: string[], type: 'node' | 'subscription' | 'profile' = 'node') => {
   if (ids && ids.length > 0) {
     batchDeleteIds.value = ids;
     batchDeleteType.value = type;
@@ -486,13 +492,13 @@ const confirmBatchDelete = () => {
   showBatchDeleteModal.value = false;
 };
 
-const handleOpenBatchTagModal = (ids, type = 'node') => {
+const handleOpenBatchTagModal = (ids: string[], type: 'node' | 'subscription' | 'profile' = 'node') => {
   batchTagIds.value = ids;
   batchTagType.value = type;
   showBatchTagModal.value = true;
 };
 
-const handleBatchTagConfirm = (payload) => {
+const handleBatchTagConfirm = (payload: { tags: string[]; mode: TagBatchMode }) => {
   if (batchTagType.value === 'subscription') {
     batchUpdateSubscriptionTags(batchTagIds.value, payload);
   } else if (batchTagType.value === 'profile') {
@@ -535,54 +541,55 @@ const handleOpenNodeTagManagement = () => {
   showNodeTagManagementModal.value = true;
 };
 
-const handleNodeTagRename = (oldName, newName) => {
+const handleNodeTagRename = (oldName: string, newName: string) => {
   renameTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleNodeTagDelete = (tagName) => {
+const handleNodeTagDelete = (tagName: string) => {
   deleteTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleNodeTagReorder = (newOrder) => {
+const handleNodeTagReorder = (newOrder: string[]) => {
   reorderTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
 const showSubTagManagementModal = ref(false);
 
-const handleSubTagRename = (oldName, newName) => {
+const handleSubTagRename = (oldName: string, newName: string) => {
   renameSubscriptionTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleSubTagDelete = (tagName) => {
+const handleSubTagDelete = (tagName: string) => {
   deleteSubscriptionTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleSubTagReorder = (newOrder) => {
+const handleSubTagReorder = (newOrder: string[]) => {
   reorderSubscriptionTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleProfileTagRename = (oldName, newName) => {
+const handleProfileTagRename = (oldName: string, newName: string) => {
   renameProfileTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleProfileTagDelete = (tagName) => {
+const handleProfileTagDelete = (tagName: string) => {
   deleteProfileTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleProfileTagReorder = (newOrder) => {
+const handleProfileTagReorder = (newOrder: string[]) => {
   reorderProfileTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleApplyDetectedName = (subscriptionId, name) => {
+const handleApplyDetectedName = (subscriptionId: string | undefined, name: string) => {
+  if (!subscriptionId) return;
   const target = String(name || '').trim();
   if (!target) return;
   const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
@@ -594,7 +601,7 @@ const handleApplyDetectedName = (subscriptionId, name) => {
 };
 
 // 节点预览处理函数
-const handlePreviewSubscription = (subscriptionId) => {
+const handlePreviewSubscription = (subscriptionId: string) => {
   const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
   if (subscription) {
     previewSubscriptionId.value = subscriptionId;
@@ -606,7 +613,7 @@ const handlePreviewSubscription = (subscriptionId) => {
   }
 };
 
-const handlePreviewProfile = (profileId) => {
+const handlePreviewProfile = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
   if (profile) {
     previewProfileId.value = profileId;
@@ -618,7 +625,7 @@ const handlePreviewProfile = (profileId) => {
   }
 };
 
-const handleViewLogs = (profileId) => {
+const handleViewLogs = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     logProfileId.value = profile.id;
@@ -906,9 +913,9 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
   />
   <ManualNodeDedupModal
     v-model:show="showDedupModal"
-    :plan="dedupPlan"
+    :plan="dedupPlan!"
     @confirm="
-      applyDedupPlan(dedupPlan);
+      applyDedupPlan(dedupPlan!);
       showDedupModal = false;
       dedupPlan = null;
     "

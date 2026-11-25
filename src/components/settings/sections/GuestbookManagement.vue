@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { Eye, EyeOff, MessageSquare, RefreshCw, Reply, Trash2 } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { api } from '@/lib/http.js';
@@ -9,20 +10,28 @@ import Textarea from '@/components/ui/Textarea.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+interface GuestbookItem {
+  id: string;
+  status: string;
+  reply?: string;
+  nickname?: string;
+  content?: string;
+  type?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+}>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const messages = ref([]);
+const messages = ref<GuestbookItem[]>([]);
 const loading = ref(false);
 const filterStatus = ref('all');
-const replyingId = ref(null);
+const replyingId = ref<string | null>(null);
 const replyContent = ref('');
 
 const defaultGuestbookConfig = {
@@ -51,11 +60,11 @@ const guestbookConfig = computed(() => props.settings.guestbook || defaultGuestb
 const fetchMessages = async () => {
   loading.value = true;
   try {
-    const data = await api.get('/api/guestbook/manage');
+    const data = await api.get<{ success?: boolean; data?: GuestbookItem[]; message?: string }>('/api/guestbook/manage');
     if (data.success) {
-      messages.value = data.data;
+      messages.value = Array.isArray(data.data) ? data.data : [];
     } else {
-      showToast(data.message || t('settings.guestbookFetchFailed'), 'error');
+      showToast(String(data.message || t('settings.guestbookFetchFailed')), 'error');
     }
   } catch (e) {
     showToast(t('settings.networkError'), 'error');
@@ -75,15 +84,19 @@ const filteredMessages = computed(() => {
   });
 });
 
-const handleAction = async (action, id, payload = {}) => {
+const handleAction = async (action: string, id: string, payload: Record<string, unknown> = {}) => {
   try {
-    const data = await api.post('/api/guestbook/manage', { action, id, ...payload });
+    const data = await api.post<{ success?: boolean; data?: GuestbookItem; message?: string }>('/api/guestbook/manage', {
+      action,
+      id,
+      ...payload,
+    });
 
     if (data.success) {
       showToast(t('settings.guestbookActionSuccess'), 'success');
       if (action === 'delete') {
         messages.value = messages.value.filter((m) => m.id !== id);
-      } else {
+      } else if (data.data) {
         const index = messages.value.findIndex((m) => m.id === id);
         if (index !== -1) {
           messages.value[index] = data.data;
@@ -94,7 +107,7 @@ const handleAction = async (action, id, payload = {}) => {
         replyContent.value = '';
       }
     } else {
-      showToast(data.message || t('settings.guestbookActionFailed'), 'error');
+      showToast(String(data.message || t('settings.guestbookActionFailed')), 'error');
     }
   } catch (e) {
     showToast(t('settings.networkError'), 'error');
@@ -102,7 +115,7 @@ const handleAction = async (action, id, payload = {}) => {
   }
 };
 
-const startReply = (msg) => {
+const startReply = (msg: GuestbookItem) => {
   replyingId.value = msg.id;
   replyContent.value = msg.reply || '';
 };
@@ -112,17 +125,17 @@ const cancelReply = () => {
   replyContent.value = '';
 };
 
-const submitReply = (id) => {
+const submitReply = (id: string) => {
   if (!replyContent.value.trim()) return;
   handleAction('reply', id, { replyContent: replyContent.value });
 };
 
-const formatDate = (isoString) => {
+const formatDate = (isoString: string | null | undefined) => {
   if (!isoString) return '-';
   return new Date(isoString).toLocaleString();
 };
 
-const getStatusBadgeClass = (status) => {
+const getStatusBadgeClass = (status: string) => {
   switch (status) {
     case 'pending':
       return 'border border-line bg-transparent text-amber-400 font-mono';
@@ -135,7 +148,7 @@ const getStatusBadgeClass = (status) => {
   }
 };
 
-const getStatusLabel = (status) => {
+const getStatusLabel = (status: string) => {
   switch (status) {
     case 'pending':
       return t('settings.guestbookPending');
@@ -148,7 +161,7 @@ const getStatusLabel = (status) => {
   }
 };
 
-const getTypeLabel = (type) => {
+const getTypeLabel = (type?: string) => {
   switch (type) {
     case 'bug':
       return t('settings.guestbookBug');

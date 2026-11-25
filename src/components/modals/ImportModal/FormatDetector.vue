@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();

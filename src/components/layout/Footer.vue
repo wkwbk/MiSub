@@ -1,20 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useI18n } from '@/i18n/index.js';
 import { useVersionStore } from '@/stores/useVersionStore.js';
 import packageJson from '../../../package.json';
 
-defineProps({
-  hideBranding: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    hideBranding?: boolean;
+    hasMobileNav?: boolean;
+  }>(),
+  {
+    hideBranding: false,
+    hasMobileNav: false,
   },
-  hasMobileNav: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
 const { t } = useI18n();
 const versionStore = useVersionStore();

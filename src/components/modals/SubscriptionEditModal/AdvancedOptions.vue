@@ -1,17 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
+import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  editingSubscription: {
-    type: Object,
-    required: true,
-  },
-});
+defineProps<{
+  editingSubscription: EditableSubscriptionForm | StoreMisubItem;
+}>();
 </script>
 
 <template>

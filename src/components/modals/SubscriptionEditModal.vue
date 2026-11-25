@@ -1,5 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { SubscriptionItem } from '@misub/core/types.js';
+import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { Link2 } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
@@ -8,13 +11,33 @@ import EditForm from '@/components/modals/SubscriptionEditModal/EditForm.vue';
 import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
 import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
 
-const props = defineProps({
-  show: Boolean,
-  isNew: Boolean,
-  editingSubscription: Object,
-});
+interface RuleTagOption {
+  label: string;
+  pattern: string;
+  icon?: string;
+}
 
-const emit = defineEmits(['update:show', 'confirm']);
+interface RuleItem extends RuleTagOption {
+  type: string;
+}
+
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    isNew?: boolean;
+    editingSubscription?: EditableSubscriptionForm | StoreMisubItem | SubscriptionItem | null;
+  }>(),
+  {
+    show: false,
+    isNew: false,
+    editingSubscription: null,
+  },
+);
+
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [];
+}>();
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
@@ -25,7 +48,7 @@ const ruleMode = ref('exclude');
 const customKeyword = ref('');
 
 // 预设标签
-const presetRegions = [
+const presetRegions: RuleTagOption[] = [
   { label: '香港', pattern: '(香港|HK|Hong Kong)', icon: '🇭🇰' },
   { label: '台湾', pattern: '(台湾|TW|Taiwan)', icon: '🇨🇳' },
   { label: '日本', pattern: '(日本|JP|Japan)', icon: '🇯🇵' },
@@ -36,7 +59,7 @@ const presetRegions = [
   { label: '英国', pattern: '(英国|UK|Britain)', icon: '🇬🇧' },
 ];
 
-const presetProtocols = [
+const presetProtocols: RuleTagOption[] = [
   { label: 'SS', pattern: 'proto:ss' },
   { label: 'VMess', pattern: 'proto:vmess' },
   { label: 'VLESS', pattern: 'proto:vless' },
@@ -44,7 +67,7 @@ const presetProtocols = [
   { label: 'Hysteria2', pattern: 'proto:hysteria2,hy2' },
 ];
 
-const presetKeywords = [
+const presetKeywords: RuleTagOption[] = [
   { label: '官网', pattern: '官网' },
   { label: '过期', pattern: '过期' },
   { label: '剩余', pattern: '(剩余|流量)' },
@@ -56,8 +79,8 @@ const presetKeywords = [
 ];
 
 // 规则池：分别管理保留规则和剔除规则
-const keepRules = ref([]);
-const excludeRules = ref([]);
+const keepRules = ref<RuleItem[]>([]);
+const excludeRules = ref<RuleItem[]>([]);
 
 // 活跃规则列表（根据当前 tab 切换）
 const currentRulePool = computed(() => {
@@ -70,18 +93,18 @@ const selectedRules = computed(() => {
 });
 
 // 检查标签在当前激活模式中是否已选中
-const isSelected = (pattern) => {
+const isSelected = (pattern: string) => {
   return currentRulePool.value.some((rule) => rule.pattern === pattern);
 };
 
 // 检查标签在另一个模式中是否已选中
-const isOtherSelected = (pattern) => {
+const isOtherSelected = (pattern: string) => {
   const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
   return otherPool.some((rule) => rule.pattern === pattern);
 };
 
 // 辅助函数：根据 pattern 转换为规范规则对象
-const createRuleItem = (tag, type) => {
+const createRuleItem = (tag: RuleTagOption, type: string): RuleItem => {
   const normalizedPattern =
     type === 'protocol' && !String(tag.pattern).toLowerCase().startsWith('proto:')
       ? `proto:${String(tag.pattern).toLowerCase()}`
@@ -94,7 +117,7 @@ const createRuleItem = (tag, type) => {
 };
 
 // 切换标签选择
-const toggleTag = (tag, type) => {
+const toggleTag = (tag: RuleTagOption, type: string) => {
   const pool = currentRulePool.value;
   const otherPool = ruleMode.value === 'keep' ? excludeRules.value : keepRules.value;
 
@@ -140,17 +163,17 @@ const addCustomKeyword = () => {
 };
 
 // 移除规则
-const removeKeepRule = (index) => {
+const removeKeepRule = (index: number) => {
   keepRules.value.splice(index, 1);
   syncToText();
 };
 
-const removeExcludeRule = (index) => {
+const removeExcludeRule = (index: number) => {
   excludeRules.value.splice(index, 1);
   syncToText();
 };
 
-const removeRule = (index, targetPool = null) => {
+const removeRule = (index: number, targetPool: string | null = null) => {
   if (targetPool === 'keep') {
     removeKeepRule(index);
   } else if (targetPool === 'exclude') {
@@ -187,7 +210,7 @@ const syncToText = () => {
   props.editingSubscription.exclude = [...exPatterns, '---', ...kpPatterns.map((p) => `keep:${p}`)].join('\n');
 };
 
-const resolvePreset = (pattern) => {
+const resolvePreset = (pattern: string): RuleItem => {
   const protocolPreset = presetProtocols.find((p) => p.pattern.toLowerCase() === pattern.toLowerCase());
   if (protocolPreset) {
     return { ...protocolPreset, type: 'protocol' };
@@ -227,8 +250,8 @@ const parseFromText = () => {
   const dividerIndex = lines.findIndex((line) => line === '---');
   const hasDivider = dividerIndex !== -1;
 
-  const rawExcludePatterns = [];
-  const rawKeepPatterns = [];
+  const rawExcludePatterns: string[] = [];
+  const rawKeepPatterns: string[] = [];
 
   lines.forEach((line, index) => {
     if (line === '---') return;
@@ -303,14 +326,14 @@ const excludeRuleState = computed(() => {
     else tagKey = 'exclude';
   }
 
-  const tagClassMap = {
+  const tagClassMap: Record<string, string> = {
     unset: 'border border-line bg-transparent text-fg-muted',
     exclude: 'border border-line bg-transparent text-fg-muted',
     keepOnly: 'border border-line bg-transparent text-fg-muted',
     mixed: 'border border-line bg-transparent text-fg-muted',
   };
 
-  const errors = [];
+  const errors: Array<{ line: number; message: string }> = [];
   rawLines.forEach((rawLine, index) => {
     let line = rawLine.trim();
     if (!line) return;

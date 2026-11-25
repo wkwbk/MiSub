@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Cpu } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -11,6 +11,19 @@ import {
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
 } from '@misub/core/domain/default-public-cores.js';
+
+interface CollectionCoreItem {
+  id: string;
+  name?: string;
+  category?: string;
+  tags?: string[];
+  _tagsInput?: string;
+  description?: string;
+  url?: string;
+  icon?: string;
+  enabled?: boolean;
+  [key: string]: unknown;
+}
 
 const { t } = useI18n();
 
@@ -33,21 +46,22 @@ const labels = computed(() => ({
   deleteConfirmQuestion: t('publicCores.deleteConfirmQuestion'),
 }));
 
-const getCategoryLabel = (category) => {
-  const found = PUBLIC_CORE_CATEGORIES.find((c) => c.value === category);
-  return found ? t(found.labelKey) : category || t('publicCores.categories.other');
+const getCategoryLabel = (category: unknown): string => {
+  const catValue = typeof category === 'string' ? category : '';
+  const found = PUBLIC_CORE_CATEGORIES.find((c) => c.value === catValue);
+  return found ? t(found.labelKey) : catValue || t('publicCores.categories.other');
 };
 
-const normalizeCoreUrl = (rawUrl) => {
+const normalizeCoreUrl = (rawUrl: unknown): string => {
   const trimmed = String(rawUrl || '').trim();
   if (!trimmed) return '';
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
 };
 
-const filterItem = (item, activeTab) => item.category === activeTab;
+const filterItem = (item: CollectionCoreItem, activeTab: string): boolean => item.category === activeTab;
 
-const createNewItem = (activeTab) => ({
+const createNewItem = (activeTab: string): CollectionCoreItem => ({
   id: '',
   name: '',
   category: activeTab === 'all' ? 'multipurpose' : activeTab,
@@ -59,13 +73,15 @@ const createNewItem = (activeTab) => ({
   enabled: true,
 });
 
-const prepareEditItem = (core) => ({
+const prepareEditItem = (core: CollectionCoreItem): CollectionCoreItem => ({
   ...core,
   category: core.category || 'other',
   _tagsInput: normalizeCoreTags(core.tags).join(', '),
 });
 
-const validateAndBuildItem = (editingCore) => {
+const validateAndBuildItem = (
+  editingCore: CollectionCoreItem,
+): { item: CollectionCoreItem; error?: undefined } | { error: string; item?: undefined } => {
   const name = String(editingCore.name || '').trim();
   if (!name) return { error: t('publicCores.nameRequired') };
 

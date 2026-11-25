@@ -15,9 +15,10 @@
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "test:e2e": "vite build && playwright test",
     "lint": "oxlint",
+    "typecheck": "tsc --noEmit && vue-tsc --noEmit",
     "release": "node scripts/release.mjs",
-    "format": "prettier --write \"functions/**/*.js\" \"packages/core/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\"",
-    "format:check": "prettier --check \"functions/**/*.js\" \"packages/core/**/*.js\" \"src/**/*.{js,vue}\" \"tests/**/*.js\""
+    "format": "prettier --write \"functions/**/*.ts\" \"worker.ts\" \"packages/core/**/*.ts\" \"src/**/*.{ts,vue}\" \"tests/**/*.js\"",
+    "format:check": "prettier --check \"functions/**/*.ts\" \"worker.ts\" \"packages/core/**/*.ts\" \"src/**/*.{ts,vue}\" \"tests/**/*.js\""
   },
   "dependencies": {
     "@hono/zod-validator": "^0.9.1",
@@ -43,8 +44,10 @@
     "oxlint": "^1.94.0",
     "prettier": "^3.10.1",
     "tailwindcss": "^4.3.5",
+    "typescript": "~5.9.3",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
+    "vue-tsc": "^3.3.14",
     "wrangler": "^4.162.0"
   }
 }

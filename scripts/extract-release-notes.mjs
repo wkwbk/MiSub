@@ -38,7 +38,7 @@ export function extractLocalChangelog(source) {
 export function getReleaseNotesForTag(targetTag, rootDir = ROOT_DIR) {
   const normalizedTarget = normalizeVersion(targetTag);
   const pkgPath = path.join(rootDir, 'package.json');
-  const versionStorePath = path.join(rootDir, 'src', 'stores', 'useVersionStore.js');
+  const versionStorePath = path.join(rootDir, 'src', 'stores', 'useVersionStore.ts');
 
   if (!fs.existsSync(pkgPath) || !fs.existsSync(versionStorePath)) {
     return '';

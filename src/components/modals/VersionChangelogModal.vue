@@ -1,8 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 import { computed } from 'vue';
 import { ExternalLink } from '@lucide/vue';
-import { useVersionStore } from '@/stores/useVersionStore.js';
+import { useVersionStore, type GithubReleaseInfo } from '@/stores/useVersionStore.js';
 import Modal from '@/components/ui/Modal.vue';
 import { renderChangelogMarkdown } from '@/utils/changelog-markdown.js';
 
@@ -10,19 +10,24 @@ const { t } = useI18n();
 
 const versionStore = useVersionStore();
 
-const props = defineProps({
-  show: Boolean,
-  release: {
-    type: Object,
-    default: () => ({ tag_name: '', name: '', body: '', html_url: '' }),
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    release?: GithubReleaseInfo;
+    currentVersion?: string;
+  }>(),
+  {
+    show: false,
+    release: () => ({ tag_name: '', name: '', body: '', html_url: '' }),
+    currentVersion: '',
   },
-  currentVersion: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits(['update:show', 'confirm', 'suppress']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [];
+  suppress: [];
+}>();
 
 const isLatest = computed(() => {
   if (!props.release?.tag_name) return true;

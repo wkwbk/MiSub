@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Compass } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -11,6 +11,17 @@ import {
   PUBLIC_LINK_CATEGORIES,
   resolvePublicLinkIcon,
 } from '@misub/core/domain/default-public-links.js';
+
+interface CollectionLinkItem {
+  id: string;
+  name?: string;
+  category?: string;
+  description?: string;
+  url?: string;
+  icon?: string;
+  enabled?: boolean;
+  [key: string]: unknown;
+}
 
 const { t } = useI18n();
 
@@ -33,14 +44,15 @@ const labels = computed(() => ({
   deleteConfirmQuestion: t('publicLinks.deleteConfirmQuestion'),
 }));
 
-const getCategoryLabel = (category) => {
-  const found = PUBLIC_LINK_CATEGORIES.find((c) => c.value === category);
-  return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
+const getCategoryLabel = (category: unknown): string => {
+  const catValue = typeof category === 'string' ? category : '';
+  const found = PUBLIC_LINK_CATEGORIES.find((c) => c.value === catValue);
+  return found ? t(found.labelKey) : catValue || t('publicLinks.categories.other');
 };
 
-const filterItem = (item, activeTab) => item.category === activeTab;
+const filterItem = (item: CollectionLinkItem, activeTab: string): boolean => item.category === activeTab;
 
-const createNewItem = (activeTab) => ({
+const createNewItem = (activeTab: string): CollectionLinkItem => ({
   id: '',
   name: '',
   category: activeTab === 'all' ? 'speedtest' : activeTab,
@@ -50,12 +62,14 @@ const createNewItem = (activeTab) => ({
   enabled: true,
 });
 
-const prepareEditItem = (link) => ({
+const prepareEditItem = (link: CollectionLinkItem): CollectionLinkItem => ({
   ...link,
   category: link.category || 'other',
 });
 
-const validateAndBuildItem = (editingLink) => {
+const validateAndBuildItem = (
+  editingLink: CollectionLinkItem,
+): { item: CollectionLinkItem; error?: undefined } | { error: string; item?: undefined } => {
   const name = String(editingLink.name || '').trim();
   if (!name) return { error: t('publicLinks.nameRequired') };
 

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useUIStore } from '@/stores/useUiStore.js';
@@ -14,13 +14,16 @@ const route = useRoute();
 const uiStore = useUIStore();
 const sessionStore = useSessionStore();
 const { publicConfig } = storeToRefs(sessionStore);
-const props = defineProps({
-  isLoggedIn: Boolean,
-  pendingPath: {
-    type: /** @type {import('vue').PropType<string | null>} */ (String),
-    default: null,
+const props = withDefaults(
+  defineProps<{
+    isLoggedIn?: boolean;
+    pendingPath?: string | null;
+  }>(),
+  {
+    isLoggedIn: false,
+    pendingPath: null,
   },
-});
+);
 
 const isPublicEnabled = computed(() => publicConfig.value?.enablePublicPage === true);
 const showExploreEntry = computed(() => props.isLoggedIn || isPublicEnabled.value);
@@ -29,17 +32,19 @@ const hideBranding = computed(
 );
 const { t } = useI18n();
 
-const emit = defineEmits(['logout']);
+const emit = defineEmits<{
+  logout: [];
+}>();
 
 const navItems = MAIN_NAV_ITEMS;
 
-function isActive(path) {
+function isActive(path: string): boolean {
   if (path === '/') return route.path === '/';
   if (path === '/dashboard') return route.path === '/dashboard';
   return route.path.startsWith(path);
 }
 
-function handleNavClick(event, path) {
+function handleNavClick(event: MouseEvent, path: string): void {
   if (props.pendingPath === path || route.fullPath === path) {
     event.preventDefault();
   }

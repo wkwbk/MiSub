@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref } from 'vue';
+import type { Ref } from 'vue';
+import type { ManualNodeItem, SubscriptionItem } from '@misub/core/types.js';
 import { FileText, Plus, Upload, Wrench, X } from '@lucide/vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useBulkImportLogic } from '@/composables/useBulkImportLogic.js';
@@ -40,11 +42,13 @@ const { markDirty } = dataStore;
 const {
   totalRemainingTraffic: trafficVal,
   enabledSubscriptionsCount,
-  subscriptions,
+  subscriptions: rawSubscriptions,
   addSubscriptionsFromBulk,
 } = useSubscriptions(markDirty);
+const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
-const { manualNodes, addNodesFromBulk } = useManualNodes(markDirty);
+const { manualNodes: rawManualNodes, addNodesFromBulk } = useManualNodes(markDirty);
+const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 const router = useRouter();
 
@@ -116,7 +120,7 @@ const hiddenHealthItemsCount = computed(() =>
 );
 
 const showFullGuide = computed(() =>
-  shouldShowFullGuide({
+  (shouldShowFullGuide as (input: Record<string, any>) => boolean)({
     subscriptions: subscriptions.value || [],
     profiles: profiles.value || [],
   }),
@@ -141,19 +145,19 @@ const readinessDotClass = computed(() => {
   return 'bg-amber-500';
 });
 
-const healthToneClasses = {
+const healthToneClasses: Record<string, string> = {
   danger: 'border-line bg-transparent text-fg',
   warning: 'border-line bg-transparent text-fg',
   info: 'border-line bg-transparent text-fg',
 };
 
-const healthDotClasses = {
+const healthDotClasses: Record<string, string> = {
   danger: 'bg-red-500',
   warning: 'bg-amber-500',
   info: 'bg-sky-500',
 };
 
-const handleStatNavigate = (path, query = {}) => {
+const handleStatNavigate = (path: string, query: Record<string, string> = {}) => {
   router.push({ path, query });
 };
 
@@ -177,13 +181,13 @@ const LogModal = defineAsyncComponent(loadLogModal);
 
 //
 // error card links to the filtered list AND offers "打开日志"), and reading
-const handleHealthAction = (item) => {
+const handleHealthAction = (item: { actionRoute?: string; actionQuery?: Record<string, string> }) => {
   if (item.actionRoute) {
     router.push({ path: item.actionRoute, query: item.actionQuery || {} });
   }
 };
 
-const handleHealthSecondaryAction = (item) => {
+const handleHealthSecondaryAction = (item: { action?: string }) => {
   if (item.action === 'openLog') {
     showLogModal.value = true;
   }
@@ -194,7 +198,7 @@ const handleHealthSecondaryAction = (item) => {
 // 写入失败必须明确告知用户，否则表现为「点了没反应」且没有任何提示。
 // silent=true：忽略某个待处理项不该弹「设置已更新」，失败文案也用下面更贴切的两句。
 // preferencesOnly=true：这个字段不影响节点处理，让服务端跳过清缓存与 TG 通知。
-const persistDismissedHealthItems = async (ids) => {
+const persistDismissedHealthItems = async (ids: string[]) => {
   try {
     await dataStore.saveSettings({ dismissedHealthItems: ids }, { silent: true, preferencesOnly: true });
     return true;
@@ -206,7 +210,7 @@ const persistDismissedHealthItems = async (ids) => {
 
 const isUpdatingHealthDismissal = ref(false);
 
-const dismissHealthItemById = async (id) => {
+const dismissHealthItemById = async (id: string) => {
   if (isUpdatingHealthDismissal.value) return;
   const current = dismissedHealthItemIds.value;
   // 已经忽略过就不必再往返一次服务端
@@ -266,7 +270,7 @@ const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
 
-const handleQRCode = (url, title) => {
+const handleQRCode = (url: string, title: string) => {
   qrCodeUrl.value = url;
   qrCodeTitle.value = title;
   showQRCodeModal.value = true;

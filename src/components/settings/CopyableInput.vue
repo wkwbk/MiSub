@@ -1,35 +1,29 @@
-<script setup>
+<script setup lang="ts">
 import { Copy } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-defineProps({
-  value: {
-    type: String,
-    default: '',
+withDefaults(
+  defineProps<{
+    value?: string;
+    label?: string;
+    hint?: string;
+    ariaLabel?: string;
+    buttonText?: string;
+    muted?: boolean;
+  }>(),
+  {
+    value: '',
+    label: '',
+    hint: '',
+    ariaLabel: '',
+    buttonText: '',
+    muted: false,
   },
-  label: {
-    type: String,
-    default: '',
-  },
-  hint: {
-    type: String,
-    default: '',
-  },
-  ariaLabel: {
-    type: String,
-    default: '',
-  },
-  buttonText: {
-    type: String,
-    default: '',
-  },
-  muted: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-defineEmits(['copy']);
+defineEmits<{
+  copy: [];
+}>();
 
 const { t } = useI18n();
 </script>

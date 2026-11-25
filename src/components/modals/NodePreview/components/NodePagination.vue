@@ -1,32 +1,32 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 import { computed } from 'vue';
 
+type PageItem = number | '...';
+
 const { t } = useI18n();
 
-const props = defineProps({
-  currentPage: {
-    type: Number,
-    default: 1,
+const props = withDefaults(
+  defineProps<{
+    currentPage?: number;
+    totalPages?: number;
+    pageSize?: number;
+    totalItems?: number;
+  }>(),
+  {
+    currentPage: 1,
+    totalPages: 1,
+    pageSize: 24,
+    totalItems: 0,
   },
-  totalPages: {
-    type: Number,
-    default: 1,
-  },
-  pageSize: {
-    type: Number,
-    default: 24,
-  },
-  totalItems: {
-    type: Number,
-    default: 0,
-  },
-});
+);
 
-const emit = defineEmits(['go-to-page']);
+const emit = defineEmits<{
+  'go-to-page': [page: number];
+}>();
 
-const pageNumbers = computed(() => {
-  const pages = [];
+const pageNumbers = computed<PageItem[]>(() => {
+  const pages: PageItem[] = [];
   const current = props.currentPage;
   const total = props.totalPages;
 
@@ -61,7 +61,7 @@ const pageNumbers = computed(() => {
   return pages;
 });
 
-const goToPage = (page) => {
+const goToPage = (page: number): void => {
   if (page < 1 || page > props.totalPages || page === props.currentPage) return;
   emit('go-to-page', page);
 };

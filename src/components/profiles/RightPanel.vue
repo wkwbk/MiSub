@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue';
+import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
 import { ArrowRight, Check, Copy, Link2, Loader2, QrCode } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -11,16 +12,22 @@ import { isReservedSubPath, normalizeSubPath } from '@misub/core/domain/reserved
 import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import { shadowrocketConfigUrl } from '@misub/core/domain/shadowrocket-links.js';
 
-const props = defineProps({
-  config: Object,
-  profiles: Array,
-  compact: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    config?: (Omit<SettingsConfig, 'mergeExpireStrategy'> & { mergeExpireStrategy?: string } & Record<string, any>) | null;
+    profiles?: ProfileConfig[];
+    compact?: boolean;
+  }>(),
+  {
+    config: () => ({}),
+    profiles: () => [],
+    compact: false,
   },
-});
+);
 
-const emit = defineEmits(['qrcode']);
+const emit = defineEmits<{
+  qrcode: [url: string, title: string];
+}>();
 
 const { showToast } = useToastStore();
 const dataStore = useDataStore();
@@ -31,15 +38,16 @@ const shortCopied = ref(false);
 const customSlug = ref('');
 const isGeneratingShortLink = ref(false);
 const generatedShortLink = ref('');
-let copyTimeout = null;
-let shortCopyTimeout = null;
+let copyTimeout: ReturnType<typeof setTimeout> | undefined;
+let shortCopyTimeout: ReturnType<typeof setTimeout> | undefined;
 
 const formats = ['universal', 'Base64', 'Clash', 'Sing-Box', 'Surge', 'Loon', 'Shadowrocket'];
 const selectedFormat = ref('universal');
 const selectedId = ref('default');
 
-const formatLabel = (format) => (format === 'universal' ? t('dashboard.linkCard.universalFormat') : format);
-const isStableToken = (value) => typeof value === 'string' && value.trim() === value && /^[a-zA-Z0-9-_]+$/.test(value);
+const formatLabel = (format: string) => (format === 'universal' ? t('dashboard.linkCard.universalFormat') : format);
+const isStableToken = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim() === value && /^[a-zA-Z0-9-_]+$/.test(value);
 
 const hasProfiles = computed(() => (props.profiles || []).length > 0);
 const rawSubPath = computed(() =>
@@ -52,7 +60,7 @@ const subPathReady = computed(
 const mainTokenReady = computed(() => isStableToken(props.config?.myToken));
 
 const setupTasks = computed(() => {
-  const tasks = [];
+  const tasks: Array<{ id: string; title: string; description: string; to: string }> = [];
   if (!subPathReady.value) {
     tasks.push({
       id: 'profile-token',
@@ -113,7 +121,7 @@ const subLink = computed(() => {
   }
 
   const origin = window.location.origin;
-  const identifier = selectedId.value === 'default' ? props.config.myToken : selectedId.value;
+  const identifier = selectedId.value === 'default' ? props.config?.myToken || '' : selectedId.value;
   const baseUrl = `${origin}/${effectiveSubPath.value}/${identifier}`;
 
   if (selectedFormat.value === 'universal') {
@@ -125,7 +133,7 @@ const subLink = computed(() => {
     return shadowrocketConfigUrl(baseUrl, profileName);
   }
 
-  const targetMapping = { 'Sing-Box': 'singbox', QuanX: 'quanx' };
+  const targetMapping: Record<string, string> = { 'Sing-Box': 'singbox', QuanX: 'quanx' };
   const formatKey = targetMapping[selectedFormat.value] || selectedFormat.value.toLowerCase();
   return `${baseUrl}?${formatKey}`;
 });
@@ -148,7 +156,7 @@ const copyToClipboard = async () => {
   }, 2000);
 };
 
-const selectedProfile = computed(() => {
+const selectedProfile = computed<ProfileConfig | null>(() => {
   if (selectedId.value === 'default') return null;
   return (props.profiles || []).find((p) => getProfileShareIdentifier(p) === selectedId.value) || null;
 });
@@ -174,11 +182,12 @@ const handleGenerateShortLink = async () => {
   if (!isLinkValid.value || isGeneratingShortLink.value) return;
   isGeneratingShortLink.value = true;
   try {
-    const shouldSaveToProfile = Boolean(selectedProfile.value && selectedFormat.value === 'universal');
+    const activeProfile = selectedProfile.value;
+    const shouldSaveToProfile = Boolean(activeProfile && selectedFormat.value === 'universal');
     const result = await createShortLink({
       url: subLink.value,
       slug: customSlug.value.trim(),
-      profileId: shouldSaveToProfile ? selectedProfile.value.id : '',
+      profileId: shouldSaveToProfile && activeProfile ? activeProfile.id : '',
       saveToProfile: shouldSaveToProfile,
     });
 
@@ -190,8 +199,8 @@ const handleGenerateShortLink = async () => {
     generatedShortLink.value = result.shortUrl;
     customSlug.value = '';
 
-    if (result.savedToProfile && selectedProfile.value) {
-      const target = (dataStore.profiles || []).find((p) => p.id === selectedProfile.value.id);
+    if (result.savedToProfile && activeProfile) {
+      const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === activeProfile.id);
       if (target) {
         target.shortLink = result.shortUrl;
       }

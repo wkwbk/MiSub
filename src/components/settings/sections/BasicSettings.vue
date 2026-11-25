@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+import type { SettingsConfig } from '@misub/core/types.js';
 import { Globe, Info, Languages, RefreshCw, RotateCw, SlidersHorizontal } from '@lucide/vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Input from '@/components/ui/Input.vue';
@@ -10,25 +11,16 @@ import { api } from '@/lib/http.js';
 import { useI18n } from '@/i18n/index.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-  disguiseConfig: {
-    type: Object,
-    required: true,
-  },
-  highlightedFocusId: {
-    type: String,
-    default: '',
-  },
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+  disguiseConfig: Record<string, any>;
+  highlightedFocusId?: string;
+}>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const hasInvalidTokenChars = (value) => /[\s/?#]/.test(value);
+const hasInvalidTokenChars = (value: string) => /[\s/?#]/.test(value);
 
 const generateUuidToken = () => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -42,7 +34,7 @@ const generateUuidToken = () => {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 };
 
-const handleGenerateToken = (field) => {
+const handleGenerateToken = (field: string) => {
   props.settings[field] = generateUuidToken();
   showToast(t('settings.tokenGenerated'), 'success');
 };
@@ -74,7 +66,10 @@ const handleRotateTokenNow = async () => {
   if (isRotatingNow.value) return;
   isRotatingNow.value = true;
   try {
-    const res = await api.post('/api/settings/rotate_token', {});
+    const res = await api.post<{
+      success?: boolean;
+      data?: { myToken?: string; rotatedAt?: string; notified?: boolean };
+    }>('/api/settings/rotate_token', {});
     if (res?.success && res.data?.myToken) {
       props.settings.myToken = res.data.myToken;
       if (props.settings.tokenAutoRotate) {
@@ -88,7 +83,7 @@ const handleRotateTokenNow = async () => {
       showToast(t('settings.rotateTokenNowFailed'), 'error');
     }
   } catch (err) {
-    showToast(err?.message || t('settings.rotateTokenNowFailed'), 'error');
+    showToast((err instanceof Error ? err.message : '') || t('settings.rotateTokenNowFailed'), 'error');
   } finally {
     isRotatingNow.value = false;
   }
@@ -167,7 +162,21 @@ watch(
   },
 );
 
-const createIntervalControl = ({ get, set, defaultValue, quickValues, min, max = Number.POSITIVE_INFINITY }) => {
+const createIntervalControl = ({
+  get,
+  set,
+  defaultValue,
+  quickValues,
+  min,
+  max = Number.POSITIVE_INFINITY,
+}: {
+  get: () => number | undefined;
+  set: (val: number) => void;
+  defaultValue?: number;
+  quickValues: number[];
+  min: number;
+  max?: number;
+}) => {
   const readValue = () => (defaultValue !== undefined ? (get() ?? defaultValue) : get());
   const isCustom = computed(() => !quickValues.includes(Number(readValue())));
   const customInput = ref(isCustom.value ? String(readValue() ?? '') : '');
@@ -180,8 +189,8 @@ const createIntervalControl = ({ get, set, defaultValue, quickValues, min, max =
     }
   });
 
-  const onInput = (event) => {
-    const raw = event.target.value;
+  const onInput = (event: Event) => {
+    const raw = (event.target as HTMLInputElement).value;
     customInput.value = raw;
     const parsed = Number.parseInt(raw, 10);
     if (!Number.isNaN(parsed) && parsed >= min) {

@@ -1,25 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
-const props = defineProps({
-  isLoading: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    isLoading?: boolean;
+    parseStatus?: string;
+    errorMessage?: string;
+    successMessage?: string;
+  }>(),
+  {
+    isLoading: false,
+    parseStatus: '',
+    errorMessage: '',
+    successMessage: '',
   },
-  parseStatus: {
-    type: String,
-    default: '',
-  },
-  errorMessage: {
-    type: String,
-    default: '',
-  },
-  successMessage: {
-    type: String,
-    default: '',
-  },
-});
+);
 </script>
 
 <template>

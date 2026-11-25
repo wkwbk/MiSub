@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ArrowRight } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -6,14 +6,17 @@ import {
   normalizePublicLinksConfig,
   PUBLIC_LINK_CATEGORIES,
   resolvePublicLinkIcon,
+  type PublicLinksConfig,
 } from '@misub/core/domain/default-public-links.js';
 
-const props = defineProps({
-  publicLinks: {
-    type: Object,
-    default: () => ({}),
+const props = withDefaults(
+  defineProps<{
+    publicLinks?: PublicLinksConfig | Record<string, unknown>;
+  }>(),
+  {
+    publicLinks: () => ({}),
   },
-});
+);
 
 const { t } = useI18n();
 
@@ -23,7 +26,7 @@ const enabledPublicLinks = computed(() =>
 );
 
 const activeLinkCategory = ref('all');
-const availableLinkCategories = computed(() => {
+const availableLinkCategories = computed<Array<{ value: string; label: string }>>(() => {
   const present = new Set(enabledPublicLinks.value.map((item) => item.category || 'other'));
   const dynamicTabs = PUBLIC_LINK_CATEGORIES.filter((cat) => present.has(cat.value)).map((cat) => ({
     value: cat.value,
@@ -37,12 +40,12 @@ const displayedPublicLinks = computed(() => {
   return enabledPublicLinks.value.filter((item) => (item.category || 'other') === activeLinkCategory.value);
 });
 
-const getLinkCategoryLabel = (category) => {
+const getLinkCategoryLabel = (category?: string): string => {
   const found = PUBLIC_LINK_CATEGORIES.find((cat) => cat.value === category);
   return found ? t(found.labelKey) : category || t('publicLinks.categories.other');
 };
 
-const getLinkHostname = (rawUrl) => {
+const getLinkHostname = (rawUrl: string): string => {
   try {
     return new URL(rawUrl).hostname.replace(/^www\./, '');
   } catch {

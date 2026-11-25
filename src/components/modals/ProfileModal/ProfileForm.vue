@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { ChevronDown, RotateCcw, SlidersHorizontal } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
@@ -13,7 +15,7 @@ import TagInput from '@/components/ui/TagInput.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useToastStore } from '@/stores/useToastStore.js';
+import { useToastStore, type ToastType } from '@/stores/useToastStore.js';
 import { getLocalizedTransformAssetByUrl } from '@/constants/transform-assets';
 import { useI18n } from '@/i18n/index.js';
 import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
@@ -25,49 +27,44 @@ import {
 import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
 
+interface ToggleOption {
+  label: string;
+  value: boolean | null;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  localProfile: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    localProfile: Record<string, any>;
+    showAdvanced?: boolean;
+    uiText: Record<string, any>;
+    prefixToggleOptions?: ToggleOption[];
+    tagPrefixToggleOptions?: ToggleOption[];
+    globalSettings?: Omit<SettingsConfig, 'mergeExpireStrategy'> & {
+      mergeExpireStrategy?: string;
+    } & Record<string, any>;
+    profileTags?: string[];
+    originalCustomId?: string;
+  }>(),
+  {
+    showAdvanced: false,
+    prefixToggleOptions: () => [],
+    tagPrefixToggleOptions: () => [],
+    globalSettings: () => ({}),
+    profileTags: () => [],
+    originalCustomId: '',
   },
-  showAdvanced: {
-    type: Boolean,
-    default: false,
-  },
-  uiText: {
-    type: Object,
-    required: true,
-  },
-  prefixToggleOptions: {
-    type: Array,
-    default: () => [],
-  },
-  tagPrefixToggleOptions: {
-    type: Array,
-    default: () => [],
-  },
-  globalSettings: {
-    type: Object,
-    default: () => ({}),
-  },
-  profileTags: {
-    type: Array,
-    default: () => [],
-  },
-  originalCustomId: {
-    type: String,
-    default: '',
-  },
-});
+);
 
 const activePinia = getActivePinia();
 const dataStore = activePinia ? useDataStore() : null;
-const ruleTemplates = activePinia ? storeToRefs(dataStore).ruleTemplates : ref([]);
+const ruleTemplates = dataStore
+  ? (storeToRefs(dataStore).ruleTemplates as Ref<Array<Record<string, any>>>)
+  : ref<Array<Record<string, any>>>([]);
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
 const toastStore = activePinia ? useToastStore() : null;
-const showToast = (msg, type) => toastStore?.showToast?.(msg, type);
+const showToast = (msg: string, type: ToastType = 'info') => toastStore?.showToast?.(msg, type);
 
 const customIdError = computed(() => {
   const currentAlias = normalizeProfileIdentifier(props.localProfile?.customId);
@@ -88,7 +85,7 @@ const customIdError = computed(() => {
 });
 
 const activeShareSuffix = computed(() => {
-  const subPath = normalizeSubPath(props.globalSettings?.profileToken, 'sub');
+  const subPath = normalizeSubPath(props.globalSettings?.profileToken || '', 'sub');
   const identifier = getProfileShareIdentifier(props.localProfile) || 'link-id';
   return `/${subPath}/${identifier}`;
 });
@@ -123,8 +120,8 @@ const globalConfigLabel = computed(() => {
     const tpl = (ruleTemplates.value || []).find((item) => item?.id === templateId);
     if (tpl?.name) return tpl.name;
   }
-  const asset = getLocalizedTransformAssetByUrl(url, t);
-  return asset ? asset.name : url ? t('profileModal.customUrl') : t('profileModal.notSet');
+  const asset = getLocalizedTransformAssetByUrl(url, t) as { name?: string } | null;
+  return asset?.name ? asset.name : url ? t('profileModal.customUrl') : t('profileModal.notSet');
 });
 
 const engineOptions = computed(() => [
@@ -148,7 +145,7 @@ const expiryPresets = computed(() => [
   { label: t('profileModal.expiresPreset1y'), years: 1 },
 ]);
 
-const selectedTransformAsset = ref(null);
+const selectedTransformAsset = ref<Record<string, any> | null>(null);
 const showRuleTemplateModal = ref(false);
 
 const isExternalEngine = computed(() => {
@@ -183,7 +180,7 @@ const ruleSourceSelection = computed({
     // 兼容历史保存的 preset / custom / custom_template，全部统一归入「规则模板」
     return 'preset';
   },
-  set: (val) => {
+  set: (val: string) => {
     if (val === 'global') {
       props.localProfile.transformConfigMode = 'global';
       if (props.localProfile.builtinTransform && typeof props.localProfile.builtinTransform === 'object') {
@@ -230,7 +227,7 @@ function syncVisualRulesFromGlobal() {
   props.localProfile.builtinTransform = createInitialVisualTransformFromGlobal();
 }
 
-function handleRuleTemplatesSaved(savedTemplateId) {
+function handleRuleTemplatesSaved(savedTemplateId: string) {
   if (!isTemplateMode.value || !savedTemplateId) return;
   const current = String(props.localProfile.transformConfig || '').trim();
   const stillExists = (ruleTemplates.value || []).some(
@@ -241,7 +238,9 @@ function handleRuleTemplatesSaved(savedTemplateId) {
   }
 }
 
-const emit = defineEmits(['toggle-advanced']);
+const emit = defineEmits<{
+  'toggle-advanced': [];
+}>();
 
 const enforceExternalSchemeConstraints = () => {
   const enabled = isExternalEngine.value;

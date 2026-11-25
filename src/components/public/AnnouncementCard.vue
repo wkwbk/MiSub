@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import DOMPurify from 'dompurify';
 import { X } from '@lucide/vue';
@@ -6,15 +6,21 @@ import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
+export interface AnnouncementData {
+  title?: string;
+  content?: string;
+  type?: string;
+  dismissible?: boolean;
+  updatedAt?: string | number;
+  [key: string]: unknown;
+}
+
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const props = defineProps({
-  announcement: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  announcement: AnnouncementData;
+}>();
 
 const isVisible = ref(true);
 
@@ -31,7 +37,7 @@ const sanitizedContent = computed(() => {
   });
 });
 
-const dismiss = (e) => {
+const dismiss = (e: MouseEvent): void => {
   e.stopPropagation();
   isVisible.value = false;
   if (props.announcement.updatedAt) {
@@ -41,7 +47,7 @@ const dismiss = (e) => {
   }
 };
 
-const checkVisibility = () => {
+const checkVisibility = (): void => {
   if (props.announcement?.dismissible && props.announcement?.updatedAt) {
     const dismissed = readRawPreference(`announcement_dismissed_${props.announcement.updatedAt}`);
     if (dismissed) {
@@ -65,7 +71,7 @@ watch(
 );
 
 const typeConfig = computed(() => {
-  const types = {
+  const types: Record<string, { dot: string }> = {
     info: {
       dot: 'bg-zinc-400',
     },
@@ -79,7 +85,7 @@ const typeConfig = computed(() => {
       dot: 'bg-red-500',
     },
   };
-  return types[props.announcement.type] || types.info;
+  return types[props.announcement.type || 'info'] || types.info;
 });
 </script>
 

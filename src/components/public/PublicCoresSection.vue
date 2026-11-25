@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { ArrowRight } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -7,32 +7,46 @@ import {
   normalizePublicCoresConfig,
   PUBLIC_CORE_CATEGORIES,
   resolvePublicCoreIcon,
+  type PublicCoreItem,
+  type PublicCoresConfig,
 } from '@misub/core/domain/default-public-cores.js';
 
-const props = defineProps({
-  publicCores: {
-    type: Object,
-    default: () => ({}),
+interface PublicCoreEntry extends PublicCoreItem {
+  repo?: string;
+}
+
+interface CoreReleaseMeta {
+  version: string;
+  publishedAt: string;
+}
+
+interface GithubReleaseResponse {
+  tag_name?: string;
+  published_at?: string;
+}
+
+const props = withDefaults(
+  defineProps<{
+    publicCores?: PublicCoresConfig | Record<string, unknown>;
+    formatReleaseUpdatedLabel?: (publishedAt?: string | number | Date | null) => string;
+    formatReleaseUpdatedTitle?: (publishedAt?: string | number | Date | null) => string;
+  }>(),
+  {
+    publicCores: () => ({}),
+    formatReleaseUpdatedLabel: () => '',
+    formatReleaseUpdatedTitle: () => '',
   },
-  formatReleaseUpdatedLabel: {
-    type: Function,
-    default: () => '',
-  },
-  formatReleaseUpdatedTitle: {
-    type: Function,
-    default: () => '',
-  },
-});
+);
 
 const { t } = useI18n();
 
 const publicCoresConfig = computed(() => normalizePublicCoresConfig(props.publicCores));
-const enabledPublicCores = computed(() =>
+const enabledPublicCores = computed<PublicCoreEntry[]>(() =>
   publicCoresConfig.value.enabled ? (publicCoresConfig.value.items || []).filter((item) => item.enabled !== false) : [],
 );
 
 const activeCoreCategory = ref('all');
-const availableCoreCategories = computed(() => {
+const availableCoreCategories = computed<Array<{ value: string; label: string }>>(() => {
   const present = new Set(enabledPublicCores.value.map((item) => item.category || 'other'));
   const dynamicTabs = PUBLIC_CORE_CATEGORIES.filter((cat) => present.has(cat.value)).map((cat) => ({
     value: cat.value,
@@ -46,12 +60,12 @@ const displayedPublicCores = computed(() => {
   return enabledPublicCores.value.filter((item) => (item.category || 'other') === activeCoreCategory.value);
 });
 
-const getCoreCategoryLabel = (category) => {
+const getCoreCategoryLabel = (category?: string): string => {
   const found = PUBLIC_CORE_CATEGORIES.find((cat) => cat.value === category);
   return found ? t(found.labelKey) : category || t('publicCores.categories.other');
 };
 
-const getLinkHostname = (rawUrl) => {
+const getLinkHostname = (rawUrl: string): string => {
   try {
     return new URL(rawUrl).hostname.replace(/^www\./, '');
   } catch {
@@ -59,7 +73,7 @@ const getLinkHostname = (rawUrl) => {
   }
 };
 
-const extractGithubRepo = (item) => {
+const extractGithubRepo = (item: Partial<PublicCoreEntry> | null | undefined): string | null => {
   if (item?.repo && /^[\w\-.]+\/[\w\-.]+$/.test(item.repo)) {
     return item.repo;
   }
@@ -80,16 +94,16 @@ const extractGithubRepo = (item) => {
   }
 };
 
-const coreReleases = ref({});
-const fetchedCoreRepos = new Set();
+const coreReleases = ref<Record<string, CoreReleaseMeta>>({});
+const fetchedCoreRepos = new Set<string>();
 
-const fetchCoreReleases = async (cores = []) => {
+const fetchCoreReleases = async (cores: PublicCoreEntry[] = []): Promise<void> => {
   cores.forEach(async (core) => {
     const repo = extractGithubRepo(core);
     if (!repo || fetchedCoreRepos.has(repo)) return;
     fetchedCoreRepos.add(repo);
     try {
-      const data = await api.get(`/api/github/release?repo=${repo}`);
+      const data = await api.get<GithubReleaseResponse>(`/api/github/release?repo=${repo}`);
       if (data?.tag_name || data?.published_at) {
         coreReleases.value = {
           ...coreReleases.value,
@@ -99,24 +113,24 @@ const fetchCoreReleases = async (cores = []) => {
           },
         };
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.warn(`Failed to fetch release info for ${core.name}`, e);
     }
   });
 };
 
-const getCoreVersionLabel = (core) => {
+const getCoreVersionLabel = (core: PublicCoreEntry): string => {
   const repo = extractGithubRepo(core);
   const version = repo ? coreReleases.value[repo]?.version : '';
   return version || getLinkHostname(core.url);
 };
 
-const getCoreUpdatedLabel = (core) => {
+const getCoreUpdatedLabel = (core: PublicCoreEntry): string => {
   const repo = extractGithubRepo(core);
   return repo ? props.formatReleaseUpdatedLabel(coreReleases.value[repo]?.publishedAt) : '';
 };
 
-const getCoreUpdatedTitle = (core) => {
+const getCoreUpdatedTitle = (core: PublicCoreEntry): string => {
   const repo = extractGithubRepo(core);
   return repo ? props.formatReleaseUpdatedTitle(coreReleases.value[repo]?.publishedAt) : '';
 };

@@ -1,17 +1,25 @@
-<script setup>
+<script setup lang="ts">
 import { Check, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
+import type { SaveState } from '@/stores/useDataStore.js';
 
-defineProps({
-  isDirty: Boolean,
-  saveState: String,
-  isDiscarding: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    isDirty?: boolean;
+    saveState?: SaveState | string;
+    isDiscarding?: boolean;
+  }>(),
+  {
+    isDirty: false,
+    saveState: 'idle',
+    isDiscarding: false,
   },
-});
+);
 
-defineEmits(['save', 'discard']);
+defineEmits<{
+  save: [];
+  discard: [];
+}>();
 const { t } = useI18n();
 </script>
 

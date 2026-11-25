@@ -1,18 +1,18 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-defineProps({
-  href: {
-    type: String,
-    default: 'https://github.com/wkwbk/MiSub',
+withDefaults(
+  defineProps<{
+    href?: string;
+    className?: string | unknown[] | Record<string, unknown>;
+  }>(),
+  {
+    href: 'https://github.com/wkwbk/MiSub',
+    className: '',
   },
-  className: {
-    type: [String, Array, Object],
-    default: '',
-  },
-});
+);
 </script>
 
 <template>

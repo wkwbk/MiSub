@@ -1,22 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 
-defineProps({
-  textSizeClass: {
-    type: String,
-    default: 'text-lg',
+withDefaults(
+  defineProps<{
+    textSizeClass?: string;
+    iconSize?: number;
+    // 跳转目标：已登录时由调用方传入 /dashboard，避免先落到 "/" 再被重定向，
+    // 造成仪表盘组件树卸载后重新挂载（定时器重启、数据重复校验、界面闪烁）。
+    to?: string;
+  }>(),
+  {
+    textSizeClass: 'text-lg',
+    iconSize: 28,
+    to: '/',
   },
-  iconSize: {
-    type: Number,
-    default: 28,
-  },
-  // 跳转目标：已登录时由调用方传入 /dashboard，避免先落到 "/" 再被重定向，
-  // 造成仪表盘组件树卸载后重新挂载（定时器重启、数据重复校验、界面闪烁）。
-  to: {
-    type: String,
-    default: '/',
-  },
-});
+);
 
 // 伪装开启时服务端会对未鉴权的 /logo.png 返回伪装页或 404（有意的指纹防护），
 // 浏览器随后会显示「图片损坏」占位符。这里降级为内联图标，保持视觉完整。

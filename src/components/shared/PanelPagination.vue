@@ -1,50 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { DEFAULT_LIST_PAGE_SIZE, LIST_PAGE_SIZE_OPTIONS } from '@/constants/pagination.js';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  variant: {
-    type: String,
-    default: 'simple',
+const props = withDefaults(
+  defineProps<{
+    variant?: string;
+    currentPage?: number;
+    totalPages?: number;
+    totalItems?: number;
+    itemsPerPage?: number;
+    itemsPerPageOptions?: number[];
+    showItemsPerPage?: boolean;
+    showTotalItems?: boolean;
+    hideWhenSinglePage?: boolean;
+  }>(),
+  {
+    variant: 'simple',
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: DEFAULT_LIST_PAGE_SIZE,
+    itemsPerPageOptions: () => [...LIST_PAGE_SIZE_OPTIONS],
+    showItemsPerPage: false,
+    showTotalItems: false,
+    hideWhenSinglePage: true,
   },
-  currentPage: {
-    type: Number,
-    default: 1,
-  },
-  totalPages: {
-    type: Number,
-    default: 1,
-  },
-  totalItems: {
-    type: Number,
-    default: 0,
-  },
-  itemsPerPage: {
-    type: Number,
-    default: DEFAULT_LIST_PAGE_SIZE,
-  },
-  itemsPerPageOptions: {
-    type: Array,
-    default: () => [...LIST_PAGE_SIZE_OPTIONS],
-  },
-  showItemsPerPage: {
-    type: Boolean,
-    default: false,
-  },
-  showTotalItems: {
-    type: Boolean,
-    default: false,
-  },
-  hideWhenSinglePage: {
-    type: Boolean,
-    default: true,
-  },
-});
+);
 
-const emit = defineEmits(['change-page', 'update:itemsPerPage']);
+const emit = defineEmits<{
+  'change-page': [page: number];
+  'update:itemsPerPage': [itemsPerPage: number];
+}>();
 
 const { t } = useI18n();
 
@@ -69,7 +58,7 @@ const shouldShow = computed(() => {
   return props.totalPages > 1;
 });
 
-const pageInput = ref('');
+const pageInput = ref<string | number>('');
 
 watch(
   () => props.currentPage,
@@ -79,8 +68,8 @@ watch(
   { immediate: true },
 );
 
-function emitPageChange(page) {
-  const parsed = parseInt(page, 10);
+function emitPageChange(page: string | number) {
+  const parsed = parseInt(String(page), 10);
   if (Number.isNaN(parsed)) return;
 
   const clamped = Math.min(Math.max(parsed, 1), Math.max(props.totalPages, 1));
@@ -93,8 +82,8 @@ function jumpToPage() {
   emitPageChange(pageInput.value);
 }
 
-function handleItemsPerPageChange(value) {
-  const parsed = parseInt(value, 10);
+function handleItemsPerPageChange(value: string | number) {
+  const parsed = parseInt(String(value), 10);
   if (!Number.isNaN(parsed)) {
     emit('update:itemsPerPage', parsed);
   }

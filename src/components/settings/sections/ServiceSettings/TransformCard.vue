@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { ChevronDown, Cpu, FileText, Info, RotateCcw, Server, SlidersHorizontal, X } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
@@ -14,14 +16,25 @@ import { testSubconverterBackend } from '@/lib/api.js';
 import { useI18n } from '@/i18n/index.js';
 import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
 
+interface BackendTestStatus {
+  success: boolean;
+  message: string;
+  endpoint: string;
+  elapsedMs?: number;
+}
+
+interface EngineSettingsSnapshot {
+  builtinSkipCertVerify?: boolean;
+  builtinEnableUdp?: boolean;
+  transformConfigMode?: string;
+  transformConfig?: string;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+}>();
 
 if (!props.settings.builtinTransform || typeof props.settings.builtinTransform !== 'object') {
   props.settings.builtinTransform = normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
@@ -52,7 +65,7 @@ const ruleSourceSelection = computed({
     // 兼容历史保存的 preset / custom / custom_template，全部统一归入「规则模板」
     return 'preset';
   },
-  set: (val) => {
+  set: (val: string) => {
     if (!props.settings.builtinTransform) {
       props.settings.builtinTransform = normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
     }
@@ -72,14 +85,16 @@ const ruleSourceSelection = computed({
 const isVisualMode = computed(() => ruleSourceSelection.value === 'visual' && isBuiltinEngine.value);
 const isTemplateMode = computed(() => ruleSourceSelection.value === 'preset');
 
-const selectedAsset = ref(null);
+const selectedAsset = ref<Record<string, any> | null>(null);
 const showRuleTemplateModal = ref(false);
 const activePinia = getActivePinia();
-const ruleTemplates = activePinia ? storeToRefs(useDataStore()).ruleTemplates : ref([]);
+const ruleTemplates = activePinia
+  ? (storeToRefs(useDataStore()).ruleTemplates as Ref<Array<Record<string, any>>>)
+  : ref<Array<Record<string, any>>>([]);
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
 const isCustomTemplateMode = computed(() => props.settings.transformConfigMode === 'custom_template');
 
-function handleRuleTemplatesSaved(savedTemplateId) {
+function handleRuleTemplatesSaved(savedTemplateId: string) {
   if (!isTemplateMode.value || !savedTemplateId) return;
   const current = String(props.settings.transformConfig || '').trim();
   const stillExists = (ruleTemplates.value || []).some(
@@ -140,10 +155,10 @@ const isBuiltinEngine = computed(
   () => props.settings.subconverter.engineMode === 'builtin' || props.settings.subconverter.engineMode === '',
 );
 const isExternalEngine = computed(() => props.settings.subconverter.engineMode === 'external');
-const backendTestStatus = ref(null);
+const backendTestStatus = ref<BackendTestStatus | null>(null);
 const isTestingBackend = ref(false);
-const previousEngineSettings = ref(null);
-const restoreEngineSnapshot = ref(null);
+const previousEngineSettings = ref<EngineSettingsSnapshot | null>(null);
+const restoreEngineSnapshot = ref<EngineSettingsSnapshot | null>(null);
 const showEngineChangeWarning = ref(false);
 const engineChangeNoticeDismissed = ref(false);
 const backendTestToneClass = computed(() => {
@@ -162,12 +177,12 @@ async function handleTestBackend() {
     const result = await testSubconverterBackend(backend, 'clash');
     if (props.settings.subconverter.defaultBackend !== backend) return;
     backendTestStatus.value = {
-      success: Boolean(result?.success || result?.available),
+      success: Boolean(result?.success || ('available' in result && result.available)),
       message: result?.message || result?.error || t('settings.transformBackendTestFailed'),
-      endpoint: result?.endpoint || '',
-      elapsedMs: result?.elapsedMs,
+      endpoint: 'endpoint' in result && typeof result.endpoint === 'string' ? result.endpoint : '',
+      elapsedMs: 'elapsedMs' in result && typeof result.elapsedMs === 'number' ? result.elapsedMs : undefined,
     };
-  } catch (error) {
+  } catch (error: any) {
     if (props.settings.subconverter.defaultBackend === backend) {
       backendTestStatus.value = {
         success: false,
@@ -533,7 +548,7 @@ watch(
           </p>
           <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
-              :aria-busy="String(isTestingBackend)"
+              :aria-busy="isTestingBackend"
               :disabled="!isExternalEngine || isTestingBackend"
               class="inline-flex items-center justify-center rounded-md border border-line bg-transparent px-3.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-60"
               data-testid="test-subconverter-backend"

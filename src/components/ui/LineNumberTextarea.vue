@@ -1,37 +1,34 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 
-const props = defineProps({
-  modelValue: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string;
+    id?: string;
+    rows?: number | string;
+    placeholder?: string;
+    disabled?: boolean;
+    textareaClass?: string;
+  }>(),
+  {
+    modelValue: '',
+    id: undefined,
+    rows: 8,
+    placeholder: '',
+    disabled: false,
+    textareaClass: '',
   },
-  id: {
-    type: String,
-    default: undefined,
-  },
-  rows: {
-    type: [Number, String],
-    default: 8,
-  },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  textareaClass: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits(['update:modelValue', 'focus', 'blur', 'input']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+  focus: [event: FocusEvent];
+  blur: [event: FocusEvent];
+  input: [event: Event];
+}>();
 
 const isFocused = ref(false);
-const scrollerRef = ref(null);
+const scrollerRef = ref<HTMLDivElement | null>(null);
 const scrollTop = ref(0);
 
 const lineCount = computed(() => {
@@ -59,18 +56,18 @@ const syncScroll = () => {
   scrollTop.value = scrollerRef.value.scrollTop;
 };
 
-const handleInput = (event) => {
-  emit('update:modelValue', event.target.value);
+const handleInput = (event: Event) => {
+  emit('update:modelValue', (event.target as HTMLTextAreaElement).value);
   emit('input', event);
   nextTick(syncScroll);
 };
 
-const handleFocus = (event) => {
+const handleFocus = (event: FocusEvent) => {
   isFocused.value = true;
   emit('focus', event);
 };
 
-const handleBlur = (event) => {
+const handleBlur = (event: FocusEvent) => {
   isFocused.value = false;
   emit('blur', event);
 };

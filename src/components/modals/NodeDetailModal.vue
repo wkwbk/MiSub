@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Check, Copy, X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -6,39 +6,49 @@ import { parseNodeDetail } from '@/utils/node-detail.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import type { NodeInspectInfo } from '@/composables/manual-nodes/filters.js';
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
-  node: {
-    type: Object,
-    default: null,
-  },
-  inspectInfo: {
-    type: Object,
-    default: null,
-  },
-  zIndex: {
-    type: [String, Number],
-    default: 'var(--z-modal-popover)',
-  },
-});
+interface NetworkDisplayItem {
+  key: string;
+  label: string;
+  display: string;
+  copyable: boolean;
+}
 
-const emit = defineEmits(['update:show']);
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    node?: { url?: string; name?: string } | string | null;
+    inspectInfo?: NodeInspectInfo | null;
+    zIndex?: string | number;
+  }>(),
+  {
+    show: false,
+    node: null,
+    inspectInfo: null,
+    zIndex: 'var(--z-modal-popover)',
+  },
+);
+
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const activeTab = ref('structured');
+const activeTab = ref<'structured' | 'yaml' | 'json'>('structured');
 const copiedKey = ref('');
 
 const detail = computed(() => parseNodeDetail(props.node));
 
-const networkItems = computed(() => {
+const networkItems = computed<NetworkDisplayItem[]>(() => {
   const info = props.inspectInfo;
   if (!info) return [];
-  const items = [];
+  const items: NetworkDisplayItem[] = [];
+  const cdnProvider = typeof info.cdnProvider === 'string' ? info.cdnProvider : '';
+  const asn = typeof info.asn === 'string' ? info.asn : '';
+  const org = typeof info.org === 'string' ? info.org : '';
+
   if (info.ip) {
     items.push({ key: 'network.ip', label: t('manualNodes.resolvedIp'), display: info.ip, copyable: true });
   }
@@ -60,22 +70,22 @@ const networkItems = computed(() => {
   if (info.networkType && info.networkType !== 'unknown') {
     const typeText =
       info.networkType === 'cdn'
-        ? `${t('manualNodes.badgeCdn')}${info.cdnProvider && info.cdnProvider !== 'CDN' ? ` (${info.cdnProvider})` : ''}`
+        ? `${t('manualNodes.badgeCdn')}${cdnProvider && cdnProvider !== 'CDN' ? ` (${cdnProvider})` : ''}`
         : info.networkType === 'relay'
           ? t('manualNodes.badgeRelay')
           : t('manualNodes.badgeDirect');
     items.push({ key: 'network.type', label: 'Route', display: typeText, copyable: false });
   }
-  if (info.asn) {
-    items.push({ key: 'network.asn', label: 'ASN', display: info.asn, copyable: true });
+  if (asn) {
+    items.push({ key: 'network.asn', label: 'ASN', display: asn, copyable: true });
   }
-  if (info.org) {
-    items.push({ key: 'network.org', label: 'ISP / Org', display: info.org, copyable: false });
+  if (org) {
+    items.push({ key: 'network.org', label: 'ISP / Org', display: org, copyable: false });
   }
   return items;
 });
 
-const sectionTitleMap = {
+const sectionTitleMap: Record<string, string> = {
   basic: 'nodeDetail.sectionBasic',
   network: 'nodeDetail.sectionNetwork',
   auth: 'nodeDetail.sectionAuth',
@@ -94,7 +104,7 @@ watch(
   },
 );
 
-const copyText = async (text, key) => {
+const copyText = async (text: string, key: string): Promise<void> => {
   if (!text) return;
   const copied = await copyTextToClipboard(text);
   if (copied) {
@@ -110,7 +120,7 @@ const copyText = async (text, key) => {
   }
 };
 
-const closeModal = () => {
+const closeModal = (): void => {
   emit('update:show', false);
 };
 </script>

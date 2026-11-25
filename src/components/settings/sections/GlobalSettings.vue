@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, watch } from 'vue';
 import { List, Map, SlidersHorizontal } from '@lucide/vue';
 import OperatorChain from '@/components/operators/OperatorChain.vue';
@@ -6,15 +6,20 @@ import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+
+interface RegionOverrideRule {
+  pattern: string;
+  region: string;
+  flags: string;
+  [key: string]: unknown;
+}
 
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
 
 const prefixToggleOptions = [
   { labelKey: 'profiles.optionEnabled', value: true },
@@ -32,33 +37,39 @@ const globalSwitchSelects = computed(() => [
   {
     labelKey: 'settings.globalManualNodePrefixSwitch',
     value: props.settings.defaultPrefixSettings.enableManualNodes,
-    update: (val) => {
+    update: (val: boolean) => {
       props.settings.defaultPrefixSettings.enableManualNodes = val;
     },
   },
   {
     labelKey: 'settings.globalSubscriptionPrefixSwitch',
     value: props.settings.defaultPrefixSettings.enableSubscriptions,
-    update: (val) => {
+    update: (val: boolean) => {
       props.settings.defaultPrefixSettings.enableSubscriptions = val;
     },
   },
   {
     labelKey: 'settings.globalFlagEmojiSwitch',
     value: props.settings.enableFlagEmoji,
-    update: (val) => {
+    update: (val: boolean) => {
       props.settings.enableFlagEmoji = val;
     },
   },
 ]);
+
+const regionOverrides = computed<RegionOverrideRule[]>(() =>
+  Array.isArray(props.settings.regionOverrides) ? (props.settings.regionOverrides as RegionOverrideRule[]) : [],
+);
+
 const buildDefaultPrefixSettings = () => ({
   enableManualNodes: true,
   enableSubscriptions: true,
   manualNodePrefix: 'Manual Node',
+  subscriptionPrefix: '',
   prependTagName: false,
 });
 
-function ensureDefaults() {
+function ensureDefaults(): void {
   if (!props.settings) return;
 
   if (!props.settings.defaultPrefixSettings) {
@@ -74,12 +85,12 @@ function ensureDefaults() {
   }
 }
 
-function addRegionOverride() {
+function addRegionOverride(): void {
   ensureDefaults();
   props.settings.regionOverrides.push({ pattern: '', region: '美国', flags: 'i' });
 }
 
-function removeRegionOverride(index) {
+function removeRegionOverride(index: number): void {
   ensureDefaults();
   props.settings.regionOverrides.splice(index, 1);
 }
@@ -132,13 +143,13 @@ watch(() => props.settings, ensureDefaults, { immediate: true });
         </button>
       </template>
 
-      <p v-if="!settings.regionOverrides.length" class="text-xs text-fg-muted">
+      <p v-if="!regionOverrides.length" class="text-xs text-fg-muted">
         {{ t('settings.regionOverridesEmpty') }}
       </p>
 
       <div v-else class="divide-y divide-line-subtle">
         <div
-          v-for="(rule, index) in settings.regionOverrides"
+          v-for="(rule, index) in regionOverrides"
           :key="index"
           class="grid grid-cols-1 gap-4 py-4 first:pt-0 last:pb-0 md:grid-cols-[1fr_160px_96px_auto]"
         >

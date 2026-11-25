@@ -26,6 +26,11 @@ jobs:
       - name: Run static lint
         run: pnpm exec oxlint --deny-warnings
 
+      - name: Run TypeScript type check
+        run: |
+          pnpm exec tsc --noEmit
+          pnpm exec vue-tsc --noEmit
+
       - name: Run unit tests
         run: pnpm test
 

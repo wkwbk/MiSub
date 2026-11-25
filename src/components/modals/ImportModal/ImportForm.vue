@@ -1,25 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 import { computed } from 'vue';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  subscriptionUrl: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    subscriptionUrl?: string;
+    isLoading?: boolean;
+  }>(),
+  {
+    subscriptionUrl: '',
+    isLoading: false,
   },
-  isLoading: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['update:subscriptionUrl', 'submit']);
+const emit = defineEmits<{
+  'update:subscriptionUrl': [value: string];
+  submit: [];
+}>();
 
 const urlModel = computed({
   get: () => props.subscriptionUrl,
-  set: (val) => emit('update:subscriptionUrl', val),
+  set: (val: string) => emit('update:subscriptionUrl', val),
 });
 </script>
 

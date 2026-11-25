@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { getActivePinia } from 'pinia';
 import { ChevronDown, ClipboardList, Loader2 } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -12,29 +13,55 @@ import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 
-const props = defineProps({
-  show: Boolean,
-  filterProfileId: {
-    type: String,
-    default: '',
-  },
-  filterProfileName: {
-    type: String,
-    default: '',
-  },
-});
+interface AccessLogItem {
+  id: string;
+  profileId?: string;
+  profileName?: string;
+  status?: string;
+  userAgent?: string;
+  timestamp?: string | number;
+  clientIp?: string;
+  geoInfo?: {
+    country?: string;
+    city?: string;
+    isp?: string;
+    asn?: string | number;
+  };
+  details?: {
+    duration?: number;
+    totalNodes?: number;
+    sourceCount?: number;
+    successCount?: number;
+  };
+}
 
-const emit = defineEmits(['update:show']);
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    filterProfileId?: string;
+    filterProfileName?: string;
+  }>(),
+  {
+    show: false,
+    filterProfileId: '',
+    filterProfileName: '',
+  },
+);
 
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
+
+import type { ToastType } from '@/stores/useToastStore.js';
 const activePinia = getActivePinia();
 const toastStore = activePinia ? useToastStore() : null;
-const showToast = (msg, type) => toastStore?.showToast?.(msg, type);
+const showToast = (msg: string, type: ToastType = 'info') => toastStore?.showToast?.(msg, type);
 const dataStore = activePinia ? useDataStore() : null;
 const { t, locale } = useI18n();
-const logs = ref([]);
+const logs = ref<AccessLogItem[]>([]);
 const isLoading = ref(false);
 const isClearing = ref(false);
-const expandedLogId = ref(null);
+const expandedLogId = ref<string | null>(null);
 
 const currentPage = ref(1);
 const pageSize = 20;
@@ -64,7 +91,7 @@ const fetchLogs = async () => {
   if (isLoading.value) return;
   isLoading.value = true;
   try {
-    logs.value = await fetchAccessLogsWithQuery(queryClient);
+    logs.value = (await fetchAccessLogsWithQuery(queryClient)) as AccessLogItem[];
     currentPage.value = 1;
   } catch {
     showToast(t('logs.fetchFailed'), 'error');
@@ -74,7 +101,7 @@ const fetchLogs = async () => {
 };
 
 const targetProfileDownloadCount = computed(() => {
-  const list = dataStore?.profiles || [];
+  const list = (dataStore?.profiles || []) as ProfileConfig[];
   if (props.filterProfileId) {
     const p = list.find((item) => item?.id === props.filterProfileId);
     return Number(p?.downloadCount) || 0;
@@ -111,6 +138,7 @@ const clearLogs = async () => {
       profileId: targetProfileId,
       profileName: targetProfileName,
     });
+    const storeProfiles = (dataStore?.profiles || []) as ProfileConfig[];
     if (targetProfileId) {
       logs.value = logs.value.filter(
         (log) =>
@@ -119,38 +147,38 @@ const clearLogs = async () => {
             (!log.profileId && targetProfileName && log.profileName === targetProfileName)
           ),
       );
-      const target = (dataStore?.profiles || []).find((p) => p?.id === targetProfileId);
+      const target = storeProfiles.find((p) => p?.id === targetProfileId);
       if (target) target.downloadCount = 0;
     } else if (targetProfileName) {
       logs.value = logs.value.filter((log) => log.profileName !== targetProfileName);
-      (dataStore?.profiles || []).forEach((p) => {
+      storeProfiles.forEach((p) => {
         if (p?.name === targetProfileName) p.downloadCount = 0;
       });
     } else {
       logs.value = [];
-      (dataStore?.profiles || []).forEach((p) => {
+      storeProfiles.forEach((p) => {
         if (p) p.downloadCount = 0;
       });
     }
     currentPage.value = 1;
     showToast(t('logs.clearSuccess'), 'success');
-  } catch (e) {
+  } catch {
     showToast(t('logs.clearFailed'), 'error');
   } finally {
     isClearing.value = false;
   }
 };
 
-const formatTime = (ts) => {
+const formatTime = (ts?: string | number) => {
   if (!ts) return '-';
   return new Date(ts).toLocaleString(locale.value, { hour12: false });
 };
 
-const toggleExpand = (id) => {
+const toggleExpand = (id: string) => {
   expandedLogId.value = expandedLogId.value === id ? null : id;
 };
 
-const logListScrollRef = ref(null);
+const logListScrollRef = ref<HTMLDivElement | null>(null);
 
 const scrollLogListToStart = () => {
   nextTick(() => {
@@ -253,7 +281,7 @@ watch(
                   <span
                     class="shrink-0 px-1.5 py-0.5 rounded-md border border-line bg-transparent font-mono text-xs font-medium text-fg-muted whitespace-nowrap"
                   >
-                    {{ getClientInfo(log.userAgent).name }}
+                    {{ getClientInfo(log.userAgent || '').name }}
                   </span>
                 </div>
 

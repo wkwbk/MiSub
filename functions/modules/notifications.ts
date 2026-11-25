@@ -1,0 +1,459 @@
+/**
+ * 通知功能模块
+ * 处理业务层逻辑：订阅到期和流量预警，Cron 任务报告。
+ * 核心发送逻辑已抽离至 functions/services/notification-service.js
+ */
+
+import type { MisubItem, SubscriptionUserInfo } from '@misub/core/types.js';
+import { formatBytes } from '@misub/core/utils/format-utils.js';
+import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
+import type { Env, StorageAdapter } from '../types.js';
+import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
+import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
+import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+// 导入核心通知服务及工具
+import { debugTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
+export { sendEnhancedTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
+
+export interface NotificationSettings {
+  botToken?: string;
+  chatId?: string;
+  notifyThresholdDays?: number;
+  notifyThresholdPercent?: number;
+  tokenAutoRotate?: {
+    enabled?: boolean;
+    intervalDays?: number;
+    lastRotatedAt?: string | null;
+  };
+  [key: string]: unknown;
+}
+
+export type NotifiableSubscription = MisubItem & {
+  userInfo?: SubscriptionUserInfo | null;
+  lastNotifiedExpire?: number;
+  lastNotifiedTraffic?: number;
+  nodeCount?: number;
+  nodeCountChange?: {
+    previous: number;
+    current: number;
+    diff: number;
+    timestamp: number;
+  };
+};
+
+interface CronSubProcessResult {
+  name: string;
+  success: boolean;
+  traffic?: boolean;
+  nodes?: boolean;
+  error?: string;
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function getErrorStatus(error: unknown): number | undefined {
+  if (error && typeof error === 'object' && 'status' in error && typeof error.status === 'number') {
+    return error.status;
+  }
+  return undefined;
+}
+
+/**
+ * 测试 Telegram 通知
+ */
+export async function handleTestNotificationRequest(
+  request: Request,
+  env: Env | Record<string, unknown> | null = null,
+): Promise<Response> {
+  if (request.method !== 'POST') {
+    return createErrorResponse('Method Not Allowed', 405);
+  }
+
+  try {
+    const rawBody = await readJsonWithLimit(request, JSON_BODY_LIMITS.small);
+    const body = rawBody && typeof rawBody === 'object' && !Array.isArray(rawBody)
+      ? (rawBody as Record<string, unknown>)
+      : {};
+    let botToken = String(body.botToken || '').trim();
+    let chatId = String(body.chatId || '').trim();
+
+    if ((!botToken || !chatId) && env) {
+      try {
+        const { StorageFactory } = await import('../storage-adapter.js');
+        const storageAdapter = StorageFactory.createAdapter(env);
+        if (storageAdapter && storageAdapter.type !== 'noop') {
+          const savedSettings = (await storageAdapter.get<NotificationSettings>(STORAGE_KEY_SETTINGS)) || {};
+          if (!botToken) botToken = String(savedSettings.botToken || '').trim();
+          if (!chatId) chatId = String(savedSettings.chatId || '').trim();
+        }
+      } catch {}
+    }
+
+    const settings = { botToken, chatId };
+
+    const result = await debugTgNotification(
+      settings,
+      '🔔 <b>通知测试</b> 🔔\n\n这是来自 MiSub 的测试消息，用于验证您的配置是否正确。',
+    );
+
+    if (result.success) {
+      return createJsonResponse({ success: true, detail: result.response });
+    }
+    return createJsonResponse({ success: false, error: result.error, detail: result.response }, 400);
+  } catch (e) {
+    return createErrorResponse(getErrorMessage(e), getErrorStatus(e) || 500);
+  }
+}
+
+async function loadSubscriptionsForCron(storageAdapter: StorageAdapter): Promise<MisubItem[]> {
+  if (typeof storageAdapter.getRemoteSubscriptions === 'function') {
+    const subscriptions = await storageAdapter.getRemoteSubscriptions();
+    if (Array.isArray(subscriptions)) {
+      return subscriptions;
+    }
+  }
+  const subscriptions = await storageAdapter.getAllSubscriptions();
+  return Array.isArray(subscriptions) ? subscriptions : [];
+}
+
+async function persistSubscriptionsForCron(
+  storageAdapter: StorageAdapter,
+  subscriptions: MisubItem[],
+): Promise<void> {
+  await storageAdapter.putAllSubscriptions(subscriptions);
+}
+
+/**
+ * 检查并发送订阅到期和流量预警通知
+ */
+export async function checkAndNotify(
+  sub: NotifiableSubscription | null | undefined,
+  settings: NotificationSettings,
+  _env?: Env | Record<string, unknown> | null,
+): Promise<void> {
+  if (!sub?.enabled || !sub.userInfo) return;
+
+  const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  // 1. 检查订阅到期
+  if (sub.userInfo.expire) {
+    const expiryDate = new Date(sub.userInfo.expire * 1000);
+    const daysRemaining = Math.ceil((expiryDate.getTime() - now) / ONE_DAY_MS);
+
+    if (daysRemaining <= (settings.notifyThresholdDays || 7)) {
+      if (!sub.lastNotifiedExpire || now - sub.lastNotifiedExpire > ONE_DAY_MS) {
+        const message = `🗓️ <b>订阅临期提醒</b> 🗓️
+
+<b>订阅名称:</b> <code>${tgEscape(sub.name || '未命名')}</code>
+<b>状态:</b> <code>${tgEscape(daysRemaining < 0 ? '已过期' : `仅剩 ${daysRemaining} 天到期`)}</code>
+<b>到期日期:</b> <code>${expiryDate.toLocaleDateString('zh-CN')}</code>`;
+
+        const sent = await sendTgNotification(settings, message);
+        if (sent) {
+          sub.lastNotifiedExpire = now;
+        }
+      }
+    }
+  }
+
+  // 2. 检查流量使用
+  const { upload = 0, download = 0, total = 0 } = sub.userInfo;
+  if (total > 0) {
+    const used = upload + download;
+    const usagePercent = Math.round((used / total) * 100);
+
+    if (usagePercent >= (settings.notifyThresholdPercent || 90)) {
+      if (!sub.lastNotifiedTraffic || now - sub.lastNotifiedTraffic > ONE_DAY_MS) {
+        const message = `📈 <b>流量预警提醒</b> 📈
+
+<b>订阅名称:</b> <code>${tgEscape(sub.name || '未命名')}</code>
+<b>状态:</b> <code>已使用 ${usagePercent}%</code>
+<b>详情:</b> <code>${tgEscape(formatBytes(used))} / ${tgEscape(formatBytes(total))}</code>`;
+
+        const sent = await sendTgNotification(settings, message);
+        if (sent) {
+          sub.lastNotifiedTraffic = now;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * 处理定时任务的通知更新（并行处理版本）
+ */
+export async function handleCronTrigger(env: Env | Record<string, unknown> | null | undefined): Promise<Response> {
+  const resolvedEnv: Env = env ?? {};
+  const { StorageFactory } = await import('../storage-adapter.js');
+
+  const storageAdapter = StorageFactory.createAdapter(resolvedEnv);
+  const originalSubs = await loadSubscriptionsForCron(storageAdapter);
+  const allSubs = JSON.parse(JSON.stringify(originalSubs)) as NotifiableSubscription[];
+  const settings = ((await storageAdapter.get<NotificationSettings>(STORAGE_KEY_SETTINGS)) ||
+    DEFAULT_SETTINGS) as NotificationSettings;
+
+  let tokenRotationResult: unknown = null;
+  if (settings?.tokenAutoRotate?.enabled === true && isTokenRotationDue(settings)) {
+    tokenRotationResult = await rotateSubscriptionToken(resolvedEnv, {
+      force: false,
+      source: 'cron-trigger',
+    }).catch((err: unknown) => {
+      const errorMessage = getErrorMessage(err);
+      console.warn('[Cron] Token auto-rotation failed:', errorMessage);
+      return { rotated: false, error: errorMessage || 'Rotation failed' };
+    });
+  }
+
+  const httpSubscriptions = allSubs.filter(
+    (sub) => sub.url && sub.url.startsWith('http') && sub.enabled && isAutoUpdateEnabled(sub),
+  );
+
+  console.info(`[Cron] Starting parallel update for ${httpSubscriptions.length} subscriptions`);
+
+  if (httpSubscriptions.length === 0) {
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'No auto-updatable subscriptions found.',
+        ...(tokenRotationResult ? { tokenRotation: tokenRotationResult } : {}),
+        summary: {
+          total: 0,
+          updated: 0,
+          failed: 0,
+          changes: false,
+          failed_subscriptions: [],
+        },
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
+  const startTime = Date.now();
+
+  const CONCURRENCY = 6;
+  const TIMEOUT = 15000;
+
+  const nodeRegex = /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|anytls|socks5|socks):\/\//gm;
+  let changesMade = false;
+  let updatedCount = 0;
+  let failedCount = 0;
+  const failedSubscriptions: Array<{ name: string; error: string }> = [];
+
+  async function processSubscription(sub: NotifiableSubscription): Promise<CronSubProcessResult> {
+    try {
+      const fetchWithTimeout = (url: string, options: RequestInit): Promise<Response> => {
+        const { cf, ...requestInit } = options;
+        const fetchCall = cf ? fetch(new Request(url, requestInit), { cf }) : fetch(new Request(url, requestInit));
+        return Promise.race([
+          fetchCall,
+          new Promise<Response>((_, reject) => setTimeout(() => reject(new Error('Timeout')), TIMEOUT)),
+        ]);
+      };
+
+      const [trafficResult, nodeCountResult] = await Promise.allSettled([
+        fetchWithTimeout(sub.url, {
+          headers: { 'User-Agent': 'clash-verge/v2.4.3' },
+          redirect: 'follow',
+          cf: { insecureSkipVerify: true },
+        }),
+        fetchWithTimeout(sub.url, {
+          headers: { 'User-Agent': SYSTEM_CONSTANTS.FETCHER_USER_AGENT },
+          redirect: 'follow',
+          cf: { insecureSkipVerify: true },
+        }),
+      ]);
+
+      let hasTrafficUpdate = false;
+      let hasNodeCountUpdate = false;
+
+      if (trafficResult.status === 'fulfilled' && trafficResult.value.ok) {
+        const userInfoHeader = trafficResult.value.headers.get('subscription-userinfo');
+        if (userInfoHeader) {
+          const info: Record<string, string | number> = {};
+          userInfoHeader.split(';').forEach((part) => {
+            const [key, value] = part.trim().split('=');
+            if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
+          });
+          const originalSub = allSubs.find((s) => s.id === sub.id);
+          if (originalSub) {
+            originalSub.userInfo = info as SubscriptionUserInfo;
+            await checkAndNotify(originalSub, settings, env);
+          }
+          hasTrafficUpdate = true;
+        }
+      }
+
+      if (nodeCountResult.status === 'fulfilled' && nodeCountResult.value.ok) {
+        const text = await nodeCountResult.value.text();
+        let decoded = '';
+        try {
+          decoded = atob(text.replace(/\s/g, ''));
+        } catch {
+          decoded = text;
+        }
+        const matches = decoded.match(nodeRegex);
+        if (matches) {
+          const originalSub = allSubs.find((s) => s.id === sub.id);
+          if (originalSub) {
+            const previousCount = originalSub.nodeCount;
+            const newCount = matches.length;
+            originalSub.nodeCount = newCount;
+
+            if (previousCount && previousCount > 0) {
+              const diff = newCount - previousCount;
+              const changePercent = Math.abs(diff) / previousCount;
+              const significantChange = Math.abs(diff) >= 10 || changePercent >= 0.2;
+
+              if (significantChange) {
+                originalSub.nodeCountChange = {
+                  previous: previousCount,
+                  current: newCount,
+                  diff: diff,
+                  timestamp: Date.now(),
+                };
+              }
+            }
+          }
+          hasNodeCountUpdate = true;
+        }
+      }
+
+      return {
+        name: sub.name,
+        success: hasTrafficUpdate || hasNodeCountUpdate,
+        traffic: hasTrafficUpdate,
+        nodes: hasNodeCountUpdate,
+      };
+    } catch (e) {
+      return {
+        name: sub.name,
+        success: false,
+        error: getErrorMessage(e),
+      };
+    }
+  }
+
+  async function runWithConcurrency<T, R>(
+    items: T[],
+    concurrency: number,
+    fn: (item: T) => Promise<R>,
+  ): Promise<R[]> {
+    const results: Array<Promise<R>> = [];
+    const executing = new Set<Promise<R>>();
+    for (const item of items) {
+      const promise = fn(item).then((result) => {
+        executing.delete(promise);
+        return result;
+      });
+      executing.add(promise);
+      results.push(promise);
+      if (executing.size >= concurrency) {
+        await Promise.race(executing);
+      }
+    }
+    return Promise.all(results);
+  }
+
+  const results = await runWithConcurrency(httpSubscriptions, CONCURRENCY, processSubscription);
+
+  for (const result of results) {
+    if (result.success) {
+      updatedCount++;
+      changesMade = true;
+    } else if (result.error) {
+      failedCount++;
+      failedSubscriptions.push({ name: result.name, error: result.error });
+    }
+  }
+
+  const nodeCountChanges: Array<{ name: string; previous: number; current: number; diff: number }> = [];
+  for (const sub of allSubs) {
+    if (sub.nodeCountChange) {
+      nodeCountChanges.push({
+        name: sub.name,
+        previous: sub.nodeCountChange.previous,
+        current: sub.nodeCountChange.current,
+        diff: sub.nodeCountChange.diff,
+      });
+      delete sub.nodeCountChange;
+    }
+  }
+
+  if (changesMade) {
+    await persistSubscriptionsForCron(storageAdapter, allSubs);
+  }
+
+  const duration = Date.now() - startTime;
+  const summary = {
+    success: true,
+    ...(tokenRotationResult ? { tokenRotation: tokenRotationResult } : {}),
+    summary: {
+      total: httpSubscriptions.length,
+      updated: updatedCount,
+      failed: failedCount,
+      changes: changesMade,
+      duration: `${duration}ms`,
+      failed_subscriptions: failedSubscriptions,
+    },
+  };
+
+  console.info(`[Cron] Completed in ${duration}ms:`, summary.summary);
+
+  // 发送节点变化通知
+  if (nodeCountChanges.length > 0 && settings.botToken && settings.chatId) {
+    let nodeChangeMessage = `📉 <b>节点数量变化提醒</b>\n\n`;
+    nodeChangeMessage += `检测到 ${nodeCountChanges.length} 个订阅的节点数量发生显著变化：\n\n`;
+
+    nodeCountChanges.slice(0, 10).forEach((change) => {
+      const changeType = change.diff > 0 ? '增加' : '减少';
+      const emoji = change.diff > 0 ? '📈' : '📉';
+      nodeChangeMessage += `${emoji} <b>${tgEscape(change.name)}</b>\n`;
+      nodeChangeMessage += `  ${tgEscape(changeType)} ${Math.abs(change.diff)} 个 (<code>${change.previous}</code> → <code>${change.current}</code>)\n`;
+    });
+
+    if (nodeCountChanges.length > 10) {
+      nodeChangeMessage += `\n... 还有 ${nodeCountChanges.length - 10} 个订阅有变化`;
+    }
+
+    await sendTgNotification(settings, nodeChangeMessage);
+  }
+
+  // 发送更新摘要
+  if (settings.botToken && settings.chatId) {
+    let updateMessage = `🔄 <b>订阅自动更新完成</b>\n\n`;
+    updateMessage += `📊 <b>统计信息</b>\n`;
+    updateMessage += `• 总订阅数: <code>${httpSubscriptions.length}</code> 个\n`;
+    updateMessage += `• 成功更新: <code>${updatedCount}</code> 个\n`;
+
+    if (failedCount > 0) {
+      updateMessage += `• 更新失败: <code>${failedCount}</code> 个\n`;
+    }
+
+    if (nodeCountChanges.length > 0) {
+      updateMessage += `• 节点变化: <code>${nodeCountChanges.length}</code> 个订阅\n`;
+    }
+
+    updateMessage += `\n⏱️ 耗时: <code>${duration}ms</code>\n`;
+
+    if (failedSubscriptions.length > 0) {
+      updateMessage += `\n❌ <b>失败详情:</b>\n`;
+      failedSubscriptions.slice(0, 5).forEach((f) => {
+        const errorShort = f.error.length > 30 ? f.error.substring(0, 30) + '...' : f.error;
+        updateMessage += `• ${tgEscape(f.name)}: <code>${tgEscape(errorShort)}</code>\n`;
+      });
+    }
+
+    await sendTgNotification(settings, updateMessage);
+  }
+
+  return new Response(JSON.stringify(summary), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}

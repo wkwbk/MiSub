@@ -1,24 +1,46 @@
-<script setup>
+<script setup lang="ts">
 import { ChevronDown, X } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({}),
-  },
-});
+interface RenameRegexRule {
+  pattern: string;
+  replacement: string;
+  flags?: string;
+}
 
-const emit = defineEmits(['update:modelValue']);
+interface RenameParams {
+  regex?: {
+    enabled?: boolean;
+    rules?: RenameRegexRule[];
+  };
+  template?: {
+    enabled?: boolean;
+    template?: string;
+    offset?: number;
+  };
+}
+
+const props = withDefaults(
+  defineProps<{
+    modelValue?: RenameParams;
+  }>(),
+  {
+    modelValue: () => ({}),
+  },
+);
+
+const emit = defineEmits<{
+  'update:modelValue': [value: RenameParams];
+}>();
 const { t } = useI18n();
 
-const updateParam = (key, value) => {
-  const newParams = { ...props.modelValue };
-  newParams[key] = { ...newParams[key], ...value };
+const updateParam = <K extends keyof RenameParams>(key: K, value: NonNullable<RenameParams[K]>) => {
+  const newParams: RenameParams = { ...props.modelValue };
+  newParams[key] = { ...(newParams[key] as Record<string, any>), ...value } as RenameParams[K];
   emit('update:modelValue', newParams);
 };
 
-const updateTemplate = (updates) => {
+const updateTemplate = (updates: Partial<NonNullable<RenameParams['template']>>) => {
   const current = props.modelValue.template || { enabled: false, template: '', offset: 1 };
   updateParam('template', { ...current, ...updates });
 };
@@ -29,7 +51,7 @@ const addRule = () => {
   updateParam('regex', current);
 };
 
-const normalizeRuleFlags = (index) => {
+const normalizeRuleFlags = (index: number) => {
   const current = { ...(props.modelValue.regex || { rules: [] }) };
   current.rules = [...(current.rules || [])];
   const rule = current.rules[index];
@@ -38,9 +60,9 @@ const normalizeRuleFlags = (index) => {
   updateParam('regex', current);
 };
 
-const removeRule = (index) => {
+const removeRule = (index: number) => {
   const current = { ...(props.modelValue.regex || { rules: [] }) };
-  current.rules = [...current.rules];
+  current.rules = [...(current.rules || [])];
   current.rules.splice(index, 1);
   updateParam('regex', current);
 };
@@ -56,7 +78,7 @@ const presetTemplates = [
   { nameKey: 'operators.templatePresetName', template: '{name}' },
 ];
 
-const applyPresetTemplate = (tpl) => {
+const applyPresetTemplate = (tpl: string) => {
   updateTemplate({ enabled: true, template: tpl });
 };
 
@@ -74,9 +96,9 @@ const presetRegexRules = [
   },
 ];
 
-const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+const statusLabel = (enabled?: boolean) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
 
-const applyPresetRegex = (rule) => {
+const applyPresetRegex = (rule: { pattern: string; replacement: string }) => {
   const current = { ...(props.modelValue.regex || { enabled: true, rules: [] }) };
   current.enabled = true;
   current.rules = [...(current.rules || []), { ...rule, flags: 'gi' }];
@@ -158,8 +180,8 @@ const applyPresetRegex = (rule) => {
                 @change="normalizeRuleFlags(idx)"
                 @input="
                   (e) => {
-                    rule.pattern = e.target.value;
-                    updateParam('regex', props.modelValue.regex);
+                    rule.pattern = (e.target as HTMLInputElement).value;
+                    updateParam('regex', props.modelValue.regex || {});
                   }
                 "
               />
@@ -173,8 +195,8 @@ const applyPresetRegex = (rule) => {
                 @change="normalizeRuleFlags(idx)"
                 @input="
                   (e) => {
-                    rule.replacement = e.target.value;
-                    updateParam('regex', props.modelValue.regex);
+                    rule.replacement = (e.target as HTMLInputElement).value;
+                    updateParam('regex', props.modelValue.regex || {});
                   }
                 "
               />
@@ -214,7 +236,7 @@ const applyPresetRegex = (rule) => {
               :value="props.modelValue.template.template || ''"
               class="w-full px-3 py-2 font-mono text-xs rounded-md bg-inset border border-line text-fg placeholder:text-fg-subtle outline-none focus:border-line-strong"
               placeholder="{emoji}{region}-{index}"
-              @input="(e) => updateTemplate({ template: e.target.value })"
+              @input="(e) => updateTemplate({ template: (e.target as HTMLInputElement).value })"
             />
             <div class="flex flex-wrap gap-1.5">
               <button
@@ -262,7 +284,7 @@ const applyPresetRegex = (rule) => {
               :value="props.modelValue.template.offset || 1"
               class="w-14 px-2 py-1 font-mono text-xs rounded-md bg-inset border border-line text-fg outline-none focus:border-line-strong"
               type="number"
-              @input="(e) => updateTemplate({ offset: parseInt(e.target.value) || 1 })"
+              @input="(e) => updateTemplate({ offset: parseInt((e.target as HTMLInputElement).value) || 1 })"
             />
           </div>
         </div>

@@ -1,28 +1,21 @@
-<script setup>
+<script setup lang="ts">
 import SectionHeader from './SectionHeader.vue';
 
-defineProps({
-  title: {
-    type: String,
-    required: true,
+withDefaults(
+  defineProps<{
+    title: string;
+    description?: string;
+    tone?: string;
+    noMargin?: boolean;
+    danger?: boolean;
+  }>(),
+  {
+    description: '',
+    tone: 'indigo',
+    noMargin: false,
+    danger: false,
   },
-  description: {
-    type: String,
-    default: '',
-  },
-  tone: {
-    type: String,
-    default: 'indigo',
-  },
-  noMargin: {
-    type: Boolean,
-    default: false,
-  },
-  danger: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 </script>
 
 <template>

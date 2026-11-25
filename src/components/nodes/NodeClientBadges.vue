@@ -1,19 +1,19 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
-import { getNodeClientCompatibility } from '@misub/core/node/client-compatibility.js';
+import { getNodeClientCompatibility, type ClientCompatibilityItem } from '@misub/core/node/client-compatibility.js';
 import { useI18n } from '@/i18n/index.js';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 
-const props = defineProps({
-  url: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    url?: string;
+    compact?: boolean;
+  }>(),
+  {
+    url: '',
+    compact: false,
   },
-  compact: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
 const { t } = useI18n();
 
@@ -24,7 +24,7 @@ const { scrollRef, scrollFadeClass, updateScrollFade } = useHorizontalScrollFade
   deps: () => compatibility.value.clients.length,
 });
 
-const getTooltip = (client) => {
+const getTooltip = (client: ClientCompatibilityItem): string => {
   if (client.supported) {
     return t('clientCompat.supportedTooltip', { client: client.label });
   }

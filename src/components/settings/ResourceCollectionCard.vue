@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -8,89 +8,72 @@ import Switch from '@/components/ui/Switch.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { api } from '@/lib/http.js';
 
-const props = defineProps({
-  title: {
-    type: String,
-    required: true,
+interface CollectionItem {
+  id: string;
+  name?: string;
+  url?: string;
+  icon?: string;
+  enabled?: boolean;
+  [key: string]: any;
+}
+
+interface CollectionConfig {
+  enabled: boolean;
+  items: CollectionItem[];
+  [key: string]: any;
+}
+
+interface CollectionTab {
+  value: string;
+  label: string;
+}
+
+const props = withDefaults(
+  defineProps<{
+    title: string;
+    description?: string;
+    tone?: string;
+    endpoint: string;
+    defaultConfig: Record<string, any>;
+    normalizeConfig: (raw: any) => CollectionConfig;
+    tabs?: CollectionTab[];
+    filterItem: (item: CollectionItem, tab: string) => boolean;
+    resolveIcon: (item: CollectionItem) => string;
+    fallbackEmoji?: string;
+    iconPlaceholder?: string;
+    getCategoryBadge?: ((item: CollectionItem) => string) | null;
+    createNewItem: (tab: string) => CollectionItem;
+    prepareEditItem?: (item: CollectionItem) => CollectionItem;
+    validateAndBuildItem: (item: CollectionItem) => { item: CollectionItem; error?: undefined } | { error: string; item?: undefined };
+    labels: Record<string, any>;
+  }>(),
+  {
+    description: '',
+    tone: 'blue',
+    tabs: () => [],
+    fallbackEmoji: '🌐',
+    iconPlaceholder: '',
+    getCategoryBadge: null,
+    prepareEditItem: (item: CollectionItem) => item,
   },
-  description: {
-    type: String,
-    default: '',
-  },
-  tone: {
-    type: String,
-    default: 'blue',
-  },
-  endpoint: {
-    type: String,
-    required: true,
-  },
-  defaultConfig: {
-    type: Object,
-    required: true,
-  },
-  normalizeConfig: {
-    type: Function,
-    required: true,
-  },
-  tabs: {
-    type: Array,
-    default: () => [],
-  },
-  filterItem: {
-    type: Function,
-    required: true,
-  },
-  resolveIcon: {
-    type: Function,
-    required: true,
-  },
-  fallbackEmoji: {
-    type: String,
-    default: '🌐',
-  },
-  iconPlaceholder: {
-    type: String,
-    default: '',
-  },
-  getCategoryBadge: {
-    type: Function,
-    default: null,
-  },
-  createNewItem: {
-    type: Function,
-    required: true,
-  },
-  prepareEditItem: {
-    type: Function,
-    default: (item) => item,
-  },
-  validateAndBuildItem: {
-    type: Function,
-    required: true,
-  },
-  labels: {
-    type: Object,
-    required: true,
-  },
-});
+);
 
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const config = ref(props.normalizeConfig(props.defaultConfig));
+const config = ref<CollectionConfig>(props.normalizeConfig(props.defaultConfig));
 const loading = ref(false);
 const activeTab = ref('all');
 const showEditModal = ref(false);
 const showResetConfirm = ref(false);
 const showDeleteConfirm = ref(false);
-const itemToDeleteId = ref(null);
+const itemToDeleteId = ref<string | null>(null);
 const isNew = ref(false);
 const saving = ref(false);
 const ordering = ref(false);
-const iconFileInput = ref(null);
+const iconFileInput = ref<HTMLInputElement | null>(null);
 const uploadingIcon = ref(false);
-const editingItem = ref(props.createNewItem('all'));
+const editingItem = ref<CollectionItem>(props.createNewItem('all'));
 
 const isDataIcon = computed(() => {
   const icon = editingItem.value?.icon;
@@ -103,7 +86,7 @@ const iconInputValue = computed({
     if (!icon || (typeof icon === 'string' && icon.startsWith('data:'))) return '';
     return icon;
   },
-  set(value) {
+  set(value: string) {
     editingItem.value = {
       ...editingItem.value,
       icon: value,
@@ -117,14 +100,14 @@ const filteredItems = computed(() => {
   return items.filter((item) => props.filterItem(item, activeTab.value));
 });
 
-const isImageIcon = (item) => {
+const isImageIcon = (item: CollectionItem) => {
   const resolved = props.resolveIcon(item);
   return Boolean(resolved && (resolved.includes('/') || resolved.startsWith('data:') || resolved.startsWith('http')));
 };
 
-const getHostname = (rawUrl) => {
+const getHostname = (rawUrl?: string) => {
   try {
-    return new URL(rawUrl).hostname.replace(/^www\./, '');
+    return new URL(rawUrl || '').hostname.replace(/^www\./, '');
   } catch {
     return rawUrl || '';
   }
@@ -159,7 +142,7 @@ const persistConfig = async (nextConfig = config.value) => {
       config.value = props.normalizeConfig(res.data);
     }
     return true;
-  } catch (error) {
+  } catch (error: any) {
     const msg = props.labels.saveErrorFormatter
       ? props.labels.saveErrorFormatter(error?.message || '')
       : error?.message || t('settings.saveFailed');
@@ -172,8 +155,9 @@ const handleEnabledToggle = async () => {
   await persistConfig();
 };
 
-const handleIconFileSelect = (event) => {
-  const file = event.target.files?.[0];
+const handleIconFileSelect = (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
 
   const allowedTypes = [
@@ -199,7 +183,7 @@ const handleIconFileSelect = (event) => {
   const reader = new FileReader();
   reader.onload = (e) => {
     const result = e.target?.result;
-    if (result) {
+    if (typeof result === 'string') {
       editingItem.value = {
         ...editingItem.value,
         icon: result,
@@ -212,7 +196,7 @@ const handleIconFileSelect = (event) => {
     uploadingIcon.value = false;
   };
   reader.readAsDataURL(file);
-  event.target.value = '';
+  input.value = '';
 };
 
 const triggerIconFileSelect = () => {
@@ -232,13 +216,13 @@ const handleAdd = () => {
   showEditModal.value = true;
 };
 
-const handleEdit = (item) => {
+const handleEdit = (item: CollectionItem) => {
   isNew.value = false;
   editingItem.value = props.prepareEditItem(JSON.parse(JSON.stringify(item)));
   showEditModal.value = true;
 };
 
-const moveItem = async (itemId, direction) => {
+const moveItem = async (itemId: string, direction: number) => {
   const fullList = [...(config.value.items || [])];
   const currentVisList = filteredItems.value;
   const visIdx = currentVisList.findIndex((item) => item.id === itemId);
@@ -277,6 +261,7 @@ const handleSave = async () => {
     return;
   }
   const nextItem = result.item;
+  if (!nextItem) return;
 
   saving.value = true;
   try {
@@ -302,7 +287,7 @@ const handleSave = async () => {
   }
 };
 
-const handleDelete = (id) => {
+const handleDelete = (id: string) => {
   itemToDeleteId.value = id;
   showDeleteConfirm.value = true;
 };
@@ -325,14 +310,14 @@ const executeReset = async () => {
   showResetConfirm.value = false;
   loading.value = true;
   try {
-    const res = await api.post(`${props.endpoint}/init`);
+    const res = await api.post<{ success?: boolean; data?: unknown; message?: string }>(`${props.endpoint}/init`);
     if (res?.success && res.data) {
       config.value = props.normalizeConfig(res.data);
       showToast(t('settings.clientResetSuccess'), 'success');
     } else {
       showToast(res?.message || t('settings.clientResetFailed'), 'error');
     }
-  } catch (error) {
+  } catch (error: any) {
     showToast(error?.message || t('settings.clientResetFailed'), 'error');
   } finally {
     loading.value = false;

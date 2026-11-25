@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { Link2, Loader2 } from '@lucide/vue';
 import SecretInput from '@/components/settings/SecretInput.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
@@ -9,15 +10,12 @@ import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+}>();
 
 const isTesting = ref(false);
-const testResult = ref(null);
+const testResult = ref<{ success: boolean; message: string } | null>(null);
 
 const shortLinkConfig = computed({
   get() {
@@ -37,7 +35,7 @@ const shortLinkConfig = computed({
   },
 });
 
-function updateField(key, value) {
+function updateField(key: string, value: unknown) {
   shortLinkConfig.value = {
     ...shortLinkConfig.value,
     [key]: value,
@@ -65,7 +63,7 @@ async function handleTestConnection() {
         message: result?.message || result?.error || t('settings.shortLinkTestFailed'),
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     testResult.value = {
       success: false,
       message: error?.message || t('settings.shortLinkTestFailed'),
@@ -100,7 +98,7 @@ async function handleTestConnection() {
             :value="shortLinkConfig.apiUrl"
             class="block w-full px-3 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
             type="text"
-            @input="updateField('apiUrl', $event.target.value)"
+            @input="updateField('apiUrl', ($event.target as HTMLInputElement).value)"
           />
           <p class="mt-1.5 text-xs text-fg-muted leading-relaxed">
             {{ t('settings.shortLinkApiUrlHint') }}

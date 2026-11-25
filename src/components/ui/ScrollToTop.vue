@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
 import { ChevronUp } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -8,11 +8,11 @@ const { t } = useI18n();
 const isVisible = ref(false);
 const scrollThreshold = 300;
 
-const handleScroll = () => {
+const handleScroll = (): void => {
   isVisible.value = window.scrollY > scrollThreshold;
 };
 
-const scrollToTop = () => {
+const scrollToTop = (): void => {
   window.scrollTo({
     top: 0,
     behavior: 'smooth',

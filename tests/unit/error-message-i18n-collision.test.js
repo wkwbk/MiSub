@@ -37,7 +37,7 @@ function walk(dir, out = []) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) {
       walk(full, out);
-    } else if (/\.(js|vue)$/.test(entry)) {
+    } else if (/\.(js|ts|vue)$/.test(entry)) {
       out.push(full);
     }
   }

@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
+import type { Component } from 'vue';
+import type { OperatorRule } from '@misub/core/types.js';
 import {
   ArrowUpDown,
   ChevronDown,
@@ -21,24 +23,28 @@ import DedupEditor from '@/components/operators/components/DedupEditor.vue';
 import Input from '@/components/ui/Input.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 
-const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    modelValue?: OperatorRule[];
+  }>(),
+  {
+    modelValue: () => [],
   },
-});
+);
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: OperatorRule[]];
+}>();
 const { t } = useI18n();
 
-const expandedIndex = ref(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
+const expandedIndex = ref<number | null>(props.modelValue.length > 0 ? props.modelValue.length - 1 : null);
 
-const toggleExpand = (index) => {
+const toggleExpand = (index: number) => {
   expandedIndex.value = expandedIndex.value === index ? null : index;
 };
 
-const addOperator = (type) => {
-  const newOp = {
+const addOperator = (type: OperatorRule['type']) => {
+  const newOp: OperatorRule = {
     id: Math.random().toString(36).substring(2, 11),
     type,
     enabled: true,
@@ -49,7 +55,7 @@ const addOperator = (type) => {
   expandedIndex.value = newList.length - 1;
 };
 
-const getInitialParams = (type) => {
+const getInitialParams = (type: OperatorRule['type']): Record<string, any> => {
   switch (type) {
     case 'filter':
       return {
@@ -82,14 +88,14 @@ const getInitialParams = (type) => {
   }
 };
 
-const removeOperator = (index) => {
+const removeOperator = (index: number) => {
   const newList = [...props.modelValue];
   newList.splice(index, 1);
   emit('update:modelValue', newList);
   if (expandedIndex.value === index) expandedIndex.value = null;
 };
 
-const moveOperator = (event, index, direction) => {
+const moveOperator = (event: MouseEvent, index: number, direction: number) => {
   event.stopPropagation();
   const newList = [...props.modelValue];
   const newIndex = index + direction;
@@ -100,19 +106,19 @@ const moveOperator = (event, index, direction) => {
   else if (expandedIndex.value === newIndex) expandedIndex.value = index;
 };
 
-const isOperatorEnabled = (op) => op?.enabled !== false;
+const isOperatorEnabled = (op: OperatorRule | undefined) => op?.enabled !== false;
 
-const toggleOperator = (event, index) => {
+const toggleOperator = (event: MouseEvent, index: number) => {
   event.stopPropagation();
   const newList = [...props.modelValue];
   newList[index] = { ...newList[index], enabled: !isOperatorEnabled(newList[index]) };
   emit('update:modelValue', newList);
 };
 
-const operatorLabel = (type) => t(`operators.${type}`);
-const operatorTypes = ['filter', 'rename', 'sort', 'dedup'];
+const operatorLabel = (type: OperatorRule['type']) => t(`operators.${type}`);
+const operatorTypes: Array<OperatorRule['type']> = ['filter', 'rename', 'sort', 'dedup'];
 
-const OPERATOR_ICONS = {
+const OPERATOR_ICONS: Record<OperatorRule['type'], Component> = {
   filter: Filter,
   rename: PenLine,
   script: Code2,
@@ -120,9 +126,9 @@ const OPERATOR_ICONS = {
   dedup: Copy,
 };
 
-const getOperatorIcon = (type) => OPERATOR_ICONS[type] || Filter;
+const getOperatorIcon = (type: OperatorRule['type']) => OPERATOR_ICONS[type] || Filter;
 
-const updateOperatorParams = (index, params) => {
+const updateOperatorParams = (index: number, params: Record<string, any>) => {
   const newList = [...props.modelValue];
   newList[index] = { ...newList[index], params };
   emit('update:modelValue', newList);
@@ -270,12 +276,12 @@ const updateOperatorParams = (index, params) => {
               <div v-else-if="op.type === 'script'" class="space-y-4">
                 <Input
                   :label="t('operators.scriptUrlLabel')"
-                  :modelValue="op.params.url"
+                  :modelValue="(op.params.url as string) || ''"
                   :placeholder="t('operators.scriptUrlPlaceholder')"
                   @update:modelValue="(val) => updateOperatorParams(index, { ...op.params, url: val })"
                 />
                 <Textarea
-                  :modelValue="op.params.code"
+                  :modelValue="(op.params.code as string) || ''"
                   class="h-64 p-3 font-mono text-xs resize-none"
                   placeholder="function operator($proxies, $context) { ... }"
                   @update:modelValue="

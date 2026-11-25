@@ -1,23 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import Select from '@/components/ui/Select.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { OperatorDedupParams } from '@misub/core/types.js';
 
-const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({}),
+const props = withDefaults(
+  defineProps<{
+    modelValue?: OperatorDedupParams;
+  }>(),
+  {
+    modelValue: () => ({}),
   },
-});
+);
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: OperatorDedupParams];
+}>();
 const { t } = useI18n();
 
 const protocolOptions = ['vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'tuic', 'socks5'];
 
-const params = computed({
+const params = computed<OperatorDedupParams>({
   get: () => ({
-    mode: 'serverPort',
+    mode: 'serverPort' as const,
     includeProtocol: true,
     ...props.modelValue,
     prefer: {
@@ -25,17 +30,17 @@ const params = computed({
       ...props.modelValue?.prefer,
     },
   }),
-  set: (val) => emit('update:modelValue', val),
+  set: (val: OperatorDedupParams) => emit('update:modelValue', val),
 });
 
-const updateValue = (patch) => {
+const updateValue = (patch: Partial<OperatorDedupParams>): void => {
   params.value = {
     ...params.value,
     ...patch,
   };
 };
 
-const toggleProtocol = (protocol) => {
+const toggleProtocol = (protocol: string): void => {
   const current = new Set(params.value.prefer?.protocolOrder || []);
   if (current.has(protocol)) {
     current.delete(protocol);

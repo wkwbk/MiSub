@@ -1,29 +1,43 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue';
 import { Braces, Check, Copy } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
-defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
-  zIndex: {
-    type: [String, Number],
-    default: 'var(--z-modal-popover)',
-  },
-});
+interface TemplateVariableItem {
+  key: string;
+  example: string;
+}
 
-const emit = defineEmits(['update:show']);
+interface TemplateVariableGroup {
+  id: string;
+  wide: boolean;
+  title: string;
+  items: TemplateVariableItem[];
+}
+
+withDefaults(
+  defineProps<{
+    show?: boolean;
+    zIndex?: string | number;
+  }>(),
+  {
+    show: false,
+    zIndex: 'var(--z-modal-popover)',
+  },
+);
+
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 const { t } = useI18n();
 
 const copiedKey = ref('');
-let copyTimer = null;
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
 
 // 模板变量说明必须放在 computed 里求值，保证切换语言即时更新
-const templateVariableGroups = computed(() => [
+const templateVariableGroups = computed<TemplateVariableGroup[]>(() => [
   {
     id: 'basic',
     wide: false,
@@ -92,18 +106,18 @@ const templateVariableGroups = computed(() => [
   },
 ]);
 
-async function copyVariable(variableKey) {
+async function copyVariable(variableKey: string): Promise<void> {
   const copied = await copyTextToClipboard(variableKey);
   if (!copied) return;
   copiedKey.value = variableKey;
-  if (copyTimer) clearTimeout(copyTimer);
+  if (copyTimer !== null) clearTimeout(copyTimer);
   copyTimer = setTimeout(() => {
     copiedKey.value = '';
   }, 1500);
 }
 
 onUnmounted(() => {
-  if (copyTimer) clearTimeout(copyTimer);
+  if (copyTimer !== null) clearTimeout(copyTimer);
 });
 </script>
 

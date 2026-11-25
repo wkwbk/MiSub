@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { CloudDownload } from '@lucide/vue';
 import { api } from '@/lib/http.js';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -11,12 +12,9 @@ import Switch from '@/components/ui/Switch.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+}>();
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
@@ -24,7 +22,7 @@ const isTesting = ref(false);
 const isBackingUp = ref(false);
 const isRestoring = ref(false);
 const isLoadingRemoteFiles = ref(false);
-const remoteFiles = ref([]);
+const remoteFiles = ref<Array<Record<string, any>>>([]);
 
 const ensureConfig = () => {
   if (!props.settings.webdavBackup) {
@@ -54,11 +52,18 @@ const testConnection = async () => {
   const config = ensureConfig();
   isTesting.value = true;
   try {
-    const result = await api.post('/api/backup/webdav/test', { webdavBackup: config });
-    if (!result.success) throw new Error(result.message || t('settings.webdavTestFailed'));
-    showToast(result.message || t('settings.webdavTestSuccess'), 'success');
-  } catch (error) {
-    showToast(t('settings.webdavTestFailedWithMessage', { message: error.message }), 'error');
+    const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/webdav/test', {
+      webdavBackup: config,
+    });
+    if (!result.success) throw new Error(String(result.message || t('settings.webdavTestFailed')));
+    showToast(String(result.message || t('settings.webdavTestSuccess')), 'success');
+  } catch (error: unknown) {
+    showToast(
+      t('settings.webdavTestFailedWithMessage', {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+      'error',
+    );
   } finally {
     isTesting.value = false;
   }
@@ -73,15 +78,23 @@ const runBackup = async () => {
   if (!confirmed) return;
   isBackingUp.value = true;
   try {
-    const result = await api.post('/api/backup/webdav/run', { scope: config.backupScope });
-    if (!result.success) throw new Error(result.message || t('settings.webdavBackupFailed'));
+    const result = await api.post<{ success?: boolean; message?: string; timestamp?: string; file?: string }>(
+      '/api/backup/webdav/run',
+      { scope: config.backupScope },
+    );
+    if (!result.success) throw new Error(String(result.message || t('settings.webdavBackupFailed')));
     config.lastBackupAt = result.timestamp;
     config.lastBackupStatus = 'success';
     config.lastBackupMessage = result.message;
     config.lastBackupFile = result.file;
     showToast(t('settings.webdavBackupSuccess'), 'success');
-  } catch (error) {
-    showToast(t('settings.webdavBackupFailedWithMessage', { message: error.message }), 'error');
+  } catch (error: unknown) {
+    showToast(
+      t('settings.webdavBackupFailedWithMessage', {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+      'error',
+    );
   } finally {
     isBackingUp.value = false;
   }
@@ -91,14 +104,15 @@ const restoreFromLocalFile = () => {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'application/json';
-  input.onchange = (event) => {
-    const file = event.target.files?.[0];
+  input.onchange = (event: Event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = async (e) => {
       isRestoring.value = true;
       try {
-        const payload = JSON.parse(e.target.result);
+        const rawText = typeof e.target?.result === 'string' ? e.target.result : '';
+        const payload = JSON.parse(rawText);
         const scope = payload?.scope || 'dataOnly';
         const label =
           scope === 'dataAndSettings' ? t('settings.webdavScopeDataAndSettings') : t('settings.webdavScopeDataOnly');
@@ -107,12 +121,20 @@ const restoreFromLocalFile = () => {
           variant: 'danger',
         });
         if (!confirmed) return;
-        const result = await api.post('/api/backup/restore', { payload, scope });
-        if (!result.success) throw new Error(result.message || t('settings.webdavRestoreFailed'));
+        const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/restore', {
+          payload,
+          scope,
+        });
+        if (!result.success) throw new Error(String(result.message || t('settings.webdavRestoreFailed')));
         showToast(t('settings.webdavRestoreSuccessReload'), 'success');
         setTimeout(() => window.location.reload(), 800);
-      } catch (error) {
-        showToast(t('settings.webdavRestoreFailedWithMessage', { message: error.message }), 'error');
+      } catch (error: unknown) {
+        showToast(
+          t('settings.webdavRestoreFailedWithMessage', {
+            message: error instanceof Error ? error.message : String(error),
+          }),
+          'error',
+        );
       } finally {
         isRestoring.value = false;
       }
@@ -126,18 +148,27 @@ const loadRemoteFiles = async () => {
   if (isLoadingRemoteFiles.value) return;
   isLoadingRemoteFiles.value = true;
   try {
-    const result = await api.get('/api/backup/webdav/list');
-    if (!result.success) throw new Error(result.message || t('settings.webdavLoadRemoteFailed'));
+    const result = await api.get<{
+      success?: boolean;
+      data?: Array<Record<string, unknown>>;
+      message?: string;
+    }>('/api/backup/webdav/list');
+    if (!result.success) throw new Error(String(result.message || t('settings.webdavLoadRemoteFailed')));
     remoteFiles.value = Array.isArray(result.data) ? result.data : [];
     showToast(t('settings.webdavLoadRemoteSuccess', { count: remoteFiles.value.length }), 'success');
   } catch (error) {
-    showToast(t('settings.webdavLoadRemoteFailedWithMessage', { message: error.message }), 'error');
+    showToast(
+      t('settings.webdavLoadRemoteFailedWithMessage', {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+      'error',
+    );
   } finally {
     isLoadingRemoteFiles.value = false;
   }
 };
 
-const restoreRemoteFile = async (file) => {
+const restoreRemoteFile = async (file: { path?: string; name?: string }) => {
   if (!file?.path || isRestoring.value) return;
   const confirmed = await confirmAction({
     message: t('settings.webdavRestoreRemoteConfirm', { name: file.name }),
@@ -146,12 +177,19 @@ const restoreRemoteFile = async (file) => {
   if (!confirmed) return;
   isRestoring.value = true;
   try {
-    const result = await api.post('/api/backup/webdav/restore', { file: file.path });
-    if (!result.success) throw new Error(result.message || t('settings.webdavRestoreFailed'));
+    const result = await api.post<{ success?: boolean; message?: string }>('/api/backup/webdav/restore', {
+      file: file.path,
+    });
+    if (!result.success) throw new Error(String(result.message || t('settings.webdavRestoreFailed')));
     showToast(t('settings.webdavRestoreRemoteSuccessReload'), 'success');
     setTimeout(() => window.location.reload(), 800);
   } catch (error) {
-    showToast(t('settings.webdavRestoreRemoteFailedWithMessage', { message: error.message }), 'error');
+    showToast(
+      t('settings.webdavRestoreRemoteFailedWithMessage', {
+        message: error instanceof Error ? error.message : String(error),
+      }),
+      'error',
+    );
   } finally {
     isRestoring.value = false;
   }

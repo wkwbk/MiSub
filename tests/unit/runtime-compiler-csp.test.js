@@ -56,7 +56,7 @@ function collectSourceFiles(dir, files = []) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) {
       collectSourceFiles(full, files);
-    } else if (/\.(vue|js)$/.test(entry)) {
+    } else if (/\.(vue|js|ts)$/.test(entry)) {
       files.push(full);
     }
   }

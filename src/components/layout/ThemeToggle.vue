@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { storeToRefs } from 'pinia';
 import { Moon, Sun } from '@lucide/vue';
 import { useThemeStore } from '@/stores/useThemeStore.js';

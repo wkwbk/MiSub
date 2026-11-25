@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import { GripHorizontal, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
@@ -7,53 +8,45 @@ import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  nodes: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    nodes?: ManualNodeItem[];
+    filteredNodes?: ManualNodeItem[];
+    searchTerm?: string;
+    activeTagFilters?: string[];
+    tags?: string[];
+    selectedIds?: string[];
+  }>(),
+  {
+    nodes: () => [],
+    filteredNodes: () => [],
+    searchTerm: '',
+    activeTagFilters: () => [],
+    tags: () => [],
+    selectedIds: () => [],
   },
-  filteredNodes: {
-    type: Array,
-    default: () => [],
-  },
-  searchTerm: {
-    type: String,
-    default: '',
-  },
-  activeTagFilters: {
-    type: Array,
-    default: () => [],
-  },
-  tags: {
-    type: Array,
-    default: () => [],
-  },
-  selectedIds: {
-    type: Array,
-    default: () => [],
-  },
-});
+);
 
-const emit = defineEmits([
-  'update:searchTerm',
-  'update:tagFilters',
-  'update:selectedIds',
-  'toggle-selection',
-  'select-all',
-  'deselect-all',
-]);
+const emit = defineEmits<{
+  'update:searchTerm': [value: string];
+  'update:tagFilters': [value: string[]];
+  'update:selectedIds': [value: string[]];
+  'toggle-selection': [id: string];
+  'select-all': [];
+  'deselect-all': [];
+}>();
 
 const searchModel = computed({
   get: () => props.searchTerm,
-  set: (val) => emit('update:searchTerm', val),
+  set: (val: string) => emit('update:searchTerm', val),
 });
 
 const orderedSelectedNodes = computed({
-  get() {
+  get(): ManualNodeItem[] {
     const nodeMap = new Map(props.nodes.map((n) => [n.id, n]));
-    return props.selectedIds.map((id) => nodeMap.get(id)).filter(Boolean);
+    return props.selectedIds.map((id) => nodeMap.get(id)).filter((n): n is ManualNodeItem => Boolean(n));
   },
-  set(newList) {
+  set(newList: ManualNodeItem[]) {
     emit(
       'update:selectedIds',
       newList.map((n) => n.id),

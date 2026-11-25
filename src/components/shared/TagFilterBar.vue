@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useI18n } from '@/i18n/index.js';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
@@ -6,30 +6,27 @@ import { normalizeActiveTagFilters, normalizeTagList, toggleTagFilterValue, UNTA
 
 const { t } = useI18n();
 
-const props = defineProps({
-  tags: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    tags?: string[];
+    activeFilters?: string[] | string;
+    showUntagged?: boolean;
+    alwaysShow?: boolean;
+    testIdPrefix?: string;
+  }>(),
+  {
+    tags: () => [],
+    activeFilters: () => [],
+    showUntagged: true,
+    alwaysShow: false,
+    testIdPrefix: 'tag-filter',
   },
-  activeFilters: {
-    type: [Array, String],
-    default: () => [],
-  },
-  showUntagged: {
-    type: Boolean,
-    default: true,
-  },
-  alwaysShow: {
-    type: Boolean,
-    default: false,
-  },
-  testIdPrefix: {
-    type: String,
-    default: 'tag-filter',
-  },
-});
+);
 
-const emit = defineEmits(['update:activeFilters', 'toggle']);
+const emit = defineEmits<{
+  'update:activeFilters': [value: string[]];
+  toggle: [target: string | null, next: string[]];
+}>();
 
 const normalizedActive = computed(() => normalizeActiveTagFilters(props.activeFilters));
 const isAllActive = computed(() => normalizedActive.value.length === 0);
@@ -48,14 +45,14 @@ const shouldRender = computed(
   () => props.alwaysShow || displayTags.value.length > 0 || normalizedActive.value.length > 0,
 );
 
-const handleSelect = (target) => {
+const handleSelect = (target: string | null): void => {
   const next = toggleTagFilterValue(normalizedActive.value, target);
   emit('update:activeFilters', next);
   emit('toggle', target, next);
 };
 
-const handleWheel = (e) => {
-  const el = e.currentTarget;
+const handleWheel = (e: WheelEvent): void => {
+  const el = e.currentTarget as HTMLElement | null;
   if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
     e.preventDefault();
     el.scrollLeft += e.deltaY;

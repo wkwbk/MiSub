@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { hasStoredLocale, useI18n } from '@/i18n/index.js';
 import { api } from '@/lib/http.js';
@@ -23,12 +24,27 @@ const GuestbookModal = defineAsyncComponent(() => import('@/components/modals/Gu
 const QuickImportModal = defineAsyncComponent(() => import('@/components/modals/QuickImportModal.vue'));
 const CustomPublicRenderer = defineAsyncComponent(() => import('@/components/public/CustomPublicRenderer.vue'));
 
-const publicProfiles = ref([]);
+interface PublicProfileItem extends ProfileConfig {
+  shareId?: string;
+  shortLink?: string;
+  [key: string]: unknown;
+}
+
+interface PublicPageConfig extends Partial<SettingsConfig> {
+  announcement?: Record<string, any>;
+  hero?: Record<string, any>;
+  guestbook?: Record<string, any>;
+  customPage?: Record<string, any>;
+  defaultLocale?: string;
+  [key: string]: any;
+}
+
+const publicProfiles = ref<PublicProfileItem[]>([]);
 const loading = ref(true);
-const error = ref(null);
+const error = ref<string | null>(null);
 const { showToast } = useToastStore();
 const { t, setLocale } = useI18n();
-const config = ref({});
+const config = ref<PublicPageConfig>({});
 const announcement = computed(() => config.value.announcement);
 const heroConfig = computed(
   () =>
@@ -94,7 +110,7 @@ const restoreCustomPageDocumentMeta = () => {
 
 const showGuestbookModal = ref(false);
 const showQuickImportModal = ref(false);
-const selectedProfileForImport = ref(null);
+const selectedProfileForImport = ref<PublicProfileItem | null>(null);
 
 const handleGuestbookTrigger = () => {
   if (guestbookConfig.value && guestbookConfig.value.enabled === false) {
@@ -116,7 +132,7 @@ const fetchPublicProfiles = async () => {
     error.value = null;
     const data = await fetchPublicProfilesWithQuery(queryClient);
     if (data.success) {
-      publicProfiles.value = data.data;
+      publicProfiles.value = (data.data || []) as unknown as PublicProfileItem[];
       config.value = data.config || {};
 
       // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
@@ -135,7 +151,7 @@ const fetchPublicProfiles = async () => {
   }
 };
 
-const copyLink = async (profile) => {
+const copyLink = async (profile: PublicProfileItem) => {
   const token = config.value.profileToken || 'sub';
   const identifier = profile.shareId || getProfileShareIdentifier(profile);
   const link = `${window.location.origin}/${token}/${identifier}`;
@@ -147,15 +163,15 @@ const copyLink = async (profile) => {
   );
 };
 
-const copyShortLink = async (profile) => {
+const copyShortLink = async (profile: PublicProfileItem) => {
   if (!profile?.shortLink) return;
   const copied = await copyTextToClipboard(profile.shortLink);
   showToast(copied ? t('public.shortLinkCopied') : t('publicProfiles.copyFailedManual'), copied ? 'success' : 'error');
 };
 
-const publicClients = ref({});
-const publicCores = ref({});
-const publicLinks = ref({});
+const publicClients = ref<Record<string, any>>({});
+const publicCores = ref<Record<string, any>>({});
+const publicLinks = ref<Record<string, any>>({});
 
 const enabledClientsForImport = computed(() => {
   const normalized = normalizePublicClientsConfig(publicClients.value);
@@ -199,13 +215,13 @@ const fetchPublicLinks = async () => {
 
 const RECENT_UPDATE_DAYS = 7;
 
-const parsePublishedDate = (publishedAt) => {
+const parsePublishedDate = (publishedAt?: string | number | Date | null) => {
   if (!publishedAt) return null;
   const date = new Date(publishedAt);
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const formatReleaseUpdatedLabel = (publishedAt) => {
+const formatReleaseUpdatedLabel = (publishedAt?: string | number | Date | null) => {
   const publishedDate = parsePublishedDate(publishedAt);
   if (!publishedDate) return '';
 
@@ -224,7 +240,7 @@ const formatReleaseUpdatedLabel = (publishedAt) => {
   return `${year}-${month}-${day}`;
 };
 
-const formatReleaseUpdatedTitle = (publishedAt) => {
+const formatReleaseUpdatedTitle = (publishedAt?: string | number | Date | null) => {
   const publishedDate = parsePublishedDate(publishedAt);
   if (!publishedDate) return '';
   return t('publicProfiles.updatedAtTooltip', {
@@ -233,29 +249,29 @@ const formatReleaseUpdatedTitle = (publishedAt) => {
 };
 
 const showPreviewModal = ref(false);
-const previewProfileId = ref(null);
+const previewProfileId = ref<string | null>(null);
 const previewProfileName = ref('');
 
-const handlePreview = (profile) => {
+const handlePreview = (profile: PublicProfileItem) => {
   previewProfileId.value = profile.shareId || getProfileShareIdentifier(profile);
   previewProfileName.value = profile.name;
   showPreviewModal.value = true;
 };
 
-const handleQuickImport = (profile) => {
+const handleQuickImport = (profile: PublicProfileItem) => {
   selectedProfileForImport.value = profile;
   showQuickImportModal.value = true;
 };
 
-const expandedQRCards = ref(new Set());
-const qrCanvasRefs = ref({});
+const expandedQRCards = ref<Set<string>>(new Set());
+const qrCanvasRefs = ref<Record<string, HTMLCanvasElement>>({});
 
-const registerQrCanvas = (profileId, canvas) => {
+const registerQrCanvas = (profileId: string, canvas: HTMLCanvasElement | null) => {
   if (!canvas) return;
   qrCanvasRefs.value[profileId] = canvas;
 };
 
-const toggleQRCode = async (profile) => {
+const toggleQRCode = async (profile: PublicProfileItem) => {
   const profileId = profile.id;
   if (expandedQRCards.value.has(profileId)) {
     expandedQRCards.value.delete(profileId);
@@ -283,9 +299,9 @@ const toggleQRCode = async (profile) => {
   }
 };
 
-const isQRExpanded = (profileId) => expandedQRCards.value.has(profileId);
+const isQRExpanded = (profileId: string) => expandedQRCards.value.has(profileId);
 
-const downloadQRCode = (profile) => {
+const downloadQRCode = (profile: PublicProfileItem) => {
   const canvas = qrCanvasRefs.value[profile.id];
   if (!canvas) return;
   const url = canvas.toDataURL('image/png');

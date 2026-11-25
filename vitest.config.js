@@ -20,14 +20,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.{js,vue}', 'functions/**/*.js', 'packages/core/src/**/*.js'],
+      include: ['src/**/*.{ts,vue}', 'functions/**/*.ts', 'packages/core/src/**/*.ts'],
       exclude: ['node_modules', 'dist', 'dev-dist'],
     },
   },
   resolve: {
-    alias: {
-      '@': '/src',
-      '@misub/core': '/packages/core/src',
-    },
+    alias: [
+      { find: '@', replacement: '/src' },
+      { find: /^@misub\/core\/(.*)\.js$/, replacement: '/packages/core/src/$1.ts' },
+      { find: '@misub/core', replacement: '/packages/core/src' },
+    ],
   },
 });

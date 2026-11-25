@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+import type { SettingsConfig } from '@misub/core/types.js';
 import { AlertTriangle, Archive, Lock } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import Input from '@/components/ui/Input.vue';
@@ -7,20 +8,21 @@ import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-  exportBackup: Function,
-  importBackup: Function,
-  handleReset: Function,
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+  exportBackup?: ((...args: any[]) => any) | Function;
+  importBackup?: ((...args: any[]) => any) | Function;
+  handleReset?: ((...args: any[]) => any) | Function;
+}>();
+
+const onExportBackup = (event: MouseEvent) => (props.exportBackup as ((e: MouseEvent) => unknown) | undefined)?.(event);
+const onImportBackup = (event: MouseEvent) => (props.importBackup as ((e: MouseEvent) => unknown) | undefined)?.(event);
+const onHandleReset = (event: MouseEvent) => (props.handleReset as ((e: MouseEvent) => unknown) | undefined)?.(event);
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const ensureExternalApiDefaults = (settings) => {
+const ensureExternalApiDefaults = (settings: Record<string, any>) => {
   if (!settings.externalApi || typeof settings.externalApi !== 'object') {
     settings.externalApi = { enabled: false, tokens: [{ name: 'default', token: '' }] };
     return;
@@ -31,7 +33,7 @@ const ensureExternalApiDefaults = (settings) => {
     return;
   }
 
-  settings.externalApi.tokens = settings.externalApi.tokens.map((item, index) => ({
+  settings.externalApi.tokens = settings.externalApi.tokens.map((item: any, index: number) => ({
     name: String(item?.name || `token-${index + 1}`).trim() || `token-${index + 1}`,
     token: String(item?.token || '').trim(),
   }));
@@ -48,13 +50,13 @@ const buildExternalApiToken = () => {
 
 ensureExternalApiDefaults(props.settings);
 
-const handleGenerateExternalApiToken = (settings) => {
+const handleGenerateExternalApiToken = (settings: Record<string, any>) => {
   ensureExternalApiDefaults(settings);
   settings.externalApi.tokens[0].token = buildExternalApiToken();
   showToast(t('systemSettings.externalApiTokenGenerated'), 'success');
 };
 
-const handleCopyExternalApiToken = async (settings) => {
+const handleCopyExternalApiToken = async (settings: Record<string, any>) => {
   ensureExternalApiDefaults(settings);
   const token = settings.externalApi.tokens[0]?.token || '';
   if (!token) {
@@ -133,13 +135,13 @@ const handleCopyExternalApiToken = async (settings) => {
       <template #actions>
         <button
           class="px-4 py-1.5 text-xs font-semibold text-accent-fg rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-accent border border-accent hover:opacity-90"
-          @click="exportBackup"
+          @click="onExportBackup"
         >
           {{ t('systemSettings.exportBackup') }}
         </button>
         <button
           class="px-4 py-1.5 text-xs font-medium text-fg-muted rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-transparent border border-line hover:bg-hover hover:text-fg"
-          @click="importBackup"
+          @click="onImportBackup"
         >
           {{ t('systemSettings.importBackup') }}
         </button>
@@ -164,7 +166,7 @@ const handleCopyExternalApiToken = async (settings) => {
         <div class="shrink-0">
           <button
             class="px-4 py-1.5 rounded-md text-red-400 text-xs font-semibold border border-red-900/60 bg-transparent hover:bg-red-950/40 hover:text-red-300 transition-colors"
-            @click="handleReset"
+            @click="onHandleReset"
           >
             {{ t('systemSettings.factoryResetTitle') }}
           </button>

@@ -9,8 +9,8 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
 const CORE_PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'packages', 'core', 'package.json');
-const BACKEND_CONFIG_PATH = path.join(ROOT_DIR, 'functions', 'modules', 'config.js');
-const VERSION_STORE_PATH = path.join(ROOT_DIR, 'src', 'stores', 'useVersionStore.js');
+const BACKEND_CONFIG_PATH = path.join(ROOT_DIR, 'functions', 'modules', 'config.ts');
+const VERSION_STORE_PATH = path.join(ROOT_DIR, 'src', 'stores', 'useVersionStore.ts');
 
 function printUsage() {
   console.log('Usage: pnpm release <version> [--no-push] [--dry-run]');
@@ -91,7 +91,7 @@ function main() {
   const configRaw = fs.readFileSync(BACKEND_CONFIG_PATH, 'utf8');
   const configUpdated = configRaw.replace(/(VERSION\s*:\s*')[^']+(')/, `$1${version}$2`);
   if (configUpdated === configRaw) {
-    console.error('Error: Failed to locate VERSION field in functions/modules/config.js.');
+    console.error('Error: Failed to locate VERSION field in functions/modules/config.ts.');
     process.exit(1);
   }
 
@@ -109,7 +109,7 @@ function main() {
   }
 
   if (dryRun) {
-    console.log(`[dry-run] Would update package.json, packages/core/package.json, and functions/modules/config.js to ${version}`);
+    console.log(`[dry-run] Would update package.json, packages/core/package.json, and functions/modules/config.ts to ${version}`);
     console.log(`[dry-run] Would commit "chore: release ${tag}" and create annotated tag ${tag}`);
     if (!noPush) {
       console.log(`[dry-run] Would push branch "${branch}" and tag "${tag}" to origin (triggering GitHub Release workflow)`);
@@ -122,9 +122,9 @@ function main() {
     fs.writeFileSync(CORE_PACKAGE_JSON_PATH, corePkgUpdated, 'utf8');
   }
   fs.writeFileSync(BACKEND_CONFIG_PATH, configUpdated, 'utf8');
-  console.log(`Updated package.json, packages/core/package.json, and functions/modules/config.js to ${version}`);
+  console.log(`Updated package.json, packages/core/package.json, and functions/modules/config.ts to ${version}`);
 
-  const filesToStage = ['package.json', 'functions/modules/config.js'];
+  const filesToStage = ['package.json', 'functions/modules/config.ts'];
   if (corePkgUpdated) filesToStage.push('packages/core/package.json');
   runGit(['add', ...filesToStage], { inherit: true });
   runGit(['commit', '-m', `chore: release ${tag}`], { inherit: true });

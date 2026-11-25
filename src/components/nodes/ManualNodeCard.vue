@@ -1,41 +1,46 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Check, Copy, CornerDownRight, Info, Pencil, Trash2, Zap } from '@lucide/vue';
 import { extractHostAndPort } from '@/lib/utils.js';
 import { getItemTags } from '@/utils/tags.js';
-import { getManualNodeProtocol } from '@/composables/manual-nodes/filters.js';
+import { getManualNodeProtocol, type NodeInspectInfo } from '@/composables/manual-nodes/filters.js';
+import type { PingResult } from '@/composables/useManualNodes.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 
-const props = defineProps({
-  node: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    node: StoreMisubItem;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    pingResult?: PingResult;
+    isPinging?: boolean;
+    inspectInfo?: NodeInspectInfo | null;
+  }>(),
+  {
+    isSelectionMode: false,
+    isSelected: false,
+    pingResult: undefined,
+    isPinging: false,
+    inspectInfo: null,
   },
-  isSelectionMode: Boolean,
-  isSelected: Boolean,
-  pingResult: Object,
-  isPinging: Boolean,
-  inspectInfo: {
-    type: Object,
-    default: null,
-  },
-});
+);
 
-const emit = defineEmits([
-  'delete',
-  'edit',
-  'detail',
-  'toggle-select',
-  'filter-tag',
-  'filter-protocol',
-  'filter-country',
-  'filter-network',
-  'ping',
-]);
+const emit = defineEmits<{
+  delete: [];
+  edit: [];
+  detail: [];
+  'toggle-select': [];
+  'filter-tag': [tag: string];
+  'filter-protocol': [protocol: string];
+  'filter-country': [countryCode: string];
+  'filter-network': [networkType: string];
+  ping: [];
+}>();
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
@@ -49,10 +54,12 @@ const hostAndPort = computed(() => extractHostAndPort(props.node.url));
 const countryBadge = computed(() => {
   const info = props.inspectInfo;
   if (!info) return null;
+  const asn = typeof info.asn === 'string' ? info.asn : '';
+  const org = typeof info.org === 'string' ? info.org : '';
   if (info.isRelay) {
     return {
       text: t('manualNodes.badgeRelay'),
-      title: `${info.country || 'CN'} · ${info.asn || ''} ${info.org || ''}`.trim(),
+      title: `${info.country || 'CN'} · ${asn} ${org}`.trim(),
       className: 'border-amber-500/40 bg-amber-500/10 text-amber-500',
     };
   }
@@ -60,7 +67,7 @@ const countryBadge = computed(() => {
     const label = info.country && info.country !== info.countryCode ? info.country : info.countryCode;
     return {
       text: info.flag && label !== info.countryCode ? `${info.flag} ${label}` : label,
-      title: `${info.country || info.countryCode}${info.asn ? ` · ${info.asn}` : ''}${info.org ? ` (${info.org})` : ''}`,
+      title: `${info.country || info.countryCode}${asn ? ` · ${asn}` : ''}${org ? ` (${org})` : ''}`,
       className: 'border-line bg-transparent text-fg-muted',
     };
   }
@@ -70,18 +77,21 @@ const countryBadge = computed(() => {
 const networkBadge = computed(() => {
   const info = props.inspectInfo;
   if (!info || !info.networkType || info.networkType === 'unknown' || info.isRelay) return null;
+  const cdnProvider = typeof info.cdnProvider === 'string' ? info.cdnProvider : '';
+  const asn = typeof info.asn === 'string' ? info.asn : '';
+  const org = typeof info.org === 'string' ? info.org : '';
   if (info.networkType === 'cdn') {
-    const provider = info.cdnProvider && info.cdnProvider !== 'CDN' ? info.cdnProvider : '';
+    const provider = cdnProvider && cdnProvider !== 'CDN' ? cdnProvider : '';
     return {
       text: provider === 'Cloudflare' ? 'CF CDN' : t('manualNodes.badgeCdn'),
-      title: provider ? `CDN (${provider})${info.asn ? ` · ${info.asn}` : ''}` : 'CDN',
+      title: provider ? `CDN (${provider})${asn ? ` · ${asn}` : ''}` : 'CDN',
       className: 'border-sky-500/40 bg-sky-500/10 text-sky-400',
     };
   }
   if (info.networkType === 'direct') {
     return {
       text: t('manualNodes.badgeDirect'),
-      title: `${t('manualNodes.badgeDirect')}${info.asn ? ` · ${info.asn}` : ''}${info.org ? ` (${info.org})` : ''}`,
+      title: `${t('manualNodes.badgeDirect')}${asn ? ` · ${asn}` : ''}${org ? ` (${org})` : ''}`,
       className: 'border-emerald-500/35 bg-emerald-500/10 text-emerald-500',
     };
   }
@@ -137,7 +147,7 @@ const protocolStyle = computed(() => {
   }
 });
 
-const copyToClipboard = async (text) => {
+const copyToClipboard = async (text: string): Promise<void> => {
   const copied = await copyTextToClipboard(text);
   showToast(copied ? t('notices.copied') : t('notices.copyFailed'), copied ? 'success' : 'error');
 };

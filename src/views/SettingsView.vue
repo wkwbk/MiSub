@@ -1,6 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { nextTick, onActivated, onMounted, onUnmounted, ref, unref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 import SettingsContent from '@/components/settings/SettingsContent.vue';
 import {
@@ -27,7 +27,7 @@ const {
 const route = useRoute();
 const router = useRouter();
 
-function resolveInitialTab() {
+function resolveInitialTab(): string {
   const focusTab = resolveSettingsFocusTab(route.query?.focus);
   if (focusTab) return focusTab;
 
@@ -40,14 +40,14 @@ function resolveInitialTab() {
   return 'basic';
 }
 
-const activeTab = ref(resolveInitialTab());
+const activeTab = ref<string>(resolveInitialTab());
 
-function syncTabToRoute(tabId) {
+function syncTabToRoute(tabId: string): void {
   const currentQueryTab = resolveSettingsTab(route.query?.tab) || 'basic';
   const hasFocus = Boolean(route.query?.focus);
   if (!hasFocus && currentQueryTab === tabId) return;
 
-  const nextQuery = { ...route.query };
+  const nextQuery: LocationQueryRaw = { ...route.query };
   delete nextQuery.focus;
   if (tabId === 'basic') {
     delete nextQuery.tab;
@@ -58,7 +58,7 @@ function syncTabToRoute(tabId) {
   Promise.resolve(router.replace({ query: nextQuery })).catch(() => {});
 }
 
-function handleActiveTabUpdate(nextTab) {
+function handleActiveTabUpdate(nextTab: string): void {
   const resolved = resolveSettingsTab(nextTab) || 'basic';
   activeTab.value = resolved;
   writeSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY, resolved);
@@ -71,9 +71,9 @@ function handleActiveTabUpdate(nextTab) {
 
 // The dashboard's "去设置 Token" buttons land here with `?focus=`. Without
 const highlightedFocusId = ref('');
-let highlightTimer = null;
+let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
-function applyFocusFromQuery() {
+function applyFocusFromQuery(): boolean {
   const focus = route.query?.focus;
   const tab = resolveSettingsFocusTab(focus);
   if (!tab) return false;
@@ -85,7 +85,7 @@ function applyFocusFromQuery() {
   if (!anchorId) return true;
 
   highlightedFocusId.value = anchorId;
-  clearTimeout(highlightTimer);
+  if (highlightTimer !== null) clearTimeout(highlightTimer);
   highlightTimer = setTimeout(() => {
     highlightedFocusId.value = '';
   }, 2400);
@@ -159,7 +159,7 @@ watch(
 );
 
 onUnmounted(() => {
-  clearTimeout(highlightTimer);
+  if (highlightTimer !== null) clearTimeout(highlightTimer);
 });
 </script>
 

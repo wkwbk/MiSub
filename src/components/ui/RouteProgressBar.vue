@@ -1,24 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 
-defineProps({
-  isNavigating: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    isNavigating?: boolean;
+    progress?: number;
+    isFadingOut?: boolean;
+    showSlowIndicator?: boolean;
+  }>(),
+  {
+    isNavigating: false,
+    progress: 0,
+    isFadingOut: false,
+    showSlowIndicator: false,
   },
-  progress: {
-    type: Number,
-    default: 0,
-  },
-  isFadingOut: {
-    type: Boolean,
-    default: false,
-  },
-  showSlowIndicator: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
 const { t } = useI18n();
 </script>

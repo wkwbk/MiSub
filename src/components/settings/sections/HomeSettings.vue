@@ -1,4 +1,5 @@
-<script setup>
+<script setup lang="ts">
+import { computed } from 'vue';
 import { Home } from '@lucide/vue';
 import Input from '@/components/ui/Input.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
@@ -8,13 +9,32 @@ import GuestbookManagement from '@/components/settings/sections/GuestbookManagem
 import PublicCoresSettings from '@/components/settings/sections/PublicCoresSettings.vue';
 import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const { t } = useI18n();
 
-defineProps({
-  settings: {
-    type: Object,
-    required: true,
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
+
+const heroTitle1 = computed({
+  get: () => (typeof props.settings.heroTitle1 === 'string' ? props.settings.heroTitle1 : ''),
+  set: (val: string) => {
+    props.settings.heroTitle1 = val;
+  },
+});
+
+const heroTitle2 = computed({
+  get: () => (typeof props.settings.heroTitle2 === 'string' ? props.settings.heroTitle2 : ''),
+  set: (val: string) => {
+    props.settings.heroTitle2 = val;
+  },
+});
+
+const heroDescription = computed({
+  get: () => (typeof props.settings.heroDescription === 'string' ? props.settings.heroDescription : ''),
+  set: (val: string) => {
+    props.settings.heroDescription = val;
   },
 });
 </script>
@@ -28,21 +48,21 @@ defineProps({
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Input
-            v-model="settings.heroTitle1"
+            v-model="heroTitle1"
             :label="t('settings.homeHeroTitle1')"
             :placeholder="t('settings.homeHeroTitle1Placeholder')"
           />
         </div>
         <div>
           <Input
-            v-model="settings.heroTitle2"
+            v-model="heroTitle2"
             :label="t('settings.homeHeroTitle2')"
             :placeholder="t('settings.homeHeroTitle2Placeholder')"
           />
         </div>
         <div class="md:col-span-2">
           <Input
-            v-model="settings.heroDescription"
+            v-model="heroDescription"
             :label="t('settings.homeHeroDescription')"
             :placeholder="t('settings.homeHeroDescriptionPlaceholder')"
           />

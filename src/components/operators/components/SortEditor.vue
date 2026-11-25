@@ -1,27 +1,37 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ChevronDown, ChevronUp, X } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
 import { useI18n } from '@/i18n/index.js';
 import draggable from 'vuedraggable';
 import { REGION_EMOJI } from '@misub/core/node/region-emoji.js';
+import type { OperatorSortKey, OperatorSortParams } from '@misub/core/types.js';
 
-const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({}),
+interface TagItem {
+  id: string;
+  name: string;
+}
+
+const props = withDefaults(
+  defineProps<{
+    modelValue?: Partial<OperatorSortParams>;
+  }>(),
+  {
+    modelValue: () => ({}),
   },
-});
+);
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: OperatorSortParams];
+}>();
 const { t, locale } = useI18n();
-const regexDrafts = ref({});
-const regexErrors = ref({});
+const regexDrafts = ref<Record<number, string>>({});
+const regexErrors = ref<Record<number, string>>({});
 // 按行下标与条件类型暂存已编辑的 customOrder，防止切换条件类型后配置丢失
-const stashedCustomOrders = ref({});
+const stashedCustomOrders = ref<Record<number, Record<string, string[]>>>({});
 const CUSTOM_ORDER_KEYS = new Set(['region', 'protocol', 'regex']);
 
-const swapIndexedMap = (mapObj, idxA, idxB) => {
+const swapIndexedMap = <T>(mapObj: Record<number, T>, idxA: number, idxB: number): Record<number, T> => {
   const next = { ...mapObj };
   const valA = next[idxA];
   const valB = next[idxB];
@@ -32,8 +42,8 @@ const swapIndexedMap = (mapObj, idxA, idxB) => {
   return next;
 };
 
-const removeIndexedEntry = (mapObj, removedIdx) => {
-  const next = {};
+const removeIndexedEntry = <T>(mapObj: Record<number, T>, removedIdx: number): Record<number, T> => {
+  const next: Record<number, T> = {};
   for (const [k, v] of Object.entries(mapObj)) {
     const num = Number(k);
     if (num < removedIdx) next[num] = v;
@@ -42,22 +52,22 @@ const removeIndexedEntry = (mapObj, removedIdx) => {
   return next;
 };
 
-const omitIndexedEntry = (mapObj, idx) => {
+const omitIndexedEntry = <T>(mapObj: Record<number, T>, idx: number): Record<number, T> => {
   if (!(idx in mapObj)) return mapObj;
   const next = { ...mapObj };
   delete next[idx];
   return next;
 };
 
-const params = computed({
+const params = computed<OperatorSortParams>({
   get: () => ({
     keys: [],
     ...props.modelValue,
   }),
-  set: (val) => emit('update:modelValue', val),
+  set: (val: OperatorSortParams) => emit('update:modelValue', val),
 });
 
-const updateKeys = (updater) => {
+const updateKeys = (updater: (keys: OperatorSortKey[]) => OperatorSortKey[]): void => {
   const currentKeys = Array.isArray(params.value.keys) ? params.value.keys : [];
   params.value = {
     ...params.value,
@@ -65,18 +75,18 @@ const updateKeys = (updater) => {
   };
 };
 
-const DEFAULT_CUSTOM_ORDERS = {
+const DEFAULT_CUSTOM_ORDERS: Record<string, string[]> = {
   region: ['香港', '台湾', '日本', '新加坡', '美国', '韩国', '英国', '德国', '法国', '加拿大'],
   protocol: ['vless', 'trojan', 'vmess', 'hysteria2', 'ss', 'ssr', 'anytls'],
 };
 
-const getDefaultCustomOrder = (keyType) => [...(DEFAULT_CUSTOM_ORDERS[keyType] || [])];
+const getDefaultCustomOrder = (keyType: string): string[] => [...(DEFAULT_CUSTOM_ORDERS[keyType] || [])];
 
-const addKey = () => {
+const addKey = (): void => {
   updateKeys((keys) => [...keys, { key: 'region', order: 'asc', customOrder: getDefaultCustomOrder('region') }]);
 };
 
-const removeKey = (index) => {
+const removeKey = (index: number): void => {
   updateKeys((keys) => {
     keys.splice(index, 1);
     return keys;
@@ -86,7 +96,7 @@ const removeKey = (index) => {
   stashedCustomOrders.value = removeIndexedEntry(stashedCustomOrders.value, index);
 };
 
-const moveKey = (index, dir) => {
+const moveKey = (index: number, dir: number): void => {
   const currentLen = Array.isArray(params.value.keys) ? params.value.keys.length : 0;
   const target = index + dir;
   if (target < 0 || target >= currentLen) return;
@@ -99,7 +109,7 @@ const moveKey = (index, dir) => {
   stashedCustomOrders.value = swapIndexedMap(stashedCustomOrders.value, index, target);
 };
 
-const updateKeyField = (index, field, value) => {
+const updateKeyField = (index: number, field: 'key' | 'order', value: string): void => {
   let nextDrafts = regexDrafts.value;
   let nextErrors = regexErrors.value;
   let nextStashed = stashedCustomOrders.value;
@@ -107,7 +117,8 @@ const updateKeyField = (index, field, value) => {
   updateKeys((keys) => {
     const current = keys[index];
     if (!current) return keys;
-    let next = { ...current, [field]: value };
+    const next: OperatorSortKey =
+      field === 'order' ? { ...current, order: value === 'desc' ? 'desc' : 'asc' } : { ...current, key: value };
     if (field === 'key' && current.key !== value) {
       const rowStash = { ...nextStashed[index] };
       if (CUSTOM_ORDER_KEYS.has(current.key) && Array.isArray(current.customOrder)) {
@@ -144,16 +155,16 @@ const updateKeyField = (index, field, value) => {
   stashedCustomOrders.value = nextStashed;
 };
 
-const getRegionEmoji = (region) => {
+const getRegionEmoji = (region: string): string => {
   if (!region) return '🌐';
-  return REGION_EMOJI[region] || '🌍';
+  return (REGION_EMOJI as Record<string, string>)[region] || '🌍';
 };
 
-const getTagsList = (item) => {
+const getTagsList = (item: OperatorSortKey): TagItem[] => {
   return (item.customOrder || []).map((val) => ({ id: val, name: val }));
 };
 
-const handleDragEnd = (idx, newOrder) => {
+const handleDragEnd = (idx: number, newOrder: TagItem[]): void => {
   updateKeys((keys) => {
     const current = keys[idx];
     if (!current) return keys;
@@ -165,7 +176,7 @@ const handleDragEnd = (idx, newOrder) => {
   });
 };
 
-const resetToDefaultOrder = (idx, keyType) => {
+const resetToDefaultOrder = (idx: number, keyType: string): void => {
   updateKeys((keys) => {
     const current = keys[idx];
     if (!current) return keys;
@@ -174,17 +185,17 @@ const resetToDefaultOrder = (idx, keyType) => {
   });
 };
 
-const clearRegexError = (idx) => {
+const clearRegexError = (idx: number): void => {
   regexErrors.value = omitIndexedEntry(regexErrors.value, idx);
 };
 
-const handleRegexEnter = (event, idx) => {
+const handleRegexEnter = (event: KeyboardEvent, idx: number): void => {
   if (event?.isComposing || event?.keyCode === 229) return;
   event?.preventDefault?.();
   addCustomOrderItem(idx);
 };
 
-const addCustomOrderItem = (idx) => {
+const addCustomOrderItem = (idx: number): void => {
   const raw = String(regexDrafts.value[idx] || '').trim();
   if (!raw) return;
   try {
@@ -212,7 +223,7 @@ const addCustomOrderItem = (idx) => {
   regexDrafts.value = omitIndexedEntry(regexDrafts.value, idx);
 };
 
-const removeCustomOrderItem = (idx, tagIdx) => {
+const removeCustomOrderItem = (idx: number, tagIdx: number): void => {
   updateKeys((keys) => {
     const current = keys[idx];
     if (!current) return keys;
@@ -223,7 +234,7 @@ const removeCustomOrderItem = (idx, tagIdx) => {
   });
 };
 
-const clearCustomOrder = (idx) => {
+const clearCustomOrder = (idx: number): void => {
   updateKeys((keys) => {
     const current = keys[idx];
     if (!current) return keys;
@@ -233,7 +244,7 @@ const clearCustomOrder = (idx) => {
   clearRegexError(idx);
 };
 
-const getPriorityTypeLabelKey = (key) => {
+const getPriorityTypeLabelKey = (key: string): string => {
   if (key === 'region') return 'operators.sortKeyRegion';
   if (key === 'protocol') return 'operators.sortKeyProtocol';
   return 'operators.sortKeyRegex';
@@ -249,7 +260,7 @@ const availableKeys = [
   { value: 'port', labelKey: 'operators.sortKeyPort' },
 ];
 
-const regionLabels = {
+const regionLabels: Record<string, string> = {
   香港: 'Hong Kong',
   台湾: 'Taiwan',
   日本: 'Japan',
@@ -261,7 +272,7 @@ const regionLabels = {
   法国: 'France',
   加拿大: 'Canada',
 };
-const displayTagName = (item, name) =>
+const displayTagName = (item: OperatorSortKey, name: string): string =>
   item.key === 'region'
     ? `${getRegionEmoji(name)} ${t('operators.regionLabel', { region: locale.value === 'en-US' ? regionLabels[name] || name : name })}`
     : name;
@@ -402,7 +413,7 @@ const displayTagName = (item, name) =>
             animation="200"
             class="flex flex-wrap gap-1.5"
             item-key="id"
-            @update:model-value="(newOrder) => handleDragEnd(idx, newOrder)"
+            @update:model-value="(newOrder: TagItem[]) => handleDragEnd(idx, newOrder)"
           >
             <template #item="{ element, index }">
               <div

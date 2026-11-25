@@ -1,4 +1,6 @@
-<script setup>
+<script setup lang="ts">
+import type { ComponentPublicInstance } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { Download, X } from '@lucide/vue';
 import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 import { useScrollLock } from '@/composables/useScrollLock.js';
@@ -6,18 +8,21 @@ import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  profile: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    profile: ProfileConfig;
+    isExpanded?: boolean;
+  }>(),
+  {
+    isExpanded: false,
   },
-  isExpanded: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['close', 'download', 'register-canvas']);
+const emit = defineEmits<{
+  close: [];
+  download: [];
+  'register-canvas': [id: string, el: Element | ComponentPublicInstance | null];
+}>();
 
 const { handleBackdropPointerDown, handleBackdropClick } = useBackdropDismiss(() => emit('close'));
 useScrollLock(() => props.isExpanded);

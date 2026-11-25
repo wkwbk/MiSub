@@ -1,55 +1,70 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { NodeIR } from '@misub/core/types.js';
 import { Check, Copy, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import Switch from '@/components/ui/Switch.vue';
 
-const { t } = useI18n();
-const props = defineProps({
-  nodes: {
-    type: Array,
-    default: () => [],
-  },
-  copiedNodeId: {
-    type: String,
-    default: '',
-  },
-  parseNodeInfo: {
-    type: Function,
-    required: true,
-  },
-  getProtocolStyle: {
-    type: Function,
-    required: true,
-  },
-  selectionMode: {
-    type: Boolean,
-    default: false,
-  },
-  selectedUrls: {
-    type: Set,
-    default: () => new Set(),
-  },
-  showNodeSwitch: {
-    type: Boolean,
-    default: false,
-  },
-  allowPing: {
-    type: Boolean,
-    default: false,
-  },
-  nodeEnabledMap: {
-    type: Object,
-    default: () => ({}),
-  },
-  nodePingMap: {
-    type: Object,
-    default: () => ({}),
-  },
-});
+interface PreviewNodeItem {
+  url: string;
+  name?: string;
+  protocol?: string;
+  region?: string;
+  server?: string;
+  port?: number | string;
+  enabled?: boolean;
+  ir?: NodeIR;
+  [key: string]: any;
+}
 
-const emit = defineEmits(['copy', 'detail', 'toggle-select', 'toggle-enabled', 'ping']);
+interface ParsedNodeInfo {
+  name?: string;
+  server?: string;
+  port?: number | string;
+  protocol?: string;
+  region?: string;
+}
+
+interface PingState {
+  status: string;
+  latency?: number;
+  mode?: string;
+}
+
+const { t } = useI18n();
+const props = withDefaults(
+  defineProps<{
+    nodes?: PreviewNodeItem[];
+    copiedNodeId?: string;
+    parseNodeInfo: (node: PreviewNodeItem) => ParsedNodeInfo;
+    getProtocolStyle: (protocol?: string) => string;
+    selectionMode?: boolean;
+    selectedUrls?: Set<string>;
+    showNodeSwitch?: boolean;
+    allowPing?: boolean;
+    nodeEnabledMap?: Record<string, boolean>;
+    nodePingMap?: Record<string, PingState>;
+  }>(),
+  {
+    nodes: () => [],
+    copiedNodeId: '',
+    selectionMode: false,
+    selectedUrls: () => new Set<string>(),
+    showNodeSwitch: false,
+    allowPing: false,
+    nodeEnabledMap: () => ({}),
+    nodePingMap: () => ({}),
+  },
+);
+
+const emit = defineEmits<{
+  copy: [node: PreviewNodeItem, url: string];
+  detail: [node: PreviewNodeItem];
+  'toggle-select': [url: string];
+  'toggle-enabled': [node: PreviewNodeItem, enabled: boolean];
+  ping: [node: PreviewNodeItem];
+}>();
 
 const rows = computed(() =>
   (props.nodes || []).map((node, index) => ({
@@ -61,11 +76,11 @@ const rows = computed(() =>
   })),
 );
 
-const formatPingClass = (ping) => {
+const formatPingClass = (ping: PingState | null) => {
   if (!ping) return 'border-line text-fg-subtle hover:border-line-strong hover:text-fg';
   if (ping.status === 'ok') {
-    if (ping.latency < 200) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
-    if (ping.latency < 500) return 'border-amber-500/40 bg-amber-500/10 text-amber-400';
+    if ((ping.latency ?? 0) < 200) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
+    if ((ping.latency ?? 0) < 500) return 'border-amber-500/40 bg-amber-500/10 text-amber-400';
     return 'border-rose-500/40 bg-rose-500/10 text-rose-400';
   }
   if (ping.status === 'unsupported') return 'border-line text-fg-subtle opacity-70';
@@ -73,13 +88,13 @@ const formatPingClass = (ping) => {
   return 'border-red-500/40 bg-red-500/10 text-red-400';
 };
 
-const handleCardClick = (node) => {
+const handleCardClick = (node: PreviewNodeItem) => {
   if (props.selectionMode) {
     emit('toggle-select', node.url);
   }
 };
 
-const getProtocolDot = (protocol) => {
+const getProtocolDot = (protocol?: string) => {
   switch (String(protocol || '').toLowerCase()) {
     case 'vless':
       return 'bg-sky-500';

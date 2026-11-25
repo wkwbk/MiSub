@@ -1,32 +1,29 @@
-<script setup>
-import { computed } from 'vue';
+<script setup lang="ts">
+import { computed, type Component } from 'vue';
 import { Folder, Inbox, RefreshCw, Search, Zap } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  filteredCount: {
-    type: Number,
-    default: 0,
+const props = withDefaults(
+  defineProps<{
+    filteredCount?: number;
+    totalCount?: number;
+    title?: string;
+    description?: string;
+    icon?: string;
+  }>(),
+  {
+    filteredCount: 0,
+    totalCount: 0,
+    title: '',
+    description: '',
+    icon: 'search',
   },
-  totalCount: {
-    type: Number,
-    default: 0,
-  },
-  title: {
-    type: String,
-    default: '',
-  },
-  description: {
-    type: String,
-    default: '',
-  },
-  icon: {
-    type: String,
-    default: 'search',
-  },
-});
+);
 
-const emit = defineEmits(['reset', 'refresh']);
+const emit = defineEmits<{
+  reset: [];
+  refresh: [];
+}>();
 const { t } = useI18n();
 
 const displayTitle = computed(() => {
@@ -53,7 +50,7 @@ const showResetButton = computed(() => {
   return props.totalCount > 0 && props.filteredCount === 0;
 });
 
-const iconComponents = {
+const iconComponents: Record<string, Component> = {
   search: Search,
   folder: Folder,
   node: Zap,

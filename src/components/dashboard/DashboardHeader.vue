@@ -1,17 +1,22 @@
-<script setup>
+<script setup lang="ts">
 import { FileText, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-defineProps({
-  formattedTotalRemainingTraffic: {
-    type: String,
-    default: '0 B',
+withDefaults(
+  defineProps<{
+    formattedTotalRemainingTraffic?: string;
+  }>(),
+  {
+    formattedTotalRemainingTraffic: '0 B',
   },
-});
+);
 
-defineEmits(['openLog', 'openBulkImport']);
+defineEmits<{
+  openLog: [];
+  openBulkImport: [];
+}>();
 </script>
 
 <template>

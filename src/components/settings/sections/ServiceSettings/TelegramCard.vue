@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { SettingsConfig } from '@misub/core/types.js';
 import { Loader2, Send } from '@lucide/vue';
 import CopyableInput from '@/components/settings/CopyableInput.vue';
 import SecretInput from '@/components/settings/SecretInput.vue';
@@ -9,16 +10,19 @@ import Textarea from '@/components/ui/Textarea.vue';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
 
+interface TelegramActionResult {
+  success: boolean;
+  message: string;
+  detail?: unknown;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: SettingsConfig & Record<string, any>;
+}>();
 
-const updatePushConfigField = (key, value) => {
+const updatePushConfigField = (key: string, value: unknown) => {
   telegramPushConfig.value = {
     ...telegramPushConfig.value,
     [key]: value,
@@ -46,7 +50,7 @@ const allowedUsersStr = computed({
   get() {
     return (telegramPushConfig.value.allowedUserIds || []).join(', ');
   },
-  set(value) {
+  set(value: string) {
     const ids = value
       .split(',')
       .map((id) => id.trim())
@@ -76,15 +80,15 @@ const setWebhookUrl = computed(() => {
   return `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl.value)}&secret_token=${encodeURIComponent(webhookSecret.value)}`;
 });
 
-const copyStatus = ref(null);
+const copyStatus = ref<{ key: string; message: string } | null>(null);
 const showSetupGuide = ref(false);
 const showUsageGuide = ref(false);
 const isTesting = ref(false);
-const testResult = ref(null);
+const testResult = ref<TelegramActionResult | null>(null);
 const isSyncingBot = ref(false);
-const syncBotResult = ref(null);
+const syncBotResult = ref<TelegramActionResult | null>(null);
 
-async function copyText(value, key) {
+async function copyText(value: string, key: string) {
   if (!value) return;
 
   const copied = await copyTextToClipboard(value);
@@ -124,7 +128,7 @@ async function testNotification() {
         detail: data.detail,
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     testResult.value = {
       success: false,
       message: error.message || t('settings.telegramRequestFailed'),
@@ -166,7 +170,7 @@ async function syncPushBot() {
         detail: data,
       };
     }
-  } catch (error) {
+  } catch (error: any) {
     syncBotResult.value = {
       success: false,
       message: error.message || t('settings.telegramRequestFailed'),

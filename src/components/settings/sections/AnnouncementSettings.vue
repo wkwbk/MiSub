@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, watch } from 'vue';
 import { Megaphone } from '@lucide/vue';
 import DOMPurify from 'dompurify';
@@ -7,17 +7,24 @@ import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+
+interface AnnouncementState {
+  enabled: boolean;
+  title: string;
+  content: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  dismissible: boolean;
+  updatedAt: string | null;
+}
 
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
 
-const defaultAnnouncement = {
+const defaultAnnouncement: AnnouncementState = {
   enabled: false,
   title: '',
   content: '',
@@ -26,9 +33,9 @@ const defaultAnnouncement = {
   updatedAt: null,
 };
 
-const ensureAnnouncement = () => {
+const ensureAnnouncement = (): void => {
   if (!props.settings.announcement) {
-    props.settings.announcement = { ...defaultAnnouncement };
+    props.settings.announcement = { ...defaultAnnouncement } as unknown as AppSettingsConfig['announcement'];
   }
 };
 
@@ -42,7 +49,9 @@ watch(
 );
 
 // 确保 announcement 对象存在
-const announcement = computed(() => props.settings.announcement || defaultAnnouncement);
+const announcement = computed<AnnouncementState>(
+  () => (props.settings.announcement as unknown as AnnouncementState | undefined) || defaultAnnouncement,
+);
 
 const allowedContentTags = ['b', 'i', 'em', 'strong', 'a', 'p', 'br', 'ul', 'li'];
 const allowedContentAttrs = ['href', 'target', 'rel'];
@@ -57,7 +66,7 @@ const sanitizedContent = computed(() => {
   });
 });
 
-const handleContentUpdate = () => {
+const handleContentUpdate = (): void => {
   announcement.value.updatedAt = new Date().toISOString();
 };
 </script>

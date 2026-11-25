@@ -1,10 +1,4 @@
-<script setup>
-const props = defineProps({
-  editingSubscription: {
-    type: Object,
-    required: true,
-  },
-});
+<script setup lang="ts">
 import Input from '@/components/ui/Input.vue';
 import Switch from '@/components/ui/Switch.vue';
 import TagInput from '@/components/ui/TagInput.vue';
@@ -16,6 +10,12 @@ import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkIm
 import { getItemTags, normalizeTagList } from '@/utils/tags.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
+import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
+
+const props = defineProps<{
+  editingSubscription: EditableSubscriptionForm | StoreMisubItem;
+}>();
 
 const { showToast } = useToastStore();
 const dataStore = useDataStore();
@@ -23,9 +23,9 @@ const { t } = useI18n();
 
 const subscriptionTagNames = computed(() => extractSubscriptionTagNames(dataStore.subscriptions || []));
 
-const selectedTags = computed({
+const selectedTags = computed<string[]>({
   get: () => getItemTags(props.editingSubscription),
-  set: (val) => {
+  set: (val: string[]) => {
     if (!props.editingSubscription) return;
     props.editingSubscription.tags = normalizeTagList(val);
   },
@@ -50,7 +50,7 @@ watch(useFetchProxy, (val) => {
   }
 });
 
-const testProxyConnectivity = async () => {
+const testProxyConnectivity = async (): Promise<void> => {
   if (!props.editingSubscription.fetchProxy || !props.editingSubscription.url) {
     showToast(t('subscriptions.proxyRequired'), 'warning');
     return;
@@ -68,8 +68,9 @@ const testProxyConnectivity = async () => {
     } else {
       showToast(t('subscriptions.proxyTestFailed', { message: res.error }), 'error');
     }
-  } catch (err) {
-    showToast(t('subscriptions.proxyTestError', { message: err.message }), 'error');
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err ?? '');
+    showToast(t('subscriptions.proxyTestError', { message }), 'error');
   } finally {
     isTestingProxy.value = false;
   }

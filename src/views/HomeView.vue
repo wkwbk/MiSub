@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, h, watchEffect } from 'vue';
 import { useSessionStore } from '@/stores/useSessionStore.js';
 import { storeToRefs } from 'pinia';

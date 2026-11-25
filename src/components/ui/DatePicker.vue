@@ -1,73 +1,75 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import type { CSSProperties } from 'vue';
 import { Calendar, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, X } from '@lucide/vue';
 import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 import { useI18n } from '@/i18n/index.js';
 
+type DatePickerSize = 'xs' | 'sm' | 'md' | 'lg';
+
+interface DatePreset {
+  label: string;
+  value?: string | (() => string);
+  days?: number;
+  months?: number;
+  years?: number;
+}
+
+interface DayCell {
+  day: number;
+  value: string;
+  inCurrentMonth: boolean;
+  isToday: boolean;
+  isSelected: boolean;
+  disabled: boolean;
+}
+
 const { locale, t } = useI18n();
 
-const props = defineProps({
-  modelValue: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string | null;
+    placeholder?: string;
+    disabled?: boolean;
+    clearable?: boolean;
+    size?: DatePickerSize;
+    min?: string;
+    max?: string;
+    presets?: DatePreset[];
+    triggerClass?: string;
+    popoverClass?: string;
+    id?: string;
+    ariaLabel?: string;
+  }>(),
+  {
+    modelValue: '',
+    placeholder: '',
+    disabled: false,
+    clearable: true,
+    size: 'md',
+    min: '',
+    max: '',
+    presets: () => [],
+    triggerClass: '',
+    popoverClass: '',
+    id: undefined,
+    ariaLabel: undefined,
   },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  clearable: {
-    type: Boolean,
-    default: true,
-  },
-  size: {
-    type: String,
-    default: 'md',
-    validator: (value) => ['xs', 'sm', 'md', 'lg'].includes(value),
-  },
-  min: {
-    type: String,
-    default: '',
-  },
-  max: {
-    type: String,
-    default: '',
-  },
-  presets: {
-    type: Array,
-    default: () => [],
-  },
-  triggerClass: {
-    type: String,
-    default: '',
-  },
-  popoverClass: {
-    type: String,
-    default: '',
-  },
-  id: {
-    type: String,
-    default: undefined,
-  },
-  ariaLabel: {
-    type: String,
-    default: undefined,
-  },
-});
+);
 
-const emit = defineEmits(['update:modelValue', 'change']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+  change: [value: string];
+}>();
 
 const isOpen = ref(false);
-const viewMode = ref('days'); // 'days' | 'months' | 'years'
-const triggerRef = ref(null);
-const popoverRef = ref(null);
-const placement = ref('bottom');
-const popoverStyle = ref({});
+const viewMode = ref<'days' | 'months' | 'years'>('days');
+const triggerRef = ref<HTMLDivElement | null>(null);
+const popoverRef = ref<HTMLDivElement | null>(null);
+const placement = ref<'top' | 'bottom'>('bottom');
+const popoverStyle = ref<CSSProperties>({});
 
-const sizeClasses = {
+const sizeClasses: Record<DatePickerSize, string> = {
   xs: 'h-7 px-2 text-xs rounded-md gap-1.5',
   sm: 'h-8 px-2.5 text-xs rounded-md gap-2',
   md: 'h-9 px-3 text-sm rounded-md gap-2',
@@ -78,11 +80,11 @@ const currentSizeClass = computed(() => sizeClasses[props.size] || sizeClasses.m
 
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-const pad2 = (n) => String(n).padStart(2, '0');
+const pad2 = (n: number) => String(n).padStart(2, '0');
 
-const formatDateStr = (year, month, day) => `${year}-${pad2(month)}-${pad2(day)}`;
+const formatDateStr = (year: number, month: number, day: number) => `${year}-${pad2(month)}-${pad2(day)}`;
 
-const parseDateStr = (value) => {
+const parseDateStr = (value: string | null | undefined) => {
   if (!value || typeof value !== 'string') return null;
   const match = DATE_RE.exec(value.trim());
   if (!match) return null;
@@ -148,13 +150,13 @@ const yearGrid = computed(() => {
   return Array.from({ length: 12 }, (_, idx) => start + idx);
 });
 
-const isDateDisabled = (dateStr) => {
+const isDateDisabled = (dateStr: string) => {
   if (props.min && dateStr < props.min) return true;
   if (props.max && dateStr > props.max) return true;
   return false;
 };
 
-const calendarDays = computed(() => {
+const calendarDays = computed<DayCell[]>(() => {
   const year = viewYear.value;
   const month = viewMonth.value;
   const firstDayOfMonth = new Date(year, month - 1, 1);
@@ -170,7 +172,7 @@ const calendarDays = computed(() => {
   const nextYear = nextMonthDate.getFullYear();
   const nextMonth = nextMonthDate.getMonth() + 1;
 
-  const cells = [];
+  const cells: DayCell[] = [];
 
   for (let i = startOffset - 1; i >= 0; i--) {
     const day = daysInPrevMonth - i;
@@ -270,7 +272,7 @@ const close = (restoreFocus = false) => {
 
 const toggle = () => (isOpen.value ? close() : open());
 
-const emitValue = (value, shouldClose = true) => {
+const emitValue = (value: string, shouldClose = true) => {
   emit('update:modelValue', value);
   emit('change', value);
   if (shouldClose) {
@@ -278,7 +280,7 @@ const emitValue = (value, shouldClose = true) => {
   }
 };
 
-const selectDay = (cell) => {
+const selectDay = (cell: DayCell) => {
   if (!cell || cell.disabled) return;
   emitValue(cell.value, true);
 };
@@ -295,7 +297,7 @@ const clearValue = () => {
   close(false);
 };
 
-const resolvePresetValue = (preset) => {
+const resolvePresetValue = (preset: DatePreset) => {
   if (!preset) return '';
   if (typeof preset.value === 'function') return preset.value();
   if (typeof preset.value === 'string') return preset.value;
@@ -310,19 +312,19 @@ const resolvePresetValue = (preset) => {
   return formatDateStr(now.getFullYear(), now.getMonth() + 1, now.getDate());
 };
 
-const selectPreset = (preset) => {
+const selectPreset = (preset: DatePreset) => {
   const value = resolvePresetValue(preset);
   if (!value || isDateDisabled(value)) return;
   emitValue(value, true);
 };
 
-const shiftMonth = (delta) => {
+const shiftMonth = (delta: number) => {
   const next = new Date(viewYear.value, viewMonth.value - 1 + delta, 1);
   viewYear.value = next.getFullYear();
   viewMonth.value = next.getMonth() + 1;
 };
 
-const shiftYear = (delta) => {
+const shiftYear = (delta: number) => {
   viewYear.value += delta;
 };
 
@@ -343,17 +345,17 @@ const handleHeaderTitleClick = () => {
   else if (viewMode.value === 'months') viewMode.value = 'years';
 };
 
-const selectMonth = (monthIndex) => {
+const selectMonth = (monthIndex: number) => {
   viewMonth.value = monthIndex + 1;
   viewMode.value = 'days';
 };
 
-const selectYear = (year) => {
+const selectYear = (year: number) => {
   viewYear.value = year;
   viewMode.value = 'months';
 };
 
-const handleTriggerKeydown = (event) => {
+const handleTriggerKeydown = (event: KeyboardEvent) => {
   if (props.disabled) return;
   if (event.key === 'Enter' || event.key === ' ' || event.key === 'ArrowDown') {
     event.preventDefault();
@@ -363,14 +365,15 @@ const handleTriggerKeydown = (event) => {
   }
 };
 
-const handleDocumentPointerDown = (event) => {
+const handleDocumentPointerDown = (event: PointerEvent) => {
   if (!isOpen.value) return;
-  if (!triggerRef.value?.contains(event.target) && !popoverRef.value?.contains(event.target)) {
+  const target = event.target as Node | null;
+  if (!triggerRef.value?.contains(target) && !popoverRef.value?.contains(target)) {
     close();
   }
 };
 
-const handleDocumentKeydown = (event) => {
+const handleDocumentKeydown = (event: KeyboardEvent) => {
   if (!isOpen.value || event.key !== 'Escape') return;
   event.preventDefault();
   event.stopPropagation();
@@ -400,7 +403,7 @@ usePopoverGuard({
   onReposition: updatePosition,
 });
 
-const getDayCellClasses = (cell) => {
+const getDayCellClasses = (cell: DayCell) => {
   if (cell.disabled) {
     return 'cursor-not-allowed opacity-30 text-fg-subtle';
   }
@@ -439,7 +442,7 @@ const getDayCellClasses = (cell) => {
       @keydown="handleTriggerKeydown"
     >
       <span :class="hasValue ? 'font-mono text-fg tabular-nums' : 'text-fg-subtle'" class="min-w-0 flex-1 truncate">
-        {{ hasValue ? modelValue : displayPlaceholder }}
+        {{ hasValue ? (modelValue ?? '') : displayPlaceholder }}
       </span>
 
       <span class="flex items-center gap-1 shrink-0">

@@ -1,75 +1,59 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from '@/i18n/index.js';
 import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 import { useScrollLock } from '@/composables/useScrollLock.js';
 
-const props = defineProps({
-  show: Boolean,
-  title: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    title?: string;
+    showCancel?: boolean;
+    showConfirm?: boolean;
+    confirmKeyword?: string;
+    size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl';
+    confirmDisabled?: boolean;
+    confirmButtonTitle?: string;
+    closeOnConfirm?: boolean;
+    confirmText?: string;
+    cancelText?: string;
+    confirmVariant?: 'primary' | 'danger';
+    bodyClass?: string;
+    zIndex?: string | number;
+  }>(),
+  {
+    show: false,
+    title: '',
+    showCancel: true,
+    showConfirm: true,
+    confirmKeyword: undefined,
+    size: 'sm',
+    confirmDisabled: false,
+    confirmButtonTitle: '',
+    closeOnConfirm: true,
+    confirmText: '',
+    cancelText: '',
+    confirmVariant: 'primary',
+    bodyClass: '',
+    zIndex: 'var(--z-modal)',
   },
-  showCancel: {
-    type: Boolean,
-    default: true,
-  },
-  showConfirm: {
-    type: Boolean,
-    default: true,
-  },
-  confirmKeyword: String,
-  size: {
-    type: String,
-    default: 'sm',
-  },
-  confirmDisabled: {
-    type: Boolean,
-    default: false,
-  },
-  confirmButtonTitle: {
-    type: String,
-    default: '',
-  },
-  closeOnConfirm: {
-    type: Boolean,
-    default: true,
-  },
-  confirmText: {
-    type: String,
-    default: '',
-  },
-  cancelText: {
-    type: String,
-    default: '',
-  },
-  confirmVariant: {
-    type: String,
-    default: 'primary',
-    validator: (value) => ['primary', 'danger'].includes(value),
-  },
-  bodyClass: {
-    type: String,
-    default: '',
-  },
-  zIndex: {
-    type: [String, Number],
-    default: 'var(--z-modal)',
-  },
-});
+);
 
-const emit = defineEmits(['update:show', 'confirm']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [];
+}>();
 const { t } = useI18n();
 const confirmLabel = computed(() => props.confirmText || t('actions.confirm'));
 const cancelLabel = computed(() => props.cancelText || t('actions.cancel'));
 const confirmTitle = computed(() => props.confirmButtonTitle || t('actions.confirm'));
 
 const confirmInput = ref('');
-const modalPanelRef = ref(null);
+const modalPanelRef = ref<HTMLDivElement | null>(null);
 const titleId = `modal-title-${Math.random().toString(36).slice(2, 10)}`;
 
 // 记录打开弹窗前的焦点元素，关闭时还原
-let previouslyFocused = null;
+let previouslyFocused: HTMLElement | null = null;
 
 const FOCUSABLE = [
   'a[href]',
@@ -80,12 +64,12 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(', ');
 
-function getFocusableElements() {
-  return modalPanelRef.value ? Array.from(modalPanelRef.value.querySelectorAll(FOCUSABLE)) : [];
+function getFocusableElements(): HTMLElement[] {
+  return modalPanelRef.value ? Array.from(modalPanelRef.value.querySelectorAll<HTMLElement>(FOCUSABLE)) : [];
 }
 
 // Focus trap：Tab / Shift+Tab 循环限制在弹窗内，Escape 关闭
-const handleKeydown = (e) => {
+const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     emit('update:show', false);
     return;
@@ -118,7 +102,7 @@ watch(
   () => props.show,
   async (val) => {
     if (val) {
-      previouslyFocused = document.activeElement;
+      previouslyFocused = document.activeElement as HTMLElement | null;
       window.addEventListener('keydown', handleKeydown);
       await nextTick();
       // 优先聚焦第一个可交互元素，否则聚焦弹窗面板本身
@@ -223,7 +207,7 @@ useScrollLock(() => props.show);
                       ? 'bg-transparent border border-red-500/40 text-red-500 dark:text-red-400 hover:bg-red-500/10'
                       : 'bg-accent text-accent-fg hover:opacity-90 border border-accent'
                   "
-                  :disabled="confirmDisabled || (confirmKeyword && confirmInput !== confirmKeyword)"
+                  :disabled="confirmDisabled || Boolean(confirmKeyword && confirmInput !== confirmKeyword)"
                   :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
                   class="px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="handleConfirm"

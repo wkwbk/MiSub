@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Braces, Plus } from '@lucide/vue';
 import { useDataStore } from '@/stores/useDataStore.js';
@@ -6,7 +6,18 @@ import { useI18n } from '@/i18n/index.js';
 import TemplateVariablesModal from '@/components/forms/TemplateVariablesModal.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 
-const emit = defineEmits(['saved']);
+interface RuleTemplateItem {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  content: string;
+  enabled: boolean;
+}
+
+const emit = defineEmits<{
+  saved: [templateId: string];
+}>();
 
 const { t } = useI18n();
 const showTemplateVariables = ref(false);
@@ -36,7 +47,7 @@ custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择\`[]♻️ 自�
 enable_rule_generator=true
 overwrite_original_rules=true`;
 
-const blankTemplate = () => ({
+const blankTemplate = (): RuleTemplateItem => ({
   id: '',
   name: '',
   description: '',
@@ -45,7 +56,7 @@ const blankTemplate = () => ({
   enabled: true,
 });
 
-const localTemplates = ref([]);
+const localTemplates = ref<RuleTemplateItem[]>([]);
 const selectedId = ref('');
 const selectedIndex = ref(-1);
 const isSaving = ref(false);
@@ -62,7 +73,7 @@ const selectedTemplate = computed(() => {
 });
 const selectedTemplateId = computed({
   get: () => selectedTemplate.value?.id || '',
-  set: (value) => {
+  set: (value: string) => {
     if (!selectedTemplate.value) return;
     selectedTemplate.value.id = value;
     selectedId.value = value;
@@ -70,11 +81,11 @@ const selectedTemplateId = computed({
 });
 const hasTemplates = computed(() => localTemplates.value.length > 0);
 
-function cloneTemplates(items) {
+function cloneTemplates(items: unknown): RuleTemplateItem[] {
   return JSON.parse(JSON.stringify(Array.isArray(items) ? items : []));
 }
 
-function selectTemplateAt(index) {
+function selectTemplateAt(index: number) {
   if (index >= 0 && index < localTemplates.value.length) {
     selectedIndex.value = index;
     selectedId.value = localTemplates.value[index].id;
@@ -98,7 +109,7 @@ watch(() => dataStore.ruleTemplates, syncFromStore, { immediate: true, deep: tru
 
 function createTemplate() {
   const now = Date.now().toString(36);
-  const template = {
+  const template: RuleTemplateItem = {
     ...blankTemplate(),
     id: `custom-${now}`,
     name: t('settings.ruleTemplateDefaultName'),
@@ -108,7 +119,7 @@ function createTemplate() {
   return template;
 }
 
-function duplicateTemplate(template) {
+function duplicateTemplate(template: RuleTemplateItem) {
   if (!template) return;
   const copy = cloneTemplates([template])[0];
   copy.id = `${template.id || 'custom'}-copy-${Date.now().toString(36)}`;
@@ -117,7 +128,7 @@ function duplicateTemplate(template) {
   selectTemplateAt(0);
 }
 
-function removeTemplate(template) {
+function removeTemplate(template: RuleTemplateItem) {
   if (!template) return;
   localTemplates.value = localTemplates.value.filter((item) => item !== template);
   selectTemplateAt(localTemplates.value.length ? 0 : -1);

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Languages } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -7,7 +7,7 @@ const { locale, setLocale, t } = useI18n();
 
 const isZh = computed(() => locale.value === 'zh-CN');
 
-function toggleLocale() {
+function toggleLocale(): void {
   setLocale(isZh.value ? 'en-US' : 'zh-CN');
 }
 </script>

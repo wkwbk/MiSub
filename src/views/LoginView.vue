@@ -1,38 +1,44 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { AlertCircle, ArrowLeft, Eye, EyeOff, Globe, Lock } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import Button from '@/components/ui/Button.vue';
 import TurnstileWidget from '@/components/ui/TurnstileWidget.vue';
 
+interface TurnstileConfig {
+  enableForLogin?: boolean;
+  siteKey?: string;
+}
+
 const { t } = useI18n();
 
 const password = ref('');
-const passwordInput = ref(null);
+const passwordInput = ref<HTMLInputElement | null>(null);
 const isLoading = ref(false);
 const error = ref('');
 const showPassword = ref(false);
-const turnstileRef = ref(null);
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null);
 const turnstileToken = ref('');
 // 伪装开启时 /logo.png 对未鉴权请求会被服务端有意 404（指纹防护），
 // 这里降级为内联图标，避免登录页出现「图片损坏」占位符。
 const logoFailed = ref(false);
 
-const props = defineProps({
-  login: Function,
-  showBackHome: {
-    type: Boolean,
-    default: true,
+const props = withDefaults(
+  defineProps<{
+    login?: (password: string, turnstileToken?: string) => Promise<unknown> | unknown;
+    showBackHome?: boolean;
+    turnstileConfig?: TurnstileConfig | null;
+  }>(),
+  {
+    login: undefined,
+    showBackHome: true,
+    turnstileConfig: null,
   },
-  turnstileConfig: {
-    type: Object,
-    default: null,
-  },
-});
+);
 
 const useTurnstile = computed(() => Boolean(props.turnstileConfig?.enableForLogin && props.turnstileConfig?.siteKey));
 
-const handleTurnstileVerify = (token) => {
+const handleTurnstileVerify = (token: string) => {
   turnstileToken.value = token || '';
   if (error.value) error.value = '';
 };
@@ -67,12 +73,12 @@ const submitLogin = async () => {
   error.value = '';
   try {
     if (useTurnstile.value) {
-      await props.login(password.value, turnstileToken.value);
+      await props.login?.(password.value, turnstileToken.value);
     } else {
-      await props.login(password.value);
+      await props.login?.(password.value);
     }
-  } catch (err) {
-    error.value = err.message || t('login.unknownError');
+  } catch (err: unknown) {
+    error.value = (err instanceof Error ? err.message : '') || t('login.unknownError');
     if (useTurnstile.value) {
       turnstileToken.value = '';
       turnstileRef.value?.reset?.();
@@ -155,7 +161,7 @@ const submitLogin = async () => {
         <div v-if="useTurnstile" class="flex justify-center">
           <TurnstileWidget
             ref="turnstileRef"
-            :site-key="turnstileConfig.siteKey"
+            :site-key="turnstileConfig?.siteKey || ''"
             action="login"
             @error="handleTurnstileError"
             @expire="handleTurnstileExpire"

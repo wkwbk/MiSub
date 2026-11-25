@@ -1,24 +1,27 @@
-<script setup>
+<script setup lang="ts">
 import { Tag, Trash2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
-defineProps({
-  isSelectionMode: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    isSelectionMode?: boolean;
+    isAllSelected?: boolean;
+    selectedCount?: number;
+  }>(),
+  {
+    isSelectionMode: false,
+    isAllSelected: false,
+    selectedCount: 0,
   },
-  isAllSelected: {
-    type: Boolean,
-    default: false,
-  },
-  selectedCount: {
-    type: Number,
-    default: 0,
-  },
-});
+);
 
-const emit = defineEmits(['toggle-select-all', 'batch-tag', 'batch-delete', 'exit']);
+const emit = defineEmits<{
+  'toggle-select-all': [];
+  'batch-tag': [];
+  'batch-delete': [];
+  exit: [];
+}>();
 </script>
 
 <template>

@@ -1,6 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 import { computed, markRaw, ref, watch } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { Box, Code2, Copy, Link2, Loader2, Monitor, Send, Zap } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -14,13 +15,22 @@ import { shadowrocketConfigUrl } from '@misub/core/domain/shadowrocket-links.js'
 
 const { t } = useI18n();
 
-const props = defineProps({
-  show: Boolean,
-  profile: Object,
-  token: String,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    profile?: ProfileConfig | null;
+    token?: string | null;
+  }>(),
+  {
+    show: false,
+    profile: null,
+    token: '',
+  },
+);
 
-const emit = defineEmits(['update:show']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 const { showToast } = useToastStore();
 const settingsStore = useSettingsStore();
 const dataStore = useDataStore();
@@ -51,7 +61,7 @@ const identifier = computed(() => {
   return getProfileShareIdentifier(props.profile);
 });
 
-const subPath = computed(() => normalizeSubPath(props.token, 'sub'));
+const subPath = computed(() => normalizeSubPath(props.token || '', 'sub'));
 
 const baseUrl = computed(() => {
   if (!identifier.value || /[\s/?#]/.test(subPath.value) || isReservedSubPath(subPath.value)) return '';
@@ -100,7 +110,7 @@ const clients = computed(() => [
   },
 ]);
 
-const copyToClipboard = async (format) => {
+const copyToClipboard = async (format: string) => {
   if (!baseUrl.value) {
     showToast(t('copyLink.tokenMissing'), 'error');
     return;
@@ -144,7 +154,7 @@ const handleCreateShortLink = async () => {
     localShortLink.value = result.shortUrl;
     customSlug.value = '';
     if (result.savedToProfile && props.profile?.id) {
-      const target = (dataStore.profiles || []).find((p) => p.id === props.profile.id);
+      const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === props.profile?.id);
       if (target) {
         target.shortLink = result.shortUrl;
       }

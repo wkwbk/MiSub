@@ -1,22 +1,17 @@
-<script setup>
-defineProps({
-  title: {
-    type: String,
-    required: true,
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    title: string;
+    description?: string;
+    tone?: string;
+    noMargin?: boolean;
+  }>(),
+  {
+    description: '',
+    tone: 'indigo',
+    noMargin: false,
   },
-  description: {
-    type: String,
-    default: '',
-  },
-  tone: {
-    type: String,
-    default: 'indigo',
-  },
-  noMargin: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 </script>
 
 <template>

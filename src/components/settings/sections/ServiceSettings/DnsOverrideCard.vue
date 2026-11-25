@@ -1,37 +1,35 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Globe } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import * as yaml from 'js-yaml';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
 
 const inputValue = computed({
   get() {
     return props.settings.customDnsOverride || '';
   },
-  set(value) {
+  set(value: string) {
     props.settings.customDnsOverride = value;
   },
 });
 
 const jsonError = ref('');
 
-function detectFormat(raw) {
+function detectFormat(raw: string): 'json' | 'yaml' {
   if (/^\s*\{/.test(raw)) return 'json';
   return 'yaml';
 }
 
-function validateInput() {
+function validateInput(): void {
   const raw = inputValue.value.trim();
   if (!raw) {
     jsonError.value = '';
@@ -39,7 +37,7 @@ function validateInput() {
   }
   const format = detectFormat(raw);
   try {
-    let parsed;
+    let parsed: unknown;
     if (format === 'json') {
       parsed = JSON.parse(raw);
     } else {

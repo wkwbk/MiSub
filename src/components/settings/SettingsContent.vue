@@ -1,10 +1,13 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { ChevronUp, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import SettingsLayout from '@/components/layout/SettingsLayout.vue';
 import SettingsSidebar from '@/components/settings/SettingsSidebar.vue';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
+import type { BackupScope } from '@/composables/useBackupLogic.js';
+import type { DisguiseConfig } from '@/composables/useSettingsLogic.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const loadBasicSettings = () => import('@/components/settings/sections/BasicSettings.vue');
 const loadHomeSettings = () => import('@/components/settings/sections/HomeSettings.vue');
@@ -37,71 +40,50 @@ const SystemSettings = defineAsyncComponent(loadSystemSettings);
  */
 const { t } = useI18n();
 
-const props = defineProps({
-  activeTab: {
-    type: String,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    activeTab: string;
+    settings: AppSettingsConfig;
+    disguiseConfig?: DisguiseConfig | Record<string, unknown>;
+    isLoading?: boolean;
+    isSaving?: boolean;
+    hasWhitespace?: boolean;
+    /** 独立页面用 ?focus= 深链定位字段时高亮；弹窗不使用 */
+    highlightedFocusId?: string;
+    hideFooter?: boolean;
+    inModal?: boolean;
+    layoutClass?: string;
+    exportBackup?: ((scope?: BackupScope) => Promise<void>) | (() => unknown) | null;
+    importBackup?: (() => void) | (() => unknown) | null;
+    handleReset?: (() => Promise<void>) | (() => unknown) | null;
+  }>(),
+  {
+    disguiseConfig: () => ({ pageType: 'default', redirectUrl: '' }),
+    isLoading: false,
+    isSaving: false,
+    hasWhitespace: false,
+    highlightedFocusId: '',
+    hideFooter: false,
+    inModal: false,
+    layoutClass: 'h-full',
+    exportBackup: null,
+    importBackup: null,
+    handleReset: null,
   },
-  settings: {
-    type: Object,
-    required: true,
-  },
-  disguiseConfig: {
-    type: Object,
-    default: () => ({}),
-  },
-  isLoading: {
-    type: Boolean,
-    default: false,
-  },
-  isSaving: {
-    type: Boolean,
-    default: false,
-  },
-  hasWhitespace: {
-    type: Boolean,
-    default: false,
-  },
-  /** 独立页面用 ?focus= 深链定位字段时高亮；弹窗不使用 */
-  highlightedFocusId: {
-    type: String,
-    default: '',
-  },
-  hideFooter: {
-    type: Boolean,
-    default: false,
-  },
-  inModal: {
-    type: Boolean,
-    default: false,
-  },
-  layoutClass: {
-    type: String,
-    default: 'h-full',
-  },
-  exportBackup: {
-    type: Function,
-    default: null,
-  },
-  importBackup: {
-    type: Function,
-    default: null,
-  },
-  handleReset: {
-    type: Function,
-    default: null,
-  },
-});
+);
 
-const emit = defineEmits(['update:activeTab', 'save']);
+const emit = defineEmits<{
+  'update:activeTab': [value: string];
+  save: [];
+}>();
 
 const activeTabModel = computed({
   get: () => props.activeTab,
-  set: (value) => emit('update:activeTab', value),
+  set: (value: string) => emit('update:activeTab', value),
 });
 
 // 仅在首次访问对应 tab 时才挂载该分区组件，后续切换通过 v-show 保留内部状态
-const visitedTabs = ref(new Set(props.activeTab ? [props.activeTab] : []));
+const visitedTabs = ref<Set<string>>(new Set(props.activeTab ? [props.activeTab] : []));
 watch(
   () => props.activeTab,
   (tab) => {
@@ -137,7 +119,7 @@ const currentTabLabel = computed(() => {
 
 const saveDisabled = computed(() => props.isSaving || props.hasWhitespace);
 
-function handleSaveClick() {
+function handleSaveClick(): void {
   if (props.isLoading || saveDisabled.value) return;
   emit('save');
 }
@@ -145,14 +127,14 @@ function handleSaveClick() {
 // 独立设置页将「回到顶部」收纳进底部操作栏，彻底避免与保存按钮或表单开关重叠
 const showScrollTop = ref(false);
 const SCROLL_TOP_THRESHOLD = 300;
-let scrollRafId = null;
+let scrollRafId: number | null = null;
 
-function updateScrollTopVisibility() {
+function updateScrollTopVisibility(): void {
   if (typeof window === 'undefined') return;
   showScrollTop.value = window.scrollY > SCROLL_TOP_THRESHOLD;
 }
 
-function handleWindowScroll() {
+function handleWindowScroll(): void {
   if (scrollRafId !== null || typeof window === 'undefined') return;
   scrollRafId = window.requestAnimationFrame(() => {
     scrollRafId = null;
@@ -160,12 +142,12 @@ function handleWindowScroll() {
   });
 }
 
-function scrollToTop() {
+function scrollToTop(): void {
   if (typeof window === 'undefined') return;
   window.scrollTo?.({ top: 0, behavior: 'smooth' });
 }
 
-let cancelSectionsPrefetch = () => {};
+let cancelSectionsPrefetch: () => void = () => {};
 
 onMounted(() => {
   cancelSectionsPrefetch = scheduleIdlePrefetch([
@@ -226,9 +208,9 @@ onUnmounted(() => {
       <div v-if="visitedTabs.has('system')" v-show="activeTab === 'system'" class="space-y-4">
         <WebdavBackupSettings :settings="settings" />
         <SystemSettings
-          :exportBackup="exportBackup"
-          :handleReset="handleReset"
-          :importBackup="importBackup"
+          :exportBackup="exportBackup ?? undefined"
+          :handleReset="handleReset ?? undefined"
+          :importBackup="importBackup ?? undefined"
           :settings="settings"
         />
       </div>

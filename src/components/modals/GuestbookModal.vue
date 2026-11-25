@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Check, RefreshCw } from '@lucide/vue';
 import { api } from '@/lib/http.js';
@@ -13,24 +13,26 @@ import { useSessionStore } from '@/stores/useSessionStore.js';
 const { t } = useI18n();
 const sessionStore = getActivePinia() ? useSessionStore() : null;
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    config?: Record<string, any>;
+  }>(),
+  {
+    show: false,
+    config: () => ({ enabled: false }),
   },
-  config: {
-    type: Object,
-    default: () => ({ enabled: false }),
-  },
-});
+);
 
-const emit = defineEmits(['close']);
+const emit = defineEmits<{
+  close: [];
+}>();
 
-const turnstileConfig = computed(() => props.config?.turnstile || sessionStore?.publicConfig?.turnstile || null);
+const turnstileConfig = computed(() => props.config?.turnstile || (sessionStore?.publicConfig as any)?.turnstile || null);
 const useTurnstile = computed(() =>
   Boolean(turnstileConfig.value?.enableForGuestbook && turnstileConfig.value?.siteKey),
 );
-const turnstileRef = ref(null);
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null);
 const turnstileToken = ref('');
 
 const form = ref({
@@ -79,7 +81,7 @@ const resetVerification = () => {
   }
 };
 
-const handleTurnstileVerify = (token) => {
+const handleTurnstileVerify = (token: string) => {
   turnstileToken.value = token || '';
   if (errorMsg.value) errorMsg.value = '';
 };
@@ -139,7 +141,7 @@ const submitMessage = async () => {
 
   submitting.value = true;
   try {
-    const payload = {
+    const payload: Record<string, any> = {
       nickname: form.value.nickname,
       content: form.value.content,
       type: form.value.type,
@@ -147,7 +149,7 @@ const submitMessage = async () => {
     if (useTurnstile.value) {
       payload.turnstileToken = turnstileToken.value;
     }
-    const data = await api.post('/api/public/guestbook', payload);
+    const data = await api.post<{ success?: boolean; message?: string }>('/api/public/guestbook', payload);
 
     if (data.success) {
       showSuccess.value = true;
@@ -155,7 +157,7 @@ const submitMessage = async () => {
       errorMsg.value = data.message || t('guestbook.submitFailed');
       resetVerification();
     }
-  } catch (e) {
+  } catch (e: any) {
     console.error('Submit guestbook error', e);
     errorMsg.value = e?.data?.error || e?.data?.message || e?.message || t('guestbook.networkError');
     resetVerification();

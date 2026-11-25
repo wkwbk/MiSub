@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { storeToRefs } from 'pinia';
@@ -11,42 +11,34 @@ import { useUIStore } from '@/stores/useUiStore.js';
 import { useSessionStore } from '@/stores/useSessionStore.js';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  isLoggedIn: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    isLoggedIn?: boolean;
+    showExplore?: boolean;
+    showSettings?: boolean;
+    showLoginButton?: boolean;
+    roundedClass?: string;
+    withFocusRing?: boolean;
+    showDivider?: boolean;
+    hideExternalRepo?: boolean;
+  }>(),
+  {
+    isLoggedIn: false,
+    showExplore: false,
+    showSettings: false,
+    showLoginButton: true,
+    roundedClass: 'misub-radius-md',
+    withFocusRing: false,
+    showDivider: false,
+    hideExternalRepo: false,
   },
-  showExplore: {
-    type: Boolean,
-    default: false,
-  },
-  showSettings: {
-    type: Boolean,
-    default: false,
-  },
-  showLoginButton: {
-    type: Boolean,
-    default: true,
-  },
-  roundedClass: {
-    type: String,
-    default: 'misub-radius-md',
-  },
-  withFocusRing: {
-    type: Boolean,
-    default: false,
-  },
-  showDivider: {
-    type: Boolean,
-    default: false,
-  },
-  hideExternalRepo: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['openSettings', 'toggleLayout', 'logout']);
+const emit = defineEmits<{
+  openSettings: [];
+  toggleLayout: [];
+  logout: [];
+}>();
 const route = useRoute();
 const uiStore = useUIStore();
 const sessionStore = useSessionStore();
@@ -73,13 +65,13 @@ const exploreBtnClass = computed(() => {
   return buildBtnClass('neutral');
 });
 
-function handlePublicFeedback() {
+function handlePublicFeedback(): void {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('open-guestbook'));
   }
 }
 
-function buildBtnClass(type) {
+function buildBtnClass(type: 'neutral' | 'danger'): string[] {
   const base = ['nav-action-btn', props.roundedClass];
 
   if (type === 'danger') {

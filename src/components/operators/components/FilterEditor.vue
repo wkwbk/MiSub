@@ -1,40 +1,67 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { X } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
+import type { OperatorFilterParams, RegexRuleObject } from '@misub/core/types.js';
 
-const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({}),
+type NormalizedFilterParams = {
+  include: { enabled: boolean; rules: RegexRuleObject[] };
+  exclude: { enabled: boolean; rules: RegexRuleObject[] };
+  protocols: { enabled: boolean; values: string[] };
+  regions: { enabled: boolean; values: string[] };
+};
+
+type RuleSectionKey = 'include' | 'exclude';
+type ValueSectionKey = 'protocols' | 'regions';
+
+const props = withDefaults(
+  defineProps<{
+    modelValue?: OperatorFilterParams;
+  }>(),
+  {
+    modelValue: () => ({}),
   },
-});
+);
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: OperatorFilterParams];
+}>();
 const { t, locale } = useI18n();
 
-const params = computed({
-  get: () => ({
-    include: { enabled: false, rules: [], ...props.modelValue.include },
-    exclude: { enabled: false, rules: [], ...props.modelValue.exclude },
-    protocols: { enabled: false, values: [], ...props.modelValue.protocols },
-    regions: { enabled: false, values: [], ...props.modelValue.regions },
-  }),
-  set: (val) => emit('update:modelValue', val),
+const params = computed<NormalizedFilterParams>({
+  get: () => {
+    const rawInclude = props.modelValue.include;
+    const rawExclude = props.modelValue.exclude;
+    return {
+      include: {
+        enabled: false,
+        ...rawInclude,
+        rules: (Array.isArray(rawInclude?.rules) ? rawInclude.rules : []) as RegexRuleObject[],
+      },
+      exclude: {
+        enabled: false,
+        ...rawExclude,
+        rules: (Array.isArray(rawExclude?.rules) ? rawExclude.rules : []) as RegexRuleObject[],
+      },
+      protocols: { enabled: false, values: [], ...props.modelValue.protocols },
+      regions: { enabled: false, values: [], ...props.modelValue.regions },
+    };
+  },
+  set: (val: NormalizedFilterParams) => emit('update:modelValue', val),
 });
 
-const updateParam = (key, value) => {
-  const newParams = { ...params.value, [key]: value };
+const updateParam = <K extends keyof NormalizedFilterParams>(key: K, value: NormalizedFilterParams[K]): void => {
+  const newParams: NormalizedFilterParams = { ...params.value, [key]: value };
   emit('update:modelValue', newParams);
 };
 
-const addRule = (type) => {
+const addRule = (type: RuleSectionKey): void => {
   const current = { ...params.value[type] };
   current.rules = [...(current.rules || []), { pattern: '', flags: 'i' }];
   updateParam(type, current);
 };
 
-const normalizeRuleFlags = (type, index) => {
+const normalizeRuleFlags = (type: RuleSectionKey, index: number): void => {
   const current = { ...params.value[type] };
   current.rules = [...(current.rules || [])];
   const rule = current.rules[index];
@@ -43,7 +70,7 @@ const normalizeRuleFlags = (type, index) => {
   updateParam(type, current);
 };
 
-const removeRule = (type, index) => {
+const removeRule = (type: RuleSectionKey, index: number): void => {
   const current = { ...params.value[type] };
   current.rules = [...current.rules];
   current.rules.splice(index, 1);
@@ -52,7 +79,7 @@ const removeRule = (type, index) => {
 
 const commonProtocols = ['vless', 'vmess', 'trojan', 'ss', 'hysteria2', 'socks'];
 const commonRegions = ['香港', '美国', '日本', '新加坡', '台湾', '韩国', '英国', '德国'];
-const regionLabels = {
+const regionLabels: Record<string, string> = {
   香港: 'Hong Kong',
   美国: 'United States',
   日本: 'Japan',
@@ -62,11 +89,11 @@ const regionLabels = {
   英国: 'United Kingdom',
   德国: 'Germany',
 };
-const statusLabel = (enabled) => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
-const regionLabel = (region) =>
+const statusLabel = (enabled: boolean): string => t(enabled ? 'operators.statusOn' : 'operators.statusOff');
+const regionLabel = (region: string): string =>
   t('operators.regionLabel', { region: locale.value === 'en-US' ? regionLabels[region] || region : region });
 
-const toggleValue = (type, value) => {
+const toggleValue = (type: ValueSectionKey, value: string): void => {
   const current = { ...params.value[type] };
   const values = new Set(current.values || []);
   if (values.has(value)) {
@@ -163,7 +190,7 @@ const toggleValue = (type, value) => {
       </div>
     </div>
 
-    <div v-for="type in ['include', 'exclude']" :key="type" class="space-y-2">
+    <div v-for="type in (['include', 'exclude'] as const)" :key="type" class="space-y-2">
       <div class="flex items-center justify-between">
         <label class="text-xs font-semibold text-fg-muted uppercase tracking-tight">
           {{ t(type === 'include' ? 'operators.includeRegex' : 'operators.excludeRegex') }}

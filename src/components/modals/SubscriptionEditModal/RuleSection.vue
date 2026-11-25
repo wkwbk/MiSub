@@ -1,108 +1,76 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { SubscriptionItem } from '@misub/core/types.js';
+import type { EditableSubscriptionForm } from '@/composables/useSubscriptionForms.js';
+import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { ChevronRight, X } from '@lucide/vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { useI18n } from '@/i18n/index.js';
 
+interface RuleTagOption {
+  label: string;
+  pattern: string;
+  icon?: string;
+  type?: string;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  editingSubscription: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    editingSubscription: EditableSubscriptionForm | StoreMisubItem | SubscriptionItem;
+    isRuleExpanded?: boolean;
+    isAdvancedMode?: boolean;
+    ruleMode?: string;
+    customKeyword?: string;
+    selectedRules?: RuleTagOption[];
+    keepRules?: RuleTagOption[];
+    excludeRules?: RuleTagOption[];
+    presetRegions?: RuleTagOption[];
+    presetProtocols?: RuleTagOption[];
+    presetKeywords?: RuleTagOption[];
+    excludeRuleState: Record<string, any>;
+    toggleTag: (tag: RuleTagOption, type: string) => void;
+    isSelected: (pattern: string) => boolean;
+    isOtherSelected?: (pattern: string) => boolean;
+    addCustomKeyword: () => void;
+    removeRule: (index: number, pool?: string | null) => void;
+    removeKeepRule?: ((index: number) => void) | null;
+    removeExcludeRule?: ((index: number) => void) | null;
+    switchToAdvanced: () => void;
+    switchToVisual: () => void;
+  }>(),
+  {
+    isRuleExpanded: false,
+    isAdvancedMode: false,
+    ruleMode: 'exclude',
+    customKeyword: '',
+    selectedRules: () => [],
+    keepRules: () => [],
+    excludeRules: () => [],
+    presetRegions: () => [],
+    presetProtocols: () => [],
+    presetKeywords: () => [],
+    isOtherSelected: () => false,
+    removeKeepRule: null,
+    removeExcludeRule: null,
   },
-  isRuleExpanded: {
-    type: Boolean,
-    default: false,
-  },
-  isAdvancedMode: {
-    type: Boolean,
-    default: false,
-  },
-  ruleMode: {
-    type: String,
-    default: 'exclude',
-  },
-  customKeyword: {
-    type: String,
-    default: '',
-  },
-  selectedRules: {
-    type: Array,
-    default: () => [],
-  },
-  keepRules: {
-    type: Array,
-    default: () => [],
-  },
-  excludeRules: {
-    type: Array,
-    default: () => [],
-  },
-  presetRegions: {
-    type: Array,
-    default: () => [],
-  },
-  presetProtocols: {
-    type: Array,
-    default: () => [],
-  },
-  presetKeywords: {
-    type: Array,
-    default: () => [],
-  },
-  excludeRuleState: {
-    type: Object,
-    required: true,
-  },
-  toggleTag: {
-    type: Function,
-    required: true,
-  },
-  isSelected: {
-    type: Function,
-    required: true,
-  },
-  isOtherSelected: {
-    type: Function,
-    default: () => false,
-  },
-  addCustomKeyword: {
-    type: Function,
-    required: true,
-  },
-  removeRule: {
-    type: Function,
-    required: true,
-  },
-  removeKeepRule: {
-    type: Function,
-    default: null,
-  },
-  removeExcludeRule: {
-    type: Function,
-    default: null,
-  },
-  switchToAdvanced: {
-    type: Function,
-    required: true,
-  },
-  switchToVisual: {
-    type: Function,
-    required: true,
-  },
-});
+);
 
-const emit = defineEmits(['toggle-expand', 'update:ruleMode', 'update:customKeyword']);
+const emit = defineEmits<{
+  'toggle-expand': [];
+  'update:ruleMode': [value: string];
+  'update:customKeyword': [value: string];
+}>();
 
 const ruleModeModel = computed({
   get: () => props.ruleMode,
-  set: (val) => emit('update:ruleMode', val),
+  set: (val: string) => emit('update:ruleMode', val),
 });
 
 const customKeywordModel = computed({
   get: () => props.customKeyword,
-  set: (val) => emit('update:customKeyword', val),
+  set: (val: string) => emit('update:customKeyword', val),
 });
 
 const effectiveKeepRules = computed(() => {
@@ -117,7 +85,7 @@ const effectiveExcludeRules = computed(() => {
   return [];
 });
 
-const handleRemoveKeep = (index) => {
+const handleRemoveKeep = (index: number) => {
   if (props.removeKeepRule) {
     props.removeKeepRule(index);
   } else {
@@ -125,7 +93,7 @@ const handleRemoveKeep = (index) => {
   }
 };
 
-const handleRemoveExclude = (index) => {
+const handleRemoveExclude = (index: number) => {
   if (props.removeExcludeRule) {
     props.removeExcludeRule(index);
   } else {

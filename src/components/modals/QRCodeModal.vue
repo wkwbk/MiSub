@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 import { computed, nextTick, ref, watch } from 'vue';
 import { Download } from '@lucide/vue';
@@ -11,30 +11,27 @@ const { t } = useI18n();
 
 const { showToast } = useToastStore();
 
-const props = defineProps({
-  show: {
-    type: Boolean,
-    default: false,
-  },
-  url: {
-    type: String,
-    required: true,
-  },
-  title: {
-    type: String,
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    url: string;
+    title?: string;
+    subscription?: boolean;
+  }>(),
+  {
+    show: false,
     // 默认值不能用 t()：defineProps 的对象字面量会被提升到模块级，
     // 此时 setup 作用域的 t 尚不存在。改由模板兜底。
-    default: '',
+    title: '',
+    subscription: false,
   },
-  subscription: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['update:show']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+}>();
 
-const canvasRef = ref(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
 const importMode = ref('universal');
 
 const payload = computed(() =>

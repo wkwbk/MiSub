@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import draggable from 'vuedraggable';
 import ManualNodeCard from '@/components/nodes/ManualNodeCard.vue';
 import PanelPagination from '@/components/shared/PanelPagination.vue';
@@ -14,53 +15,75 @@ import { scrollToPaginationStart } from '@/utils/scroll.js';
 const { t } = useI18n();
 const dataStore = useDataStore();
 
-const props = defineProps({
-  manualNodes: { type: Array, default: () => [] },
-  paginatedNodes: { type: Array, default: () => [] },
-  filteredNodes: { type: Array, default: () => [] },
-  localSearchTerm: { type: String, default: '' },
-  isSorting: { type: Boolean, default: false },
-  isSelectionMode: { type: Boolean, default: false },
-  selectedNodeIds: { type: Object, required: true },
-  searchPage: { type: Number, default: 1 },
-  searchTotalPages: { type: Number, default: 1 },
-  basePage: { type: Number, default: 1 },
-  baseTotalPages: { type: Number, default: 1 },
-  draggableManualNodes: { type: Array, default: () => [] },
-  itemsPerPage: { type: Number, default: DEFAULT_LIST_PAGE_SIZE },
-  pingResults: { type: Object, default: () => ({}) },
-  pingingNodes: { type: Object, default: () => new Set() },
-  nodeInspectMap: { type: Object, default: () => ({}) },
-  attrFilters: { type: Object, default: () => ({ protocol: '', country: '', network: '' }) },
-  useLocalPagination: { type: Boolean, default: false },
-  compactGrid: { type: Boolean, default: false },
-});
+const props = withDefaults(
+  defineProps<{
+    manualNodes?: ManualNodeItem[];
+    paginatedNodes?: ManualNodeItem[];
+    filteredNodes?: ManualNodeItem[];
+    localSearchTerm?: string;
+    isSorting?: boolean;
+    isSelectionMode?: boolean;
+    selectedNodeIds: Set<string>;
+    searchPage?: number;
+    searchTotalPages?: number;
+    basePage?: number;
+    baseTotalPages?: number;
+    draggableManualNodes?: ManualNodeItem[];
+    itemsPerPage?: number;
+    pingResults?: Record<string, any>;
+    pingingNodes?: Set<string>;
+    nodeInspectMap?: Record<string, any>;
+    attrFilters?: { protocol?: string; country?: string; network?: string };
+    useLocalPagination?: boolean;
+    compactGrid?: boolean;
+  }>(),
+  {
+    manualNodes: () => [],
+    paginatedNodes: () => [],
+    filteredNodes: () => [],
+    localSearchTerm: '',
+    isSorting: false,
+    isSelectionMode: false,
+    searchPage: 1,
+    searchTotalPages: 1,
+    basePage: 1,
+    baseTotalPages: 1,
+    draggableManualNodes: () => [],
+    itemsPerPage: DEFAULT_LIST_PAGE_SIZE,
+    pingResults: () => ({}),
+    pingingNodes: () => new Set<string>(),
+    nodeInspectMap: () => ({}),
+    attrFilters: () => ({ protocol: '', country: '', network: '' }),
+    useLocalPagination: false,
+    compactGrid: false,
+  },
+);
 
-const emit = defineEmits([
-  'update:draggableManualNodes',
-  'toggle-select',
-  'edit',
-  'detail',
-  'delete',
-  'sort-end',
-  'change-page',
-  'update:itemsPerPage',
-  'toggle-tag-filter',
-  'toggle-protocol-filter',
-  'toggle-country-filter',
-  'toggle-network-filter',
-  'clear-attr-filters',
-  'ping',
-  'clear-search',
-  'toggle-sort',
-]);
+const emit = defineEmits<{
+  'update:draggableManualNodes': [nodes: ManualNodeItem[]];
+  'toggle-select': [id: string];
+  edit: [id: string];
+  detail: [node: ManualNodeItem];
+  delete: [id: string];
+  'sort-end': [];
+  'change-page': [page: number];
+  'update:itemsPerPage': [itemsPerPage: number];
+  'toggle-tag-filter': [tag: string];
+  'toggle-protocol-filter': [protocol: string];
+  'toggle-country-filter': [country: string];
+  'toggle-network-filter': [network: string];
+  'clear-attr-filters': [];
+  ping: [id: string];
+  'clear-search': [];
+  'toggle-sort': [];
+}>();
 
 const draggableModel = computed({
   get: () => props.draggableManualNodes,
-  set: (val) => emit('update:draggableManualNodes', val),
+  set: (val: ManualNodeItem[]) => emit('update:draggableManualNodes', val),
 });
 
-const listStartRef = ref(null);
+const listStartRef = ref<HTMLElement | null>(null);
 
 const hasActiveAttrFilters = computed(() =>
   Boolean(props.attrFilters?.protocol || props.attrFilters?.country || props.attrFilters?.network),
@@ -73,8 +96,8 @@ const displayTotalPages = computed(() =>
   props.localSearchTerm || props.useLocalPagination ? props.searchTotalPages : props.baseTotalPages,
 );
 
-const handleChangePage = (page) => {
-  let p = parseInt(page, 10);
+const handleChangePage = (page: string | number) => {
+  let p = parseInt(String(page), 10);
   if (isNaN(p)) return;
   if (p < 1) p = 1;
   if (p > displayTotalPages.value) p = displayTotalPages.value;
@@ -85,7 +108,7 @@ const handleChangePage = (page) => {
   });
 };
 
-const handleDragEnd = (evt) => {
+const handleDragEnd = (evt: any) => {
   if (hasDragOrderChanged(evt)) {
     emit('sort-end');
   }

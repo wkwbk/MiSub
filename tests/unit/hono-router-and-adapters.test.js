@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
@@ -28,9 +28,15 @@ function collectStaticImportSpecifiers(entryRelPath, visited = new Set()) {
     const spec = match[1];
     results.push({ from: entryRelPath, spec });
     if (spec.startsWith('.')) {
-      const targetAbs = path.resolve(path.dirname(absPath), spec);
+      let targetAbs = path.resolve(path.dirname(absPath), spec);
+      if (targetAbs.endsWith('.js') && !existsSync(targetAbs)) {
+        const tsCandidate = targetAbs.replace(/\.js$/, '.ts');
+        if (existsSync(tsCandidate)) {
+          targetAbs = tsCandidate;
+        }
+      }
       const targetRel = path.relative(process.cwd(), targetAbs).replace(/\\/g, '/');
-      if (targetRel.endsWith('.js') && !visited.has(targetAbs)) {
+      if ((targetRel.endsWith('.js') || targetRel.endsWith('.ts')) && !visited.has(targetAbs)) {
         results.push(...collectStaticImportSpecifiers(targetRel, visited));
       }
     }
@@ -41,13 +47,13 @@ function collectStaticImportSpecifiers(entryRelPath, visited = new Set()) {
 describe('Hono Router, Zod Validation & Lazy ClientAdapter Pipeline', () => {
   it('avoids static top-level imports of client generators and template renderers on cold-start hot-paths', () => {
     const hotPathEntries = [
-      'worker.js',
-      'functions/[[path]].js',
-      'functions/app.js',
-      'functions/modules/subscription/core/main-handler.js',
-      'functions/services/processor-service.js',
-      'functions/modules/subscription/adapters/transformer-factory.js',
-      'functions/modules/subscription/adapters/adapter-registry.js',
+      'worker.ts',
+      'functions/[[path]].ts',
+      'functions/app.ts',
+      'functions/modules/subscription/core/main-handler.ts',
+      'functions/services/processor-service.ts',
+      'functions/modules/subscription/adapters/transformer-factory.ts',
+      'functions/modules/subscription/adapters/adapter-registry.ts',
     ];
 
     const visited = new Set();
@@ -57,7 +63,7 @@ describe('Hono Router, Zod Validation & Lazy ClientAdapter Pipeline', () => {
     }
 
     const forbiddenStatic = allStaticImports.filter(
-      ({ spec }) => /builtin-[a-z0-9-]+-generator\.js$/i.test(spec) || /render-[a-z0-9-]+\.js$/i.test(spec),
+      ({ spec }) => /builtin-[a-z0-9-]+-generator\.(js|ts)$/i.test(spec) || /render-[a-z0-9-]+\.(js|ts)$/i.test(spec),
     );
     expect(forbiddenStatic).toEqual([]);
   });

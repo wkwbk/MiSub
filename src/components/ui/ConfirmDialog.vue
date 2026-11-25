@@ -1,11 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
+import type { Ref } from 'vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 import { setConfirmHost, settleConfirm, useConfirmState } from '@/composables/useConfirm.js';
 
+interface ConfirmPendingState {
+  title?: string;
+  message?: string;
+  confirmText?: string;
+  cancelText?: string;
+  variant?: 'primary' | 'danger';
+}
+
 const { t } = useI18n();
-const pending = useConfirmState();
+const pending = useConfirmState() as Ref<ConfirmPendingState | null>;
 
 // 标记宿主已就绪：无宿主时 confirmAction 会回退到原生 window.confirm()
 onMounted(() => setConfirmHost(true));

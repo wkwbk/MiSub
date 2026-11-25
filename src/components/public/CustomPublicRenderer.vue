@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
 import { useRoute } from 'vue-router';
 import { Moon, Sun } from '@lucide/vue';
 import DOMPurify from 'dompurify';
@@ -8,28 +9,26 @@ import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { useI18n } from '@/i18n/index.js';
 import packageJson from '../../../package.json';
 
+type PublicProfile = ProfileConfig & { subscriptionCount?: number; manualNodeCount?: number };
+
 const route = useRoute();
 const themeStore = useThemeStore();
 const { t } = useI18n();
 
-const props = defineProps({
-  content: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    content?: string;
+    css?: string;
+    config?: SettingsConfig & Record<string, any>;
+    profiles?: PublicProfile[];
+  }>(),
+  {
+    content: '',
+    css: '',
+    config: () => ({}),
+    profiles: () => [],
   },
-  css: {
-    type: String,
-    default: '',
-  },
-  config: {
-    type: Object,
-    default: () => ({}),
-  },
-  profiles: {
-    type: Array,
-    default: () => [],
-  },
-});
+);
 
 const styleId = 'custom-public-page-styles';
 const stylesheetDataAttr = 'data-custom-page-stylesheet';
@@ -58,7 +57,7 @@ const removeScripts = () => {
 const customPageConfig = computed(() => props.config?.customPage || {});
 const customPageType = computed(() => customPageConfig.value.type || 'html');
 const isIframeMode = computed(() => ['iframe-srcdoc', 'iframe-url'].includes(customPageType.value));
-const sanitizeHtml = (html) =>
+const sanitizeHtml = (html: string) =>
   DOMPurify.sanitize(html || '', {
     USE_PROFILES: { html: true },
     ADD_ATTR: ['data-slot', 'target'],
@@ -69,7 +68,7 @@ const iframeSandbox = 'allow-forms allow-popups allow-popups-to-escape-sandbox';
 const iframeSrcdoc = computed(() =>
   customPageType.value === 'iframe-srcdoc' ? sanitizeHtml(props.content || '') : undefined,
 );
-const safeIframeUrl = (value) => {
+const safeIframeUrl = (value: unknown) => {
   try {
     const url = new URL(String(value || ''), window.location.origin);
     return ['http:', 'https:'].includes(url.protocol) ? url.toString() : '';
@@ -96,7 +95,7 @@ const iframeStyle = computed(() => ({
 const iframeUsesDefaultViewportHeight = computed(() => !customPageConfig.value.iframeHeight);
 
 const parsedSource = computed(() => parseCustomPageSource(props.content, props.css));
-const escapeHtml = (value) => {
+const escapeHtml = (value: unknown) => {
   return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 };
 
@@ -131,7 +130,7 @@ const renderedHtml = computed(() => {
 });
 
 // 用于检测占位符是否在 HTML 中的辅助函数
-const hasSlot = (name) => {
+const hasSlot = (name: string) => {
   return renderedHtml.value.includes(`data-slot="${name}"`);
 };
 

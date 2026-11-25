@@ -1,50 +1,39 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Loader2 } from '@lucide/vue';
 
-const props = defineProps({
-  variant: {
-    type: String,
-    default: 'primary',
-    validator: (value) => ['primary', 'secondary', 'danger', 'ghost', 'outline'].includes(value),
-  },
-  size: {
-    type: String,
-    default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value),
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  icon: {
-    type: String,
-    default: null,
-  },
-  iconOnly: {
-    type: Boolean,
-    default: false,
-  },
-  type: {
-    type: String,
-    default: 'button',
-  },
-  ariaLabel: {
-    type: String,
-    // 默认 undefined：空字符串会渲染出 aria-label=""，
-    // 反而覆盖按钮自身的文本内容，使读屏软件读不出按钮名。
-    default: undefined,
-  },
-});
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
+type ButtonSize = 'sm' | 'md' | 'lg';
 
-const emit = defineEmits(['click']);
+const props = withDefaults(
+  defineProps<{
+    variant?: ButtonVariant;
+    size?: ButtonSize;
+    loading?: boolean;
+    disabled?: boolean;
+    icon?: string | null;
+    iconOnly?: boolean;
+    type?: 'button' | 'submit' | 'reset';
+    ariaLabel?: string;
+  }>(),
+  {
+    variant: 'primary',
+    size: 'md',
+    loading: false,
+    disabled: false,
+    icon: null,
+    iconOnly: false,
+    type: 'button',
+    ariaLabel: undefined,
+  },
+);
+
+const emit = defineEmits<{
+  click: [event: MouseEvent];
+}>();
 
 const variantClasses = computed(() => {
-  const variants = {
+  const variants: Record<ButtonVariant, string> = {
     primary: 'bg-accent hover:opacity-90 text-accent-fg border border-accent font-semibold shadow-none',
     secondary:
       'bg-transparent hover:bg-hover hover:border-line-strong text-fg-muted hover:text-fg border border-line shadow-none',
@@ -58,14 +47,14 @@ const variantClasses = computed(() => {
 
 const sizeClasses = computed(() => {
   if (props.iconOnly) {
-    const sizes = {
+    const sizes: Record<ButtonSize, string> = {
       sm: 'p-1.5',
       md: 'p-2',
       lg: 'p-3',
     };
     return sizes[props.size];
   }
-  const sizes = {
+  const sizes: Record<ButtonSize, string> = {
     sm: 'px-3 py-1.5 text-xs gap-1.5',
     md: 'px-4 py-2 text-sm gap-2',
     lg: 'px-6 py-2.5 text-base gap-2',
@@ -73,7 +62,7 @@ const sizeClasses = computed(() => {
   return sizes[props.size];
 });
 
-const handleClick = (event) => {
+const handleClick = (event: MouseEvent) => {
   if (!props.disabled && !props.loading) {
     emit('click', event);
   }

@@ -1,46 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Boxes, ClipboardList, Server, Zap } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
+export interface TrafficStats {
+  used?: string | number;
+  total?: string | number;
+  percentage?: number | string;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  formattedTotalRemainingTraffic: {
-    type: String,
-    default: '0 B',
+const props = withDefaults(
+  defineProps<{
+    formattedTotalRemainingTraffic?: string;
+    trafficStats: TrafficStats;
+    manualNodesCount?: number;
+    enabledManualNodesCount?: number;
+    activeSubscriptionsCount?: number;
+    subscriptionsCount?: number;
+    totalNodesCount?: number;
+    activeProfilesCount?: number;
+  }>(),
+  {
+    formattedTotalRemainingTraffic: '0 B',
+    manualNodesCount: 0,
+    enabledManualNodesCount: 0,
+    activeSubscriptionsCount: 0,
+    subscriptionsCount: 0,
+    totalNodesCount: 0,
+    activeProfilesCount: 0,
   },
-  trafficStats: {
-    type: Object,
-    required: true,
-  },
-  manualNodesCount: {
-    type: Number,
-    default: 0,
-  },
-  enabledManualNodesCount: {
-    type: Number,
-    default: 0,
-  },
-  activeSubscriptionsCount: {
-    type: Number,
-    default: 0,
-  },
-  subscriptionsCount: {
-    type: Number,
-    default: 0,
-  },
-  totalNodesCount: {
-    type: Number,
-    default: 0,
-  },
-  activeProfilesCount: {
-    type: Number,
-    default: 0,
-  },
-});
+);
 
-const emit = defineEmits(['navigate']);
+const emit = defineEmits<{
+  navigate: [path: string, query?: Record<string, string>];
+}>();
 
 const trafficDisplay = computed(() => {
   const parts = props.formattedTotalRemainingTraffic.split(' ');
@@ -65,7 +60,7 @@ const cardBaseClass =
 const normalCardClass = 'border-line';
 const warningCardClass = 'border-line';
 
-const navigate = (path, query = {}) => {
+const navigate = (path: string, query: Record<string, string> = {}): void => {
   emit('navigate', path, query);
 };
 </script>

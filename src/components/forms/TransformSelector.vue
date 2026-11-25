@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { Ref } from 'vue';
 import { Braces, List } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 import Select from '@/components/ui/Select.vue';
@@ -8,29 +9,61 @@ import { getLocalizedTransformAssets } from '@/constants/transform-assets';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useI18n } from '@/i18n/index.js';
 
+interface RuleTemplateRecord {
+  id?: string;
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+}
+
+interface TransformAsset {
+  id?: string;
+  name: string;
+  url: string;
+  group?: string;
+  sourceType?: string;
+  description?: string;
+}
+
+type SelectOptionNode = { value: string; label: string } | { label: string; options: Array<{ value: string; label: string }> };
+
 const { t } = useI18n();
 
-const props = defineProps({
-  modelValue: { type: String, default: '' },
-  type: { type: String, required: true },
-  placeholder: { type: String, default: '' },
-  allowEmpty: { type: Boolean, default: true },
-  forceCustom: { type: Boolean, default: false },
-  // ⚠️ 默认值不能写成 t('...')：prop 的 default 在组件定义时就被求值，
-  // 那时候 i18n 还没初始化，而且切换语言也不会重新求值。
-  // 这里只留空字符串，真正的兜底文案交给下面的 resolvedCustomPlaceholder。
-  customPlaceholder: { type: String, default: '' },
-  excludeBuiltinAssets: { type: Boolean, default: false },
-  customTemplatesOnly: { type: Boolean, default: false },
-});
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string;
+    type: string;
+    placeholder?: string;
+    allowEmpty?: boolean;
+    forceCustom?: boolean;
+    customPlaceholder?: string;
+    excludeBuiltinAssets?: boolean;
+    customTemplatesOnly?: boolean;
+  }>(),
+  {
+    modelValue: '',
+    placeholder: '',
+    allowEmpty: true,
+    forceCustom: false,
+    // ⚠️ 默认值不能写成 t('...')：prop 的 default 在组件定义时就被求值，
+    // 那时候 i18n 还没初始化，而且切换语言也不会重新求值。
+    // 这里只留空字符串，真正的兜底文案交给下面的 resolvedCustomPlaceholder。
+    customPlaceholder: '',
+    excludeBuiltinAssets: false,
+    customTemplatesOnly: false,
+  },
+);
 
-const emit = defineEmits(['update:modelValue', 'select-asset']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+  'select-asset': [asset: TransformAsset | null];
+}>();
 const dataStore = useDataStore();
-const { ruleTemplates } = storeToRefs(dataStore);
+const { ruleTemplates } = storeToRefs(dataStore) as { ruleTemplates: Ref<RuleTemplateRecord[]> };
 
 const resolvedCustomPlaceholder = computed(() => props.customPlaceholder || t('transformSelector.customPlaceholder'));
 
-const customTemplateAssets = computed(() => {
+const customTemplateAssets = computed<TransformAsset[]>(() => {
   if (props.excludeBuiltinAssets) return [];
 
   return (ruleTemplates.value || [])
@@ -45,14 +78,14 @@ const customTemplateAssets = computed(() => {
     }));
 });
 
-const assets = computed(() => {
+const assets = computed<TransformAsset[]>(() => {
   if (props.customTemplatesOnly) return customTemplateAssets.value;
 
   // 在 computed 里解析模板名称，切换语言时下拉框即时更新。
-  const builtinAndRemote = getLocalizedTransformAssets(t).filter((item) => {
-    if (!props.excludeBuiltinAssets) return true;
-    return !String(item.url || '').startsWith('builtin:');
-  });
+  const builtinAndRemote = (getLocalizedTransformAssets(t) as (TransformAsset | null)[]).filter(
+    (item): item is TransformAsset =>
+      Boolean(item) && (!props.excludeBuiltinAssets || !String(item?.url || '').startsWith('builtin:')),
+  );
   return [...customTemplateAssets.value, ...builtinAndRemote];
 });
 
@@ -62,10 +95,10 @@ const missingCustomTemplateValue = computed(() => {
   return customTemplateAssets.value.some((item) => item.url === value) ? '' : value;
 });
 
-const groupedConfigs = computed(() => {
+const groupedConfigs = computed<Record<string, TransformAsset[]>>(() => {
   if (props.type !== 'config') return {};
 
-  const groups = {};
+  const groups: Record<string, TransformAsset[]> = {};
   assets.value.forEach((item) => {
     const group = item.group || t('transformSelector.otherGroup');
     if (!groups[group]) groups[group] = [];
@@ -139,7 +172,7 @@ watch(
   { immediate: true },
 );
 
-const handleSelectChange = (val) => {
+const handleSelectChange = (val: string) => {
   if (props.forceCustom) return;
 
   if (val === 'custom' && !props.customTemplatesOnly) {
@@ -155,8 +188,8 @@ const handleSelectChange = (val) => {
   emit('update:modelValue', val);
 };
 
-const selectOptions = computed(() => {
-  const opts = [
+const selectOptions = computed<SelectOptionNode[]>(() => {
+  const opts: SelectOptionNode[] = [
     {
       value: '',
       label:
@@ -185,8 +218,8 @@ const selectOptions = computed(() => {
   return opts;
 });
 
-const handleCustomInput = (e) => {
-  emit('update:modelValue', e.target.value);
+const handleCustomInput = (e: Event) => {
+  emit('update:modelValue', (e.target as HTMLInputElement).value);
 };
 
 const switchToSelect = () => {

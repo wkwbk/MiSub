@@ -1,34 +1,35 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import type { CSSProperties } from 'vue';
 import { Check, ChevronDown, Plus, Tag, X } from '@lucide/vue';
 import { t } from '@/i18n/index.js';
 import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 import { normalizeTagList, normalizeTagName } from '@/utils/tags.js';
 
-const props = defineProps({
-  modelValue: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    modelValue?: unknown[] | null;
+    suggestions?: unknown[];
+    placeholder?: string;
+  }>(),
+  {
+    modelValue: () => [],
+    suggestions: () => [],
+    placeholder: () => t('tags.placeholder'),
   },
-  suggestions: {
-    type: Array,
-    default: () => [],
-  },
-  placeholder: {
-    type: String,
-    default: () => t('tags.placeholder'),
-  },
-});
+);
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string[]];
+}>();
 
 const isOpen = ref(false);
 const inputText = ref('');
-const inputRef = ref(null);
-const containerRef = ref(null);
-const popoverRef = ref(null);
-const placement = ref('bottom');
-const popoverStyle = ref({});
+const inputRef = ref<HTMLInputElement | null>(null);
+const containerRef = ref<HTMLDivElement | null>(null);
+const popoverRef = ref<HTMLDivElement | null>(null);
+const placement = ref<'top' | 'bottom'>('bottom');
+const popoverStyle = ref<CSSProperties>({});
 const highlightedIndex = ref(-1);
 
 const selectedTags = computed(() => normalizeTagList(props.modelValue));
@@ -53,7 +54,7 @@ const showCreateOption = computed(() => {
 });
 
 const dropdownItems = computed(() => {
-  const items = availableSuggestions.value.map((tag) => ({
+  const items: Array<{ type: 'existing' | 'create'; value: string }> = availableSuggestions.value.map((tag) => ({
     type: 'existing',
     value: tag,
   }));
@@ -68,11 +69,11 @@ const dropdownItems = computed(() => {
 
 const isDropdownVisible = computed(() => isOpen.value && dropdownItems.value.length > 0);
 
-const updateTags = (nextList) => {
+const updateTags = (nextList: unknown) => {
   emit('update:modelValue', normalizeTagList(nextList));
 };
 
-const addTag = (rawTag) => {
+const addTag = (rawTag: unknown) => {
   const normalized = normalizeTagName(rawTag);
   if (!normalized) return;
   if (!selectedTagSet.value.has(normalized)) {
@@ -83,7 +84,7 @@ const addTag = (rawTag) => {
   nextTick(updatePosition);
 };
 
-const toggleTag = (tag) => {
+const toggleTag = (tag: string) => {
   const normalized = normalizeTagName(tag);
   if (!normalized) return;
   if (selectedTagSet.value.has(normalized)) {
@@ -95,7 +96,7 @@ const toggleTag = (tag) => {
   nextTick(updatePosition);
 };
 
-const removeTag = (tag) => {
+const removeTag = (tag: string) => {
   updateTags(selectedTags.value.filter((item) => item !== tag));
   nextTick(updatePosition);
 };
@@ -147,8 +148,8 @@ const focusInput = () => {
   open();
 };
 
-const handleInput = (e) => {
-  const val = e.target.value;
+const handleInput = (e: Event) => {
+  const val = (e.target as HTMLInputElement).value;
   if (val.includes(',') || val.includes('，')) {
     const parts = val.split(/[,，]/);
     const trailing = parts.pop() || '';
@@ -177,7 +178,7 @@ const handleBlur = () => {
   }, 120);
 };
 
-const handleKeydown = (event) => {
+const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === 'Escape' && isOpen.value) {
     event.preventDefault();
     event.stopPropagation();
@@ -237,9 +238,10 @@ const toggleDropdown = () => {
   }
 };
 
-const handleDocumentPointerDown = (event) => {
+const handleDocumentPointerDown = (event: PointerEvent) => {
   if (!isOpen.value) return;
-  if (!containerRef.value?.contains(event.target) && !popoverRef.value?.contains(event.target)) {
+  const target = event.target as Node | null;
+  if (!containerRef.value?.contains(target) && !popoverRef.value?.contains(target)) {
     if (typedNormalized.value) {
       addTag(typedNormalized.value);
     }

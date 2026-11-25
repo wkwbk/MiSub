@@ -1,11 +1,20 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type {
+  ManualNodeItem,
+  OperatorRule,
+  ProfileConfig,
+  ProfileSubconverter,
+  ProfileSubscriptionRef,
+  SubscriptionItem,
+} from '@misub/core/types.js';
 import { Folder } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
 import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
 import NodeSelector from '@/components/modals/ProfileModal/NodeSelector.vue';
+import type { EditableProfile } from '@/composables/useProfiles.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useI18n } from '@/i18n/index.js';
@@ -18,24 +27,36 @@ const { t } = useI18n();
 const dataStore = useDataStore();
 const settingsStore = useSettingsStore();
 
-const props = defineProps({
-  show: Boolean,
-  profile: Object,
-  isNew: Boolean,
-  allSubscriptions: Array,
-  allManualNodes: Array,
-});
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    profile?: EditableProfile | ProfileConfig | null;
+    isNew?: boolean;
+    allSubscriptions?: SubscriptionItem[];
+    allManualNodes?: ManualNodeItem[];
+  }>(),
+  {
+    show: false,
+    profile: null,
+    isNew: false,
+    allSubscriptions: () => [],
+    allManualNodes: () => [],
+  },
+);
 
-const emit = defineEmits(['update:show', 'save']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  save: [profile: EditableProfile];
+}>();
 
-const localProfile = ref({});
+const localProfile = ref<EditableProfile>({});
 const subscriptionSearchTerm = ref('');
 const subProfileSearchTerm = ref('');
 const nodeSearchTerm = ref('');
-const activeResourceTab = ref('manualNodes');
-const activeSubscriptionTagFilters = ref([]);
-const activeManualNodeTagFilters = ref([]);
-const activeSubProfileTagFilters = ref([]);
+const activeResourceTab = ref<'manualNodes' | 'subscriptions' | 'subProfiles' | 'all'>('manualNodes');
+const activeSubscriptionTagFilters = ref<string[]>([]);
+const activeManualNodeTagFilters = ref<string[]>([]);
+const activeSubProfileTagFilters = ref<string[]>([]);
 const showAdvanced = ref(false);
 const uiText = computed(() => ({
   prefixTitle: t('profileModal.nodeNameVisibility'),
@@ -57,7 +78,7 @@ const tagPrefixToggleOptions = [
   { label: t('profiles.optionDisabled'), value: false },
 ];
 
-const countryCodeMap = {
+const countryCodeMap: Record<string, string[]> = {
   hk: ['🇭🇰', '香港'],
   tw: ['🇨🇳', '台湾', '臺灣'],
   sg: ['🇸🇬', '新加坡', '狮城'],
@@ -114,8 +135,10 @@ const countryCodeMap = {
   nz: ['🇳🇿', '新西兰', '紐西蘭'],
 };
 
+const storeProfiles = computed<ProfileConfig[]>(() => (dataStore.profiles || []) as ProfileConfig[]);
+
 const allProfileTags = computed(() =>
-  collectTags(dataStore.profiles || [], settingsStore.config.profileTagOrder || []),
+  collectTags(storeProfiles.value, settingsStore.config.profileTagOrder || []),
 );
 
 const manualNodeTags = computed(() =>
@@ -131,7 +154,7 @@ const subscriptionTags = computed(() => {
 });
 
 const filteredSubscriptions = computed(() => {
-  let validSubs = selectableSubscriptions.value.filter((sub) =>
+  const validSubs = selectableSubscriptions.value.filter((sub) =>
     matchesTagFilter(sub, activeSubscriptionTagFilters.value),
   );
 
@@ -159,7 +182,7 @@ const filteredSubscriptions = computed(() => {
 
 const selectableSubProfiles = computed(() => {
   const currentId = localProfile.value?.id || props.profile?.id;
-  return (dataStore.profiles || []).filter((p) => {
+  return storeProfiles.value.filter((p) => {
     if (!p) return false;
     if (currentId && (p.id === currentId || p.customId === currentId)) {
       return false;
@@ -301,7 +324,7 @@ watch(
           ? profileCopy.fetchLimitMode
           : '';
 
-      localProfile.value = ensureProfileLinkId(profileCopy);
+      localProfile.value = ensureProfileLinkId(profileCopy) as EditableProfile;
     } else {
       localProfile.value = {
         name: '',
@@ -379,9 +402,11 @@ const handleConfirm = () => {
   emit('save', profileToSave);
 };
 
-const toggleSelection = (listName, id) => {
-  const list = localProfile.value[listName];
+type SelectionListName = 'subscriptions' | 'manualNodes' | 'subProfiles';
+
+const toggleSelection = (listName: SelectionListName, id: string) => {
   if (listName === 'subscriptions') {
+    const list = (localProfile.value.subscriptions ??= []);
     const index = list.findIndex((item) => getProfileSubscriptionId(item) === id);
     if (index > -1) {
       list.splice(index, 1);
@@ -390,6 +415,7 @@ const toggleSelection = (listName, id) => {
     }
     return;
   }
+  const list = (localProfile.value[listName] ??= []);
   const index = list.indexOf(id);
   if (index > -1) {
     list.splice(index, 1);
@@ -398,9 +424,9 @@ const toggleSelection = (listName, id) => {
   }
 };
 
-const handleSelectAll = (listName, sourceArray) => {
+const handleSelectAll = (listName: SelectionListName, sourceArray: Array<{ id: string }>) => {
   if (listName === 'subscriptions') {
-    const currentList = Array.isArray(localProfile.value[listName]) ? localProfile.value[listName] : [];
+    const currentList = Array.isArray(localProfile.value.subscriptions) ? localProfile.value.subscriptions : [];
     const existingIds = new Set(currentList.map(getProfileSubscriptionId).filter(Boolean));
     const nextList = [...currentList];
     sourceArray.forEach((item) => {
@@ -409,26 +435,26 @@ const handleSelectAll = (listName, sourceArray) => {
         nextList.push(item.id);
       }
     });
-    localProfile.value[listName] = nextList;
+    localProfile.value.subscriptions = nextList;
     return;
   }
-  const currentSelection = new Set(localProfile.value[listName]);
+  const currentSelection = new Set(localProfile.value[listName] || []);
   sourceArray.forEach((item) => currentSelection.add(item.id));
   localProfile.value[listName] = Array.from(currentSelection);
 };
 
-const handleDeselectAll = (listName, sourceArray) => {
+const handleDeselectAll = (listName: SelectionListName, sourceArray: Array<{ id: string }>) => {
   const sourceIdSet = new Set(sourceArray.map((item) => item.id));
   if (listName === 'subscriptions') {
-    localProfile.value[listName] = localProfile.value[listName].filter(
+    localProfile.value.subscriptions = (localProfile.value.subscriptions || []).filter(
       (entry) => !sourceIdSet.has(getProfileSubscriptionId(entry)),
     );
     return;
   }
-  localProfile.value[listName] = localProfile.value[listName].filter((id) => !sourceIdSet.has(id));
+  localProfile.value[listName] = (localProfile.value[listName] || []).filter((id) => !sourceIdSet.has(id));
 };
 
-const updateSelectedIds = (listName, newIds) => {
+const updateSelectedIds = (listName: SelectionListName, newIds: any[]) => {
   localProfile.value[listName] = newIds;
 };
 </script>
@@ -602,7 +628,7 @@ const updateSelectedIds = (listName, newIds) => {
             <div v-show="activeResourceTab === 'subProfiles' || activeResourceTab === 'all'">
               <SubProfileSelector
                 :active-tag-filters="activeSubProfileTagFilters"
-                :all-profiles="dataStore.profiles || []"
+                :all-profiles="storeProfiles"
                 :filtered-profiles="filteredSubProfiles"
                 :profiles="selectableSubProfiles"
                 :search-term="subProfileSearchTerm"

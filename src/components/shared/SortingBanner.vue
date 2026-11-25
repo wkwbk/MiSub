@@ -1,22 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 
-defineProps({
-  hint: {
-    type: String,
-    required: true,
-  },
-  bannerTestId: {
-    type: String,
-    default: undefined,
-  },
-  buttonTestId: {
-    type: String,
-    default: undefined,
-  },
-});
+defineProps<{
+  hint: string;
+  bannerTestId?: string;
+  buttonTestId?: string;
+}>();
 
-const emit = defineEmits(['finish']);
+const emit = defineEmits<{
+  finish: [];
+}>();
 const { t } = useI18n();
 </script>
 

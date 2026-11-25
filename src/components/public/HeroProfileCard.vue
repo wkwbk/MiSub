@@ -1,5 +1,6 @@
-<script setup>
-import { computed } from 'vue';
+<script setup lang="ts">
+import { computed, type ComponentPublicInstance } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { Copy, Download, Eye, Link2, QrCode } from '@lucide/vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 import { getItemTags } from '@/utils/tags.js';
@@ -7,28 +8,27 @@ import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  profile: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    profile: ProfileConfig;
+    isQrExpanded?: boolean;
+  }>(),
+  {
+    isQrExpanded: false,
   },
-  isQrExpanded: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
 const profileTags = computed(() => getItemTags(props.profile));
 
-const emit = defineEmits([
-  'quick-import',
-  'preview',
-  'copy-link',
-  'copy-short-link',
-  'toggle-qr',
-  'download-qr',
-  'register-canvas',
-]);
+const emit = defineEmits<{
+  'quick-import': [profile: ProfileConfig];
+  preview: [profile: ProfileConfig];
+  'copy-link': [profile: ProfileConfig];
+  'copy-short-link': [profile: ProfileConfig];
+  'toggle-qr': [profile: ProfileConfig];
+  'download-qr': [profile: ProfileConfig];
+  'register-canvas': [id: string, el: Element | ComponentPublicInstance | null];
+}>();
 </script>
 
 <template>

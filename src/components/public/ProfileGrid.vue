@@ -1,32 +1,30 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import ProfileCard from '@/components/public/ProfileCard.vue';
 import HeroProfileCard from '@/components/public/HeroProfileCard.vue';
 
-const props = defineProps({
-  profiles: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    profiles?: ProfileConfig[];
+    isQrExpanded: (id: string) => boolean;
+    profileToken?: string;
+  }>(),
+  {
+    profiles: () => [],
+    profileToken: 'sub',
   },
-  isQrExpanded: {
-    type: Function,
-    required: true,
-  },
-  profileToken: {
-    type: String,
-    default: 'sub',
-  },
-});
+);
 
-const emit = defineEmits([
-  'quick-import',
-  'toggle-qr',
-  'preview',
-  'copy-link',
-  'copy-short-link',
-  'download-qr',
-  'register-canvas',
-]);
+const emit = defineEmits<{
+  'quick-import': [profile: ProfileConfig];
+  'toggle-qr': [profile: ProfileConfig];
+  preview: [profile: ProfileConfig];
+  'copy-link': [profile: ProfileConfig];
+  'copy-short-link': [profile: ProfileConfig];
+  'download-qr': [profile: ProfileConfig];
+  'register-canvas': [id: string, el: any];
+}>();
 
 // 计算布局类型
 const isSingleProfile = computed(() => props.profiles.length === 1);

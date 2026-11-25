@@ -1,13 +1,36 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { getActivePinia } from 'pinia';
 import { useThemeStore } from '@/stores/useThemeStore.js';
 
+interface TurnstileApi {
+  render: (
+    container: HTMLElement,
+    options: {
+      sitekey: string;
+      theme?: string;
+      size?: string;
+      action?: string;
+      callback?: (token: string) => void;
+      'expired-callback'?: () => void;
+      'error-callback'?: (code?: string) => void;
+    },
+  ) => string;
+  remove?: (widgetId: string) => void;
+  reset?: (widgetId: string) => void;
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
 
-let scriptLoadPromise = null;
+let scriptLoadPromise: Promise<TurnstileApi> | null = null;
 
-function loadTurnstileScript() {
+function loadTurnstileScript(): Promise<TurnstileApi> {
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return Promise.reject(new Error('Browser environment required'));
   }
@@ -71,31 +94,30 @@ function loadTurnstileScript() {
   return scriptLoadPromise;
 }
 
-const props = defineProps({
-  siteKey: {
-    type: String,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    siteKey: string;
+    theme?: string;
+    action?: string;
+    size?: string;
+  }>(),
+  {
+    theme: '',
+    action: '',
+    size: 'normal',
   },
-  theme: {
-    type: String,
-    default: '',
-  },
-  action: {
-    type: String,
-    default: '',
-  },
-  size: {
-    type: String,
-    default: 'normal',
-  },
-});
+);
 
-const emit = defineEmits(['verify', 'expire', 'error']);
+const emit = defineEmits<{
+  verify: [token: string];
+  expire: [];
+  error: [code: string];
+}>();
 
 const themeStore = getActivePinia() ? useThemeStore() : null;
-const containerRef = ref(null);
+const containerRef = ref<HTMLDivElement | null>(null);
 const loadFailed = ref(false);
-let widgetId = null;
+let widgetId: string | null = null;
 let unmounted = false;
 
 const resolvedTheme = computed(() => {
@@ -146,7 +168,7 @@ async function renderWidget() {
   } catch (err) {
     if (!unmounted) {
       loadFailed.value = true;
-      emit('error', err?.message || 'turnstile_load_failed');
+      emit('error', err instanceof Error ? err.message : 'turnstile_load_failed');
     }
   }
 }

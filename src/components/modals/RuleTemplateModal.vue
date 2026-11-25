@@ -1,30 +1,33 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import Modal from '@/components/ui/Modal.vue';
 import RuleTemplateManager from '@/components/settings/sections/ServiceSettings/RuleTemplateManager.vue';
 import { useI18n } from '@/i18n/index.js';
 
-defineProps({
-  show: {
-    type: Boolean,
-    default: false,
+withDefaults(
+  defineProps<{
+    show?: boolean;
+    zIndex?: string | number;
+  }>(),
+  {
+    show: false,
+    zIndex: 1050000,
   },
-  zIndex: {
-    type: [String, Number],
-    default: 1050000,
-  },
-});
+);
 
-const emit = defineEmits(['update:show', 'saved']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  saved: [templateId: string];
+}>();
 const { t } = useI18n();
 
-const managerRef = ref(null);
+const managerRef = ref<InstanceType<typeof RuleTemplateManager> | null>(null);
 const lastSavedTemplateId = ref('');
 
 const isSaving = computed(() => Boolean(managerRef.value?.isSaving));
 const isLoading = computed(() => Boolean(managerRef.value?.isLoading));
 
-function handleManagerSaved(templateId) {
+function handleManagerSaved(templateId?: string) {
   lastSavedTemplateId.value = templateId || '';
 }
 

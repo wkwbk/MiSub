@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { Check, Copy, Eye, FileText, Pencil, QrCode, Trash2 } from '@lucide/vue';
 import { getItemTags } from '@/utils/tags.js';
 import { useI18n } from '@/i18n/index.js';
@@ -7,36 +8,31 @@ import Switch from '@/components/ui/Switch.vue';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  profile: {
-    type: Object,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    profile: ProfileConfig;
+    isSorting?: boolean;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+  }>(),
+  {
+    isSorting: false,
+    isSelectionMode: false,
+    isSelected: false,
   },
-  isSorting: {
-    type: Boolean,
-    default: false,
-  },
-  isSelectionMode: {
-    type: Boolean,
-    default: false,
-  },
-  isSelected: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits([
-  'delete',
-  'change',
-  'edit',
-  'open-copy',
-  'preview',
-  'view-logs',
-  'qrcode',
-  'filter-tag',
-  'toggle-select',
-]);
+const emit = defineEmits<{
+  delete: [];
+  change: [profile: ProfileConfig];
+  edit: [];
+  'open-copy': [];
+  preview: [];
+  'view-logs': [];
+  qrcode: [];
+  'filter-tag': [tag: string];
+  'toggle-select': [];
+}>();
 
 const profileTags = computed(() => getItemTags(props.profile));
 const visibleTags = computed(() => profileTags.value.slice(0, 2));

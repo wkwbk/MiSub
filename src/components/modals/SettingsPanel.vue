@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
 import SettingsContent from '@/components/settings/SettingsContent.vue';
@@ -18,9 +18,9 @@ const {
   importBackup,
 } = useSettingsLogic();
 
-const activeTab = ref(resolveSettingsTab(readSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY)) || 'basic');
+const activeTab = ref<string>(resolveSettingsTab(readSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY)) || 'basic');
 
-watch(activeTab, (tabId) => {
+watch(activeTab, (tabId: string) => {
   const resolved = resolveSettingsTab(tabId) || 'basic';
   writeSessionPreference(SETTINGS_ACTIVE_TAB_STORAGE_KEY, resolved);
 });
@@ -32,7 +32,7 @@ onMounted(() => {
 
 const saveDisabled = computed(() => isSaving.value || hasWhitespace.value);
 
-const handleSaveAndReturnStatus = async () => {
+const handleSaveAndReturnStatus = async (): Promise<boolean> => {
   return handleSave();
 };
 

@@ -1,84 +1,66 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Globe, Loader2, Plus, Search, X, Zap } from '@lucide/vue';
 import MoreActionsMenu from '@/components/shared/MoreActionsMenu.vue';
 import TagFilterBar from '@/components/shared/TagFilterBar.vue';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 import { useI18n } from '@/i18n/index.js';
+import type { NodeAttributeFilters, NodeAttributeOptions } from '@/composables/manual-nodes/filters.js';
+import type { PingMode } from '@/composables/useManualNodes.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  manualNodesCount: {
-    type: Number,
-    default: 0,
+const props = withDefaults(
+  defineProps<{
+    manualNodesCount?: number;
+    filteredNodesCount?: number;
+    searchTerm?: string;
+    activeTagFilters?: string[];
+    manualNodeTags?: string[];
+    isSorting?: boolean;
+    isSelectionMode?: boolean;
+    isPingingAll?: boolean;
+    isInspectingNodes?: boolean;
+    pingMode?: PingMode | string;
+    attrFilters?: NodeAttributeFilters;
+    attributeOptions?: NodeAttributeOptions;
+  }>(),
+  {
+    manualNodesCount: 0,
+    filteredNodesCount: 0,
+    searchTerm: '',
+    activeTagFilters: () => [],
+    manualNodeTags: () => [],
+    isSorting: false,
+    isSelectionMode: false,
+    isPingingAll: false,
+    isInspectingNodes: false,
+    pingMode: 'local',
+    attrFilters: () => ({ protocol: '', country: '', network: '' }),
+    attributeOptions: () => ({ protocols: [], countries: [], networks: [] }),
   },
-  filteredNodesCount: {
-    type: Number,
-    default: 0,
-  },
-  searchTerm: {
-    type: String,
-    default: '',
-  },
-  activeTagFilters: {
-    type: Array,
-    default: () => [],
-  },
-  manualNodeTags: {
-    type: Array,
-    default: () => [],
-  },
-  isSorting: {
-    type: Boolean,
-    default: false,
-  },
-  isSelectionMode: {
-    type: Boolean,
-    default: false,
-  },
-  isPingingAll: {
-    type: Boolean,
-    default: false,
-  },
-  isInspectingNodes: {
-    type: Boolean,
-    default: false,
-  },
-  pingMode: {
-    type: String,
-    default: 'local',
-  },
-  attrFilters: {
-    type: Object,
-    default: () => ({ protocol: '', country: '', network: '' }),
-  },
-  attributeOptions: {
-    type: Object,
-    default: () => ({ protocols: [], countries: [], networks: [] }),
-  },
-});
+);
 
-const emit = defineEmits([
-  'update:searchTerm',
-  'set-tag-filters',
-  'toggle-protocol-filter',
-  'toggle-country-filter',
-  'toggle-network-filter',
-  'clear-attr-filters',
-  'add',
-  'import',
-  'auto-sort',
-  'deduplicate',
-  'toggle-sort',
-  'delete-all',
-  'toggle-selection-mode',
-  'ping-all',
-  'inspect-all',
-  'update:pingMode',
-  'sort-by-latency',
-  'manage-tags',
-]);
+const emit = defineEmits<{
+  'update:searchTerm': [value: string];
+  'set-tag-filters': [filters: string[]];
+  'toggle-protocol-filter': [protocol: string];
+  'toggle-country-filter': [country: string];
+  'toggle-network-filter': [network: string];
+  'clear-attr-filters': [];
+  add: [];
+  import: [];
+  'auto-sort': [];
+  deduplicate: [];
+  'toggle-sort': [];
+  'delete-all': [];
+  'toggle-selection-mode': [];
+  'ping-all': [];
+  'inspect-all': [];
+  'update:pingMode': [mode: PingMode];
+  'sort-by-latency': [];
+  'manage-tags': [];
+}>();
 
 const hasAttrOptions = computed(() => {
   const opts = props.attributeOptions;
@@ -94,15 +76,15 @@ const hasActiveAttrFilters = computed(() =>
   Boolean(props.attrFilters?.protocol || props.attrFilters?.country || props.attrFilters?.network),
 );
 
-const networkLabel = (net) => {
+const networkLabel = (net: string): string => {
   if (net === 'direct') return t('manualNodes.badgeDirect');
   if (net === 'cdn') return t('manualNodes.badgeCdn');
   if (net === 'relay') return t('manualNodes.badgeRelay');
   return net;
 };
 
-const handleAttrWheel = (e) => {
-  const el = e.currentTarget;
+const handleAttrWheel = (e: WheelEvent): void => {
+  const el = e.currentTarget as HTMLElement | null;
   if (el && el.scrollWidth > el.clientWidth && e.deltaY !== 0) {
     e.preventDefault();
     el.scrollLeft += e.deltaY;
@@ -111,7 +93,7 @@ const handleAttrWheel = (e) => {
 
 const searchModel = computed({
   get: () => props.searchTerm,
-  set: (val) => emit('update:searchTerm', val),
+  set: (val: string) => emit('update:searchTerm', val),
 });
 
 const {

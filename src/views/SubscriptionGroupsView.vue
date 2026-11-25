@@ -1,10 +1,13 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { SubscriptionItem } from '@misub/core/types.js';
 import { useRoute, useRouter } from 'vue-router';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useSubscriptionForms } from '@/composables/useSubscriptionForms.js';
+import type { TagBatchMode } from '@/composables/useManualNodes.js';
 import { useSubscriptionBulkImport } from '@/composables/useSubscriptionBulkImport.js';
 import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -32,13 +35,13 @@ const router = useRouter();
 const isSortingSubs = useSortingMode(dataStore);
 const showDeleteSubsModal = ref(false);
 const showBatchDeleteModal = ref(false);
-const batchDeleteIds = ref([]);
+const batchDeleteIds = ref<string[]>([]);
 const showBatchTagModal = ref(false);
-const batchTagIds = ref([]);
+const batchTagIds = ref<string[]>([]);
 const showTagManagementModal = ref(false);
 
 const {
-  subscriptions,
+  subscriptions: rawSubscriptions,
   subscriptionTags,
   activeTagFilters,
   setTagFilters,
@@ -64,6 +67,7 @@ const {
   refreshError,
   lastRefreshAt,
 } = useSubscriptions(markDirty);
+const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
 const {
   showModal: showSubModal,
@@ -83,7 +87,7 @@ const openBulkImportModal = () => {
   showBulkImportModal.value = true;
 };
 
-const handleDeleteSubscriptionWithCleanup = (subId) => {
+const handleDeleteSubscriptionWithCleanup = (subId: string) => {
   deleteSubscription(subId);
 };
 
@@ -92,17 +96,17 @@ const handleDeleteAllSubscriptionsWithCleanup = () => {
   showDeleteSubsModal.value = false;
 };
 
-const handleOpenBatchTagModal = (ids) => {
+const handleOpenBatchTagModal = (ids: string[]) => {
   batchTagIds.value = ids;
   showBatchTagModal.value = true;
 };
 
-const handleBatchTagConfirm = (payload) => {
+const handleBatchTagConfirm = (payload: { tags: string[]; mode: TagBatchMode }) => {
   batchUpdateSubscriptionTags(batchTagIds.value, payload);
   batchTagIds.value = [];
 };
 
-const handleBatchDeleteRequest = (ids) => {
+const handleBatchDeleteRequest = (ids: string[]) => {
   if (ids && ids.length > 0) {
     batchDeleteIds.value = ids;
     showBatchDeleteModal.value = true;
@@ -117,26 +121,27 @@ const confirmBatchDelete = () => {
 
 const NodePreviewModal = defineAsyncComponent(loadNodePreviewModal);
 const showNodePreviewModal = ref(false);
-const previewSubscriptionId = ref(null);
+const previewSubscriptionId = ref<string | null>(null);
 const previewSubscriptionName = ref('');
 const previewSubscriptionUrl = ref('');
 
-const handleTagRename = (oldName, newName) => {
+const handleTagRename = (oldName: string, newName: string) => {
   renameSubscriptionTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleTagDelete = (tagName) => {
+const handleTagDelete = (tagName: string) => {
   deleteSubscriptionTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleTagReorder = (newOrder) => {
+const handleTagReorder = (newOrder: string[]) => {
   reorderSubscriptionTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleApplyDetectedName = (subscriptionId, name) => {
+const handleApplyDetectedName = (subscriptionId: string | undefined, name: string) => {
+  if (!subscriptionId) return;
   const target = String(name || '').trim();
   if (!target) return;
   const targetSub = subscriptions.value.find((s) => s.id === subscriptionId);
@@ -148,7 +153,7 @@ const handleApplyDetectedName = (subscriptionId, name) => {
   showToast(t('subscriptions.nameApplied', { name: target }), 'success');
 };
 
-const handlePreviewSubscription = (subscriptionId) => {
+const handlePreviewSubscription = (subscriptionId: string) => {
   const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
   if (subscription) {
     previewSubscriptionId.value = subscriptionId;
@@ -165,7 +170,7 @@ const showQRCodeModal = ref(false);
 const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
 
-const handleQRCode = (id) => {
+const handleQRCode = (id: string) => {
   const sub = subscriptions.value.find((s) => s.id === id);
   if (sub) {
     qrCodeUrl.value = sub.url;
@@ -175,7 +180,7 @@ const handleQRCode = (id) => {
 };
 
 const activeStatusFilter = ref('');
-const STATUS_FILTER_LABEL_KEYS = {
+const STATUS_FILTER_LABEL_KEYS: Record<string, string> = {
   disabled: 'subscriptions.filterStatusDisabled',
   error: 'subscriptions.filterStatusError',
   expired: 'subscriptions.filterStatusExpired',

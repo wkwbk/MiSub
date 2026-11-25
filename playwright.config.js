@@ -17,7 +17,7 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'node tests/e2e/e2e-server.mjs',
+    command: 'node --experimental-strip-types --import ./tests/e2e/register-ts-loader.mjs tests/e2e/e2e-server.mjs',
     url: `${baseURL}/api/public/config`,
     reuseExistingServer: !process.env.CI,
     timeout: 30_000,

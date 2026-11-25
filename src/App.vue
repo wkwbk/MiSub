@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Globe } from '@lucide/vue';
 import RouteErrorBoundary from '@/components/ui/RouteErrorBoundary.vue';
@@ -131,7 +131,7 @@ const loginComponent = computed(() => {
   return sessionStore.publicConfig?.hasCustomLoginPath ? NotFound : Login;
 });
 
-const handleBeforeUnload = (event) => {
+const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
   if (isLoggedIn.value && layoutMode.value === 'modern' && isDirty.value) {
     event.preventDefault();
     event.returnValue = t('common.unsavedLeaveConfirm');
@@ -188,8 +188,7 @@ watch(
   },
 );
 
-/** @type {ReturnType<typeof setTimeout> | null} */
-let versionCheckTimer = null;
+let versionCheckTimer: ReturnType<typeof setTimeout> | null = null;
 
 function clearVersionCheckTimer() {
   if (versionCheckTimer !== null) {
@@ -419,7 +418,7 @@ const isCustomPageFullWidth = computed(() => {
     <ConfirmDialog />
     <VersionChangelogModal
       :current-version="currentVersion"
-      :release="versionReleaseInfo || {}"
+      :release="versionReleaseInfo || undefined"
       :show="showVersionChangelogModal"
       @confirm="handleVersionModalConfirm"
       @suppress="handleVersionModalSuppress"

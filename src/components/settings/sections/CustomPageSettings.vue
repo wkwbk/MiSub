@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { CUSTOM_PAGE_TEMPLATES } from '@/constants/custom-page-templates.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
@@ -7,15 +7,15 @@ import { confirmAction } from '@/composables/useConfirm.js';
 import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import SettingCard from '@/components/settings/SettingCard.vue';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+
+type CustomPageTemplate = (typeof CUSTOM_PAGE_TEMPLATES)[number];
 
 const { t } = useI18n();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
 
 if (!props.settings.customPage) {
   props.settings.customPage = {
@@ -23,6 +23,14 @@ if (!props.settings.customPage) {
     type: 'html',
     content: '',
     css: '',
+    iframeUrl: '',
+    iframeHeight: '100vh',
+    iframeFullWidth: true,
+    iframeAllowFullscreen: true,
+    iframeFillViewport: false,
+    iframePaddingY: '0px',
+    iframeRadius: '0px',
+    iframeShadow: false,
     useDefaultLayout: true,
     allowExternalStylesheets: false,
     allowScripts: false,
@@ -45,7 +53,7 @@ if (typeof cp.hideFooter !== 'boolean') cp.hideFooter = false;
 
 const customPage = computed(() => props.settings.customPage);
 
-const insertPlaceholder = (placeholder) => {
+const insertPlaceholder = (placeholder: string): void => {
   props.settings.customPage.content = (customPage.value.content || '') + `{{${placeholder}}}`;
 };
 
@@ -69,7 +77,7 @@ const layoutSwitchRows = [
   { key: 'hideBranding', titleKey: 'settings.customPageHideBranding', descKey: 'settings.customPageHideBrandingDesc' },
   { key: 'hideHeader', titleKey: 'settings.customPageHideHeader', descKey: 'settings.customPageHideHeaderDesc' },
   { key: 'hideFooter', titleKey: 'settings.customPageHideFooter', descKey: 'settings.customPageHideFooterDesc' },
-];
+] as const;
 
 const fixedDisabledRows = [
   { titleKey: 'settings.customPageExternalStylesDisabled', descKey: 'settings.customPageExternalStylesDisabledDesc' },
@@ -100,7 +108,7 @@ const placeholderDocGroups = [
 
 const templates = CUSTOM_PAGE_TEMPLATES;
 
-const applyTemplate = async (tpl) => {
+const applyTemplate = async (tpl: CustomPageTemplate): Promise<void> => {
   const confirmed = await confirmAction({
     message: t('settings.customPageApplyConfirm', { name: t(tpl.nameKey) }),
   });
@@ -122,7 +130,7 @@ const applyTemplate = async (tpl) => {
   }
 };
 
-const normalizeFullPageSource = () => {
+const normalizeFullPageSource = (): void => {
   const parsed = parseCustomPageSource(props.settings.customPage.content, props.settings.customPage.css);
   props.settings.customPage.content = parsed.html;
   props.settings.customPage.css = parsed.css;

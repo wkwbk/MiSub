@@ -1,14 +1,16 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { LogIn } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  to: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    to?: string;
+  }>(),
+  {
+    to: '',
   },
-});
+);
 
 const { t } = useI18n();
 

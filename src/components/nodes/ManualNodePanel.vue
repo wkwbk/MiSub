@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import BulkOperations from '@/components/nodes/ManualNodePanel/BulkOperations.vue';
 import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
 import NodeTable from '@/components/nodes/ManualNodePanel/NodeTable.vue';
@@ -8,58 +9,85 @@ import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { useManualNodeSearchPagination } from '@/composables/manual-nodes/useManualNodeSearchPagination.js';
 import { collectNodeAttributeOptions } from '@/composables/manual-nodes/filters.js';
 
-const props = defineProps({
-  manualNodes: { type: Array, default: () => [] },
-  paginatedManualNodes: Array,
-  currentPage: Number,
-  totalPages: Number,
-  isSorting: Boolean,
-  searchTerm: String,
-  tags: { type: Array, default: () => [] },
-  activeTagFilters: { type: Array, default: () => [] },
-  itemsPerPage: { type: Number, default: DEFAULT_LIST_PAGE_SIZE },
-  pingResults: { type: Object, default: () => ({}) },
-  pingingNodes: { type: Object, default: () => new Set() },
-  isPingingAll: { type: Boolean, default: false },
-  nodeInspectMap: { type: Object, default: () => ({}) },
-  isInspectingNodes: { type: Boolean, default: false },
-  pingMode: { type: String, default: 'local' },
-  attrFilters: { type: Object, default: () => ({ protocol: '', country: '', network: '' }) },
-  compactGrid: { type: Boolean, default: false },
-});
+interface NodeAttrFilters {
+  protocol: string;
+  country: string;
+  network: string;
+}
 
-const emit = defineEmits([
-  'add',
-  'delete',
-  'edit',
-  'changePage',
-  'update:searchTerm',
-  'toggleSort',
-  'markDirty',
-  'autoSort',
-  'deduplicate',
-  'import',
-  'deleteAll',
-  'reorder',
-  'update:itemsPerPage',
-  'set-tag-filters',
-  'toggle-tag-filter',
-  'toggle-protocol-filter',
-  'toggle-country-filter',
-  'toggle-network-filter',
-  'clear-attr-filters',
-  'open-batch-tag-modal',
-  'batch-delete-nodes',
-  'ping',
-  'ping-all',
-  'inspect-all',
-  'update:pingMode',
-  'sort-by-latency',
-  'manage-tags',
-]);
+const props = withDefaults(
+  defineProps<{
+    manualNodes?: ManualNodeItem[];
+    paginatedManualNodes?: ManualNodeItem[];
+    currentPage?: number;
+    totalPages?: number;
+    isSorting?: boolean;
+    searchTerm?: string;
+    tags?: string[];
+    activeTagFilters?: string[];
+    itemsPerPage?: number;
+    pingResults?: Record<string, any>;
+    pingingNodes?: Set<string>;
+    isPingingAll?: boolean;
+    nodeInspectMap?: Record<string, any>;
+    isInspectingNodes?: boolean;
+    pingMode?: string;
+    attrFilters?: NodeAttrFilters;
+    compactGrid?: boolean;
+  }>(),
+  {
+    manualNodes: () => [],
+    paginatedManualNodes: undefined,
+    currentPage: undefined,
+    totalPages: undefined,
+    isSorting: false,
+    searchTerm: '',
+    tags: () => [],
+    activeTagFilters: () => [],
+    itemsPerPage: DEFAULT_LIST_PAGE_SIZE,
+    pingResults: () => ({}),
+    pingingNodes: () => new Set<string>(),
+    isPingingAll: false,
+    nodeInspectMap: () => ({}),
+    isInspectingNodes: false,
+    pingMode: 'local',
+    attrFilters: () => ({ protocol: '', country: '', network: '' }),
+    compactGrid: false,
+  },
+);
+
+const emit = defineEmits<{
+  add: [];
+  delete: [id: string];
+  edit: [id: string];
+  changePage: [page: number];
+  'update:searchTerm': [value: string];
+  toggleSort: [];
+  markDirty: [];
+  autoSort: [];
+  deduplicate: [];
+  import: [];
+  deleteAll: [];
+  reorder: [nodes: ManualNodeItem[]];
+  'update:itemsPerPage': [itemsPerPage: number];
+  'set-tag-filters': [filters: string[]];
+  'toggle-tag-filter': [tag: string];
+  'toggle-protocol-filter': [protocol: string];
+  'toggle-country-filter': [country: string];
+  'toggle-network-filter': [network: string];
+  'clear-attr-filters': [];
+  'open-batch-tag-modal': [ids: string[]];
+  'batch-delete-nodes': [ids: string[]];
+  ping: [id: string];
+  'ping-all': [];
+  'inspect-all': [];
+  'update:pingMode': [mode: string];
+  'sort-by-latency': [];
+  'manage-tags': [];
+}>();
 
 const isSelectionMode = ref(false);
-const selectedNodeIds = ref(new Set());
+const selectedNodeIds = ref(new Set<string>());
 
 const attributeOptions = computed(() => collectNodeAttributeOptions(props.manualNodes, props.nodeInspectMap));
 
@@ -79,8 +107,8 @@ const {
   attrFilters: computed(() => props.attrFilters),
   nodeInspectMap: computed(() => props.nodeInspectMap),
   itemsPerPage: computed(() => props.itemsPerPage),
-  onBasePageChange: (page) => emit('changePage', page),
-  onSearchTermChange: (value) => emit('update:searchTerm', value),
+  onBasePageChange: (page: number) => emit('changePage', page),
+  onSearchTermChange: (value: string) => emit('update:searchTerm', value),
 });
 
 const toggleSelectionMode = () => {
@@ -88,7 +116,7 @@ const toggleSelectionMode = () => {
   selectedNodeIds.value.clear();
 };
 
-const toggleNodeSelection = (nodeId) => {
+const toggleNodeSelection = (nodeId: string) => {
   if (selectedNodeIds.value.has(nodeId)) {
     selectedNodeIds.value.delete(nodeId);
   } else {
@@ -98,16 +126,16 @@ const toggleNodeSelection = (nodeId) => {
 
 const isAllSelected = computed(() => {
   if (paginatedNodes.value.length === 0) return false;
-  return paginatedNodes.value.every((node) => selectedNodeIds.value.has(node.id));
+  return paginatedNodes.value.every((node: ManualNodeItem) => selectedNodeIds.value.has(node.id));
 });
 
 const selectedCount = computed(() => selectedNodeIds.value.size);
 
 const toggleSelectAll = () => {
   if (isAllSelected.value) {
-    paginatedNodes.value.forEach((node) => selectedNodeIds.value.delete(node.id));
+    paginatedNodes.value.forEach((node: ManualNodeItem) => selectedNodeIds.value.delete(node.id));
   } else {
-    paginatedNodes.value.forEach((node) => selectedNodeIds.value.add(node.id));
+    paginatedNodes.value.forEach((node: ManualNodeItem) => selectedNodeIds.value.add(node.id));
   }
 };
 
@@ -123,20 +151,20 @@ const handleBatchDelete = () => {
 
 const draggableManualNodes = computed({
   get: () => (props.isSorting ? [...filteredNodes.value] : [...props.manualNodes]),
-  set: (val) => emit('reorder', val),
+  set: (val: ManualNodeItem[]) => emit('reorder', val),
 });
 
-const handleDelete = (id) => emit('delete', id);
-const handleEdit = (id) => emit('edit', id);
-const detailNode = ref(null);
+const handleDelete = (id: string) => emit('delete', id);
+const handleEdit = (id: string) => emit('edit', id);
+const detailNode = ref<ManualNodeItem | null>(null);
 const showDetailModal = ref(false);
-const handleDetail = (node) => {
+const handleDetail = (node: ManualNodeItem) => {
   detailNode.value = node;
   showDetailModal.value = true;
 };
 const handleAdd = () => emit('add');
-const handleChangePage = (page) => handlePageChange(page);
-const handleSearchTermUpdate = (value) => {
+const handleChangePage = (page: number) => handlePageChange(page);
+const handleSearchTermUpdate = (value: string) => {
   localSearchTerm.value = value || '';
 };
 const handleToggleSort = () => {
@@ -248,8 +276,8 @@ const handleDeleteAll = () => emit('deleteAll');
 
     <NodeDetailModal
       v-model:show="showDetailModal"
-      :inspect-info="detailNode ? nodeInspectMap[detailNode.id] : null"
-      :node="detailNode"
+      :inspect-info="detailNode ? nodeInspectMap[detailNode.id] : undefined"
+      :node="detailNode!"
     />
   </div>
 </template>

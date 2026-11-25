@@ -1,43 +1,38 @@
-<script setup>
+<script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { CSSProperties } from 'vue';
 import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  title: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+    description?: string;
+    confirmText?: string;
+    cancelText?: string;
+    variant?: 'danger' | 'primary';
+    disabled?: boolean;
+  }>(),
+  {
+    title: '',
+    description: '',
+    confirmText: '',
+    cancelText: '',
+    variant: 'danger',
+    disabled: false,
   },
-  description: {
-    type: String,
-    default: '',
-  },
-  confirmText: {
-    type: String,
-    default: '',
-  },
-  cancelText: {
-    type: String,
-    default: '',
-  },
-  variant: {
-    type: String,
-    default: 'danger',
-    validator: (value) => ['danger', 'primary'].includes(value),
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['confirm', 'cancel']);
+const emit = defineEmits<{
+  confirm: [];
+  cancel: [];
+}>();
 
 const isOpen = ref(false);
-const triggerRef = ref(null);
-const popoverRef = ref(null);
-const positionStyle = ref({});
+const triggerRef = ref<HTMLDivElement | null>(null);
+const popoverRef = ref<HTMLDivElement | null>(null);
+const positionStyle = ref<CSSProperties>({});
 
 const updatePosition = () => {
   const triggerEl = triggerRef.value;
@@ -102,16 +97,16 @@ const handleCancel = () => {
   emit('cancel');
 };
 
-const handleDocumentPointerDown = (event) => {
+const handleDocumentPointerDown = (event: PointerEvent) => {
   if (!isOpen.value) return;
-  const target = event.target;
+  const target = event.target as Node | null;
   if (triggerRef.value?.contains(target) || popoverRef.value?.contains(target)) {
     return;
   }
   closePopover();
 };
 
-const handleKeydown = (event) => {
+const handleKeydown = (event: KeyboardEvent) => {
   if (isOpen.value && event.key === 'Escape') {
     event.stopPropagation();
     closePopover();

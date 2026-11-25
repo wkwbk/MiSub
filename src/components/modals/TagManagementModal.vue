@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Check, GripVertical, Pencil, Tag, Trash2, X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -7,24 +7,35 @@ import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import { normalizeTagName } from '@/utils/tags.js';
 
+interface TagEntry {
+  name: string;
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  show: Boolean,
-  tags: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    tags?: string[];
+    allowReorder?: boolean;
+  }>(),
+  {
+    show: false,
+    tags: () => [],
+    allowReorder: true,
   },
-  allowReorder: {
-    type: Boolean,
-    default: true,
-  },
-});
+);
 
-const emit = defineEmits(['close', 'rename', 'delete', 'reorder', 'update:show']);
+const emit = defineEmits<{
+  close: [];
+  rename: [oldName: string, newName: string];
+  delete: [tagName: string];
+  reorder: [newOrder: string[]];
+  'update:show': [value: boolean];
+}>();
 
-const localTags = ref([]);
-const editingIndex = ref(null);
+const localTags = ref<TagEntry[]>([]);
+const editingIndex = ref<number | null>(null);
 const editingName = ref('');
 
 const syncTags = () => {
@@ -48,7 +59,7 @@ const handleClose = () => {
   emit('close');
 };
 
-const startEdit = (index) => {
+const startEdit = (index: number) => {
   editingIndex.value = index;
   editingName.value = localTags.value[index].name;
 };
@@ -68,8 +79,8 @@ const confirmEdit = () => {
   const oldName = localTags.value[editingIndex.value]?.name;
   if (oldName && newName !== oldName) {
     emit('rename', oldName, newName);
-    const merged = [];
-    const seen = new Set();
+    const merged: TagEntry[] = [];
+    const seen = new Set<string>();
     for (const item of localTags.value) {
       const target = item.name === oldName ? newName : item.name;
       if (!seen.has(target)) {
@@ -83,7 +94,7 @@ const confirmEdit = () => {
   cancelEdit();
 };
 
-const handleDelete = async (tagName) => {
+const handleDelete = async (tagName: string) => {
   const confirmed = await confirmAction({
     message: t('tags.deleteTagConfirm', { name: tagName }),
     variant: 'danger',

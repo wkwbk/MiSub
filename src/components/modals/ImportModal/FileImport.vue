@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useI18n } from '@/i18n/index.js';
 /**
  * 文件上传导入：拖拽 / 点击选择本地文件，读取文本后走后端 /api/parse_subscription。
@@ -10,29 +10,27 @@ import { IMPORT_FILE_ACCEPT, readFilesAsText } from '@/utils/import-file.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  isProcessing: {
-    type: Boolean,
-    default: false,
+const props = withDefaults(
+  defineProps<{
+    isProcessing?: boolean;
+    parseStatus?: string;
+    errorMessage?: string;
+    successMessage?: string;
+  }>(),
+  {
+    isProcessing: false,
+    parseStatus: '',
+    errorMessage: '',
+    successMessage: '',
   },
-  parseStatus: {
-    type: String,
-    default: '',
-  },
-  errorMessage: {
-    type: String,
-    default: '',
-  },
-  successMessage: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits(['files']);
+const emit = defineEmits<{
+  files: [files: FileList];
+}>();
 
 const isDragging = ref(false);
-const fileInput = ref(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const acceptAttr = IMPORT_FILE_ACCEPT;
 
@@ -43,14 +41,15 @@ function openPicker() {
   fileInput.value?.click();
 }
 
-function onInputChange(event) {
-  const files = event.target.files;
+function onInputChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
   if (files && files.length) emit('files', files);
   // 允许重复选择同一文件
-  event.target.value = '';
+  input.value = '';
 }
 
-function onDrop(event) {
+function onDrop(event: DragEvent) {
   isDragging.value = false;
   if (props.isProcessing) return;
   const files = event.dataTransfer?.files;

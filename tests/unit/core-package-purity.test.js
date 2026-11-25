@@ -10,7 +10,7 @@ function collectJsFiles(dir, result = []) {
     const fullPath = path.join(dir, entry);
     if (statSync(fullPath).isDirectory()) {
       collectJsFiles(fullPath, result);
-    } else if (fullPath.endsWith('.js')) {
+    } else if (fullPath.endsWith('.js') || fullPath.endsWith('.ts')) {
       result.push(fullPath);
     }
   }

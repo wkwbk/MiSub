@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-const mainSource = readFileSync(path.resolve(process.cwd(), 'src/main.js'), 'utf-8');
+const mainSource = readFileSync(path.resolve(process.cwd(), 'src/main.ts'), 'utf-8');
 
 describe('main.js 全局错误处理器接线', () => {
   it('引入来源判定工具', () => {

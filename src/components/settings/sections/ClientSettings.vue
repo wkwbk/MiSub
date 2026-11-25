@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Monitor } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -10,6 +10,18 @@ import {
   normalizePublicClientsConfig,
   resolvePublicClientIcon,
 } from '@misub/core/domain/default-public-clients.js';
+
+interface CollectionClientItem {
+  id: string;
+  name?: string;
+  icon?: string;
+  description?: string;
+  platforms?: string[];
+  url?: string;
+  repo?: string | null;
+  enabled?: boolean;
+  [key: string]: unknown;
+}
 
 const { t } = useI18n();
 
@@ -37,12 +49,13 @@ const labels = computed(() => ({
   deleteConfirmQuestion: t('settings.clientDeleteConfirmQuestion'),
   fetchErrorText: t('settings.clientFetchFailed'),
   saveErrorText: t('settings.clientSaveFailed'),
-  saveErrorFormatter: (message) => t('settings.clientSaveFailedWithMessage', { message }),
+  saveErrorFormatter: (message: string) => t('settings.clientSaveFailedWithMessage', { message }),
 }));
 
-const filterItem = (client, activeTab) => Array.isArray(client.platforms) && client.platforms.includes(activeTab);
+const filterItem = (client: CollectionClientItem, activeTab: string): boolean =>
+  Array.isArray(client.platforms) && client.platforms.includes(activeTab);
 
-const createNewItem = (activeTab) => ({
+const createNewItem = (activeTab: string): CollectionClientItem => ({
   id: '',
   name: '',
   icon: '',
@@ -53,12 +66,14 @@ const createNewItem = (activeTab) => ({
   enabled: true,
 });
 
-const prepareEditItem = (client) => ({
+const prepareEditItem = (client: CollectionClientItem): CollectionClientItem => ({
   ...client,
-  platforms: client.platforms || [],
+  platforms: Array.isArray(client.platforms) ? client.platforms : [],
 });
 
-const validateAndBuildItem = (editingClient) => {
+const validateAndBuildItem = (
+  editingClient: CollectionClientItem,
+): { item: CollectionClientItem; error?: undefined } | { error: string; item?: undefined } => {
   const name = String(editingClient.name || '').trim();
   if (!name) return { error: t('settings.clientNameRequired') };
 
@@ -77,7 +92,7 @@ const validateAndBuildItem = (editingClient) => {
   };
 };
 
-const getPlatformClass = (platform) => {
+const getPlatformClass = (platform: string): string => {
   const option = platformOptions.find((opt) => opt.value === platform);
   return option ? option.class : 'border border-line bg-transparent text-fg-muted font-mono';
 };

@@ -79,6 +79,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@', replacement: '/src' },
+      { find: /^@misub\/core\/(.*)\.js$/, replacement: '/packages/core/src/$1.ts' },
       { find: '@misub/core', replacement: '/packages/core/src' },
       {
         // vuedraggable 的 package.json main 指向 dist/vuedraggable.umd.min.js，

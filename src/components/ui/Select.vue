@@ -1,67 +1,82 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import type { CSSProperties } from 'vue';
 import { Check, ChevronDown } from '@lucide/vue';
 import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 
-const props = defineProps({
-  modelValue: {
-    type: [String, Number, Boolean, Array, Object],
-    default: undefined,
-  },
-  options: {
-    type: Array,
-    default: () => [],
-  },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  multiple: {
-    type: Boolean,
-    default: false,
-  },
-  size: {
-    type: String,
-    default: 'md',
-    validator: (value) => ['xs', 'sm', 'md', 'lg'].includes(value),
-  },
-  triggerClass: {
-    type: String,
-    default: '',
-  },
-  popoverClass: {
-    type: String,
-    default: '',
-  },
-  popoverMinWidth: {
-    type: [Number, String],
-    default: 0,
-  },
-  id: {
-    type: String,
-    default: undefined,
-  },
-  ariaLabel: {
-    type: String,
-    default: undefined,
-  },
-});
+type SelectSize = 'xs' | 'sm' | 'md' | 'lg';
 
-const emit = defineEmits(['update:modelValue', 'change']);
+interface SelectOptionItem {
+  value: any;
+  label?: string;
+  disabled?: boolean;
+}
+
+interface SelectOptionGroup {
+  label: string;
+  options: Array<SelectOptionItem | string | number | boolean>;
+}
+
+type SelectOptionInput = SelectOptionItem | SelectOptionGroup | string | number | boolean;
+
+interface GroupHeaderItem {
+  isGroupHeader: true;
+  label: string;
+}
+
+interface FlatSelectOption {
+  isGroupHeader: false;
+  value: any;
+  label: string;
+  disabled: boolean;
+  flatIndex: number;
+}
+
+type RenderItem = GroupHeaderItem | FlatSelectOption;
+
+const props = withDefaults(
+  defineProps<{
+    modelValue?: any;
+    options?: SelectOptionInput[];
+    placeholder?: string;
+    disabled?: boolean;
+    multiple?: boolean;
+    size?: SelectSize;
+    triggerClass?: string;
+    popoverClass?: string;
+    popoverMinWidth?: number | string;
+    id?: string;
+    ariaLabel?: string;
+  }>(),
+  {
+    modelValue: undefined,
+    options: () => [],
+    placeholder: '',
+    disabled: false,
+    multiple: false,
+    size: 'md',
+    triggerClass: '',
+    popoverClass: '',
+    popoverMinWidth: 0,
+    id: undefined,
+    ariaLabel: undefined,
+  },
+);
+
+const emit = defineEmits<{
+  'update:modelValue': [value: any];
+  change: [value: any];
+}>();
 
 const isOpen = ref(false);
-const triggerRef = ref(null);
-const popoverRef = ref(null);
-const listRef = ref(null);
+const triggerRef = ref<HTMLButtonElement | null>(null);
+const popoverRef = ref<HTMLDivElement | null>(null);
+const listRef = ref<HTMLDivElement | null>(null);
 const highlightedIndex = ref(-1);
-const placement = ref('bottom');
-const popoverStyle = ref({});
+const placement = ref<'top' | 'bottom'>('bottom');
+const popoverStyle = ref<CSSProperties>({});
 
-const sizeClasses = {
+const sizeClasses: Record<SelectSize, string> = {
   xs: 'h-7 px-2 text-xs rounded-md gap-1.5',
   sm: 'h-8 px-2.5 text-xs rounded-md gap-2',
   md: 'h-9 px-3 text-sm rounded-md gap-2',
@@ -70,7 +85,7 @@ const sizeClasses = {
 
 const currentSizeClass = computed(() => sizeClasses[props.size] || sizeClasses.md);
 
-const normalizeOption = (item) => {
+const normalizeOption = (item: SelectOptionItem | string | number | boolean) => {
   if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
     return {
       value: item.value,
@@ -86,12 +101,12 @@ const normalizeOption = (item) => {
 };
 
 // 扁平化分组标题与选项，避免模板中重复渲染逻辑
-const renderItems = computed(() => {
-  const items = [];
+const renderItems = computed<RenderItem[]>(() => {
+  const items: RenderItem[] = [];
   let flatIndex = 0;
 
   for (const item of props.options || []) {
-    if (item && typeof item === 'object' && Array.isArray(item.options)) {
+    if (item && typeof item === 'object' && 'options' in item && Array.isArray(item.options)) {
       if (item.options.length === 0) continue;
       items.push({ isGroupHeader: true, label: item.label });
       for (const subItem of item.options) {
@@ -104,7 +119,7 @@ const renderItems = computed(() => {
     } else {
       items.push({
         isGroupHeader: false,
-        ...normalizeOption(item),
+        ...normalizeOption(item as SelectOptionItem | string | number | boolean),
         flatIndex: flatIndex++,
       });
     }
@@ -113,9 +128,11 @@ const renderItems = computed(() => {
   return items;
 });
 
-const flatOptions = computed(() => renderItems.value.filter((item) => !item.isGroupHeader));
+const flatOptions = computed(() =>
+  renderItems.value.filter((item): item is FlatSelectOption => !item.isGroupHeader),
+);
 
-const isSelected = (value) => {
+const isSelected = (value: any) => {
   if (props.multiple) {
     return Array.isArray(props.modelValue) && props.modelValue.includes(value);
   }
@@ -179,7 +196,7 @@ const scrollHighlightedIntoView = () => {
   nextTick(() => {
     const list = listRef.value;
     if (!list || highlightedIndex.value < 0) return;
-    const target = list.querySelector(`[data-option-index="${highlightedIndex.value}"]`);
+    const target = list.querySelector<HTMLElement>(`[data-option-index="${highlightedIndex.value}"]`);
     if (!target) return;
     const targetTop = target.offsetTop;
     const targetBottom = targetTop + target.offsetHeight;
@@ -217,7 +234,7 @@ const close = (restoreFocus = false) => {
 
 const toggle = () => (isOpen.value ? close() : open());
 
-const selectOption = (option) => {
+const selectOption = (option: FlatSelectOption | undefined) => {
   if (!option || option.disabled) return;
 
   if (props.multiple) {
@@ -235,7 +252,7 @@ const selectOption = (option) => {
   close(true);
 };
 
-const moveHighlight = (step) => {
+const moveHighlight = (step: number) => {
   const opts = flatOptions.value;
   if (!opts.length) return;
   let idx = highlightedIndex.value;
@@ -249,7 +266,7 @@ const moveHighlight = (step) => {
   }
 };
 
-const handleTriggerKeydown = (event) => {
+const handleTriggerKeydown = (event: KeyboardEvent) => {
   if (props.disabled) return;
 
   if (event.key === 'Enter' || event.key === ' ') {
@@ -267,14 +284,15 @@ const handleTriggerKeydown = (event) => {
   }
 };
 
-const handleDocumentPointerDown = (event) => {
+const handleDocumentPointerDown = (event: PointerEvent) => {
   if (!isOpen.value) return;
-  if (!triggerRef.value?.contains(event.target) && !popoverRef.value?.contains(event.target)) {
+  const target = event.target as Node | null;
+  if (!triggerRef.value?.contains(target) && !popoverRef.value?.contains(target)) {
     close();
   }
 };
 
-const handleDocumentKeydown = (event) => {
+const handleDocumentKeydown = (event: KeyboardEvent) => {
   if (!isOpen.value || event.key !== 'Escape') return;
   event.preventDefault();
   event.stopPropagation();
@@ -304,7 +322,7 @@ usePopoverGuard({
   onReposition: updatePosition,
 });
 
-const getOptionClasses = (opt) => {
+const getOptionClasses = (opt: FlatSelectOption) => {
   if (opt.disabled) {
     return 'cursor-not-allowed opacity-40 text-fg-subtle';
   }

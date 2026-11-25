@@ -1,22 +1,23 @@
-<script setup>
-const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false,
+<script setup lang="ts">
+const props = withDefaults(
+  defineProps<{
+    modelValue?: boolean;
+    label?: string;
+    disabled?: boolean;
+  }>(),
+  {
+    modelValue: false,
+    label: '',
+    disabled: false,
   },
-  label: {
-    type: String,
-    default: '',
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['update:modelValue', 'change']);
+const emit = defineEmits<{
+  'update:modelValue': [value: boolean];
+  change: [value: boolean];
+}>();
 
-const toggle = () => {
+const toggle = (): void => {
   if (props.disabled) return;
   const newValue = !props.modelValue;
   emit('update:modelValue', newValue);

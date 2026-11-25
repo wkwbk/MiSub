@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { utf8ToBase64 } from '@misub/core/utils/base64.js';
 import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import {
@@ -11,21 +12,41 @@ import { X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  show: Boolean,
-  profile: Object,
-  clients: Array,
-  profileToken: String,
-});
+interface ImportClientItem {
+  id: string;
+  name?: string;
+  icon?: string;
+  platforms?: string[];
+  [key: string]: any;
+}
 
-const emit = defineEmits(['close']);
+type PlatformKey = 'ios' | 'android' | 'windows' | 'macos' | 'linux' | 'HarmonyOS';
+
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    profile?: ProfileConfig | null;
+    clients?: ImportClientItem[];
+    profileToken?: string;
+  }>(),
+  {
+    show: false,
+    profile: null,
+    clients: () => [],
+    profileToken: 'sub',
+  },
+);
+
+const emit = defineEmits<{
+  close: [];
+}>();
 const { t } = useI18n();
 
 // 设备检测
-const detectedPlatform = ref(null);
+const detectedPlatform = ref<PlatformKey | null>(null);
 const fullConfigCopied = ref(false);
 
-const detectPlatform = () => {
+const detectPlatform = (): PlatformKey | null => {
   const ua = navigator.userAgent;
   if (/HarmonyOS|OpenHarmony/.test(ua)) return 'HarmonyOS';
   if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
@@ -39,7 +60,7 @@ const detectPlatform = () => {
 // URL Scheme 映射表（内置）
 // 桌面端 Clash/Mihomo 系客户端在导入订阅时会直接拉取这里的 url。
 // 明确带上 target=clash，避免客户端/中间层使用通用 target 名称时拿到原始 Base64 节点列表。
-const urlSchemeMap = {
+const urlSchemeMap: Record<string, string> = {
   'clash-verge-rev': 'clash://install-config?url={url_clash}&name={name}',
   'clash-party': 'mihomo://install-config?url={url_clash}&name={name}',
   clashbox: 'clash://install-config?url={url_clash}&name={name}',
@@ -86,7 +107,7 @@ const openShadowrocketConfigImport = () => {
 };
 
 // 生成深度链接
-const withQueryParam = (url, key, value) => {
+const withQueryParam = (url: string, key: string, value: string) => {
   try {
     const parsed = new URL(url);
     if (!parsed.searchParams.has(key)) {
@@ -99,7 +120,7 @@ const withQueryParam = (url, key, value) => {
   }
 };
 
-const generateDeepLink = (client) => {
+const generateDeepLink = (client: ImportClientItem) => {
   const subUrl = getSubscriptionUrl();
   const clashSubUrl = withQueryParam(subUrl, 'target', 'clash');
   const singboxSubUrl = withQueryParam(subUrl, 'target', 'singbox');
@@ -137,12 +158,12 @@ const groupedClients = computed(() => {
 });
 
 // 判断客户端是否为{{ t('quickImport.recommended') }}（当前平台）
-const isRecommended = (client) => {
-  return detectedPlatform.value && client.platforms?.includes(detectedPlatform.value);
+const isRecommended = (client: ImportClientItem) => {
+  return Boolean(detectedPlatform.value && client.platforms?.includes(detectedPlatform.value));
 };
 
 // 处理客户端点击
-const handleClientClick = (client) => {
+const handleClientClick = (client: ImportClientItem) => {
   const deepLink = generateDeepLink(client);
   if (deepLink) {
     window.location.href = deepLink;
@@ -150,8 +171,8 @@ const handleClientClick = (client) => {
 };
 
 // 获取平台标签
-const getPlatformLabel = (platform) => {
-  const map = {
+const getPlatformLabel = (platform: string) => {
+  const map: Record<string, string> = {
     ios: 'iOS',
     android: 'Android',
     windows: 'Windows',

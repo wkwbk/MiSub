@@ -17,7 +17,7 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = path.join(dir, entry);
     if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.(js|mjs)$/.test(entry)) out.push(full);
+    else if (/\.(js|mjs|ts)$/.test(entry)) out.push(full);
   }
   return out;
 }
@@ -86,7 +86,7 @@ describe('errorHandler ↔ 服务端错误消息契约', () => {
   });
 
   it('客户端侧不该出现「服务端标识符」的本地化版本', () => {
-    const clientSource = ['src/utils/error-handler.js']
+    const clientSource = ['src/utils/error-handler.ts']
       .map((rel) => readFileSync(path.resolve(__dirname, '../..', rel), 'utf8'))
       .join('\n');
 

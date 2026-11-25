@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import { getActivePinia } from 'pinia';
 import { Layers } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -12,7 +13,7 @@ import ParseResult from '@/components/modals/ImportModal/ParseResult.vue';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkImport.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useToastStore } from '@/stores/useToastStore.js';
+import { useToastStore, type ToastType } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { api, APIError } from '@/lib/http.js';
 import { handleError } from '@/utils/error-handler.js';
@@ -28,36 +29,30 @@ const isDev = import.meta.env.DEV;
 const activePinia = getActivePinia();
 const dataStore = activePinia ? useDataStore() : null;
 const toastStore = activePinia ? useToastStore() : null;
-const { manualNodeTags } = dataStore ? useManualNodes(dataStore.markDirty) : { manualNodeTags: computed(() => []) };
+const { manualNodeTags } = dataStore ? useManualNodes(dataStore.markDirty) : { manualNodeTags: computed<string[]>(() => []) };
 
-const props = defineProps({
-  show: Boolean,
-  /**
-   * 导入模式：
-   * - 'bulk': 混合批量粘贴或文件上传（首页 Dashboard 使用）
-   * - 'nodes': 订阅 URL / 文件解析导入手动节点（手动节点页使用）
-   * - 'subscriptions': 批量机场订阅链接导入（机场订阅页使用）
-   */
-  mode: {
-    type: String,
-    default: 'bulk',
-    validator: (value) => ['bulk', 'nodes', 'subscriptions'].includes(value),
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    mode?: 'bulk' | 'nodes' | 'subscriptions';
+    addNodesFromBulk?: ((nodes: ManualNodeItem[], tags?: string[]) => void) | null;
+    tags?: string[] | null;
+    initialTab?: string;
+  }>(),
+  {
+    show: false,
+    mode: 'bulk',
+    addNodesFromBulk: null,
+    tags: null,
+    initialTab: '',
   },
-  addNodesFromBulk: {
-    type: Function,
-    default: null,
-  },
-  tags: {
-    type: Array,
-    default: null,
-  },
-  initialTab: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits(['update:show', 'import', 'files-imported']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  import: [text: string, tags: string[]];
+  'files-imported': [nodes: ManualNodeItem[], tags: string[]];
+}>();
 
 const resolveDefaultTab = () => {
   if (props.initialTab) return props.initialTab;
@@ -68,7 +63,7 @@ const resolveDefaultTab = () => {
 const activeTab = ref(resolveDefaultTab());
 const importText = ref('');
 const subscriptionUrl = ref('');
-const selectedTags = ref([]);
+const selectedTags = ref<string[]>([]);
 
 const isProcessing = ref(false);
 const parseStatus = ref('');
@@ -78,9 +73,9 @@ const successMessage = ref('');
 const isNodesMode = computed(() => props.mode === 'nodes');
 const isSubscriptionsMode = computed(() => props.mode === 'subscriptions');
 
-const subscriptionTagNames = computed(() => extractSubscriptionTagNames(dataStore?.subscriptions || []));
+const subscriptionTagNames = computed<string[]>(() => extractSubscriptionTagNames(dataStore?.subscriptions || []));
 
-const tagSuggestions = computed(() => {
+const tagSuggestions = computed<string[]>(() => {
   if (Array.isArray(props.tags)) return props.tags;
   if (isSubscriptionsMode.value) return subscriptionTagNames.value;
   return manualNodeTags.value || [];
@@ -145,17 +140,42 @@ watch(
   },
 );
 
-const showToast = (msg, type) => {
+const showToast = (msg: string, type: ToastType = 'info') => {
   toastStore?.showToast?.(msg, type);
 };
 
-const normalizeAndDedupeParsedNodes = (backendNodes, targetTags, applyTagsDirectly = false) => {
-  const mapped = (backendNodes || []).map((node) => {
-    const base = {
+interface ParsedNodePayload {
+  name?: string;
+  url: string;
+  protocol?: string;
+}
+
+interface ParseSubscriptionApiResponse {
+  success?: boolean;
+  error?: string;
+  data?: {
+    nodes?: ParsedNodePayload[];
+  };
+}
+
+interface FetchExternalApiResponse {
+  success?: boolean;
+  error?: string;
+  content?: string;
+}
+
+const normalizeAndDedupeParsedNodes = (
+  backendNodes: Array<{ name?: string; url: string; protocol?: string }>,
+  targetTags: string[],
+  applyTagsDirectly = false,
+): { uniqueNodes: ManualNodeItem[]; duplicateCount: number } => {
+  const mapped: ManualNodeItem[] = (backendNodes || []).map((node) => {
+    const base: ManualNodeItem = {
       id: generateNodeId(),
       name: node.name || 'Unknown',
       url: cleanNodeUrl(node.url),
       enabled: true,
+      tags: [],
       protocol: node.protocol || 'unknown',
       source: 'import',
     };
@@ -169,7 +189,12 @@ const normalizeAndDedupeParsedNodes = (backendNodes, targetTags, applyTagsDirect
   };
 };
 
-const commitParsedNodes = (backendNodes, targetTags, sourceLabel, { applyTagsDirectly = false } = {}) => {
+const commitParsedNodes = (
+  backendNodes: Array<{ name?: string; url: string; protocol?: string }>,
+  targetTags: unknown,
+  sourceLabel: string,
+  { applyTagsDirectly = false } = {},
+) => {
   const normalizedTags = normalizeTagList(targetTags);
   const { uniqueNodes, duplicateCount } = normalizeAndDedupeParsedNodes(
     backendNodes,
@@ -220,7 +245,7 @@ const handleTextConfirm = () => {
   }
 };
 
-const handleFiles = async (fileList) => {
+const handleFiles = async (fileList: FileList | File[]) => {
   if (isProcessing.value) return;
   isProcessing.value = true;
   errorMessage.value = '';
@@ -235,16 +260,16 @@ const handleFiles = async (fileList) => {
       selectedTags.value = targetTags;
     }
 
-    const { text, fileCount } = await readFilesAsText(fileList);
+    const { text, fileCount } = await readFilesAsText(Array.from(fileList));
     if (!text.trim()) {
       throw new Error(t('importNodes.emptyFile'));
     }
 
     parseStatus.value = t('importNodes.parsingFiles', { count: fileCount });
-    const parseResult = await api.post('/api/parse_subscription', { content: text });
+    const parseResult = await api.post<ParseSubscriptionApiResponse>('/api/parse_subscription', { content: text });
 
     if (!parseResult.success) {
-      throw new Error(parseResult.error || t('importNodes.parseFileFailed'));
+      throw new Error(String(parseResult.error || t('importNodes.parseFileFailed')));
     }
 
     const backendNodes = parseResult.data?.nodes || [];
@@ -257,7 +282,7 @@ const handleFiles = async (fileList) => {
     commitParsedNodes(backendNodes, targetTags, 'File upload', {
       applyTagsDirectly: !isNodesMode.value,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('批量文件导入失败:', error);
     if (isNodesMode.value) {
       handleError(error, 'File Import Error', { parseStatus: parseStatus.value });
@@ -270,7 +295,7 @@ const handleFiles = async (fileList) => {
   }
 };
 
-const isValidHttpUrl = (url) => {
+const isValidHttpUrl = (url: string) => {
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -297,9 +322,9 @@ const importSubscriptionUrl = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 20000);
 
-    let responseData;
+    let responseData: FetchExternalApiResponse;
     try {
-      responseData = await api.post(
+      responseData = await api.post<FetchExternalApiResponse>(
         '/api/fetch_external_url',
         {
           url: subscriptionUrl.value,
@@ -307,19 +332,24 @@ const importSubscriptionUrl = async () => {
         },
         { signal: controller.signal },
       );
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof APIError) {
-        const errorMsg = error.data?.error || error.data?.message || error.message || `HTTP ${error.status}`;
-        if (error.status === 408 || errorMsg.includes('timeout')) {
+        const errData = error.data;
+        const errText =
+          (typeof errData?.error === 'string' && errData.error) ||
+          (typeof errData?.message === 'string' && errData.message) ||
+          error.message ||
+          `HTTP ${error.status}`;
+        if (error.status === 408 || errText.includes('timeout')) {
           throw new Error(t('importNodes.requestTimeout'));
-        } else if (error.status === 413 || errorMsg.includes('too large')) {
+        } else if (error.status === 413 || errText.includes('too large')) {
           throw new Error(t('importNodes.contentTooLarge'));
-        } else if (errorMsg.includes('DNS')) {
+        } else if (errText.includes('DNS')) {
           throw new Error(t('importNodes.dnsFailed'));
         } else if (error.status >= 500) {
           throw new Error(t('importNodes.serverError'));
         }
-        throw new Error(errorMsg);
+        throw new Error(errText);
       }
       throw error;
     } finally {
@@ -327,16 +357,16 @@ const importSubscriptionUrl = async () => {
     }
 
     if (!responseData.success) {
-      throw new Error(responseData.error || t('importNodes.fetchFailed'));
+      throw new Error(String(responseData.error || t('importNodes.fetchFailed')));
     }
 
     parseStatus.value = t('importNodes.parsingSubscription');
-    const parseResult = await api.post('/api/parse_subscription', {
-      content: responseData.content,
+    const parseResult = await api.post<ParseSubscriptionApiResponse>('/api/parse_subscription', {
+      content: responseData.content || '',
     });
 
     if (!parseResult.success) {
-      throw new Error(parseResult.error || t('importNodes.parseSubscriptionFailed'));
+      throw new Error(String(parseResult.error || t('importNodes.parseSubscriptionFailed')));
     }
 
     const backendNodes = parseResult.data?.nodes || [];
@@ -346,7 +376,7 @@ const importSubscriptionUrl = async () => {
       parseStatus.value = '';
       throw new Error(t('importNodes.noValidNodesFromSubscription'));
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('导入订阅失败:', error);
     handleError(error, 'Subscription Import Error', {
       url: subscriptionUrl.value,

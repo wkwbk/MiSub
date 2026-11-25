@@ -1,26 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import { computed, markRaw, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Component } from 'vue';
 import { Check, FileText, Globe, Home, LayoutGrid, Server, Settings, SlidersHorizontal, Zap } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
+interface SidebarTab {
+  id: string;
+  labelKey: string;
+  descKey: string;
+  icon: Component;
+}
+
+interface SidebarGroup {
+  id: string;
+  labelKey: string;
+  tabs: SidebarTab[];
+}
+
 const { t } = useI18n();
 
-const props = defineProps({
-  activeTab: {
-    type: String,
-    required: true,
+const props = withDefaults(
+  defineProps<{
+    activeTab: string;
+    inModal?: boolean;
+  }>(),
+  {
+    inModal: false,
   },
-  inModal: {
-    type: Boolean,
-    default: false,
-  },
-});
+);
 
-const emit = defineEmits(['update:activeTab']);
+const emit = defineEmits<{
+  'update:activeTab': [tabId: string];
+}>();
 
 // 分组结构：按「站点展示 / 数据与集成 / 系统维护」三组归类，
 // 桌面端提供分组标题与副标题说明，移动端提供单行横向标签栏 + 全部分类速查面板。
-const tabGroups = [
+const tabGroups: SidebarGroup[] = [
   {
     id: 'site',
     labelKey: 'settings.groups.site',
@@ -85,16 +100,16 @@ const tabGroups = [
 
 const flatTabs = computed(() => tabGroups.flatMap((group) => group.tabs));
 
-const desktopNavRef = ref(null);
-const mobileBarRef = ref(null);
-const mobileScrollRef = ref(null);
+const desktopNavRef = ref<HTMLElement | null>(null);
+const mobileBarRef = ref<HTMLDivElement | null>(null);
+const mobileScrollRef = ref<HTMLElement | null>(null);
 const isMobileMenuOpen = ref(false);
 const canScrollLeft = ref(false);
 const canScrollRight = ref(false);
 
-let resizeObserver = null;
+let resizeObserver: ResizeObserver | null = null;
 
-function selectTab(tabId) {
+function selectTab(tabId: string) {
   isMobileMenuOpen.value = false;
   if (tabId !== props.activeTab) {
     emit('update:activeTab', tabId);
@@ -109,10 +124,10 @@ function updateScrollIndicators() {
   canScrollRight.value = maxScrollLeft - el.scrollLeft > 4;
 }
 
-function centerActiveMobileTab(behavior = 'smooth') {
+function centerActiveMobileTab(behavior: ScrollBehavior = 'smooth') {
   const container = mobileScrollRef.value;
   if (!container) return;
-  const target = container.querySelector(`[data-mobile-tab="${props.activeTab}"]`);
+  const target = container.querySelector<HTMLElement>(`[data-mobile-tab="${props.activeTab}"]`);
   if (!target) return;
 
   const targetCenter = target.offsetLeft - (container.clientWidth - target.offsetWidth) / 2;
@@ -125,7 +140,7 @@ function centerActiveMobileTab(behavior = 'smooth') {
   updateScrollIndicators();
 }
 
-function handleDesktopKeydown(event, currentId) {
+function handleDesktopKeydown(event: KeyboardEvent, currentId: string) {
   const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
   if (!keys.includes(event.key)) return;
   event.preventDefault();
@@ -149,12 +164,12 @@ function handleDesktopKeydown(event, currentId) {
   if (!nextTab) return;
   selectTab(nextTab.id);
   nextTick(() => {
-    const btn = desktopNavRef.value?.querySelector(`[data-desktop-tab="${nextTab.id}"]`);
+    const btn = desktopNavRef.value?.querySelector<HTMLElement>(`[data-desktop-tab="${nextTab.id}"]`);
     btn?.focus?.();
   });
 }
 
-function handleMobileKeydown(event, currentId) {
+function handleMobileKeydown(event: KeyboardEvent, currentId: string) {
   const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
   if (!keys.includes(event.key)) return;
   event.preventDefault();
@@ -178,19 +193,19 @@ function handleMobileKeydown(event, currentId) {
   if (!nextTab) return;
   selectTab(nextTab.id);
   nextTick(() => {
-    const btn = mobileScrollRef.value?.querySelector(`[data-mobile-tab="${nextTab.id}"]`);
+    const btn = mobileScrollRef.value?.querySelector<HTMLElement>(`[data-mobile-tab="${nextTab.id}"]`);
     btn?.focus?.();
   });
 }
 
-function handleDocumentPointerDown(event) {
+function handleDocumentPointerDown(event: PointerEvent) {
   if (!isMobileMenuOpen.value) return;
-  if (mobileBarRef.value && !mobileBarRef.value.contains(event.target)) {
+  if (mobileBarRef.value && !mobileBarRef.value.contains(event.target as Node | null)) {
     isMobileMenuOpen.value = false;
   }
 }
 
-function handleDocumentKeydown(event) {
+function handleDocumentKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && isMobileMenuOpen.value) {
     isMobileMenuOpen.value = false;
   }

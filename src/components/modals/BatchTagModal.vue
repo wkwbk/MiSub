@@ -1,25 +1,32 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Tag } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import { useI18n } from '@/i18n/index.js';
+import type { TagBatchMode } from '@/composables/useManualNodes.js';
 
-const props = defineProps({
-  show: Boolean,
-  tags: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    tags?: string[];
+  }>(),
+  {
+    show: false,
+    tags: () => [],
   },
-});
+);
 
-const emit = defineEmits(['update:show', 'confirm']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [payload: { mode: TagBatchMode; tags: string[] }];
+}>();
 const { t } = useI18n();
 
-const mode = ref('append');
-const selectedTags = ref([]);
+const mode = ref<TagBatchMode>('append');
+const selectedTags = ref<string[]>([]);
 
-const modes = computed(() => [
+const modes = computed<Array<{ key: TagBatchMode; label: string }>>(() => [
   { key: 'append', label: t('tags.batchModeAppend') },
   { key: 'replace', label: t('tags.batchModeReplace') },
   { key: 'remove', label: t('tags.batchModeRemove') },

@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
+import type { SubscriptionItem } from '@misub/core/types.js';
 import { Plus, Search, Upload, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import Card from '@/components/subscriptions/Card.vue';
@@ -22,59 +23,79 @@ import {
   toggleTagFilterValue,
 } from '@/utils/tags.js';
 
+type PanelSubscription = SubscriptionItem & Record<string, any>;
+
 const { t } = useI18n();
 const dataStore = useDataStore();
 
-const props = defineProps({
-  subscriptions: { type: Array, default: () => [] },
-  tags: { type: Array, default: undefined },
-  activeTagFilters: { type: Array, default: undefined },
-  currentPage: { type: Number, default: undefined },
-  itemsPerPage: { type: Number, default: undefined },
-  isSorting: Boolean,
-  searchable: { type: Boolean, default: false },
-  searchQuery: { type: String, default: '' },
-  filteredCount: { type: Number, default: undefined },
-  isRefreshing: { type: Boolean, default: false },
-  refreshError: { type: Boolean, default: false },
-  lastRefreshAt: { type: [String, Number, Date], default: null },
-  statusFilter: { type: String, default: '' },
-  statusFilterLabel: { type: String, default: '' },
-});
+const props = withDefaults(
+  defineProps<{
+    subscriptions?: PanelSubscription[];
+    tags?: string[];
+    activeTagFilters?: string[];
+    currentPage?: number;
+    itemsPerPage?: number;
+    isSorting?: boolean;
+    searchable?: boolean;
+    searchQuery?: string;
+    filteredCount?: number;
+    isRefreshing?: boolean;
+    refreshError?: boolean;
+    lastRefreshAt?: string | number | Date | null;
+    statusFilter?: string;
+    statusFilterLabel?: string;
+  }>(),
+  {
+    subscriptions: () => [],
+    tags: undefined,
+    activeTagFilters: undefined,
+    currentPage: undefined,
+    itemsPerPage: undefined,
+    isSorting: false,
+    searchable: false,
+    searchQuery: '',
+    filteredCount: undefined,
+    isRefreshing: false,
+    refreshError: false,
+    lastRefreshAt: null,
+    statusFilter: '',
+    statusFilterLabel: '',
+  },
+);
 
-const emit = defineEmits([
-  'add',
-  'delete',
-  'updateNodeCount',
-  'edit',
-  'toggleSort',
-  'markDirty',
-  'preview',
-  'deleteAll',
-  'refreshAll',
-  'reorder',
-  'import',
-  'qrcode',
-  'updateSearch',
-  'applyDetectedName',
-  'clearStatusFilter',
-  'set-tag-filters',
-  'manage-tags',
-  'open-batch-tag-modal',
-  'batch-delete-subscriptions',
-  'changePage',
-  'update:itemsPerPage',
-]);
+const emit = defineEmits<{
+  add: [];
+  delete: [id: string];
+  updateNodeCount: [id: string];
+  edit: [id: string];
+  toggleSort: [];
+  markDirty: [];
+  preview: [id: string];
+  deleteAll: [];
+  refreshAll: [];
+  reorder: [items: PanelSubscription[]];
+  import: [];
+  qrcode: [id: string];
+  updateSearch: [query: string];
+  applyDetectedName: [id: string | undefined, name: string];
+  clearStatusFilter: [];
+  'set-tag-filters': [filters: string[]];
+  'manage-tags': [];
+  'open-batch-tag-modal': [ids: string[]];
+  'batch-delete-subscriptions': [ids: string[]];
+  changePage: [page: number];
+  'update:itemsPerPage': [itemsPerPage: number];
+}>();
 
 const isSelectionMode = ref(false);
-const selectedSubscriptionIds = ref(new Set());
+const selectedSubscriptionIds = ref(new Set<string>());
 
 const toggleSelectionMode = () => {
   isSelectionMode.value = !isSelectionMode.value;
   selectedSubscriptionIds.value.clear();
 };
 
-const toggleSubscriptionSelection = (subId) => {
+const toggleSubscriptionSelection = (subId: string) => {
   if (selectedSubscriptionIds.value.has(subId)) {
     selectedSubscriptionIds.value.delete(subId);
   } else {
@@ -98,21 +119,21 @@ const handleBatchDelete = () => {
 
 const searchModel = computed({
   get: () => props.searchQuery,
-  set: (value) => emit('updateSearch', value),
+  set: (value: string) => emit('updateSearch', value),
 });
 
-const localTagFilters = ref([]);
+const localTagFilters = ref<string[]>([]);
 const currentTagFilters = computed(() =>
   props.activeTagFilters !== undefined ? normalizeActiveTagFilters(props.activeTagFilters) : localTagFilters.value,
 );
 
-const setTagFilters = (filters) => {
+const setTagFilters = (filters: unknown) => {
   const next = normalizeActiveTagFilters(filters);
   localTagFilters.value = next;
   emit('set-tag-filters', next);
 };
 
-const toggleTag = (tag) => {
+const toggleTag = (tag: string) => {
   const next = toggleTagFilterValue(currentTagFilters.value, tag);
   setTagFilters(next);
 };
@@ -120,7 +141,7 @@ const toggleTag = (tag) => {
 const availableTags = computed(() => (Array.isArray(props.tags) ? props.tags : collectTags(props.subscriptions)));
 
 const matchedSubscriptions = computed(() => {
-  let list = (props.subscriptions || []).filter((sub) => matchesTagFilter(sub, currentTagFilters.value));
+  const list = (props.subscriptions || []).filter((sub) => matchesTagFilter(sub, currentTagFilters.value));
 
   const query = String(props.searchQuery || '')
     .trim()
@@ -161,18 +182,18 @@ const refreshTime = computed(() => {
 
 const draggableSubscriptions = computed({
   get: () => [...matchedSubscriptions.value],
-  set: (val) => emit('reorder', val),
+  set: (val: PanelSubscription[]) => emit('reorder', val),
 });
 
-const handleDelete = (id) => emit('delete', id);
-const handleEdit = (id) => emit('edit', id);
-const handleUpdate = (id) => emit('updateNodeCount', id);
-const handlePreview = (id) => emit('preview', id);
-const handleQRCode = (id) => emit('qrcode', id);
+const handleDelete = (id: string) => emit('delete', id);
+const handleEdit = (id: string) => emit('edit', id);
+const handleUpdate = (id: string) => emit('updateNodeCount', id);
+const handlePreview = (id: string) => emit('preview', id);
+const handleQRCode = (id: string) => emit('qrcode', id);
 const handleAdd = () => emit('add');
 const handleToggleSort = () => emit('toggleSort');
 const handleSortEnd = () => emit('markDirty');
-const handleDragEnd = (evt) => {
+const handleDragEnd = (evt: any) => {
   if (hasDragOrderChanged(evt)) {
     handleSortEnd();
   }
@@ -180,13 +201,13 @@ const handleDragEnd = (evt) => {
 const handleDeleteAll = () => emit('deleteAll');
 const handleRefreshAll = () => emit('refreshAll');
 const handleImport = () => emit('import');
-const handleApplyDetectedName = (subscription, name) => {
+const handleApplyDetectedName = (subscription: PanelSubscription, name: string) => {
   emit('applyDetectedName', subscription?.id, name);
 };
 
 const refreshingCount = computed(() => props.subscriptions.filter((sub) => sub.isUpdating).length);
 
-const listStartRef = ref(null);
+const listStartRef = ref<HTMLElement | null>(null);
 const localCurrentPage = ref(1);
 const localItemsPerPage = ref(DEFAULT_LIST_PAGE_SIZE);
 
@@ -206,7 +227,7 @@ watch(
   () => props.currentPage,
   (nextPage) => {
     if (nextPage === undefined) return;
-    const parsed = parseInt(nextPage, 10);
+    const parsed = parseInt(String(nextPage), 10);
     if (!Number.isNaN(parsed)) {
       localCurrentPage.value = Math.min(Math.max(parsed, 1), totalPages.value);
     }
@@ -236,8 +257,8 @@ const toggleSelectAll = () => {
   }
 };
 
-const handleChangePage = (page) => {
-  const parsed = parseInt(page, 10);
+const handleChangePage = (page: string | number) => {
+  const parsed = parseInt(String(page), 10);
   if (Number.isNaN(parsed)) return;
   const clamped = Math.min(Math.max(parsed, 1), totalPages.value);
   if (clamped === effectiveCurrentPage.value) return;
@@ -248,7 +269,7 @@ const handleChangePage = (page) => {
   });
 };
 
-const handleItemsPerPageChange = (value) => {
+const handleItemsPerPageChange = (value: unknown) => {
   const normalized = normalizeListPageSize(value, DEFAULT_LIST_PAGE_SIZE);
   localItemsPerPage.value = normalized;
   localCurrentPage.value = 1;
@@ -463,7 +484,7 @@ watch(totalPages, (nextTotal) => {
       />
       <draggable
         v-model="draggableSubscriptions"
-        :item-key="(item) => item.id"
+        :item-key="(item: PanelSubscription) => item.id"
         animation="300"
         class="grid grid-cols-1 md:grid-cols-2 gap-4"
         tag="div"

@@ -1,39 +1,42 @@
-<script setup>
-import { computed, useAttrs } from 'vue';
+<script setup lang="ts">
+import { computed, useAttrs, type StyleValue } from 'vue';
 
 defineOptions({
   inheritAttrs: false,
 });
 
-const props = defineProps({
-  modelValue: {
-    type: [String, Number],
-    default: '',
+withDefaults(
+  defineProps<{
+    modelValue?: string | number;
+    invalid?: boolean;
+    wrapperClass?: string | unknown[] | Record<string, unknown>;
+    textareaClass?: string | unknown[] | Record<string, unknown>;
+  }>(),
+  {
+    modelValue: '',
+    invalid: false,
+    wrapperClass: '',
+    textareaClass: '',
   },
-  invalid: {
-    type: Boolean,
-    default: false,
-  },
-  wrapperClass: {
-    type: [String, Array, Object],
-    default: '',
-  },
-  textareaClass: {
-    type: [String, Array, Object],
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits(['update:modelValue', 'input', 'focus', 'blur']);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+  input: [event: Event];
+  focus: [event: FocusEvent];
+  blur: [event: FocusEvent];
+}>();
 const attrs = useAttrs();
 
+const wrapperStyle = computed(() => attrs.style as StyleValue | undefined);
 const textareaAttrs = computed(() => {
   const { class: _class, style: _style, ...rest } = attrs;
   return rest;
 });
 
-const handleInput = (event) => {
-  emit('update:modelValue', event.target.value);
+const handleInput = (event: Event): void => {
+  const target = event.target as HTMLTextAreaElement;
+  emit('update:modelValue', target.value);
   emit('input', event);
 };
 </script>
@@ -46,7 +49,7 @@ const handleInput = (event) => {
         : 'border-line hover:border-line-strong focus-within:border-line-strong',
       wrapperClass,
     ]"
-    :style="attrs.style"
+    :style="wrapperStyle"
     class="relative overflow-hidden rounded-md border bg-inset transition-colors"
   >
     <slot name="overlay" />

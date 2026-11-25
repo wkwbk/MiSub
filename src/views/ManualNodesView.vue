@@ -1,7 +1,10 @@
-<script setup>
+<script setup lang="ts">
 import { defineAsyncComponent, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { useManualNodes } from '@/composables/useManualNodes.js';
+import { useManualNodes, type TagBatchMode } from '@/composables/useManualNodes.js';
+import type { DedupPlan } from '@/composables/manual-nodes/dedup.js';
 import { useSortingMode } from '@/composables/useSortingMode.js';
 import { useNodeForms } from '@/composables/useNodeForms.js';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -33,16 +36,16 @@ const { t } = useI18n();
 const isSortingNodes = useSortingMode(dataStore);
 const showDeleteNodesModal = ref(false);
 const showBatchDeleteModal = ref(false);
-const batchDeleteIds = ref([]);
+const batchDeleteIds = ref<string[]>([]);
 const showSubscriptionImportModal = ref(false);
 const showDedupModal = ref(false);
-const dedupPlan = ref(null);
+const dedupPlan = ref<DedupPlan | null>(null);
 const showBatchTagModal = ref(false);
-const batchTagIds = ref([]);
+const batchTagIds = ref<string[]>([]);
 const showTagManagementModal = ref(false);
 
 const {
-  manualNodes,
+  manualNodes: rawManualNodes,
   manualNodesCurrentPage,
   manualNodesTotalPages,
   paginatedManualNodes,
@@ -84,6 +87,7 @@ const {
   pingAllNodes,
   sortNodesByLatency,
 } = useManualNodes(markDirty);
+const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 watch(
   () => manualNodes.value.map((n) => `${n.id}:${n.url}`).join('|'),
@@ -95,7 +99,7 @@ watch(
   { immediate: true },
 );
 
-const handleSearchTermUpdate = (val) => {
+const handleSearchTermUpdate = (val: string) => {
   searchTerm.value = val;
 };
 
@@ -109,7 +113,7 @@ const {
   handleSave: handleSaveNode,
 } = useNodeForms({ addNode, updateNode });
 
-const handleDeleteNodeWithCleanup = (nodeId) => {
+const handleDeleteNodeWithCleanup = (nodeId: string) => {
   deleteNode(nodeId);
 };
 
@@ -138,17 +142,17 @@ const handleDeduplicateNodes = () => {
   showDedupModal.value = true;
 };
 
-const handleOpenBatchTagModal = (ids) => {
+const handleOpenBatchTagModal = (ids: string[]) => {
   batchTagIds.value = ids;
   showBatchTagModal.value = true;
 };
 
-const handleBatchTagConfirm = (payload) => {
+const handleBatchTagConfirm = (payload: { tags: string[]; mode: TagBatchMode }) => {
   batchUpdateTags(batchTagIds.value, payload);
   batchTagIds.value = [];
 };
 
-const handleBatchDeleteRequest = (ids) => {
+const handleBatchDeleteRequest = (ids: string[]) => {
   if (ids && ids.length > 0) {
     batchDeleteIds.value = ids;
     showBatchDeleteModal.value = true;
@@ -165,17 +169,17 @@ const handleOpenTagManagement = () => {
   showTagManagementModal.value = true;
 };
 
-const handleTagRename = (oldName, newName) => {
+const handleTagRename = (oldName: string, newName: string) => {
   renameTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleTagDelete = (tagName) => {
+const handleTagDelete = (tagName: string) => {
   deleteTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleTagReorder = (newOrder) => {
+const handleTagReorder = (newOrder: string[]) => {
   reorderTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
@@ -239,9 +243,9 @@ const handleTagReorder = (newOrder) => {
     />
     <ManualNodeDedupModal
       v-model:show="showDedupModal"
-      :plan="dedupPlan"
+      :plan="dedupPlan!"
       @confirm="
-        applyDedupPlan(dedupPlan);
+        applyDedupPlan(dedupPlan!);
         showDedupModal = false;
         dedupPlan = null;
       "

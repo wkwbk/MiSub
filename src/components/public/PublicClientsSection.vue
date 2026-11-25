@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { ArrowRight } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
@@ -8,40 +8,54 @@ import {
   CLIENT_PLATFORMS,
   normalizePublicClientsConfig,
   resolvePublicClientIcon,
+  type PublicClientItem,
+  type PublicClientsConfig,
 } from '@misub/core/domain/default-public-clients.js';
 
-const props = defineProps({
-  publicClients: {
-    type: [Object, Array],
-    default: () => ({}),
+interface PublicClientEntry extends PublicClientItem {
+  publishedAt?: string;
+}
+
+interface ClientReleaseMeta {
+  version: string;
+  publishedAt: string;
+}
+
+interface GithubOrAppStoreReleaseResponse {
+  tag_name?: string;
+  published_at?: string;
+}
+
+const props = withDefaults(
+  defineProps<{
+    publicClients?: PublicClientsConfig | PublicClientItem[] | Record<string, unknown>;
+    formatReleaseUpdatedLabel?: (publishedAt?: string | number | Date | null) => string;
+    formatReleaseUpdatedTitle?: (publishedAt?: string | number | Date | null) => string;
+  }>(),
+  {
+    publicClients: () => ({}),
+    formatReleaseUpdatedLabel: () => '',
+    formatReleaseUpdatedTitle: () => '',
   },
-  formatReleaseUpdatedLabel: {
-    type: Function,
-    default: () => '',
-  },
-  formatReleaseUpdatedTitle: {
-    type: Function,
-    default: () => '',
-  },
-});
+);
 
 const { t } = useI18n();
 
 const publicClientsConfig = computed(() => normalizePublicClientsConfig(props.publicClients));
-const enabledPublicClients = computed(() =>
+const enabledPublicClients = computed<PublicClientEntry[]>(() =>
   publicClientsConfig.value.enabled
     ? (publicClientsConfig.value.items || []).filter((item) => item.enabled !== false)
     : [],
 );
 
-const getPlatformLabel = (p) => {
+const getPlatformLabel = (p: string): string => {
   const found = CLIENT_PLATFORMS.find((opt) => opt.value === p);
   return found ? found.label : p;
 };
 
 const activeClientPlatform = ref('all');
-const availableClientPlatforms = computed(() => {
-  const present = new Set();
+const availableClientPlatforms = computed<Array<{ value: string; label: string }>>(() => {
+  const present = new Set<string>();
   enabledPublicClients.value.forEach((client) => {
     (client.platforms || []).forEach((p) => present.add(p));
   });
@@ -64,7 +78,7 @@ const displayedClients = computed(() => {
   );
 });
 
-const extractAppStoreInfo = (rawUrl) => {
+const extractAppStoreInfo = (rawUrl?: string | null): { id: string; country: string } | null => {
   if (!rawUrl) return null;
   try {
     const parsed = new URL(rawUrl);
@@ -83,17 +97,17 @@ const extractAppStoreInfo = (rawUrl) => {
   }
 };
 
-const clientReleases = ref({});
-const fetchedClientKeys = new Set();
+const clientReleases = ref<Record<string, ClientReleaseMeta>>({});
+const fetchedClientKeys = new Set<string>();
 
-const getReleaseKey = (client) => {
+const getReleaseKey = (client: Partial<PublicClientEntry> | null | undefined): string => {
   if (client?.repo) return `gh:${client.repo}`;
   const appStore = extractAppStoreInfo(client?.url);
   if (appStore) return `as:${appStore.country}:${appStore.id}`;
   return '';
 };
 
-const fetchClientReleases = async (clients = []) => {
+const fetchClientReleases = async (clients: PublicClientEntry[] = []): Promise<void> => {
   clients.forEach(async (client) => {
     const key = getReleaseKey(client);
     if (!key || fetchedClientKeys.has(key)) return;
@@ -109,7 +123,7 @@ const fetchClientReleases = async (clients = []) => {
     }
 
     try {
-      const data = await api.get(endpoint);
+      const data = await api.get<GithubOrAppStoreReleaseResponse>(endpoint);
       if (data?.tag_name || data?.published_at) {
         clientReleases.value = {
           ...clientReleases.value,
@@ -119,13 +133,13 @@ const fetchClientReleases = async (clients = []) => {
           },
         };
       }
-    } catch (e) {
+    } catch (e: unknown) {
       console.warn(`Failed to fetch version for ${client.name}`, e);
     }
   });
 };
 
-const getClientVersionLabel = (client) => {
+const getClientVersionLabel = (client: PublicClientEntry): string => {
   const key = getReleaseKey(client);
   const fetchedVersion = key ? clientReleases.value[key]?.version : '';
   if (fetchedVersion) return fetchedVersion;
@@ -134,13 +148,13 @@ const getClientVersionLabel = (client) => {
   return t('publicProfiles.stableVersion');
 };
 
-const getClientUpdatedLabel = (client) => {
+const getClientUpdatedLabel = (client: PublicClientEntry): string => {
   const key = getReleaseKey(client);
   const publishedAt = (key && clientReleases.value[key]?.publishedAt) || client?.publishedAt;
   return props.formatReleaseUpdatedLabel(publishedAt);
 };
 
-const getClientUpdatedTitle = (client) => {
+const getClientUpdatedTitle = (client: PublicClientEntry): string => {
   const key = getReleaseKey(client);
   const publishedAt = (key && clientReleases.value[key]?.publishedAt) || client?.publishedAt;
   return props.formatReleaseUpdatedTitle(publishedAt);

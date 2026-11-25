@@ -1,24 +1,25 @@
-<script setup>
+<script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
+import type { CSSProperties } from 'vue';
 import { MoreHorizontal } from '@lucide/vue';
 import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
 import { t } from '@/i18n/index.js';
 
-const props = defineProps({
-  teleportToBody: {
-    type: Boolean,
-    default: true,
+const props = withDefaults(
+  defineProps<{
+    teleportToBody?: boolean;
+    menuWidthClass?: string;
+  }>(),
+  {
+    teleportToBody: true,
+    menuWidthClass: 'w-36',
   },
-  menuWidthClass: {
-    type: String,
-    default: 'w-36',
-  },
-});
+);
 
 const isOpen = ref(false);
-const triggerRef = ref(null);
-const menuRef = ref(null);
-const menuStyle = ref({});
+const triggerRef = ref<HTMLDivElement | null>(null);
+const menuRef = ref<HTMLDivElement | null>(null);
+const menuStyle = ref<CSSProperties>({});
 const menuId = `more-actions-menu-${Math.random().toString(36).slice(2, 10)}`;
 
 const FOCUSABLE = ['button:not([disabled])', 'a[href]', '[tabindex]:not([tabindex="-1"])'].join(', ');
@@ -60,8 +61,8 @@ function updatePosition() {
   };
 }
 
-function getFocusableItems() {
-  return menuRef.value ? Array.from(menuRef.value.querySelectorAll(FOCUSABLE)) : [];
+function getFocusableItems(): HTMLElement[] {
+  return menuRef.value ? Array.from(menuRef.value.querySelectorAll<HTMLElement>(FOCUSABLE)) : [];
 }
 
 async function openMenu() {
@@ -80,7 +81,7 @@ function toggleMenu() {
   }
 }
 
-function closeMenu(options = {}) {
+function closeMenu(options: { restoreFocus?: boolean } = {}) {
   const { restoreFocus = false } = options;
   isOpen.value = false;
   if (restoreFocus) {
@@ -88,16 +89,17 @@ function closeMenu(options = {}) {
   }
 }
 
-function handleClickOutside(event) {
-  const isClickInTrigger = triggerRef.value && triggerRef.value.contains(event.target);
-  const isClickInMenu = menuRef.value && menuRef.value.contains(event.target);
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as Node | null;
+  const isClickInTrigger = triggerRef.value && triggerRef.value.contains(target);
+  const isClickInMenu = menuRef.value && menuRef.value.contains(target);
 
   if (!isClickInTrigger && !isClickInMenu) {
     closeMenu();
   }
 }
 
-function handleTriggerKeydown(event) {
+function handleTriggerKeydown(event: KeyboardEvent) {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault();
     toggleMenu();
@@ -116,7 +118,7 @@ function handleTriggerKeydown(event) {
   }
 }
 
-function handleMenuKeydown(event) {
+function handleMenuKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') {
     event.preventDefault();
     closeMenu({ restoreFocus: true });

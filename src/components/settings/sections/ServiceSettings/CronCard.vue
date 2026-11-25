@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
 import { Clock } from '@lucide/vue';
 import CopyableInput from '@/components/settings/CopyableInput.vue';
@@ -6,20 +6,26 @@ import SettingCard from '@/components/settings/SettingCard.vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
+
+interface CronTaskItem {
+  key: string;
+  title: string;
+  desc: string;
+  url: string;
+  command: string;
+}
 
 const { t } = useI18n();
 const { showToast } = useToastStore();
 
-const props = defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{
+  settings: AppSettingsConfig;
+}>();
 
 const showCronGuide = ref(false);
 
-const cronTasks = computed(() => {
+const cronTasks = computed<CronTaskItem[]>(() => {
   const secret = props.settings.cronSecret;
   if (!secret) return [];
 
@@ -59,7 +65,7 @@ const cronTasks = computed(() => {
   ];
 });
 
-async function copyText(value) {
+async function copyText(value: string): Promise<void> {
   if (!value) return;
   const ok = await copyTextToClipboard(value);
   showToast(ok ? t('common.copied') : t('common.copyFailed'), ok ? 'success' : 'error');

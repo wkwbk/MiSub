@@ -1,13 +1,15 @@
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useI18n } from '@/i18n/index.js';
 
-const props = defineProps({
-  resetKey: {
-    type: [String, Number],
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    resetKey?: string | number;
+  }>(),
+  {
+    resetKey: '',
   },
-});
+);
 
 const { t } = useI18n();
 
@@ -30,9 +32,9 @@ const handleReload = () => {
   window.location.reload();
 };
 
-const errorCaptured = (error) => {
+const errorCaptured = (error: unknown) => {
   hasError.value = true;
-  errorMessage.value = error?.message || t('common.routeRenderFailed');
+  errorMessage.value = error instanceof Error ? error.message : t('common.routeRenderFailed');
   return false;
 };
 
@@ -55,10 +57,10 @@ defineExpose({ reset, errorCaptured });
   <slot v-else />
 </template>
 
-<script>
+<script lang="ts">
 export default {
-  errorCaptured(err) {
-    return this.$.exposed.errorCaptured(err);
+  errorCaptured(err: unknown) {
+    return (this.$ as { exposed?: { errorCaptured?: (e: unknown) => boolean } } | null)?.exposed?.errorCaptured?.(err);
   },
 };
 </script>

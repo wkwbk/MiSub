@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, nextTick, ref } from 'vue';
+import type { ProfileConfig } from '@misub/core/types.js';
 import { Plus, Search, X } from '@lucide/vue';
 import draggable from 'vuedraggable';
 import ProfileCard from '@/components/profiles/ProfileCard.vue';
@@ -18,68 +19,65 @@ import { scrollToPaginationStart } from '@/utils/scroll.js';
 const { t } = useI18n();
 const dataStore = useDataStore();
 
-const props = defineProps({
-  profiles: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    profiles?: ProfileConfig[];
+    paginatedProfiles?: ProfileConfig[];
+    tags?: string[];
+    activeTagFilters?: string[];
+    currentPage?: number;
+    totalPages?: number;
+    itemsPerPage?: number;
+    isSorting?: boolean;
+    searchable?: boolean;
+    searchQuery?: string;
+    filteredCount?: number;
+  }>(),
+  {
+    profiles: () => [],
+    paginatedProfiles: () => [],
+    tags: undefined,
+    activeTagFilters: undefined,
+    currentPage: undefined,
+    totalPages: undefined,
+    itemsPerPage: DEFAULT_LIST_PAGE_SIZE,
+    isSorting: false,
+    searchable: false,
+    searchQuery: '',
+    filteredCount: undefined,
   },
-  paginatedProfiles: {
-    type: Array,
-    default: () => [],
-  },
-  tags: {
-    type: Array,
-    default: undefined,
-  },
-  activeTagFilters: {
-    type: Array,
-    default: undefined,
-  },
-  currentPage: Number,
-  totalPages: Number,
-  itemsPerPage: {
-    type: Number,
-    default: DEFAULT_LIST_PAGE_SIZE,
-  },
-  isSorting: {
-    type: Boolean,
-    default: false,
-  },
-  searchable: { type: Boolean, default: false },
-  searchQuery: { type: String, default: '' },
-  filteredCount: { type: Number, default: undefined },
-});
+);
 
-const emit = defineEmits([
-  'add',
-  'edit',
-  'delete',
-  'deleteAll',
-  'toggle',
-  'openCopy',
-  'preview',
-  'reorder',
-  'changePage',
-  'viewLogs',
-  'qrcode',
-  'toggle-sort',
-  'updateSearch',
-  'set-tag-filters',
-  'manage-tags',
-  'open-batch-tag-modal',
-  'batch-delete-profiles',
-  'update:itemsPerPage',
-]);
+const emit = defineEmits<{
+  add: [];
+  edit: [profileId: string];
+  delete: [profileId: string];
+  deleteAll: [];
+  toggle: [event: any];
+  openCopy: [profileId: string];
+  preview: [profileId: string];
+  reorder: [profiles: ProfileConfig[]];
+  changePage: [page: number];
+  viewLogs: [profileId: string];
+  qrcode: [profileId: string];
+  'toggle-sort': [];
+  updateSearch: [query: string];
+  'set-tag-filters': [filters: string[]];
+  'manage-tags': [];
+  'open-batch-tag-modal': [ids: string[]];
+  'batch-delete-profiles': [ids: string[]];
+  'update:itemsPerPage': [itemsPerPage: number];
+}>();
 
 const isSelectionMode = ref(false);
-const selectedProfileIds = ref(new Set());
+const selectedProfileIds = ref(new Set<string>());
 
 const toggleSelectionMode = () => {
   isSelectionMode.value = !isSelectionMode.value;
   selectedProfileIds.value.clear();
 };
 
-const toggleProfileSelection = (profileId) => {
+const toggleProfileSelection = (profileId: string) => {
   if (selectedProfileIds.value.has(profileId)) {
     selectedProfileIds.value.delete(profileId);
   } else {
@@ -103,23 +101,23 @@ const handleBatchDelete = () => {
 
 const searchModel = computed({
   get: () => props.searchQuery,
-  set: (value) => emit('updateSearch', value),
+  set: (value: string) => emit('updateSearch', value),
 });
 
-const localTagFilters = ref([]);
+const localTagFilters = ref<string[]>([]);
 const currentTagFilters = computed(() =>
   props.activeTagFilters !== undefined ? normalizeActiveTagFilters(props.activeTagFilters) : localTagFilters.value,
 );
 
 const availableTags = computed(() => (Array.isArray(props.tags) ? props.tags : collectTags(props.profiles)));
 
-const setTagFilters = (filters) => {
+const setTagFilters = (filters: unknown) => {
   const next = normalizeActiveTagFilters(filters);
   localTagFilters.value = next;
   emit('set-tag-filters', next);
 };
 
-const toggleTag = (tag) => {
+const toggleTag = (tag: string) => {
   setTagFilters(toggleTagFilterValue(currentTagFilters.value, tag));
 };
 
@@ -153,15 +151,15 @@ const toggleSelectAll = () => {
   }
 };
 
-const listStartRef = ref(null);
+const listStartRef = ref<HTMLElement | null>(null);
 
-const handleEdit = (profileId) => emit('edit', profileId);
-const handleDelete = (profileId) => emit('delete', profileId);
-const handleToggle = (event) => emit('toggle', event);
-const handleOpenCopy = (profileId) => emit('openCopy', profileId);
-const handlePreview = (profileId) => emit('preview', profileId);
+const handleEdit = (profileId: string) => emit('edit', profileId);
+const handleDelete = (profileId: string) => emit('delete', profileId);
+const handleToggle = (event: any) => emit('toggle', event);
+const handleOpenCopy = (profileId: string) => emit('openCopy', profileId);
+const handlePreview = (profileId: string) => emit('preview', profileId);
 const handleAdd = () => emit('add');
-const handleChangePage = (page) => {
+const handleChangePage = (page: number) => {
   if (page === props.currentPage) return;
   emit('changePage', page);
   nextTick(() => {
@@ -170,11 +168,11 @@ const handleChangePage = (page) => {
 };
 const handleDeleteAll = () => emit('deleteAll');
 const handleToggleSort = () => emit('toggle-sort');
-const handleQRCode = (profileId) => emit('qrcode', profileId);
+const handleQRCode = (profileId: string) => emit('qrcode', profileId);
 
 const draggableProfiles = computed({
   get: () => [...(props.profiles || [])],
-  set: (val) => emit('reorder', val),
+  set: (val: ProfileConfig[]) => emit('reorder', val),
 });
 </script>
 

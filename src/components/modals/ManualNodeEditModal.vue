@@ -1,5 +1,6 @@
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { ManualNodeItem } from '@misub/core/types.js';
 import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import Input from '@/components/ui/Input.vue';
@@ -16,17 +17,26 @@ import { buildAutoTagName } from '@/utils/auto-tag-name.js';
 import { normalizeTagList } from '@/utils/tags.js';
 import { cleanNodeUrl, extractNodeName } from '@/lib/utils.js';
 
-const props = defineProps({
-  show: Boolean,
-  isNew: Boolean,
-  editingNode: Object,
-  tags: {
-    type: Array,
-    default: () => [],
+const props = withDefaults(
+  defineProps<{
+    show?: boolean;
+    isNew?: boolean;
+    editingNode?: ManualNodeItem | null;
+    tags?: string[];
+  }>(),
+  {
+    show: false,
+    isNew: false,
+    editingNode: null,
+    tags: () => [],
   },
-});
+);
 
-const emit = defineEmits(['update:show', 'confirm', 'input-url']);
+const emit = defineEmits<{
+  'update:show': [value: boolean];
+  confirm: [];
+  'input-url': [event: Event];
+}>();
 const dataStore = useDataStore();
 const { markDirty } = dataStore;
 const { t } = useI18n();
@@ -36,7 +46,7 @@ const { addNodesFromBulk } = useManualNodes(markDirty);
 const { handleBulkImport } = useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk });
 
 // [文件导入] 新增节点时支持选择本地文件，内容直接填入编辑框，复用多行预览与批量导入流程
-const fileInputRef = ref(null);
+const fileInputRef = ref<HTMLInputElement | null>(null);
 const fileAccept = IMPORT_FILE_ACCEPT;
 const fileNameHint = ref('');
 const isReadingFile = ref(false);
@@ -45,14 +55,15 @@ const openFilePicker = () => {
   fileInputRef.value?.click();
 };
 
-const onFilePicked = async (event) => {
-  const files = event.target.files;
-  event.target.value = '';
+const onFilePicked = async (event: Event) => {
+  const input = event.target as HTMLInputElement;
+  const files = input.files;
+  input.value = '';
   if (!files || !files.length || !props.editingNode) return;
 
   isReadingFile.value = true;
   try {
-    const { text, fileCount } = await readFilesAsText(files);
+    const { text, fileCount } = await readFilesAsText(Array.from(files));
     if (!text.trim()) {
       fileNameHint.value = t('manualNodes.fileImportEmpty');
       return;
@@ -67,7 +78,7 @@ const onFilePicked = async (event) => {
       const autoTag = buildAutoTagName({ fileName: files[0].name });
       props.editingNode.tags = autoTag ? [autoTag] : [];
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('读取文件失败:', error);
     fileNameHint.value = error.message || t('manualNodes.fileImportFailed');
   } finally {
@@ -79,7 +90,7 @@ const onFilePicked = async (event) => {
 const nameFocused = ref(false);
 
 // 协议检测
-const getProtocol = (url) => {
+const getProtocol = (url?: string) => {
   if (!url) return null;
   const lowerUrl = url.toLowerCase().trim();
   if (lowerUrl.startsWith('anytls://')) return { name: 'AnyTLS', color: 'slate' };
@@ -144,7 +155,7 @@ const handleConfirm = async () => {
   const rawUrl = (props.editingNode?.url || '').trim();
   const requiresServerParsing = props.isNew && rawUrl && needsServerParsing(rawUrl);
 
-  if (props.isNew && (isMultiLine.value || requiresServerParsing)) {
+  if (props.isNew && props.editingNode && (isMultiLine.value || requiresServerParsing)) {
     // 多行批量导入 / 需后端转换：未填写标签时自动生成一个批次标签
     let targetTags = normalizeTagList(props.editingNode.tags);
     if (targetTags.length === 0) {
@@ -317,7 +328,7 @@ const handleConfirm = async () => {
           </div>
           <div class="max-h-48 overflow-y-auto rounded-md border border-line bg-inset divide-y divide-line-subtle">
             <div v-for="(node, idx) in parsedNodes.slice(0, 10)" :key="idx" class="flex items-center gap-3 px-3 py-2">
-              <span class="font-mono text-xs text-fg-subtle w-5 text-right">{{ idx + 1 }}</span>
+              <span class="font-mono text-xs text-fg-subtle w-5 text-right">{{ Number(idx) + 1 }}</span>
               <span
                 v-if="node.protocol"
                 class="font-mono text-xs font-semibold uppercase px-1.5 py-0.5 rounded-md border border-line bg-transparent text-fg-muted shrink-0"

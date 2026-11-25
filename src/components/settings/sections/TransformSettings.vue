@@ -1,13 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
 import DnsOverrideCard from '@/components/settings/sections/ServiceSettings/DnsOverrideCard.vue';
+import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
-defineProps({
-  settings: {
-    type: Object,
-    required: true,
-  },
-});
+defineProps<{
+  settings: AppSettingsConfig;
+}>();
 </script>
 
 <template>

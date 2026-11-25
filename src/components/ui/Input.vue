@@ -1,62 +1,45 @@
-<script setup>
+<script setup lang="ts">
 import { computed, useSlots } from 'vue';
 
-const props = defineProps({
-  modelValue: {
-    type: [String, Number],
-    default: '',
-  },
-  label: {
-    type: String,
-    default: '',
-  },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  type: {
-    type: String,
-    default: 'text',
-  },
-  error: {
-    type: String,
-    default: '',
-  },
-  id: {
-    type: String,
-    default: () => `input-${Math.random().toString(36).substr(2, 9)}`,
-  },
-  prefix: {
-    type: String,
-    default: '',
-  },
-  icon: {
-    type: String,
-    default: null,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  autocomplete: {
-    type: String,
-    default: 'off',
-  },
-  name: {
-    type: String,
-    default: undefined,
-  },
-  size: {
-    type: String,
-    default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value),
-  },
-});
+type InputSize = 'sm' | 'md' | 'lg';
 
-const emit = defineEmits(['update:modelValue']);
+const props = withDefaults(
+  defineProps<{
+    modelValue?: string | number | null;
+    label?: string;
+    placeholder?: string;
+    type?: string;
+    error?: string;
+    id?: string;
+    prefix?: string;
+    icon?: string | null;
+    disabled?: boolean;
+    autocomplete?: string;
+    name?: string;
+    size?: InputSize;
+  }>(),
+  {
+    modelValue: '',
+    label: '',
+    placeholder: '',
+    type: 'text',
+    error: '',
+    id: () => `input-${Math.random().toString(36).substr(2, 9)}`,
+    prefix: '',
+    icon: null,
+    disabled: false,
+    autocomplete: 'off',
+    name: undefined,
+    size: 'md',
+  },
+);
 
-const updateValue = (event) => {
-  emit('update:modelValue', event.target.value);
+const emit = defineEmits<{
+  'update:modelValue': [value: string];
+}>();
+
+const updateValue = (event: Event) => {
+  emit('update:modelValue', (event.target as HTMLInputElement).value);
 };
 
 const slots = useSlots();
@@ -65,7 +48,7 @@ const hasPrefix = computed(() => props.prefix !== '');
 const hasSuffix = computed(() => Boolean(slots.suffix));
 
 // 尺寸映射支持
-const sizeMap = {
+const sizeMap: Record<InputSize, { input: string; label: string; icon: string }> = {
   sm: {
     input: 'h-8 py-1 text-xs rounded-md px-2.5',
     label: 'text-xs mb-1',
@@ -98,7 +81,7 @@ const currentSize = computed(() => sizeMap[props.size] || sizeMap.md);
       >
         <slot name="icon">
           <svg :class="currentSize.icon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path :d="icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path :d="icon || undefined" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
           </svg>
         </slot>
       </div>

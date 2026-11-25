@@ -1,5 +1,7 @@
-<script setup>
+<script setup lang="ts">
 import { defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import type { Ref } from 'vue';
+import type { ManualNodeItem, ProfileConfig, SubscriptionItem } from '@misub/core/types.js';
 import { useRoute } from 'vue-router';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useProfiles } from '@/composables/useProfiles.js';
@@ -8,7 +10,7 @@ import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 import Modal from '@/components/ui/Modal.vue';
 import BatchTagModal from '@/components/modals/BatchTagModal.vue';
 import { storeToRefs } from 'pinia';
-import { useManualNodes } from '@/composables/useManualNodes.js';
+import { useManualNodes, type TagBatchMode } from '@/composables/useManualNodes.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { resolveProfileFocus } from '@/utils/dashboard-deeplink.js';
@@ -32,12 +34,12 @@ const { markDirty } = dataStore;
 const { showToast } = useToastStore();
 const isProfileSorting = useSortingMode(dataStore);
 
-const profilesSectionRef = ref(null);
+const profilesSectionRef = ref<HTMLDivElement | null>(null);
 const showTagManagementModal = ref(false);
 const showBatchTagModal = ref(false);
-const batchTagIds = ref([]);
+const batchTagIds = ref<string[]>([]);
 const showBatchDeleteModal = ref(false);
-const batchDeleteIds = ref([]);
+const batchDeleteIds = ref<string[]>([]);
 
 function applyFocusFromQuery() {
   if (!resolveProfileFocus(route.query?.focus)) return;
@@ -66,7 +68,7 @@ onUnmounted(() => {
 watch(() => route.query.focus, applyFocusFromQuery);
 
 const {
-  profiles,
+  profiles: rawProfiles,
   profileTags,
   activeTagFilters,
   setTagFilters,
@@ -94,40 +96,43 @@ const {
   paginatedProfiles,
   changeProfilesPage,
 } = useProfiles(markDirty);
+const profiles = rawProfiles as unknown as Ref<ProfileConfig[]>;
 
-const { subscriptions } = storeToRefs(dataStore);
-const { manualNodes } = useManualNodes(markDirty);
+const { subscriptions: rawSubscriptions } = storeToRefs(dataStore);
+const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
+const { manualNodes: rawManualNodes } = useManualNodes(markDirty);
+const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 const toggleProfileSorting = () => {
   isProfileSorting.value = !isProfileSorting.value;
 };
 
-const handleTagRename = (oldName, newName) => {
+const handleTagRename = (oldName: string, newName: string) => {
   renameProfileTag(oldName, newName);
   showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
 };
 
-const handleTagDelete = (tagName) => {
+const handleTagDelete = (tagName: string) => {
   deleteProfileTag(tagName);
   showToast(t('tags.tagDeleted', { name: tagName }), 'success');
 };
 
-const handleTagReorder = (newOrder) => {
+const handleTagReorder = (newOrder: string[]) => {
   reorderProfileTags(newOrder);
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleOpenBatchTagModal = (ids) => {
+const handleOpenBatchTagModal = (ids: string[]) => {
   batchTagIds.value = ids;
   showBatchTagModal.value = true;
 };
 
-const handleBatchTagConfirm = (payload) => {
+const handleBatchTagConfirm = (payload: { tags: string[]; mode: TagBatchMode }) => {
   batchUpdateProfileTags(batchTagIds.value, payload);
   batchTagIds.value = [];
 };
 
-const handleBatchDeleteRequest = (ids) => {
+const handleBatchDeleteRequest = (ids: string[]) => {
   if (ids && ids.length > 0) {
     batchDeleteIds.value = ids;
     showBatchDeleteModal.value = true;
@@ -142,10 +147,10 @@ const confirmBatchDelete = () => {
 
 const NodePreviewModal = defineAsyncComponent(loadNodePreviewModal);
 const showNodePreviewModal = ref(false);
-const previewProfileId = ref(null);
+const previewProfileId = ref<string | null>(null);
 const previewProfileName = ref('');
 
-const handlePreviewProfile = (profileId) => {
+const handlePreviewProfile = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
   if (profile) {
     previewProfileId.value = profileId;
@@ -163,9 +168,9 @@ const logProfileName = ref('');
 const logProfileId = ref('');
 
 const showCopyModal = ref(false);
-const showCopyModalProfile = ref(null);
+const showCopyModalProfile = ref<ProfileConfig | null>(null);
 
-const handleOpenCopy = (profileId) => {
+const handleOpenCopy = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     showCopyModalProfile.value = profile;
@@ -173,7 +178,7 @@ const handleOpenCopy = (profileId) => {
   }
 };
 
-const handleViewLogs = (profileId) => {
+const handleViewLogs = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     logProfileId.value = profile.id;
@@ -188,7 +193,7 @@ const qrCodeUrl = ref('');
 const qrCodeTitle = ref('');
 const { settings } = storeToRefs(dataStore);
 
-const handleQRCode = (profileId) => {
+const handleQRCode = (profileId: string) => {
   const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId || p.linkId === profileId);
   if (profile) {
     const token = (settings.value.profileToken || '').trim().replace(/^\/+|\/+$/g, '') || 'sub';

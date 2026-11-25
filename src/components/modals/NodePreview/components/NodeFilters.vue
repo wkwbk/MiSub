@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue';
 import { Layers, LayoutGrid, List, Search, Zap } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
@@ -6,70 +6,56 @@ import { useI18n } from '@/i18n/index.js';
 
 const { t } = useI18n();
 
-const props = defineProps({
-  searchQuery: {
-    type: String,
-    default: '',
+const props = withDefaults(
+  defineProps<{
+    searchQuery?: string;
+    protocolFilter?: string;
+    regionFilter?: string;
+    viewMode?: string;
+    showProcessed?: boolean;
+    availableProtocols?: string[];
+    availableRegions?: string[];
+    profileId?: string | null;
+    apiEndpoint?: string;
+  }>(),
+  {
+    searchQuery: '',
+    protocolFilter: 'all',
+    regionFilter: 'all',
+    viewMode: 'list',
+    showProcessed: false,
+    availableProtocols: () => [],
+    availableRegions: () => [],
+    profileId: '',
+    apiEndpoint: '',
   },
-  protocolFilter: {
-    type: String,
-    default: 'all',
-  },
-  regionFilter: {
-    type: String,
-    default: 'all',
-  },
-  viewMode: {
-    type: String,
-    default: 'list',
-  },
-  showProcessed: {
-    type: Boolean,
-    default: false,
-  },
-  availableProtocols: {
-    type: Array,
-    default: () => [],
-  },
-  availableRegions: {
-    type: Array,
-    default: () => [],
-  },
-  profileId: {
-    type: String,
-    default: '',
-  },
-  apiEndpoint: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-const emit = defineEmits([
-  'update:searchQuery',
-  'update:protocolFilter',
-  'update:regionFilter',
-  'update:viewMode',
-  'update:showProcessed',
-]);
+const emit = defineEmits<{
+  'update:searchQuery': [value: string];
+  'update:protocolFilter': [value: string];
+  'update:regionFilter': [value: string];
+  'update:viewMode': [value: string];
+  'update:showProcessed': [value: boolean];
+}>();
 
 const searchModel = computed({
   get: () => props.searchQuery,
-  set: (val) => emit('update:searchQuery', val),
+  set: (val: string) => emit('update:searchQuery', val),
 });
 
 const protocolModel = computed({
   get: () => props.protocolFilter,
-  set: (val) => emit('update:protocolFilter', val),
+  set: (val: string) => emit('update:protocolFilter', val),
 });
 
 const regionModel = computed({
   get: () => props.regionFilter,
-  set: (val) => emit('update:regionFilter', val),
+  set: (val: string) => emit('update:regionFilter', val),
 });
 
 const isProcessedToggleVisible = computed(() => {
-  return props.profileId && props.apiEndpoint !== '/api/public/preview';
+  return Boolean(props.profileId) && props.apiEndpoint !== '/api/public/preview';
 });
 </script>
 

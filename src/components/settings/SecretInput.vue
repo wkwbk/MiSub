@@ -1,32 +1,28 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue';
 import { Eye, EyeOff } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-defineProps({
-  modelValue: {
-    type: String,
-    default: '',
+withDefaults(
+  defineProps<{
+    modelValue?: string;
+    label?: string;
+    placeholder?: string;
+    hint?: string;
+    ariaLabel?: string;
+  }>(),
+  {
+    modelValue: '',
+    label: '',
+    placeholder: '',
+    hint: '',
+    ariaLabel: '',
   },
-  label: {
-    type: String,
-    default: '',
-  },
-  placeholder: {
-    type: String,
-    default: '',
-  },
-  hint: {
-    type: String,
-    default: '',
-  },
-  ariaLabel: {
-    type: String,
-    default: '',
-  },
-});
+);
 
-defineEmits(['update:modelValue']);
+defineEmits<{
+  'update:modelValue': [value: string];
+}>();
 
 const { t } = useI18n();
 const visible = ref(false);
@@ -43,7 +39,7 @@ const visible = ref(false);
         :value="modelValue"
         autocomplete="off"
         class="block w-full pl-3 pr-10 py-2 bg-inset border border-line rounded-md shadow-none focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-line-strong focus:border-line-strong text-sm font-mono text-fg transition-colors"
-        @input="$emit('update:modelValue', $event.target.value)"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
       />
       <button
         :aria-label="visible ? t('actions.hide') : t('actions.show')"
