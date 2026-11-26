@@ -12,6 +12,18 @@
     "head_sampling_rate": 1
   },
 
+  // 上传 Source Maps：在 Cloudflare Workers Observability 中直接还原 worker.ts 的原始报错堆栈行号
+  "upload_source_maps": true,
+
+  // 智能放置 (Smart Placement)：自动将 Worker 调度至离 D1 数据库和上游订阅源站最近的边缘节点，降低跨区请求延迟
+  "placement": {
+    "mode": "smart"
+  },
+
+  // 绑定自定义域名后，取消下方注释可关闭默认的 *.workers.dev 入口与预览链接以防探测
+  // "workers_dev": false,
+  // "preview_urls": false,
+
   // 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
   "build": {
     "command": "npm run build"
