@@ -1,5 +1,5 @@
 import { nextTick } from 'vue';
-import { mount } from '@vue/test-utils';
+import { flushPromises, mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
@@ -322,7 +322,7 @@ describe('Pagination auto-scroll integration', () => {
     });
 
     await wrapper.setProps({ show: true });
-    await nextTick();
+    await flushPromises();
     await nextTick();
 
     const scrollContainer = wrapper.get('.overflow-y-auto').element;

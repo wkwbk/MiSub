@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { RemoteSubscriptionUrlSchema } from '@misub/core/schemas/entities.js';
+import { isValidRemoteSubscriptionUrl } from '@misub/core/utils/url-validators.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
@@ -25,7 +25,7 @@ export function extractSubscriptionTagNames(subscriptions: Array<Partial<StoreMi
  * 校验单行是否为合法的 http:// 或 https:// 订阅链接。
  */
 export function isValidSubscriptionUrl(line: string): boolean {
-  return RemoteSubscriptionUrlSchema.safeParse(line).success;
+  return isValidRemoteSubscriptionUrl(line);
 }
 
 /**

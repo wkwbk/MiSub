@@ -2,9 +2,9 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { readRawPreference, writeRawPreference } from '@/utils/local-preference.js';
 
-export type LayoutMode = 'modern' | 'legacy';
+type LayoutMode = 'modern' | 'legacy';
 
-export const useUiStore = defineStore('ui', () => {
+export const useUIStore = defineStore('ui', () => {
   const isSettingsModalVisible = ref(false);
   const savedLayout = readRawPreference('layoutMode');
   const layoutMode = ref<LayoutMode>(savedLayout === 'legacy' ? 'legacy' : 'modern');
@@ -26,5 +26,3 @@ export const useUiStore = defineStore('ui', () => {
 
   return { isSettingsModalVisible, layoutMode, show, hide, toggleLayout };
 });
-
-export const useUIStore = useUiStore;

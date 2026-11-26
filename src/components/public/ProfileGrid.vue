@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, type ComponentPublicInstance } from 'vue';
 import type { ProfileConfig } from '@misub/core/types.js';
 import ProfileCard from '@/components/public/ProfileCard.vue';
 import HeroProfileCard from '@/components/public/HeroProfileCard.vue';
@@ -23,7 +23,7 @@ const emit = defineEmits<{
   'copy-link': [profile: ProfileConfig];
   'copy-short-link': [profile: ProfileConfig];
   'download-qr': [profile: ProfileConfig];
-  'register-canvas': [id: string, el: any];
+  'register-canvas': [id: string, el: Element | ComponentPublicInstance | null];
 }>();
 
 // 计算布局类型

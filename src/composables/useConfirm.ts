@@ -1,6 +1,6 @@
 import { ref, type Ref } from 'vue';
 
-export type ConfirmVariant = 'primary' | 'danger' | 'warning' | 'info';
+type ConfirmVariant = 'primary' | 'danger' | 'warning' | 'info';
 
 export interface ConfirmOptions {
   title?: string;

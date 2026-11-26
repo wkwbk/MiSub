@@ -24,7 +24,7 @@ interface DayCell {
   disabled: boolean;
 }
 
-const { locale, t } = useI18n();
+const { t } = useI18n();
 
 const props = withDefaults(
   defineProps<{
@@ -117,17 +117,9 @@ const initialParts = parsedValue.value || getTodayParts();
 const viewYear = ref(initialParts.year);
 const viewMonth = ref(initialParts.month); // 1 - 12
 
-const isZh = computed(() => String(locale.value || '').startsWith('zh'));
+const weekdayLabels = computed(() => t('datePicker.weekdaysShort').split(','));
 
-const weekdayLabels = computed(() =>
-  isZh.value ? ['一', '二', '三', '四', '五', '六', '日'] : ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-);
-
-const monthLabels = computed(() =>
-  isZh.value
-    ? ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-    : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-);
+const monthLabels = computed(() => t('datePicker.monthsShort').split(','));
 
 const headerTitle = computed(() => {
   if (viewMode.value === 'years') {
@@ -135,12 +127,12 @@ const headerTitle = computed(() => {
     return `${start} - ${start + 11}`;
   }
   if (viewMode.value === 'months') {
-    return isZh.value ? `${viewYear.value}年` : String(viewYear.value);
+    return t('datePicker.yearTitle', { year: viewYear.value });
   }
-  if (isZh.value) {
-    return `${viewYear.value}年 ${viewMonth.value}月`;
-  }
-  return `${monthLabels.value[viewMonth.value - 1]} ${viewYear.value}`;
+  return t('datePicker.yearMonthTitle', {
+    year: viewYear.value,
+    month: monthLabels.value[viewMonth.value - 1],
+  });
 });
 
 const yearGridStart = computed(() => Math.floor(viewYear.value / 12) * 12);

@@ -16,7 +16,7 @@ import {
   normalizeBuiltinTransform,
   type VisualRulesOptions,
 } from './visual-rules-builder.js';
-import { DNS_PROXY_GROUP, type SingboxDnsConfig, type SubscriptionDnsPolicyEntry } from '../security/safe-dns.js';
+import type { SingboxDnsConfig, SubscriptionDnsPolicyEntry } from '../security/safe-dns.js';
 import { cloneSnifferConfig } from './sniffing-config.js';
 import type { RegionGroupNode, RegionPolicyGroup } from './region-groups.js';
 import type { RegionOverrideRule, TemplateProxy, UnifiedTemplateModel } from '../templates/template-model.js';
@@ -78,7 +78,7 @@ export const CLASH_YAML_DUMP_OPTIONS = Object.freeze({
   forceQuotes: false,
 });
 
-export const SINGBOX_TUN_INBOUND = Object.freeze({
+const SINGBOX_TUN_INBOUND = Object.freeze({
   type: 'tun',
   tag: 'tun-in',
   address: ['172.19.0.1/30'],
@@ -737,5 +737,3 @@ export function buildQuanxProxyLine(
 
   return null;
 }
-
-export { DNS_PROXY_GROUP };

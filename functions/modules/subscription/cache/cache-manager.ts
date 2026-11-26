@@ -13,7 +13,7 @@ export interface CachedNodeEntry {
   sources?: string[];
 }
 
-export type CacheStatus = 'fresh' | 'stale' | 'expired' | 'miss';
+type CacheStatus = 'fresh' | 'stale' | 'expired' | 'miss';
 
 export interface ResolveNodeListWithCacheOptions {
   storageAdapter: StorageAdapter;

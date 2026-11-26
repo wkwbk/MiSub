@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import LogModal from '@/components/modals/LogModal.vue';
 import { createI18n } from '@/i18n/index.js';
+import { appQueryClient } from '@/lib/query-client.js';
 
 const { apiGet, apiDel, confirmActionMock, showToastMock } = vi.hoisted(() => ({
   apiGet: vi.fn(),
@@ -41,6 +42,7 @@ const mountLogModal = (props = {}) =>
 
 describe('LogModal scoped clear', () => {
   beforeEach(() => {
+    appQueryClient.clear();
     apiGet.mockReset();
     apiDel.mockReset();
     confirmActionMock.mockReset();

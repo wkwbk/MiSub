@@ -1,13 +1,10 @@
-<script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
-import type { CSSProperties } from 'vue';
-import { Check, ChevronDown } from '@lucide/vue';
-import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
-
+<script lang="ts">
 type SelectSize = 'xs' | 'sm' | 'md' | 'lg';
+type SelectPrimitiveValue = string | number | boolean | null | undefined;
+type SelectModelValue = SelectPrimitiveValue | SelectPrimitiveValue[];
 
 interface SelectOptionItem {
-  value: any;
+  value: SelectPrimitiveValue;
   label?: string;
   disabled?: boolean;
 }
@@ -26,7 +23,7 @@ interface GroupHeaderItem {
 
 interface FlatSelectOption {
   isGroupHeader: false;
-  value: any;
+  value: SelectPrimitiveValue;
   label: string;
   disabled: boolean;
   flatIndex: number;
@@ -34,9 +31,20 @@ interface FlatSelectOption {
 
 type RenderItem = GroupHeaderItem | FlatSelectOption;
 
+function isSelectOptionGroup(item: SelectOptionInput): item is SelectOptionGroup {
+  return Boolean(item) && typeof item === 'object' && 'options' in item && Array.isArray(item.options);
+}
+</script>
+
+<script setup lang="ts" generic="T extends SelectModelValue = SelectModelValue">
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import type { CSSProperties } from 'vue';
+import { Check, ChevronDown } from '@lucide/vue';
+import { usePopoverGuard } from '@/composables/usePopoverGuard.js';
+
 const props = withDefaults(
   defineProps<{
-    modelValue?: any;
+    modelValue?: T;
     options?: SelectOptionInput[];
     placeholder?: string;
     disabled?: boolean;
@@ -64,8 +72,8 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  'update:modelValue': [value: any];
-  change: [value: any];
+  'update:modelValue': [value: T];
+  change: [value: T];
 }>();
 
 const isOpen = ref(false);
@@ -85,8 +93,10 @@ const sizeClasses: Record<SelectSize, string> = {
 
 const currentSizeClass = computed(() => sizeClasses[props.size] || sizeClasses.md);
 
-const normalizeOption = (item: SelectOptionItem | string | number | boolean) => {
-  if (item !== null && typeof item === 'object' && !Array.isArray(item)) {
+const normalizeOption = (
+  item: SelectOptionItem | string | number | boolean,
+): { value: SelectPrimitiveValue; label: string; disabled: boolean } => {
+  if (item !== null && typeof item === 'object') {
     return {
       value: item.value,
       label: item.label ?? String(item.value ?? ''),
@@ -106,7 +116,7 @@ const renderItems = computed<RenderItem[]>(() => {
   let flatIndex = 0;
 
   for (const item of props.options || []) {
-    if (item && typeof item === 'object' && 'options' in item && Array.isArray(item.options)) {
+    if (isSelectOptionGroup(item)) {
       if (item.options.length === 0) continue;
       items.push({ isGroupHeader: true, label: item.label });
       for (const subItem of item.options) {
@@ -119,7 +129,7 @@ const renderItems = computed<RenderItem[]>(() => {
     } else {
       items.push({
         isGroupHeader: false,
-        ...normalizeOption(item as SelectOptionItem | string | number | boolean),
+        ...normalizeOption(item),
         flatIndex: flatIndex++,
       });
     }
@@ -132,7 +142,7 @@ const flatOptions = computed(() =>
   renderItems.value.filter((item): item is FlatSelectOption => !item.isGroupHeader),
 );
 
-const isSelected = (value: any) => {
+const isSelected = (value: SelectPrimitiveValue) => {
   if (props.multiple) {
     return Array.isArray(props.modelValue) && props.modelValue.includes(value);
   }
@@ -242,13 +252,13 @@ const selectOption = (option: FlatSelectOption | undefined) => {
     const idx = current.indexOf(option.value);
     if (idx >= 0) current.splice(idx, 1);
     else current.push(option.value);
-    emit('update:modelValue', current);
-    emit('change', current);
+    emit('update:modelValue', current as T);
+    emit('change', current as T);
     return;
   }
 
-  emit('update:modelValue', option.value);
-  emit('change', option.value);
+  emit('update:modelValue', option.value as T);
+  emit('change', option.value as T);
   close(true);
 };
 

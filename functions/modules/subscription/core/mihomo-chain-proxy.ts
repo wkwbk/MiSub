@@ -17,7 +17,7 @@ import type {
   UnifiedTemplateModel,
 } from '../templates/template-model.js';
 
-export interface ClashRawGroup {
+interface ClashRawGroup {
   name: string;
   type?: string;
   proxies?: string[];

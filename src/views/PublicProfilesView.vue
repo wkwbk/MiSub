@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch, type ComponentPublicInstance } from 'vue';
 import type {
   AnnouncementConfig,
   CustomPageConfig,
@@ -15,8 +15,7 @@ import { hasStoredLocale, useI18n } from '@/i18n/index.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { fetchPublicResource } from '@/lib/api.js';
 import { downloadDataUrlFile } from '@/utils/import-file.js';
-import { resolveComponentQueryClient } from '@/lib/query-client.js';
-import { fetchPublicProfilesWithQuery } from '@/queries/usePublicProfilesQuery.js';
+import { usePublicProfilesQuery } from '@/queries/usePublicProfilesQuery.js';
 import ProfileGrid from '@/components/public/ProfileGrid.vue';
 import PublicClientsSection from '@/components/public/PublicClientsSection.vue';
 import PublicCoresSection from '@/components/public/PublicCoresSection.vue';
@@ -51,12 +50,51 @@ interface PublicPageConfig {
   [key: string]: unknown;
 }
 
-const publicProfiles = ref<PublicProfileItem[]>([]);
-const loading = ref(true);
-const error = ref<string | null>(null);
 const { showToast } = useToastStore();
 const { t, setLocale } = useI18n();
-const config = ref<PublicPageConfig>({});
+const {
+  data: publicProfilesQueryData,
+  isPending: isPublicProfilesPending,
+  isFetching: isPublicProfilesFetching,
+  isError: isPublicProfilesError,
+  refetch: refetchPublicProfiles,
+} = usePublicProfilesQuery({
+  staleTime: 0,
+  retry: false,
+});
+
+const publicProfiles = computed<PublicProfileItem[]>(() =>
+  publicProfilesQueryData.value?.success
+    ? ((publicProfilesQueryData.value.data || []) as unknown as PublicProfileItem[])
+    : [],
+);
+const config = computed<PublicPageConfig>(() =>
+  publicProfilesQueryData.value?.success
+    ? ((publicProfilesQueryData.value.config || {}) as PublicPageConfig)
+    : {},
+);
+const loading = computed(() => isPublicProfilesPending.value || isPublicProfilesFetching.value);
+const error = computed<string | null>(() => {
+  if (loading.value) return null;
+  if (isPublicProfilesError.value || (publicProfilesQueryData.value && !publicProfilesQueryData.value.success)) {
+    return t('publicProfiles.fetchFailed');
+  }
+  return null;
+});
+
+watch(
+  () => config.value.defaultLocale,
+  (serverLocale) => {
+    if (serverLocale && !hasStoredLocale()) {
+      setLocale(serverLocale);
+    }
+  },
+  { immediate: true },
+);
+
+const fetchPublicProfiles = () => {
+  void refetchPublicProfiles();
+};
 const announcement = computed(() => config.value.announcement);
 const heroConfig = computed<Partial<HeroConfig>>(
   () =>
@@ -134,33 +172,6 @@ const handleGuestbookTrigger = () => {
 
 const handleGuestbookEvent = () => {
   handleGuestbookTrigger();
-};
-
-const queryClient = resolveComponentQueryClient();
-
-const fetchPublicProfiles = async () => {
-  try {
-    loading.value = true;
-    error.value = null;
-    const data = await fetchPublicProfilesWithQuery(queryClient);
-    if (data.success) {
-      publicProfiles.value = (data.data || []) as unknown as PublicProfileItem[];
-      config.value = (data.config || {}) as PublicPageConfig;
-
-      // 应用服务端默认显示语言（仅当访客未显式选择过语言时）
-      const serverLocale = config.value.defaultLocale;
-      if (serverLocale && !hasStoredLocale()) {
-        setLocale(serverLocale);
-      }
-    } else {
-      error.value = t('publicProfiles.fetchFailed');
-    }
-  } catch (err) {
-    error.value = t('publicProfiles.fetchFailed');
-    console.error('Fetch error:', err);
-  } finally {
-    loading.value = false;
-  }
 };
 
 const copyLink = async (profile: PublicProfileItem) => {
@@ -278,8 +289,8 @@ const handleQuickImport = (profile: PublicProfileItem) => {
 const expandedQRCards = ref<Set<string>>(new Set());
 const qrCanvasRefs = ref<Record<string, HTMLCanvasElement>>({});
 
-const registerQrCanvas = (profileId: string, canvas: HTMLCanvasElement | null) => {
-  if (!canvas) return;
+const registerQrCanvas = (profileId: string, canvas: Element | ComponentPublicInstance | null) => {
+  if (!(canvas instanceof HTMLCanvasElement)) return;
   qrCanvasRefs.value[profileId] = canvas;
 };
 
@@ -324,7 +335,6 @@ onMounted(() => {
   if (typeof window !== 'undefined') {
     window.addEventListener('open-guestbook', handleGuestbookEvent);
   }
-  fetchPublicProfiles();
   fetchClients();
   fetchPublicCores();
   fetchPublicLinks();

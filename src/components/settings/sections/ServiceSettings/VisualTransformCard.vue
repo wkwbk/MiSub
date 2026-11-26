@@ -1,6 +1,5 @@
 <script setup lang="ts" generic="T extends { builtinTransform?: BuiltinTransformConfig }">
 import { computed, ref, watch } from 'vue';
-import * as yaml from 'js-yaml';
 import type { BuiltinTransformConfig, CustomVisualRule } from '@misub/core/types.js';
 import { Check, Code2, Copy, Plus, Sliders, Trash2 } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
@@ -237,33 +236,50 @@ const activeBaseConfigText = computed({
   },
 });
 
-const baseConfigValidationError = computed(() => {
-  const raw = String(activeBaseConfigText.value || '').trim();
-  if (!raw) return '';
-  if (activeBaseConfigTarget.value === 'singbox') {
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return t('settings.visualBaseConfigMustBeObject');
-      }
-      return '';
-    } catch {
-      return t('settings.dnsOverrideInvalidJson');
+const baseConfigValidationError = ref('');
+let baseConfigValidateSeq = 0;
+
+watch(
+  [activeBaseConfigText, activeBaseConfigTarget],
+  async ([rawText, target]) => {
+    const seq = ++baseConfigValidateSeq;
+    const raw = String(rawText || '').trim();
+    if (!raw) {
+      baseConfigValidationError.value = '';
+      return;
     }
-  }
-  if (activeBaseConfigTarget.value === 'clash') {
-    try {
-      const parsed = yaml.load(raw);
-      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-        return t('settings.visualBaseConfigMustBeObject');
+    if (target === 'singbox') {
+      try {
+        const parsed = JSON.parse(raw);
+        baseConfigValidationError.value =
+          !parsed || typeof parsed !== 'object' || Array.isArray(parsed)
+            ? t('settings.visualBaseConfigMustBeObject')
+            : '';
+      } catch {
+        baseConfigValidationError.value = t('settings.dnsOverrideInvalidJson');
       }
-      return '';
-    } catch {
-      return t('settings.dnsOverrideInvalidYaml');
+      return;
     }
-  }
-  return '';
-});
+    if (target === 'clash') {
+      try {
+        const yaml = await import('js-yaml');
+        if (seq !== baseConfigValidateSeq) return;
+        const parsed = yaml.load(raw);
+        if (seq !== baseConfigValidateSeq) return;
+        baseConfigValidationError.value =
+          !parsed || typeof parsed !== 'object' || Array.isArray(parsed)
+            ? t('settings.visualBaseConfigMustBeObject')
+            : '';
+      } catch {
+        if (seq !== baseConfigValidateSeq) return;
+        baseConfigValidationError.value = t('settings.dnsOverrideInvalidYaml');
+      }
+      return;
+    }
+    baseConfigValidationError.value = '';
+  },
+  { immediate: true },
+);
 
 function clearActiveBaseConfig() {
   activeBaseConfigText.value = '';

@@ -1,71 +1,17 @@
-import type {
-  BuiltinTransformConfig,
-  OperatorRule,
-  ProfileSubscriptionRef,
-  RegionOverrideRule,
-} from '@misub/core/types.js';
-import { DEFAULT_SUBCONVERTER_BACKEND } from '@/constants/subconverter-backends.js';
-import { DEFAULT_BUILTIN_TRANSFORM } from '@misub/core/domain/visual-rules-catalog.js';
+import type { BuiltinTransformConfig, ProfileSubscriptionRef } from '@misub/core/types.js';
+import { DEFAULT_SHARED_SETTINGS } from '@misub/core/domain/default-settings.js';
 
 export const DEFAULT_SETTINGS = {
-  fileName: 'MiSub',
-  myToken: '',
-  profileToken: 'sub',
-  publicUrl: '',
-  tokenAutoRotate: {
-    enabled: false,
-    intervalDays: 2,
-    lastRotatedAt: null as string | null,
-  },
-  defaultLocale: 'zh-CN',
-  cronSecret: '',
-  botToken: '',
-  chatId: '',
-  transformConfigMode: 'builtin',
-  transformConfig: '',
-  ruleLevel: 'std',
-  builtinSkipCertVerify: false,
-  builtinEnableUdp: true,
+  ...DEFAULT_SHARED_SETTINGS,
   builtinTransform: {
-    ...DEFAULT_BUILTIN_TRANSFORM,
-    baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig },
+    ...DEFAULT_SHARED_SETTINGS.builtinTransform,
+    baseConfig: { ...DEFAULT_SHARED_SETTINGS.builtinTransform.baseConfig },
   } as BuiltinTransformConfig,
-  enableAccessLog: false,
-  accessLogPersistenceMode: 'light',
-  mergeExpireStrategy: 'max' as 'max' | 'min',
-  notifyThresholdDays: 3,
-  notifyThresholdPercent: 90,
-  enableTrafficNode: false,
-  enableFlagEmoji: true,
-  enablePublicPage: true,
-  allowBrowserSubAccess: true,
-  disguise: {
-    pageType: 'default' as 'default' | 'redirect',
-    redirectUrl: '',
-  },
-  storageType: 'd1',
-  autoUpdateInterval: 0, // 分钟，0表示禁用自动更新
-  profileUpdateInterval: 24, // 小时，客户端订阅默认更新间隔，0表示禁用注入
-  subFetchMinInterval: 15, // 分钟，服务端最小被订阅间隔（边缘缓存与防刷），0表示禁用
-  subFetchLimitMode: 'cache' as 'cache' | 'strict', // 'cache'（温和返回缓存）| 'strict'（严格返回 429）
   defaultPrefixSettings: {
-    enableManualNodes: true,
-    enableSubscriptions: true,
-    manualNodePrefix: '\u624b\u52a8\u8282\u70b9',
+    ...DEFAULT_SHARED_SETTINGS.defaultPrefixSettings,
     subscriptionPrefix: '',
-    prependTagName: false,
   },
-  manualNodeTagOrder: [] as string[], // 手动节点标签自定义顺序
-  subscriptionTagOrder: [] as string[], // 订阅源标签自定义顺序
-  profileTagOrder: [] as string[], // 分享组合标签自定义顺序
-  // 首页「待处理事项」里被用户主动忽略的条目 id。
-  // 存在设置里是为了跨设备同步（原先只存 localStorage，换设备就丢）。
-  // 条目的 id 都是固定字符串（见 src/utils/dashboard-health.js），跨设备可比对。
-  dismissedHealthItems: [] as string[],
-  defaultOperators: [] as OperatorRule[],
-  nodeTransformPresets: [] as Record<string, unknown>[],
-  regionOverrides: [] as RegionOverrideRule[],
-  // 公告设置
+  // 公告设置（管理端预览默认值）
   announcement: {
     enabled: true, // 是否启用公告
     title: '2.5 版本更新说明', // 公告标题
@@ -75,71 +21,19 @@ export const DEFAULT_SETTINGS = {
     dismissible: true, // 是否可关闭
     updatedAt: '2026-04-13T00:00:00.000Z' as string | null, // 更新时间
   },
-  // 留言板设置
-  guestbook: {
-    enabled: false,
-    allowAnonymous: true,
-  },
-  webdavBackup: {
-    enabled: false,
-    endpoint: '',
-    username: '',
-    password: '',
-    remotePath: '/MiSub',
-    filenameTemplate: 'misub-backup-{datetime}.json',
-    backupScope: 'dataOnly' as 'dataOnly' | 'dataAndSettings',
-    autoBackup: false,
-    interval: 'daily' as 'hourly' | 'daily' | 'weekly' | 'monthly',
-    retentionCount: 7,
-    lastCheckedAt: null as string | null,
-    lastBackupAt: null as string | null,
-    lastBackupStatus: null as string | null,
-    lastBackupMessage: '',
-    lastBackupFile: '',
-  },
-  externalApi: {
-    enabled: false,
-    tokens: [
-      {
-        name: 'default',
-        token: '',
-      },
-    ],
-  },
-  // 订阅转换设置
-  subconverter: {
-    engineMode: 'builtin',
-    defaultBackend: DEFAULT_SUBCONVERTER_BACKEND,
-    defaultOptions: {
-      udp: true,
-      emoji: true,
-      scv: true,
-      tfo: false,
-      sort: false,
-      list: false,
-    },
-  },
   // 短链服务设置（支持 Sink）
   shortLink: {
-    enabled: false,
-    provider: 'sink',
-    apiUrl: '',
-    apiToken: '',
+    ...DEFAULT_SHARED_SETTINGS.shortLink,
     hasToken: false,
   },
   // Cloudflare Turnstile 人机验证设置
   turnstile: {
-    enabled: false,
-    siteKey: '',
-    secretKey: '',
-    enableForGuestbook: true,
-    enableForLogin: false,
+    ...DEFAULT_SHARED_SETTINGS.turnstile,
     hasSecretKey: false,
     hasEnvKeys: false,
     loginDisabledByEnv: false,
   },
   // 自定义公开页
-  customDnsOverride: '',
   customPage: {
     enabled: false,
     type: 'html',

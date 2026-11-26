@@ -22,7 +22,6 @@ interface CollectionLinkItem {
   url?: string;
   icon?: string;
   enabled?: boolean;
-  [key: string]: unknown;
 }
 
 const { t } = useI18n();
@@ -107,7 +106,7 @@ const validateAndBuildItem = (
     :get-category-badge="(item) => getCategoryLabel(item.category)"
     :icon-placeholder="t('settings.clientIconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicLinksConfig as any"
+    :normalize-config="normalizePublicLinksConfig"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicLinkIcon"
     :tabs="categoryTabs"

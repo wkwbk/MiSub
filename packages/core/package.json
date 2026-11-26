@@ -2,6 +2,7 @@
   "name": "@misub/core",
   "version": "2.8.7",
   "private": true,
+  "sideEffects": false,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",

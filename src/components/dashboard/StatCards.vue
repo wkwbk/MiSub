@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { Boxes, ClipboardList, Server, Zap } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 
-export interface TrafficStats {
+interface TrafficStats {
   used?: string | number;
   total?: string | number;
   percentage?: number | string;

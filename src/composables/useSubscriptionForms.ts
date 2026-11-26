@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import { HttpUrlStringSchema } from '@misub/core/schemas/entities.js';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import { applyItemTags, getItemTags } from '@/utils/tags.js';
@@ -74,7 +74,7 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }: Us
       showToast(t('subscriptions.urlRequired'), 'error');
       return;
     }
-    if (!HttpUrlStringSchema.safeParse(editingSubscription.value.url).success) {
+    if (!isValidHttpUrlString(editingSubscription.value.url)) {
       showToast(t('subscriptions.invalidUrl'), 'error');
       return;
     }

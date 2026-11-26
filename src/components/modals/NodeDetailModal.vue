@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue';
 import { Check, Copy, X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
-import { parseNodeDetail } from '@/utils/node-detail.js';
+import { formatNodeDetailYaml, parseNodeDetail } from '@/utils/node-detail.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
@@ -38,8 +38,28 @@ const { t } = useI18n();
 
 const activeTab = ref<'structured' | 'yaml' | 'json'>('structured');
 const copiedKey = ref('');
+const lazyYaml = ref('');
+let yamlLoadSeq = 0;
 
 const detail = computed(() => parseNodeDetail(props.node));
+const displayedYaml = computed(() => lazyYaml.value || detail.value.formattedYaml);
+
+watch(
+  [activeTab, () => props.show, () => detail.value.proxy],
+  async ([tab, visible, proxy]) => {
+    const seq = ++yamlLoadSeq;
+    if (!visible || !proxy) {
+      lazyYaml.value = '';
+      return;
+    }
+    if (tab !== 'yaml') return;
+    const formatted = await formatNodeDetailYaml(proxy);
+    if (seq === yamlLoadSeq) {
+      lazyYaml.value = formatted;
+    }
+  },
+  { immediate: true },
+);
 
 const networkItems = computed<NetworkDisplayItem[]>(() => {
   const info = props.inspectInfo;
@@ -306,7 +326,7 @@ const closeModal = (): void => {
             <button
               class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
               type="button"
-              @click="copyText(detail.formattedYaml, '__yaml__')"
+              @click="copyText(displayedYaml, '__yaml__')"
             >
               <Check v-if="copiedKey === '__yaml__'" class="h-3 w-3 text-emerald-400" />
               <Copy v-else class="h-3 w-3" />
@@ -316,7 +336,7 @@ const closeModal = (): void => {
           <div class="modal-inset-surface rounded-md overflow-hidden">
             <pre
               class="modal-scrollbar max-h-[420px] overflow-auto px-3.5 py-3 font-mono text-xs leading-relaxed text-fg"
-              >{{ detail.formattedYaml }}</pre>
+              >{{ displayedYaml }}</pre>
           </div>
         </div>
 

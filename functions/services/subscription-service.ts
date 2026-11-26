@@ -14,7 +14,8 @@ import type { BoundRequestContext } from '../types.js';
 import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
 import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
 import { parseNodeList } from '@misub/core/node/node-parser.js';
-import { getProcessedUserAgent, isValidBase64 } from '@misub/core/utils/format-utils.js';
+import { tryDecodeBase64Utf8 } from '@misub/core/utils/base64.js';
+import { getProcessedUserAgent } from '@misub/core/utils/format-utils.js';
 import { buildFetchProxyUrl } from '../utils/fetch-proxy-utils.js';
 import {
   addFlagEmoji,
@@ -354,7 +355,7 @@ export async function generateCombinedNodeList(
       const buffer = await response.arrayBuffer();
       let text = new TextDecoder('utf-8').decode(buffer);
 
-      text = await decodeBase64Content(text);
+      text = tryDecodeBase64Utf8(text);
 
       // 使用统一的 node-parser 解析，确保与预览一致的过滤规则 (UUID校验, Hysteria1过滤, SS加密校验等)
       const parsedObjects = parseNodeList(text, { plusAsSpace: Boolean(sub?.plusAsSpace) });
@@ -588,29 +589,4 @@ export async function generateCombinedNodeList(
   }
 
   return result;
-}
-
-/**
- * 解码Base64内容
- */
-async function decodeBase64Content(text: string): Promise<string> {
-  try {
-    const cleanedText = text.replace(/\s/g, '');
-    if (isValidBase64(cleanedText)) {
-      let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
-      const padding = normalized.length % 4;
-      if (padding) {
-        normalized += '='.repeat(4 - padding);
-      }
-      const binaryString = atob(normalized);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      return new TextDecoder('utf-8').decode(bytes);
-    }
-  } catch (e) {
-    console.debug('[Subscription] Base64 decode failed, using raw text:', e);
-  }
-  return text;
 }

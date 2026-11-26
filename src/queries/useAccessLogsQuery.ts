@@ -1,5 +1,5 @@
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
-import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/vue-query';
+import { useQuery, type QueryClient } from '@tanstack/vue-query';
 import { api } from '@/lib/http.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
@@ -30,8 +30,12 @@ export interface ClearAccessLogsOptions {
 
 export type AccessLogQueryKey = ReturnType<typeof QUERY_KEYS.accessLogs>;
 
-export interface UseAccessLogsQueryOptions
-  extends Omit<UseQueryOptions<AccessLogEntry[], Error, AccessLogEntry[], AccessLogQueryKey>, 'queryKey' | 'queryFn'> {
+export interface UseAccessLogsQueryOptions {
+  enabled?: MaybeRefOrGetter<boolean>;
+  staleTime?: number;
+  gcTime?: number;
+  retry?: boolean | number;
+  refetchOnWindowFocus?: boolean;
   queryClient?: QueryClient;
 }
 
@@ -39,13 +43,6 @@ function extractAccessLogs(response: unknown): AccessLogEntry[] {
   if (!response || typeof response !== 'object') return [];
   const data = (response as { data?: unknown }).data;
   return Array.isArray(data) ? (data as AccessLogEntry[]) : [];
-}
-
-export async function fetchAccessLogsWithQuery(queryClient?: QueryClient | null): Promise<AccessLogEntry[]> {
-  const response: unknown = await api.get(`${API_ENDPOINTS.LOGS}?t=${Date.now()}`);
-  const logs = extractAccessLogs(response);
-  queryClient?.setQueryData?.(QUERY_KEYS.accessLogs(), logs);
-  return logs;
 }
 
 export async function clearAccessLogsWithQuery(
@@ -58,7 +55,15 @@ export async function clearAccessLogsWithQuery(
   const queryStr = queryParts.join('&');
   const endpoint = queryStr ? `${API_ENDPOINTS.LOGS}?${queryStr}` : API_ENDPOINTS.LOGS;
   const result: unknown = await api.del(endpoint);
-  await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.accessLogsRoot });
+  queryClient.setQueriesData<AccessLogEntry[]>({ queryKey: QUERY_KEYS.accessLogsRoot }, (old) => {
+    if (!Array.isArray(old)) return old;
+    if (!profileId && !profileName) return [];
+    return old.filter((log) => {
+      if (profileId && log.profileId) return log.profileId !== profileId;
+      if (profileName && log.profileName) return log.profileName !== profileName;
+      return true;
+    });
+  });
   return result;
 }
 

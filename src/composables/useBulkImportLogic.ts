@@ -1,5 +1,9 @@
 import { ref } from 'vue';
-import { HttpUrlStringSchema, ManualNodeUrlSchema, RemoteSubscriptionUrlSchema } from '@misub/core/schemas/entities.js';
+import {
+  isValidHttpUrlString,
+  isValidManualNodeUrl,
+  isValidRemoteSubscriptionUrl,
+} from '@misub/core/utils/url-validators.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
@@ -37,7 +41,7 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
       const keptLines = importText
         .split('\n')
         .map((line) => line.trim())
-        .filter((line) => HttpUrlStringSchema.safeParse(line).success);
+        .filter((line) => isValidHttpUrlString(line));
 
       return [...converted, ...keptLines].join('\n');
     } catch (error: unknown) {
@@ -111,13 +115,13 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         normalizedTags,
       );
 
-      if (RemoteSubscriptionUrlSchema.safeParse(line).success) {
+      if (isValidRemoteSubscriptionUrl(line)) {
         if (!existingUrls.has(line)) {
           validSubs.push({ ...baseItem, id: generateSubscriptionId() });
         } else {
           duplicateCount++;
         }
-      } else if (!/^v2rayn:\/\//i.test(line) && ManualNodeUrlSchema.safeParse(line).success) {
+      } else if (!/^v2rayn:\/\//i.test(line) && isValidManualNodeUrl(line)) {
         const alreadyParsed = validNodes.some((n) => n.url === line);
         if (!alreadyParsed) {
           if (!existingUrls.has(line)) {

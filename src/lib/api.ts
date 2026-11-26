@@ -658,3 +658,22 @@ export async function initPublicResource<T = unknown>(endpoint: string): Promise
 }> {
   return await api.post<{ success?: boolean; data?: T; message?: string }>(`${endpoint}/init`);
 }
+
+export async function fetchNodePreview<T = Record<string, unknown>>(
+  endpoint: string,
+  payload: object,
+): Promise<T> {
+  return await api.post<T>(endpoint, payload);
+}
+
+export async function checkAdminSession(): Promise<void> {
+  await api.get(API_ENDPOINTS.DATA);
+}
+
+export function isApiError(error: unknown): error is APIError {
+  return isApiErrorInstance(error);
+}
+
+export function isUnauthorizedApiError(error: unknown): boolean {
+  return isApiErrorInstance(error) && error.status === 401;
+}

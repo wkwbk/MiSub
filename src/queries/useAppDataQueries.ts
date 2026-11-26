@@ -12,7 +12,7 @@ import type {
   SubscriptionItem,
   SubscriptionUserInfo,
   TelegramPushConfig,
-} from '@misub/core';
+} from '@misub/core/types.js';
 import { api } from '@/lib/http.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 import { createStorageCache } from '@/utils/cache-helper.js';

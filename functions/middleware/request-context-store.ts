@@ -33,7 +33,7 @@ const STANDARD_HEADER_NAMES = [
   'x-misub-origin-asset-fetch',
 ];
 
-export interface MockHeaders {
+interface MockHeaders {
   get(name: string): string | null;
   forEach(callback: (value: string, key: string, parent: MockHeaders) => void): void;
 }

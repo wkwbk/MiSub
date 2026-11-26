@@ -11,6 +11,10 @@ export default {
     nextMonth: 'Next month',
     prevYear: 'Previous year',
     nextYear: 'Next year',
+    weekdaysShort: 'Mo,Tu,We,Th,Fr,Sa,Su',
+    monthsShort: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec',
+    yearTitle: '{year}',
+    yearMonthTitle: '{month} {year}',
   },
   pageTitles: {
     home: 'Home',
@@ -231,6 +235,8 @@ export default {
     tabManualNodes: 'Manual Nodes',
     tabAll: 'All Resources',
     subProfilesCountBadge: '{count} sub-profiles',
+    subProfileCounts: '{subscriptions} sources · {nodes} nodes',
+    tabsAriaLabel: 'Resource tabs',
     noMatchedNodes: 'No matching nodes.',
     noAvailableNodes: 'No nodes available',
   },
@@ -532,6 +538,26 @@ export default {
       exclude: 'Exclude',
       keepOnly: 'Keep only',
       mixed: 'Mixed',
+    },
+    presets: {
+      regions: {
+        hk: 'Hong Kong',
+        tw: 'Taiwan',
+        jp: 'Japan',
+        sg: 'Singapore',
+        us: 'United States',
+        kr: 'South Korea',
+        de: 'Germany',
+        uk: 'United Kingdom',
+      },
+      keywords: {
+        official: 'Official',
+        expire: 'Expire',
+        remaining: 'Remaining',
+        multiplier: 'Multiplier',
+        test: 'Test',
+        maintenance: 'Maintenance',
+      },
     },
   },
   bulkImport: {
@@ -1987,5 +2013,10 @@ export default {
     batchReplaceDesc: 'Replace all existing tags on the chosen nodes with the tags below.',
     batchRemoveDesc: 'Remove the specified tags from the chosen nodes.',
     batchClearDesc: 'Clear all tags from the chosen nodes.',
+  },
+  footer: {
+    copyrightPrefix: 'Copyright © {year}',
+    allRightsReserved: 'All Rights Reserved.',
+    copyrightNoBrand: 'Copyright © {year}. All Rights Reserved.',
   },
 };

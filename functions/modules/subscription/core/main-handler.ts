@@ -53,7 +53,6 @@ import {
 } from './userinfo-formatters.js';
 import {
   buildExternalSubconverterUrl,
-  normalizeExternalTemplateConfigUrl,
   normalizeSubconverterBackend,
   resolveAddFlagEmoji,
   resolveBuiltinEngineFlags,
@@ -77,11 +76,9 @@ export {
   resolveTemplateUrl,
   resolveTemplateSource,
   resolveExternalTemplateConfigUrl,
-  normalizeExternalTemplateConfigUrl,
   normalizeSubconverterBackend,
   buildExternalSubconverterUrl,
   resolveBuiltinEngineFlags,
-  resolveEffectiveBuiltinTransform,
   resolveEffectiveEngine,
   resolveBuiltinRequestOptions,
   resolveEffectiveNodeTransform,

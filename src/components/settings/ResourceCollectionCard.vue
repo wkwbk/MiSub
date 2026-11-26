@@ -1,36 +1,24 @@
-<script setup lang="ts" generic="TItem extends CollectionItem = CollectionItem">
-import { computed, onMounted, ref } from 'vue';
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
-import { useI18n } from '@/i18n/index.js';
-import { useToastStore } from '@/stores/useToastStore.js';
-import Modal from '@/components/ui/Modal.vue';
-import Switch from '@/components/ui/Switch.vue';
-import SettingCard from '@/components/settings/SettingCard.vue';
-import { fetchPublicResource, initPublicResource, savePublicResource } from '@/lib/api.js';
-import { extractErrorMessage } from '@/utils/error-handler.js';
-import { readFileAsDataUrl } from '@/utils/import-file.js';
-
-export interface CollectionItem {
+<script lang="ts">
+interface CollectionItemBase {
   id: string;
   name?: string;
   description?: string;
   url?: string;
   icon?: string;
   enabled?: boolean;
-  [key: string]: unknown;
 }
 
-export interface CollectionConfig<Item extends CollectionItem = CollectionItem> {
+interface CollectionConfig<Item extends CollectionItemBase = CollectionItemBase> {
   enabled: boolean;
   items: Item[];
 }
 
-export interface CollectionTab {
+interface CollectionTab {
   value: string;
   label: string;
 }
 
-export interface CollectionLabels {
+interface CollectionLabels {
   resetBtn: string;
   addBtn: string;
   emptyText: string;
@@ -43,6 +31,19 @@ export interface CollectionLabels {
   saveErrorText?: string;
   saveErrorFormatter?: (message: string) => string;
 }
+</script>
+
+<script setup lang="ts" generic="TItem extends CollectionItemBase = CollectionItemBase">
+import { computed, onMounted, ref } from 'vue';
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
+import { useI18n } from '@/i18n/index.js';
+import { useToastStore } from '@/stores/useToastStore.js';
+import Modal from '@/components/ui/Modal.vue';
+import Switch from '@/components/ui/Switch.vue';
+import SettingCard from '@/components/settings/SettingCard.vue';
+import { fetchPublicResource, initPublicResource, savePublicResource } from '@/lib/api.js';
+import { extractErrorMessage } from '@/utils/error-handler.js';
+import { readFileAsDataUrl } from '@/utils/import-file.js';
 
 const props = withDefaults(
   defineProps<{

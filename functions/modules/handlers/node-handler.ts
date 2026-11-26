@@ -5,6 +5,8 @@
 
 import type { SubscriptionItem, SubscriptionUserInfo } from '@misub/core/types.js';
 import { parseNodeList } from '@misub/core/node/node-parser.js';
+import { NODE_PROTOCOL_GLOBAL_REGEX } from '@misub/core/protocols/constants.js';
+import { tryDecodeBase64Utf8 } from '@misub/core/utils/base64.js';
 import { getProcessedUserAgent } from '@misub/core/utils/format-utils.js';
 import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js';
 import type { Env, StorageAdapter } from '../../types.js';
@@ -33,12 +35,6 @@ interface NodeCountResult {
 }
 
 type ErrorWithStatus = Error & { status?: number };
-
-// 创建用于全局匹配的协议正则表达式
-const NODE_PROTOCOL_GLOBAL_REGEX = new RegExp(
-  '^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|anytls|socks5|socks):\\/\\/',
-  'gm',
-);
 
 const SUBSCRIPTION_BODY_ERROR_PATTERNS = [
   /failed to fetch remote profile/i,
@@ -118,24 +114,7 @@ function extractUserInfo(response: Response): Record<string, string | number> | 
 }
 
 function decodeBase64SubscriptionText(text: string): string {
-  let decodedText = text;
-  try {
-    const cleanedText = text.replace(/\s/g, '');
-    let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
-    const padding = normalized.length % 4;
-    if (padding) normalized += '='.repeat(4 - padding);
-    if (/^[A-Za-z0-9+/=]+$/.test(normalized) && normalized.length >= 20) {
-      const binaryString = atob(normalized);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      decodedText = new TextDecoder('utf-8').decode(bytes);
-    }
-  } catch {
-    /* 已经是明文 */
-  }
-  return decodedText;
+  return tryDecodeBase64Utf8(text);
 }
 
 // 辅助函数：从响应体伪节点名称中解析流量和到期信息
@@ -349,31 +328,11 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
             console.error('Node count parse error:', e);
 
             try {
-              const cleanedText = text.replace(/\s/g, '');
-              let normalized = cleanedText.replace(/-/g, '+').replace(/_/g, '/');
-              const padding = normalized.length % 4;
-              if (padding) {
-                normalized += '='.repeat(4 - padding);
-              }
-              const base64Regex = /^[A-Za-z0-9+/=]+$/;
-              if (base64Regex.test(normalized) && normalized.length >= 20) {
-                const binaryString = atob(normalized);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
-                  bytes[i] = binaryString.charCodeAt(i);
-                }
-                const processedText = new TextDecoder('utf-8').decode(bytes);
-                const lineMatches = processedText.match(NODE_PROTOCOL_GLOBAL_REGEX);
-                if (lineMatches) {
-                  result.count = lineMatches.length;
-                  nodeCountRequestSucceeded = true;
-                }
-              } else {
-                const lineMatches = text.match(NODE_PROTOCOL_GLOBAL_REGEX);
-                if (lineMatches) {
-                  result.count = lineMatches.length;
-                  nodeCountRequestSucceeded = true;
-                }
+              const processedText = tryDecodeBase64Utf8(text);
+              const lineMatches = processedText.match(NODE_PROTOCOL_GLOBAL_REGEX);
+              if (lineMatches) {
+                result.count = lineMatches.length;
+                nodeCountRequestSucceeded = true;
               }
             } catch (error: unknown) {
               // 最后降级到原始文本统计

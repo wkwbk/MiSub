@@ -454,9 +454,15 @@ const handleDeselectAll = (listName: SelectionListName, sourceArray: Array<{ id:
   localProfile.value[listName] = (localProfile.value[listName] || []).filter((id) => !sourceIdSet.has(id));
 };
 
-const updateSelectedIds = (listName: SelectionListName, newIds: any[]) => {
-  localProfile.value[listName] = newIds;
-};
+function updateSelectedIds(listName: 'subscriptions', newIds: ProfileSubscriptionRef[]): void;
+function updateSelectedIds(listName: 'manualNodes' | 'subProfiles', newIds: string[]): void;
+function updateSelectedIds(listName: SelectionListName, newIds: Array<string | ProfileSubscriptionRef>): void {
+  if (listName === 'subscriptions') {
+    localProfile.value.subscriptions = newIds as ProfileSubscriptionRef[];
+    return;
+  }
+  localProfile.value[listName] = newIds as string[];
+}
 </script>
 
 <template>
@@ -497,7 +503,7 @@ const updateSelectedIds = (listName: SelectionListName, newIds: any[]) => {
         <!-- 资源选择区（节点 / 订阅 / 订阅组） -->
         <div class="space-y-4">
           <div class="border-b border-line">
-            <nav aria-label="Tabs" class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+            <nav :aria-label="t('profileModal.tabsAriaLabel')" class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
               <button
                 :class="[
                   activeResourceTab === 'manualNodes'

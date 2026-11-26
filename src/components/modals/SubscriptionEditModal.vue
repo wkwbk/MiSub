@@ -68,16 +68,16 @@ const ruleMode = ref('exclude');
 const customKeyword = ref('');
 
 // 预设标签
-const presetRegions: RuleTagOption[] = [
-  { label: '香港', pattern: '(香港|HK|Hong Kong)', icon: '🇭🇰' },
-  { label: '台湾', pattern: '(台湾|TW|Taiwan)', icon: '🇨🇳' },
-  { label: '日本', pattern: '(日本|JP|Japan)', icon: '🇯🇵' },
-  { label: '新加坡', pattern: '(新加坡|SG|Singapore)', icon: '🇸🇬' },
-  { label: '美国', pattern: '(美国|US|USA)', icon: '🇺🇸' },
-  { label: '韩国', pattern: '(韩国|KR|Korea)', icon: '🇰🇷' },
-  { label: '德国', pattern: '(德国|DE|Germany)', icon: '🇩🇪' },
-  { label: '英国', pattern: '(英国|UK|Britain)', icon: '🇬🇧' },
-];
+const presetRegions = computed<RuleTagOption[]>(() => [
+  { label: t('subscriptions.presets.regions.hk'), pattern: '(香港|HK|Hong Kong)', icon: '🇭🇰' },
+  { label: t('subscriptions.presets.regions.tw'), pattern: '(台湾|TW|Taiwan)', icon: '🇨🇳' },
+  { label: t('subscriptions.presets.regions.jp'), pattern: '(日本|JP|Japan)', icon: '🇯🇵' },
+  { label: t('subscriptions.presets.regions.sg'), pattern: '(新加坡|SG|Singapore)', icon: '🇸🇬' },
+  { label: t('subscriptions.presets.regions.us'), pattern: '(美国|US|USA)', icon: '🇺🇸' },
+  { label: t('subscriptions.presets.regions.kr'), pattern: '(韩国|KR|Korea)', icon: '🇰🇷' },
+  { label: t('subscriptions.presets.regions.de'), pattern: '(德国|DE|Germany)', icon: '🇩🇪' },
+  { label: t('subscriptions.presets.regions.uk'), pattern: '(英国|UK|Britain)', icon: '🇬🇧' },
+]);
 
 const presetProtocols: RuleTagOption[] = [
   { label: 'SS', pattern: 'proto:ss' },
@@ -87,16 +87,16 @@ const presetProtocols: RuleTagOption[] = [
   { label: 'Hysteria2', pattern: 'proto:hysteria2,hy2' },
 ];
 
-const presetKeywords: RuleTagOption[] = [
-  { label: '官网', pattern: '官网' },
-  { label: '过期', pattern: '过期' },
-  { label: '剩余', pattern: '(剩余|流量)' },
-  { label: '倍率', pattern: '倍率' },
-  { label: '测试', pattern: '测试' },
-  { label: '维护', pattern: '维护' },
+const presetKeywords = computed<RuleTagOption[]>(() => [
+  { label: t('subscriptions.presets.keywords.official'), pattern: '官网' },
+  { label: t('subscriptions.presets.keywords.expire'), pattern: '过期' },
+  { label: t('subscriptions.presets.keywords.remaining'), pattern: '(剩余|流量)' },
+  { label: t('subscriptions.presets.keywords.multiplier'), pattern: '倍率' },
+  { label: t('subscriptions.presets.keywords.test'), pattern: '测试' },
+  { label: t('subscriptions.presets.keywords.maintenance'), pattern: '维护' },
   { label: 'GB', pattern: 'GB' },
   { label: '2026', pattern: '2026' },
-];
+]);
 
 // 规则池：分别管理保留规则和剔除规则
 const keepRules = ref<RuleItem[]>([]);
@@ -235,10 +235,10 @@ const resolvePreset = (pattern: string): RuleItem => {
     return { ...protocolPreset, type: 'protocol' };
   }
 
-  const allPresets = [...presetRegions, ...presetProtocols, ...presetKeywords];
+  const allPresets = [...presetRegions.value, ...presetProtocols, ...presetKeywords.value];
   const preset = allPresets.find((p) => p.pattern === pattern);
   if (preset) {
-    const type = presetRegions.includes(preset) ? 'region' : presetProtocols.includes(preset) ? 'protocol' : 'keyword';
+    const type = presetRegions.value.includes(preset) ? 'region' : presetProtocols.includes(preset) ? 'protocol' : 'keyword';
     return { ...preset, type };
   }
 

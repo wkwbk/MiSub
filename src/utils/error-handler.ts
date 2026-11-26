@@ -7,7 +7,7 @@ import { t } from '@/i18n/index.js';
 import { isChunkLoadError } from '@/utils/chunk-reload.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
 
-export type ErrorToastType = 'info' | 'success' | 'warning' | 'error';
+type ErrorToastType = 'info' | 'success' | 'warning' | 'error';
 
 export type ToastHandler = (message: string, type?: ErrorToastType, duration?: number) => void;
 

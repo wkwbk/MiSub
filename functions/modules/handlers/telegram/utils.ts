@@ -2,6 +2,8 @@
  * Telegram Bot 节点/订阅解析、文件下载与参数解析工具
  */
 
+import { extractNodeName as extractCoreNodeName } from '@misub/core/node/node-name.js';
+
 /** Telegram 单文件下载大小上限（字节），防止大文件拖垮 Worker */
 const TG_MAX_FILE_BYTES = 5 * 1024 * 1024;
 
@@ -39,15 +41,8 @@ export function getErrorMessage(error: unknown, fallback = 'Unknown error'): str
  */
 export function extractNodeName(url: string): string {
   try {
-    const hashIndex = url.indexOf('#');
-    if (hashIndex !== -1) {
-      const encoded = url.substring(hashIndex + 1);
-      try {
-        return decodeURIComponent(encoded);
-      } catch {
-        return encoded;
-      }
-    }
+    const coreName = extractCoreNodeName(url);
+    if (coreName) return coreName;
     const protocol = url.split('://')[0].toUpperCase();
     return `${protocol} 节点`;
   } catch {

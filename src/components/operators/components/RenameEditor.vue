@@ -36,7 +36,7 @@ const { t } = useI18n();
 
 const updateParam = <K extends keyof RenameParams>(key: K, value: NonNullable<RenameParams[K]>) => {
   const newParams: RenameParams = { ...props.modelValue };
-  newParams[key] = { ...(newParams[key] as Record<string, any>), ...value } as RenameParams[K];
+  newParams[key] = { ...(newParams[key] as Record<string, unknown>), ...value } as RenameParams[K];
   emit('update:modelValue', newParams);
 };
 

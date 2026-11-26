@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils';
 import { applyFilterRules } from '../../functions/services/subscription-service.js';
 import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
 import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
+import { createI18n } from '@/i18n/index.js';
 import { createPinia, setActivePinia } from 'pinia';
 
 describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {
@@ -132,6 +133,7 @@ describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {
           },
         },
         global: {
+          plugins: [createI18n({ initialLocale: 'zh-CN' })],
           stubs: {
             Modal: {
               template: '<div><slot name="title"/><slot name="body"/></div>',
@@ -176,6 +178,7 @@ describe('Mixed Subscription Filter Rules (Include + Exclude)', () => {
           },
         },
         global: {
+          plugins: [createI18n({ initialLocale: 'zh-CN' })],
           stubs: {
             Modal: {
               template: '<div><slot name="title"/><slot name="body"/></div>',

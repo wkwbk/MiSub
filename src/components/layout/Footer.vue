@@ -31,7 +31,7 @@ const currentVersion = packageJson.version;
     <div class="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-fg-subtle">
       <p class="font-mono">
         <template v-if="!hideBranding">
-          Copyright © {{ currentYear }}
+          {{ t('footer.copyrightPrefix', { year: currentYear }) }}
           <a
             class="font-semibold text-fg-muted hover:text-fg hover:underline transition-colors"
             href="https://github.com/wkwbk/MiSub"
@@ -39,9 +39,9 @@ const currentVersion = packageJson.version;
             target="_blank"
           >
             MiSUB </a
-          >. All Rights Reserved.
+          >. {{ t('footer.allRightsReserved') }}
         </template>
-        <template v-else> Copyright © {{ currentYear }}. All Rights Reserved. </template>
+        <template v-else>{{ t('footer.copyrightNoBrand', { year: currentYear }) }}</template>
       </p>
       <button
         :title="

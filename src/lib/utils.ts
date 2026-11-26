@@ -1,9 +1,8 @@
 import { t } from '@/i18n/index.js';
 import { cleanNodeUrl, cleanNodeUrlsText } from '@misub/core/node/node-cleaner.js';
-import { base64ToUtf8 } from '@misub/core/utils/base64.js';
-import { getV2raynRemarks, isV2raynUrl } from '@misub/core/protocols/v2rayn-utils.js';
+import { extractNodeName } from '@misub/core/node/node-name.js';
 
-export { cleanNodeUrl, cleanNodeUrlsText };
+export { cleanNodeUrl, cleanNodeUrlsText, extractNodeName };
 
 const isDev = import.meta.env.DEV;
 
@@ -15,63 +14,6 @@ export interface HostAndPort {
 export interface ClientInfo {
   name: string;
   className: string;
-}
-
-export function extractNodeName(url: string): string {
-  if (!url) return '';
-  url = url.trim();
-  try {
-    if (isV2raynUrl(url)) {
-      return getV2raynRemarks(url) || '';
-    }
-    const hashIndex = url.indexOf('#');
-    if (hashIndex !== -1 && hashIndex < url.length - 1) {
-      return decodeURIComponent(url.substring(hashIndex + 1)).trim();
-    }
-    const protocolIndex = url.indexOf('://');
-    if (protocolIndex === -1) return '';
-    const protocol = url.substring(0, protocolIndex);
-    const mainPart = url.substring(protocolIndex + 3).split('#')[0];
-    switch (protocol) {
-      case 'vmess': {
-        let ps = '';
-        try {
-          const jsonString = base64ToUtf8(mainPart);
-          const node = JSON.parse(jsonString) as { ps?: unknown };
-          ps = typeof node.ps === 'string' ? node.ps : '';
-        } catch (e) {
-          console.error('Failed to decode vmess link:', e);
-        }
-        return ps;
-      }
-      case 'trojan':
-      case 'vless':
-        return mainPart.substring(mainPart.indexOf('@') + 1).split(':')[0] || '';
-      case 'ss': {
-        const atIndexSS = mainPart.indexOf('@');
-        if (atIndexSS !== -1) return mainPart.substring(atIndexSS + 1).split(':')[0] || '';
-        try {
-          let base64Part = mainPart;
-          if (base64Part.includes('%')) {
-            base64Part = decodeURIComponent(base64Part);
-          }
-          const decodedSS = atob(base64Part);
-          const ssDecodedAtIndex = decodedSS.indexOf('@');
-          if (ssDecodedAtIndex !== -1) return decodedSS.substring(ssDecodedAtIndex + 1).split(':')[0] || '';
-        } catch (e) {
-          if (isDev) {
-            console.debug('[Utils] Failed to decode SS base64, using raw text:', e);
-          }
-        }
-        return '';
-      }
-      default:
-        if (url.startsWith('http')) return new URL(url).hostname;
-        return '';
-    }
-  } catch {
-    return url.substring(0, 50);
-  }
 }
 
 /**

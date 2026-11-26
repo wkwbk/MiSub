@@ -1,7 +1,7 @@
 import type { BoundRequestContext, Env } from '../../../types.js';
 import { anonymizeLogToken, LogService } from '../../../services/log-service.js';
 
-export interface GenerationStats {
+interface GenerationStats {
   totalNodes?: number;
   sourceCount?: number;
   successCount?: number;

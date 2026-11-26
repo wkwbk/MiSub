@@ -28,7 +28,7 @@ export interface Env {
   [key: string]: unknown;
 }
 
-export interface AppVariables {
+interface AppVariables {
   externalTokenName?: string;
   validatedBody?: unknown;
 }

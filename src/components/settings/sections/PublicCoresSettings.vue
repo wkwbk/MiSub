@@ -25,7 +25,6 @@ interface CollectionCoreItem {
   url?: string;
   icon?: string;
   enabled?: boolean;
-  [key: string]: unknown;
 }
 
 const { t } = useI18n();
@@ -115,7 +114,7 @@ const validateAndBuildItem = (
     :get-category-badge="(item) => getCategoryLabel(item.category)"
     :icon-placeholder="t('publicCores.iconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicCoresConfig as any"
+    :normalize-config="normalizePublicCoresConfig"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicCoreIcon"
     :tabs="categoryTabs"

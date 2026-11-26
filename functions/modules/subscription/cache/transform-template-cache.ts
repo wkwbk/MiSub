@@ -2,7 +2,7 @@ import type { Env, StorageAdapter } from '../../../types.js';
 import { getCache } from '../../../services/node-cache-service.js';
 import { assertPublicNetworkUrl } from '../../security-utils.js';
 
-export interface TransformTemplateCacheEntry {
+interface TransformTemplateCacheEntry {
   nodes: string;
   timestamp: number;
   nodeCount?: number;

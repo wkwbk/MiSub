@@ -14,7 +14,7 @@ export type TelegramSubscriptionItem = MisubItem & {
   created_at?: string;
 };
 
-export interface TelegramRateLimitConfig {
+interface TelegramRateLimitConfig {
   maxPerMinute: number;
   maxPerDay: number;
 }

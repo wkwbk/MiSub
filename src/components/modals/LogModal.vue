@@ -8,7 +8,7 @@ import { useToastStore } from '@/stores/useToastStore.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { getClientInfo } from '@/lib/utils';
 import { resolveComponentQueryClient } from '@/lib/query-client.js';
-import { clearAccessLogsWithQuery, fetchAccessLogsWithQuery } from '@/queries/useAccessLogsQuery.js';
+import { clearAccessLogsWithQuery, useAccessLogsQuery } from '@/queries/useAccessLogsQuery.js';
 import { useI18n } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
@@ -58,13 +58,40 @@ const toastStore = activePinia ? useToastStore() : null;
 const showToast = (msg: string, type: ToastType = 'info') => toastStore?.showToast?.(msg, type);
 const dataStore = activePinia ? useDataStore() : null;
 const { t, locale } = useI18n();
-const logs = ref<AccessLogItem[]>([]);
-const isLoading = ref(false);
 const isClearing = ref(false);
 const expandedLogId = ref<string | null>(null);
 
 const currentPage = ref(1);
 const pageSize = 20;
+
+const queryClient = resolveComponentQueryClient();
+const {
+  data: logsQueryData,
+  isPending: isLogsPending,
+  isFetching: isLogsFetching,
+  isError: isLogsError,
+  refetch: refetchLogs,
+} = useAccessLogsQuery(
+  {},
+  {
+    enabled: computed(() => props.show),
+    staleTime: 0,
+    retry: false,
+    queryClient,
+  },
+);
+
+const logs = computed<AccessLogItem[]>(() => (logsQueryData.value || []) as AccessLogItem[]);
+const isLoading = computed(() => isLogsPending.value || isLogsFetching.value);
+
+watch(
+  () => isLogsError.value && props.show && !isLogsFetching.value,
+  (hasError) => {
+    if (hasError) {
+      showToast(t('logs.fetchFailed'), 'error');
+    }
+  },
+);
 
 const filteredLogs = computed(() => {
   if (props.filterProfileId) {
@@ -85,19 +112,10 @@ const paginatedLogs = computed(() => {
   return filteredLogs.value.slice(start, end);
 });
 
-const queryClient = resolveComponentQueryClient();
-
 const fetchLogs = async () => {
-  if (isLoading.value) return;
-  isLoading.value = true;
-  try {
-    logs.value = (await fetchAccessLogsWithQuery(queryClient)) as AccessLogItem[];
-    currentPage.value = 1;
-  } catch {
-    showToast(t('logs.fetchFailed'), 'error');
-  } finally {
-    isLoading.value = false;
-  }
+  if (isLogsFetching.value) return;
+  currentPage.value = 1;
+  await refetchLogs();
 };
 
 const targetProfileDownloadCount = computed(() => {
@@ -140,22 +158,13 @@ const clearLogs = async () => {
     });
     const storeProfiles = (dataStore?.profiles || []) as ProfileConfig[];
     if (targetProfileId) {
-      logs.value = logs.value.filter(
-        (log) =>
-          !(
-            log.profileId === targetProfileId ||
-            (!log.profileId && targetProfileName && log.profileName === targetProfileName)
-          ),
-      );
       const target = storeProfiles.find((p) => p?.id === targetProfileId);
       if (target) target.downloadCount = 0;
     } else if (targetProfileName) {
-      logs.value = logs.value.filter((log) => log.profileName !== targetProfileName);
       storeProfiles.forEach((p) => {
         if (p?.name === targetProfileName) p.downloadCount = 0;
       });
     } else {
-      logs.value = [];
       storeProfiles.forEach((p) => {
         if (p) p.downloadCount = 0;
       });
@@ -204,7 +213,7 @@ watch(
   () => props.show,
   (newVal) => {
     if (newVal) {
-      fetchLogs();
+      currentPage.value = 1;
     }
   },
 );

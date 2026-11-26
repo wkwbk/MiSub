@@ -21,7 +21,6 @@ interface CollectionClientItem {
   url?: string;
   repo?: string | null;
   enabled?: boolean;
-  [key: string]: unknown;
 }
 
 const { t } = useI18n();
@@ -108,7 +107,7 @@ const getPlatformClass = (platform: string): string => {
     :filter-item="filterItem"
     :icon-placeholder="t('settings.clientIconPlaceholder')"
     :labels="labels"
-    :normalize-config="normalizePublicClientsConfig as any"
+    :normalize-config="normalizePublicClientsConfig"
     :prepare-edit-item="prepareEditItem"
     :resolve-icon="resolvePublicClientIcon"
     :tabs="platformTabs"

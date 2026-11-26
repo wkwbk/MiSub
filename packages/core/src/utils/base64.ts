@@ -52,6 +52,23 @@ export function base64ToUtf8(str: string): string {
 }
 
 /**
+ * 尝试将 Base64（含 URL-safe / 缺失 padding）订阅内容解码为 UTF-8 明文；若非有效 Base64 则原样返回
+ */
+export function tryDecodeBase64Utf8(text: string, minLength = 20): string {
+  try {
+    const normalized = normalizeBase64String(text);
+    if (!normalized || normalized.length < minLength || !/^[A-Za-z0-9+/=]+$/.test(normalized)) {
+      return text;
+    }
+    const binary = atob(normalized);
+    const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+    return textDecoder.decode(bytes);
+  } catch {
+    return text;
+  }
+}
+
+/**
  * 将 ArrayBuffer / Uint8Array 编码为标准 Base64
  */
 export function encodeArrayBufferToBase64(buffer: ArrayBuffer | ArrayBufferView): string {

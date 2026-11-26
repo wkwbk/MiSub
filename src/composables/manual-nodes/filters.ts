@@ -28,7 +28,7 @@ export interface NodeAttributeOptions {
   networks: Array<{ value: string; count: number }>;
 }
 
-export const countryCodeMap: Record<string, string[]> = {
+const countryCodeMap: Record<string, string[]> = {
   hk: ['🇭🇰', '香港', 'HK'],
   tw: ['🇨🇳', '台湾', '臺灣'],
   sg: ['🇸🇬', '新加坡', '狮城'],

@@ -150,7 +150,7 @@ async function fetchConfig(baseUrl, params) {
   throw lastError || new Error('request failed');
 }
 
-export async function runSmoke(baseUrl) {
+async function runSmoke(baseUrl) {
   assert(baseUrl, 'MISUB_SMOKE_URL is not set');
   for (const mode of ['clean', 'polluted']) {
     const suffix = mode === 'clean' ? {} : { 'dns-mode': 'polluted' };

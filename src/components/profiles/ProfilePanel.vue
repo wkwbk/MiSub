@@ -53,7 +53,7 @@ const emit = defineEmits<{
   edit: [profileId: string];
   delete: [profileId: string];
   deleteAll: [];
-  toggle: [event: any];
+  toggle: [profile: ProfileConfig];
   openCopy: [profileId: string];
   preview: [profileId: string];
   reorder: [profiles: ProfileConfig[]];
@@ -155,7 +155,7 @@ const listStartRef = ref<HTMLElement | null>(null);
 
 const handleEdit = (profileId: string) => emit('edit', profileId);
 const handleDelete = (profileId: string) => emit('delete', profileId);
-const handleToggle = (event: any) => emit('toggle', event);
+const handleToggle = (profile: ProfileConfig) => emit('toggle', profile);
 const handleOpenCopy = (profileId: string) => emit('openCopy', profileId);
 const handlePreview = (profileId: string) => emit('preview', profileId);
 const handleAdd = () => emit('add');

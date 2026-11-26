@@ -17,7 +17,7 @@ export class APIError extends Error {
   }
 }
 
-export interface UnauthorizedContext {
+interface UnauthorizedContext {
   url: string;
   data: unknown;
 }

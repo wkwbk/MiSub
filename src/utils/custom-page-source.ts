@@ -1,4 +1,4 @@
-export interface ParsedCustomPageScript {
+interface ParsedCustomPageScript {
   src: string;
   content: string;
 }

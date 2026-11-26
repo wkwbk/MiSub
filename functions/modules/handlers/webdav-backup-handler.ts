@@ -35,7 +35,7 @@ interface WebdavBackupConfig {
   [key: string]: unknown;
 }
 
-export interface BackupDataSection {
+interface BackupDataSection {
   subscriptions: MisubItem[];
   profiles: ProfileConfig[];
   ruleTemplates: RuleTemplateItem[];

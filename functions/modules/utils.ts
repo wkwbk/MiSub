@@ -203,7 +203,7 @@ export function createJsonResponse(data: unknown, status = 200, headers: Record<
 /**
  * 自定义 API 错误类
  */
-export class APIError extends Error {
+class APIError extends Error {
   status: number;
   code: string;
   details: unknown;
@@ -335,15 +335,7 @@ export function createErrorResponse(error: unknown, status = 500): Response {
   );
 }
 
-/**
- * 生成唯一标识符 (UUID v4)
- */
-export function generateId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID();
-  }
-  return `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-}
+export { generateId } from '@misub/core/utils/id.js';
 
 /**
  * 安全的 UTF-8 到 Base64 编码 (替代已弃用的 unescape/encodeURIComponent 方案)

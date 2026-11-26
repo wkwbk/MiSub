@@ -1,11 +1,10 @@
-import * as yaml from 'js-yaml';
 import type { ClashProxy } from '@misub/core/types.js';
 import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
 import { extractHostAndPort } from '@/lib/utils.js';
 
-export type NodeDetailItemKind = 'boolean' | 'array' | 'json' | 'string';
+type NodeDetailItemKind = 'boolean' | 'array' | 'json' | 'string';
 
-export interface NodeDetailItem {
+interface NodeDetailItem {
   key: string;
   label: string;
   value: boolean | string;
@@ -14,7 +13,7 @@ export interface NodeDetailItem {
   copyable: boolean;
 }
 
-export interface NodeDetailSection {
+interface NodeDetailSection {
   id: string;
   items: NodeDetailItem[];
 }
@@ -256,6 +255,69 @@ function flattenEntries(prefix: string, value: unknown, target: NodeDetailItem[]
   });
 }
 
+function formatYamlScalar(value: unknown): string {
+  if (value === null) return 'null';
+  if (typeof value === 'boolean' || typeof value === 'number') return String(value);
+  const str = String(value);
+  if (
+    str === '' ||
+    /^(?:true|false|null|~|yes|no|on|off)$/i.test(str) ||
+    /^[-+]?(?:\d+\.?\d*|\.\d+)$/.test(str) ||
+    /[:#{}[\],&*?|>!%@`'"\\\r\n]/.test(str) ||
+    /^\s|\s$/.test(str)
+  ) {
+    return JSON.stringify(str);
+  }
+  return str;
+}
+
+function formatSimpleYaml(value: unknown, indent = 0): string {
+  const prefix = ' '.repeat(indent);
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '[]';
+    return value
+      .map((item) => {
+        if (isPlainObject(item) || Array.isArray(item)) {
+          const nested = formatSimpleYaml(item, indent + 2);
+          return `${prefix}-\n${nested}`;
+        }
+        return `${prefix}- ${formatYamlScalar(item)}`;
+      })
+      .join('\n');
+  }
+  if (isPlainObject(value)) {
+    const entries = Object.entries(value).filter(([, v]) => v !== undefined);
+    if (entries.length === 0) return '{}';
+    return entries
+      .map(([k, v]) => {
+        const keyStr = formatYamlScalar(k);
+        if (isPlainObject(v) || Array.isArray(v)) {
+          const nested = formatSimpleYaml(v, indent + 2);
+          if ((Array.isArray(v) && v.length === 0) || (isPlainObject(v) && Object.keys(v).length === 0)) {
+            return `${prefix}${keyStr}: ${nested}`;
+          }
+          return `${prefix}${keyStr}:\n${nested}`;
+        }
+        return `${prefix}${keyStr}: ${formatYamlScalar(v)}`;
+      })
+      .join('\n');
+  }
+  return `${prefix}${formatYamlScalar(value)}`;
+}
+
+/**
+ * 按需动态加载 js-yaml 生成完整规范的 YAML（用于节点详情弹窗切换 YAML 标签页）
+ */
+export async function formatNodeDetailYaml(proxy: Omit<ClashProxy, 'metadata'> | null): Promise<string> {
+  if (!proxy) return '';
+  try {
+    const yaml = await import('js-yaml');
+    return yaml.dump(proxy, { lineWidth: -1, noRefs: true }).trim();
+  } catch {
+    return formatSimpleYaml(proxy);
+  }
+}
+
 /**
  * 解析节点详情配置，复用后端 urlToClashProxy 解析器
  */
@@ -306,7 +368,7 @@ export function parseNodeDetail(
 
     let formattedYaml = '';
     try {
-      formattedYaml = yaml.dump(cleanProxy, { lineWidth: -1, noRefs: true }).trim();
+      formattedYaml = formatSimpleYaml(cleanProxy).trim();
     } catch {
       formattedYaml = '';
     }

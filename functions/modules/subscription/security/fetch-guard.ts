@@ -8,7 +8,7 @@
 import type { ProfileConfig, SettingsConfig } from '@misub/core/types.js';
 import type { BoundRequestContext, StorageAdapter } from '../../../types.js';
 
-export type FetchLimitMode = 'cache' | 'strict';
+type FetchLimitMode = 'cache' | 'strict';
 
 export interface FetchGuardPolicy {
   enabled: boolean;

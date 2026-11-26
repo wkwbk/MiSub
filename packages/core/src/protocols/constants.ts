@@ -37,6 +37,10 @@ export function createProtocolRegex(protocols: readonly string[], caseInsensitiv
 
 export const NODE_PROTOCOL_PREFIXES = COMMON_NODE_PROTOCOLS.map((protocol) => `${protocol}://`);
 export const NODE_PROTOCOL_REGEX = createProtocolRegex(COMMON_NODE_PROTOCOLS);
+export const NODE_PROTOCOL_GLOBAL_REGEX = new RegExp(
+  `^(${COMMON_NODE_PROTOCOLS.map((protocol) => protocol.replace(/\+/g, '\\+')).join('|')}):\\/\\/`,
+  'gm',
+);
 
 /**
  * 判断节点链接是否为纯 UDP 协议（浏览器 Fetch 与 Workers TCPing 均无法直接探测 UDP）

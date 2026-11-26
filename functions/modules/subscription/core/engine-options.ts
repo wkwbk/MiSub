@@ -8,7 +8,7 @@ import { assertPublicNetworkUrl } from '../../security-utils.js';
 import { isHiddifyAgent, isMetaCore } from './user-agent-utils.js';
 import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
 
-export type TemplateSourceKind = 'none' | 'builtin' | 'custom' | 'remote';
+type TemplateSourceKind = 'none' | 'builtin' | 'custom' | 'remote';
 
 export interface TemplateSource {
   kind: TemplateSourceKind;
@@ -81,7 +81,7 @@ export function resolveExternalTemplateConfigUrl(templateSource: Partial<Templat
   return normalizeExternalTemplateConfigUrl(String(templateSource.value || '').trim());
 }
 
-export function normalizeExternalTemplateConfigUrl(input: unknown): string {
+function normalizeExternalTemplateConfigUrl(input: unknown): string {
   const raw = typeof input === 'string' ? input.trim() : '';
   if (!raw) return '';
 

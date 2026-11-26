@@ -4,7 +4,6 @@ import { Globe } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import SettingCard from '@/components/settings/SettingCard.vue';
 import Textarea from '@/components/ui/Textarea.vue';
-import * as yaml from 'js-yaml';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const { t } = useI18n();
@@ -30,13 +29,15 @@ const inputValue = computed({
 });
 
 const jsonError = ref('');
+let validateSeq = 0;
 
 function detectFormat(raw: string): 'json' | 'yaml' {
   if (/^\s*\{/.test(raw)) return 'json';
   return 'yaml';
 }
 
-function validateInput(): void {
+async function validateInput(): Promise<void> {
+  const seq = ++validateSeq;
   const raw = inputValue.value.trim();
   if (!raw) {
     jsonError.value = '';
@@ -48,14 +49,18 @@ function validateInput(): void {
     if (format === 'json') {
       parsed = JSON.parse(raw);
     } else {
+      const yaml = await import('js-yaml');
+      if (seq !== validateSeq) return;
       parsed = yaml.load(raw);
     }
+    if (seq !== validateSeq) return;
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
       jsonError.value = t('settings.dnsOverrideInvalidObject');
     } else {
       jsonError.value = '';
     }
   } catch {
+    if (seq !== validateSeq) return;
     jsonError.value = format === 'json' ? t('settings.dnsOverrideInvalidJson') : t('settings.dnsOverrideInvalidYaml');
   }
 }

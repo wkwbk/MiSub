@@ -15,8 +15,7 @@ import { extractSubscriptionTagNames } from '@/composables/useSubscriptionBulkIm
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useToastStore, type ToastType } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
-import { APIError } from '@/lib/http.js';
-import { fetchExternalSubscriptionUrl, parseSubscriptionContent } from '@/lib/api.js';
+import { fetchExternalSubscriptionUrl, isApiError, parseSubscriptionContent } from '@/lib/api.js';
 import { extractErrorMessage, handleError } from '@/utils/error-handler.js';
 import { isValidHttpUrl } from '@/utils/validation-utils.js';
 import { generateNodeId } from '@misub/core/utils/id.js';
@@ -322,7 +321,7 @@ const importSubscriptionUrl = async () => {
         signal: controller.signal,
       });
     } catch (error: unknown) {
-      if (error instanceof APIError) {
+      if (isApiError(error)) {
         const errData = error.data;
         const errText =
           (typeof errData?.error === 'string' && errData.error) ||

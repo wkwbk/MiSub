@@ -22,7 +22,7 @@ import { SubscriptionRepository } from '../../repositories/subscription-reposito
 
 export type ExternalSubscriptionSelector = string | { id?: string | null; action?: string | null } | null;
 
-export interface SubscriptionInspectionSuccess {
+interface SubscriptionInspectionSuccess {
   ok: true;
   requestedUrl: string;
   effectiveUserAgent: string;
@@ -32,7 +32,7 @@ export interface SubscriptionInspectionSuccess {
   userInfo: SubscriptionUserInfo | null;
 }
 
-export interface SubscriptionInspectionFailure {
+interface SubscriptionInspectionFailure {
   ok: false;
   requestedUrl?: string;
   effectiveUserAgent?: string;

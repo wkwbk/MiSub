@@ -17,7 +17,7 @@ export interface ReadFilesResult {
   byteSize: number;
 }
 
-export interface PickLocalFileOptions {
+interface PickLocalFileOptions {
   accept?: string;
   multiple?: boolean;
 }
@@ -25,7 +25,7 @@ export interface PickLocalFileOptions {
 /**
  * 把 File 读成文本。
  */
-export function readFileAsText(file: File): Promise<string> {
+function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ''));
@@ -87,7 +87,7 @@ export async function readFilesAsText(files: FileList | File[]): Promise<ReadFil
  * 通过瞬态 <input type="file"> 唤起本地文件选择。
  * 用户取消选择时返回空数组。
  */
-export function pickLocalFile(options: PickLocalFileOptions = {}): Promise<File[]> {
+function pickLocalFile(options: PickLocalFileOptions = {}): Promise<File[]> {
   if (typeof document === 'undefined') {
     return Promise.resolve([]);
   }
@@ -141,7 +141,7 @@ export async function pickAndReadJsonFile<T = unknown>(
 /**
  * 触发浏览器下载 Blob 文件并自动回收 ObjectURL。
  */
-export function downloadBlobFile(blob: Blob, filename: string): void {
+function downloadBlobFile(blob: Blob, filename: string): void {
   if (typeof document === 'undefined' || typeof URL === 'undefined') return;
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

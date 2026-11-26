@@ -138,7 +138,12 @@ const handleSelectAllValid = () => {
             {{ t('profileModal.cycleWarning') }}
           </span>
           <span v-else class="text-xs font-mono text-fg-subtle shrink-0">
-            {{ (item.subscriptions || []).length }} 机场 · {{ (item.manualNodes || []).length }} 节点
+            {{
+              t('profileModal.subProfileCounts', {
+                subscriptions: (item.subscriptions || []).length,
+                nodes: (item.manualNodes || []).length,
+              })
+            }}
           </span>
         </label>
       </div>

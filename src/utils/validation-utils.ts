@@ -1,8 +1,8 @@
-import { HttpUrlStringSchema, ManualNodeUrlSchema } from '@misub/core/schemas/entities.js';
+import { isValidHttpUrlString, isValidManualNodeUrl } from '@misub/core/utils/url-validators.js';
 import type { ProfileConfig } from '@misub/core/types.js';
 import { t } from '@/i18n/index.js';
 
-export interface FieldValidationRule {
+interface FieldValidationRule {
   required?: boolean | string;
   type?: 'url' | 'email' | 'nodeUrl';
   minLength?: number;
@@ -10,7 +10,7 @@ export interface FieldValidationRule {
   validator?: (value: unknown) => string | null | undefined;
 }
 
-export type ValidationRules = Record<string, FieldValidationRule>;
+type ValidationRules = Record<string, FieldValidationRule>;
 
 export interface ValidationResult {
   isValid: boolean;
@@ -18,11 +18,10 @@ export interface ValidationResult {
 }
 
 /**
- * 复用 @misub/core Zod Schema 验证 HTTP/HTTPS URL 格式。
+ * 复用 @misub/core 纯函数验证 HTTP/HTTPS URL 格式。
  */
 export function isValidHttpUrl(url: unknown): boolean {
-  if (typeof url !== 'string') return false;
-  return HttpUrlStringSchema.safeParse(url).success;
+  return isValidHttpUrlString(url);
 }
 
 /**
@@ -33,11 +32,10 @@ function isValidUrl(url: unknown): boolean {
 }
 
 /**
- * 复用 @misub/core Zod Schema 验证节点URL格式
+ * 复用 @misub/core 纯函数验证节点URL格式
  */
 function isValidNodeUrl(nodeUrl: unknown): boolean {
-  if (typeof nodeUrl !== 'string') return false;
-  return ManualNodeUrlSchema.safeParse(nodeUrl).success;
+  return isValidManualNodeUrl(nodeUrl);
 }
 
 /**

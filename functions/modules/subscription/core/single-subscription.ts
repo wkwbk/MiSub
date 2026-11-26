@@ -9,7 +9,7 @@ import { assertPublicNetworkUrl } from '../../security-utils.js';
 import { fetchSubscriptionNodes, type FetchSubscriptionNodesResult } from '../security/node-fetcher.js';
 import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
 
-export type AnnotatedNodeItem = ParsedNodeInfo & {
+type AnnotatedNodeItem = ParsedNodeInfo & {
   subscriptionName?: string;
   enabled?: boolean;
   metadata?: NodeMetadata;

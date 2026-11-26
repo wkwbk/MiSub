@@ -11,6 +11,10 @@ export default {
     nextMonth: '下个月',
     prevYear: '上一年',
     nextYear: '下一年',
+    weekdaysShort: '一,二,三,四,五,六,日',
+    monthsShort: '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月',
+    yearTitle: '{year}年',
+    yearMonthTitle: '{year}年 {month}',
   },
   pageTitles: {
     home: '首页',
@@ -230,6 +234,8 @@ export default {
     tabManualNodes: '节点',
     tabAll: '全部展示',
     subProfilesCountBadge: '{count} 个组合',
+    subProfileCounts: '{subscriptions} 机场 · {nodes} 节点',
+    tabsAriaLabel: '资源标签页',
     noMatchedNodes: '没有找到匹配的节点。',
     noAvailableNodes: '没有可用的手动节点',
   },
@@ -528,6 +534,26 @@ export default {
       exclude: '排除',
       keepOnly: '仅包含',
       mixed: '混合',
+    },
+    presets: {
+      regions: {
+        hk: '香港',
+        tw: '台湾',
+        jp: '日本',
+        sg: '新加坡',
+        us: '美国',
+        kr: '韩国',
+        de: '德国',
+        uk: '英国',
+      },
+      keywords: {
+        official: '官网',
+        expire: '过期',
+        remaining: '剩余',
+        multiplier: '倍率',
+        test: '测试',
+        maintenance: '维护',
+      },
     },
   },
   bulkImport: {
@@ -1932,5 +1958,10 @@ export default {
     batchReplaceDesc: '用以下标签替换选中节点的全部现有标签。',
     batchRemoveDesc: '从选中的节点中移除以下指定的标签。',
     batchClearDesc: '确认后将清空所选节点上的全部标签。',
+  },
+  footer: {
+    copyrightPrefix: 'Copyright © {year}',
+    allRightsReserved: 'All Rights Reserved.',
+    copyrightNoBrand: 'Copyright © {year}. All Rights Reserved.',
   },
 };

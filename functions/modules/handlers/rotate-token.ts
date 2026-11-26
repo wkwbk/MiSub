@@ -6,7 +6,7 @@ import { sendTgNotification, tgEscape } from '../notifications.js';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
-export interface TokenAutoRotateConfig {
+interface TokenAutoRotateConfig {
   enabled?: boolean;
   intervalDays?: number;
   lastRotatedAt?: string | null;

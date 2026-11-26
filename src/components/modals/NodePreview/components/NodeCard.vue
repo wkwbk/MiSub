@@ -15,7 +15,7 @@ interface PreviewNodeItem {
   port?: number | string;
   enabled?: boolean;
   ir?: NodeIR;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface ParsedNodeInfo {

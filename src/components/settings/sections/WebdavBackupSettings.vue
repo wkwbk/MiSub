@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { WebdavBackupConfig, WebdavRemoteFile } from '@misub/core/types.js';
-import { HttpUrlStringSchema } from '@misub/core/schemas/entities.js';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 import { CloudDownload } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
@@ -69,7 +69,7 @@ const remoteFiles = computed<WebdavRemoteFile[]>(() => remoteFilesQuery.data.val
 const testConnection = async (): Promise<void> => {
   if (isTesting.value) return;
   const config = webdavConfig.value;
-  if (!HttpUrlStringSchema.safeParse(config.endpoint || '').success) {
+  if (!isValidHttpUrlString(config.endpoint || '')) {
     showToast(t('settings.webdavInvalidEndpoint'), 'error');
     return;
   }

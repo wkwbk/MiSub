@@ -15,9 +15,12 @@ import { useI18n } from '@/i18n/index.js';
 interface ImportClientItem {
   id: string;
   name?: string;
+  description?: string;
+  url?: string;
+  repo?: string | null;
   icon?: string;
   platforms?: string[];
-  [key: string]: any;
+  enabled?: boolean;
 }
 
 type PlatformKey = 'ios' | 'android' | 'windows' | 'macos' | 'linux' | 'HarmonyOS';

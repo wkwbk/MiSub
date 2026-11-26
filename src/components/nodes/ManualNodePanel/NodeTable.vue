@@ -8,7 +8,7 @@ import SortingBanner from '@/components/shared/SortingBanner.vue';
 import EmptyState from '@/components/ui/EmptyState.vue';
 import { useI18n } from '@/i18n/index.js';
 import { useDataStore } from '@/stores/useDataStore.js';
-import { hasDragOrderChanged } from '@/composables/useSortingMode.js';
+import { hasDragOrderChanged, type DragEndEvent } from '@/composables/useSortingMode.js';
 import { DEFAULT_LIST_PAGE_SIZE } from '@/constants/pagination.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
 import type { NodeInspectMap } from '@/composables/manual-nodes/filters.js';
@@ -110,7 +110,7 @@ const handleChangePage = (page: string | number) => {
   });
 };
 
-const handleDragEnd = (evt: any) => {
+const handleDragEnd = (evt: DragEndEvent) => {
   if (hasDragOrderChanged(evt)) {
     emit('sort-end');
   }

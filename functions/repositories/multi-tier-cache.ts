@@ -470,10 +470,6 @@ export class MultiTierCache {
 
 export const defaultMultiTierCache = new MultiTierCache();
 
-export function resetAllMultiTierCaches(): void {
-  defaultMultiTierCache.reset();
-}
-
 registerCacheResetListener(() => {
   defaultMultiTierCache.reset();
 });

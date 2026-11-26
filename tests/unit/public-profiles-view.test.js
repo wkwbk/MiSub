@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
 import PublicProfilesView from '@/views/PublicProfilesView.vue';
 import PublicLinksSettings from '@/components/settings/sections/PublicLinksSettings.vue';
 import ClientSettings from '@/components/settings/sections/ClientSettings.vue';
 import { api } from '@/lib/http.js';
+import { appQueryClient } from '@/lib/query-client.js';
 
 vi.mock('@/lib/http.js', () => ({
   api: {
@@ -33,8 +35,12 @@ vi.mock('@/components/modals/QuickImportModal.vue', () => ({
 
 describe('PublicProfilesView hero loading state', () => {
   let wrapper;
+  let pinia;
 
   beforeEach(() => {
+    pinia = createPinia();
+    setActivePinia(pinia);
+    appQueryClient.clear();
     api.get.mockReset();
     api.get.mockImplementation((url) => {
       if (url === '/api/clients') {
@@ -47,6 +53,7 @@ describe('PublicProfilesView hero loading state', () => {
   afterEach(async () => {
     await vi.dynamicImportSettled();
     wrapper?.unmount();
+    appQueryClient.clear();
     vi.clearAllMocks();
   });
 
@@ -66,6 +73,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -116,6 +124,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -178,6 +187,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -218,6 +228,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -250,6 +261,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -279,6 +291,7 @@ describe('PublicProfilesView hero loading state', () => {
     );
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -314,6 +327,7 @@ describe('PublicProfilesView hero loading state', () => {
       });
       wrapper = mount(PublicProfilesView, {
         global: {
+          plugins: [pinia],
           stubs: {
             ProfileGrid: true,
             BaseIcon: true,
@@ -346,6 +360,7 @@ describe('PublicProfilesView hero loading state', () => {
     );
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -375,6 +390,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,
@@ -504,6 +520,7 @@ describe('PublicProfilesView hero loading state', () => {
 
     wrapper = mount(PublicProfilesView, {
       global: {
+        plugins: [pinia],
         stubs: {
           ProfileGrid: true,
           BaseIcon: true,

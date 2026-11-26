@@ -10,14 +10,14 @@ import { resolveSafeLoginRedirect } from '@/utils/login-path.js';
 
 export type SessionState = 'loading' | 'loggedIn' | 'loggedOut';
 
-export interface TurnstilePublicConfig {
+interface TurnstilePublicConfig {
   siteKey: string;
   enableForGuestbook: boolean;
   enableForLogin: boolean;
   [key: string]: unknown;
 }
 
-export interface CustomPagePublicConfig {
+interface CustomPagePublicConfig {
   enabled: boolean;
   useDefaultLayout: boolean;
   allowExternalStylesheets: boolean;

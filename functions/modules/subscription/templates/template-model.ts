@@ -1,6 +1,6 @@
 import type { ClashProxy } from '@misub/core/types.js';
 
-export interface TemplateMeta {
+interface TemplateMeta {
   name: string;
   source: string;
   target: string;
@@ -53,7 +53,7 @@ export interface RegionOverrideRule {
   flags?: string;
 }
 
-export interface TemplateSettings {
+interface TemplateSettings {
   managedConfigUrl: string;
   interval: number;
   skipCertVerify: boolean;
@@ -65,7 +65,7 @@ export interface TemplateSettings {
   [key: string]: unknown;
 }
 
-export interface TemplateExtras {
+interface TemplateExtras {
   chainProxy?: ChainProxyConfig[];
   rulesets?: Array<{
     group?: string;

@@ -9,6 +9,7 @@
 import type { ClashProxy } from '@misub/core/types.js';
 import type { BatchCachePutEntry, Env } from '../types.js';
 import { urlToClashProxy } from '@misub/core/protocols/url-to-clash.js';
+import { isUdpOnlyProtocol } from '@misub/core/protocols/constants.js';
 import { parseNodeInfo } from '@misub/core/node/geo-utils.js';
 import { NodeRepository } from '../repositories/node-repository.js';
 
@@ -99,7 +100,6 @@ const IP_GEO_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const DNS_CACHE_PREFIX = 'node_inspect_dns:';
 const IP_CACHE_PREFIX = 'node_inspect_ip:';
 
-const UDP_ONLY_PROTOCOLS = new Set(['hysteria', 'hysteria2', 'hy', 'hy2', 'tuic', 'wireguard', 'wg']);
 const CDN_CAPABLE_TRANSPORTS = new Set(['ws', 'grpc', 'h2', 'http', 'xhttp', 'httpupgrade', 'splithttp']);
 
 // 主流 CDN IPv4 CIDR 段（重点覆盖 Cloudflare / Fastly / Gcore / Akamai 常见优选段）
@@ -426,7 +426,7 @@ export function extractProtocolTransportInfo(nodeUrl: unknown): ProtocolTranspor
     .trim()
     .toLowerCase();
   const tls = Boolean(proxy?.tls || protocol === 'trojan' || protocol === 'hysteria2' || protocol === 'tuic');
-  const isUdpOnly = UDP_ONLY_PROTOCOLS.has(protocol);
+  const isUdpOnly = isUdpOnlyProtocol(rawUrl) || isUdpOnlyProtocol(`${protocol}://`);
 
   return {
     server,

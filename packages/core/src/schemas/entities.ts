@@ -1,23 +1,16 @@
 import { z } from 'zod';
-import { NODE_PROTOCOL_REGEX } from '../protocols/constants.js';
-
-const HTTP_URL_REGEX = /^https?:\/\/.+/i;
-const HTTP_PROXY_AUTH_URL_REGEX = /^https?:\/\/[^/\s]+@[^/\s]+/i;
-
-const isValidHttpProtocolUrl = (value: string): boolean => {
-  try {
-    const parsed = new URL(value);
-    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-};
+import {
+  HTTP_PROXY_AUTH_URL_REGEX,
+  HTTP_URL_REGEX,
+  isValidHttpUrlString,
+  isValidManualNodeUrl,
+} from '../utils/url-validators.js';
 
 export const HttpUrlStringSchema = z
   .string()
   .trim()
   .regex(HTTP_URL_REGEX)
-  .refine(isValidHttpProtocolUrl, 'URL must be a valid http:// or https:// URL');
+  .refine(isValidHttpUrlString, 'URL must be a valid http:// or https:// URL');
 
 export const RegexRuleObjectSchema = z
   .object({
@@ -192,19 +185,13 @@ export const RemoteSubscriptionUrlSchema = z
   .string()
   .trim()
   .regex(HTTP_URL_REGEX, 'Subscription URL must start with http:// or https://')
-  .refine(isValidHttpProtocolUrl, 'Subscription URL must be a valid http:// or https:// URL')
+  .refine(isValidHttpUrlString, 'Subscription URL must be a valid http:// or https:// URL')
   .refine((value) => !HTTP_PROXY_AUTH_URL_REGEX.test(value), 'Authenticated HTTP proxy URLs belong to manual nodes');
 
 export const ManualNodeUrlSchema = z
   .string()
   .trim()
-  .refine((value) => {
-    if (!value) return false;
-    if (/^https?:\/\//i.test(value)) {
-      return HTTP_PROXY_AUTH_URL_REGEX.test(value);
-    }
-    return NODE_PROTOCOL_REGEX.test(value);
-  }, 'Manual node URL must use a supported node protocol');
+  .refine(isValidManualNodeUrl, 'Manual node URL must use a supported node protocol');
 
 export const SubscriptionSchema = z
   .object({

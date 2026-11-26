@@ -5,7 +5,7 @@ const DNS_MODES = Object.freeze({
   POLLUTED: 'polluted',
 } as const);
 
-export type DnsMode = (typeof DNS_MODES)[keyof typeof DNS_MODES];
+type DnsMode = (typeof DNS_MODES)[keyof typeof DNS_MODES];
 
 export interface DnsPolicy {
   mode: DnsMode;
@@ -26,7 +26,7 @@ export interface ResolveDnsOptions {
   subscriptionDnsPolicies?: SubscriptionDnsPolicyEntry[];
 }
 
-export interface SingboxDnsServer {
+interface SingboxDnsServer {
   tag: string;
   type: string;
   server: string;

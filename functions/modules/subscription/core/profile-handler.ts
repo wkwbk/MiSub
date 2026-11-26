@@ -15,14 +15,14 @@ import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
 
 const PROFILE_FETCH_CONCURRENCY = 4;
 
-export type ProfileNodeItem = ParsedNodeInfo & {
+type ProfileNodeItem = ParsedNodeInfo & {
   subscriptionName?: string;
   tags?: string[];
   metadata?: NodeMetadata;
   warning?: Record<string, unknown>;
 };
 
-export interface ProfileSubscriptionEntry {
+interface ProfileSubscriptionEntry {
   subscriptionName: string;
   url: string;
   success: boolean;

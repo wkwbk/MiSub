@@ -1,32 +1,9 @@
 import type { ManualNodeItem, ProfileConfig, SubscriptionItem, SubscriptionUserInfo } from '@misub/core/types.js';
 import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
-
-const NODE_PROTOCOLS = [
-  'ss',
-  'ssr',
-  'vmess',
-  'vless',
-  'trojan',
-  'hysteria',
-  'hysteria2',
-  'hy',
-  'hy2',
-  'tuic',
-  'anytls',
-  'socks5',
-  'socks',
-  'snell',
-  'naive+https',
-  'naive+quic',
-  'naive+http',
-  'wireguard',
-  'v2rayn',
-];
-
-const NODE_PROTOCOL_REGEX = new RegExp(
-  `^(${NODE_PROTOCOLS.map((protocol) => protocol.replace('+', '\\+')).join('|')}):\\/\\/`,
-  'i',
-);
+import {
+  detectNodeProtocol as detectCoreNodeProtocol,
+  NODE_PROTOCOL_REGEX,
+} from '@misub/core/protocols/constants.js';
 
 export interface ExternalSubscriptionDto {
   id: string;
@@ -109,10 +86,8 @@ export function isManualNode(item: unknown): item is ManualNodeItem {
 }
 
 export function detectNodeProtocol(url = ''): string {
-  const match = String(url || '')
-    .trim()
-    .match(/^([a-z0-9+]+):\/\//i);
-  return match ? match[1].toLowerCase() : '';
+  const protocol = detectCoreNodeProtocol(url);
+  return protocol === 'unknown' ? '' : protocol;
 }
 
 export function toExternalSubscription(item: SubscriptionRecordLike): ExternalSubscriptionDto {

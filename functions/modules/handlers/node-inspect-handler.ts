@@ -35,7 +35,7 @@ interface CloudflareSocketsModule {
   connect?: ConnectFn;
 }
 
-export interface TcpingResultEntry {
+interface TcpingResultEntry {
   status: 'ok' | 'timeout' | 'error';
   latency: number;
   mode: 'tcping';

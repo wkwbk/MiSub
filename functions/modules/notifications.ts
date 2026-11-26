@@ -6,7 +6,9 @@
 
 import type { MisubItem, SubscriptionUserInfo } from '@misub/core/types.js';
 import { formatBytes } from '@misub/core/utils/format-utils.js';
+import { tryDecodeBase64Utf8 } from '@misub/core/utils/base64.js';
 import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
+import { NODE_PROTOCOL_GLOBAL_REGEX } from '@misub/core/protocols/constants.js';
 import type { Env, StorageAdapter } from '../types.js';
 import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
@@ -247,7 +249,6 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
   const CONCURRENCY = 3;
   const TIMEOUT = 15000;
 
-  const nodeRegex = /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|anytls|socks5|socks):\/\//gm;
   let changesMade = false;
   let updatedCount = 0;
   let failedCount = 0;
@@ -306,13 +307,8 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
       if (nodeCountResult.status === 'fulfilled') {
         if (nodeCountResult.value.ok) {
           const text = await nodeCountResult.value.text();
-          let decoded = '';
-          try {
-            decoded = atob(text.replace(/\s/g, ''));
-          } catch {
-            decoded = text;
-          }
-          const matches = decoded.match(nodeRegex);
+          const decoded = tryDecodeBase64Utf8(text, 1);
+          const matches = decoded.match(NODE_PROTOCOL_GLOBAL_REGEX);
           if (matches) {
             const originalSub = allSubs.find((s) => s.id === sub.id);
             if (originalSub) {

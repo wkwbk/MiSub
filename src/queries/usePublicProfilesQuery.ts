@@ -1,9 +1,10 @@
-import { useQuery, type QueryClient, type UseQueryOptions } from '@tanstack/vue-query';
+import type { MaybeRefOrGetter } from 'vue';
+import { useQuery, type QueryClient } from '@tanstack/vue-query';
 import { api } from '@/lib/http.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 
-export interface PublicProfileSummary {
+interface PublicProfileSummary {
   id: string;
   name: string;
   description: string;
@@ -18,7 +19,7 @@ export interface PublicProfileSummary {
   [key: string]: unknown;
 }
 
-export interface PublicProfilesResponse {
+interface PublicProfilesResponse {
   success: boolean;
   data?: PublicProfileSummary[];
   config?: {
@@ -35,20 +36,13 @@ export interface PublicProfilesResponse {
   [key: string]: unknown;
 }
 
-export interface UsePublicProfilesQueryOptions
-  extends Omit<
-    UseQueryOptions<PublicProfilesResponse, Error, PublicProfilesResponse, typeof QUERY_KEYS.publicProfiles>,
-    'queryKey' | 'queryFn'
-  > {
+export interface UsePublicProfilesQueryOptions {
+  enabled?: MaybeRefOrGetter<boolean>;
+  staleTime?: number;
+  gcTime?: number;
+  retry?: boolean | number;
+  refetchOnWindowFocus?: boolean;
   queryClient?: QueryClient;
-}
-
-export async function fetchPublicProfilesWithQuery(queryClient: QueryClient): Promise<PublicProfilesResponse> {
-  return await queryClient.fetchQuery({
-    queryKey: QUERY_KEYS.publicProfiles,
-    staleTime: 0,
-    queryFn: () => api.get(API_ENDPOINTS.PUBLIC_PROFILES) as Promise<PublicProfilesResponse>,
-  });
 }
 
 export function usePublicProfilesQuery(options: UsePublicProfilesQueryOptions = {}) {

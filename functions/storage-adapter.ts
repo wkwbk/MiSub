@@ -111,7 +111,7 @@ function stableStringify(value: unknown): string {
 /**
  * D1 存储适配器（八表职责分离与索引行级存储）
  */
-export class D1StorageAdapter implements StorageAdapter {
+class D1StorageAdapter implements StorageAdapter {
   db: D1Database;
   type: string;
 

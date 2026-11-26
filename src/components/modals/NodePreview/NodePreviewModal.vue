@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue';
 import type { NodeIR, SubscriptionItem } from '@misub/core/types.js';
 import { Gauge, Loader2, X } from '@lucide/vue';
-import { api, APIError } from '@/lib/http.js';
+import { checkAdminSession, fetchNodePreview, isUnauthorizedApiError } from '@/lib/api.js';
 import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { extractErrorMessage } from '@/utils/error-handler.js';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -154,7 +154,7 @@ const dataStore = useDataStore();
 const { addNodesFromBulk } = useManualNodes(dataStore.markDirty);
 
 // 单订阅节点开关 & 延迟测速状态
-const isPublicPreview = computed(() => props.apiEndpoint === '/api/public/preview');
+const isPublicPreview = computed(() => props.apiEndpoint === API_ENDPOINTS.PUBLIC_PREVIEW);
 const canManageSubscriptionNodes = computed(
   () => Boolean(props.subscriptionId) && !props.profileId && !isPublicPreview.value,
 );
@@ -474,8 +474,8 @@ const handleSaveSelection = async () => {
 
     pickingMode.value = false;
     selectedUrls.value.clear();
-  } catch (err: any) {
-    showToast(t('nodePreview.saveSelectionFailed', { message: err.message }), 'error');
+  } catch (err: unknown) {
+    showToast(t('nodePreview.saveSelectionFailed', { message: extractErrorMessage(err) }), 'error');
   }
 };
 
@@ -627,7 +627,7 @@ const loadNodes = async () => {
       console.debug('[Preview] Sending request to:', props.apiEndpoint, requestData);
     }
 
-    const data = await api.post<{
+    const data = await fetchNodePreview<{
       success?: boolean;
       error?: string;
       nodes?: PreviewNodeItem[];
@@ -696,9 +696,9 @@ const loadNodes = async () => {
     currentPage.value = 1;
   } catch (err: unknown) {
     // 提供更友好的错误信息（文案与 useNodePreview.js 保持同一套 key）
-    if (err instanceof APIError && err.status === 401) {
+    if (isUnauthorizedApiError(err)) {
       try {
-        await api.get(API_ENDPOINTS.DATA);
+        await checkAdminSession();
         error.value = t('nodePreview.authAbnormal');
       } catch {
         error.value = t('nodePreview.authFailed');
