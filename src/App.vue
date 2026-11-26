@@ -267,9 +267,13 @@ watch([sessionState, isLoggingOut, () => route.fullPath, loginPath], redirectUna
 });
 
 const isCustomPageFullWidth = computed(() => {
-  if (!isCustomPublicPageRoute.value) return false;
+  if (sessionState.value === 'loading') return false;
   const cp = sessionStore.publicConfig?.customPage;
-  return cp?.enabled === true && cp?.useDefaultLayout === false;
+  if (cp?.enabled !== true || cp?.useDefaultLayout !== false) return false;
+  if (isLoggedIn.value) {
+    return layoutMode.value === 'modern' && route.name === 'Explore';
+  }
+  return isCustomPublicPageRoute.value;
 });
 </script>
 

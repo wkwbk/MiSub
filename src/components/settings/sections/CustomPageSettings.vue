@@ -110,18 +110,13 @@ const applyTemplate = async (tpl: CustomPageTemplate): Promise<void> => {
   });
   if (confirmed) {
     const parsed = parseCustomPageSource(tpl.content, tpl.css || '');
-    const layoutPatch = tpl.layoutPreset
-      ? {
-          useDefaultLayout: tpl.layoutPreset.useDefaultLayout,
-          hideHeader: tpl.layoutPreset.hideHeader,
-          hideFooter: tpl.layoutPreset.hideFooter,
-          hideBranding: tpl.layoutPreset.hideBranding,
-        }
-      : {};
     updateCustomPage({
       content: parsed.html,
       css: parsed.css,
-      ...layoutPatch,
+      useDefaultLayout: tpl.layoutPreset.useDefaultLayout,
+      hideHeader: tpl.layoutPreset.hideHeader,
+      hideFooter: tpl.layoutPreset.hideFooter,
+      hideBranding: tpl.layoutPreset.hideBranding,
     });
   }
 };
@@ -279,35 +274,14 @@ const normalizeFullPageSource = (): void => {
                 class="w-full h-20 rounded-md border border-line bg-canvas/90 p-2.5 overflow-hidden relative flex flex-col justify-between"
                 aria-hidden="true"
               >
-                <template v-if="tpl.id === 'minimal-nav'">
-                  <div class="w-10 h-2 rounded-full bg-fg/20 mx-auto mt-1"></div>
-                  <div class="w-3/4 h-2.5 rounded-full bg-fg/15 border border-line mx-auto"></div>
-                  <div class="grid grid-cols-4 gap-1.5 w-full">
-                    <div v-for="i in 4" :key="i" class="h-4 rounded bg-surface border border-line"></div>
-                  </div>
-                </template>
-                <template v-else-if="tpl.id === 'personal-home'">
-                  <div class="w-full h-2 rounded bg-surface border border-line"></div>
-                  <div class="grid grid-cols-3 gap-1.5 flex-1 mt-1.5">
-                    <div class="col-span-2 rounded bg-surface border border-line p-1.5 flex flex-col justify-end">
-                      <div class="w-2/3 h-1.5 rounded bg-fg/20"></div>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                      <div class="flex-1 rounded bg-surface border border-line"></div>
-                      <div class="flex-1 rounded bg-surface border border-line"></div>
-                    </div>
-                  </div>
-                </template>
-                <template v-else>
-                  <div class="flex flex-col items-center gap-1 pt-0.5">
-                    <div class="w-12 h-1.5 rounded-full bg-primary-500/40"></div>
-                    <div class="w-2/3 h-2 rounded bg-fg/20"></div>
-                  </div>
-                  <div class="grid grid-cols-3 gap-1 mt-1.5">
-                    <div v-for="i in 3" :key="i" class="h-3 rounded bg-surface border border-line"></div>
-                  </div>
-                  <div class="w-full h-3.5 rounded bg-surface border border-line mt-1"></div>
-                </template>
+                <div class="flex flex-col items-center gap-1 pt-0.5">
+                  <div class="w-12 h-1.5 rounded-full bg-primary-500/40"></div>
+                  <div class="w-2/3 h-2 rounded bg-fg/20"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-1 mt-1.5">
+                  <div v-for="i in 3" :key="i" class="h-3 rounded bg-surface border border-line"></div>
+                </div>
+                <div class="w-full h-3.5 rounded bg-surface border border-line mt-1"></div>
               </div>
 
               <div class="space-y-1">

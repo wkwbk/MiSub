@@ -70,42 +70,34 @@ describe('CustomPageSettings safety messaging', () => {
     }
   });
 
-  it('applies scoped, script-free preset templates without global CSS resets', async () => {
+  it('keeps only the Dark Editorial Zine template without external site attribution and applies scoped, script-free HTML/CSS', async () => {
     const originalConfirm = window.confirm;
     window.confirm = vi.fn(() => true);
     const wrapper = mountSettings();
 
     try {
       const buttons = wrapper.findAll('[data-testid="custom-page-template"]');
-      expect(buttons.length).toBe(4);
+      expect(buttons.length).toBe(1);
 
-      for (const button of buttons) {
-        await button.trigger('click');
-        const { content, css } = wrapper.props('settings').customPage;
+      const templateText = buttons[0].text();
+      expect(templateText).toContain('Dark Editorial Zine');
+      expect(templateText).not.toContain('saas.sin.fan');
+      expect(templateText).not.toContain('Minimal navigation');
+      expect(templateText).not.toContain('Personal homepage');
+      expect(templateText).not.toContain('Subscription portal');
 
-        expect(content).toBeTruthy();
-        expect(css).toBeTruthy();
-        expect(content).not.toMatch(/<script/i);
-        expect(css).not.toMatch(/(^|\n)\s*\*\s*\{/);
-      }
-
-      // First template (Minimal Nav) auto-applies immersive fullscreen layout preset
       await buttons[0].trigger('click');
-      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
-      expect(wrapper.props('settings').customPage.hideHeader).toBe(true);
-      expect(wrapper.props('settings').customPage.hideFooter).toBe(true);
+      const { content, css, useDefaultLayout, hideHeader, hideFooter, hideBranding } =
+        wrapper.props('settings').customPage;
 
-      // Third template (Sub Portal) keeps native header & footer
-      await buttons[2].trigger('click');
-      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
-      expect(wrapper.props('settings').customPage.hideHeader).toBe(false);
-      expect(wrapper.props('settings').customPage.hideFooter).toBe(false);
-
-      // Fourth template (Editorial Zine) auto-applies immersive fullscreen layout preset
-      await buttons[3].trigger('click');
-      expect(wrapper.props('settings').customPage.useDefaultLayout).toBe(false);
-      expect(wrapper.props('settings').customPage.hideHeader).toBe(true);
-      expect(wrapper.props('settings').customPage.hideFooter).toBe(true);
+      expect(content).toBeTruthy();
+      expect(css).toBeTruthy();
+      expect(content).not.toMatch(/<script/i);
+      expect(css).not.toMatch(/(^|\n)\s*\*\s*\{/);
+      expect(useDefaultLayout).toBe(false);
+      expect(hideHeader).toBe(true);
+      expect(hideFooter).toBe(true);
+      expect(hideBranding).toBe(true);
     } finally {
       window.confirm = originalConfirm;
     }
