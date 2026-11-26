@@ -32,12 +32,12 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  // 当前版本本地更新日志 (v2.8.7)
-  const localChangelog = `🚀 **核心架构升级、订阅协议扩展、安全加固与代码瘦身**
-- **核心架构与性能**：升级 \`@misub/core\` 工作区架构、Hono 路由与多级缓存，新增乐观并发保存锁（\`baseRevision\`）、增量缓存失效与虚拟化节点预览。
-- **订阅协议与规则**：新增原生 Shadowrocket \`.conf\` 生成器与 \`v2rayn://\` 协议转换，支持域名嗅探、安全 DoH 与国内直连分流；支持按订阅暂停自动更新、订阅组 \`linkId\` 解耦与 Token 自动轮换。
-- **安全加固与公开页**：接入 Cloudflare Turnstile 登录与留言板人机验证，强化鉴权速率限制、敏感凭据脱敏与 SSRF/ReDoS 防护；新增自定义公开页预设模板。
-- **全仓瘦身与类型统一**：清理孤立死代码与冗余导出，抽取 \`client-shared\` 合并多客户端生成器与渲染器重复逻辑，统一 Zod 到 JSDoc 类型推导并收敛设置页公共组件。`;
+  // 当前版本本地更新日志 (v2.9.0)
+  const localChangelog = `🚀 **全仓严格 TypeScript 迁移、运行时加固与工程质量全面升级**
+- **全仓严格 TypeScript 迁移**：将 \`@misub/core\`、Edge 后端（\`worker.ts\` / \`functions/\`）及前端（含 135 个 Vue SFC）全面迁移至严格模式 TypeScript，实现全仓零 \`any\` 类型约束，并接入 \`tsc\` / \`vue-tsc\` CI 门禁。
+- **Worker 运行时加固与可观测性**：强化边缘并发控制、连接清理、SSRF 防护与 Single-Flight 缓存防击穿；配置迁移至 \`wrangler.jsonc\`，启用 Workers Observability、Source Maps 与 Smart Placement。
+- **前端架构标准化**：统一 API 端点与 HTTP 客户端、TanStack Query 数据层、单向数据流、统一错误处理、Zod 校验及国际化文案，精简弹窗导入模块结构。
+- **全仓深度瘦身与性能优化**：完成 P2 专项优化与 Knip 死代码清理，进一步精简前端构建产物体积并提升整体可维护性。`;
 
   function normalizeVersion(version: string | number | null | undefined): string {
     return String(version || '')
