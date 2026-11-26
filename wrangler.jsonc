@@ -71,7 +71,7 @@
     {
       "binding": "MISUB_DB",
       "database_name": "misub",
-      "database_id": "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
+      "database_id": "aaaeee3d-8647-4aa9-8f6c-71d390a9f894"
     }
   ],
 
@@ -81,7 +81,7 @@
     "d1_databases": [
       {
         "binding": "MISUB_DB",
-        "database_id": "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
+        "database_id": "1834a1bf-a87f-4837-9834-33f3f2ec3b09"
       }
     ]
   }
