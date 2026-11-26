@@ -2,7 +2,7 @@
 import { useI18n } from '@/i18n/index.js';
 import { computed, markRaw, ref, watch } from 'vue';
 import type { ProfileConfig } from '@misub/core/types.js';
-import { Box, Code2, Copy, Link2, Loader2, Monitor, Send, Zap } from '@lucide/vue';
+import { Box, Code2, Copy, Download, Link2, Loader2, Monitor, RefreshCw, Send, Zap } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
@@ -167,7 +167,7 @@ const handleCreateShortLink = async () => {
 </script>
 
 <template>
-  <Modal :show="show" :show-cancel="false" :show-confirm="false" @update:show="close">
+  <Modal :show="show" :show-cancel="false" :show-confirm="false" size="md" @update:show="close">
     <template #title>
       <h3 class="text-base font-semibold text-fg">
         {{ t('copyLink.title') }}
@@ -175,107 +175,119 @@ const handleCreateShortLink = async () => {
     </template>
 
     <template #body>
-      <div v-if="!baseUrl" class="mt-2">
+      <div v-if="!baseUrl">
         <div class="flex items-center gap-2 text-red-400 text-xs bg-transparent p-3 rounded-md border border-line">
           <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-red-400"></span>
           <span>{{ t('copyLink.tokenMissingHint') }}</span>
         </div>
       </div>
-      <div v-else class="space-y-2 mt-2">
+      <div v-else class="space-y-4">
         <div
           v-if="shortLinkEnabled || localShortLink"
-          class="mb-3 p-3 rounded-md border border-line bg-inset/40 space-y-2"
+          class="p-3.5 rounded-lg border border-line bg-inset/40 space-y-2.5"
         >
           <div class="flex items-center justify-between gap-2">
             <span class="inline-flex items-center gap-1.5 text-xs font-medium text-fg">
-              <Link2 class="h-3.5 w-3.5 text-fg-muted" />
+              <Link2 class="h-3.5 w-3.5 text-fg-muted shrink-0" />
               {{ t('copyLink.shortLinkLabel') }}
             </span>
           </div>
 
-          <div v-if="localShortLink" class="flex items-center gap-1.5">
-            <input
-              :value="localShortLink"
-              class="flex-1 min-w-0 h-8 px-2.5 text-xs font-mono text-fg bg-inset border border-line rounded-md focus-visible:outline-hidden"
-              readonly
-              type="text"
-            />
-            <button
-              class="shrink-0 inline-flex items-center gap-1 h-8 px-2.5 text-xs font-medium rounded-md bg-accent text-accent-fg hover:opacity-90 transition-opacity cursor-pointer"
-              type="button"
-              @click="copyShortLink"
-            >
-              <Copy class="h-3.5 w-3.5" />
-              <span>{{ t('actions.copy') }}</span>
-            </button>
-          </div>
+          <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+            <template v-if="localShortLink">
+              <div
+                :title="localShortLink"
+                class="flex items-center min-w-0 h-9 px-3 text-xs font-mono text-fg bg-inset border border-line rounded-md select-all overflow-hidden"
+                data-testid="short-link-value"
+              >
+                <span class="truncate">{{ localShortLink }}</span>
+              </div>
+              <button
+                class="w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-medium whitespace-nowrap rounded-md bg-accent text-accent-fg hover:opacity-90 transition-opacity cursor-pointer"
+                type="button"
+                @click="copyShortLink"
+              >
+                <Copy class="h-3.5 w-3.5 shrink-0" />
+                <span>{{ t('actions.copy') }}</span>
+              </button>
+            </template>
 
-          <div v-if="shortLinkEnabled" class="flex items-center gap-1.5">
-            <input
-              v-model="customSlug"
-              :placeholder="t('copyLink.shortLinkSlugPlaceholder')"
-              class="flex-1 min-w-0 h-8 px-2.5 text-xs font-mono text-fg bg-inset border border-line rounded-md focus-visible:outline-hidden focus-visible:border-line-strong"
-              type="text"
-              @keyup.enter="handleCreateShortLink"
-            />
-            <button
-              :disabled="isGeneratingShortLink"
-              class="shrink-0 inline-flex items-center gap-1.5 h-8 px-2.5 text-xs font-medium rounded-md border border-line bg-transparent text-fg hover:bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-              type="button"
-              @click="handleCreateShortLink"
-            >
-              <Loader2 v-if="isGeneratingShortLink" class="h-3.5 w-3.5 animate-spin" />
-              <span>{{
-                isGeneratingShortLink
-                  ? t('copyLink.shortLinkGenerating')
-                  : localShortLink
-                    ? t('copyLink.shortLinkRegenerate')
-                    : t('copyLink.shortLinkGenerate')
-              }}</span>
-            </button>
+            <template v-if="shortLinkEnabled">
+              <input
+                v-model="customSlug"
+                :placeholder="t('copyLink.shortLinkSlugPlaceholder')"
+                class="min-w-0 w-full h-9 px-3 text-xs font-mono placeholder:font-sans placeholder:text-fg-subtle text-fg bg-inset border border-line rounded-md focus-visible:outline-hidden focus-visible:border-line-strong transition-colors"
+                type="text"
+                @keyup.enter="handleCreateShortLink"
+              />
+              <button
+                :disabled="isGeneratingShortLink"
+                class="w-full inline-flex items-center justify-center gap-1.5 h-9 px-3 text-xs font-medium whitespace-nowrap rounded-md border border-line bg-transparent text-fg hover:bg-hover hover:border-line-strong disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                type="button"
+                @click="handleCreateShortLink"
+              >
+                <Loader2 v-if="isGeneratingShortLink" class="h-3.5 w-3.5 shrink-0 animate-spin" />
+                <RefreshCw v-else-if="localShortLink" class="h-3.5 w-3.5 shrink-0" />
+                <span>{{
+                  isGeneratingShortLink
+                    ? t('copyLink.shortLinkGenerating')
+                    : localShortLink
+                      ? t('copyLink.shortLinkRegenerate')
+                      : t('copyLink.shortLinkGenerate')
+                }}</span>
+              </button>
+            </template>
           </div>
         </div>
 
-        <p class="text-xs text-fg-muted mb-3">
-          {{ t('copyLink.formatHint') }}
-        </p>
+        <div class="space-y-2">
+          <p class="text-xs text-fg-muted leading-relaxed mb-2.5">
+            {{ t('copyLink.formatHint') }}
+          </p>
 
-        <div
-          v-for="client in clients"
-          :key="client.type"
-          class="flex items-center justify-between p-2.5 border border-line rounded-md hover:bg-hover hover:border-line-strong cursor-pointer transition-colors group"
-          @click="copyToClipboard(client.format)"
-        >
-          <div class="flex items-center gap-3">
+          <div
+            v-for="client in clients"
+            :key="client.type"
+            :class="client.hint ? 'items-start' : 'items-center'"
+            class="flex gap-3 p-3 border border-line rounded-md hover:bg-hover hover:border-line-strong cursor-pointer transition-colors group"
+            @click="copyToClipboard(client.format)"
+          >
             <div
-              class="w-8 h-8 rounded-md border border-line bg-transparent flex items-center justify-center text-fg-muted group-hover:text-fg transition-colors"
+              class="w-8 h-8 shrink-0 rounded-md border border-line bg-transparent flex items-center justify-center text-fg-muted group-hover:text-fg transition-colors"
             >
               <component :is="client.icon" class="h-4 w-4" />
             </div>
-            <div>
-              <p class="text-sm font-medium text-fg">
-                {{ client.name }}
-              </p>
-              <p v-if="client.hint" class="mt-0.5 text-xs text-fg-muted">
+
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2 min-h-8">
+                <p class="text-sm font-medium text-fg leading-snug">
+                  {{ client.name }}
+                </p>
+                <button
+                  class="shrink-0 whitespace-nowrap inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-accent-fg bg-accent rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
+                  type="button"
+                >
+                  <Copy class="h-3 w-3 shrink-0" />
+                  <span>{{ t('actions.copy') }}</span>
+                </button>
+              </div>
+
+              <p v-if="client.hint" class="mt-0.5 text-xs text-fg-muted leading-relaxed">
                 {{ client.hint }}
               </p>
+
               <a
                 v-if="client.type === 'shadowrocket-config'"
                 :href="shadowrocketConfigUrl(baseUrl, profile?.name)"
-                class="mt-1 inline-block text-xs font-medium text-fg underline decoration-line-strong underline-offset-4 hover:text-fg-muted"
+                class="mt-2 inline-flex items-center gap-1.5 rounded-md border border-line bg-inset/60 px-2.5 py-1 text-xs font-medium text-fg-muted hover:text-fg hover:border-line-strong hover:bg-inset transition-colors"
                 download
                 @click.stop
               >
-                {{ t('copyLink.downloadShadowrocketConfig') }}
+                <Download class="h-3.5 w-3.5 shrink-0" />
+                <span>{{ t('copyLink.downloadShadowrocketConfig') }}</span>
               </a>
             </div>
           </div>
-
-          <button
-            class="px-2.5 py-1 text-xs font-medium text-accent-fg bg-accent rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 cursor-pointer"
-          >
-            {{ t('actions.copy') }}
-          </button>
         </div>
       </div>
     </template>
