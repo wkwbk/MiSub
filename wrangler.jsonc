@@ -21,8 +21,8 @@
   },
 
   // 绑定自定义域名后，取消下方注释可关闭默认的 *.workers.dev 入口与预览链接以防探测
-  // "workers_dev": false,
-  // "preview_urls": false,
+  "workers_dev": false,
+  "preview_urls": false,
 
   // 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
   "build": {
