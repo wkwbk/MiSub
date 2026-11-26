@@ -139,14 +139,14 @@ test.describe('MiSub Core E2E Workflows', () => {
     await page.goto('/dashboard/subscriptions');
     await page.getByRole('button', { name: '新增' }).click();
 
-    const profileModal = page.getByRole('dialog');
+    const profileModal = page.getByRole('dialog', { name: /新增订阅组/ });
     await expect(profileModal).toBeVisible();
     await profileModal.locator('#profile-name').fill('E2E主力订阅');
     await profileModal.locator('#profile-custom-id').fill('e2e-main');
 
     // Select manual nodes (active tab defaults to manualNodes) and subscriptions
     await profileModal.getByRole('button', { name: '全选', exact: true }).click();
-    await profileModal.locator('nav[aria-label="Tabs"] button').nth(1).click();
+    await profileModal.getByRole('navigation', { name: '资源标签页' }).locator('button').nth(1).click();
     await profileModal.getByRole('button', { name: '全选', exact: true }).click();
     await profileModal.getByRole('button', { name: '确认' }).click();
 
@@ -155,7 +155,7 @@ test.describe('MiSub Core E2E Workflows', () => {
     // Verify CopyLinkModal shows Clash & Sing-Box links
     await expect(page.locator('body')).toContainText('E2E主力订阅');
     await page.getByRole('button', { name: '复制订阅' }).first().click();
-    const copyModal = page.getByRole('dialog');
+    const copyModal = page.getByRole('dialog').filter({ hasText: 'Clash' });
     await expect(copyModal).toBeVisible();
     await expect(copyModal).toContainText('Clash');
     await expect(copyModal).toContainText('Sing-Box');

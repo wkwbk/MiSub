@@ -133,17 +133,24 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
       }
     });
 
-    let message = '';
+    const messageParts: string[] = [];
+
+    // 先写入手动节点再触发异步订阅导入，避免订阅测速完成后的自动保存（saveData）
+    // 在 addNodesFromBulk 执行前发出并在响应回写时覆盖掉刚导入的手动节点。
+    if (validNodes.length > 0) {
+      addNodesFromBulk(validNodes, normalizedTags);
+    }
 
     if (validSubs.length > 0) {
       await addSubscriptionsFromBulk(validSubs);
-      message += t('bulkImport.importedSubscriptions', { count: validSubs.length }) + ' ';
+      messageParts.push(t('bulkImport.importedSubscriptions', { count: validSubs.length }));
     }
 
     if (validNodes.length > 0) {
-      addNodesFromBulk(validNodes, normalizedTags);
-      message += t('bulkImport.importedNodes', { count: validNodes.length });
+      messageParts.push(t('bulkImport.importedNodes', { count: validNodes.length }));
     }
+
+    const message = messageParts.join(' ');
 
     if (message) {
       const trimmedMessage = message.trim();

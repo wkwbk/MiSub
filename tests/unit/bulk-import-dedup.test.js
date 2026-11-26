@@ -106,4 +106,27 @@ ss://new@server5.com:10000`;
     expect(lastToast?.message).toContain('1');
     expect(lastToast?.message).not.toContain('未检测到有效的链接');
   });
+
+  it('混合导入订阅和手动节点时，应在异步订阅保存前先写入手动节点避免丢失', async () => {
+    let snapshotDuringAsyncSubSave = [];
+    const mixedBulkImport = useBulkImportLogic({
+      addSubscriptionsFromBulk: async (subs) => {
+        subs.forEach((sub) => dataStore.addSubscription(sub));
+        await Promise.resolve();
+        // 模拟订阅测速完成后触发 saveData() 时读取到的 store 快照
+        snapshotDuringAsyncSubSave = dataStore.subscriptions.map((item) => item.url);
+      },
+      addNodesFromBulk: (nodes) => {
+        nodes.forEach((node) => dataStore.addSubscription(node));
+      },
+    });
+
+    const subUrl = 'https://airport.example.com/sub';
+    const manualNodeUrl = 'vless://99999999-9999-9999-9999-999999999999@manual.example.com:443#Manual-HK-Edge';
+
+    await mixedBulkImport.handleBulkImport(`${subUrl}\n${manualNodeUrl}`, '');
+
+    expect(snapshotDuringAsyncSubSave).toContain(subUrl);
+    expect(snapshotDuringAsyncSubSave).toContain(manualNodeUrl);
+  });
 });
