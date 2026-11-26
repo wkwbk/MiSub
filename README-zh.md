@@ -209,7 +209,7 @@ npx wrangler d1 create misub
 npx wrangler d1 execute misub --file=schema.sql --remote
 ```
 
-> ⚠️ **Fork 用户提示**：若通过 `wrangler.toml` 部署 Workers，请务必将 `[[d1_databases]]` 中的 `database_id` 替换为你自己创建的 D1 数据库 ID。
+> ⚠️ **Fork 用户提示**：若通过 `wrangler.jsonc` 部署 Workers，请务必将 `d1_databases` 中的 `database_id` 替换为你自己创建的 D1 数据库 ID。
 
 **绑定数据库（Pages 或 Workers Dashboard）:**
 1. `设置` → `绑定`（或 Pages 的 `设置` → `函数` → `D1 数据库绑定`）
@@ -225,7 +225,7 @@ npx wrangler d1 execute misub --file=schema.sql --remote
 
 > **安全提示（必读）**：
 > - `ADMIN_PASSWORD`、`COOKIE_SECRET`、`CRON_SECRET` 等敏感变量在 Cloudflare 控制台添加时，**类型务必选择 `Secret`（加密密钥）**，切勿选成普通文本（Text）。
-> - 使用 `wrangler deploy` / Git 自动部署时，若 `wrangler.toml` 中配置了 `[vars]` 且未开启 `keep_vars = true`，控制台手动添加的**普通文本变量会被覆盖清空**，而 `Secret` 密钥不受影响。
+> - 使用 `wrangler deploy` / Git 自动部署时，若 `wrangler.jsonc` 中配置了 `vars` 且未开启 `"keep_vars": true`，控制台手动添加的**普通文本变量会被覆盖清空**，而 `Secret` 密钥不受影响。
 > - 也可直接通过命令行注入加密密钥：`npx wrangler secret put ADMIN_PASSWORD`
 
 **必选：**
@@ -354,7 +354,7 @@ rules:
 
 ### 定时任务（Worker 原生 Cron & 外部 `/cron/*`）
 
-- **Cloudflare Workers 原生 Cron Triggers**：使用 `wrangler.toml` 部署时默认启用三项独立定时任务（每 6 小时同步订阅、每日 02:00 UTC WebDAV 备份、每日 03:30 UTC 维护清理），无需额外配置外部服务。
+- **Cloudflare Workers 原生 Cron Triggers**：使用 `wrangler.jsonc` 部署时默认启用三项独立定时任务（每 6 小时同步订阅、每日 02:00 UTC WebDAV 备份、每日 03:30 UTC 维护清理），无需额外配置外部服务。
 - **外部 `/cron/*` 接口**：适合 Cloudflare Pages 等不支持原生 Cron Trigger 的场景，按业务拆分为 `/cron/subscriptions`、`/cron/backup`、`/cron/maintenance`、`/cron/rotate-token`。
   - **推荐方式**：在请求头设置 `Authorization: Bearer <SECRET>`，避免密钥出现在 URL 和访问日志中。
   - **兼容方式**：支持 `?secret=<SECRET>` 查询参数；密钥可在后台「服务集成」设置，或通过 `CRON_SECRET` Secret 环境变量注入。

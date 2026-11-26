@@ -1,0 +1,76 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "misub",
+  "main": "worker.ts",
+  "compatibility_date": "2025-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Workers Observability（实时日志与可观测性）
+  // 参考: https://developers.cloudflare.com/workers/observability/
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
+  "build": {
+    "command": "npm run build"
+  },
+
+  // 静态资源托管 (Cloudflare Workers Static Assets)
+  // run_worker_first = true 确保所有请求先经过 Worker 执行伪装页、防探测、自定义登录路径和短链路由
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "not_found_handling": "none"
+  },
+
+  // 原生定时触发器（按业务独立调度，无需依赖外部定时服务）
+  // - "0 */6 * * *": 每 6 小时同步订阅流量/节点数并发送 Telegram 预警通知
+  // - "0 2 * * *":   每天 UTC 02:00（北京时间 10:00）执行 WebDAV 自动备份
+  // - "30 3 * * *":  每天 UTC 03:30（北京时间 11:30）执行存储维护清理
+  "triggers": {
+    "crons": [
+      "0 */6 * * *",
+      "0 2 * * *",
+      "30 3 * * *"
+    ]
+  },
+
+  // ==============================================================================
+  // 存储与环境变量绑定说明：
+  // 生产部署可通过 Cloudflare Dashboard (Workers & Pages -> Settings -> Bindings) 绑定，
+  // 或填入实际的 D1 Database ID。
+  //
+  // 敏感密钥建议使用命令行注入，切勿明文提交到代码仓库：
+  //   npx wrangler secret put ADMIN_PASSWORD
+  //   npx wrangler secret put COOKIE_SECRET
+  //   npx wrangler secret put CRON_SECRET
+  //   npx wrangler secret put GITHUB_TOKEN
+  //   npx wrangler secret put TURNSTILE_SITE_KEY      # 可选：Cloudflare Turnstile Site Key（也可在后台设置）
+  //   npx wrangler secret put TURNSTILE_SECRET_KEY    # 可选：Cloudflare Turnstile Secret Key（也可在后台设置）
+  //   # 紧急跳过登录 Turnstile 验证（防止配置错误锁死后台）：设置变量 DISABLE_LOGIN_TURNSTILE=true
+  //
+  // ⚠️ Fork 用户请注意：下方 database_id 仅用于仓库维护者自动部署，Fork 后请替换为你自己
+  //    通过 `npx wrangler d1 create misub` 创建的数据库 ID，并建议为预览环境绑定独立数据库。
+  // ==============================================================================
+  "d1_databases": [
+    {
+      "binding": "MISUB_DB",
+      "database_name": "misub",
+      "database_id": "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
+    }
+  ],
+
+  // 建议在正式项目中为 previews 绑定独立的测试 D1 database_id，避免预览部署读写生产库
+  // 注：observability 为可继承字段，previews 默认自动继承顶层 observability 配置
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "MISUB_DB",
+        "database_id": "5ab54f7e-53a0-433f-af4b-6042760b8ac2"
+      }
+    ]
+  }
+}

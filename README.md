@@ -79,10 +79,10 @@ It is designed for personal and small-team usage: simple operations, clear clien
 
 ### Deploy to Cloudflare Workers (Recommended) / Pages
 
-MiSub natively supports **Cloudflare Workers** (Static Assets + built-in Cron Triggers via [wrangler.toml](wrangler.toml)) as well as **Cloudflare Pages**.
+MiSub natively supports **Cloudflare Workers** (Static Assets + built-in Cron Triggers via [wrangler.jsonc](wrangler.jsonc)) as well as **Cloudflare Pages**.
 
 1. Fork this repository.
-2. Create your own D1 database and replace `database_id` in `wrangler.toml` (or bind `MISUB_DB` in the Cloudflare Dashboard).
+2. Create your own D1 database and replace `database_id` in `wrangler.jsonc` (or bind `MISUB_DB` in the Cloudflare Dashboard).
 3. For Workers: connect your forked repo in `Workers & Pages` → `Create` → `Workers` (or run `pnpm deploy:worker`).
 4. For Pages: create a Pages project with build command `npm run build` and output directory `dist`.
 5. Bind `MISUB_DB` and initialize the D1 schema before production use.
@@ -98,7 +98,7 @@ npx wrangler d1 create misub
 npx wrangler d1 execute misub --file=schema.sql --remote
 ```
 
-Update `database_id` in `wrangler.toml` (for Workers) or bind the database in Pages settings (`Functions` → `D1 database bindings`):
+Update `database_id` in `wrangler.jsonc` (for Workers) or bind the database in Pages settings (`Functions` → `D1 database bindings`):
 
 - Variable name: `MISUB_DB`
 - Binding type: D1 database
@@ -107,7 +107,7 @@ Update `database_id` in `wrangler.toml` (for Workers) or bind the database in Pa
 
 ### Recommended environment variables
 
-> **Security Note**: Always configure `ADMIN_PASSWORD`, `COOKIE_SECRET`, and `CRON_SECRET` as **Secret** (encrypted) in the Cloudflare Dashboard (or via `npx wrangler secret put <KEY>`), **not** as plaintext variables. Plaintext dashboard variables are overwritten by `[vars]` in `wrangler.toml` on deploy unless `keep_vars = true` is set.
+> **Security Note**: Always configure `ADMIN_PASSWORD`, `COOKIE_SECRET`, and `CRON_SECRET` as **Secret** (encrypted) in the Cloudflare Dashboard (or via `npx wrangler secret put <KEY>`), **not** as plaintext variables. Plaintext dashboard variables are overwritten by `vars` in `wrangler.jsonc` on deploy unless `"keep_vars": true` is set.
 
 - `ADMIN_PASSWORD` (**required**): admin login password (configure as a Secret). Login fails closed if unset, and rotating `ADMIN_PASSWORD` immediately invalidates existing sessions.
 - `COOKIE_SECRET`: optional session signing secret (configure as a Secret; never persisted to D1, derived deterministically from `ADMIN_PASSWORD` if omitted, and rotating it immediately invalidates existing sessions).
