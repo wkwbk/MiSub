@@ -331,6 +331,7 @@ export default {
     tabStructured: 'Details',
     tabYaml: 'Clash YAML',
     tabJson: 'JSON',
+    tabQrCode: 'QR Code',
     sectionBasic: 'Basic',
     sectionNetwork: 'IP & Network Info',
     sectionAuth: 'Auth & Encryption',
@@ -1707,6 +1708,7 @@ export default {
     shadowrocketConfigHint: 'Scan to open shadowrocket://config/add and install the full native .conf profile.',
     shadowrocketNodesHint: 'Scan to subscribe to the node list ordered with manual nodes first and grouped by region.',
     privateLinkHint: 'This QR code contains private subscription credentials; do not share it publicly.',
+    nodeScanHint: 'Scan with a proxy client to import this node. Contains credentials; do not share publicly.',
   },
   pagination: {
     showingRange: 'Showing {from}-{to} of {total}',

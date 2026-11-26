@@ -11,7 +11,6 @@ import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useI18n } from '@/i18n/index.js';
 import { isNetworkErrorMessage } from '@/utils/network-error.js';
 import { scrollToPaginationStart } from '@/utils/scroll.js';
-import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { isUdpOnlyProtocol, pingNode, tcpingNodes } from '@/utils/ping.js';
 import { getDisabledNodeSet, normalizeDisabledNodes } from '@misub/core/domain/disabled-nodes.js';
 import Modal from '@/components/ui/Modal.vue';
@@ -118,9 +117,6 @@ const protocolStats = ref<Record<string, number>>({});
 const regionStats = ref<Record<string, number>>({});
 const availableProtocols = ref<string[]>([]);
 const availableRegions = ref<string[]>([]);
-
-// 复制状态
-const copiedNodeId = ref('');
 
 // 节点详情弹窗状态
 const detailNode = ref<PreviewNodeItem | null>(null);
@@ -549,7 +545,6 @@ const resetState = () => {
   regionStats.value = {};
   availableProtocols.value = [];
   availableRegions.value = [];
-  copiedNodeId.value = '';
   pickingMode.value = false;
   selectedUrls.value.clear();
   nodeEnabledMap.value = {};
@@ -712,17 +707,6 @@ const loadNodes = async () => {
     allNodes.value = [];
   } finally {
     loading.value = false;
-  }
-};
-
-// 复制节点链接
-const copyNodeUrl = async (node: PreviewNodeItem, nodeId: string) => {
-  const copied = await copyTextToClipboard(node.url);
-  if (copied) {
-    copiedNodeId.value = nodeId;
-    setTimeout(() => {
-      copiedNodeId.value = '';
-    }, 2000);
   }
 };
 
@@ -1026,7 +1010,6 @@ const goToPage = (page: number) => {
             <NodeList
               v-if="effectiveViewMode === 'list'"
               :allow-ping="allowPing"
-              :copied-node-id="copiedNodeId"
               :get-protocol-style="getProtocolStyle"
               :node-enabled-map="nodeEnabledMap"
               :node-ping-map="nodePingMap"
@@ -1035,7 +1018,6 @@ const goToPage = (page: number) => {
               :selected-urls="selectedUrls"
               :selection-mode="pickingMode"
               :show-node-switch="canManageSubscriptionNodes"
-              @copy="copyNodeUrl"
               @detail="openNodeDetail"
               @ping="testSingleNode"
               @toggle-enabled="handleToggleNodeEnabled"
@@ -1046,7 +1028,6 @@ const goToPage = (page: number) => {
             <NodeCard
               v-else
               :allow-ping="allowPing"
-              :copied-node-id="copiedNodeId"
               :get-protocol-style="getProtocolStyle"
               :node-enabled-map="nodeEnabledMap"
               :node-ping-map="nodePingMap"
@@ -1055,7 +1036,6 @@ const goToPage = (page: number) => {
               :selected-urls="selectedUrls"
               :selection-mode="pickingMode"
               :show-node-switch="canManageSubscriptionNodes"
-              @copy="copyNodeUrl"
               @detail="openNodeDetail"
               @ping="testSingleNode"
               @toggle-enabled="handleToggleNodeEnabled"

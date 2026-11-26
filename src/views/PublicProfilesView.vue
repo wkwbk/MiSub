@@ -25,6 +25,7 @@ import { normalizePublicClientsConfig } from '@misub/core/domain/default-public-
 import { getProfileShareIdentifier } from '@misub/core/domain/profile-link.js';
 import { parseCustomPageSource } from '@/utils/custom-page-source.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { renderQrCodeToCanvas, sanitizeQrFilename } from '@/utils/qrcode.js';
 
 const isDev = import.meta.env.DEV;
 
@@ -307,12 +308,7 @@ const toggleQRCode = async (profile: PublicProfileItem) => {
       const identifier = profile.shareId || getProfileShareIdentifier(profile);
       const link = `${window.location.origin}/${token}/${identifier}`;
       try {
-        const { default: QRCode } = await import('qrcode');
-        await QRCode.toCanvas(canvas, link, {
-          width: 200,
-          margin: 2,
-          color: { dark: '#000000', light: '#FFFFFF' },
-        });
+        await renderQrCodeToCanvas(canvas, link, 200);
       } catch (err) {
         // 生成失败时卡片内是空白，访客会以为功能坏了，需给出提示
         console.error('Failed to generate QR code:', err);
@@ -327,7 +323,10 @@ const isQRExpanded = (profileId: string) => expandedQRCards.value.has(profileId)
 const downloadQRCode = (profile: PublicProfileItem) => {
   const canvas = qrCanvasRefs.value[profile.id];
   if (!canvas) return;
-  downloadDataUrlFile(canvas.toDataURL('image/png'), `${profile.name || 'subscription'}-qrcode.png`);
+  downloadDataUrlFile(
+    canvas.toDataURL('image/png'),
+    `${sanitizeQrFilename(profile.name || 'subscription')}-qrcode.png`,
+  );
   showToast(t('publicProfiles.qrDownloaded'), 'success');
 };
 

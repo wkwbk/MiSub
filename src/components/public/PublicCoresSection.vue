@@ -179,13 +179,13 @@ watch(
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-4">
         <div
           v-for="core in displayedPublicCores"
           :key="core.id || core.name"
-          class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+          class="group relative flex h-full flex-col bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
         >
-          <div class="flex items-start gap-4">
+          <div class="flex items-start gap-4 pb-4">
             <div
               class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
             >
@@ -231,7 +231,7 @@ watch(
             </div>
           </div>
 
-          <div class="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-line">
+          <div class="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-line">
             <div class="flex items-center gap-2 min-w-0">
               <span
                 :title="getCoreVersionLabel(core)"

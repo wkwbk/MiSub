@@ -330,6 +330,7 @@ export default {
     tabStructured: '配置详情',
     tabYaml: 'Clash YAML',
     tabJson: 'JSON',
+    tabQrCode: '二维码',
     sectionBasic: '基础信息',
     sectionNetwork: 'IP 与网络属性',
     sectionAuth: '认证与加密',
@@ -1662,6 +1663,7 @@ export default {
     shadowrocketConfigHint: '扫码调用 shadowrocket://config/add 安装完整原生 .conf 配置文件。',
     shadowrocketNodesHint: '扫码添加按「自建置顶 + 地区排序」整理的纯节点列表订阅。',
     privateLinkHint: '此二维码包含私有订阅凭据，请勿分享给未授权人员。',
+    nodeScanHint: '使用代理客户端扫描二维码即可导入该节点，请勿随意分享。',
   },
   pagination: {
     showingRange: '显示第 {from} - {to} 项，共 {total} 项',

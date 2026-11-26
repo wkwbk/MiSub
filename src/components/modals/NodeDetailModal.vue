@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { Check, Copy, X } from '@lucide/vue';
+import { computed, nextTick, ref, watch } from 'vue';
+import { Check, Copy, Download, QrCode, X } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { formatNodeDetailYaml, parseNodeDetail } from '@/utils/node-detail.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import { copyTextToClipboard } from '@/utils/clipboard.js';
+import { downloadDataUrlFile } from '@/utils/import-file.js';
+import { renderQrCodeToCanvas, sanitizeQrFilename } from '@/utils/qrcode.js';
 import type { NodeInspectInfo } from '@/composables/manual-nodes/filters.js';
 
 interface NetworkDisplayItem {
@@ -36,10 +38,12 @@ const emit = defineEmits<{
 const { showToast } = useToastStore();
 const { t } = useI18n();
 
-const activeTab = ref<'structured' | 'yaml' | 'json'>('structured');
+const activeTab = ref<'structured' | 'yaml' | 'json' | 'qrcode'>('structured');
 const copiedKey = ref('');
 const lazyYaml = ref('');
+const qrCanvasRef = ref<HTMLCanvasElement | null>(null);
 let yamlLoadSeq = 0;
+let qrLoadSeq = 0;
 
 const detail = computed(() => parseNodeDetail(props.node));
 const displayedYaml = computed(() => lazyYaml.value || detail.value.formattedYaml);
@@ -60,6 +64,30 @@ watch(
   },
   { immediate: true },
 );
+
+watch(
+  [activeTab, () => props.show, () => detail.value.rawUrl],
+  async ([tab, visible, rawUrl]) => {
+    const seq = ++qrLoadSeq;
+    if (!visible || tab !== 'qrcode' || !rawUrl) return;
+    await nextTick();
+    if (!qrCanvasRef.value || seq !== qrLoadSeq) return;
+    try {
+      await renderQrCodeToCanvas(qrCanvasRef.value, rawUrl);
+    } catch (err) {
+      if (seq !== qrLoadSeq) return;
+      console.error('QR Code generation failed', err);
+      showToast(t('qr.generateFailed'), 'error');
+    }
+  },
+  { immediate: true },
+);
+
+const downloadNodeQrCode = (): void => {
+  if (!qrCanvasRef.value) return;
+  const filename = sanitizeQrFilename(detail.value.name || 'node-qrcode');
+  downloadDataUrlFile(qrCanvasRef.value.toDataURL('image/png'), `${filename}.png`);
+};
 
 const networkItems = computed<NetworkDisplayItem[]>(() => {
   const info = props.inspectInfo;
@@ -181,7 +209,7 @@ const closeModal = (): void => {
 
     <template #body>
       <div class="space-y-5">
-        <div v-if="detail.parsed" class="modal-inset-surface inline-flex items-center gap-0.5 rounded-md p-1">
+        <div v-if="detail.parsed || detail.rawUrl" class="modal-inset-surface inline-flex items-center gap-0.5 rounded-md p-1">
           <button
             :class="activeTab === 'structured' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
             class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
@@ -191,6 +219,7 @@ const closeModal = (): void => {
             {{ t('nodeDetail.tabStructured') }}
           </button>
           <button
+            v-if="detail.parsed"
             :class="activeTab === 'yaml' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
             class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
             type="button"
@@ -199,12 +228,24 @@ const closeModal = (): void => {
             {{ t('nodeDetail.tabYaml') }}
           </button>
           <button
+            v-if="detail.parsed"
             :class="activeTab === 'json' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
             class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
             type="button"
             @click="activeTab = 'json'"
           >
             {{ t('nodeDetail.tabJson') }}
+          </button>
+          <button
+            v-if="detail.rawUrl"
+            :class="activeTab === 'qrcode' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
+            class="inline-flex items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-medium transition-all"
+            data-testid="node-detail-qrcode-tab"
+            type="button"
+            @click="activeTab = 'qrcode'"
+          >
+            <QrCode class="h-3.5 w-3.5" />
+            {{ t('nodeDetail.tabQrCode') }}
           </button>
         </div>
 
@@ -298,20 +339,9 @@ const closeModal = (): void => {
           </section>
 
           <section v-if="detail.rawUrl">
-            <div class="mb-1.5 flex items-center justify-between px-1">
-              <h4 class="text-xs font-medium uppercase tracking-wider text-fg-muted">
-                {{ t('nodeDetail.rawUrl') }}
-              </h4>
-              <button
-                class="inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
-                type="button"
-                @click="copyText(detail.rawUrl, '__raw_url__')"
-              >
-                <Check v-if="copiedKey === '__raw_url__'" class="h-3 w-3 text-emerald-400" />
-                <Copy v-else class="h-3 w-3" />
-                {{ t('actions.copyLink') }}
-              </button>
-            </div>
+            <h4 class="mb-1.5 px-1 text-xs font-medium uppercase tracking-wider text-fg-muted">
+              {{ t('nodeDetail.rawUrl') }}
+            </h4>
             <div class="modal-inset-surface rounded-md overflow-hidden">
               <pre
                 class="modal-scrollbar max-h-28 overflow-auto whitespace-pre-wrap break-all px-3.5 py-2.5 font-mono text-xs leading-relaxed text-fg-muted"
@@ -358,6 +388,23 @@ const closeModal = (): void => {
               class="modal-scrollbar max-h-[420px] overflow-auto px-3.5 py-3 font-mono text-xs leading-relaxed text-fg"
               >{{ detail.formattedJson }}</pre>
           </div>
+        </div>
+
+        <div v-else-if="activeTab === 'qrcode'" class="flex flex-col items-center gap-4 py-4">
+          <div class="rounded-md border border-line bg-white p-3">
+            <canvas ref="qrCanvasRef" class="h-64 w-64 rounded-sm"></canvas>
+          </div>
+          <p class="max-w-xs text-center text-xs leading-relaxed text-fg-subtle">
+            {{ t('qr.nodeScanHint') }}
+          </p>
+          <button
+            class="inline-flex items-center gap-2 rounded-md bg-accent px-5 py-2 text-xs font-medium text-accent-fg transition-opacity hover:opacity-90"
+            type="button"
+            @click="downloadNodeQrCode"
+          >
+            <Download class="h-4 w-4" />
+            {{ t('qr.saveImage') }}
+          </button>
         </div>
       </div>
     </template>

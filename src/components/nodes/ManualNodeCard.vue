@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Check, Copy, CornerDownRight, Info, Pencil, Trash2, Zap } from '@lucide/vue';
+import { Check, CornerDownRight, Info, Pencil, Trash2, Zap } from '@lucide/vue';
 import { extractHostAndPort } from '@/lib/utils.js';
 import { getItemTags } from '@/utils/tags.js';
 import { getManualNodeProtocol, type NodeInspectInfo } from '@/composables/manual-nodes/filters.js';
 import type { PingResult } from '@/composables/useManualNodes.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
-import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
-import { copyTextToClipboard } from '@/utils/clipboard.js';
 import { useHorizontalScrollFade } from '@/composables/useHorizontalScrollFade.js';
 
 const props = withDefaults(
@@ -41,7 +39,6 @@ const emit = defineEmits<{
   'filter-network': [networkType: string];
   ping: [];
 }>();
-const { showToast } = useToastStore();
 const { t } = useI18n();
 
 const nodeTags = computed(() => getItemTags(props.node));
@@ -147,11 +144,6 @@ const protocolStyle = computed(() => {
   }
 });
 
-const copyToClipboard = async (text: string): Promise<void> => {
-  const copied = await copyTextToClipboard(text);
-  showToast(copied ? t('notices.copied') : t('notices.copyFailed'), copied ? 'success' : 'error');
-};
-
 const {
   scrollRef: badgesScrollRef,
   scrollFadeClass: badgesScrollFadeClass,
@@ -178,7 +170,7 @@ const {
         'cursor-pointer': isSelectionMode,
       },
     ]"
-    class="group relative flex flex-col justify-between rounded-md border p-3 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 min-h-[96px]"
+    class="group relative flex h-full flex-col justify-between rounded-md border p-3 hover:-translate-y-0.5 hover:z-10 transition-all duration-200 min-h-[96px]"
     @click="isSelectionMode ? emit('toggle-select') : null"
   >
     <div class="flex items-center justify-between gap-2">
@@ -287,7 +279,7 @@ const {
     <NodeClientBadges :url="node.url" class="mb-2" compact />
 
     <div class="mt-auto flex items-center justify-between gap-2 border-t border-line pt-2">
-      <div class="min-w-0 flex-1">
+      <div class="flex min-h-[2.25rem] min-w-0 flex-1 flex-col justify-center">
         <span
           v-if="hostAndPort.host"
           :title="
@@ -332,14 +324,6 @@ const {
           @click.stop="emit('detail')"
         >
           <Info class="h-3.5 w-3.5" />
-        </button>
-        <button
-          :aria-label="t('actions.copyLink')"
-          :title="t('actions.copyLink')"
-          class="flex h-7 w-7 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
-          @click.stop="copyToClipboard(node.url)"
-        >
-          <Copy class="h-3.5 w-3.5" />
         </button>
         <button
           :aria-label="t('actions.edit')"

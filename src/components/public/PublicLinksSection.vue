@@ -88,13 +88,13 @@ const getLinkHostname = (rawUrl: string): string => {
         </button>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr gap-4">
         <div
           v-for="link in displayedPublicLinks"
           :key="link.id || link.name"
-          class="group relative bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
+          class="group relative flex h-full flex-col bg-surface rounded-md p-5 hover:-translate-y-1 hover:z-10 border border-line transition-all duration-200"
         >
-          <div class="flex items-start gap-4">
+          <div class="flex items-start gap-4 pb-4">
             <div
               class="h-10 w-10 rounded-md flex items-center justify-center text-xl shadow-none bg-transparent border border-line shrink-0 overflow-hidden"
             >
@@ -131,7 +131,7 @@ const getLinkHostname = (rawUrl: string): string => {
             </div>
           </div>
 
-          <div class="mt-4 flex items-center justify-between pt-3 border-t border-line">
+          <div class="mt-auto flex items-center justify-between pt-3 border-t border-line">
             <span
               class="font-mono text-xs text-fg-muted bg-transparent border border-line px-2 py-0.5 rounded-md truncate max-w-[60%]"
             >

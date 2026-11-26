@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, type ComponentPublicInstance } from 'vue';
 import type { ProfileConfig } from '@misub/core/types.js';
-import { Copy, Download, Eye, Link2, QrCode } from '@lucide/vue';
+import { Download, Eye, Link2, QrCode } from '@lucide/vue';
 import QRCodeOverlay from '@/components/public/QRCodeOverlay.vue';
 import { getItemTags } from '@/utils/tags.js';
 import { useI18n } from '@/i18n/index.js';
@@ -71,25 +71,10 @@ const emit = defineEmits<{
       </span>
     </div>
 
-    <div class="flex-1 mb-5 space-y-3">
+    <div class="flex-1 mb-5">
       <p class="text-fg-subtle text-xs leading-relaxed line-clamp-3">
         {{ profile.description || t('public.noDescription') }}
       </p>
-
-      <button
-        v-if="profile.shortLink"
-        :aria-label="t('public.copyShortLink')"
-        :title="`${t('public.copyShortLink')}: ${profile.shortLink}`"
-        class="w-full flex items-center justify-between gap-2 rounded-md border border-line bg-inset/50 px-2.5 py-1.5 text-left text-xs text-fg-muted hover:border-line-strong hover:text-fg transition-colors cursor-pointer"
-        type="button"
-        @click.stop="emit('copy-short-link', profile)"
-      >
-        <span class="inline-flex items-center gap-1.5 min-w-0">
-          <Link2 class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
-          <span class="truncate font-mono text-xs">{{ profile.shortLink }}</span>
-        </span>
-        <Copy class="h-3.5 w-3.5 shrink-0 text-fg-subtle" />
-      </button>
     </div>
 
     <div class="mt-auto pt-4 border-t border-line flex items-center gap-2">
@@ -112,10 +97,10 @@ const emit = defineEmits<{
       </button>
 
       <button
-        :aria-label="t('public.copySubscriptionLink')"
-        :title="t('actions.copyLink')"
+        :aria-label="profile.shortLink ? t('public.copyShortLink') : t('public.copySubscriptionLink')"
+        :title="profile.shortLink ? `${t('public.copyShortLink')}: ${profile.shortLink}` : t('actions.copyLink')"
         class="rounded-md border border-line p-2 text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
-        @click="emit('copy-link', profile)"
+        @click="profile.shortLink ? emit('copy-short-link', profile) : emit('copy-link', profile)"
       >
         <Link2 class="w-4 h-4" />
       </button>

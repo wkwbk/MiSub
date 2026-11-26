@@ -2,11 +2,11 @@
 import { useI18n } from '@/i18n/index.js';
 import { computed, nextTick, ref, watch } from 'vue';
 import { Download } from '@lucide/vue';
-import QRCode from 'qrcode';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { shadowrocketQrPayload } from '@misub/core/domain/shadowrocket-links.js';
 import { downloadDataUrlFile } from '@/utils/import-file.js';
+import { renderQrCodeToCanvas, sanitizeQrFilename } from '@/utils/qrcode.js';
 
 const { t } = useI18n();
 
@@ -34,6 +34,7 @@ const emit = defineEmits<{
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const importMode = ref('universal');
+let renderSeq = 0;
 
 const payload = computed(() =>
   props.subscription ? shadowrocketQrPayload(props.url, importMode.value, props.title) : props.url,
@@ -49,17 +50,12 @@ const importHint = computed(() =>
 
 const generateQRCode = async () => {
   if (!props.url || !canvasRef.value) return;
-  if (typeof canvasRef.value.getContext !== 'function' || !canvasRef.value.getContext('2d')) return;
+  const seq = ++renderSeq;
   try {
-    await QRCode.toCanvas(canvasRef.value, payload.value, {
-      width: 256,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#ffffff',
-      },
-    });
+    const rendered = await renderQrCodeToCanvas(canvasRef.value, payload.value);
+    if (!rendered || seq !== renderSeq) return;
   } catch (err) {
+    if (seq !== renderSeq) return;
     // 生成失败时画布是空白的，必须告知用户，否则只会看到一个空框
     console.error('QR Code generation failed', err);
     showToast(t('qr.generateFailed'), 'error');
@@ -86,9 +82,10 @@ watch(
 
 const downloadQRCode = () => {
   if (!canvasRef.value) return;
+  const baseName = sanitizeQrFilename(props.title || 'qrcode');
   downloadDataUrlFile(
     canvasRef.value.toDataURL('image/png'),
-    `${props.title || 'qrcode'}${props.subscription ? `-${importMode.value}` : ''}.png`,
+    `${baseName}${props.subscription ? `-${importMode.value}` : ''}.png`,
   );
 };
 </script>
@@ -96,7 +93,7 @@ const downloadQRCode = () => {
 <template>
   <Modal :show="show" :show-confirm="false" @update:show="emit('update:show', $event)">
     <template #title>
-      <h3 class="text-base font-semibold text-fg">
+      <h3 class="truncate text-base font-semibold text-fg">
         {{ title || t('qr.title') }}
       </h3>
     </template>
@@ -122,12 +119,13 @@ const downloadQRCode = () => {
           <canvas ref="canvasRef" class="w-64 h-64 rounded-sm"></canvas>
         </div>
 
-        <p class="text-xs font-mono text-center text-fg-subtle max-w-xs break-all">
+        <p class="max-h-24 overflow-y-auto text-xs font-mono text-center text-fg-subtle max-w-xs break-all">
           {{ subscription ? t('qr.privateLinkHint') : url }}
         </p>
 
         <button
           class="flex items-center gap-2 px-5 py-2 bg-accent hover:opacity-90 text-accent-fg rounded-md text-xs font-medium transition-colors shadow-none"
+          type="button"
           @click="downloadQRCode"
         >
           <Download class="h-4 w-4" />

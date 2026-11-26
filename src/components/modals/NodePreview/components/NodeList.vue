@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { NodeIR } from '@misub/core/types.js';
-import { Check, Copy, Info, Loader2 } from '@lucide/vue';
+import { Check, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useVirtualList } from '@/composables/useVirtualList.js';
 import Switch from '@/components/ui/Switch.vue';
@@ -37,7 +37,6 @@ const { t } = useI18n();
 const props = withDefaults(
   defineProps<{
     nodes?: PreviewNodeItem[];
-    copiedNodeId?: string;
     parseNodeInfo: (node: PreviewNodeItem) => ParsedNodeInfo;
     getProtocolStyle: (protocol?: string) => string;
     selectionMode?: boolean;
@@ -49,7 +48,6 @@ const props = withDefaults(
   }>(),
   {
     nodes: () => [],
-    copiedNodeId: '',
     selectionMode: false,
     selectedUrls: () => new Set<string>(),
     showNodeSwitch: false,
@@ -60,7 +58,6 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  copy: [node: PreviewNodeItem, url: string];
   detail: [node: PreviewNodeItem];
   'toggle-select': [url: string];
   'toggle-enabled': [node: PreviewNodeItem, enabled: boolean];
@@ -270,19 +267,6 @@ const getProtocolDot = (protocol?: string) => {
                     @click.stop="emit('detail', row.node)"
                   >
                     <Info class="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    v-if="!selectionMode"
-                    :aria-label="t('actions.copyNode')"
-                    :class="{
-                      'text-emerald-500': copiedNodeId === row.node.url,
-                    }"
-                    :title="t('actions.copyNode')"
-                    class="inline-flex items-center justify-center w-7 h-7 rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors touch-target"
-                    @click.stop="emit('copy', row.node, row.node.url)"
-                  >
-                    <Copy v-if="copiedNodeId !== row.node.url" class="w-3.5 h-3.5" />
-                    <Check v-else class="w-3.5 h-3.5" />
                   </button>
                   <div v-if="!selectionMode && showNodeSwitch" @click.stop>
                     <Switch

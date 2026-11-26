@@ -159,14 +159,14 @@ const handleDragEnd = (evt: DragEndEvent) => {
             : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3'
         "
         animation="300"
-        class="grid gap-4"
+        class="grid auto-rows-fr gap-4"
         ghost-class="opacity-50"
         item-key="id"
         tag="div"
         @end="handleDragEnd"
       >
         <template #item="{ element: node }">
-          <div class="cursor-move rounded-md border border-dashed border-sky-500/40 p-0.5">
+          <div class="cursor-move h-full rounded-md border border-dashed border-sky-500/40 p-0.5">
             <ManualNodeCard
               :inspect-info="nodeInspectMap[node.id]"
               :is-pinging="pingingNodes.has(node.id)"
@@ -193,13 +193,13 @@ const handleDragEnd = (evt: DragEndEvent) => {
           ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-2'
           : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3'
       "
-      class="grid gap-4"
+      class="grid auto-rows-fr gap-4"
     >
       <div
         v-for="(node, index) in paginatedNodes"
         :key="node.id"
         :style="{ '--delay-index': Math.min(index, 20) }"
-        class="list-item-animation"
+        class="list-item-animation h-full"
       >
         <ManualNodeCard
           :inspect-info="nodeInspectMap[node.id]"

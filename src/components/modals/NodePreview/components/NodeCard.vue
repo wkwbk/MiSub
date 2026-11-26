@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { NodeIR } from '@misub/core/types.js';
-import { Check, Copy, Info, Loader2 } from '@lucide/vue';
+import { Check, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import NodeClientBadges from '@/components/nodes/NodeClientBadges.vue';
 import Switch from '@/components/ui/Switch.vue';
@@ -36,7 +36,6 @@ const { t } = useI18n();
 const props = withDefaults(
   defineProps<{
     nodes?: PreviewNodeItem[];
-    copiedNodeId?: string;
     parseNodeInfo: (node: PreviewNodeItem) => ParsedNodeInfo;
     getProtocolStyle: (protocol?: string) => string;
     selectionMode?: boolean;
@@ -48,7 +47,6 @@ const props = withDefaults(
   }>(),
   {
     nodes: () => [],
-    copiedNodeId: '',
     selectionMode: false,
     selectedUrls: () => new Set<string>(),
     showNodeSwitch: false,
@@ -59,7 +57,6 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  copy: [node: PreviewNodeItem, url: string];
   detail: [node: PreviewNodeItem];
   'toggle-select': [url: string];
   'toggle-enabled': [node: PreviewNodeItem, enabled: boolean];
@@ -207,18 +204,6 @@ const getProtocolDot = (protocol?: string) => {
           >
             <Info class="w-3.5 h-3.5" />
           </button>
-          <button
-            :aria-label="t('actions.copyNode')"
-            :class="{
-              'text-emerald-500 border-emerald-500/40': copiedNodeId === row.node.url,
-            }"
-            :title="t('actions.copyNode')"
-            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md border border-line bg-surface text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
-            @click.stop="emit('copy', row.node, row.node.url)"
-          >
-            <Copy v-if="copiedNodeId !== row.node.url" class="w-3.5 h-3.5" />
-            <Check v-else class="w-3.5 h-3.5" />
-          </button>
           <div v-if="showNodeSwitch" @click.stop>
             <Switch
               :model-value="row.enabled"
@@ -313,18 +298,6 @@ const getProtocolDot = (protocol?: string) => {
                   @click.stop="emit('detail', row.node)"
                 >
                   <Info class="w-3.5 h-3.5" />
-                </button>
-                <button
-                  :aria-label="t('actions.copyNode')"
-                  :class="{
-                    'text-emerald-500 border-emerald-500/40': copiedNodeId === row.node.url,
-                  }"
-                  :title="t('actions.copyNode')"
-                  class="p-1.5 rounded-md border border-line bg-surface text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
-                  @click.stop="emit('copy', row.node, row.node.url)"
-                >
-                  <Copy v-if="copiedNodeId !== row.node.url" class="w-3.5 h-3.5" />
-                  <Check v-else class="w-3.5 h-3.5" />
                 </button>
                 <div v-if="showNodeSwitch" @click.stop>
                   <Switch

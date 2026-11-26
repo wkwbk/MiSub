@@ -397,13 +397,13 @@ const executeReset = async () => {
           {{ labels.emptyText }}
         </div>
 
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 auto-rows-fr gap-4">
           <div
             v-for="(item, index) in filteredItems"
             :key="item.id"
-            class="relative bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
+            class="relative flex h-full flex-col bg-transparent border border-line rounded-md p-4 shadow-none transition-colors hover:border-line-strong group"
           >
-            <div class="flex items-start gap-3 min-w-0">
+            <div class="flex items-start gap-3 min-w-0 pb-4">
               <div
                 class="h-11 w-11 rounded-md flex items-center justify-center text-lg shrink-0 bg-transparent text-fg-muted overflow-hidden border border-line"
               >
@@ -445,7 +445,7 @@ const executeReset = async () => {
               </div>
             </div>
 
-            <div class="mt-4 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3">
+            <div class="mt-auto grid grid-cols-2 sm:flex sm:flex-wrap gap-2 border-t border-line pt-3">
               <button
                 :disabled="ordering || index === 0"
                 class="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs bg-transparent border border-line text-fg-muted hover:bg-hover hover:text-fg rounded-md transition-colors disabled:opacity-40"
