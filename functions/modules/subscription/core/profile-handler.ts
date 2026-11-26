@@ -7,10 +7,13 @@ import { calculateProtocolStats, calculateRegionStats } from '@misub/core/node/n
 import { applyNodeTransformPipeline } from '@misub/core/operators/node-transformer.js';
 import { runOperatorChain } from '@misub/core/operators/operator-runner.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../../config.js';
+import { createConcurrencyLimiter } from '../../../services/fetch-utils.js';
 import { fetchSubscriptionNodes, type FetchSubscriptionNodesResult } from '../security/node-fetcher.js';
 import { applyManualNodeName } from '@misub/core/node/node-cleaner.js';
 import { adaptLegacyTransform } from '@misub/core/operators/legacy-adapter.js';
 import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
+
+const PROFILE_FETCH_CONCURRENCY = 4;
 
 export type ProfileNodeItem = ParsedNodeInfo & {
   subscriptionName?: string;
@@ -168,25 +171,28 @@ export async function handleProfileMode(
     };
   });
 
-  // 并行获取HTTP订阅节点（开启保护性缓存时，上游失败回退缓存节点，与输出链路一致）
+  // 并行获取HTTP订阅节点（限流并发 <= 4，开启保护性缓存时上游失败回退缓存节点）
+  const limiter = createConcurrencyLimiter(PROFILE_FETCH_CONCURRENCY);
   const rawSubscriptionResults: FetchSubscriptionNodesResult[] = await Promise.all(
-    targetSubscriptions.map((sub) => {
-      const subItem = sub as Partial<SubscriptionItem> & Record<string, unknown>;
-      return fetchSubscriptionNodes(
-        sub.url,
-        sub.name,
-        userAgent,
-        typeof subItem.customUserAgent === 'string' ? subItem.customUserAgent : undefined,
-        false,
-        typeof subItem.exclude === 'string' ? subItem.exclude : undefined,
-        typeof subItem.fetchProxy === 'string' ? subItem.fetchProxy : undefined,
-        skipCertVerify,
-        Boolean(subItem.plusAsSpace),
-        subItem.enableNodeCache === true,
-        storageAdapter,
-        subItem,
-      );
-    }),
+    targetSubscriptions.map((sub) =>
+      limiter(() => {
+        const subItem = sub as Partial<SubscriptionItem> & Record<string, unknown>;
+        return fetchSubscriptionNodes(
+          sub.url,
+          sub.name,
+          userAgent,
+          typeof subItem.customUserAgent === 'string' ? subItem.customUserAgent : undefined,
+          false,
+          typeof subItem.exclude === 'string' ? subItem.exclude : undefined,
+          typeof subItem.fetchProxy === 'string' ? subItem.fetchProxy : undefined,
+          skipCertVerify,
+          Boolean(subItem.plusAsSpace),
+          subItem.enableNodeCache === true,
+          storageAdapter,
+          subItem,
+        );
+      }),
+    ),
   );
 
   // 过滤订阅源内手动停用的节点

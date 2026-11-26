@@ -10,7 +10,15 @@ import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
 import type { Env, StorageAdapter } from '../types.js';
 import { isTokenRotationDue, rotateSubscriptionToken } from './handlers/rotate-token.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS, SYSTEM_CONSTANTS } from './config.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from './utils.js';
+import {
+  createErrorResponse,
+  createJsonResponse,
+  createTimeoutFetch,
+  JSON_BODY_LIMITS,
+  readJsonWithLimit,
+} from './utils.js';
+import { assertPublicNetworkUrl } from './security-utils.js';
+import { createConcurrencyLimiter } from '../services/fetch-utils.js';
 // 导入核心通知服务及工具
 import { debugTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
 export { sendEnhancedTgNotification, sendTgNotification, tgEscape } from '../services/notification-service.js';
@@ -236,7 +244,7 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
 
   const startTime = Date.now();
 
-  const CONCURRENCY = 6;
+  const CONCURRENCY = 3;
   const TIMEOUT = 15000;
 
   const nodeRegex = /^(ss|ssr|vmess|vless|trojan|hysteria2?|hy|hy2|tuic|anytls|socks5|socks):\/\//gm;
@@ -247,22 +255,22 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
 
   async function processSubscription(sub: NotifiableSubscription): Promise<CronSubProcessResult> {
     try {
-      const fetchWithTimeout = (url: string, options: RequestInit): Promise<Response> => {
-        const { cf, ...requestInit } = options;
-        const fetchCall = cf ? fetch(new Request(url, requestInit), { cf }) : fetch(new Request(url, requestInit));
-        return Promise.race([
-          fetchCall,
-          new Promise<Response>((_, reject) => setTimeout(() => reject(new Error('Timeout')), TIMEOUT)),
-        ]);
-      };
+      const safeSubUrl = assertPublicNetworkUrl(sub.url).toString();
+      const fetchWithTimeout = (url: string, options: RequestInit): Promise<Response> =>
+        createTimeoutFetch(url, options, TIMEOUT).catch((err: unknown) => {
+          if (err instanceof Error && err.name === 'AbortError') {
+            throw new Error('Timeout');
+          }
+          throw err;
+        });
 
       const [trafficResult, nodeCountResult] = await Promise.allSettled([
-        fetchWithTimeout(sub.url, {
+        fetchWithTimeout(safeSubUrl, {
           headers: { 'User-Agent': 'clash-verge/v2.4.3' },
           redirect: 'follow',
           cf: { insecureSkipVerify: true },
         }),
-        fetchWithTimeout(sub.url, {
+        fetchWithTimeout(safeSubUrl, {
           headers: { 'User-Agent': SYSTEM_CONSTANTS.FETCHER_USER_AGENT },
           redirect: 'follow',
           cf: { insecureSkipVerify: true },
@@ -272,55 +280,65 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
       let hasTrafficUpdate = false;
       let hasNodeCountUpdate = false;
 
-      if (trafficResult.status === 'fulfilled' && trafficResult.value.ok) {
-        const userInfoHeader = trafficResult.value.headers.get('subscription-userinfo');
-        if (userInfoHeader) {
-          const info: Record<string, string | number> = {};
-          userInfoHeader.split(';').forEach((part) => {
-            const [key, value] = part.trim().split('=');
-            if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
-          });
-          const originalSub = allSubs.find((s) => s.id === sub.id);
-          if (originalSub) {
-            originalSub.userInfo = info as SubscriptionUserInfo;
-            await checkAndNotify(originalSub, settings, env);
+      if (trafficResult.status === 'fulfilled') {
+        try {
+          if (trafficResult.value.ok) {
+            const userInfoHeader = trafficResult.value.headers.get('subscription-userinfo');
+            if (userInfoHeader) {
+              const info: Record<string, string | number> = {};
+              userInfoHeader.split(';').forEach((part) => {
+                const [key, value] = part.trim().split('=');
+                if (key && value) info[key] = /^\d+$/.test(value) ? Number(value) : value;
+              });
+              const originalSub = allSubs.find((s) => s.id === sub.id);
+              if (originalSub) {
+                originalSub.userInfo = info as SubscriptionUserInfo;
+                await checkAndNotify(originalSub, settings, env);
+              }
+              hasTrafficUpdate = true;
+            }
           }
-          hasTrafficUpdate = true;
+        } finally {
+          await trafficResult.value.body?.cancel?.().catch(() => {});
         }
       }
 
-      if (nodeCountResult.status === 'fulfilled' && nodeCountResult.value.ok) {
-        const text = await nodeCountResult.value.text();
-        let decoded = '';
-        try {
-          decoded = atob(text.replace(/\s/g, ''));
-        } catch {
-          decoded = text;
-        }
-        const matches = decoded.match(nodeRegex);
-        if (matches) {
-          const originalSub = allSubs.find((s) => s.id === sub.id);
-          if (originalSub) {
-            const previousCount = originalSub.nodeCount;
-            const newCount = matches.length;
-            originalSub.nodeCount = newCount;
+      if (nodeCountResult.status === 'fulfilled') {
+        if (nodeCountResult.value.ok) {
+          const text = await nodeCountResult.value.text();
+          let decoded = '';
+          try {
+            decoded = atob(text.replace(/\s/g, ''));
+          } catch {
+            decoded = text;
+          }
+          const matches = decoded.match(nodeRegex);
+          if (matches) {
+            const originalSub = allSubs.find((s) => s.id === sub.id);
+            if (originalSub) {
+              const previousCount = originalSub.nodeCount;
+              const newCount = matches.length;
+              originalSub.nodeCount = newCount;
 
-            if (previousCount && previousCount > 0) {
-              const diff = newCount - previousCount;
-              const changePercent = Math.abs(diff) / previousCount;
-              const significantChange = Math.abs(diff) >= 10 || changePercent >= 0.2;
+              if (previousCount && previousCount > 0) {
+                const diff = newCount - previousCount;
+                const changePercent = Math.abs(diff) / previousCount;
+                const significantChange = Math.abs(diff) >= 10 || changePercent >= 0.2;
 
-              if (significantChange) {
-                originalSub.nodeCountChange = {
-                  previous: previousCount,
-                  current: newCount,
-                  diff: diff,
-                  timestamp: Date.now(),
-                };
+                if (significantChange) {
+                  originalSub.nodeCountChange = {
+                    previous: previousCount,
+                    current: newCount,
+                    diff: diff,
+                    timestamp: Date.now(),
+                  };
+                }
               }
             }
+            hasNodeCountUpdate = true;
           }
-          hasNodeCountUpdate = true;
+        } else {
+          await nodeCountResult.value.body?.cancel?.().catch(() => {});
         }
       }
 
@@ -339,28 +357,8 @@ export async function handleCronTrigger(env: Env | Record<string, unknown> | nul
     }
   }
 
-  async function runWithConcurrency<T, R>(
-    items: T[],
-    concurrency: number,
-    fn: (item: T) => Promise<R>,
-  ): Promise<R[]> {
-    const results: Array<Promise<R>> = [];
-    const executing = new Set<Promise<R>>();
-    for (const item of items) {
-      const promise = fn(item).then((result) => {
-        executing.delete(promise);
-        return result;
-      });
-      executing.add(promise);
-      results.push(promise);
-      if (executing.size >= concurrency) {
-        await Promise.race(executing);
-      }
-    }
-    return Promise.all(results);
-  }
-
-  const results = await runWithConcurrency(httpSubscriptions, CONCURRENCY, processSubscription);
+  const limiter = createConcurrencyLimiter(CONCURRENCY);
+  const results = await Promise.all(httpSubscriptions.map((sub) => limiter(() => processSubscription(sub))));
 
   for (const result of results) {
     if (result.success) {

@@ -191,7 +191,9 @@ function createApiRouter() {
   apiApp.all('/public/profiles', (c) =>
     handlePublicProfilesRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
   );
-  apiApp.all('/public/preview', (c) => handlePublicPreviewRequest(c.req.raw, c.env));
+  apiApp.all('/public/preview', (c) =>
+    handlePublicPreviewRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
 
   apiApp.get('/public/guestbook', (c) => handleGuestbookGet(c.req.raw, c.env));
   apiApp.post('/public/guestbook', (c) => handleGuestbookPost(c.req.raw, c.env));

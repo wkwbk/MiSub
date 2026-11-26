@@ -91,6 +91,12 @@ const handleDeleteSubscriptionWithCleanup = (subId: string) => {
   deleteSubscription(subId);
 };
 
+const handleToggleSubscription = ({ id, enabled }: { id: string; enabled: boolean }) => {
+  const target = subscriptions.value.find((s) => s.id === id);
+  if (!target) return;
+  updateSubscription({ ...target, enabled });
+};
+
 const handleDeleteAllSubscriptionsWithCleanup = () => {
   deleteAllSubscriptions();
   showDeleteSubsModal.value = false;
@@ -259,6 +265,7 @@ const visibleSubscriptions = computed(() =>
       @preview="handlePreviewSubscription"
       @qrcode="handleQRCode"
       @reorder="reorderSubscriptions"
+      @toggle="handleToggleSubscription"
       @update:items-per-page="(val) => (subscriptionsPerPage = val)"
       @clear-status-filter="clearStatusFilter"
       @set-tag-filters="setTagFilters"

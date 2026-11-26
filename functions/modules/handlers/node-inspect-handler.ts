@@ -184,8 +184,7 @@ export async function handleNodeTcpingRequest(
   let connectFn: ConnectFn | null = options.connectFn || null;
   if (!connectFn) {
     try {
-      const cfSocketsSpecifier = ['cloudflare', 'sockets'].join(':');
-      const mod = (await import(/* @vite-ignore */ cfSocketsSpecifier)) as CloudflareSocketsModule;
+      const mod = (await import('cloudflare:sockets')) as CloudflareSocketsModule;
       connectFn = mod?.connect || null;
     } catch {
       connectFn = null;

@@ -76,6 +76,7 @@ const emit = defineEmits<{
   reorder: [items: PanelSubscription[]];
   import: [];
   qrcode: [id: string];
+  toggle: [payload: { id: string; enabled: boolean }];
   updateSearch: [query: string];
   applyDetectedName: [id: string | undefined, name: string];
   clearStatusFilter: [];
@@ -193,6 +194,12 @@ const handleQRCode = (id: string) => emit('qrcode', id);
 const handleAdd = () => emit('add');
 const handleToggleSort = () => emit('toggleSort');
 const handleSortEnd = () => emit('markDirty');
+const handleToggleEnabled = (subscription: PanelSubscription, enabled: boolean | undefined) => {
+  if (typeof enabled === 'boolean') {
+    emit('toggle', { id: subscription.id, enabled });
+  }
+  handleSortEnd();
+};
 const handleDragEnd = (evt: any) => {
   if (hasDragOrderChanged(evt)) {
     handleSortEnd();
@@ -496,7 +503,7 @@ watch(totalPages, (nextTotal) => {
               :misub="subscription"
               class="pointer-events-none select-none"
               @applyDetectedName="(name) => handleApplyDetectedName(subscription, name)"
-              @change="handleSortEnd"
+              @change="(val) => handleToggleEnabled(subscription, val)"
               @delete="handleDelete(subscription.id)"
               @edit="handleEdit(subscription.id)"
               @preview="handlePreview(subscription.id)"
@@ -526,7 +533,7 @@ watch(totalPages, (nextTotal) => {
             :is-selection-mode="isSelectionMode"
             :misub="subscription"
             @applyDetectedName="(name) => handleApplyDetectedName(subscription, name)"
-            @change="handleSortEnd"
+            @change="(val) => handleToggleEnabled(subscription, val)"
             @delete="handleDelete(subscription.id)"
             @edit="handleEdit(subscription.id)"
             @preview="handlePreview(subscription.id)"

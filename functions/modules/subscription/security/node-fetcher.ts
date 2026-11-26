@@ -2,12 +2,20 @@ import { parseNodeList, type ParsedNodeItem } from '@misub/core/node/node-parser
 import type { SubscriptionItem } from '@misub/core/types.js';
 import type { StorageAdapter } from '../../../types.js';
 import { fetchWithRetry } from '../../../services/fetch-utils.js';
+import { assertPublicNetworkUrl } from '../../security-utils.js';
 import { buildFetchProxyUrl } from '../../../utils/fetch-proxy-utils.js';
 import {
   buildSubscriptionFilterFingerprint,
   readSubscriptionNodeCache,
 } from '../../../services/subscription-service.js';
 import { encodeArrayBufferToBase64, filterNodeObjects, parseFilterRuleText } from '@misub/core/node/node-cleaner.js';
+
+const NODE_FETCH_CONFIG = {
+  TIMEOUT: 15000,
+  MAX_RETRIES: 2,
+  BASE_DELAY: 1000,
+  RETRYABLE_STATUS: [500, 502, 503, 504, 429],
+};
 
 export interface FetchSubscriptionNodesResult {
   subscriptionName: string;
@@ -75,11 +83,13 @@ export async function fetchSubscriptionNodes(
     }
   };
 
+  let requestUrl = '';
   try {
     const effectiveUserAgent = customUserAgent && customUserAgent.trim() !== '' ? customUserAgent : userAgent;
+    assertPublicNetworkUrl(url);
 
     // 当配置了 fetchProxy 时，使用代理拉取订阅
-    let requestUrl = url;
+    requestUrl = url;
 
     // 只有开启保护性缓存节点时才加时间戳绕过强缓存 (如 Cloudflare Edge Cache)
     if (enableNodeCache) {
@@ -96,15 +106,40 @@ export async function fetchSubscriptionNodes(
       requestUrl = buildFetchProxyUrl(fetchProxy, url, effectiveUserAgent);
     }
 
-    // 使用统一的 Fetch 工具，复用重试逻辑
-    const response = await fetchWithRetry(requestUrl, {
-      headers: { 'User-Agent': effectiveUserAgent },
-      redirect: 'follow',
-      ...(skipCertVerify ? { cf: { insecureSkipVerify: true } } : {}),
-    });
+    requestUrl = assertPublicNetworkUrl(requestUrl).toString();
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    return {
+      subscriptionName: resolvedSubName,
+      url,
+      success: false,
+      nodes: [],
+      error: message,
+    };
+  }
+
+  try {
+    const effectiveUserAgent = customUserAgent && customUserAgent.trim() !== '' ? customUserAgent : userAgent;
+
+    // 使用统一的 Fetch 工具，复用重试与单源超时控制
+    const response = await fetchWithRetry(
+      requestUrl,
+      {
+        headers: { 'User-Agent': effectiveUserAgent },
+        redirect: 'follow',
+        ...(skipCertVerify ? { cf: { insecureSkipVerify: true } } : {}),
+      },
+      {
+        timeout: NODE_FETCH_CONFIG.TIMEOUT,
+        maxRetries: NODE_FETCH_CONFIG.MAX_RETRIES,
+        baseDelay: NODE_FETCH_CONFIG.BASE_DELAY,
+        retryableStatus: NODE_FETCH_CONFIG.RETRYABLE_STATUS,
+      },
+    );
 
     if (!response.ok) {
       const upstreamError = `HTTP ${response.status}: ${response.statusText}`;
+      await response.body?.cancel?.().catch(() => {});
       const cachedResult = await fallbackToNodeCache(upstreamError, false);
       if (cachedResult) return cachedResult;
       return {

@@ -32,8 +32,34 @@ export interface ResolveNodeListWithCacheResult {
   cacheStatus: CacheStatus;
 }
 
-const refreshDebounce = new Map<string, number>();
 const DEBOUNCE_TIME = 10000;
+const DEBOUNCE_LIMIT = 500;
+const DEFAULT_CACHE_SCOPE = Object.freeze({ __misubCacheManagerDefault: true });
+
+const refreshDebounceByScope = new WeakMap<object, Map<string, number>>();
+const inflightRefreshByScope = new WeakMap<object, Map<string, Promise<string>>>();
+
+function getCacheScopeTarget(storageAdapter: StorageAdapter | Record<string, unknown> | null | undefined): object {
+  if (!storageAdapter || typeof storageAdapter !== 'object') {
+    return DEFAULT_CACHE_SCOPE;
+  }
+  const db = 'db' in storageAdapter ? storageAdapter.db : undefined;
+  return db && typeof db === 'object' ? db : storageAdapter;
+}
+
+function pruneDebounceMap(map: Map<string, number>, now: number): void {
+  if (map.size <= DEBOUNCE_LIMIT) return;
+  for (const [key, timestamp] of map.entries()) {
+    if (now - timestamp > DEBOUNCE_TIME) {
+      map.delete(key);
+    }
+  }
+  while (map.size > DEBOUNCE_LIMIT) {
+    const oldestKey = map.keys().next().value;
+    if (oldestKey === undefined) break;
+    map.delete(oldestKey);
+  }
+}
 
 function countCachedNodes(cachedData: CachedNodeEntry | null | undefined): number {
   const declaredCount = Number(cachedData?.nodeCount);
@@ -111,19 +137,50 @@ export async function resolveNodeListWithCache({
     combinedNodeList = cachedData.nodes;
     cacheHeaders = createCacheHeaders('REFRESHING', cachedNodeCount) as Record<string, string>;
 
+    const scopeTarget = getCacheScopeTarget(storageAdapter);
+    let refreshDebounce = refreshDebounceByScope.get(scopeTarget);
+    if (!refreshDebounce) {
+      refreshDebounce = new Map();
+      refreshDebounceByScope.set(scopeTarget, refreshDebounce);
+    }
+    const now = Date.now();
     const lastRun = refreshDebounce.get(cacheKey);
-    if (!lastRun || Date.now() - lastRun > DEBOUNCE_TIME) {
-      refreshDebounce.set(cacheKey, Date.now());
+    if (!lastRun || now - lastRun > DEBOUNCE_TIME) {
+      refreshDebounce.set(cacheKey, now);
+      pruneDebounceMap(refreshDebounce, now);
       triggerBackgroundRefresh(context, () => refreshNodes(true));
     }
 
     populateCachedStats(context, cachedNodeCount, targetMisubsCount);
   } else {
-    combinedNodeList = await refreshNodes(false);
-    cacheHeaders = createCacheHeaders(
-      'MISS',
-      combinedNodeList.split('\n').filter((line) => line.trim()).length,
-    ) as Record<string, string>;
+    const scopeTarget = getCacheScopeTarget(storageAdapter);
+    let inflightMap = inflightRefreshByScope.get(scopeTarget);
+    if (!inflightMap) {
+      inflightMap = new Map();
+      inflightRefreshByScope.set(scopeTarget, inflightMap);
+    }
+    const inflightKey = `${forceRefresh ? 'force' : 'miss'}:${cacheKey}`;
+    let refreshPromise = inflightMap.get(inflightKey);
+    let isOwner = false;
+    if (!refreshPromise) {
+      isOwner = true;
+      refreshPromise = Promise.resolve().then(() => refreshNodes(false));
+      inflightMap.set(inflightKey, refreshPromise);
+    }
+
+    try {
+      combinedNodeList = await refreshPromise;
+    } finally {
+      if (isOwner && inflightMap.get(inflightKey) === refreshPromise) {
+        inflightMap.delete(inflightKey);
+      }
+    }
+
+    const nodeCount = combinedNodeList.split('\n').filter((line) => line.trim()).length;
+    if (!context?.generationStats) {
+      populateCachedStats(context, nodeCount, targetMisubsCount);
+    }
+    cacheHeaders = createCacheHeaders('MISS', nodeCount) as Record<string, string>;
   }
 
   return { combinedNodeList, cacheHeaders, cacheStatus };

@@ -5,6 +5,7 @@ import { StorageFactory } from '../../../storage-adapter.js';
 import { createJsonResponse } from '../../utils.js';
 import { parseNodeInfo } from '@misub/core/node/geo-utils.js';
 import { calculateProtocolStats, calculateRegionStats } from '@misub/core/node/node-parser.js';
+import { assertPublicNetworkUrl } from '../../security-utils.js';
 import { fetchSubscriptionNodes, type FetchSubscriptionNodesResult } from '../security/node-fetcher.js';
 import { getDisabledNodeSet } from '@misub/core/domain/disabled-nodes.js';
 
@@ -80,6 +81,8 @@ export async function handleSingleSubscriptionMode(
     };
   }
 
+  assertPublicNetworkUrl(subscription.url);
+
   // HTTP订阅：获取节点（开启保护性缓存时，上游失败回退缓存节点，与输出链路一致）
   const result = await fetchSubscriptionNodes(
     subscription.url,
@@ -125,6 +128,8 @@ export async function handleDirectUrlMode(
   skipCertVerify = false,
   plusAsSpace = false,
 ): Promise<SubscriptionModeResponse> {
+  assertPublicNetworkUrl(subscriptionUrl);
+
   const result = await fetchSubscriptionNodes(
     subscriptionUrl,
     '预览订阅',

@@ -42,7 +42,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   delete: [];
-  change: [value?: unknown];
+  change: [enabled?: boolean];
   update: [];
   edit: [];
   preview: [];
@@ -475,9 +475,9 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
         class="mt-auto flex items-center justify-between gap-3 border-t border-line pt-2.5"
       >
         <Switch
-          v-model="misub.enabled"
+          :model-value="Boolean(misub.enabled)"
           :label="misub.enabled ? t('common.enabled') : t('common.disabled')"
-          @change="emit('change')"
+          @update:model-value="(val: boolean) => emit('change', val)"
         />
 
         <div class="flex items-center gap-2">

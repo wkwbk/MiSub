@@ -10,9 +10,20 @@ import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js
 import type { Env, StorageAdapter } from '../../types.js';
 import { StorageFactory } from '../../storage-adapter.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
-import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
+import {
+  createErrorResponse,
+  createJsonResponse,
+  createTimeoutFetch,
+  JSON_BODY_LIMITS,
+  readJsonWithLimit,
+} from '../utils.js';
+import { assertPublicNetworkUrl } from '../security-utils.js';
+import { createConcurrencyLimiter } from '../../services/fetch-utils.js';
 import { buildFetchProxyUrl } from '../../utils/fetch-proxy-utils.js';
 import { isSuspiciousNodeCountDrop } from '../../services/node-cache-service.js';
+
+const NODE_COUNT_TIMEOUT_MS = 15000;
+const BATCH_UPDATE_CONCURRENCY = 4;
 
 interface NodeCountResult {
   count: number;
@@ -229,8 +240,14 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
     let requestUrl = subUrl;
     const requestedUserAgent = typeof customUserAgent === 'string' ? customUserAgent.trim() : '';
     const processedUserAgent = requestedUserAgent || getProcessedUserAgent('v2rayN/7.23', subUrl);
-    if (fetchProxy && typeof fetchProxy === 'string' && fetchProxy.trim()) {
-      requestUrl = buildFetchProxyUrl(fetchProxy, subUrl, processedUserAgent);
+    try {
+      assertPublicNetworkUrl(subUrl);
+      if (fetchProxy && typeof fetchProxy === 'string' && fetchProxy.trim()) {
+        requestUrl = buildFetchProxyUrl(fetchProxy, subUrl, processedUserAgent);
+      }
+      requestUrl = assertPublicNetworkUrl(requestUrl).toString();
+    } catch (urlError: unknown) {
+      return createErrorResponse(toHttpError(urlError).message, 400);
     }
 
     try {
@@ -245,24 +262,34 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
 
       // cf 选项需传给 fetch() 而非 Request()：仅在用户显式启用跳过证书验证时传递
       const cfOptions = await resolveNodeCountFetchCfOptions(env);
-      const trafficRequest = fetch(new Request(requestUrl, trafficFetchOptions), cfOptions);
-      const nodeCountRequest = fetch(new Request(requestUrl, fetchOptions), cfOptions);
+      const trafficRequest = createTimeoutFetch(
+        requestUrl,
+        { ...trafficFetchOptions, ...cfOptions },
+        NODE_COUNT_TIMEOUT_MS,
+      );
+      const nodeCountRequest = createTimeoutFetch(requestUrl, { ...fetchOptions, ...cfOptions }, NODE_COUNT_TIMEOUT_MS);
 
       // 使用 Promise.allSettled 替换 Promise.all
       const responses = await Promise.allSettled([trafficRequest, nodeCountRequest]);
 
-      // 1. 处理流量请求的结果
-      if (responses[0].status === 'fulfilled' && responses[0].value.ok) {
-        const info = extractUserInfo(responses[0].value);
-        if (info) {
-          result.userInfo = info;
+      // 1. 处理流量请求的结果（无论成功与否均释放响应体，避免 Workers 连接槽泄漏）
+      if (responses[0].status === 'fulfilled') {
+        try {
+          if (responses[0].value.ok) {
+            const info = extractUserInfo(responses[0].value);
+            if (info) {
+              result.userInfo = info;
+            }
+          } else {
+            const reason = `HTTP ${responses[0].value.status}`;
+            console.warn(`[NodeHandler] Traffic specific request failed (${reason}). Will attempt fallback extraction.`);
+          }
+        } finally {
+          await responses[0].value.body?.cancel?.().catch(() => {});
         }
       } else {
         // 仅记录警告，不视为严重错误，因为我们还有 fallback
-        const reason =
-          responses[0].status === 'fulfilled'
-            ? `HTTP ${responses[0].value.status}`
-            : toHttpError(responses[0].reason).message;
+        const reason = toHttpError(responses[0].reason).message;
         console.warn(`[NodeHandler] Traffic specific request failed (${reason}). Will attempt fallback extraction.`);
       }
 
@@ -365,6 +392,7 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
       } else if (responses[1].status === 'fulfilled' && !responses[1].value.ok) {
         if (!fetchError) fetchError = new Error(`HTTP ${responses[1].value.status}: ${responses[1].value.statusText}`);
         console.error('Node count request returned error:', responses[1].value.status);
+        await responses[1].value.body?.cancel?.().catch(() => {});
       }
 
       // 检查是否两个请求都失败了
@@ -533,95 +561,94 @@ export async function handleBatchUpdateNodesRequest(request: Request, env: Env):
       });
     }
 
-    // 单个订阅超时时间（毫秒）
+    // 单个订阅超时时间（毫秒）与并发上限
     const SINGLE_SUB_TIMEOUT = 15000;
     const fetchCfOptions = await resolveNodeCountFetchCfOptions(env);
+    const limiter = createConcurrencyLimiter(BATCH_UPDATE_CONCURRENCY);
 
-    // 并行获取所有订阅的节点（带超时）
-    const updatePromises = targetSubscriptions.map(async (subscription) => {
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
-      try {
-        const effectiveUserAgent =
-          (typeof subscription.customUserAgent === 'string' && subscription.customUserAgent.trim()) ||
-          getProcessedUserAgent(userAgent, subscription.url);
-        let requestUrl = subscription.url;
-        if (subscription.fetchProxy && typeof subscription.fetchProxy === 'string' && subscription.fetchProxy.trim()) {
-          requestUrl = buildFetchProxyUrl(subscription.fetchProxy, subscription.url, effectiveUserAgent);
-        }
-
-        // 使用 Promise.race 实现超时
-        const fetchPromise = fetch(
-          new Request(requestUrl, {
-            headers: { 'User-Agent': effectiveUserAgent },
-            redirect: 'follow',
-          }),
-          fetchCfOptions,
-        );
-
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          timeoutId = setTimeout(() => reject(new Error('请求超时')), SINGLE_SUB_TIMEOUT);
-        });
-
-        const response = await Promise.race([fetchPromise, timeoutPromise]);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const text = await response.text();
-        const bodyError = detectSubscriptionBodyError(text);
-        if (bodyError) {
-          throw bodyError;
-        }
-
-        let userInfo: SubscriptionUserInfo | Record<string, string | number> | null = extractUserInfo(response);
-        if (!userInfo) {
-          userInfo = extractUserInfoFromBody(decodeBase64SubscriptionText(text));
-        }
-
-        // 使用与预览功能相同的解码和节点统计逻辑
-        let nodeCount = 0;
+    // 限流并行获取所有订阅的节点（带真实 AbortController 超时与 SSRF 校验）
+    const updatePromises = targetSubscriptions.map((subscription) =>
+      limiter(async () => {
         try {
-          // 使用 parseNodeList 函数，与预览功能完全一致
-          const parsedNodes = parseNodeList(text, {
-            plusAsSpace: Boolean(subscription.plusAsSpace),
-          });
-          nodeCount = parsedNodes.length;
-        } catch (e: unknown) {
-          // 解码失败，尝试简单统计
-          console.error('Batch update decode error:', e);
-          try {
-            const processedText = decodeBase64SubscriptionText(text);
-            nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
-          } catch {
-            // 如果都失败，使用原始文本进行统计
-            nodeCount = (text.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
+          assertPublicNetworkUrl(subscription.url);
+          const effectiveUserAgent =
+            (typeof subscription.customUserAgent === 'string' && subscription.customUserAgent.trim()) ||
+            getProcessedUserAgent(userAgent, subscription.url);
+          let requestUrl = subscription.url;
+          if (subscription.fetchProxy && typeof subscription.fetchProxy === 'string' && subscription.fetchProxy.trim()) {
+            requestUrl = buildFetchProxyUrl(subscription.fetchProxy, subscription.url, effectiveUserAgent);
           }
-        }
+          requestUrl = assertPublicNetworkUrl(requestUrl).toString();
 
-        return {
-          subscriptionId: subscription.id,
-          subscriptionName: subscription.name,
-          success: true,
-          nodeCount,
-          userInfo: userInfo || null,
-          error: null,
-          lastUpdated: new Date().toISOString(),
-        };
-      } catch (e: unknown) {
-        return {
-          subscriptionId: subscription.id,
-          subscriptionName: subscription.name,
-          success: false,
-          nodeCount: 0,
-          userInfo: null,
-          error: toHttpError(e).message,
-          lastUpdated: new Date().toISOString(),
-        };
-      } finally {
-        if (timeoutId !== undefined) clearTimeout(timeoutId);
-      }
-    });
+          const response = await createTimeoutFetch(
+            requestUrl,
+            {
+              headers: { 'User-Agent': effectiveUserAgent },
+              redirect: 'follow',
+              ...fetchCfOptions,
+            },
+            SINGLE_SUB_TIMEOUT,
+          );
+
+          if (!response.ok) {
+            await response.body?.cancel?.().catch(() => {});
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const text = await response.text();
+          const bodyError = detectSubscriptionBodyError(text);
+          if (bodyError) {
+            throw bodyError;
+          }
+
+          let userInfo: SubscriptionUserInfo | Record<string, string | number> | null = extractUserInfo(response);
+          if (!userInfo) {
+            userInfo = extractUserInfoFromBody(decodeBase64SubscriptionText(text));
+          }
+
+          // 使用与预览功能相同的解码和节点统计逻辑
+          let nodeCount = 0;
+          try {
+            // 使用 parseNodeList 函数，与预览功能完全一致
+            const parsedNodes = parseNodeList(text, {
+              plusAsSpace: Boolean(subscription.plusAsSpace),
+            });
+            nodeCount = parsedNodes.length;
+          } catch (e: unknown) {
+            // 解码失败，尝试简单统计
+            console.error('Batch update decode error:', e);
+            try {
+              const processedText = decodeBase64SubscriptionText(text);
+              nodeCount = (processedText.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
+            } catch {
+              // 如果都失败，使用原始文本进行统计
+              nodeCount = (text.match(NODE_PROTOCOL_GLOBAL_REGEX) || []).length;
+            }
+          }
+
+          return {
+            subscriptionId: subscription.id,
+            subscriptionName: subscription.name,
+            success: true,
+            nodeCount,
+            userInfo: userInfo || null,
+            error: null,
+            lastUpdated: new Date().toISOString(),
+          };
+        } catch (e: unknown) {
+          const errorMessage = e instanceof Error && e.name === 'AbortError' ? '请求超时' : toHttpError(e).message;
+          return {
+            subscriptionId: subscription.id,
+            subscriptionName: subscription.name,
+            success: false,
+            nodeCount: 0,
+            userInfo: null,
+            error: errorMessage,
+            lastUpdated: new Date().toISOString(),
+          };
+        }
+      }),
+    );
 
     // 等待所有更新完成
     const results = await Promise.all(updatePromises);

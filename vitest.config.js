@@ -8,6 +8,19 @@ export default defineConfig({
         transformAssetUrls: false,
       },
     }),
+    {
+      name: 'vitest-cloudflare-sockets-stub',
+      resolveId(id) {
+        if (id === 'cloudflare:sockets') {
+          return '\0virtual:cloudflare-sockets';
+        }
+      },
+      load(id) {
+        if (id === '\0virtual:cloudflare-sockets') {
+          return 'export const connect = undefined;\n';
+        }
+      },
+    },
   ],
   test: {
     globals: true,

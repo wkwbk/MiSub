@@ -1,11 +1,92 @@
 import type { SettingsConfig } from '@misub/core/types.js';
-import type { Env } from '../../../types.js';
+import type { BoundRequestContext, Env, StorageAdapter } from '../../../types.js';
 import { StorageFactory } from '../../../storage-adapter.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../../utils.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../../config.js';
 import { enforcePublicApiAccess } from '../../access-control.js';
-import { handleProfileMode } from './profile-handler.js';
+import { getEdgeCacheVersion } from '../../../services/node-cache-service.js';
+import { readEdgeCachedResponse, writeEdgeCachedResponse } from '../security/fetch-guard.js';
+import { handleProfileMode, type HandleProfileModeResult } from './profile-handler.js';
 import { handleDirectUrlMode, handleSingleSubscriptionMode } from './single-subscription.js';
+
+const PUBLIC_PREVIEW_RATE_WINDOW_MS = 60 * 1000;
+const PUBLIC_PREVIEW_RATE_LIMIT_MAX = 20;
+const PUBLIC_PREVIEW_RATE_LIMIT_ENTRIES = 500;
+const PUBLIC_PREVIEW_CACHE_TTL_SECONDS = 60;
+const DEFAULT_PREVIEW_SCOPE = Object.freeze({ __misubPublicPreviewScope: true });
+
+interface PublicPreviewRateLimitEntry {
+  count: number;
+  resetAt: number;
+}
+
+let publicPreviewRateLimits = new WeakMap<object, Map<string, PublicPreviewRateLimitEntry>>();
+let publicPreviewInflight = new WeakMap<object, Map<string, Promise<HandleProfileModeResult | Response>>>();
+
+function getPreviewScopeTarget(storageAdapter: StorageAdapter | Record<string, unknown> | null | undefined): object {
+  if (!storageAdapter || typeof storageAdapter !== 'object') {
+    return DEFAULT_PREVIEW_SCOPE;
+  }
+  const db = 'db' in storageAdapter ? storageAdapter.db : undefined;
+  return db && typeof db === 'object' ? db : storageAdapter;
+}
+
+function getPreviewClientIp(request: Request): string {
+  return (
+    request.headers.get('CF-Connecting-IP') ||
+    request.headers.get('X-Real-IP') ||
+    request.headers.get('X-Forwarded-For')?.split(',')[0]?.trim() ||
+    'unknown'
+  );
+}
+
+function pruneRateLimitMap(map: Map<string, PublicPreviewRateLimitEntry>, now: number): void {
+  if (map.size <= PUBLIC_PREVIEW_RATE_LIMIT_ENTRIES) return;
+  for (const [key, entry] of map.entries()) {
+    if (entry.resetAt <= now) {
+      map.delete(key);
+    }
+  }
+  while (map.size > PUBLIC_PREVIEW_RATE_LIMIT_ENTRIES) {
+    const oldestKey = map.keys().next().value;
+    if (oldestKey === undefined) break;
+    map.delete(oldestKey);
+  }
+}
+
+function checkPublicPreviewRateLimit(
+  scopeTarget: object,
+  clientIp: string,
+  now = Date.now(),
+): { limited: boolean; retryAfterSeconds: number } {
+  let map = publicPreviewRateLimits.get(scopeTarget);
+  if (!map) {
+    map = new Map();
+    publicPreviewRateLimits.set(scopeTarget, map);
+  }
+
+  const existing = map.get(clientIp);
+  if (!existing || existing.resetAt <= now) {
+    map.set(clientIp, { count: 1, resetAt: now + PUBLIC_PREVIEW_RATE_WINDOW_MS });
+    pruneRateLimitMap(map, now);
+    return { limited: false, retryAfterSeconds: 0 };
+  }
+
+  if (existing.count >= PUBLIC_PREVIEW_RATE_LIMIT_MAX) {
+    return {
+      limited: true,
+      retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)),
+    };
+  }
+
+  existing.count += 1;
+  return { limited: false, retryAfterSeconds: 0 };
+}
+
+export function resetPublicPreviewProtectionForTests(): void {
+  publicPreviewRateLimits = new WeakMap();
+  publicPreviewInflight = new WeakMap();
+}
 
 interface PreviewRequestPayload {
   profileId?: string;
@@ -50,7 +131,11 @@ function determineRequestMode(requestData: PreviewRequestPayload): 'profile' | '
 /**
  * 处理公开订阅组预览请求
  */
-export async function handlePublicPreviewRequest(request: Request, env: Env): Promise<Response> {
+export async function handlePublicPreviewRequest(
+  request: Request,
+  env: Env,
+  context: BoundRequestContext | null = null,
+): Promise<Response> {
   if (request.method !== 'POST') {
     return createJsonResponse('Method Not Allowed', 405);
   }
@@ -70,6 +155,23 @@ export async function handlePublicPreviewRequest(request: Request, env: Env): Pr
     const blocked = await enforcePublicApiAccess(request, env, settings);
     if (blocked) return blocked;
 
+    const scopeTarget = getPreviewScopeTarget(storageAdapter);
+    const rateStatus = checkPublicPreviewRateLimit(scopeTarget, getPreviewClientIp(request));
+    if (rateStatus.limited) {
+      return createJsonResponse(
+        {
+          error: 'Too many preview requests. Please try again later.',
+          retryAfter: rateStatus.retryAfterSeconds,
+        },
+        429,
+        {
+          'Cache-Control': 'no-store, no-cache',
+          'Retry-After': String(rateStatus.retryAfterSeconds),
+          'X-MiSub-Rate-Limit': 'public-preview',
+        },
+      );
+    }
+
     const profile =
       typeof storageAdapter.getPublicProfileByIdentifier === 'function'
         ? (await storageAdapter.getPublicProfileByIdentifier(profileId)) ||
@@ -78,6 +180,19 @@ export async function handlePublicPreviewRequest(request: Request, env: Env): Pr
 
     if (!profile || !profile.enabled || !profile.isPublic) {
       return createJsonResponse({ error: 'Profile not found or not public' }, 404);
+    }
+
+    const baseVersion = await getEdgeCacheVersion(storageAdapter);
+    const cacheVersion = profile.updatedAt ? `${baseVersion}:${String(profile.updatedAt)}` : baseVersion;
+    const requestOrigin = new URL(request.url).origin;
+    const previewCacheRequest = new Request(
+      `${requestOrigin}/__misub_public_preview/${encodeURIComponent(profile.id)}?__v=${encodeURIComponent(cacheVersion)}`,
+      { method: 'GET' },
+    );
+
+    const cachedResponse = await readEdgeCachedResponse(previewCacheRequest, storageAdapter);
+    if (cachedResponse) {
+      return cachedResponse;
     }
 
     const profileRecord = profile as Record<string, unknown>;
@@ -94,10 +209,40 @@ export async function handlePublicPreviewRequest(request: Request, env: Env): Pr
         profileSettings?.builtinSkipCertVerify ||
         profileSettings?.transformBackendScv,
     );
-    const result = await handleProfileMode(request, env, profile.id, userAgent, true, shouldSkipCertificateVerify);
+
+    let inflightMap = publicPreviewInflight.get(scopeTarget);
+    if (!inflightMap) {
+      inflightMap = new Map();
+      publicPreviewInflight.set(scopeTarget, inflightMap);
+    }
+
+    const inflightKey = previewCacheRequest.url;
+    let inflightPromise = inflightMap.get(inflightKey);
+    let isLeader = false;
+    if (!inflightPromise) {
+      isLeader = true;
+      inflightPromise = handleProfileMode(request, env, profile.id, userAgent, true, shouldSkipCertificateVerify);
+      inflightMap.set(inflightKey, inflightPromise);
+    }
+
+    let result: HandleProfileModeResult | Response;
+    try {
+      result = await inflightPromise;
+    } finally {
+      if (isLeader && inflightMap.get(inflightKey) === inflightPromise) {
+        inflightMap.delete(inflightKey);
+      }
+    }
+
     if (result instanceof Response) return result;
 
-    return createJsonResponse(result);
+    const response = createJsonResponse(result, 200, {
+      'X-MiSub-Edge-Cache': 'MISS',
+    });
+    if (isLeader && result.success) {
+      writeEdgeCachedResponse(context, previewCacheRequest, response, PUBLIC_PREVIEW_CACHE_TTL_SECONDS, storageAdapter);
+    }
+    return response;
   } catch (e) {
     return createErrorResponse(`Preview failed: ${getErrorMessage(e)}`, getErrorStatus(e));
   }
