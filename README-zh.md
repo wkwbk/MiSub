@@ -373,7 +373,7 @@ MiSub 采用 `pnpm` Monorepo 工作区结构，前后端职责边界清晰：
 - **`functions/` 与 `worker.js`（边缘计算后端）**：基于 **Hono** 构建统一路由与洋葱中间件（会话续期、CORS/CSRF、Cookie/Bearer 鉴权、Zod 入参校验与 `onError`）；订阅转换管线按 `User-Agent` **按需动态懒加载 (`await import(...)`)** 各客户端 `ClientAdapter` 生成器与模板渲染器；通过 `Repository` 仓储层封装 **内存 -> Cloudflare Cache API -> D1** 三级缓存及 `db.batch([...])` 批量写入合并。
 - **`src/`（Vue 3 管理前端）**：使用 **`@tanstack/vue-query`** 接管后端异步数据请求与失效刷新，Pinia Store 统一规范为 `useXxxStore.js`（如 `useDataStore.js`、`useSessionStore.js`、`useSettingsStore.js`），导入入口统一收敛至 [ImportModal.vue](src/components/modals/ImportModal.vue)。
 
-完整架构与请求链路说明请见 [docs/architecture.md](docs/architecture.md)。
+完整架构与请求链路说明请见 [docs/architecture/overview.md](docs/architecture/overview.md)。
 
 ## 本地开发
 

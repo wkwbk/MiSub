@@ -127,7 +127,7 @@ MiSub is organized as a `pnpm` monorepo with strict separation between shared do
 - **`functions/` & `worker.js`**: Cloudflare Workers / Pages Functions backend built with **Hono**, onion CORS/CSRF/auth middlewares, Zod request validation, lazy-loaded `ClientAdapter` subscription generators/renderers (`await import(...)`), and a **Repository + 3-tier cache (`Memory -> Cache API -> D1`)** layer with `db.batch(...)` coalesced writes.
 - **`src/`**: Vue 3 + Vite 8 + Tailwind CSS 4 frontend using **`@tanstack/vue-query`** for server state, canonical `useXxxStore.js` Pinia stores, and the unified [ImportModal.vue](src/components/modals/ImportModal.vue).
 
-See [docs/architecture.md](docs/architecture.md) for the full module map and request pipeline.
+See [docs/architecture/overview.md](docs/architecture/overview.md) for the full module map and request pipeline.
 
 ## Local Development
 
@@ -190,7 +190,7 @@ Profiles can inherit a global default operator chain or define their own process
 
 ## Documentation
 
-- [Architecture Guide](docs/architecture.md)
+- [Architecture Guide](docs/architecture/overview.md)
 - [Chinese README](README-zh.md)
 
 ## Version

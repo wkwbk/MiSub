@@ -18,5 +18,5 @@
     "unicorn/no-useless-spread": "warn",
     "oxc/only-used-in-recursion": "warn"
   },
-  "ignorePatterns": ["dist/**", "node_modules/**", "**/node_modules/**", "public/**", "coverage/**", ".wrangler/**", "playwright-report/**", "test-results/**"]
+  "ignorePatterns": ["dist/**", "node_modules/**", "**/node_modules/**", "public/**", "coverage/**", ".wrangler/**", "playwright-report/**", "test-results/**", "docs/.vitepress/dist/**", "docs/.vitepress/cache/**"]
 }

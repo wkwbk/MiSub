@@ -17,6 +17,8 @@ lerna-debug.log*
 dist
 dist-ssr
 dev-dist
+docs/.vitepress/cache
+docs/.vitepress/dist
 
 # Dependencies
 node_modules/
