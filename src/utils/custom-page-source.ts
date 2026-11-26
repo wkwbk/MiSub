@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 interface ParsedCustomPageScript {
   src: string;
   content: string;
@@ -13,6 +15,51 @@ export interface ParsedCustomPageSource {
   hadFullDocument: boolean;
   extractedStyles: boolean;
   strippedScripts: boolean;
+}
+
+export const CUSTOM_PAGE_DOMPURIFY_CONFIG = {
+  USE_PROFILES: { html: true },
+  ADD_ATTR: ['data-slot', 'target'],
+  FORBID_TAGS: ['script', 'object', 'embed', 'link', 'style'],
+  FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'style'],
+};
+
+export const CUSTOM_PAGE_COMPONENT_PLACEHOLDERS = [
+  'profiles',
+  'announcement',
+  'announcements',
+  'hero',
+  'guestbook',
+  'theme_toggle',
+] as const;
+
+export function sanitizeCustomPageHtml(html: string): string {
+  return DOMPurify.sanitize(html || '', CUSTOM_PAGE_DOMPURIFY_CONFIG);
+}
+
+export function escapeCustomPageText(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+export function renderCustomPageHtml(parsedHtml: string, textVars: Record<string, string | number>): string {
+  let html = parsedHtml || '';
+
+  for (const [key, val] of Object.entries(textVars)) {
+    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
+    html = html.replace(regex, escapeCustomPageText(val));
+  }
+
+  CUSTOM_PAGE_COMPONENT_PLACEHOLDERS.forEach((p) => {
+    const slotName = p === 'announcement' ? 'announcements' : p;
+    const regex = new RegExp(`{{\\s*${p}\\s*}}`, 'gi');
+    html = html.replace(regex, `<div data-slot="${slotName}"></div>`);
+  });
+
+  return sanitizeCustomPageHtml(html);
 }
 
 export function parseCustomPageSource(content: string | null | undefined, css = ''): ParsedCustomPageSource {

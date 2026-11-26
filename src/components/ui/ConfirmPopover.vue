@@ -13,6 +13,7 @@ const props = withDefaults(
     cancelText?: string;
     variant?: 'danger' | 'primary';
     disabled?: boolean;
+    triggerClass?: string;
   }>(),
   {
     title: '',
@@ -21,6 +22,7 @@ const props = withDefaults(
     cancelText: '',
     variant: 'danger',
     disabled: false,
+    triggerClass: 'inline-flex items-center',
   },
 );
 
@@ -137,7 +139,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="triggerRef" class="inline-flex items-center">
+  <div ref="triggerRef" :class="triggerClass">
     <slot :is-open="isOpen" :toggle="togglePopover" name="trigger" />
   </div>
 

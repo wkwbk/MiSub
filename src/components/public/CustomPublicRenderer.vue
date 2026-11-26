@@ -3,9 +3,8 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import type { CustomPageConfig, HeroConfig, ProfileConfig } from '@misub/core/types.js';
 import { useRoute } from 'vue-router';
 import { Moon, Sun } from '@lucide/vue';
-import DOMPurify from 'dompurify';
 import { useThemeStore } from '@/stores/useThemeStore.js';
-import { parseCustomPageSource } from '@/utils/custom-page-source.js';
+import { parseCustomPageSource, renderCustomPageHtml, sanitizeCustomPageHtml } from '@/utils/custom-page-source.js';
 import { useI18n } from '@/i18n/index.js';
 import packageJson from '../../../package.json';
 
@@ -61,16 +60,9 @@ const removeScripts = () => {
 const customPageConfig = computed<Partial<CustomPageConfig>>(() => props.config?.customPage || {});
 const customPageType = computed(() => customPageConfig.value.type || 'html');
 const isIframeMode = computed(() => ['iframe-srcdoc', 'iframe-url'].includes(customPageType.value));
-const sanitizeHtml = (html: string) =>
-  DOMPurify.sanitize(html || '', {
-    USE_PROFILES: { html: true },
-    ADD_ATTR: ['data-slot', 'target'],
-    FORBID_TAGS: ['script', 'object', 'embed', 'link', 'style'],
-    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'style'],
-  });
 const iframeSandbox = 'allow-forms allow-popups allow-popups-to-escape-sandbox';
 const iframeSrcdoc = computed(() =>
-  customPageType.value === 'iframe-srcdoc' ? sanitizeHtml(props.content || '') : undefined,
+  customPageType.value === 'iframe-srcdoc' ? sanitizeCustomPageHtml(props.content || '') : undefined,
 );
 const safeIframeUrl = (value: unknown) => {
   try {
@@ -99,14 +91,8 @@ const iframeStyle = computed(() => ({
 const iframeUsesDefaultViewportHeight = computed(() => !customPageConfig.value.iframeHeight);
 
 const parsedSource = computed(() => parseCustomPageSource(props.content, props.css));
-const escapeHtml = (value: unknown) => {
-  return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-};
 
 const renderedHtml = computed(() => {
-  let html = parsedSource.value.html || '';
-
-  // 1. 文本占位符替换
   const nodeCount = props.profiles.reduce((sum, p) => sum + (p.subscriptionCount || 0) + (p.manualNodeCount || 0), 0);
   const textVars = {
     version: packageJson.version,
@@ -116,21 +102,7 @@ const renderedHtml = computed(() => {
     node_count: nodeCount,
   };
 
-  for (const [key, val] of Object.entries(textVars)) {
-    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
-    html = html.replace(regex, escapeHtml(val));
-  }
-
-  // 2. 组件占位符替换 (转换为 data-slot div)
-  const placeholders = ['profiles', 'announcement', 'announcements', 'hero', 'guestbook', 'theme_toggle'];
-  placeholders.forEach((p) => {
-    // 使用 gi 确保不区分大小写，announcement 与 announcements 统一映射到 announcements 插槽
-    const slotName = p === 'announcement' ? 'announcements' : p;
-    const regex = new RegExp(`{{\\s*${p}\\s*}}`, 'gi');
-    html = html.replace(regex, `<div data-slot="${slotName}"></div>`);
-  });
-
-  return sanitizeHtml(html);
+  return renderCustomPageHtml(parsedSource.value.html || '', textVars);
 });
 
 // 用于检测占位符是否在 HTML 中的辅助函数

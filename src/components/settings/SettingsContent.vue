@@ -228,6 +228,10 @@ onUnmounted(() => {
         v-if="visitedTabs.has('custom-page')"
         v-show="activeTab === 'custom-page'"
         v-model:settings="settingsModel"
+        :is-active="activeTab === 'custom-page'"
+        :is-saving="isSaving"
+        :save-disabled="saveDisabled"
+        @save="handleSaveClick"
       />
       <div v-if="visitedTabs.has('system')" v-show="activeTab === 'system'" class="space-y-4">
         <WebdavBackupSettings v-model:settings="settingsModel" />

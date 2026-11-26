@@ -37,6 +37,7 @@ const editorialZineTemplate = {
           <span class="cp-ed-status-dot" aria-hidden="true"></span>
           <span>ONLINE · v{{version}}</span>
         </span>
+        {{theme_toggle}}
         <a class="cp-ed-nav-ext" href="#cp-ed-profiles">订阅 ↘</a>
       </div>
     </div>
@@ -340,6 +341,46 @@ const editorialZineTemplate = {
   </footer>
 </div>`,
   css: `.cp-ed {
+  --ed-bg: #f7f4ee;
+  --ed-surface: #ffffff;
+  --ed-surface-alt: #efebe2;
+  --ed-fg: #181715;
+  --ed-muted: #5c5850;
+  --ed-subtle: #7c776d;
+  --ed-gold: #9a7428;
+  --ed-gold-bright: #b0852d;
+  --ed-coral: #b84b4b;
+  --ed-emerald: #10b981;
+  --ed-line: rgba(24, 23, 21, 0.14);
+  --ed-line-strong: rgba(24, 23, 21, 0.28);
+  --ed-v-dash: repeating-linear-gradient(to bottom, rgba(24, 23, 21, 0.11) 0 2px, transparent 2px 6px);
+  --ed-h-dash: repeating-linear-gradient(to right, rgba(24, 23, 21, 0.14) 0 2px, transparent 2px 6px);
+  --ed-nav-bg: rgba(247, 244, 238, 0.86);
+  --ed-stipple-dot-1: rgba(24, 23, 21, 0.92);
+  --ed-stipple-dot-2: rgba(24, 23, 21, 0.36);
+  --ed-stipple-grad-start: rgba(24, 23, 21, 0.92);
+  --ed-stipple-grad-end: rgba(92, 88, 80, 0.62);
+  --ed-outline-stroke: rgba(24, 23, 21, 0.48);
+  --ed-compare-stroke: rgba(24, 23, 21, 0.42);
+  --ed-zero8-stroke: rgba(24, 23, 21, 0.22);
+  --ed-feature-hover-bg: rgba(24, 23, 21, 0.035);
+  --ed-watermark-color: rgba(24, 23, 21, 0.08);
+  --ed-btn-hover-fg: #ffffff;
+  --ed-serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, 'Times New Roman', serif;
+  --ed-mono: var(--font-mono, 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace);
+  --ed-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  background-color: var(--ed-bg);
+  background-image: var(--ed-grain);
+  color: var(--ed-fg);
+  font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+  overflow-x: clip;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark .cp-ed {
   --ed-bg: #0a0a0a;
   --ed-surface: #111111;
   --ed-surface-alt: #161616;
@@ -354,17 +395,18 @@ const editorialZineTemplate = {
   --ed-line-strong: rgba(240, 237, 230, 0.28);
   --ed-v-dash: repeating-linear-gradient(to bottom, rgba(240, 237, 230, 0.11) 0 2px, transparent 2px 6px);
   --ed-h-dash: repeating-linear-gradient(to right, rgba(240, 237, 230, 0.14) 0 2px, transparent 2px 6px);
-  --ed-serif: 'Noto Serif SC', 'Songti SC', 'STSong', Georgia, 'Times New Roman', serif;
-  --ed-mono: var(--font-mono, 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace);
+  --ed-nav-bg: rgba(10, 10, 10, 0.84);
+  --ed-stipple-dot-1: rgba(240, 237, 230, 0.94);
+  --ed-stipple-dot-2: rgba(240, 237, 230, 0.42);
+  --ed-stipple-grad-start: rgba(240, 237, 230, 0.92);
+  --ed-stipple-grad-end: rgba(162, 155, 143, 0.58);
+  --ed-outline-stroke: rgba(240, 237, 230, 0.55);
+  --ed-compare-stroke: rgba(240, 237, 230, 0.45);
+  --ed-zero8-stroke: rgba(240, 237, 230, 0.28);
+  --ed-feature-hover-bg: rgba(240, 237, 230, 0.025);
+  --ed-watermark-color: rgba(240, 237, 230, 0.08);
+  --ed-btn-hover-fg: #0a0a0a;
   --ed-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
-  position: relative;
-  width: 100%;
-  min-height: 100dvh;
-  background-color: var(--ed-bg);
-  background-image: var(--ed-grain);
-  color: var(--ed-fg);
-  font-family: var(--font-body, system-ui, -apple-system, sans-serif);
-  overflow-x: clip;
 }
 
 .cp-ed *,
@@ -380,9 +422,9 @@ const editorialZineTemplate = {
 .cp-ed-stipple {
   color: var(--ed-fg);
   background-image:
-    radial-gradient(rgba(240, 237, 230, 0.94) 1px, transparent 1px),
-    radial-gradient(rgba(240, 237, 230, 0.42) 1px, transparent 1px),
-    linear-gradient(170deg, rgba(240, 237, 230, 0.92) 0%, rgba(162, 155, 143, 0.58) 100%);
+    radial-gradient(var(--ed-stipple-dot-1) 1px, transparent 1px),
+    radial-gradient(var(--ed-stipple-dot-2) 1px, transparent 1px),
+    linear-gradient(170deg, var(--ed-stipple-grad-start) 0%, var(--ed-stipple-grad-end) 100%);
   background-size: 3px 3px, 5px 5px, 100% 100%;
   background-position: 0 0, 2px 2px, 0 0;
   -webkit-background-clip: text;
@@ -448,7 +490,7 @@ const editorialZineTemplate = {
   top: 0;
   z-index: 40;
   width: 100%;
-  background: rgba(10, 10, 10, 0.84);
+  background: var(--ed-nav-bg);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -523,7 +565,31 @@ const editorialZineTemplate = {
 .cp-ed-nav-right {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.cp-ed [data-slot="theme_toggle"]:empty {
+  display: none;
+}
+
+.cp-ed [data-slot="theme_toggle"] .theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 0 !important;
+  border: 1px dashed var(--ed-line) !important;
+  background: transparent !important;
+  color: var(--ed-muted) !important;
+  transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.cp-ed [data-slot="theme_toggle"] .theme-toggle-btn:hover {
+  color: var(--ed-fg) !important;
+  border-color: var(--ed-gold) !important;
+  background: var(--ed-feature-hover-bg) !important;
 }
 
 .cp-ed-status-pill {
@@ -749,7 +815,7 @@ const editorialZineTemplate = {
 .cp-ed-btn-primary:hover {
   background: var(--ed-gold-bright);
   border-color: var(--ed-gold-bright);
-  color: var(--ed-bg);
+  color: var(--ed-btn-hover-fg);
 }
 
 .cp-ed-btn-ghost {
@@ -919,8 +985,22 @@ const editorialZineTemplate = {
   color: var(--ed-subtle);
 }
 
-/* Profiles slot theme overrides (match dark editorial sharp-corner style) */
+/* Profiles slot theme overrides (match editorial sharp-corner style in light & dark modes) */
 .cp-ed-profiles-wrap {
+  --surface: #ffffff;
+  --elevated-card: #efebe2;
+  --inset: #f4f0e8;
+  --hover: #eae5da;
+  --accent: #181715;
+  --accent-fg: #f7f4ee;
+  --fg: #181715;
+  --fg-muted: #5c5850;
+  --fg-subtle: #7c776d;
+  --line: rgba(24, 23, 21, 0.16);
+  --line-strong: rgba(154, 116, 40, 0.55);
+}
+
+.dark .cp-ed-profiles-wrap {
   --surface: #111111;
   --elevated-card: #181818;
   --inset: #0d0d0d;
@@ -981,7 +1061,7 @@ const editorialZineTemplate = {
 
 .cp-ed-outline {
   color: transparent;
-  -webkit-text-stroke: 1px rgba(240, 237, 230, 0.55);
+  -webkit-text-stroke: 1px var(--ed-outline-stroke);
 }
 
 .cp-ed-star {
@@ -1025,7 +1105,7 @@ const editorialZineTemplate = {
 .cp-ed-compare-old {
   position: relative;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(240, 237, 230, 0.45);
+  -webkit-text-stroke: 1px var(--ed-compare-stroke);
   padding: 0 10px;
 }
 
@@ -1154,7 +1234,7 @@ const editorialZineTemplate = {
   font-weight: 900;
   line-height: 0.9;
   color: transparent;
-  -webkit-text-stroke: 1px rgba(240, 237, 230, 0.28);
+  -webkit-text-stroke: 1px var(--ed-zero8-stroke);
 }
 
 .cp-ed-features-list {
@@ -1175,7 +1255,7 @@ const editorialZineTemplate = {
 }
 
 .cp-ed-feature-item:hover {
-  background-color: rgba(240, 237, 230, 0.025);
+  background-color: var(--ed-feature-hover-bg);
   border-left-color: var(--ed-gold);
   padding-left: 18px;
 }
@@ -1362,6 +1442,7 @@ const editorialZineTemplate = {
 .cp-ed [data-slot="guestbook"] button:hover {
   background: var(--ed-gold-bright) !important;
   border-color: var(--ed-gold-bright) !important;
+  color: var(--ed-btn-hover-fg) !important;
   opacity: 1 !important;
 }
 
@@ -1409,7 +1490,7 @@ const editorialZineTemplate = {
   line-height: 0.78;
   letter-spacing: -0.02em;
   text-align: center;
-  color: rgba(240, 237, 230, 0.08);
+  color: var(--ed-watermark-color);
   user-select: none;
   padding-top: 8px;
 }
