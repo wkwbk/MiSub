@@ -7,11 +7,26 @@ import { createJsonResponse } from './utils.js';
 
 const LOCK_KEY = 'misub_webdav_backup_lock';
 export const WEBDAV_LAST_CHECKED_CACHE_KEY = 'misub_webdav_backup_last_checked';
+export const MAINTENANCE_LAST_RUN_CACHE_KEY = 'misub_last_maintenance_at';
+export const MAINTENANCE_LOCK_KEY = 'misub_maintenance_lock';
 const CHECK_THROTTLE_MS = 5 * 60 * 1000;
 const LOCK_TTL_MS = 10 * 60 * 1000;
 const LAST_CHECKED_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const MAINTENANCE_THROTTLE_MS = 6 * 60 * 60 * 1000;
-const lastMaintenanceMap = new WeakMap<object, number>();
+export const MAINTENANCE_THROTTLE_MS = 6 * 60 * 60 * 1000;
+const MAINTENANCE_LOCK_TTL_MS = 10 * 60 * 1000;
+
+export interface MaintenanceTriggerOptions {
+  now?: number;
+  force?: boolean;
+  source?: string;
+}
+
+interface MaintenanceLastRunRecord {
+  executedAt?: string;
+  timestamp?: number;
+  expiresAt?: number;
+  source?: string;
+}
 
 export interface ScheduledTaskOptions {
   forceCheck?: boolean;
@@ -84,22 +99,6 @@ export async function maybeRunScheduledTasks(
 
   const storageAdapter = ctxObj.storage || (await getStorage(env));
   const now = Date.now();
-  const db = env.MISUB_DB && typeof env.MISUB_DB === 'object' ? env.MISUB_DB : null;
-
-  if (db && typeof storageAdapter.cleanupMaintenance === 'function') {
-    const lastMaint = lastMaintenanceMap.get(db) || 0;
-    if (options.forceCheck || now - lastMaint >= MAINTENANCE_THROTTLE_MS) {
-      lastMaintenanceMap.set(db, now);
-      const maintPromise = storageAdapter.cleanupMaintenance({ now }).catch((err: unknown) => {
-        console.warn('[ScheduledTasks] Storage maintenance failed:', getErrorMessage(err));
-      });
-      if (typeof ctxObj.waitUntil === 'function' && !options.awaitRun) {
-        ctxObj.waitUntil(maintPromise);
-      } else {
-        await maintPromise;
-      }
-    }
-  }
 
   const rawSettings =
     ctxObj.settings !== undefined && !options.forceCheck
@@ -237,17 +236,119 @@ export async function handleCronBackupTrigger(env: Env | Record<string, unknown>
   }
 }
 
+function extractLastRunTimestamp(record: unknown): number {
+  if (typeof record === 'number' && Number.isFinite(record)) {
+    return record;
+  }
+  if (typeof record === 'string') {
+    return parseTime(record);
+  }
+  if (record && typeof record === 'object') {
+    const obj = record as MaintenanceLastRunRecord;
+    if (typeof obj.timestamp === 'number' && Number.isFinite(obj.timestamp)) {
+      return obj.timestamp;
+    }
+    return parseTime(obj.executedAt);
+  }
+  return 0;
+}
+
 /**
- * HTTP /cron/maintenance 处理器：清理过期缓存、孤儿缓存与过期访问日志
+ * 执行存储清理维护，并通过 D1 cache 持久化节流时间戳与互斥锁以防止多实例冷启动重复执行
+ */
+export async function runStorageMaintenance(
+  storageAdapter: StorageAdapter,
+  options: MaintenanceTriggerOptions = {},
+): Promise<
+  | { skipped: true; reason: 'unsupported' | 'throttled' | 'locked'; lastRunAt?: string; stats?: { removedExpiredCache: number } }
+  | { skipped: false; stats: { removedExpiredCache: number } }
+> {
+  if (typeof storageAdapter.cleanupMaintenance !== 'function') {
+    return {
+      skipped: true,
+      reason: 'unsupported',
+      stats: { removedExpiredCache: 0 },
+    };
+  }
+
+  const now = typeof options.now === 'number' && Number.isFinite(options.now) ? options.now : Date.now();
+  const source = options.source || 'cron';
+
+  if (!options.force) {
+    const lastRunRecord = await storageAdapter
+      .get<MaintenanceLastRunRecord | string | number>(MAINTENANCE_LAST_RUN_CACHE_KEY, 'json', { fresh: true })
+      .catch(() => null);
+    const lastRunAt = extractLastRunTimestamp(lastRunRecord);
+    if (lastRunAt > 0 && now - lastRunAt < MAINTENANCE_THROTTLE_MS) {
+      return {
+        skipped: true,
+        reason: 'throttled',
+        lastRunAt: new Date(lastRunAt).toISOString(),
+      };
+    }
+  }
+
+  const lock = await storageAdapter
+    .get<BackupLockRecord>(MAINTENANCE_LOCK_KEY, 'json', { fresh: true })
+    .catch(() => null);
+  if (lock?.expiresAt && parseTime(lock.expiresAt) > now) {
+    return {
+      skipped: true,
+      reason: 'locked',
+    };
+  }
+
+  await storageAdapter.put(MAINTENANCE_LOCK_KEY, {
+    lockedAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + MAINTENANCE_LOCK_TTL_MS).toISOString(),
+    source,
+  });
+
+  try {
+    const stats = (await storageAdapter.cleanupMaintenance({ now })) || { removedExpiredCache: 0 };
+    await storageAdapter.put(MAINTENANCE_LAST_RUN_CACHE_KEY, {
+      executedAt: new Date(now).toISOString(),
+      timestamp: now,
+      expiresAt: now + MAINTENANCE_THROTTLE_MS,
+      source,
+    });
+    return {
+      skipped: false,
+      stats,
+    };
+  } finally {
+    await storageAdapter.delete?.(MAINTENANCE_LOCK_KEY).catch(() => {});
+  }
+}
+
+/**
+ * HTTP /cron/maintenance 与 Workers scheduled Cron 处理器：清理过期缓存、孤儿缓存与过期访问日志
  */
 export async function handleCronMaintenanceTrigger(
   env: Env | Record<string, unknown> | null | undefined,
+  options: MaintenanceTriggerOptions = {},
 ): Promise<Response> {
   const storageAdapter = await getStorage(env);
-  const stats = (await storageAdapter.cleanupMaintenance?.({ now: Date.now() })) || {};
+  const result = await runStorageMaintenance(storageAdapter, {
+    now: options.now,
+    force: options.force,
+    source: options.source || 'cron',
+  });
+
+  if (result.skipped) {
+    return createJsonResponse({
+      success: true,
+      task: 'maintenance',
+      skipped: true,
+      reason: result.reason,
+      ...(result.lastRunAt ? { lastRunAt: result.lastRunAt } : {}),
+    });
+  }
+
   return createJsonResponse({
     success: true,
     task: 'maintenance',
-    stats,
+    skipped: false,
+    stats: result.stats,
   });
 }

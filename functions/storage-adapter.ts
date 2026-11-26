@@ -1195,7 +1195,7 @@ class D1StorageAdapter implements StorageAdapter {
 
   /**
    * 定期维护任务：
-   * 1. 确保八张表结构及索引就绪；
+   * 1. 表结构由 schema.sql 部署初始化，仅在捕获缺表/缺列异常时按需触发 ensureD1Schema；
    * 2. 利用 cache.expires_at 索引批量清理过期缓存，并仅按 key 清理孤儿节点缓存；
    * 3. 修剪过期的访问日志。
    */
@@ -1203,12 +1203,6 @@ class D1StorageAdapter implements StorageAdapter {
     const stats = {
       removedExpiredCache: 0,
     };
-
-    try {
-      await ensureD1Schema(this.db);
-    } catch {
-      return stats;
-    }
 
     const [profiles, allSubAndNodes] = await Promise.all([
       this.getAllProfiles().catch(() => [] as ProfileConfig[]),
@@ -1224,63 +1218,70 @@ class D1StorageAdapter implements StorageAdapter {
 
     // 清理 cache 表：先用 expires_at 索引直接批量删除过期行（无需读取大体积 value）
     try {
-      const expiredResult = await this.db
-        .prepare('DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= ?')
-        .bind(now)
-        .run();
-      stats.removedExpiredCache += extractD1Changes(expiredResult);
+      const removedFromCache = await this._withSchemaRetry(async () => {
+        let removedInPass = 0;
+        const expiredResult = await this.db
+          .prepare('DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= ?')
+          .bind(now)
+          .run();
+        removedInPass += extractD1Changes(expiredResult);
 
-      // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填过期时间
-      const nullExpRows = await this.db.prepare('SELECT key FROM cache WHERE expires_at IS NULL').all<{ key?: string }>();
-      const cacheCleanupStatements: D1PreparedStatement[] = [];
-      for (const row of nullExpRows?.results || []) {
-        const key = String(row?.key || '');
-        if (!key) continue;
+        // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填过期时间
+        const nullExpRows = await this.db.prepare('SELECT key FROM cache WHERE expires_at IS NULL').all<{ key?: string }>();
+        const cacheCleanupStatements: D1PreparedStatement[] = [];
+        for (const row of nullExpRows?.results || []) {
+          const key = String(row?.key || '');
+          if (!key) continue;
 
-        let shouldDelete = false;
-        if (key.startsWith('node_cache_profile_')) {
-          const pid = key.slice('node_cache_profile_'.length);
-          if (pid && profileByIdentifier.size > 0 && !profileByIdentifier.has(pid)) {
+          let shouldDelete = false;
+          if (key.startsWith('node_cache_profile_')) {
+            const pid = key.slice('node_cache_profile_'.length);
+            if (pid && profileByIdentifier.size > 0 && !profileByIdentifier.has(pid)) {
+              shouldDelete = true;
+            }
+          } else if (key.startsWith('node_cache_subscription_') && !key.startsWith('node_cache_subscription_url_')) {
+            const subId = decodeURIComponent(key.slice('node_cache_subscription_'.length));
+            if (subId && validSubIds.size > 0 && !validSubIds.has(subId)) {
+              shouldDelete = true;
+            }
+          } else if (key.startsWith('misub_test_')) {
             shouldDelete = true;
           }
-        } else if (key.startsWith('node_cache_subscription_') && !key.startsWith('node_cache_subscription_url_')) {
-          const subId = decodeURIComponent(key.slice('node_cache_subscription_'.length));
-          if (subId && validSubIds.size > 0 && !validSubIds.has(subId)) {
-            shouldDelete = true;
-          }
-        } else if (key.startsWith('misub_test_')) {
-          shouldDelete = true;
-        }
 
-        if (shouldDelete) {
-          cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
-          stats.removedExpiredCache += 1;
-          continue;
-        }
-
-        const needsBackfill =
-          key.startsWith('tg_push_rate:') ||
-          key === 'misub_webdav_backup_lock' ||
-          key.startsWith('github_release_') ||
-          key.startsWith('appstore_release_') ||
-          (key.startsWith('node_cache_') && !key.startsWith('node_cache_subscription_'));
-
-        if (needsBackfill) {
-          const fullRow = await this.db.prepare('SELECT value FROM cache WHERE key = ?').bind(key).first<{ value?: string }>();
-          const computedExp = computeCacheExpiresAt(key, fullRow?.value, now);
-          if (computedExp && computedExp <= now) {
+          if (shouldDelete) {
             cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
-            stats.removedExpiredCache += 1;
-          } else if (computedExp) {
-            cacheCleanupStatements.push(
-              this.db.prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key),
-            );
+            removedInPass += 1;
+            continue;
+          }
+
+          const needsBackfill =
+            key.startsWith('tg_push_rate:') ||
+            key === 'misub_webdav_backup_lock' ||
+            key === 'misub_maintenance_lock' ||
+            key === 'misub_last_maintenance_at' ||
+            key.startsWith('github_release_') ||
+            key.startsWith('appstore_release_') ||
+            (key.startsWith('node_cache_') && !key.startsWith('node_cache_subscription_'));
+
+          if (needsBackfill) {
+            const fullRow = await this.db.prepare('SELECT value FROM cache WHERE key = ?').bind(key).first<{ value?: string }>();
+            const computedExp = computeCacheExpiresAt(key, fullRow?.value, now);
+            if (computedExp && computedExp <= now) {
+              cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
+              removedInPass += 1;
+            } else if (computedExp) {
+              cacheCleanupStatements.push(
+                this.db.prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key),
+              );
+            }
           }
         }
-      }
-      if (cacheCleanupStatements.length > 0) {
-        await this._runBatchOrSequential(cacheCleanupStatements);
-      }
+        if (cacheCleanupStatements.length > 0) {
+          await this._runBatchOrSequential(cacheCleanupStatements);
+        }
+        return removedInPass;
+      });
+      stats.removedExpiredCache += removedFromCache;
     } catch (error) {
       if (!isNoSuchTableError(error)) {
         console.warn('[D1 Maintenance] Failed to clean expired cache:', getErrorMessage(error));

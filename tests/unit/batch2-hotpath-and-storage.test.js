@@ -3,6 +3,10 @@ import { onRequest } from '../../functions/[[path]].js';
 import { handleSettingsGet } from '../../functions/modules/api-handler.js';
 import { createSignedToken, getSessionSigningSecret } from '../../functions/modules/auth-middleware.js';
 import {
+  handleCronMaintenanceTrigger,
+  MAINTENANCE_LAST_RUN_CACHE_KEY,
+  MAINTENANCE_LOCK_KEY,
+  MAINTENANCE_THROTTLE_MS,
   maybeRunScheduledTasks,
   WEBDAV_LAST_CHECKED_CACHE_KEY,
 } from '../../functions/modules/scheduled-task-runner.js';
@@ -26,14 +30,17 @@ function wrapWithQueryCounter(d1) {
   const settingsSelects = [];
   const settingsWrites = [];
   const cacheWrites = [];
+  const executedSqls = [];
 
   return {
     settingsSelects,
     settingsWrites,
     cacheWrites,
+    executedSqls,
     prepare(sql) {
       const stmt = d1.prepare(sql);
       const record = (args) => {
+        executedSqls.push(sql.replace(/\s+/g, ' ').trim());
         if (/SELECT .* FROM settings WHERE key = \?/i.test(sql)) {
           settingsSelects.push(args[0]);
         }
@@ -64,9 +71,18 @@ function wrapWithQueryCounter(d1) {
         bind(...args) {
           return wrapBound(stmt.bind(...args), args);
         },
-        first: () => stmt.first(),
-        all: () => stmt.all(),
-        run: () => stmt.run(),
+        first: async () => {
+          record([]);
+          return stmt.first();
+        },
+        all: async () => {
+          record([]);
+          return stmt.all();
+        },
+        run: async () => {
+          record([]);
+          return stmt.run();
+        },
       };
     },
     batch: typeof d1.batch === 'function' ? (stmts) => d1.batch(stmts) : undefined,
@@ -177,6 +193,141 @@ describe('Batch 2 hotpath, cache isolation, and Base64 optimizations', () => {
     const settingsBody = await settingsRes.json();
     expect(settingsBody.fileName).toBe('MiSub-Cached');
     expect(db.settingsSelects).toEqual(['main']);
+  });
+
+  it('decouples GET /api/data from background scheduled tasks and storage maintenance', async () => {
+    const rawDb = createMemoryD1({
+      main: {
+        fileName: 'MiSub-Decoupled',
+        webdavBackup: {
+          enabled: true,
+          autoBackup: true,
+          interval: 'daily',
+          lastBackupAt: null,
+        },
+      },
+    });
+    rawDb.tables.cache.set('tg_push_rate:u1:min', JSON.stringify({ count: 1, expiresAt: 1000 }));
+    rawDb.cacheExpiresAt.set('tg_push_rate:u1:min', 1000);
+
+    const db = wrapWithQueryCounter(rawDb);
+    const env = {
+      MISUB_DB: db,
+      ADMIN_PASSWORD: 'admin-password',
+      COOKIE_SECRET: 'cookie-secret',
+    };
+    const token = await createSignedToken(await getSessionSigningSecret(env), String(Date.now()));
+    const waitUntil = vi.fn();
+
+    const response = await onRequest({
+      request: createMockRequest('https://example.com/api/data', {
+        headers: { Cookie: `auth_session=${token}` },
+      }),
+      env,
+      waitUntil,
+    });
+
+    expect(response.status).toBe(200);
+    expect(waitUntil).not.toHaveBeenCalled();
+    expect(db.cacheWrites).toHaveLength(0);
+    expect(
+      db.executedSqls.some((sql) =>
+        /CREATE\s+TABLE|ALTER\s+TABLE|CREATE\s+INDEX|DELETE\s+FROM\s+(cache|access_logs)/i.test(sql),
+      ),
+    ).toBe(false);
+    expect(rawDb.tables.cache.has('tg_push_rate:u1:min')).toBe(true);
+  });
+
+  it('persists maintenance throttle and lock in D1 cache across worker isolates for 6 hours', async () => {
+    const baseNow = 1_800_000_000_000;
+    const rawDb = createMemoryD1({
+      main: { fileName: 'MiSub' },
+    });
+    rawDb.tables.cache.set('tg_push_rate:u1:min', JSON.stringify({ count: 1, expiresAt: baseNow - 1000 }));
+    rawDb.cacheExpiresAt.set('tg_push_rate:u1:min', baseNow - 1000);
+
+    // Isolate 1: first run executes cleanupMaintenance and persists last run timestamp in D1 cache
+    const db1 = wrapWithQueryCounter(rawDb);
+    const firstRes = await handleCronMaintenanceTrigger({ MISUB_DB: db1 }, { now: baseNow, source: 'cron' });
+    const firstBody = await firstRes.json();
+    expect(firstBody).toEqual({
+      success: true,
+      task: 'maintenance',
+      skipped: false,
+      stats: { removedExpiredCache: 1 },
+    });
+    expect(rawDb.tables.cache.has('tg_push_rate:u1:min')).toBe(false);
+    expect(rawDb.tables.cache.has(MAINTENANCE_LAST_RUN_CACHE_KEY)).toBe(true);
+    expect(rawDb.cacheExpiresAt.get(MAINTENANCE_LAST_RUN_CACHE_KEY)).toBe(baseNow + MAINTENANCE_THROTTLE_MS);
+    expect(rawDb.tables.cache.has(MAINTENANCE_LOCK_KEY)).toBe(false);
+
+    // Isolate 2: simulate cold start / another worker instance within 6 hours -> strictly throttled by D1
+    clearSettingsCache();
+    const db2 = wrapWithQueryCounter(rawDb);
+    const throttledRes = await handleCronMaintenanceTrigger(
+      { MISUB_DB: db2 },
+      { now: baseNow + 5 * 60 * 1000, source: 'cron' },
+    );
+    const throttledBody = await throttledRes.json();
+    expect(throttledBody).toEqual({
+      success: true,
+      task: 'maintenance',
+      skipped: true,
+      reason: 'throttled',
+      lastRunAt: new Date(baseNow).toISOString(),
+    });
+    expect(db2.executedSqls.some((sql) => /DELETE\s+FROM\s+(cache|access_logs)/i.test(sql))).toBe(false);
+
+    // Isolate 3: active lock blocks execution even with force=true
+    rawDb.tables.cache.set(
+      MAINTENANCE_LOCK_KEY,
+      JSON.stringify({
+        lockedAt: new Date(baseNow).toISOString(),
+        expiresAt: new Date(baseNow + 60_000).toISOString(),
+        source: 'other-worker',
+      }),
+    );
+    const lockedRes = await handleCronMaintenanceTrigger(
+      { MISUB_DB: wrapWithQueryCounter(rawDb) },
+      { now: baseNow + 10_000, force: true, source: 'http-cron' },
+    );
+    expect(await lockedRes.json()).toEqual({
+      success: true,
+      task: 'maintenance',
+      skipped: true,
+      reason: 'locked',
+    });
+
+    // Clear lock and verify force=true bypasses 6h throttle, and post-6h window runs normally
+    rawDb.tables.cache.delete(MAINTENANCE_LOCK_KEY);
+    rawDb.tables.cache.set('tg_push_rate:u2:min', JSON.stringify({ count: 1, expiresAt: baseNow - 1000 }));
+    rawDb.cacheExpiresAt.set('tg_push_rate:u2:min', baseNow - 1000);
+    const forcedRes = await handleCronMaintenanceTrigger(
+      { MISUB_DB: wrapWithQueryCounter(rawDb) },
+      { now: baseNow + 20_000, force: true, source: 'http-cron' },
+    );
+    expect(await forcedRes.json()).toEqual({
+      success: true,
+      task: 'maintenance',
+      skipped: false,
+      stats: { removedExpiredCache: 1 },
+    });
+
+    const afterWindowNow = baseNow + 20_000 + MAINTENANCE_THROTTLE_MS + 1000;
+    rawDb.tables.cache.set('tg_push_rate:u3:min', JSON.stringify({ count: 1, expiresAt: afterWindowNow - 500 }));
+    rawDb.cacheExpiresAt.set('tg_push_rate:u3:min', afterWindowNow - 500);
+    // After 6h window: previous misub_last_maintenance_at has expired too, so both it and tg_push_rate:u3:min are cleaned up (2)
+    const afterWindowRes = await handleCronMaintenanceTrigger(
+      { MISUB_DB: wrapWithQueryCounter(rawDb) },
+      { now: afterWindowNow, source: 'cron' },
+    );
+    expect(await afterWindowRes.json()).toEqual({
+      success: true,
+      task: 'maintenance',
+      skipped: false,
+      stats: { removedExpiredCache: 2 },
+    });
+    expect(rawDb.cacheExpiresAt.get(MAINTENANCE_LAST_RUN_CACHE_KEY)).toBe(afterWindowNow + MAINTENANCE_THROTTLE_MS);
   });
 
   it('encodes large UTF-8 and emoji payloads consistently via shared utf8ToBase64', () => {

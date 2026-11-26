@@ -180,7 +180,10 @@ async function handleCronDispatch(c: Context<HonoEnv>): Promise<Response> {
     case '/cron/backup':
       return await handleCronBackupTrigger(env);
     case '/cron/maintenance':
-      return await handleCronMaintenanceTrigger(env);
+      return await handleCronMaintenanceTrigger(env, {
+        force: url.searchParams.get('force') === '1',
+        source: 'http-cron',
+      });
     case '/cron/rotate-token': {
       const rotateResult = await rotateSubscriptionToken(env, {
         request,

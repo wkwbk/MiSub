@@ -22,7 +22,7 @@ import {
 } from './notifications.js';
 import { clearAllNodeCaches } from '../services/node-cache-service.js';
 import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
-import { maybeRunScheduledTasks, WEBDAV_LAST_CHECKED_CACHE_KEY } from './scheduled-task-runner.js';
+import { WEBDAV_LAST_CHECKED_CACHE_KEY } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings } from './config.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
@@ -315,19 +315,6 @@ export async function handleDataRequest(
       env,
       { scope: 'data' },
     );
-    try {
-      const taskContext: BoundRequestContext = context
-        ? { ...context, storage: storageAdapter, settings }
-        : { env: env ?? undefined, storage: storageAdapter, settings };
-      const runPromise = maybeRunScheduledTasks(taskContext, { source: 'admin-api' });
-      if (typeof taskContext.waitUntil !== 'function') {
-        runPromise.catch((error: unknown) =>
-          console.warn('[ScheduledTasks] lazy check failed:', getErrorMessage(error)),
-        );
-      }
-    } catch (taskError) {
-      console.warn('[ScheduledTasks] lazy check init failed:', getErrorMessage(taskError));
-    }
     return createJsonResponse({ misubs, profiles, ruleTemplates, config, dataRevision });
   } catch (e) {
     console.error('[API Error /data] Failed to read from storage', {

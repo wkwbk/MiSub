@@ -28,6 +28,7 @@ const NODE_CACHE_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
 export const ACCESS_LOG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
 const initializedSchemas = new WeakSet<object>();
+const schemaInitPromises = new WeakMap<object, Promise<void>>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -117,6 +118,8 @@ const D1_INDEX_STATEMENTS = [
 const D1_CACHE_KEYS = new Set([
   'misub_webdav_backup_lock',
   'misub_webdav_backup_last_checked',
+  'misub_last_maintenance_at',
+  'misub_maintenance_lock',
   'misub_restore_snapshot_latest',
   'cron_last_execution',
   'sub_edge_cache_version',
@@ -177,9 +180,17 @@ export function computeCacheExpiresAt(keyStr: string, rawValue: unknown, now = D
   }
   const parsedRecord = isRecord(parsed) ? parsed : null;
 
-  if (keyStr.startsWith('tg_push_rate:') || keyStr === 'misub_webdav_backup_lock') {
+  if (
+    keyStr.startsWith('tg_push_rate:') ||
+    keyStr === 'misub_webdav_backup_lock' ||
+    keyStr === 'misub_maintenance_lock'
+  ) {
     const exp = parseTimestampMs(parsedRecord?.expiresAt);
     return exp > 0 ? exp : now + 60 * 60 * 1000;
+  }
+  if (keyStr === 'misub_last_maintenance_at') {
+    const exp = parseTimestampMs(parsedRecord?.expiresAt);
+    return exp > 0 ? exp : now + 6 * 60 * 60 * 1000;
   }
   if (keyStr === 'misub_webdav_backup_last_checked') {
     const exp = parseTimestampMs(parsedRecord?.expiresAt);
@@ -215,46 +226,69 @@ export function computeCacheExpiresAt(keyStr: string, rawValue: unknown, now = D
   return null;
 }
 
+const D1_BACKFILL_STATEMENTS = [
+  `UPDATE profiles
+   SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
+   WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
+  `UPDATE profiles
+   SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
+   WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
+];
+
+async function runStatementsBatchOrSequential(d1Db: D1Database, statements: string[]): Promise<void> {
+  if (statements.length === 0) return;
+  if (typeof d1Db.batch === 'function') {
+    await d1Db.batch(statements.map((sql) => d1Db.prepare(sql)));
+    return;
+  }
+  for (const sql of statements) {
+    await d1Db.prepare(sql).run();
+  }
+}
+
 export async function ensureD1Schema(d1Db: D1Database): Promise<void> {
-  for (const statement of D1_TABLE_STATEMENTS) {
-    await d1Db.prepare(statement).run();
+  if (!d1Db || typeof d1Db !== 'object') return;
+  if (initializedSchemas.has(d1Db)) return;
+
+  const existingPromise = schemaInitPromises.get(d1Db);
+  if (existingPromise) {
+    return existingPromise;
   }
 
-  // 针对已存在的旧表平滑补齐新增索引列（若列已存在则忽略 duplicate column 错误）
-  for (const alterSql of D1_COLUMN_MIGRATIONS) {
+  const initPromise = (async () => {
     try {
-      await d1Db.prepare(alterSql).run();
-    } catch {}
-  }
+      // 快路径：在表与列均已是最新结构时，单次 db.batch() 完成全部 DDL、回填与索引幂等确认
+      await runStatementsBatchOrSequential(d1Db, [
+        ...D1_TABLE_STATEMENTS,
+        ...D1_BACKFILL_STATEMENTS,
+        ...D1_INDEX_STATEMENTS,
+      ]);
+    } catch {
+      // 兼容旧表结构：先建缺失表，再逐条执行 ALTER TABLE ADD COLUMN（避免 duplicate column 中断 batch 事务）
+      await runStatementsBatchOrSequential(d1Db, D1_TABLE_STATEMENTS);
 
-  // 为存量 profiles 行一次性回填 custom_id / link_id 索引列
-  try {
-    await d1Db
-      .prepare(
-        `UPDATE profiles
-                 SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
-                 WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
-      )
-      .run();
-  } catch {}
+      for (const alterSql of D1_COLUMN_MIGRATIONS) {
+        try {
+          await d1Db.prepare(alterSql).run();
+        } catch {}
+      }
 
-  try {
-    await d1Db
-      .prepare(
-        `UPDATE profiles
-                 SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
-                 WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
-      )
-      .run();
-  } catch {}
+      try {
+        await runStatementsBatchOrSequential(d1Db, [...D1_BACKFILL_STATEMENTS, ...D1_INDEX_STATEMENTS]);
+      } catch {
+        for (const sql of [...D1_BACKFILL_STATEMENTS, ...D1_INDEX_STATEMENTS]) {
+          try {
+            await d1Db.prepare(sql).run();
+          } catch {}
+        }
+      }
+    }
 
-  for (const indexSql of D1_INDEX_STATEMENTS) {
-    try {
-      await d1Db.prepare(indexSql).run();
-    } catch {}
-  }
-
-  if (d1Db && typeof d1Db === 'object') {
     initializedSchemas.add(d1Db);
-  }
+  })().finally(() => {
+    schemaInitPromises.delete(d1Db);
+  });
+
+  schemaInitPromises.set(d1Db, initPromise);
+  return initPromise;
 }

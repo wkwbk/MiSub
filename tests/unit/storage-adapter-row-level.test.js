@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StorageFactory } from '../../functions/storage-adapter.js';
+import { ensureD1Schema } from '../../functions/storage/d1-schema.js';
 import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
 import { handleErrorReportRequest } from '../../functions/modules/handlers/error-report-handler.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
@@ -153,6 +154,8 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     db.tables.cache.set('github_release_fresh/repo', JSON.stringify({ data: {}, timestamp: now - 1000 }));
     db.cacheExpiresAt.set('github_release_fresh/repo', null);
 
+    const prepareSpy = vi.spyOn(db, 'prepare');
+    const batchSpy = vi.spyOn(db, 'batch');
     const stats = await adapter.cleanupMaintenance({ now });
 
     expect(stats).toEqual({
@@ -160,6 +163,136 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     });
     expect(Array.from(db.tables.cache.keys())).toEqual(['github_release_fresh/repo']);
     expect(db.cacheExpiresAt.get('github_release_fresh/repo')).toBeGreaterThan(now);
+
+    const executedSqls = prepareSpy.mock.calls.map((c) => c[0]);
+    expect(executedSqls.some((sql) => /^\s*(CREATE|ALTER)\s+/i.test(sql))).toBe(false);
+    expect(batchSpy.mock.calls.flatMap((c) => c[0]).length).toBeGreaterThan(0);
+  });
+
+  it('triggers ensureD1Schema on-demand only when cleanupMaintenance hits a schema mismatch error', async () => {
+    const now = 1_800_000_000_000;
+    const rawDb = createMemoryD1({
+      profiles: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
+    });
+    let cacheMissing = true;
+    const db = {
+      prepare(sql) {
+        const stmt = rawDb.prepare(sql);
+        const isCacheDelete = /DELETE FROM cache WHERE expires_at/i.test(sql);
+        if (!isCacheDelete) return stmt;
+        return {
+          bind(...args) {
+            const bound = stmt.bind(...args);
+            return {
+              ...bound,
+              async run() {
+                if (cacheMissing) {
+                  throw new Error('D1_ERROR: no such table: cache');
+                }
+                return bound.run();
+              },
+            };
+          },
+        };
+      },
+      async batch(statements) {
+        cacheMissing = false;
+        return rawDb.batch(statements);
+      },
+    };
+
+    const batchSpy = vi.spyOn(db, 'batch');
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+    const stats = await adapter.cleanupMaintenance({ now });
+
+    expect(stats).toEqual({ removedExpiredCache: 0 });
+    expect(batchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('batches DDL statements in ensureD1Schema, caches initialized instances, handles legacy ALTER fallback, and does not cache failures', async () => {
+    // 1. Fast path: single batch() call, second call hits initializedSchemas cache
+    const freshDb = createMemoryD1();
+    const prepareSpy = vi.spyOn(freshDb, 'prepare');
+    const batchSpy = vi.spyOn(freshDb, 'batch');
+
+    await ensureD1Schema(freshDb);
+    expect(batchSpy).toHaveBeenCalledTimes(1);
+    expect(batchSpy.mock.calls[0][0].length).toBeGreaterThan(15);
+
+    prepareSpy.mockClear();
+    batchSpy.mockClear();
+
+    await ensureD1Schema(freshDb);
+    expect(batchSpy).not.toHaveBeenCalled();
+    expect(prepareSpy).not.toHaveBeenCalled();
+
+    // 2. Legacy fallback: fast-path batch fails with missing column, falls back to ALTER TABLE + backfill/index batch
+    let legacyMissingColumn = true;
+    const legacySqlLog = [];
+    const legacyDb = {
+      prepare(sql) {
+        return {
+          async run() {
+            legacySqlLog.push(sql.replace(/\s+/g, ' ').trim());
+            if (/ALTER TABLE profiles ADD COLUMN custom_id/i.test(sql)) {
+              legacyMissingColumn = false;
+              return { success: true };
+            }
+            if (/ALTER TABLE /i.test(sql)) {
+              throw new Error('duplicate column name');
+            }
+            if (legacyMissingColumn && /UPDATE profiles|CREATE INDEX/i.test(sql)) {
+              throw new Error('no such column: custom_id');
+            }
+            return { success: true };
+          },
+        };
+      },
+      async batch(statements) {
+        for (const stmt of statements) {
+          await stmt.run();
+        }
+        return statements.map(() => ({ success: true }));
+      },
+    };
+    const legacyBatchSpy = vi.spyOn(legacyDb, 'batch');
+
+    await ensureD1Schema(legacyDb);
+    expect(legacyMissingColumn).toBe(false);
+    expect(legacyBatchSpy).toHaveBeenCalledTimes(3);
+    expect(legacySqlLog.some((sql) => /^ALTER TABLE profiles ADD COLUMN custom_id/i.test(sql))).toBe(true);
+
+    legacyBatchSpy.mockClear();
+    await ensureD1Schema(legacyDb);
+    expect(legacyBatchSpy).not.toHaveBeenCalled();
+
+    // 3. Failure must not poison initializedSchemas cache
+    let shouldFail = true;
+    const flakyDb = {
+      prepare() {
+        return {
+          async run() {
+            if (shouldFail) {
+              throw new Error('D1 transient failure');
+            }
+            return { success: true };
+          },
+        };
+      },
+      async batch(statements) {
+        if (shouldFail) {
+          throw new Error('D1 transient failure');
+        }
+        return statements.map(() => ({ success: true }));
+      },
+    };
+
+    await expect(ensureD1Schema(flakyDb)).rejects.toThrow('D1 transient failure');
+
+    shouldFail = false;
+    const retryBatchSpy = vi.spyOn(flakyDb, 'batch');
+    await ensureD1Schema(flakyDb);
+    expect(retryBatchSpy).toHaveBeenCalledTimes(1);
   });
 
   it('avoids full-table scans on subscription group pull and invalid-token / disguise requests', async () => {

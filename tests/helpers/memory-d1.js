@@ -28,6 +28,8 @@ export function createMemoryD1(initial = {}) {
   const isCacheKey = (k) =>
     k === 'misub_webdav_backup_lock' ||
     k === 'misub_webdav_backup_last_checked' ||
+    k === 'misub_last_maintenance_at' ||
+    k === 'misub_maintenance_lock' ||
     k === 'misub_restore_snapshot_latest' ||
     k === 'cron_last_execution' ||
     k.startsWith('node_cache_') ||
