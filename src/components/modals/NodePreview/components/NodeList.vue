@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { NodeIR } from '@misub/core/types.js';
-import { Check, Info, Loader2 } from '@lucide/vue';
+import { Check, Gauge, Info, Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useVirtualList } from '@/composables/useVirtualList.js';
 import Switch from '@/components/ui/Switch.vue';
@@ -246,18 +246,19 @@ const getProtocolDot = (protocol?: string) => {
                 >
                   <button
                     v-if="!selectionMode && allowPing"
-                    :class="formatPingClass(row.ping)"
+                    :aria-label="t('nodePreview.testSingleNode')"
+                    :class="[formatPingClass(row.ping), row.ping && row.ping.status !== 'loading' ? 'px-2' : 'w-7']"
                     :title="t('nodePreview.testSingleNode')"
-                    class="inline-flex h-7 min-w-[48px] shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-2 font-mono text-xs leading-none transition-colors"
+                    class="inline-flex h-7 shrink-0 items-center justify-center whitespace-nowrap rounded-md border font-mono text-xs leading-none transition-colors"
                     type="button"
                     @click.stop="emit('ping', row.node)"
                   >
-                    <Loader2 v-if="row.ping?.status === 'loading'" class="h-3 w-3 animate-spin" />
+                    <Loader2 v-if="row.ping?.status === 'loading'" class="h-3.5 w-3.5 animate-spin" />
                     <span v-else-if="row.ping?.status === 'ok'">{{ row.ping.latency }}ms</span>
                     <span v-else-if="row.ping?.status === 'unsupported'">UDP</span>
                     <span v-else-if="row.ping?.status === 'timeout'">{{ t('nodePreview.pingTimeout') }}</span>
                     <span v-else-if="row.ping?.status === 'error'">{{ t('nodePreview.pingFailed') }}</span>
-                    <span v-else>{{ t('nodePreview.pingAction') }}</span>
+                    <Gauge v-else class="h-3.5 w-3.5" />
                   </button>
                   <button
                     v-if="!selectionMode"

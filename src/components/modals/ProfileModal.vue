@@ -648,6 +648,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
               <NodeSelector
                 :active-tag-filters="activeManualNodeTagFilters"
                 :filtered-nodes="filteredManualNodes"
+                :layout="activeResourceTab === 'all' ? 'stacked' : 'split'"
                 :nodes="allManualNodes"
                 :search-term="nodeSearchTerm"
                 :selected-ids="localProfile.manualNodes || []"
@@ -665,6 +666,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
               <SubscriptionSelector
                 :active-tag-filters="activeSubscriptionTagFilters"
                 :filtered-subscriptions="filteredSubscriptions"
+                :layout="activeResourceTab === 'all' ? 'stacked' : 'split'"
                 :search-term="subscriptionSearchTerm"
                 :selected-ids="localProfile.subscriptions || []"
                 :subscriptions="selectableSubscriptions"
@@ -683,6 +685,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
                 :active-tag-filters="activeSubProfileTagFilters"
                 :all-profiles="storeProfiles"
                 :filtered-profiles="filteredSubProfiles"
+                :layout="activeResourceTab === 'all' ? 'stacked' : 'split'"
                 :profiles="selectableSubProfiles"
                 :search-term="subProfileSearchTerm"
                 :selected-ids="localProfile.subProfiles || []"
