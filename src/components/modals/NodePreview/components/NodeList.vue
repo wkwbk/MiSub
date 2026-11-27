@@ -84,7 +84,7 @@ const { containerRef, isVirtualized, visibleItems, topSpacerHeight, bottomSpacer
 );
 
 const formatPingClass = (ping: PingState | null) => {
-  if (!ping) return 'border-line text-fg-subtle hover:border-line-strong hover:text-fg';
+  if (!ping) return 'border-line bg-surface text-fg-subtle hover:border-line-strong hover:bg-hover hover:text-fg';
   if (ping.status === 'ok') {
     if ((ping.latency ?? 0) < 200) return 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400';
     if ((ping.latency ?? 0) < 500) return 'border-amber-500/40 bg-amber-500/10 text-amber-400';
@@ -248,7 +248,7 @@ const getProtocolDot = (protocol?: string) => {
                     v-if="!selectionMode && allowPing"
                     :class="formatPingClass(row.ping)"
                     :title="t('nodePreview.testSingleNode')"
-                    class="inline-flex h-6 min-w-[46px] items-center justify-center rounded border px-1.5 font-mono text-xs transition-colors"
+                    class="inline-flex h-7 min-w-[48px] shrink-0 items-center justify-center whitespace-nowrap rounded-md border px-2 font-mono text-xs leading-none transition-colors"
                     type="button"
                     @click.stop="emit('ping', row.node)"
                   >
@@ -263,12 +263,13 @@ const getProtocolDot = (protocol?: string) => {
                     v-if="!selectionMode"
                     :aria-label="t('actions.viewDetail')"
                     :title="t('actions.viewDetail')"
-                    class="inline-flex items-center justify-center w-7 h-7 rounded-md text-fg-subtle hover:text-fg hover:bg-hover transition-colors touch-target"
+                    class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-line bg-surface text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
+                    type="button"
                     @click.stop="emit('detail', row.node)"
                   >
                     <Info class="w-3.5 h-3.5" />
                   </button>
-                  <div v-if="!selectionMode && showNodeSwitch" @click.stop>
+                  <div v-if="!selectionMode && showNodeSwitch" class="flex h-7 shrink-0 items-center" @click.stop>
                     <Switch
                       :model-value="row.enabled"
                       size="sm"

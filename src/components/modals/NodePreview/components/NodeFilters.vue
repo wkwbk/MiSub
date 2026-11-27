@@ -75,7 +75,7 @@ const isProcessedToggleVisible = computed(() => {
               v-model="searchModel"
               :aria-label="t('nodePreview.searchLabel')"
               :placeholder="t('nodePreview.searchPlaceholder')"
-              class="w-full rounded-md border border-line bg-inset px-3 py-2 pr-9 text-sm text-fg placeholder:text-fg-subtle focus:border-line-strong focus:outline-hidden transition-colors shadow-none"
+              class="h-[38px] w-full rounded-md border border-line bg-inset px-3 py-2 pr-9 text-sm text-fg placeholder:text-fg-subtle focus:border-line-strong focus:outline-hidden transition-colors shadow-none"
               type="text"
             />
             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-fg-subtle">

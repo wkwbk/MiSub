@@ -4,6 +4,8 @@ import { createPinia, setActivePinia } from 'pinia';
 import { createI18n } from '@/i18n/index.js';
 import NodeDetailModal from '@/components/modals/NodeDetailModal.vue';
 import NodePreviewModal from '@/components/modals/NodePreview/NodePreviewModal.vue';
+import NodeCard from '@/components/modals/NodePreview/components/NodeCard.vue';
+import NodeList from '@/components/modals/NodePreview/components/NodeList.vue';
 import CopyLinkModal from '@/components/modals/CopyLinkModal.vue';
 import QRCodeModal from '@/components/modals/QRCodeModal.vue';
 import LogModal from '@/components/modals/LogModal.vue';
@@ -227,5 +229,133 @@ describe('modal mobile UX regressions', () => {
     for (const btn of srButtons) {
       expect(btn.classes()).toContain('whitespace-nowrap');
     }
+  });
+
+  it('aligns mobile and desktop action button heights and switch wrappers in NodeCard', () => {
+    const previewNode = {
+      url: 'vless://11111111-2222-3333-4444-555555555555@example.com:443#PreviewHK',
+      name: 'Preview HK',
+      protocol: 'vless',
+      server: 'example.com',
+      port: 443,
+      region: '香港',
+    };
+
+    const wrapper = mount(NodeCard, {
+      props: {
+        nodes: [previewNode],
+        parseNodeInfo: (n) => n,
+        getProtocolStyle: () => '',
+        allowPing: true,
+        showNodeSwitch: true,
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+      },
+    });
+
+    const pingButtons = wrapper.findAll('button').filter((b) => b.text().trim() === '测速');
+    expect(pingButtons).toHaveLength(2);
+    for (const btn of pingButtons) {
+      expect(btn.classes()).toContain('h-7');
+      expect(btn.classes()).toContain('shrink-0');
+    }
+
+    const detailButtons = wrapper.findAll('button[aria-label="查看详情"]');
+    expect(detailButtons).toHaveLength(2);
+    for (const btn of detailButtons) {
+      expect(btn.classes()).toContain('h-7');
+      expect(btn.classes()).toContain('w-7');
+      expect(btn.classes()).toContain('shrink-0');
+    }
+
+    const switchInputs = wrapper.findAll('input[type="checkbox"]');
+    expect(switchInputs).toHaveLength(2);
+    for (const input of switchInputs) {
+      const switchContainer = input.element.closest('label')?.parentElement;
+      expect(switchContainer?.className).toContain('flex');
+      expect(switchContainer?.className).toContain('h-7');
+      expect(switchContainer?.className).toContain('items-center');
+    }
+  });
+
+  it('aligns action button heights and switch wrapper in NodeList', () => {
+    const previewNode = {
+      url: 'vless://11111111-2222-3333-4444-555555555555@example.com:443#PreviewHK',
+      name: 'Preview HK',
+      protocol: 'vless',
+      server: 'example.com',
+      port: 443,
+      region: '香港',
+    };
+
+    const wrapper = mount(NodeList, {
+      props: {
+        nodes: [previewNode],
+        parseNodeInfo: (n) => n,
+        getProtocolStyle: () => '',
+        allowPing: true,
+        showNodeSwitch: true,
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+      },
+    });
+
+    const pingBtn = wrapper.findAll('button').find((b) => b.text().trim() === '测速');
+    expect(pingBtn).toBeTruthy();
+    expect(pingBtn.classes()).toContain('h-7');
+    expect(pingBtn.classes()).toContain('shrink-0');
+
+    const detailBtn = wrapper.get('button[aria-label="查看详情"]');
+    expect(detailBtn.classes()).toContain('h-7');
+    expect(detailBtn.classes()).toContain('w-7');
+    expect(detailBtn.classes()).toContain('shrink-0');
+
+    const switchInput = wrapper.get('input[type="checkbox"]');
+    const switchContainer = switchInput.element.closest('label')?.parentElement;
+    expect(switchContainer?.className).toContain('flex');
+    expect(switchContainer?.className).toContain('h-7');
+    expect(switchContainer?.className).toContain('items-center');
+  });
+
+  it('matches header and latency toolbar button heights in NodePreviewModal', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+
+    const wrapper = mount(NodePreviewModal, {
+      props: {
+        show: true,
+        profileId: 'profile-1',
+        profileName: 'Demo Profile',
+      },
+      global: {
+        plugins: [pinia, createI18n({ initialLocale: 'zh-CN' })],
+        stubs: {
+          Teleport: true,
+          NodeFilters: true,
+          NodeList: true,
+          NodeCard: true,
+          NodePagination: true,
+          NodeDetailModal: true,
+        },
+      },
+    });
+
+    await flushPromises();
+
+    const pickButton = wrapper.findAll('button').find((b) => b.text().includes('挑选节点'));
+    expect(pickButton).toBeTruthy();
+    expect(pickButton.classes()).toContain('h-8');
+
+    const closeButton = wrapper.get('.modal-chrome-header button[aria-label="关闭"]');
+    expect(closeButton.classes()).toContain('h-8');
+
+    const latencyBtn = wrapper.get('[data-testid="preview-test-latency-btn"]');
+    expect(latencyBtn.classes()).toContain('h-8');
+
+    const tcpingBtn = wrapper.findAll('button').find((b) => b.text().trim() === 'TCPing');
+    expect(tcpingBtn).toBeTruthy();
+    expect(tcpingBtn.element.parentElement?.className).toContain('h-8');
   });
 });

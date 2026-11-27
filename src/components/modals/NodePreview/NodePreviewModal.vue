@@ -828,7 +828,7 @@ const goToPage = (page: number) => {
                 ? 'bg-active text-fg border-line-strong'
                 : 'bg-transparent border-line text-fg-muted hover:bg-hover'
             "
-            class="px-3 py-1.5 text-xs font-medium rounded-md border transition-colors shadow-none whitespace-nowrap"
+            class="inline-flex h-8 items-center justify-center px-3 text-xs font-medium rounded-md border transition-colors shadow-none whitespace-nowrap"
             @click="pickingMode = !pickingMode"
           >
             {{ pickingMode ? t('nodePreview.exitPicking') : t('nodePreview.pickNodes') }}
@@ -913,7 +913,7 @@ const goToPage = (page: number) => {
         <div class="flex flex-wrap items-center gap-2">
           <button
             :disabled="isTestingLatency || filteredNodes.length === 0"
-            class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong bg-elevated-card px-2.5 py-1.5 font-medium text-fg hover:bg-hover disabled:opacity-50 transition-colors"
+            class="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong bg-elevated-card px-2.5 font-medium text-fg hover:bg-hover disabled:opacity-50 transition-colors"
             data-testid="preview-test-latency-btn"
             type="button"
             @click="testFilteredNodes"
@@ -923,12 +923,12 @@ const goToPage = (page: number) => {
             <span>{{ isTestingLatency ? t('nodePreview.testingLatency') : t('nodePreview.testFilteredLatency') }}</span>
           </button>
 
-          <div class="inline-flex shrink-0 items-center rounded-md border border-line overflow-hidden divide-x divide-line">
+          <div class="inline-flex h-8 shrink-0 items-center rounded-md border border-line overflow-hidden divide-x divide-line">
             <button
               :class="
                 pingMode === 'tcping' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
               "
-              class="px-2 py-1 whitespace-nowrap transition-colors"
+              class="inline-flex h-full items-center px-2.5 whitespace-nowrap transition-colors"
               type="button"
               @click="pingMode = 'tcping'"
             >
@@ -938,7 +938,7 @@ const goToPage = (page: number) => {
               :class="
                 pingMode === 'local' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
               "
-              class="px-2 py-1 whitespace-nowrap transition-colors"
+              class="inline-flex h-full items-center px-2.5 whitespace-nowrap transition-colors"
               type="button"
               @click="pingMode = 'local'"
             >
@@ -948,7 +948,7 @@ const goToPage = (page: number) => {
 
           <button
             v-if="canManageSubscriptionNodes && failedFilteredUrls.length > 0"
-            class="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-red-400 hover:bg-red-500/20 transition-colors"
+            class="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border border-red-500/40 bg-red-500/10 px-2.5 text-red-400 hover:bg-red-500/20 transition-colors"
             type="button"
             @click="disableFailedNodes"
           >
@@ -957,7 +957,7 @@ const goToPage = (page: number) => {
 
           <button
             v-if="canManageSubscriptionNodes && disabledCount > 0"
-            class="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-line bg-transparent px-2.5 py-1 text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
+            class="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md border border-line bg-transparent px-2.5 text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
             type="button"
             @click="enableAllNodes"
           >
@@ -969,7 +969,7 @@ const goToPage = (page: number) => {
           <span class="font-mono text-fg-muted">
             {{ t('nodePreview.enabledSummary', { enabled: enabledCount, total: allNodes.length }) }}
           </span>
-          <label class="inline-flex items-center gap-2 text-fg-muted cursor-pointer">
+          <label class="inline-flex h-8 items-center gap-2 text-fg-muted cursor-pointer">
             <span>{{ t('nodePreview.autoDisableFailedLabel') }}</span>
             <Switch v-model="autoDisableFailed" size="sm" />
           </label>
