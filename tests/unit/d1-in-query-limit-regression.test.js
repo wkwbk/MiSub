@@ -43,8 +43,8 @@ function createMockD1(rows) {
           };
         },
         async first() {
-          if (/^PRAGMA\s+user_version/i.test(sql)) {
-            return { user_version: 2 };
+          if (/FROM\s+schema_versions/i.test(sql)) {
+            return { version: 2 };
           }
           const ids = new Set(record.bindings || []);
           const hit = rows.find((row) => ids.has(row.id));

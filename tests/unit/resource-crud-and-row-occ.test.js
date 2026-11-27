@@ -1216,7 +1216,7 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
     expect(sentProfPatch).not.toHaveProperty('shortLink');
   });
 
-  it('Audit #6: legacy v1 D1 database auto-migrates once via PRAGMA user_version v1 -> v2 and runs zero DDL thereafter', async () => {
+  it('Audit #6: live legacy D1 without schema_versions auto-migrates once without PRAGMA and runs zero DDL thereafter', async () => {
     const legacyDb = createMemoryD1(
       {
         subscriptions: [
@@ -1230,9 +1230,24 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
           },
         ],
       },
-      { userVersion: 1 },
+      {
+        schemaVersion: 0,
+        existingTables: [
+          'subscriptions',
+          'nodes',
+          'profiles',
+          'guestbook',
+          'settings',
+          'cache',
+          'access_logs',
+          'error_reports',
+        ],
+      },
     );
-    expect(legacyDb.getUserVersion()).toBe(1);
+    legacyDb.existingColumns.add('profiles.custom_id');
+    legacyDb.existingColumns.add('profiles.link_id');
+    legacyDb.existingColumns.add('cache.expires_at');
+    expect(legacyDb.getSchemaVersion()).toBe(0);
     expect(legacyDb.existingColumns.has('subscriptions.config_version')).toBe(false);
 
     const prepareSpy = vi.spyOn(legacyDb, 'prepare');
@@ -1240,8 +1255,9 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
 
     const dataRes = await handleApiRequest(makeAuthedRequest('/api/data', cookie), env);
     expect(dataRes.status).toBe(200);
-    expect(legacyDb.getUserVersion()).toBe(2);
+    expect(legacyDb.getSchemaVersion()).toBe(2);
     expect(legacyDb.existingColumns.has('subscriptions.config_version')).toBe(true);
+    expect(prepareSpy.mock.calls.some((c) => /\bPRAGMA\b/i.test(c[0]))).toBe(false);
     const payload = await dataRes.json();
     expect(payload.misubs[0]).toMatchObject({ id: 'sub-legacy-1', configVersion: 3 });
 
@@ -1261,6 +1277,6 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
     });
 
     const postMigrationSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
-    expect(postMigrationSqls.some((sql) => /\b(CREATE|ALTER)\b|\bPRAGMA\s+user_version\b/i.test(sql))).toBe(false);
+    expect(postMigrationSqls.some((sql) => /\b(CREATE|ALTER)\b|\bPRAGMA\b|\bschema_versions\b/i.test(sql))).toBe(false);
   });
 });

@@ -169,11 +169,12 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     expect(batchSpy.mock.calls.flatMap((c) => c[0]).length).toBeGreaterThan(0);
   });
 
-  it('initializes an empty D1 database from v0 -> v1 -> v2 on first storage access', async () => {
-    const emptyDb = createMemoryD1({}, { userVersion: 0 });
+  it('initializes an empty D1 database from v0 -> v1 -> v2 via schema_versions on first storage access', async () => {
+    const emptyDb = createMemoryD1({}, { schemaVersion: 0 });
     expect(emptyDb.existingTables.size).toBe(0);
-    expect(emptyDb.getUserVersion()).toBe(0);
+    expect(emptyDb.getSchemaVersion()).toBe(0);
 
+    const prepareSpy = vi.spyOn(emptyDb, 'prepare');
     const adapter = StorageFactory.createAdapter({ MISUB_DB: emptyDb });
     const created = await adapter.putSubscription({
       id: 'sub-init-1',
@@ -181,14 +182,25 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
       url: 'https://init.example.com/sub',
     });
 
-    expect(emptyDb.getUserVersion()).toBe(LATEST_SCHEMA_VERSION);
-    for (const tbl of ['subscriptions', 'nodes', 'profiles', 'guestbook', 'settings', 'cache', 'access_logs', 'error_reports']) {
+    expect(emptyDb.getSchemaVersion()).toBe(LATEST_SCHEMA_VERSION);
+    for (const tbl of [
+      'schema_versions',
+      'subscriptions',
+      'nodes',
+      'profiles',
+      'guestbook',
+      'settings',
+      'cache',
+      'access_logs',
+      'error_reports',
+    ]) {
       expect(emptyDb.existingTables.has(tbl)).toBe(true);
     }
     expect(emptyDb.existingColumns.has('subscriptions.config_version')).toBe(true);
     expect(emptyDb.existingColumns.has('nodes.config_version')).toBe(true);
     expect(emptyDb.existingColumns.has('profiles.config_version')).toBe(true);
     expect(created.configVersion).toBe(1);
+    expect(prepareSpy.mock.calls.some((c) => /\bPRAGMA\b/i.test(c[0]))).toBe(false);
 
     const casRes = await adapter.compareAndSwapSubscription({ ...created, name: 'Init Sub Updated' }, 1);
     expect(casRes.updated).toBe(true);
@@ -205,9 +217,9 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
         ],
         profiles: [{ id: 'p-ver', name: 'Legacy Prof V5', version: 5 }],
       },
-      { userVersion: 1 },
+      { schemaVersion: 1 },
     );
-    expect(legacyV1Db.getUserVersion()).toBe(1);
+    expect(legacyV1Db.getSchemaVersion()).toBe(1);
     expect(legacyV1Db.existingColumns.has('subscriptions.config_version')).toBe(false);
 
     const prepareSpy = vi.spyOn(legacyV1Db, 'prepare');
@@ -216,25 +228,27 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     const subs = await adapter.getAllSubscriptions({ fresh: true });
     const profs = await adapter.getAllProfiles({ fresh: true });
 
-    expect(legacyV1Db.getUserVersion()).toBe(2);
+    expect(legacyV1Db.getSchemaVersion()).toBe(2);
     expect(subs.find((s) => s.id === 's-ver')?.configVersion).toBe(4);
     expect(subs.find((s) => s.id === 's-cv')?.configVersion).toBe(3);
     expect(subs.find((s) => s.id === 'n-def')?.configVersion).toBe(1);
     expect(profs[0]?.configVersion).toBe(5);
 
     const executedSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
+    expect(executedSqls.some((sql) => /^PRAGMA\b/i.test(sql))).toBe(false);
     expect(executedSqls.some((sql) => /^CREATE TABLE/i.test(sql))).toBe(false);
     expect(executedSqls.some((sql) => /^ALTER TABLE subscriptions ADD COLUMN config_version/i.test(sql))).toBe(true);
-    expect(executedSqls.some((sql) => /^PRAGMA user_version = 2/i.test(sql))).toBe(true);
+    expect(executedSqls.some((sql) => /^INSERT OR REPLACE INTO schema_versions/i.test(sql))).toBe(true);
   });
 
-  it('skips duplicate column errors when Wrangler already applied migrations, yet rethrows real DDL errors', async () => {
-    const wranglerMigratedDb = createMemoryD1(
+  it('migrates live legacy production DBs lacking schema_versions and skips duplicate column errors (including wrapped cause)', async () => {
+    const liveLegacyDb = createMemoryD1(
       {
-        subscriptions: [{ id: 's-w1', name: 'Wrangler Sub', url: 'https://w.example.com/sub', version: 3 }],
+        subscriptions: [{ id: 's-live-1', name: 'Live Airport', url: 'https://live.example.com/sub' }],
+        profiles: [{ id: 'p-live-1', name: 'Live Profile' }],
       },
       {
-        userVersion: 0,
+        schemaVersion: 0,
         existingTables: [
           'subscriptions',
           'nodes',
@@ -245,23 +259,59 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
           'access_logs',
           'error_reports',
         ],
-        hasConfigVersionColumns: true,
       },
     );
-    wranglerMigratedDb.existingColumns.add('profiles.custom_id');
-    wranglerMigratedDb.existingColumns.add('profiles.link_id');
-    wranglerMigratedDb.existingColumns.add('cache.expires_at');
+    liveLegacyDb.existingColumns.add('profiles.custom_id');
+    liveLegacyDb.existingColumns.add('profiles.link_id');
+    liveLegacyDb.existingColumns.add('cache.expires_at');
 
-    await runD1Migrations(wranglerMigratedDb);
-    expect(wranglerMigratedDb.getUserVersion()).toBe(LATEST_SCHEMA_VERSION);
-    const adapter = StorageFactory.createAdapter({ MISUB_DB: wranglerMigratedDb });
-    expect((await adapter.getSubscriptionById('s-w1'))?.configVersion).toBe(3);
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: liveLegacyDb });
+    const loadedSubs = await adapter.getAllSubscriptions({ fresh: true });
+    expect(loadedSubs).toHaveLength(1);
+    expect(loadedSubs[0]).toMatchObject({ id: 's-live-1', configVersion: 1 });
+    expect(liveLegacyDb.getSchemaVersion()).toBe(LATEST_SCHEMA_VERSION);
+    expect(liveLegacyDb.existingTables.has('schema_versions')).toBe(true);
+
+    // Also verifies wrapped Error.cause duplicate column name handling + real DDL error rethrow
+    let insertedVersion = 0;
+    const causeWrappedDb = {
+      prepare(sql) {
+        return {
+          bind(...args) {
+            return {
+              async run() {
+                if (/INSERT OR REPLACE INTO schema_versions/i.test(sql)) {
+                  insertedVersion = args[0];
+                }
+                return { success: true };
+              },
+            };
+          },
+          async first() {
+            if (/FROM schema_versions/i.test(sql)) return { version: 1 };
+            return null;
+          },
+          async run() {
+            if (/^ALTER TABLE/i.test(sql)) {
+              throw new Error('D1_ERROR', { cause: new Error('duplicate column name: config_version') });
+            }
+            return { success: true };
+          },
+        };
+      },
+      async batch(statements) {
+        for (const s of statements) await s.run();
+        return statements.map(() => ({ success: true }));
+      },
+    };
+    await runD1Migrations(causeWrappedDb);
+    expect(insertedVersion).toBe(2);
 
     const brokenAlterDb = {
       prepare(sql) {
         return {
           async first() {
-            if (/^PRAGMA\s+user_version/i.test(sql)) return { user_version: 1 };
+            if (/FROM schema_versions/i.test(sql)) return { version: 1 };
             return null;
           },
           async run() {
@@ -277,19 +327,21 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
   });
 
   it('runs zero DDL on v2 databases, caches migration state per isolate, deduplicates concurrent calls, and does not cache failures', async () => {
-    // 1. Up-to-date v2 DB: first access checks PRAGMA user_version once with zero DDL, second access does zero queries
-    const freshV2Db = createMemoryD1({}, { userVersion: 2 });
+    // 1. Up-to-date v2 DB: first access reads schema_versions once with zero DDL, second access does zero queries
+    const freshV2Db = createMemoryD1({}, { schemaVersion: 2 });
     const prepareSpy = vi.spyOn(freshV2Db, 'prepare');
 
     await runD1Migrations(freshV2Db);
-    expect(prepareSpy.mock.calls.map((c) => c[0])).toEqual(['PRAGMA user_version']);
+    expect(prepareSpy.mock.calls.map((c) => c[0])).toEqual([
+      'SELECT COALESCE(MAX(version), 0) AS version FROM schema_versions',
+    ]);
 
     prepareSpy.mockClear();
     await runD1Migrations(freshV2Db);
     expect(prepareSpy).not.toHaveBeenCalled();
 
     // 2. Concurrent cold-start callers share one in-flight migration promise
-    const concurrentDb = createMemoryD1({}, { userVersion: 2 });
+    const concurrentDb = createMemoryD1({}, { schemaVersion: 2 });
     const concurrentPrepareSpy = vi.spyOn(concurrentDb, 'prepare');
     await Promise.all([runD1Migrations(concurrentDb), runD1Migrations(concurrentDb), runD1Migrations(concurrentDb)]);
     expect(concurrentPrepareSpy).toHaveBeenCalledTimes(1);
@@ -300,15 +352,24 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     const flakyDb = {
       prepare(sql) {
         return {
+          bind(...args) {
+            return {
+              async run() {
+                if (shouldFail) throw new Error('D1 transient failure');
+                if (/INSERT OR REPLACE INTO schema_versions/i.test(sql)) {
+                  fakeVersion = Number(args[0]);
+                }
+                return { success: true };
+              },
+            };
+          },
           async first() {
             if (shouldFail) throw new Error('D1 transient failure');
-            if (/^PRAGMA\s+user_version/i.test(sql)) return { user_version: fakeVersion };
+            if (/FROM schema_versions/i.test(sql)) return { version: fakeVersion };
             return null;
           },
           async run() {
             if (shouldFail) throw new Error('D1 transient failure');
-            const m = sql.match(/^PRAGMA\s+user_version\s*=\s*(\d+)/i);
-            if (m) fakeVersion = Number(m[1]);
             return { success: true };
           },
         };

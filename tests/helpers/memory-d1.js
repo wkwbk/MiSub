@@ -1,7 +1,7 @@
 /**
- * 内存版 D1 数据库测试桩，兼容八表结构
+ * 内存版 D1 数据库测试桩，兼容八表结构与 schema_versions 线性迁移表
  * （subscriptions / nodes / profiles / guestbook / settings / cache / access_logs / error_reports）
- * 及 PRAGMA user_version 读写、DDL/列校验与认证 SQL。
+ * 严格禁止 PRAGMA user_version（模拟 Cloudflare D1 鉴权限制）并校验 DDL/列/DML 状态。
  */
 export function createMemoryD1(initial = {}, options = {}) {
   const ALL_BASE_TABLES = [
@@ -21,18 +21,23 @@ export function createMemoryD1(initial = {}, options = {}) {
     cache: ['expires_at'],
   };
 
-  let userVersion = Number.isInteger(options.userVersion) ? options.userVersion : 2;
+  const rawSchemaOption = options.schemaVersion ?? options.userVersion;
+  const initialVersion = Number.isInteger(rawSchemaOption) ? rawSchemaOption : 2;
   const explicitExistingTables = Array.isArray(options.existingTables);
   const existingTables = new Set(
-    explicitExistingTables ? options.existingTables : userVersion >= 1 ? [...ALL_BASE_TABLES, 'logs'] : [],
+    explicitExistingTables
+      ? options.existingTables
+      : initialVersion >= 1
+        ? [...ALL_BASE_TABLES, 'logs', 'schema_versions']
+        : [],
   );
   const existingColumns = new Set();
-  if (userVersion >= 1) {
+  if (initialVersion >= 1) {
     existingColumns.add('profiles.custom_id');
     existingColumns.add('profiles.link_id');
     existingColumns.add('cache.expires_at');
   }
-  if (userVersion >= 2 || options.hasConfigVersionColumns === true) {
+  if (initialVersion >= 2 || options.hasConfigVersionColumns === true) {
     existingColumns.add('subscriptions.config_version');
     existingColumns.add('nodes.config_version');
     existingColumns.add('profiles.config_version');
@@ -48,7 +53,16 @@ export function createMemoryD1(initial = {}, options = {}) {
     access_logs: new Map(),
     error_reports: new Map(),
     logs: new Map(),
+    schema_versions: new Map(),
   };
+
+  if (existingTables.has('schema_versions') && initialVersion >= 1) {
+    tables.schema_versions.set(1, { version: 1, name: '0000_initial_schema' });
+    if (initialVersion >= 2) {
+      tables.schema_versions.set(2, { version: 2, name: '0001_add_config_version' });
+    }
+  }
+
   const configVersions = {
     subscriptions: new Map(),
     nodes: new Map(),
@@ -99,7 +113,7 @@ export function createMemoryD1(initial = {}, options = {}) {
   const serialize = (val) => (typeof val === 'string' ? val : JSON.stringify(val));
 
   const markSeededTableIfUnconstrained = (tblName) => {
-    if (!explicitExistingTables && userVersion === 0) {
+    if (!explicitExistingTables && initialVersion === 0) {
       existingTables.add(tblName);
     }
   };
@@ -209,7 +223,7 @@ export function createMemoryD1(initial = {}, options = {}) {
 
   const assertDmlTarget = (normalizedSql) => {
     const tblMatch = normalizedSql.match(
-      /^(?:SELECT\b.*?\bFROM|INSERT\s+(?:OR\s+(?:REPLACE|IGNORE)\s+)?INTO|UPDATE|DELETE\s+FROM)\s+(subscriptions|nodes|profiles|guestbook|settings|cache|access_logs|error_reports|logs)\b/i,
+      /^(?:SELECT\b.*?\bFROM|INSERT\s+(?:OR\s+(?:REPLACE|IGNORE)\s+)?INTO|UPDATE|DELETE\s+FROM)\s+(subscriptions|nodes|profiles|guestbook|settings|cache|access_logs|error_reports|logs|schema_versions)\b/i,
     );
     if (tblMatch) {
       assertTableAndCols(tblMatch[1].toLowerCase(), normalizedSql);
@@ -231,16 +245,22 @@ export function createMemoryD1(initial = {}, options = {}) {
     return null;
   };
 
+  const getSchemaVersion = () =>
+    Array.from(tables.schema_versions.keys()).reduce((max, ver) => Math.max(max, Number(ver) || 0), 0);
+
   const executeStatement = (sql, args = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
 
     return {
       async first() {
-        if (/^PRAGMA\s+user_version\s*;?$/i.test(normalized)) {
-          return { user_version: userVersion };
+        if (/^PRAGMA\s+user_version/i.test(normalized)) {
+          throw new Error('D1_ERROR: not authorized');
         }
         assertDmlTarget(normalized);
 
+        if (/^SELECT\s+COALESCE\(MAX\(version\),\s*0\)\s+AS\s+version\s+FROM\s+schema_versions/i.test(normalized)) {
+          return { version: getSchemaVersion() };
+        }
         if (/SELECT 1 AS ok FROM (\w+) LIMIT 1/i.test(normalized)) {
           const table = normalized.match(/FROM (\w+)/i)[1];
           return tables[table] && tables[table].size > 0 ? { ok: 1 } : null;
@@ -290,11 +310,16 @@ export function createMemoryD1(initial = {}, options = {}) {
         return null;
       },
       async all() {
-        if (/^PRAGMA\s+user_version\s*;?$/i.test(normalized)) {
-          return { results: [{ user_version: userVersion }] };
+        if (/^PRAGMA\s+user_version/i.test(normalized)) {
+          throw new Error('D1_ERROR: not authorized');
         }
         assertDmlTarget(normalized);
 
+        if (/FROM schema_versions/i.test(normalized)) {
+          return {
+            results: Array.from(tables.schema_versions.values()).sort((a, b) => a.version - b.version),
+          };
+        }
         if (/SELECT data(?:,\s*config_version)? FROM profiles WHERE id = \? OR custom_id = \? OR link_id = \?/i.test(normalized)) {
           const targetLower = String(args[0] ?? '')
             .trim()
@@ -424,13 +449,8 @@ export function createMemoryD1(initial = {}, options = {}) {
         return { results: [] };
       },
       async run() {
-        const setPragmaMatch = normalized.match(/^PRAGMA\s+user_version\s*=\s*(\d+)\s*;?$/i);
-        if (setPragmaMatch) {
-          userVersion = Number(setPragmaMatch[1]);
-          return { success: true, meta: { changes: 0 } };
-        }
-        if (/^PRAGMA\s+user_version\s*;?$/i.test(normalized)) {
-          return { success: true, meta: { changes: 0 } };
+        if (/^PRAGMA\s+user_version/i.test(normalized)) {
+          throw new Error('D1_ERROR: not authorized');
         }
         const createTableMatch = normalized.match(
           /^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)\s*\((.+)\)\s*;?$/i,
@@ -455,7 +475,7 @@ export function createMemoryD1(initial = {}, options = {}) {
           }
           const colKey = `${tblName}.${colName}`;
           if (existingColumns.has(colKey)) {
-            throw new Error(`SQLITE_ERROR: duplicate column name: ${colName}`);
+            throw new Error(`D1_EXEC_ERROR: Error in line 1: ${normalized}: sql error: duplicate column name: ${colName}`);
           }
           existingColumns.add(colKey);
           if (colName === 'config_version' && configVersions[tblName]) {
@@ -483,6 +503,12 @@ export function createMemoryD1(initial = {}, options = {}) {
 
         assertDmlTarget(normalized);
 
+        if (/^INSERT\s+OR\s+REPLACE\s+INTO\s+schema_versions\s*\(version,\s*name\)/i.test(normalized)) {
+          const ver = Number(args[0]);
+          const name = String(args[1] || '');
+          tables.schema_versions.set(ver, { version: ver, name });
+          return { success: true, meta: { changes: 1 } };
+        }
         if (/^UPDATE (subscriptions|nodes) SET data = \?, config_version = COALESCE\(config_version, 1\) \+ 1, updated_at = CURRENT_TIMESTAMP WHERE id = \? AND COALESCE\(config_version, 1\) = \?/i.test(normalized)) {
           const match = normalized.match(/^UPDATE (subscriptions|nodes) SET/i);
           const tblName = match[1].toLowerCase();
@@ -809,7 +835,8 @@ export function createMemoryD1(initial = {}, options = {}) {
     cacheExpiresAt,
     existingTables,
     existingColumns,
-    getUserVersion: () => userVersion,
+    getSchemaVersion,
+    getUserVersion: getSchemaVersion,
     async batch(statements = []) {
       const results = [];
       for (const stmt of statements) {

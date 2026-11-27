@@ -215,7 +215,7 @@ function resolveSyncedEntityDiff<T extends { configVersion?: unknown }>(
 
 /**
  * D1 存储适配器（八表职责分离与索引行级存储）
- * 在单点 SQL 执行网关前自动运行基于 PRAGMA user_version 的线性版本迁移，业务层零 DDL 容错分支。
+ * 在单点 SQL 执行网关前自动运行基于 schema_versions 表的线性版本迁移，业务层零 DDL 容错分支。
  */
 class D1StorageAdapter implements StorageAdapter {
   db: D1Database;
@@ -463,6 +463,7 @@ class D1StorageAdapter implements StorageAdapter {
     table: string,
     options: { fresh?: boolean } = {},
   ): Promise<T[]> {
+    await runD1Migrations(this.db);
     return readCachedD1Collection(
       this.db,
       table,
@@ -1396,7 +1397,7 @@ class D1StorageAdapter implements StorageAdapter {
 
   /**
    * 定期维护任务：
-   * 1. 表结构与线性版本迁移在存储访问入口自动通过 PRAGMA user_version 一次性校验完成；
+   * 1. 表结构与线性版本迁移在存储访问入口自动通过 schema_versions 表一次性校验完成；
    * 2. 利用 cache.expires_at 索引批量清理过期缓存，并仅按 key 清理孤儿节点缓存；
    * 3. 修剪过期的访问日志。
    */

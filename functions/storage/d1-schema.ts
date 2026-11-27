@@ -1,5 +1,5 @@
 /**
- * D1 存储层 Schema、表常量、键路由规则与线性版本迁移状态机（基于 PRAGMA user_version）
+ * D1 存储层 Schema、表常量、键路由规则与线性版本迁移状态机（基于 schema_versions 表）
  */
 
 export const STORAGE_TYPES = {
@@ -26,6 +26,12 @@ export const ID_DATA_TABLES = new Set(['subscriptions', 'nodes', 'profiles', 'gu
 const GITHUB_RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const NODE_CACHE_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
 export const ACCESS_LOG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+const SCHEMA_VERSIONS_TABLE_SQL = `CREATE TABLE IF NOT EXISTS schema_versions (
+  version INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);`;
 
 export interface SchemaMigration {
   version: number;
@@ -100,10 +106,10 @@ export const SCHEMA_MIGRATIONS: readonly SchemaMigration[] = [
     postStatements: [
       `UPDATE profiles
        SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
-       WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
+       WHERE custom_id IS NULL AND json_valid(data) = 1 AND json_extract(data, '$.customId') IS NOT NULL`,
       `UPDATE profiles
        SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
-       WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
+       WHERE link_id IS NULL AND json_valid(data) = 1 AND json_extract(data, '$.linkId') IS NOT NULL`,
       `CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);`,
       `CREATE INDEX IF NOT EXISTS idx_nodes_updated_at ON nodes(updated_at);`,
       `CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ON profiles(custom_id);`,
@@ -129,28 +135,34 @@ export const SCHEMA_MIGRATIONS: readonly SchemaMigration[] = [
       `UPDATE subscriptions
        SET config_version = MAX(
          COALESCE(config_version, 1),
-         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+         CASE
+           WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+           ELSE 1
+         END
        )
-       WHERE json_extract(data, '$.configVersion') IS NOT NULL
-          OR json_extract(data, '$.version') IS NOT NULL
+       WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
           OR config_version IS NULL
           OR config_version < 1`,
       `UPDATE nodes
        SET config_version = MAX(
          COALESCE(config_version, 1),
-         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+         CASE
+           WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+           ELSE 1
+         END
        )
-       WHERE json_extract(data, '$.configVersion') IS NOT NULL
-          OR json_extract(data, '$.version') IS NOT NULL
+       WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
           OR config_version IS NULL
           OR config_version < 1`,
       `UPDATE profiles
        SET config_version = MAX(
          COALESCE(config_version, 1),
-         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+         CASE
+           WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+           ELSE 1
+         END
        )
-       WHERE json_extract(data, '$.configVersion') IS NOT NULL
-          OR json_extract(data, '$.version') IS NOT NULL
+       WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
           OR config_version IS NULL
           OR config_version < 1`,
     ],
@@ -200,10 +212,20 @@ export function isCacheKey(keyStr: string): boolean {
   return D1_CACHE_KEYS.has(keyStr) || D1_CACHE_PREFIXES.some((prefix) => keyStr.startsWith(prefix));
 }
 
-function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (isRecord(error) && typeof error.message === 'string') return error.message;
-  return '';
+function getFullErrorMessage(error: unknown, depth = 0): string {
+  if (!error || depth > 4) return '';
+  if (typeof error === 'string') return error;
+  const parts: string[] = [];
+  if (error instanceof Error) {
+    if (error.message) parts.push(error.message);
+    const causeMsg = getFullErrorMessage((error as Error & { cause?: unknown }).cause, depth + 1);
+    if (causeMsg) parts.push(causeMsg);
+  } else if (isRecord(error)) {
+    if (typeof error.message === 'string' && error.message) parts.push(error.message);
+    const causeMsg = getFullErrorMessage(error.cause, depth + 1);
+    if (causeMsg) parts.push(causeMsg);
+  }
+  return parts.join(' | ');
 }
 
 export function parseTimestampMs(val: unknown): number {
@@ -285,6 +307,22 @@ async function runStatementsBatchOrSequential(d1Db: D1Database, statements: read
   }
 }
 
+async function readCurrentSchemaVersion(d1Db: D1Database): Promise<number> {
+  try {
+    const row = await d1Db
+      .prepare('SELECT COALESCE(MAX(version), 0) AS version FROM schema_versions')
+      .first<{ version?: number | string | null }>();
+    const rawVersion = Number(row?.version);
+    return Number.isInteger(rawVersion) && rawVersion > 0 ? rawVersion : 0;
+  } catch (error) {
+    if (/no such table/i.test(getFullErrorMessage(error))) {
+      await d1Db.prepare(SCHEMA_VERSIONS_TABLE_SQL).run();
+      return 0;
+    }
+    throw error;
+  }
+}
+
 export async function runD1Migrations(d1Db: D1Database): Promise<void> {
   if (!d1Db || typeof d1Db !== 'object') return;
   if (migratedDatabases.has(d1Db)) return;
@@ -295,9 +333,7 @@ export async function runD1Migrations(d1Db: D1Database): Promise<void> {
   }
 
   const migrationPromise = (async () => {
-    const row = await d1Db.prepare('PRAGMA user_version').first<{ user_version?: number | string }>();
-    const rawVersion = Number(row?.user_version);
-    const currentVersion = Number.isInteger(rawVersion) && rawVersion > 0 ? rawVersion : 0;
+    const currentVersion = await readCurrentSchemaVersion(d1Db);
 
     if (currentVersion >= LATEST_SCHEMA_VERSION) {
       migratedDatabases.add(d1Db);
@@ -316,7 +352,7 @@ export async function runD1Migrations(d1Db: D1Database): Promise<void> {
           try {
             await d1Db.prepare(alterSql).run();
           } catch (error) {
-            if (!/duplicate column name/i.test(getErrorMessage(error))) {
+            if (!/duplicate column name/i.test(getFullErrorMessage(error))) {
               throw error;
             }
           }
@@ -327,7 +363,10 @@ export async function runD1Migrations(d1Db: D1Database): Promise<void> {
         await runStatementsBatchOrSequential(d1Db, migration.postStatements);
       }
 
-      await d1Db.prepare(`PRAGMA user_version = ${migration.version}`).run();
+      await d1Db
+        .prepare('INSERT OR REPLACE INTO schema_versions (version, name) VALUES (?, ?)')
+        .bind(migration.version, migration.name)
+        .run();
     }
 
     migratedDatabases.add(d1Db);

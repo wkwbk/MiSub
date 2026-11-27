@@ -6,29 +6,35 @@ ALTER TABLE profiles ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;
 UPDATE subscriptions
 SET config_version = MAX(
   COALESCE(config_version, 1),
-  COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+  CASE
+    WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+    ELSE 1
+  END
 )
-WHERE json_extract(data, '$.configVersion') IS NOT NULL
-   OR json_extract(data, '$.version') IS NOT NULL
+WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
    OR config_version IS NULL
    OR config_version < 1;
 
 UPDATE nodes
 SET config_version = MAX(
   COALESCE(config_version, 1),
-  COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+  CASE
+    WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+    ELSE 1
+  END
 )
-WHERE json_extract(data, '$.configVersion') IS NOT NULL
-   OR json_extract(data, '$.version') IS NOT NULL
+WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
    OR config_version IS NULL
    OR config_version < 1;
 
 UPDATE profiles
 SET config_version = MAX(
   COALESCE(config_version, 1),
-  COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+  CASE
+    WHEN json_valid(data) = 1 THEN COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+    ELSE 1
+  END
 )
-WHERE json_extract(data, '$.configVersion') IS NOT NULL
-   OR json_extract(data, '$.version') IS NOT NULL
+WHERE (json_valid(data) = 1 AND (json_extract(data, '$.configVersion') IS NOT NULL OR json_extract(data, '$.version') IS NOT NULL))
    OR config_version IS NULL
    OR config_version < 1;
