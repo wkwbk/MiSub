@@ -34,6 +34,7 @@ export const DEFAULT_SHARED_SETTINGS = {
   enableFlagEmoji: true,
   enablePublicPage: true,
   allowBrowserSubAccess: true,
+  blockCrawlerSubAccess: true,
   subPortalMode: 'portal' as 'portal' | 'redirect' | 'raw',
   subPortalRedirectUrl: '',
   subPortalTitle: '',

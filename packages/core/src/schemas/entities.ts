@@ -537,6 +537,7 @@ export const SettingsSchema = z
     enableFlagEmoji: z.boolean().optional(),
     enablePublicPage: z.boolean().optional(),
     allowBrowserSubAccess: z.boolean().optional(),
+    blockCrawlerSubAccess: z.boolean().optional(),
     subPortalMode: z.enum(['portal', 'redirect', 'raw']).optional(),
     subPortalRedirectUrl: z.string().optional(),
     subPortalTitle: z.string().optional(),

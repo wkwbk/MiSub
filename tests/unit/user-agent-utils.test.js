@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   determineTargetFormat,
   isBrowserAgent,
+  isCrawlerOrImAgent,
   isMetaCore,
 } from '../../functions/modules/subscription/core/user-agent-utils.js';
 
@@ -46,6 +47,67 @@ describe('User-Agent Utils', () => {
       expect(isBrowserAgent(null)).toBe(false);
       expect(isBrowserAgent('curl/7.64.1')).toBe(false);
       expect(isBrowserAgent('PostmanRuntime/7.26.8')).toBe(false);
+    });
+  });
+
+  describe('isCrawlerOrImAgent', () => {
+    it('should identify domestic IM webviews and international link preview crawlers', () => {
+      const crawlers = [
+        'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 MicroMessenger/8.0.42.2460',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) QQ/8.9.80.618',
+        'Mozilla/5.0 (Linux; Android 12) MQQBrowser/12.1 TBS/046237',
+        'Mozilla/5.0 (Windows NT 10.0) wxwork/4.1.20',
+        'WeCom/4.1.0',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AliApp(DingTalk/7.0.0)',
+        'Mozilla/5.0 (Linux; Android 13) Lark/6.12.0 Feishu/6.12.0',
+        'Mozilla/5.0 (iPhone) AlipayClient/10.5.0',
+        'Mozilla/5.0 (Linux; Android 12) baiduboxapp/13.20.0',
+        'Mozilla/5.0 (compatible; Bytespider; spider-feedback@bytedance.com)',
+        'Mozilla/5.0 (iPhone) Weibo (iPhone15,2__weibo__13.10.0)',
+        'TelegramBot (like TwitterBot)',
+        'WhatsApp/2.23.20.0 A',
+        'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)',
+        'Slackbot-LinkExpanding 1.0 (+https://api.slack.com/robots)',
+        'Twitterbot/1.0',
+        'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+      ];
+      crawlers.forEach((ua) => {
+        expect(isCrawlerOrImAgent(ua)).toBe(true);
+      });
+    });
+
+    it('should unconditionally allow known proxy clients and internal callbacks', () => {
+      const allowed = [
+        'Clash/1.0',
+        'Clash.Meta/1.18.0',
+        'Mihomo/1.18.5',
+        'Shadowrocket/2.2.60 CFNetwork/1496.0.7',
+        'Quantumult%20X/1.4.2',
+        'Sing-box/1.9.0',
+        'Karing/1.0.30',
+        'FlClash/v0.8.5',
+        'Hiddify/2.0.5',
+        'MiSub-Backend/1.0',
+        // Even if a proxy client UA hypothetically contains crawler keywords, whitelist wins
+        'Mozilla/5.0 MicroMessenger/8.0 Clash.Meta/1.18.0',
+      ];
+      allowed.forEach((ua) => {
+        expect(isCrawlerOrImAgent(ua)).toBe(false);
+      });
+    });
+
+    it('should not block standard desktop browsers, CLI tools, or empty UA by default', () => {
+      const nonCrawlers = [
+        '',
+        null,
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/125.0.0.0 Safari/537.36',
+        'curl/8.4.0',
+        'Go-http-client/2.0',
+        'Wget/1.21.4',
+      ];
+      nonCrawlers.forEach((ua) => {
+        expect(isCrawlerOrImAgent(ua)).toBe(false);
+      });
     });
   });
 

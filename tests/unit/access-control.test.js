@@ -5,6 +5,7 @@ import {
   enforcePublicApiAccess,
   evaluatePageAccess,
   isBrowserSubAccessAllowed,
+  isCrawlerSubAccessBlocked,
   isPublicPageEnabled,
 } from '../../functions/modules/access-control.js';
 import { createDisguiseResponse } from '../../functions/modules/disguise-page.js';
@@ -157,5 +158,10 @@ describe('web access control (single source of truth)', () => {
     expect(isBrowserSubAccessAllowed({ allowBrowserSubAccess: true })).toBe(true);
     expect(isBrowserSubAccessAllowed({ allowBrowserSubAccess: false })).toBe(false);
     expect(isBrowserSubAccessAllowed({ allowBrowserSubAccess: 'false' })).toBe(false);
+
+    expect(isCrawlerSubAccessBlocked({})).toBe(true);
+    expect(isCrawlerSubAccessBlocked({ blockCrawlerSubAccess: true })).toBe(true);
+    expect(isCrawlerSubAccessBlocked({ blockCrawlerSubAccess: false })).toBe(false);
+    expect(isCrawlerSubAccessBlocked({ blockCrawlerSubAccess: 'false' })).toBe(false);
   });
 });

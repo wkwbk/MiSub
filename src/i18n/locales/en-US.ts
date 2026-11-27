@@ -1031,6 +1031,9 @@ export default {
     disguisePageTitle: 'Allow browsers to open subscription links',
     disguisePageDesc:
       'When off, opening subscription links in any browser is blocked while proxy clients (Clash, Sing-Box, v2rayN, etc.) keep updating normally.',
+    blockCrawlerSubTitle: 'Block IM & link preview crawlers',
+    blockCrawlerSubDesc:
+      'Enabled by default. Silently returns the disguised response (without logs or Telegram notifications) to chat app webviews and link preview bots such as WeChat, QQ, WeCom, DingTalk, Feishu, Telegram, WhatsApp, and Discord while always allowing known proxy clients.',
     customAdminPath: 'Admin login path',
     customAdminPathPlaceholder: 'Default: login',
     customAdminPathHint: 'Defaults to /login. Setting a custom path immediately disables and blocks /login.',

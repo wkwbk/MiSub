@@ -1020,6 +1020,9 @@ export default {
     disguisePageTitle: '允许浏览器打开订阅链接',
     disguisePageDesc:
       '开启时浏览器可直接打开订阅链接；关闭后浏览器访问将被拦截，Clash、Sing-Box、v2rayN 等代理客户端不受影响。',
+    blockCrawlerSubTitle: '拦截 IM 与链接预览爬虫',
+    blockCrawlerSubDesc:
+      '默认开启。自动拦截微信、QQ、企业微信、钉钉、飞书、Telegram、WhatsApp、Discord 等聊天软件内置浏览与链接预览爬虫，直接返回伪装响应且静默不推送通知；主流代理客户端白名单无条件放行。',
     customAdminPath: '后台登录路径',
     customAdminPathPlaceholder: '默认: login',
     customAdminPathHint: '留空默认 /login；设置自定义路径后，旧路径 /login 将立即失效并被拦截。',

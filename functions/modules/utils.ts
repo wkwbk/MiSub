@@ -158,6 +158,9 @@ export function migrateConfigSettings<T extends Record<string, unknown>>(config:
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'allowBrowserSubAccess')) {
     migratedConfig.allowBrowserSubAccess = toBoolean(migratedConfig.allowBrowserSubAccess);
   }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'blockCrawlerSubAccess')) {
+    migratedConfig.blockCrawlerSubAccess = toBoolean(migratedConfig.blockCrawlerSubAccess);
+  }
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'subPortalMode')) {
     const mode = migratedConfig.subPortalMode;
     migratedConfig.subPortalMode = mode === 'redirect' || mode === 'raw' ? mode : 'portal';

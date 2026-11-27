@@ -10,7 +10,11 @@ import { sendEnhancedTgNotification, tgEscape } from '../../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings } from '../../config.js';
 import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
-import { createBlockedResponse, isBrowserSubAccessAllowed } from '../../access-control.js';
+import {
+  createBlockedResponse,
+  isBrowserSubAccessAllowed,
+  isCrawlerSubAccessBlocked,
+} from '../../access-control.js';
 import { isSafeUserRegexPattern } from '../../security-utils.js';
 import {
   generateCacheKey,
@@ -41,7 +45,13 @@ import {
   type EffectivePortalConfig,
 } from '@misub/core/domain/multi-socks.js';
 import { isVirtualInfoProxy } from '@misub/core/protocols/clash-parsers/common.js';
-import { determineTargetFormat, isBrowserAgent, isMetaCore, shouldRouteToBrowserPortal } from './user-agent-utils.js';
+import {
+  determineTargetFormat,
+  isBrowserAgent,
+  isCrawlerOrImAgent,
+  isMetaCore,
+  shouldRouteToBrowserPortal,
+} from './user-agent-utils.js';
 import { renderSubscriptionPortalPage } from './portal-page.js';
 import { getClientAdapter } from '../adapters/adapter-registry.js';
 import { handleProfileMode } from './profile-handler.js';
@@ -190,10 +200,19 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const urlScv = url.searchParams.get('scv');
   const urlList = url.searchParams.get('list') === 'true';
 
+  const isCrawlerOrIm = isCrawlerOrImAgent(userAgentHeader);
+  const blockCrawlerSub = isCrawlerSubAccessBlocked(config);
   const isBrowser = isBrowserAgent(userAgentHeader);
 
   const allowBrowserSub = isBrowserSubAccessAllowed(config);
-  console.log(`[MiSub Logic] isBrowser: ${isBrowser}, AllowBrowserSub: ${allowBrowserSub}`);
+  console.log(
+    `[MiSub Logic] isCrawlerOrIm: ${isCrawlerOrIm}, BlockCrawlerSub: ${blockCrawlerSub}, isBrowser: ${isBrowser}, AllowBrowserSub: ${allowBrowserSub}`,
+  );
+
+  // 开启「拦截 IM 与链接预览爬虫」后，微信/QQ/钉钉/飞书/Telegram 等预览爬虫一律返回伪装响应，且不触发日志与通知
+  if (blockCrawlerSub && isCrawlerOrIm && !url.searchParams.has('callback_token')) {
+    return createBlockedResponse(config.disguise as Parameters<typeof createBlockedResponse>[0], request.url);
+  }
 
   // 关闭「允许浏览器打开订阅链接」后，任何浏览器直连订阅 URL 一律拦截，代理客户端不受影响
   if (!allowBrowserSub && isBrowser && !url.searchParams.has('callback_token')) {

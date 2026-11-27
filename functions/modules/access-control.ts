@@ -6,6 +6,7 @@ import { createJsonResponse, normalizeLoginPath } from './utils.js';
 export interface AccessControlConfig {
   enablePublicPage?: boolean | string;
   allowBrowserSubAccess?: boolean | string;
+  blockCrawlerSubAccess?: boolean | string;
   customLoginPath?: unknown;
   disguise?: DisguiseConfig | null;
   [key: string]: unknown;
@@ -51,6 +52,17 @@ export function isBrowserSubAccessAllowed(config?: AccessControlConfig | null): 
     return config.allowBrowserSubAccess.toLowerCase() !== 'false';
   }
   return config.allowBrowserSubAccess !== false;
+}
+
+/**
+ * 判断是否拦截 IM / 社交平台链接预览爬虫访问订阅链接（默认开启；关闭后放行）
+ */
+export function isCrawlerSubAccessBlocked(config?: AccessControlConfig | null): boolean {
+  if (!config || typeof config !== 'object') return true;
+  if (typeof config.blockCrawlerSubAccess === 'string') {
+    return config.blockCrawlerSubAccess.toLowerCase() !== 'false';
+  }
+  return config.blockCrawlerSubAccess !== false;
 }
 
 /**

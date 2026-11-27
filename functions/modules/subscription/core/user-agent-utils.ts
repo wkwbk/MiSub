@@ -1,5 +1,11 @@
 const KNOWN_PROXY_CLIENT_REGEX =
-  /clash|flclash|flyclash|butterfly|verge|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|mihomo\.party|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|singbox|surfboard|hiddify|egern|yuetu|月兔|cfw|clashforwindows/i;
+  /clash|flclash|flyclash|butterfly|verge|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|mihomo\.party|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|singbox|surfboard|hiddify|karing|egern|yuetu|月兔|cfw|clashforwindows/i;
+
+/**
+ * 国内外常见 IM / 社交 / 协同平台内置浏览器与链接预览爬虫标识
+ */
+const IM_OR_CRAWLER_AGENT_REGEX =
+  /MicroMessenger|MQQBrowser|QQ\/|WeCom|wxwork|DingTalk|Feishu|Lark|AliApp|AlipayClient|baiduboxapp|Baiduspider|Bytespider|BytedanceWebview|Weibo|TBS\/|xiaohongshu|\bxhs\b|TelegramBot|WhatsApp|Discordbot|Slackbot|Twitterbot|facebookexternalhit|Facebot|LinkedInBot|SkypeUriPreview/i;
 
 const EXPLICIT_FORMAT_QUERY_KEYS = [
   'target',
@@ -22,6 +28,18 @@ const EXPLICIT_FORMAT_QUERY_KEYS = [
 export function isKnownProxyClientAgent(userAgent: string): boolean {
   if (!userAgent) return false;
   return KNOWN_PROXY_CLIENT_REGEX.test(userAgent);
+}
+
+/**
+ * 判断是否为 IM / 社交平台内置浏览器或链接预览爬虫
+ * 命中代理客户端白名单或内部回调标识时无条件放行，防止误杀
+ */
+export function isCrawlerOrImAgent(userAgent: string): boolean {
+  if (!userAgent) return false;
+  if (isKnownProxyClientAgent(userAgent) || /MiSub-Backend/i.test(userAgent)) {
+    return false;
+  }
+  return IM_OR_CRAWLER_AGENT_REGEX.test(userAgent);
 }
 
 /**

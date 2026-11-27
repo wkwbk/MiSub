@@ -308,12 +308,17 @@ const intervalControls = [
 ];
 
 const webAccessSwitchRows: Array<{
-  key: 'enablePublicPage' | 'allowBrowserSubAccess';
+  key: 'enablePublicPage' | 'allowBrowserSubAccess' | 'blockCrawlerSubAccess';
   titleKey: string;
   descKey: string;
 }> = [
   { key: 'enablePublicPage', titleKey: 'settings.publicPageAccessTitle', descKey: 'settings.publicPageAccessDesc' },
   { key: 'allowBrowserSubAccess', titleKey: 'settings.disguisePageTitle', descKey: 'settings.disguisePageDesc' },
+  {
+    key: 'blockCrawlerSubAccess',
+    titleKey: 'settings.blockCrawlerSubTitle',
+    descKey: 'settings.blockCrawlerSubDesc',
+  },
 ];
 
 const disguisePageTypeOptions: Array<{

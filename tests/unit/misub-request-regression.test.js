@@ -700,6 +700,66 @@ describe('handleMisubRequest regression coverage', () => {
     }
   });
 
+  it('blocks IM and link preview crawlers silently with disguise response even when browser access is allowed', async () => {
+    const adapter = createStorageAdapter({
+      settings: {
+        myToken: 'stable-token',
+        enableFlagEmoji: false,
+        enableTrafficNode: false,
+        allowBrowserSubAccess: true,
+        blockCrawlerSubAccess: true,
+        enableAccessLog: true,
+        botToken: '123:test-bot',
+        chatId: '99999',
+        disguise: { pageType: 'default' },
+      },
+      subscriptions: [
+        {
+          id: 'sub-a',
+          name: 'Airport A',
+          url: 'https://airport.example/sub',
+          enabled: true,
+        },
+      ],
+    });
+    createAdapter.mockReturnValue(adapter);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response('trojan://pass@example.com:443#HK', { status: 200 })),
+    );
+
+    const logSpy = silenceExpectedRequestLogs();
+    try {
+      const { handleMisubRequest } = await import('../../functions/modules/subscription/core/main-handler.js');
+      for (const ua of [
+        'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 MicroMessenger/8.0.42',
+        'TelegramBot (like TwitterBot)',
+        'WhatsApp/2.23.20.0 A',
+        'Mozilla/5.0 (compatible; Discordbot/2.0; +https://discordapp.com)',
+      ]) {
+        const waitUntil = vi.fn();
+        const response = await handleMisubRequest({
+          request: new Request('https://misub.example/stable-token?target=nodes', {
+            headers: {
+              'User-Agent': ua,
+            },
+          }),
+          env: {},
+          waitUntil,
+        });
+        const text = await response.text();
+
+        expect(response.status).toBe(404);
+        expect(response.headers.get('Content-Type')).toContain('text/html');
+        expect(text).not.toContain('trojan://pass@example.com');
+        expect(waitUntil).not.toHaveBeenCalled();
+      }
+      expect(globalThis.fetch).not.toHaveBeenCalled();
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
   it.each(['refresh', 'nocache', 'debug'])('bypasses fresh aggregate cache when %s is present', async (paramName) => {
     const subscriptions = [
       {
