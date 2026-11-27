@@ -418,7 +418,7 @@ const handleQRCode = (url: string, title: string) => {
                 <div class="flex shrink-0 flex-col sm:flex-row gap-2 font-sans">
                   <button
                     v-if="item.actionLabel"
-                    class="min-h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-line-strong bg-active text-fg px-3 py-1.5 text-xs font-semibold hover:bg-hover transition-colors shadow-none"
+                    class="min-h-9 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong bg-active text-fg px-3 py-1.5 text-xs font-semibold hover:bg-hover transition-colors shadow-none"
                     type="button"
                     @click="handleHealthAction(item)"
                   >
@@ -427,7 +427,7 @@ const handleQRCode = (url: string, title: string) => {
                   </button>
                   <button
                     v-if="item.secondaryActionLabel"
-                    class="min-h-9 inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none"
+                    class="min-h-9 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none"
                     type="button"
                     @click="handleHealthSecondaryAction(item)"
                   >
@@ -437,7 +437,7 @@ const handleQRCode = (url: string, title: string) => {
                     :aria-label="t('dashboard.health.dismissItem')"
                     :disabled="isUpdatingHealthDismissal"
                     :title="t('dashboard.health.dismissItem')"
-                    class="min-h-9 inline-flex items-center justify-center gap-1 rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="min-h-9 inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-fg-muted px-3 py-1.5 text-xs font-medium hover:bg-hover hover:text-fg hover:border-line-strong transition-colors shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                     data-testid="health-item-dismiss"
                     type="button"
                     @click="dismissHealthItemById(item.id)"

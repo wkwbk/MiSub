@@ -421,7 +421,7 @@ const handleModalConfirm = () => {
       <button
         v-if="activeTab === 'url'"
         :disabled="isProcessing || !subscriptionUrl.trim()"
-        class="whitespace-nowrap px-4 py-2 bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        class="whitespace-nowrap px-4 py-2 border border-accent bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         type="button"
         @click="importSubscriptionUrl"
       >
@@ -430,7 +430,7 @@ const handleModalConfirm = () => {
       <button
         v-else-if="activeTab === 'text'"
         :disabled="isProcessing || (isSubscriptionsMode && !importText.trim())"
-        class="whitespace-nowrap px-4 py-2 bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
+        class="whitespace-nowrap px-4 py-2 border border-accent bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
         type="button"
         @click="handleTextConfirm"
       >

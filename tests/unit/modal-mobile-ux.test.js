@@ -10,6 +10,13 @@ import CopyLinkModal from '@/components/modals/CopyLinkModal.vue';
 import QRCodeModal from '@/components/modals/QRCodeModal.vue';
 import LogModal from '@/components/modals/LogModal.vue';
 import QuickImportModal from '@/components/modals/QuickImportModal.vue';
+import VersionChangelogModal from '@/components/modals/VersionChangelogModal.vue';
+import GuestbookModal from '@/components/modals/GuestbookModal.vue';
+import ProfileCard from '@/components/profiles/ProfileCard.vue';
+import PublicProfileCard from '@/components/public/ProfileCard.vue';
+import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
+import SubscriptionPanel from '@/components/subscriptions/SubscriptionPanel.vue';
+import ProfilePanel from '@/components/profiles/ProfilePanel.vue';
 
 const toCanvasMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 const toastMock = vi.hoisted(() => vi.fn());
@@ -228,6 +235,7 @@ describe('modal mobile UX regressions', () => {
     expect(srButtons).toHaveLength(2);
     for (const btn of srButtons) {
       expect(btn.classes()).toContain('whitespace-nowrap');
+      expect(btn.classes()).toContain('border');
     }
   });
 
@@ -357,5 +365,168 @@ describe('modal mobile UX regressions', () => {
     const tcpingBtn = wrapper.findAll('button').find((b) => b.text().trim() === 'TCPing');
     expect(tcpingBtn).toBeTruthy();
     expect(tcpingBtn.element.parentElement?.className).toContain('h-8');
+  });
+
+  it('unifies padding, gap, and nowrap across ProfileCard footer buttons', () => {
+    const wrapper = mount(ProfileCard, {
+      props: {
+        profile: {
+          id: 'p1',
+          name: 'BIDC',
+          enabled: true,
+          isPublic: false,
+          subscriptions: [],
+          manualNodes: [],
+          subProfiles: [],
+        },
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+      },
+    });
+
+    const copyBtn = wrapper.findAll('button').find((b) => b.text().includes('复制订阅'));
+    const logBtn = wrapper.findAll('button').find((b) => b.text().includes('订阅日志'));
+    expect(copyBtn).toBeTruthy();
+    expect(logBtn).toBeTruthy();
+
+    for (const btn of [copyBtn, logBtn]) {
+      expect(btn.classes()).toEqual(
+        expect.arrayContaining(['px-3', 'py-1.5', 'gap-1.5', 'whitespace-nowrap', 'border']),
+      );
+    }
+  });
+
+  it('unifies toolbar button heights and horizontal padding across NodeActions, SubscriptionPanel, and ProfilePanel', () => {
+    const i18n = createI18n({ initialLocale: 'zh-CN' });
+
+    const nodeActionsWrapper = mount(NodeActions, {
+      props: { manualNodesCount: 3 },
+      global: {
+        plugins: [createPinia(), i18n],
+        stubs: { Teleport: true },
+      },
+    });
+
+    const inspectBtn = nodeActionsWrapper.get('[data-testid="inspect-all-nodes-btn"]');
+    const pingAllBtn = nodeActionsWrapper.findAll('button').find((b) => b.text().includes('检测延迟'));
+    const nodeAddBtn = nodeActionsWrapper.findAll('button').find((b) => b.text().includes('新增'));
+    const nodeMenuTrigger = nodeActionsWrapper.get('button[aria-haspopup="menu"]');
+
+    expect(inspectBtn.classes()).toEqual(expect.arrayContaining(['h-8', 'w-8', 'sm:px-3', 'whitespace-nowrap']));
+    expect(nodeMenuTrigger.classes()).toEqual(expect.arrayContaining(['h-8', 'w-8']));
+    for (const btn of [pingAllBtn, nodeAddBtn]) {
+      expect(btn).toBeTruthy();
+      expect(btn.classes()).toEqual(expect.arrayContaining(['h-8', 'px-3', 'whitespace-nowrap']));
+    }
+
+    const subPanelWrapper = mount(SubscriptionPanel, {
+      props: { subscriptions: [] },
+      global: {
+        plugins: [createPinia(), i18n],
+        stubs: {
+          Card: true,
+          draggable: true,
+          Teleport: true,
+        },
+      },
+    });
+
+    const bulkImportBtn = subPanelWrapper.findAll('button').find((b) => b.text().includes('批量导入'));
+    const subAddBtn = subPanelWrapper.findAll('button').find((b) => b.text().includes('新增'));
+    const subMenuTrigger = subPanelWrapper.get('button[aria-haspopup="menu"]');
+
+    expect(subMenuTrigger.classes()).toEqual(expect.arrayContaining(['h-8', 'w-8']));
+    for (const btn of [bulkImportBtn, subAddBtn]) {
+      expect(btn).toBeTruthy();
+      expect(btn.classes()).toEqual(expect.arrayContaining(['h-8', 'px-3', 'whitespace-nowrap']));
+    }
+
+    const profilePanelWrapper = mount(ProfilePanel, {
+      props: { profiles: [], paginatedProfiles: [] },
+      global: {
+        plugins: [createPinia(), i18n],
+        stubs: {
+          ProfileCard: true,
+          draggable: true,
+          Teleport: true,
+        },
+      },
+    });
+
+    const profileAddBtn = profilePanelWrapper.findAll('button').find((b) => b.text().includes('新增'));
+    const profileMenuTrigger = profilePanelWrapper.get('button[aria-haspopup="menu"]');
+
+    expect(profileMenuTrigger.classes()).toEqual(expect.arrayContaining(['h-8', 'w-8']));
+    expect(profileAddBtn).toBeTruthy();
+    expect(profileAddBtn.classes()).toEqual(expect.arrayContaining(['h-8', 'px-3', 'whitespace-nowrap']));
+  });
+
+  it('unifies footer button heights and borders in public ProfileCard', () => {
+    const wrapper = mount(PublicProfileCard, {
+      props: {
+        profile: {
+          id: 'pub-1',
+          name: 'Public Demo',
+          description: 'Demo description',
+        },
+      },
+      global: {
+        plugins: [createI18n({ initialLocale: 'zh-CN' })],
+        stubs: { QRCodeOverlay: true },
+      },
+    });
+
+    const quickImportBtn = wrapper.get('button[aria-label="一键导入订阅"]');
+    const previewBtn = wrapper.get('button[aria-label="预览节点"]');
+    const copyLinkBtn = wrapper.get('button[aria-label="复制订阅链接"]');
+
+    expect(quickImportBtn.classes()).toEqual(
+      expect.arrayContaining(['h-9', 'border', 'border-accent', 'whitespace-nowrap']),
+    );
+    for (const iconBtn of [previewBtn, copyLinkBtn]) {
+      expect(iconBtn.classes()).toEqual(expect.arrayContaining(['h-9', 'w-9', 'border']));
+    }
+  });
+
+  it('keeps border parity and single-line text on VersionChangelogModal and GuestbookModal footer buttons', () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const i18n = createI18n({ initialLocale: 'zh-CN' });
+
+    const changelogWrapper = mount(VersionChangelogModal, {
+      props: {
+        show: true,
+        currentVersion: '2.8.2',
+        release: { tag_name: 'v2.8.2', body: '' },
+      },
+      global: {
+        plugins: [pinia, i18n],
+        stubs: { Teleport: true },
+      },
+    });
+
+    const changelogFooterBtns = changelogWrapper.findAll('.modal-chrome-footer button');
+    expect(changelogFooterBtns).toHaveLength(2);
+    for (const btn of changelogFooterBtns) {
+      expect(btn.classes()).toEqual(expect.arrayContaining(['border', 'whitespace-nowrap']));
+    }
+
+    const guestbookWrapper = mount(GuestbookModal, {
+      props: {
+        show: true,
+        config: { enabled: true },
+      },
+      global: {
+        plugins: [pinia, i18n],
+        stubs: { Teleport: true, TurnstileWidget: true },
+      },
+    });
+
+    const guestbookFooterBtns = guestbookWrapper.findAll('.modal-chrome-footer button');
+    expect(guestbookFooterBtns).toHaveLength(2);
+    for (const btn of guestbookFooterBtns) {
+      expect(btn.classes()).toEqual(expect.arrayContaining(['border', 'whitespace-nowrap']));
+    }
   });
 });

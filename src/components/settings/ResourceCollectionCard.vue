@@ -350,14 +350,14 @@ const executeReset = async () => {
         <Switch v-model="config.enabled" @change="handleEnabledToggle" />
         <template v-if="config.enabled">
           <button
-            class="px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
+            class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
             type="button"
             @click="showResetConfirm = true"
           >
             {{ labels.resetBtn }}
           </button>
           <button
-            class="px-3.5 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
+            class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
             type="button"
             @click="handleAdd"
           >

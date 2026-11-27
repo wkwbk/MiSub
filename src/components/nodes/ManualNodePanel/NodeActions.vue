@@ -133,28 +133,28 @@ const {
       >
         <button
           :disabled="isInspectingNodes || manualNodesCount === 0"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
+          class="inline-flex h-8 w-8 sm:w-auto sm:px-3 items-center justify-center gap-1.5 whitespace-nowrap shrink-0 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
           data-testid="inspect-all-nodes-btn"
           type="button"
           @click="emit('inspect-all')"
         >
-          <Loader2 v-if="isInspectingNodes" aria-hidden="true" class="h-3.5 w-3.5 animate-spin text-sky-500" />
-          <Globe v-else aria-hidden="true" class="h-3.5 w-3.5 text-sky-500" stroke-width="1.75" />
+          <Loader2 v-if="isInspectingNodes" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 animate-spin text-sky-500" />
+          <Globe v-else aria-hidden="true" class="h-3.5 w-3.5 shrink-0 text-sky-500" stroke-width="1.75" />
           <span class="hidden sm:inline">{{ t('actions.inspectAll') }}</span>
         </button>
         <button
           :disabled="isPingingAll"
           :title="pingMode === 'tcping' ? t('manualNodes.pingModeTcping') : t('manualNodes.pingModeLocal')"
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
+          class="inline-flex h-8 px-3 items-center justify-center gap-1.5 whitespace-nowrap shrink-0 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent shadow-none"
           type="button"
           @click="emit('ping-all')"
         >
-          <Loader2 v-if="isPingingAll" aria-hidden="true" class="h-3.5 w-3.5 animate-spin text-emerald-500" />
-          <Zap v-else aria-hidden="true" class="h-3.5 w-3.5 text-emerald-500" stroke-width="1.75" />
+          <Loader2 v-if="isPingingAll" aria-hidden="true" class="h-3.5 w-3.5 shrink-0 animate-spin text-emerald-500" />
+          <Zap v-else aria-hidden="true" class="h-3.5 w-3.5 shrink-0 text-emerald-500" stroke-width="1.75" />
           {{ t('actions.pingAll') }}
         </button>
         <button
-          class="inline-flex items-center gap-1.5 shrink-0 rounded-md border border-line-strong bg-active px-3.5 py-1.5 text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
+          class="inline-flex h-8 px-3 items-center justify-center gap-1.5 whitespace-nowrap shrink-0 rounded-md border border-line-strong bg-active text-xs font-semibold text-fg transition-colors hover:bg-hover shadow-none"
           @click="emit('add')"
         >
           <Plus class="h-3.5 w-3.5 shrink-0" stroke-width="2" />

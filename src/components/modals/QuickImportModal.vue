@@ -250,7 +250,7 @@ onMounted(() => {
               {{ fullConfigCopied ? t('quickImport.fullConfigCopied') : t('quickImport.copyFullConfig') }}
             </button>
             <button
-              class="whitespace-nowrap px-2.5 py-1.5 rounded-md bg-accent text-accent-fg font-medium hover:opacity-90 transition-opacity"
+              class="whitespace-nowrap px-2.5 py-1.5 rounded-md border border-accent bg-accent text-accent-fg font-medium hover:opacity-90 transition-opacity"
               type="button"
               @click="openShadowrocketConfigImport"
             >

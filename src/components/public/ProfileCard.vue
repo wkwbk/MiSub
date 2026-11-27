@@ -80,17 +80,17 @@ const emit = defineEmits<{
     <div class="mt-auto pt-4 border-t border-line flex items-center gap-2">
       <button
         :aria-label="t('public.quickImportSubscription')"
-        class="flex flex-1 items-center justify-center gap-2 rounded-md bg-accent hover:opacity-90 px-4 py-2 text-xs font-medium text-accent-fg transition-colors shadow-none"
+        class="flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-accent bg-accent hover:opacity-90 px-3.5 text-xs font-medium text-accent-fg transition-colors shadow-none"
         @click="emit('quick-import', profile)"
       >
-        <Download class="w-3.5 h-3.5" />
+        <Download class="w-3.5 h-3.5 shrink-0" />
         {{ t('public.quickImport') }}
       </button>
 
       <button
         :aria-label="t('public.previewNodes')"
         :title="t('public.previewNodes')"
-        class="rounded-md border border-line p-2 text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-line text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
         @click="emit('preview', profile)"
       >
         <Eye class="w-4 h-4" />
@@ -99,7 +99,7 @@ const emit = defineEmits<{
       <button
         :aria-label="profile.shortLink ? t('public.copyShortLink') : t('public.copySubscriptionLink')"
         :title="profile.shortLink ? `${t('public.copyShortLink')}: ${profile.shortLink}` : t('actions.copyLink')"
-        class="rounded-md border border-line p-2 text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
+        class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-line text-fg-subtle transition-colors hover:bg-hover hover:text-fg"
         @click="profile.shortLink ? emit('copy-short-link', profile) : emit('copy-link', profile)"
       >
         <Link2 class="w-4 h-4" />

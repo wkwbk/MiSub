@@ -485,10 +485,10 @@ const hasFooterMeta = computed(() => Boolean(noteWithoutUrl.value || websiteUrl.
             :aria-label="misub.isUpdating ? t('subscriptions.updating') : t('subscriptions.updateNodeInfo')"
             :disabled="Boolean(misub.isUpdating)"
             :title="misub.isUpdating ? t('subscriptions.updating') : t('subscriptions.updateNodeInfo')"
-            class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50"
+            class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg disabled:opacity-50"
             @click.stop="emit('update')"
           >
-            <RefreshCw :class="{ 'animate-spin text-fg': misub.isUpdating }" class="w-3.5 h-3.5" />
+            <RefreshCw :class="{ 'animate-spin text-fg': misub.isUpdating }" class="w-3.5 h-3.5 shrink-0" />
             <span>
               {{ misub.isUpdating ? t('subscriptions.updating') : t('subscriptions.updateNodeInfo') }}
             </span>

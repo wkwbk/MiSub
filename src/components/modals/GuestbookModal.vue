@@ -281,7 +281,7 @@ const submitMessage = async () => {
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <button
-          class="px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover transition-colors"
+          class="whitespace-nowrap px-4 py-1.5 text-xs font-medium text-fg-muted bg-transparent border border-line rounded-md hover:bg-hover transition-colors"
           @click="closeModal"
         >
           {{ showSuccess ? t('common.close') : t('actions.cancel') }}
@@ -289,7 +289,7 @@ const submitMessage = async () => {
         <button
           v-if="!showSuccess"
           :disabled="submitting || !form.content"
-          class="px-4 py-1.5 text-xs font-medium bg-accent text-accent-fg hover:opacity-90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-none"
+          class="whitespace-nowrap px-4 py-1.5 text-xs font-medium border border-accent bg-accent text-accent-fg hover:opacity-90 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-none"
           @click="submitMessage"
         >
           {{ submitting ? t('guestbook.submitting') : t('guestbook.submitFeedback') }}

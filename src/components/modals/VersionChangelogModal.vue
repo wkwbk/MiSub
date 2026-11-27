@@ -118,13 +118,13 @@ const renderedChangelogHtml = computed(() => {
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <button
-          class="rounded-md border border-line bg-transparent px-4 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover"
+          class="whitespace-nowrap rounded-md border border-line bg-transparent px-4 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover"
           @click="emit('suppress')"
         >
           {{ t('changelog.dontShowAgain') }}
         </button>
         <button
-          class="rounded-md bg-accent px-4 py-1.5 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90"
+          class="whitespace-nowrap rounded-md border border-accent bg-accent px-4 py-1.5 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90"
           @click="emit('confirm')"
         >
           {{ t('actions.confirm') }}

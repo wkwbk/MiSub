@@ -213,20 +213,20 @@ const isPublic = computed(() => props.profile?.isPublic === true);
     >
       <div class="flex items-center gap-2 sm:gap-4">
         <button
-          class="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-3.5 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-hover"
+          class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong bg-elevated-card px-3 py-1.5 text-xs font-medium text-fg transition-colors hover:bg-hover"
           @click="emit('open-copy')"
         >
-          <Copy class="h-3.5 w-3.5" />
+          <Copy class="h-3.5 w-3.5 shrink-0" />
           {{ t('profiles.copySubscription') }}
         </button>
       </div>
       <div class="flex items-center gap-1.5 transition-opacity duration-200">
         <button
           :title="t('actions.viewLogs')"
-          class="inline-flex items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
+          class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-line-strong hover:bg-hover hover:text-fg"
           @click.stop="emit('view-logs')"
         >
-          <FileText class="h-3.5 w-3.5" />
+          <FileText class="h-3.5 w-3.5 shrink-0" />
           {{ t('actions.viewLog') }}
         </button>
       </div>

@@ -66,10 +66,10 @@ const emit = defineEmits<{
           class="col-span-2 sm:col-span-1 flex items-center justify-center w-full sm:w-auto gap-3 sm:gap-2 shrink-0 sm:ml-1 sm:pl-2 sm:border-l border-line pt-1 sm:pt-0 border-t sm:border-t-0"
         >
           <button
-            class="flex-1 sm:flex-none justify-center text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap flex items-center gap-1 px-3 py-1.5 border border-line hover:border-red-900/60 hover:bg-red-950/40 bg-transparent rounded-md transition-colors cursor-pointer"
+            class="flex-1 sm:flex-none justify-center text-xs text-red-400 hover:text-red-300 font-medium whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 border border-line hover:border-red-900/60 hover:bg-red-950/40 bg-transparent rounded-md transition-colors cursor-pointer"
             @click="emit('batch-delete')"
           >
-            <Trash2 class="h-3.5 w-3.5" />
+            <Trash2 class="h-3.5 w-3.5 shrink-0" />
             {{ t('actions.delete') }}
           </button>
           <button

@@ -712,7 +712,7 @@ onUnmounted(() => {
             <div class="relative group" @mouseleave="showFullscreenSecurityTooltip = false">
               <button
                 :aria-expanded="showFullscreenSecurityTooltip"
-                class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-transparent text-xs text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
+                class="inline-flex h-8 w-8 sm:w-auto sm:px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-xs text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
                 type="button"
                 @click="showFullscreenSecurityTooltip = !showFullscreenSecurityTooltip"
               >
@@ -743,30 +743,30 @@ onUnmounted(() => {
             </div>
 
             <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
+              class="inline-flex h-8 w-8 sm:w-auto sm:px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
               type="button"
               @click="triggerHtmlImport"
             >
-              <Upload class="w-3.5 h-3.5" />
+              <Upload class="w-3.5 h-3.5 shrink-0" />
               <span class="hidden sm:inline">{{ t('settings.customPageImportHtml') }}</span>
             </button>
 
             <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
+              class="inline-flex h-8 w-8 md:w-auto md:px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
               type="button"
               @click="normalizeFullPageSource"
             >
-              <Wand2 class="w-3.5 h-3.5" />
+              <Wand2 class="w-3.5 h-3.5 shrink-0" />
               <span class="hidden md:inline">{{ t('settings.customPageNormalizeSource') }}</span>
             </button>
 
             <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
+              class="inline-flex h-8 w-8 md:w-auto md:px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
               type="button"
               @click="copyAiPrompt"
             >
-              <Check v-if="aiPromptCopied" class="w-3.5 h-3.5 text-emerald-500" />
-              <Sparkles v-else class="w-3.5 h-3.5" />
+              <Check v-if="aiPromptCopied" class="w-3.5 h-3.5 shrink-0 text-emerald-500" />
+              <Sparkles v-else class="w-3.5 h-3.5 shrink-0" />
               <span class="hidden md:inline">{{
                 aiPromptCopied ? t('settings.customPageAiPromptCopied') : t('settings.customPageCopyAiPrompt')
               }}</span>
@@ -775,26 +775,28 @@ onUnmounted(() => {
             <button
               :disabled="saveDisabled || isSaving"
               :title="t('settings.customPageSaveShortcutHint')"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-accent text-accent-fg border border-accent text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+              class="inline-flex h-8 px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-accent text-accent-fg border border-accent text-xs font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
               data-testid="custom-page-fullscreen-save"
               type="button"
               @click="handleFullscreenSave"
             >
-              <Loader2 v-if="isSaving" class="w-3.5 h-3.5 animate-spin" />
-              <Save v-else class="w-3.5 h-3.5" />
+              <Loader2 v-if="isSaving" class="w-3.5 h-3.5 shrink-0 animate-spin" />
+              <Save v-else class="w-3.5 h-3.5 shrink-0" />
               <span>{{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}</span>
-              <kbd class="hidden sm:inline-block px-1 py-0.5 text-[10px] font-mono rounded bg-black/15 dark:bg-white/15">
+              <kbd
+                class="hidden sm:inline-block px-1 py-0.5 text-[10px] leading-none font-mono rounded bg-black/15 dark:bg-white/15"
+              >
                 Ctrl+S
               </kbd>
             </button>
 
             <button
-              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
+              class="inline-flex h-8 px-2.5 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-line bg-transparent text-xs font-medium text-fg-muted hover:border-line-strong hover:bg-hover hover:text-fg transition-colors"
               data-testid="custom-page-fullscreen-close"
               type="button"
               @click="isFullscreen = false"
             >
-              <Minimize2 class="w-3.5 h-3.5" />
+              <Minimize2 class="w-3.5 h-3.5 shrink-0" />
               <span>{{ t('settings.customPageFullscreenExit') }}</span>
             </button>
           </div>

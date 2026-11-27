@@ -148,7 +148,7 @@ onUnmounted(() => {
       :aria-expanded="isOpen"
       :aria-label="t('actions.bulkActions')"
       aria-haspopup="menu"
-      class="group p-2 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+      class="group inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
       @click="toggleMenu"
       @keydown="handleTriggerKeydown"
     >
