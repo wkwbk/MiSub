@@ -193,10 +193,6 @@ export async function handleDeleteCommand(
       for (const delId of deletedIds) {
         await storageAdapter.deleteSubscriptionById(delId);
       }
-    } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
-      await storageAdapter.syncAllSubscriptions(allSubscriptions);
-    } else {
-      await storageAdapter.putAllSubscriptions(allSubscriptions);
     }
 
     // 3. 清理订阅组中的引用（仅写入受影响行）
@@ -659,10 +655,6 @@ export async function handleDupCommand(
         for (const dupId of duplicateIds) {
           await storageAdapter.deleteSubscriptionById(dupId);
         }
-      } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
-        await storageAdapter.syncAllSubscriptions(allSubscriptions);
-      } else {
-        await storageAdapter.putAllSubscriptions(allSubscriptions);
       }
 
       await sendTelegramMessage(chatId, `✅ <b>去重完成</b>\n\n已删除 ${duplicates.length} 个重复节点`, env);

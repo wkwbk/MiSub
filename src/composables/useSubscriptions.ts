@@ -93,10 +93,10 @@ export function useSubscriptions() {
     activeTagFilters.value = normalizeActiveTagFilters(filters);
   }
 
-  async function renameSubscriptionTag(oldName: string, newName: string): Promise<void> {
+  async function renameSubscriptionTag(oldName: string, newName: string): Promise<boolean> {
     const normalizedOld = normalizeTagName(oldName);
     const normalizedNew = normalizeTagName(newName);
-    if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
+    if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return false;
 
     const updates: Array<{ id: string; tags: string[] }> = [];
     subscriptions.value.forEach((sub) => {
@@ -107,7 +107,8 @@ export function useSubscriptions() {
     });
 
     if (updates.length > 0) {
-      await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+      const res = await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+      if (!res.ok) return false;
     }
 
     const customOrder = getSubscriptionTagOrder();
@@ -121,11 +122,12 @@ export function useSubscriptions() {
         activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag)),
       );
     }
+    return true;
   }
 
-  async function deleteSubscriptionTag(tagName: string): Promise<void> {
+  async function deleteSubscriptionTag(tagName: string): Promise<boolean> {
     const normalized = normalizeTagName(tagName);
-    if (!normalized) return;
+    if (!normalized) return false;
 
     const updates: Array<{ id: string; tags: string[] }> = [];
     subscriptions.value.forEach((sub) => {
@@ -136,7 +138,8 @@ export function useSubscriptions() {
     });
 
     if (updates.length > 0) {
-      await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+      const res = await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+      if (!res.ok) return false;
     }
 
     const customOrder = getSubscriptionTagOrder();
@@ -148,6 +151,7 @@ export function useSubscriptions() {
     if (activeTagFilters.value.includes(normalized)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
     }
+    return true;
   }
 
   function reorderSubscriptionTags(newOrder: string[]): void {
@@ -658,12 +662,20 @@ export function useSubscriptions() {
   }
 
   async function reorderSubscriptions(newOrder: StoreMisubItem[]): Promise<MutationResult<StoreMisubItem[]>> {
+    const currentSubs = subscriptions.value;
+    const reorderedVisible = [...(newOrder || [])];
+    const newOrderIds = new Set(reorderedVisible.map((s) => s.id));
+    const orderedSubs =
+      newOrderIds.size > 0 && newOrderIds.size < currentSubs.length
+        ? currentSubs.map((sub) => (newOrderIds.has(sub.id) ? (reorderedVisible.shift() ?? sub) : sub))
+        : reorderedVisible;
+
     const currentManualNodes = (allSubscriptions.value || []).filter(
       (item) => !item.url || !/^https?:\/\//.test(item.url),
     );
-    const mergedList = [...newOrder, ...currentManualNodes];
+    const mergedList = [...orderedSubs, ...currentManualNodes];
     return await dataStore.reorderSubscriptionsRecord(
-      newOrder.map((s) => s.id),
+      orderedSubs.map((s) => s.id),
       mergedList,
     );
   }

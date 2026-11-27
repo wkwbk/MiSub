@@ -113,15 +113,10 @@ export class SubscriptionRepository extends BaseRepository {
     options: { skipOtherTableDelete?: boolean } = {},
   ): Promise<MisubItem | null> {
     if (!item?.id) return null;
-    let saved = item;
-    if (typeof this.storage.putSubscription === 'function') {
-      saved = await this.storage.putSubscription(item, options);
-    } else if (typeof this.storage.syncAllSubscriptions === 'function') {
-      const current = (await this.storage.getAllSubscriptions()) || [];
-      const next = current.filter((entry) => entry?.id !== item.id);
-      next.push(item);
-      await this.storage.syncAllSubscriptions(next);
-    }
+    const saved =
+      typeof this.storage.putSubscription === 'function'
+        ? await this.storage.putSubscription(item, options)
+        : item;
     this.invalidateCaches();
     return saved;
   }
@@ -141,12 +136,6 @@ export class SubscriptionRepository extends BaseRepository {
     }
     this.invalidateCaches();
     return true;
-  }
-
-  async syncAll(items: MisubItem[] = []): Promise<boolean | { upserted: number; deleted: number }> {
-    const result = await this.storage.syncAllSubscriptions(Array.isArray(items) ? items : []);
-    this.invalidateCaches();
-    return result;
   }
 
   async deleteById(id: string): Promise<boolean> {

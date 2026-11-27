@@ -19,6 +19,9 @@ function createCountingD1(initialSettings = {}) {
     prepare(sql) {
       queries.push(sql);
       const executeFirst = async (args) => {
+        if (/^PRAGMA\s+user_version/i.test(sql)) {
+          return { user_version: 2 };
+        }
         if (/SELECT value as data FROM settings WHERE key = \?/i.test(sql)) {
           const key = args[0];
           if (!settingsMap.has(key)) return null;
@@ -146,26 +149,32 @@ describe('worker hot-path D1 and auth performance guards', () => {
     clearSettingsCache();
     const db = createCountingD1({ main: { fileName: 'MiSub-V1' } });
     const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
+    const dataQueries = () => db.queries.filter((q) => !/^PRAGMA\s+user_version/i.test(q));
+    const pragmaQueries = () => db.queries.filter((q) => /^PRAGMA\s+user_version/i.test(q));
 
     const first = await adapter.get(STORAGE_KEY_SETTINGS);
     const second = await adapter.get(STORAGE_KEY_SETTINGS);
     expect(first).toEqual({ fileName: 'MiSub-V1' });
     expect(second).toEqual({ fileName: 'MiSub-V1' });
-    expect(db.queries).toHaveLength(1);
+    expect(dataQueries()).toHaveLength(1);
+    expect(pragmaQueries()).toHaveLength(1);
 
     // Mutating returned object must not pollute cache
     first.fileName = 'Mutated';
     const third = await adapter.get(STORAGE_KEY_SETTINGS);
     expect(third.fileName).toBe('MiSub-V1');
-    expect(db.queries).toHaveLength(1);
+    expect(dataQueries()).toHaveLength(1);
+    expect(pragmaQueries()).toHaveLength(1);
 
     // Explicit fresh read bypasses cache
     await adapter.get(STORAGE_KEY_SETTINGS, 'json', { fresh: true });
-    expect(db.queries).toHaveLength(2);
+    expect(dataQueries()).toHaveLength(2);
+    expect(pragmaQueries()).toHaveLength(1);
 
-    // Writing settings automatically invalidates cache
+    // Writing settings automatically invalidates cache without re-running PRAGMA migration check
     await adapter.put(STORAGE_KEY_SETTINGS, { fileName: 'MiSub-V2' });
     const afterPut = await adapter.get(STORAGE_KEY_SETTINGS);
     expect(afterPut).toEqual({ fileName: 'MiSub-V2' });
+    expect(pragmaQueries()).toHaveLength(1);
   });
 });

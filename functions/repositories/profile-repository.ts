@@ -125,12 +125,6 @@ export class ProfileRepository extends BaseRepository {
     return true;
   }
 
-  async syncAll(profiles: ProfileConfig[] = []): Promise<boolean | { upserted: number; deleted: number }> {
-    const result = await this.storage.syncAllProfiles(Array.isArray(profiles) ? profiles : []);
-    this.invalidateCaches();
-    return result;
-  }
-
   async deleteById(id: string): Promise<boolean> {
     const deleted = await this.storage.deleteProfileById(id);
     this.invalidateCaches();

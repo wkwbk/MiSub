@@ -1,5 +1,5 @@
 /**
- * D1 存储层 Schema、表常量、键路由规则与迁移工具
+ * D1 存储层 Schema、表常量、键路由规则与线性版本迁移状态机（基于 PRAGMA user_version）
  */
 
 export const STORAGE_TYPES = {
@@ -27,8 +27,140 @@ const GITHUB_RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 const NODE_CACHE_CLEANUP_AGE_MS = 24 * 60 * 60 * 1000;
 export const ACCESS_LOG_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
-const initializedSchemas = new WeakSet<object>();
-const schemaInitPromises = new WeakMap<object, Promise<void>>();
+export interface SchemaMigration {
+  version: number;
+  name: string;
+  statements?: readonly string[];
+  addColumnStatements?: readonly string[];
+  postStatements?: readonly string[];
+}
+
+export const SCHEMA_MIGRATIONS: readonly SchemaMigration[] = [
+  {
+    version: 1,
+    name: '0000_initial_schema',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS subscriptions (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS nodes (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS profiles (
+        id TEXT PRIMARY KEY,
+        custom_id TEXT,
+        link_id TEXT,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS guestbook (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS cache (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        expires_at INTEGER,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS access_logs (
+        id TEXT PRIMARY KEY,
+        timestamp INTEGER NOT NULL,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+      `CREATE TABLE IF NOT EXISTS error_reports (
+        id TEXT PRIMARY KEY,
+        timestamp INTEGER NOT NULL,
+        data TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );`,
+    ],
+    addColumnStatements: [
+      `ALTER TABLE profiles ADD COLUMN custom_id TEXT;`,
+      `ALTER TABLE profiles ADD COLUMN link_id TEXT;`,
+      `ALTER TABLE cache ADD COLUMN expires_at INTEGER;`,
+    ],
+    postStatements: [
+      `UPDATE profiles
+       SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
+       WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
+      `UPDATE profiles
+       SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
+       WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
+      `CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_nodes_updated_at ON nodes(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ON profiles(custom_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_profiles_link_id ON profiles(link_id);`,
+      `CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON profiles(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_guestbook_updated_at ON guestbook(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_cache_expires_at ON cache(expires_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_cache_updated_at ON cache(updated_at);`,
+      `CREATE INDEX IF NOT EXISTS idx_access_logs_timestamp ON access_logs(timestamp DESC);`,
+      `CREATE INDEX IF NOT EXISTS idx_error_reports_timestamp ON error_reports(timestamp DESC);`,
+    ],
+  },
+  {
+    version: 2,
+    name: '0001_add_config_version',
+    addColumnStatements: [
+      `ALTER TABLE subscriptions ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
+      `ALTER TABLE nodes ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
+      `ALTER TABLE profiles ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
+    ],
+    postStatements: [
+      `UPDATE subscriptions
+       SET config_version = MAX(
+         COALESCE(config_version, 1),
+         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+       )
+       WHERE json_extract(data, '$.configVersion') IS NOT NULL
+          OR json_extract(data, '$.version') IS NOT NULL
+          OR config_version IS NULL
+          OR config_version < 1`,
+      `UPDATE nodes
+       SET config_version = MAX(
+         COALESCE(config_version, 1),
+         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+       )
+       WHERE json_extract(data, '$.configVersion') IS NOT NULL
+          OR json_extract(data, '$.version') IS NOT NULL
+          OR config_version IS NULL
+          OR config_version < 1`,
+      `UPDATE profiles
+       SET config_version = MAX(
+         COALESCE(config_version, 1),
+         COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1)
+       )
+       WHERE json_extract(data, '$.configVersion') IS NOT NULL
+          OR json_extract(data, '$.version') IS NOT NULL
+          OR config_version IS NULL
+          OR config_version < 1`,
+    ],
+  },
+];
+
+export const LATEST_SCHEMA_VERSION = SCHEMA_MIGRATIONS.length;
+
+const migratedDatabases = new WeakSet<object>();
+const migrationPromises = new WeakMap<object, Promise<void>>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -40,86 +172,6 @@ export function isManualNodeRecord(item: unknown): boolean {
   if (!url) return false;
   return !/^https?:\/\//i.test(url);
 }
-
-const D1_TABLE_STATEMENTS = [
-  `CREATE TABLE IF NOT EXISTS subscriptions (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        config_version INTEGER NOT NULL DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS nodes (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        config_version INTEGER NOT NULL DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS profiles (
-        id TEXT PRIMARY KEY,
-        custom_id TEXT,
-        link_id TEXT,
-        data TEXT NOT NULL,
-        config_version INTEGER NOT NULL DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS guestbook (
-        id TEXT PRIMARY KEY,
-        data TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS settings (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS cache (
-        key TEXT PRIMARY KEY,
-        value TEXT NOT NULL,
-        expires_at INTEGER,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS access_logs (
-        id TEXT PRIMARY KEY,
-        timestamp INTEGER NOT NULL,
-        data TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-  `CREATE TABLE IF NOT EXISTS error_reports (
-        id TEXT PRIMARY KEY,
-        timestamp INTEGER NOT NULL,
-        data TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );`,
-];
-
-const D1_COLUMN_MIGRATIONS = [
-  `ALTER TABLE subscriptions ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
-  `ALTER TABLE nodes ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
-  `ALTER TABLE profiles ADD COLUMN custom_id TEXT;`,
-  `ALTER TABLE profiles ADD COLUMN link_id TEXT;`,
-  `ALTER TABLE profiles ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
-  `ALTER TABLE cache ADD COLUMN expires_at INTEGER;`,
-];
-
-const D1_INDEX_STATEMENTS = [
-  `CREATE INDEX IF NOT EXISTS idx_subscriptions_updated_at ON subscriptions(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_nodes_updated_at ON nodes(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_profiles_custom_id ON profiles(custom_id);`,
-  `CREATE INDEX IF NOT EXISTS idx_profiles_link_id ON profiles(link_id);`,
-  `CREATE INDEX IF NOT EXISTS idx_profiles_updated_at ON profiles(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_guestbook_updated_at ON guestbook(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_settings_updated_at ON settings(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_cache_expires_at ON cache(expires_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_cache_updated_at ON cache(updated_at);`,
-  `CREATE INDEX IF NOT EXISTS idx_access_logs_timestamp ON access_logs(timestamp DESC);`,
-  `CREATE INDEX IF NOT EXISTS idx_error_reports_timestamp ON error_reports(timestamp DESC);`,
-];
 
 const D1_CACHE_KEYS = new Set([
   'misub_webdav_backup_lock',
@@ -152,16 +204,6 @@ function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message;
   if (isRecord(error) && typeof error.message === 'string') return error.message;
   return '';
-}
-
-export function isNoSuchTableError(error: unknown): boolean {
-  const message = getErrorMessage(error);
-  return Boolean(message && message.toLowerCase().includes('no such table'));
-}
-
-export function isSchemaMismatchError(error: unknown): boolean {
-  const msg = getErrorMessage(error).toLowerCase();
-  return msg.includes('no such table') || msg.includes('no such column') || msg.includes('has no column named');
 }
 
 export function parseTimestampMs(val: unknown): number {
@@ -232,25 +274,7 @@ export function computeCacheExpiresAt(keyStr: string, rawValue: unknown, now = D
   return null;
 }
 
-const D1_BACKFILL_STATEMENTS = [
-  `UPDATE profiles
-   SET custom_id = NULLIF(TRIM(json_extract(data, '$.customId')), '')
-   WHERE custom_id IS NULL AND json_extract(data, '$.customId') IS NOT NULL`,
-  `UPDATE profiles
-   SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
-   WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
-  `UPDATE subscriptions
-   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
-   WHERE config_version IS NULL OR config_version < 1`,
-  `UPDATE nodes
-   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
-   WHERE config_version IS NULL OR config_version < 1`,
-  `UPDATE profiles
-   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
-   WHERE config_version IS NULL OR config_version < 1`,
-];
-
-async function runStatementsBatchOrSequential(d1Db: D1Database, statements: string[]): Promise<void> {
+async function runStatementsBatchOrSequential(d1Db: D1Database, statements: readonly string[]): Promise<void> {
   if (statements.length === 0) return;
   if (typeof d1Db.batch === 'function') {
     await d1Db.batch(statements.map((sql) => d1Db.prepare(sql)));
@@ -261,49 +285,60 @@ async function runStatementsBatchOrSequential(d1Db: D1Database, statements: stri
   }
 }
 
-export async function ensureD1Schema(d1Db: D1Database): Promise<void> {
+export async function runD1Migrations(d1Db: D1Database): Promise<void> {
   if (!d1Db || typeof d1Db !== 'object') return;
-  if (initializedSchemas.has(d1Db)) return;
+  if (migratedDatabases.has(d1Db)) return;
 
-  const existingPromise = schemaInitPromises.get(d1Db);
+  const existingPromise = migrationPromises.get(d1Db);
   if (existingPromise) {
     return existingPromise;
   }
 
-  const initPromise = (async () => {
-    try {
-      // 快路径：在表与列均已是最新结构时，单次 db.batch() 完成全部 DDL、回填与索引幂等确认
-      await runStatementsBatchOrSequential(d1Db, [
-        ...D1_TABLE_STATEMENTS,
-        ...D1_BACKFILL_STATEMENTS,
-        ...D1_INDEX_STATEMENTS,
-      ]);
-    } catch {
-      // 兼容旧表结构：先建缺失表，再逐条执行 ALTER TABLE ADD COLUMN（避免 duplicate column 中断 batch 事务）
-      await runStatementsBatchOrSequential(d1Db, D1_TABLE_STATEMENTS);
+  const migrationPromise = (async () => {
+    const row = await d1Db.prepare('PRAGMA user_version').first<{ user_version?: number | string }>();
+    const rawVersion = Number(row?.user_version);
+    const currentVersion = Number.isInteger(rawVersion) && rawVersion > 0 ? rawVersion : 0;
 
-      for (const alterSql of D1_COLUMN_MIGRATIONS) {
-        try {
-          await d1Db.prepare(alterSql).run();
-        } catch {}
-      }
-
-      try {
-        await runStatementsBatchOrSequential(d1Db, [...D1_BACKFILL_STATEMENTS, ...D1_INDEX_STATEMENTS]);
-      } catch {
-        for (const sql of [...D1_BACKFILL_STATEMENTS, ...D1_INDEX_STATEMENTS]) {
-          try {
-            await d1Db.prepare(sql).run();
-          } catch {}
-        }
-      }
+    if (currentVersion >= LATEST_SCHEMA_VERSION) {
+      migratedDatabases.add(d1Db);
+      return;
     }
 
-    initializedSchemas.add(d1Db);
+    for (const migration of SCHEMA_MIGRATIONS) {
+      if (migration.version <= currentVersion) continue;
+
+      if (migration.statements?.length) {
+        await runStatementsBatchOrSequential(d1Db, migration.statements);
+      }
+
+      if (migration.addColumnStatements?.length) {
+        for (const alterSql of migration.addColumnStatements) {
+          try {
+            await d1Db.prepare(alterSql).run();
+          } catch (error) {
+            if (!/duplicate column name/i.test(getErrorMessage(error))) {
+              throw error;
+            }
+          }
+        }
+      }
+
+      if (migration.postStatements?.length) {
+        await runStatementsBatchOrSequential(d1Db, migration.postStatements);
+      }
+
+      await d1Db.prepare(`PRAGMA user_version = ${migration.version}`).run();
+    }
+
+    migratedDatabases.add(d1Db);
   })().finally(() => {
-    schemaInitPromises.delete(d1Db);
+    migrationPromises.delete(d1Db);
   });
 
-  schemaInitPromises.set(d1Db, initPromise);
-  return initPromise;
+  migrationPromises.set(d1Db, migrationPromise);
+  return migrationPromise;
+}
+
+export async function ensureD1Schema(d1Db: D1Database): Promise<void> {
+  return runD1Migrations(d1Db);
 }

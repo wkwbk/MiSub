@@ -391,11 +391,11 @@ export function useManualNodes() {
     return collectTags(manualNodes.value, getStoredTagOrder());
   });
 
-  async function renameTag(oldName: string, newName: string): Promise<void> {
+  async function renameTag(oldName: string, newName: string): Promise<boolean> {
     const normalizedOldName = normalizeTagName(oldName);
     const normalizedNewName = normalizeTagName(newName);
     if (!normalizedOldName || !normalizedNewName || normalizedOldName === normalizedNewName) {
-      return;
+      return false;
     }
 
     const updates: Array<{ id: string; tags: string[] }> = [];
@@ -411,7 +411,8 @@ export function useManualNodes() {
     });
 
     if (updates.length > 0) {
-      await dataStore.batchUpdateNodeTagsRecord(updates);
+      const res = await dataStore.batchUpdateNodeTagsRecord(updates);
+      if (!res.ok) return false;
     }
 
     const customOrder = getStoredTagOrder();
@@ -434,11 +435,12 @@ export function useManualNodes() {
         activeTagFilters.value.map((tag) => (tag === normalizedOldName ? normalizedNewName : tag)),
       );
     }
+    return true;
   }
 
-  async function deleteTag(tagName: string): Promise<void> {
+  async function deleteTag(tagName: string): Promise<boolean> {
     const normalizedTagName = normalizeTagName(tagName);
-    if (!normalizedTagName) return;
+    if (!normalizedTagName) return false;
 
     const updates: Array<{ id: string; tags: string[] }> = [];
     manualNodes.value.forEach((node) => {
@@ -449,7 +451,8 @@ export function useManualNodes() {
     });
 
     if (updates.length > 0) {
-      await dataStore.batchUpdateNodeTagsRecord(updates);
+      const res = await dataStore.batchUpdateNodeTagsRecord(updates);
+      if (!res.ok) return false;
     }
 
     const customOrder = getStoredTagOrder();
@@ -468,6 +471,7 @@ export function useManualNodes() {
     if (activeTagFilters.value.includes(normalizedTagName)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalizedTagName);
     }
+    return true;
   }
 
   function reorderTags(newOrder: string[]): void {

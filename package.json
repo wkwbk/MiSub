@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "dev:worker": "npx wrangler dev --port 8787",
-    "deploy:worker": "npx wrangler deploy",
+    "db:migrate": "npx wrangler d1 migrations apply misub --remote",
+    "db:migrate:local": "npx wrangler d1 migrations apply misub --local",
+    "deploy:worker": "npm run db:migrate && npx wrangler deploy",
     "build": "vite build",
     "preview": "vite preview",
     "docs:dev": "pnpm --dir docs dev",

@@ -36,7 +36,7 @@ const props = withDefaults(
   defineProps<{
     show?: boolean;
     mode?: 'bulk' | 'nodes' | 'subscriptions';
-    addNodesFromBulk?: ((nodes: ManualNodeItem[], tags?: string[]) => void) | null;
+    addNodesFromBulk?: ((nodes: ManualNodeItem[], tags?: string[]) => unknown | Promise<unknown>) | null;
     tags?: string[] | null;
     initialTab?: string;
   }>(),
@@ -190,12 +190,12 @@ const normalizeAndDedupeParsedNodes = (
   };
 };
 
-const commitParsedNodes = (
+const commitParsedNodes = async (
   backendNodes: Array<{ name?: string; url: string; protocol?: string }>,
   targetTags: unknown,
   sourceLabel: string,
   { applyTagsDirectly = false } = {},
-) => {
+): Promise<boolean> => {
   const normalizedTags = normalizeTagList(targetTags);
   const { uniqueNodes, duplicateCount } = normalizeAndDedupeParsedNodes(
     backendNodes,
@@ -205,7 +205,10 @@ const commitParsedNodes = (
   if (uniqueNodes.length === 0) return false;
 
   if (typeof props.addNodesFromBulk === 'function') {
-    props.addNodesFromBulk(uniqueNodes, normalizedTags);
+    const outcome = await props.addNodesFromBulk(uniqueNodes, normalizedTags);
+    if (outcome === false || (outcome && typeof outcome === 'object' && 'ok' in outcome && !(outcome as { ok?: boolean }).ok)) {
+      return false;
+    }
   }
   emit('files-imported', uniqueNodes, normalizedTags);
 
@@ -227,7 +230,7 @@ const commitParsedNodes = (
 };
 
 const handleTextConfirm = () => {
-  if (activeTab.value !== 'text' || !importText.value.trim()) return;
+  if (isProcessing.value || activeTab.value !== 'text' || !importText.value.trim()) return;
   let tags = normalizeTagList(selectedTags.value);
   if (!isSubscriptionsMode.value && tags.length === 0) {
     const autoTag = buildAutoTagName();
@@ -235,14 +238,10 @@ const handleTextConfirm = () => {
   }
   selectedTags.value = tags;
   emit('import', importText.value, tags);
-  importText.value = '';
-  selectedTags.value = [];
   if (isSubscriptionsMode.value) {
+    importText.value = '';
+    selectedTags.value = [];
     emit('update:show', false);
-  } else {
-    setTimeout(() => {
-      emit('update:show', false);
-    }, 1000);
   }
 };
 
@@ -280,7 +279,7 @@ const handleFiles = async (fileList: FileList | File[]) => {
     }
 
     parseStatus.value = '';
-    commitParsedNodes(backendNodes, targetTags, 'File upload', {
+    await commitParsedNodes(backendNodes, targetTags, 'File upload', {
       applyTagsDirectly: !isNodesMode.value,
     });
   } catch (error: unknown) {
@@ -357,7 +356,7 @@ const importSubscriptionUrl = async () => {
 
     const backendNodes = parseResult.data?.nodes || [];
     if (backendNodes.length > 0) {
-      commitParsedNodes(backendNodes, targetTags, 'URL import');
+      await commitParsedNodes(backendNodes, targetTags, 'URL import');
     } else {
       parseStatus.value = '';
       throw new Error(t('importNodes.noValidNodesFromSubscription'));
@@ -430,7 +429,7 @@ const handleModalConfirm = () => {
       </button>
       <button
         v-else-if="activeTab === 'text'"
-        :disabled="isSubscriptionsMode && !importText.trim()"
+        :disabled="isProcessing || (isSubscriptionsMode && !importText.trim())"
         class="px-4 py-2 bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
         type="button"
         @click="handleTextConfirm"

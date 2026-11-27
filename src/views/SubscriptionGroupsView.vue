@@ -133,19 +133,22 @@ const previewSubscriptionId = ref<string | null>(null);
 const previewSubscriptionName = ref('');
 const previewSubscriptionUrl = ref('');
 
-const handleTagRename = (oldName: string, newName: string) => {
-  renameSubscriptionTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameSubscriptionTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleTagDelete = (tagName: string) => {
-  deleteSubscriptionTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleTagDelete = async (tagName: string) => {
+  const ok = await deleteSubscriptionTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleTagReorder = (newOrder: string[]) => {
   reorderSubscriptionTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
 const handleApplyDetectedName = async (subscriptionId: string | undefined, name: string) => {

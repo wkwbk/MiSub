@@ -436,6 +436,7 @@ const switchToVisual = () => {
     :close-on-confirm="false"
     :confirm-button-title="t('subscriptions.fixRulesFirst')"
     :confirm-disabled="Boolean(isSaving) || (isAdvancedMode && excludeRuleState.errors.length > 0)"
+    :confirm-loading="Boolean(isSaving)"
     :show="show"
     size="2xl"
     @confirm="handleConfirm"

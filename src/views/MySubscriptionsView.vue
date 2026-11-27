@@ -110,19 +110,22 @@ const toggleProfileSorting = () => {
   isProfileSorting.value = !isProfileSorting.value;
 };
 
-const handleTagRename = (oldName: string, newName: string) => {
-  renameProfileTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameProfileTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleTagDelete = (tagName: string) => {
-  deleteProfileTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleTagDelete = async (tagName: string) => {
+  const ok = await deleteProfileTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleTagReorder = (newOrder: string[]) => {
   reorderProfileTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
 const handleOpenBatchTagModal = (ids: string[]) => {

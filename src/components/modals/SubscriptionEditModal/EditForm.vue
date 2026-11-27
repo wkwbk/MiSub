@@ -50,10 +50,24 @@ const useFetchProxy = ref(false);
 const isTestingProxy = ref(false);
 
 watch(
-  () => props.editingSubscription,
-  (newSub) => {
-    if (newSub) {
-      useFetchProxy.value = !!newSub.fetchProxy;
+  [
+    () => props.editingSubscription?.id,
+    () => props.editingSubscription?.configVersion,
+    () => Boolean(props.editingSubscription?.fetchProxy),
+    () =>
+      Boolean(
+        props.editingSubscription &&
+          !props.editingSubscription.id &&
+          !props.editingSubscription.name &&
+          !props.editingSubscription.url &&
+          !props.editingSubscription.fetchProxy,
+      ),
+  ],
+  ([id, ver, hasProxy, isFreshEmpty], prev) => {
+    const recordChanged = !prev || id !== prev[0] || ver !== prev[1];
+    const resetEmptyDraft = Boolean(isFreshEmpty && prev && !prev[3]);
+    if (recordChanged || hasProxy || resetEmptyDraft) {
+      useFetchProxy.value = hasProxy;
     }
   },
   { immediate: true },

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import { Loader2 } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useBackdropDismiss } from '@/composables/useBackdropDismiss.js';
 import { useScrollLock } from '@/composables/useScrollLock.js';
@@ -13,6 +14,7 @@ const props = withDefaults(
     confirmKeyword?: string;
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl';
     confirmDisabled?: boolean;
+    confirmLoading?: boolean;
     confirmButtonTitle?: string;
     closeOnConfirm?: boolean;
     confirmText?: string;
@@ -29,6 +31,7 @@ const props = withDefaults(
     confirmKeyword: undefined,
     size: 'sm',
     confirmDisabled: false,
+    confirmLoading: false,
     confirmButtonTitle: '',
     closeOnConfirm: true,
     confirmText: '',
@@ -207,12 +210,13 @@ useScrollLock(() => props.show);
                       ? 'bg-transparent border border-red-500/40 text-red-500 dark:text-red-400 hover:bg-red-500/10'
                       : 'bg-accent text-accent-fg hover:opacity-90 border border-accent'
                   "
-                  :disabled="confirmDisabled || Boolean(confirmKeyword && confirmInput !== confirmKeyword)"
-                  :title="confirmDisabled ? confirmTitle : t('actions.confirm')"
-                  class="px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  :disabled="confirmDisabled || confirmLoading || Boolean(confirmKeyword && confirmInput !== confirmKeyword)"
+                  :title="confirmDisabled || confirmLoading ? confirmTitle : t('actions.confirm')"
+                  class="inline-flex items-center justify-center gap-1.5 px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="handleConfirm"
                 >
-                  {{ confirmLabel }}
+                  <Loader2 v-if="confirmLoading" class="h-3.5 w-3.5 animate-spin shrink-0" />
+                  <span>{{ confirmLabel }}</span>
                 </button>
               </slot>
             </div>

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, type Ref } from 'vue';
 import { isValidRemoteSubscriptionUrl } from '@misub/core/utils/url-validators.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
@@ -78,18 +78,18 @@ export interface SubscriptionRuntimePatch {
   isUpdating?: boolean;
 }
 
-type ResourceKind = 'subscription' | 'node';
+type MisubResourceKind = 'subscription' | 'node';
+type ResourceKind = MisubResourceKind | 'profile';
 
-const RESOURCE_ENDPOINTS: Record<
-  ResourceKind,
-  {
-    base: string;
-    batch: string;
-    batchDelete: string;
-    batchTags: string;
-    reorder: string;
-  }
-> = {
+interface ResourceEndpointGroup {
+  base: string;
+  batch?: string;
+  batchDelete: string;
+  batchTags: string;
+  reorder: string;
+}
+
+const RESOURCE_ENDPOINTS: Record<ResourceKind, ResourceEndpointGroup> = {
   subscription: {
     base: API_ENDPOINTS.SUBSCRIPTIONS,
     batch: API_ENDPOINTS.SUBSCRIPTIONS_BATCH,
@@ -104,40 +104,101 @@ const RESOURCE_ENDPOINTS: Record<
     batchTags: API_ENDPOINTS.NODES_BATCH_TAGS,
     reorder: API_ENDPOINTS.NODES_REORDER,
   },
+  profile: {
+    base: API_ENDPOINTS.PROFILES,
+    batchDelete: API_ENDPOINTS.PROFILES_BATCH_DELETE,
+    batchTags: API_ENDPOINTS.PROFILES_BATCH_TAGS,
+    reorder: API_ENDPOINTS.PROFILES_REORDER,
+  },
 };
+
+const COMMON_NON_PATCH_KEYS = [
+  'id',
+  'sortIndex',
+  'configVersion',
+  'version',
+  'createdAt',
+  'updatedAt',
+  'downloadCount',
+] as const;
+
+const MISUB_NON_PATCH_KEYS = [
+  ...COMMON_NON_PATCH_KEYS,
+  'isUpdating',
+  'nodeCount',
+  'lastGoodNodeCount',
+  'userInfo',
+  'detectedName',
+  'lastError',
+  'lastUpdate',
+  'latency',
+  'status',
+  'latencyMode',
+  'lastTestedAt',
+] as const;
+
+const PROFILE_NON_PATCH_KEYS = [...COMMON_NON_PATCH_KEYS] as const;
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
+function resolveNormalizedConfigVersion(entity: { configVersion?: unknown; version?: unknown }): number {
+  const candidate = Number(entity.configVersion ?? entity.version);
+  return Number.isInteger(candidate) && candidate >= 1 ? candidate : 1;
+}
+
 function normalizeMisubItem(item: StoreMisubItem): StoreMisubItem {
-  return hydrateItemTags({ ...item, isUpdating: false });
+  return hydrateItemTags({
+    ...item,
+    configVersion: resolveNormalizedConfigVersion(item as { configVersion?: unknown; version?: unknown }),
+    isUpdating: false,
+  });
 }
 
 function normalizeProfileItem(profile: StoreProfileConfig): StoreProfileConfig {
   return {
     ...profile,
+    configVersion: resolveNormalizedConfigVersion(profile as { configVersion?: unknown; version?: unknown }),
     tags: getItemTags(profile),
   };
 }
 
-function serializeMisubPayload(item: Partial<StoreMisubItem>): Record<string, unknown> {
-  const { isUpdating: _isUpdating, ...rest } = item;
-  return hydrateItemTags(rest as StoreMisubItem);
+function stripDisallowedKeys(obj: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+  const next = { ...obj };
+  for (const key of keys) {
+    delete next[key];
+  }
+  return next;
 }
 
-function serializeProfilePayload(profile: Partial<StoreProfileConfig>): Record<string, unknown> {
+function serializeMisubPayload(item: Partial<StoreMisubItem>, forPatch = false): Record<string, unknown> {
+  const { isUpdating: _isUpdating, ...rest } = item;
+  const serialized = hydrateItemTags(rest as StoreMisubItem) as unknown as Record<string, unknown>;
+  return forPatch ? stripDisallowedKeys(serialized, MISUB_NON_PATCH_KEYS) : serialized;
+}
+
+function serializeProfilePayload(profile: Partial<StoreProfileConfig>, forPatch = false): Record<string, unknown> {
   const { clashRuleLevel, ...restProfile } = profile;
-  const serialized: Record<string, unknown> = {
-    ...restProfile,
-  };
+  const serialized: Record<string, unknown> = { ...restProfile };
   if (profile.tags !== undefined || Array.isArray(restProfile.tags)) {
     serialized.tags = normalizeTagList(getItemTags(profile));
   }
   if (restProfile.ruleLevel !== undefined || clashRuleLevel !== undefined) {
     serialized.ruleLevel = restProfile.ruleLevel || clashRuleLevel || '';
   }
-  return serialized;
+  return forPatch ? stripDisallowedKeys(serialized, PROFILE_NON_PATCH_KEYS) : serialized;
+}
+
+function buildPatchRequestBody(serialized: Record<string, unknown>, options: RecordPatchOptions): Record<string, unknown> {
+  const body = { ...serialized };
+  if (options.expectedConfigVersion !== undefined) {
+    body.configVersion = options.expectedConfigVersion;
+  }
+  if (options.force) {
+    body.force = true;
+  }
+  return body;
 }
 
 function extractVersionConflict<T>(error: unknown): MutationConflict<T> | null {
@@ -147,9 +208,7 @@ function extractVersionConflict<T>(error: unknown): MutationConflict<T> | null {
   const code = typeof errObj.data.code === 'string' ? errObj.data.code : undefined;
   if (code !== 'VERSION_CONFLICT') return null;
   const message =
-    typeof errObj.data.message === 'string' && errObj.data.message
-      ? errObj.data.message
-      : t('store.dataConflict');
+    typeof errObj.data.message === 'string' && errObj.data.message ? errObj.data.message : t('store.dataConflict');
   return {
     current: errObj.data.current as T | undefined,
     message,
@@ -167,6 +226,38 @@ function unwrapApiData<T>(response: unknown): T {
   return response as T;
 }
 
+function upsertItemInList<T extends { id: string }>(list: T[], item: T, prepend = false): T {
+  const index = list.findIndex((entry) => entry.id === item.id);
+  if (index !== -1) {
+    list[index] = item;
+  } else if (prepend) {
+    list.unshift(item);
+  } else {
+    list.push(item);
+  }
+  return item;
+}
+
+function restoreOrderFromBaseline<T extends { id: string }>(currentList: T[], baselineIds: string[]): T[] {
+  const byId = new Map(currentList.map((item) => [item.id, item]));
+  const baselineSet = new Set(baselineIds);
+  const ordered = baselineIds.map((id) => byId.get(id)).filter((item): item is T => Boolean(item));
+  const additions = currentList.filter((item) => !baselineSet.has(item.id));
+  return [...ordered, ...additions];
+}
+
+interface CollectionAdapter<T extends { id: string; tags?: string[] }> {
+  kind: ResourceKind;
+  listRef: Ref<T[]>;
+  endpoints: ResourceEndpointGroup;
+  normalize: (item: T) => T;
+  serialize: (item: Partial<T>, forPatch?: boolean) => Record<string, unknown>;
+  findDeleteTarget: (id: string) => { index: number; item: T | null };
+  resolveBatchDeleteIds: (payload: { ids?: string[]; all?: boolean }) => string[];
+  optimisticRemove: (ids: string[]) => void;
+  withTags: (item: T, tags: string[] | undefined) => T;
+}
+
 export const useDataStore = defineStore('data', () => {
   const { showToast } = useToastStore();
   const settingsStore = useSettingsStore();
@@ -182,8 +273,34 @@ export const useDataStore = defineStore('data', () => {
   const hasDataLoaded = computed(() => !!lastUpdated.value);
   const isMutating = computed(() => editorStore.isMutating);
 
-  const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
-  const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
+  // 实例级并发控制状态：按资源键串行排队、保留首次基线快照并在响应乱序/失败时精确收敛
+  const mutationChains = new Map<string, Promise<unknown>>();
+  const mutationSeq = new Map<string, number>();
+  const baselineFieldsByKey = new Map<string, Record<string, unknown>>();
+  const baselineOrderByKey = new Map<string, string[]>();
+  const inFlightDeletes = new Map<string, Promise<MutationResult<DeleteRecordPayload>>>();
+
+  function enqueueKeyedMutation<T>(key: string, runner: (isLatest: () => boolean) => Promise<T>): Promise<T> {
+    const seq = (mutationSeq.get(key) || 0) + 1;
+    mutationSeq.set(key, seq);
+    const isLatest = () => mutationSeq.get(key) === seq;
+    const prev = mutationChains.get(key) ?? Promise.resolve();
+    const next = prev.then(
+      () => runner(isLatest),
+      () => runner(isLatest),
+    );
+    const settled = next.then(
+      () => undefined,
+      () => undefined,
+    );
+    mutationChains.set(key, settled);
+    void settled.then(() => {
+      if (mutationChains.get(key) === settled && isLatest()) {
+        mutationChains.delete(key);
+      }
+    });
+    return next;
+  }
 
   function syncCache(): void {
     syncAppDataSnapshotToCache(resolvePiniaQueryClient(), {
@@ -206,8 +323,7 @@ export const useDataStore = defineStore('data', () => {
   function hydrateFromData(data: RawAppDataPayload | null | undefined): boolean {
     if (!data) return false;
     try {
-      const queryClient = resolvePiniaQueryClient();
-      const snapshot = hydrateAppDataInQueryClient(queryClient, data, settingsStore.config);
+      const snapshot = hydrateAppDataInQueryClient(resolvePiniaQueryClient(), data, settingsStore.config);
       return applyNormalizedSnapshot(snapshot);
     } catch (error: unknown) {
       console.error('hydrateFromData failed:', error);
@@ -266,32 +382,6 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  function upsertMisubItem(item: StoreMisubItem, prepend = false): StoreMisubItem {
-    const normalized = normalizeMisubItem(item);
-    const index = subscriptions.value.findIndex((s) => s.id === normalized.id);
-    if (index !== -1) {
-      subscriptions.value[index] = normalized;
-    } else if (prepend) {
-      subscriptions.value.unshift(normalized);
-    } else {
-      subscriptions.value.push(normalized);
-    }
-    return normalized;
-  }
-
-  function upsertProfileItem(profile: StoreProfileConfig, prepend = false): StoreProfileConfig {
-    const normalized = normalizeProfileItem(profile);
-    const index = profiles.value.findIndex((p) => p.id === normalized.id);
-    if (index !== -1) {
-      profiles.value[index] = normalized;
-    } else if (prepend) {
-      profiles.value.unshift(normalized);
-    } else {
-      profiles.value.push(normalized);
-    }
-    return normalized;
-  }
-
   function mergeUpdatedProfiles(updatedProfiles: StoreProfileConfig[] | undefined): void {
     if (!Array.isArray(updatedProfiles) || updatedProfiles.length === 0) return;
     const byId = new Map(updatedProfiles.map((profile) => [profile.id, normalizeProfileItem(profile)]));
@@ -300,21 +390,20 @@ export const useDataStore = defineStore('data', () => {
 
   function syncSubscriptionFromServer(item: StoreMisubItem | null | undefined): void {
     if (!item?.id) return;
-    upsertMisubItem(item);
+    upsertItemInList(subscriptions.value, normalizeMisubItem(item));
     syncCache();
   }
 
   function syncProfileFromServer(profile: StoreProfileConfig | null | undefined): void {
     if (!profile?.id) return;
-    upsertProfileItem(profile);
+    upsertItemInList(profiles.value, normalizeProfileItem(profile));
     syncCache();
   }
 
   function applySubscriptionRuntimeUpdate(id: string, runtimePatch: SubscriptionRuntimePatch): void {
     const index = subscriptions.value.findIndex((s) => s.id === id);
     if (index === -1) return;
-    const current = subscriptions.value[index];
-    const next: StoreMisubItem = { ...current };
+    const next: StoreMisubItem = { ...subscriptions.value[index] };
     const runtimeKeys: Array<keyof SubscriptionRuntimePatch> = [
       'nodeCount',
       'lastGoodNodeCount',
@@ -333,32 +422,127 @@ export const useDataStore = defineStore('data', () => {
     syncCache();
   }
 
-  // --- Shared Resource Mutation Helpers (Subscriptions & Manual Nodes) ---
+  // --- Shared Field/Delete/Reorder Rollback Helpers ---
 
-  async function createMisubResource(
-    kind: ResourceKind,
-    item: Partial<StoreMisubItem>,
+  function recordFieldBaseline<T extends Record<string, unknown>>(
+    key: string,
+    currentRecord: T | undefined,
+    patch: Record<string, unknown>,
+  ): void {
+    if (!currentRecord) return;
+    const existing = baselineFieldsByKey.get(key) || {};
+    for (const patchKey of Object.keys(patch)) {
+      if (!Object.prototype.hasOwnProperty.call(existing, patchKey)) {
+        existing[patchKey] = currentRecord[patchKey];
+      }
+    }
+    baselineFieldsByKey.set(key, existing);
+  }
+
+  function rollbackFieldBaseline<T extends { id: string }>(listRef: Ref<T[]>, id: string, key: string): void {
+    const baseline = baselineFieldsByKey.get(key);
+    baselineFieldsByKey.delete(key);
+    if (!baseline) return;
+    const idx = listRef.value.findIndex((entry) => entry.id === id);
+    if (idx !== -1) {
+      listRef.value[idx] = { ...listRef.value[idx], ...baseline };
+    }
+  }
+
+  type SavedProfileRefs = Partial<Pick<StoreProfileConfig, 'subscriptions' | 'manualNodes' | 'subProfiles'>>;
+
+  function captureAffectedProfileRefs(): Map<string, SavedProfileRefs> {
+    return new Map(
+      profiles.value.map((p) => {
+        const refs: SavedProfileRefs = {};
+        if (Array.isArray(p.subscriptions)) refs.subscriptions = [...p.subscriptions];
+        if (Array.isArray(p.manualNodes)) refs.manualNodes = [...p.manualNodes];
+        if (Array.isArray(p.subProfiles)) refs.subProfiles = [...p.subProfiles];
+        return [p.id, refs];
+      }),
+    );
+  }
+
+  function restoreAffectedProfileRefs(snapshot: Map<string, SavedProfileRefs>): void {
+    profiles.value = profiles.value.map((p) => {
+      const savedRefs = snapshot.get(p.id);
+      return savedRefs ? { ...p, ...savedRefs } : p;
+    });
+  }
+
+  // --- Collection Adapters & Unified CRUD Helpers (Subscriptions / Nodes / Profiles) ---
+
+  const getMisubAdapter = (kind: MisubResourceKind): CollectionAdapter<StoreMisubItem> => ({
+    kind,
+    listRef: subscriptions,
+    endpoints: RESOURCE_ENDPOINTS[kind],
+    normalize: normalizeMisubItem,
+    serialize: serializeMisubPayload,
+    findDeleteTarget: (id) => {
+      const index = subscriptions.value.findIndex((s) => s.id === id);
+      return { index, item: index !== -1 ? subscriptions.value[index] : null };
+    },
+    resolveBatchDeleteIds: (payload) =>
+      payload.all
+        ? subscriptions.value
+            .filter((item) =>
+              kind === 'subscription'
+                ? Boolean(item.url && isValidRemoteSubscriptionUrl(item.url))
+                : Boolean(!item.url || !isValidRemoteSubscriptionUrl(item.url)),
+            )
+            .map((item) => item.id)
+        : Array.isArray(payload.ids)
+          ? payload.ids
+          : [],
+    optimisticRemove: (ids) => {
+      const idSet = new Set(ids);
+      subscriptions.value = subscriptions.value.filter((item) => !idSet.has(item.id));
+      (kind === 'subscription' ? removeSubscriptionFromProfiles : removeManualNodeFromProfiles)(ids);
+    },
+    withTags: (item, tags) => normalizeMisubItem({ ...item, tags: tags ?? [] }),
+  });
+
+  const profileAdapter: CollectionAdapter<StoreProfileConfig> = {
+    kind: 'profile',
+    listRef: profiles,
+    endpoints: RESOURCE_ENDPOINTS.profile,
+    normalize: normalizeProfileItem,
+    serialize: serializeProfilePayload,
+    findDeleteTarget: (id) => {
+      const index = profiles.value.findIndex((p) => p.id === id || p.customId === id);
+      return { index, item: index !== -1 ? profiles.value[index] : null };
+    },
+    resolveBatchDeleteIds: (payload) =>
+      payload.all ? profiles.value.map((p) => p.id) : Array.isArray(payload.ids) ? payload.ids : [],
+    optimisticRemove: (ids) => ids.forEach((id) => removeProfile(id)),
+    withTags: (item, tags) => normalizeProfileItem({ ...item, tags }),
+  };
+
+  async function createRecord<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
+    item: Partial<T>,
     options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreMisubItem>> {
-    const endpoint = RESOURCE_ENDPOINTS[kind].base;
+  ): Promise<MutationResult<T>> {
     return await runMutation(async () => {
-      const response = await api.post(endpoint, serializeMisubPayload(item));
-      const created = unwrapApiData<StoreMisubItem>(response);
-      return upsertMisubItem(created, true);
+      const response = await api.post(adapter.endpoints.base, adapter.serialize(item));
+      const created = unwrapApiData<T>(response);
+      return upsertItemInList(adapter.listRef.value, adapter.normalize(created), true);
     }, options);
   }
 
   async function createMisubResourcesBatch(
-    kind: ResourceKind,
+    kind: MisubResourceKind,
     items: Array<Partial<StoreMisubItem>>,
     options: { silent?: boolean } = {},
   ): Promise<MutationResult<StoreMisubItem[]>> {
     if (!Array.isArray(items) || items.length === 0) {
       return { ok: true, data: [] };
     }
-    const endpoint = RESOURCE_ENDPOINTS[kind].batch;
     return await runMutation(async () => {
-      const response = await api.post(endpoint, { items: items.map(serializeMisubPayload) });
+      const endpoint = RESOURCE_ENDPOINTS[kind].batch || RESOURCE_ENDPOINTS[kind].base;
+      const response = await api.post(endpoint, {
+        items: items.map((entry) => serializeMisubPayload(entry)),
+      });
       const createdList = unwrapApiData<StoreMisubItem[]>(response) || [];
       const normalized = createdList.map(normalizeMisubItem);
       const createdIds = new Set(normalized.map((item) => item.id));
@@ -367,60 +551,67 @@ export const useDataStore = defineStore('data', () => {
     }, options);
   }
 
-  async function patchMisubResource(
-    kind: ResourceKind,
+  async function patchRecord<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
     id: string,
-    patch: Partial<StoreMisubItem>,
+    patch: Partial<T>,
     options: RecordPatchOptions & { optimistic?: boolean } = {},
-  ): Promise<MutationResult<StoreMisubItem>> {
-    const endpoint = `${RESOURCE_ENDPOINTS[kind].base}/${encodeURIComponent(id)}`;
-    const prevSnapshot = options.optimistic ? [...subscriptions.value] : null;
+  ): Promise<MutationResult<T>> {
+    const cleanPatch = adapter.serialize(patch, true);
+    const body = buildPatchRequestBody(cleanPatch, options);
+    const key = `item:${adapter.kind}:${id}`;
+
     if (options.optimistic) {
-      updateSubscription(id, patch);
+      const currentIdx = adapter.listRef.value.findIndex((entry) => entry.id === id);
+      if (currentIdx !== -1) {
+        const current = adapter.listRef.value[currentIdx];
+        recordFieldBaseline(key, current as Record<string, unknown>, cleanPatch);
+        adapter.listRef.value[currentIdx] = { ...current, ...cleanPatch } as T;
+      }
     }
 
-    const body: Record<string, unknown> = { ...serializeMisubPayload(patch) };
-    if (options.expectedConfigVersion !== undefined) {
-      body.configVersion = options.expectedConfigVersion;
-    }
-    if (options.force) {
-      body.force = true;
-    }
-
-    return await runMutation(
-      async () => {
-        const response = await api.patch(endpoint, body);
-        const updated = unwrapApiData<StoreMisubItem>(response);
-        return upsertMisubItem(updated);
-      },
-      {
-        silent: options.silent,
-        suppressConflictToast: options.suppressConflictToast,
-        onRollback: () => {
-          if (prevSnapshot) subscriptions.value = prevSnapshot;
+    return await enqueueKeyedMutation(key, async (isLatest) => {
+      return await runMutation(
+        async () => {
+          const endpoint = `${adapter.endpoints.base}/${encodeURIComponent(id)}`;
+          const response = await api.patch(endpoint, body);
+          const updated = unwrapApiData<T>(response);
+          const normalized = adapter.normalize(updated);
+          if (!isLatest()) return normalized;
+          if (options.optimistic) {
+            baselineFieldsByKey.delete(key);
+          }
+          return upsertItemInList(adapter.listRef.value, normalized);
         },
-      },
-    );
+        {
+          silent: options.silent,
+          suppressConflictToast: options.suppressConflictToast,
+          onRollback: () => {
+            if (options.optimistic && isLatest()) {
+              rollbackFieldBaseline(adapter.listRef, id, key);
+            }
+          },
+        },
+      );
+    });
   }
 
-  async function deleteMisubResource(
-    kind: ResourceKind,
+  async function deleteRecord<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
     id: string,
     options: { silent?: boolean } = {},
   ): Promise<MutationResult<DeleteRecordPayload>> {
-    const endpoint = `${RESOURCE_ENDPOINTS[kind].base}/${encodeURIComponent(id)}`;
-    const prevSubscriptions = [...subscriptions.value];
-    const prevProfiles = [...profiles.value];
+    const deleteKey = `delete:${adapter.kind}:${id}`;
+    const existingFlight = inFlightDeletes.get(deleteKey);
+    if (existingFlight) return await existingFlight;
 
-    removeSubscription(id);
-    if (kind === 'subscription') {
-      removeSubscriptionFromProfiles(id);
-    } else {
-      removeManualNodeFromProfiles(id);
-    }
+    const { index: removedIndex, item: removedItem } = adapter.findDeleteTarget(id);
+    const profileRefsSnapshot = captureAffectedProfileRefs();
+    adapter.optimisticRemove([id]);
 
-    return await runMutation(
+    const promise = runMutation(
       async () => {
+        const endpoint = `${adapter.endpoints.base}/${encodeURIComponent(id)}`;
         const response = await api.del(endpoint);
         const result = unwrapApiData<DeleteRecordPayload>(response) || { id };
         mergeUpdatedProfiles(result.updatedProfiles);
@@ -429,379 +620,163 @@ export const useDataStore = defineStore('data', () => {
       {
         silent: options.silent,
         onRollback: () => {
-          subscriptions.value = prevSubscriptions;
-          profiles.value = prevProfiles;
+          if (removedItem && !adapter.listRef.value.some((entry) => entry.id === removedItem.id)) {
+            const insertAt = Math.max(0, Math.min(removedIndex, adapter.listRef.value.length));
+            adapter.listRef.value.splice(insertAt, 0, removedItem);
+          }
+          restoreAffectedProfileRefs(profileRefsSnapshot);
         },
       },
-    );
+    ).finally(() => {
+      if (inFlightDeletes.get(deleteKey) === promise) {
+        inFlightDeletes.delete(deleteKey);
+      }
+    });
+
+    inFlightDeletes.set(deleteKey, promise);
+    return await promise;
   }
 
-  async function batchDeleteMisubResources(
-    kind: ResourceKind,
+  async function batchDeleteRecords<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
     payload: { ids?: string[]; all?: boolean },
     options: { silent?: boolean } = {},
   ): Promise<MutationResult<BatchDeleteResultPayload>> {
-    const endpoint = RESOURCE_ENDPOINTS[kind].batchDelete;
-    const prevSubscriptions = [...subscriptions.value];
-    const prevProfiles = [...profiles.value];
-
-    const targetIds = payload.all
-      ? subscriptions.value
-          .filter((item) =>
-            kind === 'subscription'
-              ? Boolean(item.url && isValidRemoteSubscriptionUrl(item.url))
-              : Boolean(!item.url || !isValidRemoteSubscriptionUrl(item.url)),
-          )
-          .map((item) => item.id)
-      : Array.isArray(payload.ids)
-        ? payload.ids
-        : [];
+    const prevList = [...adapter.listRef.value];
+    const profileRefsSnapshot = adapter.kind !== 'profile' ? captureAffectedProfileRefs() : null;
+    const targetIds = adapter.resolveBatchDeleteIds(payload);
 
     if (targetIds.length === 0 && !payload.all) {
       return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
     }
 
-    const idSet = new Set(targetIds);
-    subscriptions.value = subscriptions.value.filter((item) => !idSet.has(item.id));
-    if (kind === 'subscription') {
-      removeSubscriptionFromProfiles(targetIds);
-    } else {
-      removeManualNodeRefsFromProfilesOptimistic(targetIds);
-    }
+    adapter.optimisticRemove(targetIds);
 
     return await runMutation(
       async () => {
-        const response = await api.post(endpoint, payload);
+        const response = await api.post(adapter.endpoints.batchDelete, payload);
         const result = unwrapApiData<BatchDeleteResultPayload>(response) || { deletedIds: targetIds };
         const confirmedDeleted = new Set(result.deletedIds || targetIds);
-        subscriptions.value = subscriptions.value.filter((item) => !confirmedDeleted.has(item.id));
+        adapter.listRef.value = adapter.listRef.value.filter((item) => !confirmedDeleted.has(item.id));
         mergeUpdatedProfiles(result.updatedProfiles);
         return result;
       },
       {
         silent: options.silent,
         onRollback: () => {
-          subscriptions.value = prevSubscriptions;
-          profiles.value = prevProfiles;
+          adapter.listRef.value = prevList;
+          if (profileRefsSnapshot) {
+            restoreAffectedProfileRefs(profileRefsSnapshot);
+          }
         },
       },
     );
   }
 
-  function removeManualNodeRefsFromProfilesOptimistic(nodeIds: string[]): void {
-    const { profiles: next, modified } = removeManualNodeRefsFromProfiles(profiles.value, nodeIds);
-    if (modified) profiles.value = next;
-  }
-
-  async function batchUpdateMisubTags(
-    kind: ResourceKind,
+  async function batchUpdateRecordTags<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
     updates: Array<{ id: string; tags: string[] }>,
     options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreMisubItem[]>> {
+  ): Promise<MutationResult<T[]>> {
     if (!Array.isArray(updates) || updates.length === 0) {
       return { ok: true, data: [] };
     }
-    const endpoint = RESOURCE_ENDPOINTS[kind].batchTags;
-    const prevSubscriptions = [...subscriptions.value];
+    const prevTagMap = new Map(adapter.listRef.value.map((item) => [item.id, item.tags]));
     const updateMap = new Map(updates.map((u) => [u.id, normalizeTagList(u.tags)]));
 
-    subscriptions.value = subscriptions.value.map((item) => {
+    adapter.listRef.value = adapter.listRef.value.map((item) => {
       const nextTags = updateMap.get(item.id);
-      return nextTags ? normalizeMisubItem({ ...item, tags: nextTags }) : item;
+      return nextTags ? adapter.withTags(item, nextTags) : item;
     });
 
     return await runMutation(
       async () => {
-        const response = await api.post(endpoint, { updates });
-        const updatedList = (unwrapApiData<StoreMisubItem[]>(response) || []).map(normalizeMisubItem);
+        const response = await api.post(adapter.endpoints.batchTags, { updates });
+        const updatedList = (unwrapApiData<T[]>(response) || []).map(adapter.normalize);
         const updatedById = new Map(updatedList.map((item) => [item.id, item]));
-        subscriptions.value = subscriptions.value.map((item) => updatedById.get(item.id) || item);
+        adapter.listRef.value = adapter.listRef.value.map((item) => updatedById.get(item.id) || item);
         return updatedList;
       },
       {
         silent: options.silent,
         onRollback: () => {
-          subscriptions.value = prevSubscriptions;
+          adapter.listRef.value = adapter.listRef.value.map((item) =>
+            updateMap.has(item.id) ? adapter.withTags(item, prevTagMap.get(item.id)) : item,
+          );
         },
       },
     );
   }
 
-  async function reorderMisubResources(
-    kind: ResourceKind,
+  async function reorderRecords<T extends { id: string; tags?: string[] }>(
+    adapter: CollectionAdapter<T>,
     orderedIds: string[],
-    optimisticMergedList?: StoreMisubItem[],
+    optimisticList?: T[],
     options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreMisubItem[]>> {
-    const endpoint = RESOURCE_ENDPOINTS[kind].reorder;
-    const prevSubscriptions = [...subscriptions.value];
-    if (Array.isArray(optimisticMergedList)) {
-      subscriptions.value = optimisticMergedList;
+  ): Promise<MutationResult<T[]>> {
+    const key = `reorder:${adapter.kind}`;
+    if (!baselineOrderByKey.has(key)) {
+      baselineOrderByKey.set(
+        key,
+        adapter.listRef.value.map((item) => item.id),
+      );
+    }
+    if (Array.isArray(optimisticList)) {
+      adapter.listRef.value = optimisticList;
     }
 
-    return await runMutation(
-      async () => {
-        const response = await api.post(endpoint, { orderedIds });
-        const reordered = (unwrapApiData<StoreMisubItem[]>(response) || []).map(normalizeMisubItem);
-        if (reordered.length > 0) {
-          const reorderedIds = new Set(reordered.map((item) => item.id));
-          const others = subscriptions.value.filter((item) => !reorderedIds.has(item.id));
-          subscriptions.value = [...reordered, ...others];
-        }
-        return reordered;
-      },
-      {
-        silent: options.silent,
-        onRollback: () => {
-          subscriptions.value = prevSubscriptions;
+    return await enqueueKeyedMutation(key, async (isLatest) => {
+      return await runMutation(
+        async () => {
+          const response = await api.post(adapter.endpoints.reorder, { orderedIds });
+          const reordered = (unwrapApiData<T[]>(response) || []).map(adapter.normalize);
+          if (isLatest()) {
+            baselineOrderByKey.delete(key);
+            if (reordered.length > 0) {
+              const reorderedIds = new Set(reordered.map((item) => item.id));
+              const others = adapter.listRef.value.filter((item) => !reorderedIds.has(item.id));
+              adapter.listRef.value = [...reordered, ...others];
+            }
+          }
+          return reordered;
         },
-      },
-    );
-  }
-
-  // --- Public Subscription Actions ---
-
-  const createSubscription = (item: Partial<StoreMisubItem>, options?: { silent?: boolean }) =>
-    createMisubResource('subscription', item, options);
-
-  const createSubscriptionsBatch = (items: Array<Partial<StoreMisubItem>>, options?: { silent?: boolean }) =>
-    createMisubResourcesBatch('subscription', items, options);
-
-  const updateSubscriptionRecord = (id: string, patch: Partial<StoreMisubItem>, options: RecordPatchOptions = {}) =>
-    patchMisubResource('subscription', id, patch, { ...options, optimistic: false });
-
-  const patchSubscription = (id: string, patch: Partial<StoreMisubItem>, options: RecordPatchOptions = {}) =>
-    patchMisubResource('subscription', id, patch, { ...options, optimistic: true });
-
-  const deleteSubscriptionRecord = (id: string, options?: { silent?: boolean }) =>
-    deleteMisubResource('subscription', id, options);
-
-  const batchDeleteSubscriptionsRecord = (payload: { ids?: string[]; all?: boolean }, options?: { silent?: boolean }) =>
-    batchDeleteMisubResources('subscription', payload, options);
-
-  const batchUpdateSubscriptionTagsRecord = (
-    updates: Array<{ id: string; tags: string[] }>,
-    options?: { silent?: boolean },
-  ) => batchUpdateMisubTags('subscription', updates, options);
-
-  const reorderSubscriptionsRecord = (
-    orderedIds: string[],
-    optimisticMergedList?: StoreMisubItem[],
-    options?: { silent?: boolean },
-  ) => reorderMisubResources('subscription', orderedIds, optimisticMergedList, options);
-
-  // --- Public Manual Node Actions ---
-
-  const createNode = (item: Partial<StoreMisubItem>, options?: { silent?: boolean }) =>
-    createMisubResource('node', item, options);
-
-  const createNodesBatch = (items: Array<Partial<StoreMisubItem>>, options?: { silent?: boolean }) =>
-    createMisubResourcesBatch('node', items, options);
-
-  const updateNodeRecord = (id: string, patch: Partial<StoreMisubItem>, options: RecordPatchOptions = {}) =>
-    patchMisubResource('node', id, patch, { ...options, optimistic: false });
-
-  const patchNode = (id: string, patch: Partial<StoreMisubItem>, options: RecordPatchOptions = {}) =>
-    patchMisubResource('node', id, patch, { ...options, optimistic: true });
-
-  const deleteNodeRecord = (id: string, options?: { silent?: boolean }) => deleteMisubResource('node', id, options);
-
-  const batchDeleteNodesRecord = (payload: { ids?: string[]; all?: boolean }, options?: { silent?: boolean }) =>
-    batchDeleteMisubResources('node', payload, options);
-
-  const batchUpdateNodeTagsRecord = (
-    updates: Array<{ id: string; tags: string[] }>,
-    options?: { silent?: boolean },
-  ) => batchUpdateMisubTags('node', updates, options);
-
-  const reorderNodesRecord = (
-    orderedIds: string[],
-    optimisticMergedList?: StoreMisubItem[],
-    options?: { silent?: boolean },
-  ) => reorderMisubResources('node', orderedIds, optimisticMergedList, options);
-
-  // --- Public Profile Actions ---
-
-  async function createProfile(
-    profile: Partial<StoreProfileConfig>,
-    options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreProfileConfig>> {
-    return await runMutation(async () => {
-      const response = await api.post(API_ENDPOINTS.PROFILES, serializeProfilePayload(profile));
-      const created = unwrapApiData<StoreProfileConfig>(response);
-      return upsertProfileItem(created, true);
-    }, options);
-  }
-
-  async function updateProfileRecord(
-    id: string,
-    patch: Partial<StoreProfileConfig>,
-    options: RecordPatchOptions = {},
-  ): Promise<MutationResult<StoreProfileConfig>> {
-    const endpoint = `${API_ENDPOINTS.PROFILES}/${encodeURIComponent(id)}`;
-    const body: Record<string, unknown> = { ...serializeProfilePayload(patch) };
-    if (options.expectedConfigVersion !== undefined) {
-      body.configVersion = options.expectedConfigVersion;
-    }
-    if (options.force) {
-      body.force = true;
-    }
-
-    return await runMutation(
-      async () => {
-        const response = await api.patch(endpoint, body);
-        const updated = unwrapApiData<StoreProfileConfig>(response);
-        return upsertProfileItem(updated);
-      },
-      {
-        silent: options.silent,
-        suppressConflictToast: options.suppressConflictToast,
-      },
-    );
-  }
-
-  async function patchProfile(
-    id: string,
-    patch: Partial<StoreProfileConfig>,
-    options: RecordPatchOptions = {},
-  ): Promise<MutationResult<StoreProfileConfig>> {
-    const endpoint = `${API_ENDPOINTS.PROFILES}/${encodeURIComponent(id)}`;
-    const prevProfiles = [...profiles.value];
-    profiles.value = profiles.value.map((p) => (p.id === id ? normalizeProfileItem({ ...p, ...patch }) : p));
-
-    return await runMutation(
-      async () => {
-        const response = await api.patch(endpoint, serializeProfilePayload(patch));
-        const updated = unwrapApiData<StoreProfileConfig>(response);
-        return upsertProfileItem(updated);
-      },
-      {
-        silent: options.silent,
-        suppressConflictToast: options.suppressConflictToast,
-        onRollback: () => {
-          profiles.value = prevProfiles;
+        {
+          silent: options.silent,
+          onRollback: () => {
+            if (isLatest()) {
+              const baselineIds = baselineOrderByKey.get(key) || [];
+              baselineOrderByKey.delete(key);
+              adapter.listRef.value = restoreOrderFromBaseline(adapter.listRef.value, baselineIds);
+            }
+          },
         },
-      },
-    );
-  }
-
-  async function deleteProfileRecord(
-    id: string,
-    options: { silent?: boolean } = {},
-  ): Promise<MutationResult<DeleteRecordPayload>> {
-    const endpoint = `${API_ENDPOINTS.PROFILES}/${encodeURIComponent(id)}`;
-    const prevProfiles = [...profiles.value];
-    removeProfile(id);
-
-    return await runMutation(
-      async () => {
-        const response = await api.del(endpoint);
-        const result = unwrapApiData<DeleteRecordPayload>(response) || { id };
-        mergeUpdatedProfiles(result.updatedProfiles);
-        return result;
-      },
-      {
-        silent: options.silent,
-        onRollback: () => {
-          profiles.value = prevProfiles;
-        },
-      },
-    );
-  }
-
-  async function batchDeleteProfilesRecord(
-    payload: { ids?: string[]; all?: boolean },
-    options: { silent?: boolean } = {},
-  ): Promise<MutationResult<BatchDeleteResultPayload>> {
-    const prevProfiles = [...profiles.value];
-    const targetIds = payload.all
-      ? profiles.value.map((p) => p.id)
-      : Array.isArray(payload.ids)
-        ? payload.ids
-        : [];
-
-    if (targetIds.length === 0 && !payload.all) {
-      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
-    }
-
-    targetIds.forEach((id) => removeProfile(id));
-
-    return await runMutation(
-      async () => {
-        const response = await api.post(API_ENDPOINTS.PROFILES_BATCH_DELETE, payload);
-        const result = unwrapApiData<BatchDeleteResultPayload>(response) || { deletedIds: targetIds };
-        const confirmedDeleted = new Set(result.deletedIds || targetIds);
-        profiles.value = profiles.value.filter((p) => !confirmedDeleted.has(p.id));
-        mergeUpdatedProfiles(result.updatedProfiles);
-        return result;
-      },
-      {
-        silent: options.silent,
-        onRollback: () => {
-          profiles.value = prevProfiles;
-        },
-      },
-    );
-  }
-
-  async function batchUpdateProfileTagsRecord(
-    updates: Array<{ id: string; tags: string[] }>,
-    options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreProfileConfig[]>> {
-    if (!Array.isArray(updates) || updates.length === 0) {
-      return { ok: true, data: [] };
-    }
-    const prevProfiles = [...profiles.value];
-    const updateMap = new Map(updates.map((u) => [u.id, normalizeTagList(u.tags)]));
-
-    profiles.value = profiles.value.map((p) => {
-      const nextTags = updateMap.get(p.id);
-      return nextTags ? normalizeProfileItem({ ...p, tags: nextTags }) : p;
+      );
     });
-
-    return await runMutation(
-      async () => {
-        const response = await api.post(API_ENDPOINTS.PROFILES_BATCH_TAGS, { updates });
-        const updatedList = (unwrapApiData<StoreProfileConfig[]>(response) || []).map(normalizeProfileItem);
-        mergeUpdatedProfiles(updatedList);
-        return updatedList;
-      },
-      {
-        silent: options.silent,
-        onRollback: () => {
-          profiles.value = prevProfiles;
-        },
-      },
-    );
   }
 
-  async function reorderProfilesRecord(
-    orderedIds: string[],
-    optimisticOrder?: StoreProfileConfig[],
-    options: { silent?: boolean } = {},
-  ): Promise<MutationResult<StoreProfileConfig[]>> {
-    const prevProfiles = [...profiles.value];
-    if (Array.isArray(optimisticOrder)) {
-      profiles.value = optimisticOrder;
-    }
-
-    return await runMutation(
-      async () => {
-        const response = await api.post(API_ENDPOINTS.PROFILES_REORDER, { orderedIds });
-        const reordered = (unwrapApiData<StoreProfileConfig[]>(response) || []).map(normalizeProfileItem);
-        if (reordered.length > 0) {
-          profiles.value = reordered;
-        }
-        return reordered;
-      },
-      {
-        silent: options.silent,
-        onRollback: () => {
-          profiles.value = prevProfiles;
-        },
-      },
-    );
+  function buildResourceActions<T extends { id: string; tags?: string[] }>(adapter: CollectionAdapter<T>) {
+    return {
+      create: (item: Partial<T>, options?: { silent?: boolean }) => createRecord(adapter, item, options),
+      updateRecord: (id: string, patch: Partial<T>, options: RecordPatchOptions = {}) =>
+        patchRecord(adapter, id, patch, { ...options, optimistic: false }),
+      patch: (id: string, patch: Partial<T>, options: RecordPatchOptions = {}) =>
+        patchRecord(adapter, id, patch, { ...options, optimistic: true }),
+      deleteRecord: (id: string, options?: { silent?: boolean }) => deleteRecord(adapter, id, options),
+      batchDelete: (payload: { ids?: string[]; all?: boolean }, options?: { silent?: boolean }) =>
+        batchDeleteRecords(adapter, payload, options),
+      batchUpdateTags: (updates: Array<{ id: string; tags: string[] }>, options?: { silent?: boolean }) =>
+        batchUpdateRecordTags(adapter, updates, options),
+      reorder: (orderedIds: string[], optimisticList?: T[], options?: { silent?: boolean }) =>
+        reorderRecords(adapter, orderedIds, optimisticList, options),
+    };
   }
+
+  const activeSubscriptions = computed(() => subscriptions.value.filter((sub) => sub.enabled));
+  const activeProfiles = computed(() => profiles.value.filter((profile) => profile.enabled));
+
+  const subActions = buildResourceActions(getMisubAdapter('subscription'));
+  const nodeActions = buildResourceActions(getMisubAdapter('node'));
+  const profileActions = buildResourceActions(profileAdapter);
 
   // --- Settings & Rule Templates ---
 
@@ -812,8 +787,7 @@ export const useDataStore = defineStore('data', () => {
     const { silent = false, preferencesOnly = false } = options;
     editorStore.setLoading(true);
     try {
-      const queryClient = resolvePiniaQueryClient();
-      await saveSettingsWithQueryClient(queryClient, newSettings, {
+      await saveSettingsWithQueryClient(resolvePiniaQueryClient(), newSettings, {
         preferencesOnly,
         currentConfig: settingsStore.config,
       });
@@ -832,8 +806,7 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function fetchRuleTemplates(): Promise<RuleTemplateItem[]> {
-    const queryClient = resolvePiniaQueryClient();
-    const list = await fetchRuleTemplatesWithQueryClient(queryClient);
+    const list = await fetchRuleTemplatesWithQueryClient(resolvePiniaQueryClient());
     ruleTemplates.value = list;
     return list;
   }
@@ -841,8 +814,7 @@ export const useDataStore = defineStore('data', () => {
   async function saveRuleTemplates(items: RuleTemplateItem[] = ruleTemplates.value): Promise<RuleTemplateItem[]> {
     editorStore.setLoading(true);
     try {
-      const queryClient = resolvePiniaQueryClient();
-      const savedList = await saveRuleTemplatesWithQueryClient(queryClient, items);
+      const savedList = await saveRuleTemplatesWithQueryClient(resolvePiniaQueryClient(), items);
       ruleTemplates.value = savedList;
       showToast(t('store.ruleTemplatesSaved'), 'success');
       return savedList;
@@ -861,64 +833,38 @@ export const useDataStore = defineStore('data', () => {
 
   // --- Local Helpers (kept for synchronous cache seeding and internal optimistic updates) ---
 
-  function addSubscription(subscription: StoreMisubItem): void {
-    subscriptions.value.unshift(subscription);
-  }
-
-  function overwriteSubscriptions(items: StoreMisubItem[]): void {
-    subscriptions.value = items;
-  }
-
-  function removeSubscription(id: string): void {
+  const addSubscription = (subscription: StoreMisubItem): void => void subscriptions.value.unshift(subscription);
+  const overwriteSubscriptions = (items: StoreMisubItem[]): void => void (subscriptions.value = items);
+  const removeSubscription = (id: string): void => {
     const index = subscriptions.value.findIndex((s) => s.id === id);
-    if (index !== -1) {
-      subscriptions.value.splice(index, 1);
-    }
-  }
-
-  function updateSubscription(id: string, updates: Partial<StoreMisubItem>): void {
+    if (index !== -1) subscriptions.value.splice(index, 1);
+  };
+  const updateSubscription = (id: string, updates: Partial<StoreMisubItem>): void => {
     const index = subscriptions.value.findIndex((s) => s.id === id);
-    if (index !== -1) {
-      subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
-    }
-  }
-
-  function addProfile(profile: StoreProfileConfig): void {
-    profiles.value.unshift(profile);
-  }
-
-  function overwriteProfiles(items: StoreProfileConfig[]): void {
-    profiles.value = items;
-  }
-
-  function removeProfile(id: string): void {
+    if (index !== -1) subscriptions.value[index] = { ...subscriptions.value[index], ...updates };
+  };
+  const addProfile = (profile: StoreProfileConfig): void => void profiles.value.unshift(profile);
+  const overwriteProfiles = (items: StoreProfileConfig[]): void => void (profiles.value = items);
+  const removeProfile = (id: string): void => {
     const index = profiles.value.findIndex((p) => p.id === id || p.customId === id);
-    if (index !== -1) {
-      const removed = profiles.value.splice(index, 1)[0];
-      const ids = [removed.id, removed.customId].filter((value): value is string => Boolean(value));
-      removeProfileFromProfiles(ids);
-    }
+    if (index === -1) return;
+    const removed = profiles.value.splice(index, 1)[0];
+    const ids = [removed.id, removed.customId].filter((value): value is string => Boolean(value));
+    removeProfileFromProfiles(ids);
+  };
+
+  function applyProfilePrune(result: { profiles: StoreProfileConfig[]; modified: boolean }): void {
+    if (result.modified) profiles.value = result.profiles;
   }
 
-  function removeProfileFromProfiles(profileIds: string | string[]): void {
-    const { profiles: next, modified } = removeProfileRefsFromProfiles(profiles.value, profileIds);
-    if (modified) profiles.value = next;
-  }
-
-  function removeManualNodeFromProfiles(nodeIds: string | string[]): void {
-    const { profiles: next, modified } = removeManualNodeRefsFromProfiles(profiles.value, nodeIds);
-    if (modified) profiles.value = next;
-  }
-
-  function removeSubscriptionFromProfiles(subIds: string | string[]): void {
-    const { profiles: next, modified } = removeSubscriptionRefsFromProfiles(profiles.value, subIds);
-    if (modified) profiles.value = next;
-  }
-
-  function pruneInvalidReferences(): void {
-    const { profiles: next, modified } = pruneInvalidProfileReferences(profiles.value, subscriptions.value);
-    if (modified) profiles.value = next;
-  }
+  const removeProfileFromProfiles = (profileIds: string | string[]): void =>
+    applyProfilePrune(removeProfileRefsFromProfiles(profiles.value, profileIds));
+  const removeManualNodeFromProfiles = (nodeIds: string | string[]): void =>
+    applyProfilePrune(removeManualNodeRefsFromProfiles(profiles.value, nodeIds));
+  const removeSubscriptionFromProfiles = (subIds: string | string[]): void =>
+    applyProfilePrune(removeSubscriptionRefsFromProfiles(profiles.value, subIds));
+  const pruneInvalidReferences = (): void =>
+    applyProfilePrune(pruneInvalidProfileReferences(profiles.value, subscriptions.value));
 
   return {
     subscriptions,
@@ -941,33 +887,35 @@ export const useDataStore = defineStore('data', () => {
     clearCachedData,
 
     // 细粒度资源持久化 Actions
-    createSubscription,
-    createSubscriptionsBatch,
-    updateSubscriptionRecord,
-    patchSubscription,
-    deleteSubscriptionRecord,
-    batchDeleteSubscriptionsRecord,
-    batchUpdateSubscriptionTagsRecord,
-    reorderSubscriptionsRecord,
+    createSubscription: subActions.create,
+    createSubscriptionsBatch: (items: Array<Partial<StoreMisubItem>>, options?: { silent?: boolean }) =>
+      createMisubResourcesBatch('subscription', items, options),
+    updateSubscriptionRecord: subActions.updateRecord,
+    patchSubscription: subActions.patch,
+    deleteSubscriptionRecord: subActions.deleteRecord,
+    batchDeleteSubscriptionsRecord: subActions.batchDelete,
+    batchUpdateSubscriptionTagsRecord: subActions.batchUpdateTags,
+    reorderSubscriptionsRecord: subActions.reorder,
     applySubscriptionRuntimeUpdate,
     syncSubscriptionFromServer,
 
-    createNode,
-    createNodesBatch,
-    updateNodeRecord,
-    patchNode,
-    deleteNodeRecord,
-    batchDeleteNodesRecord,
-    batchUpdateNodeTagsRecord,
-    reorderNodesRecord,
+    createNode: nodeActions.create,
+    createNodesBatch: (items: Array<Partial<StoreMisubItem>>, options?: { silent?: boolean }) =>
+      createMisubResourcesBatch('node', items, options),
+    updateNodeRecord: nodeActions.updateRecord,
+    patchNode: nodeActions.patch,
+    deleteNodeRecord: nodeActions.deleteRecord,
+    batchDeleteNodesRecord: nodeActions.batchDelete,
+    batchUpdateNodeTagsRecord: nodeActions.batchUpdateTags,
+    reorderNodesRecord: nodeActions.reorder,
 
-    createProfile,
-    updateProfileRecord,
-    patchProfile,
-    deleteProfileRecord,
-    batchDeleteProfilesRecord,
-    batchUpdateProfileTagsRecord,
-    reorderProfilesRecord,
+    createProfile: profileActions.create,
+    updateProfileRecord: profileActions.updateRecord,
+    patchProfile: profileActions.patch,
+    deleteProfileRecord: profileActions.deleteRecord,
+    batchDeleteProfilesRecord: profileActions.batchDelete,
+    batchUpdateProfileTagsRecord: profileActions.batchUpdateTags,
+    reorderProfilesRecord: profileActions.reorder,
     syncProfileFromServer,
 
     // 纯本地状态同步辅助方法

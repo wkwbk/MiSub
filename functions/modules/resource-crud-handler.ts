@@ -6,7 +6,7 @@
  * - 级联清理订阅组引用 & 增量精准清除节点缓存
  */
 
-import type { ManualNodeItem, MisubItem, ProfileConfig, ProfileSubscriptionRef, SubscriptionItem } from '@misub/core/types.js';
+import type { MisubItem, ProfileConfig, ProfileSubscriptionRef, SubscriptionItem } from '@misub/core/types.js';
 import { isValidManualNodeUrl, isValidRemoteSubscriptionUrl } from '@misub/core/utils/url-validators.js';
 import { generateNodeId, generateProfileId, generateSubscriptionId } from '@misub/core/utils/id.js';
 import { ensureProfileLinkId, normalizeProfileIdentifier, rotateProfileLinkId } from '@misub/core/domain/profile-link.js';
@@ -88,6 +88,7 @@ const PROFILE_EDITABLE_FIELDS = [
   'tags',
   'transformConfigMode',
   'transformConfig',
+  'builtinTransform',
   'ruleLevel',
   'target',
   'prefixSettings',
@@ -121,14 +122,15 @@ function getErrorMessage(error: unknown): string {
 }
 
 function getErrorStatus(error: unknown): number | undefined {
-  if (isRecord(error) && typeof error.status === 'number') {
-    return error.status;
-  }
-  return undefined;
+  return isRecord(error) && typeof error.status === 'number' ? error.status : undefined;
 }
 
 function nowIso(): string {
   return new Date().toISOString();
+}
+
+function bumpConfigVersion(current: unknown): number {
+  return Math.max(1, Number(current) || 1) + 1;
 }
 
 function normalizeTagArray(rawTags: unknown): string[] {
@@ -175,11 +177,7 @@ function getExpectedConfigVersionFromBody(body: RecordObj) {
   return parseExpectedConfigVersion(body.configVersion ?? body.expectedConfigVersion ?? body.expectedVersion);
 }
 
-function preserveRuntimeFields(
-  target: RecordObj,
-  current: RecordObj,
-  runtimeFields: readonly string[],
-): RecordObj {
+function preserveRuntimeFields(target: RecordObj, current: RecordObj, runtimeFields: readonly string[]): RecordObj {
   const next = { ...target };
   for (const field of runtimeFields) {
     if (Object.prototype.hasOwnProperty.call(current, field) && current[field] !== undefined) {
@@ -230,12 +228,213 @@ async function parseJsonRequestBody(
   }
 }
 
+function buildVersionConflictResponse(current: unknown): Response {
+  return createJsonResponse(
+    {
+      success: false,
+      code: 'VERSION_CONFLICT',
+      message: '该记录已在其他终端或标签页更新，请选择加载最新内容或强制覆盖保存',
+      current,
+    },
+    409,
+  );
+}
+
+async function withWriteContext(
+  env: EnvLike,
+  context: BoundRequestContext | null,
+  operation: (repos: Repositories) => Promise<Response>,
+): Promise<Response> {
+  try {
+    const { repos, errorResponse } = ensureStorageAvailable(env, context);
+    if (errorResponse || !repos) return errorResponse!;
+    return await operation(repos);
+  } catch (error) {
+    console.error('[Resource CRUD] Storage write failed:', error);
+    return createJsonResponse(
+      {
+        success: false,
+        message: `数据保存失败: ${getErrorMessage(error) || '存储服务暂时不可用，请稍后重试'}`,
+      },
+      500,
+    );
+  }
+}
+
+async function withJsonWriteContext(
+  request: Request,
+  env: EnvLike,
+  context: BoundRequestContext | null,
+  maxBytes: number,
+  operation: (repos: Repositories, body: RecordObj) => Promise<Response>,
+): Promise<Response> {
+  return await withWriteContext(env, context, async (repos) => {
+    const { body, errorResponse } = await parseJsonRequestBody(request, maxBytes);
+    if (errorResponse || !body) return errorResponse!;
+    return await operation(repos, body);
+  });
+}
+
+interface CasRepository<T> {
+  compareAndSwap: (
+    item: T,
+    expectedConfigVersion: number,
+    options?: { skipOtherTableDelete?: boolean },
+  ) => Promise<{ updated: boolean; current: T | null }>;
+  save: (item: T, options?: { skipOtherTableDelete?: boolean }) => Promise<T | null>;
+}
+
+async function persistWithCas<T>(
+  repo: CasRepository<T>,
+  nextItem: T,
+  expected: { present: boolean; value: number },
+  force: boolean,
+  notFoundMessage: string,
+  saveOptions?: { skipOtherTableDelete?: boolean },
+): Promise<{ saved?: T; errorResponse?: Response }> {
+  if (expected.present && !force) {
+    const cas = saveOptions
+      ? await repo.compareAndSwap(nextItem, expected.value, saveOptions)
+      : await repo.compareAndSwap(nextItem, expected.value);
+    if (!cas.updated) {
+      return {
+        errorResponse: cas.current
+          ? buildVersionConflictResponse(cas.current)
+          : createJsonResponse({ success: false, message: notFoundMessage }, 404),
+      };
+    }
+    return { saved: cas.current || nextItem };
+  }
+  const saved = saveOptions ? await repo.save(nextItem, saveOptions) : await repo.save(nextItem);
+  return { saved: saved || nextItem };
+}
+
+function resolveBatchDeleteIds(
+  body: RecordObj,
+  existingIds: Set<string>,
+  missingMessage: string,
+): { targetIds?: string[]; errorResponse?: Response } {
+  if (body.all === true) {
+    return { targetIds: Array.from(existingIds) };
+  }
+  if (Array.isArray(body.ids)) {
+    return {
+      targetIds: Array.from(
+        new Set(body.ids.map((v) => String(v || '').trim()).filter((v) => v && existingIds.has(v))),
+      ),
+    };
+  }
+  return { errorResponse: createJsonResponse({ success: false, message: missingMessage }, 400) };
+}
+
+function buildToggledItems<T extends { id: string; enabled?: boolean; configVersion?: number }>(
+  items: T[],
+  {
+    enabled,
+    all,
+    targetIdSet,
+    timestamp,
+    normalizeExtra,
+  }: {
+    enabled: boolean;
+    all: boolean;
+    targetIdSet: Set<string>;
+    timestamp: string;
+    normalizeExtra?: (item: T) => Partial<T>;
+  },
+): T[] {
+  const updated: T[] = [];
+  for (const item of items) {
+    if (!all && !targetIdSet.has(item.id)) continue;
+    if (Boolean(item.enabled) === enabled) continue;
+    const next: RecordObj = {
+      ...(item as RecordObj),
+      ...(normalizeExtra ? (normalizeExtra(item) as RecordObj) : {}),
+      enabled,
+      configVersion: bumpConfigVersion(item.configVersion),
+      updatedAt: timestamp,
+    };
+    delete next.version;
+    updated.push(next as T);
+  }
+  return updated;
+}
+
+function buildTagUpdatedItems<T extends { id: string; configVersion?: number }>(
+  byId: Map<string, T>,
+  updates: unknown[],
+  timestamp: string,
+  normalizeExtra?: (item: T) => Partial<T>,
+): T[] {
+  const updated: T[] = [];
+  for (const entry of updates) {
+    if (!isRecord(entry) || typeof entry.id !== 'string') continue;
+    const current = byId.get(entry.id.trim());
+    if (!current) continue;
+    const next: RecordObj = {
+      ...(current as RecordObj),
+      ...(normalizeExtra ? (normalizeExtra(current) as RecordObj) : {}),
+      tags: normalizeTagArray(entry.tags),
+      configVersion: bumpConfigVersion(current.configVersion),
+      updatedAt: timestamp,
+    };
+    delete next.version;
+    updated.push(next as T);
+  }
+  return updated;
+}
+
+function buildReorderedItems<T extends { id: string; sortIndex?: number; configVersion?: number }>(
+  items: T[],
+  orderedIds: unknown[],
+  timestamp: string,
+  normalizeExtra?: (item: T) => Partial<T>,
+): { reorderedItems: T[]; changedItems: T[] } {
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const seen = new Set<string>();
+  const ordered: T[] = [];
+
+  for (const rawId of orderedIds) {
+    const id = typeof rawId === 'string' ? rawId.trim() : '';
+    if (!id || seen.has(id)) continue;
+    const found = byId.get(id);
+    if (found) {
+      seen.add(id);
+      ordered.push(found);
+    }
+  }
+  for (const item of items) {
+    if (!seen.has(item.id)) {
+      ordered.push(item);
+    }
+  }
+
+  const changedItems: T[] = [];
+  const reorderedItems = ordered.map((item, idx) => {
+    const prevSort = Number(item.sortIndex);
+    if (Number.isFinite(prevSort) && prevSort === idx) {
+      return item;
+    }
+    const next: RecordObj = {
+      ...(item as RecordObj),
+      ...(normalizeExtra ? (normalizeExtra(item) as RecordObj) : {}),
+      sortIndex: idx,
+      configVersion: bumpConfigVersion(item.configVersion),
+      updatedAt: timestamp,
+    };
+    delete next.version;
+    const typed = next as T;
+    changedItems.push(typed);
+    return typed;
+  });
+
+  return { reorderedItems, changedItems };
+}
+
 async function loadNotificationSettings(repos: Repositories): Promise<NotificationSettings> {
   try {
     const loaded = await repos.settings.getMain();
-    return isRecord(loaded) && Object.keys(loaded).length > 0
-      ? (loaded as NotificationSettings)
-      : defaultSettings;
+    return isRecord(loaded) && Object.keys(loaded).length > 0 ? (loaded as NotificationSettings) : defaultSettings;
   } catch {
     return defaultSettings;
   }
@@ -301,7 +500,6 @@ async function invalidateNodeCachesIncremental(
       if (extraId) affectedProfileIds.add(extraId);
     }
 
-    // Ensure parent composite profiles referencing extraAffectedProfileIds are also invalidated
     if (extraAffectedProfileIds.length > 0) {
       const profileIdByIdentifier = new Map<string, string>();
       for (const profile of normalizedNextProfiles) {
@@ -335,17 +533,11 @@ async function invalidateNodeCachesIncremental(
       }
     }
 
-    const cacheOptions: {
-      preserveKeys: string[];
-      preserveProfileKeys?: string[];
-      skipTokenCaches?: boolean;
-    } = { preserveKeys };
-    if (preserveProfileKeys.length > 0) {
-      cacheOptions.preserveProfileKeys = preserveProfileKeys;
-    }
-    if (changedSubIds.size === 0) {
-      cacheOptions.skipTokenCaches = true;
-    }
+    const cacheOptions: { preserveKeys: string[]; preserveProfileKeys?: string[]; skipTokenCaches?: boolean } = {
+      preserveKeys,
+    };
+    if (preserveProfileKeys.length > 0) cacheOptions.preserveProfileKeys = preserveProfileKeys;
+    if (changedSubIds.size === 0) cacheOptions.skipTokenCaches = true;
 
     await clearAllNodeCaches(repos.storage, cacheOptions);
   } catch (error: unknown) {
@@ -406,7 +598,7 @@ async function pruneProfileReferencesAndPersist(
       nextProfile = {
         ...nextProfile,
         downloadCount: Number(profile.downloadCount) || 0,
-        configVersion: Math.max(1, Number(profile.configVersion) || 1) + 1,
+        configVersion: bumpConfigVersion(profile.configVersion),
         updatedAt: timestamp,
       };
       delete (nextProfile as RecordObj).version;
@@ -422,106 +614,155 @@ async function pruneProfileReferencesAndPersist(
   return { previousProfiles, finalProfiles, updatedProfiles };
 }
 
-function buildVersionConflictResponse(current: unknown): Response {
-  return createJsonResponse(
-    {
-      success: false,
-      code: 'VERSION_CONFLICT',
-      message: '该记录已在其他终端或标签页更新，请选择加载最新内容或强制覆盖保存',
-      current,
-    },
-    409,
-  );
+// ==================== Subscriptions & Nodes Descriptor ====================
+
+interface MisubWriteRepo {
+  getById: (id: string, options?: { fresh?: boolean }) => Promise<MisubItem | null>;
+  save: (item: MisubItem, options?: { skipOtherTableDelete?: boolean }) => Promise<MisubItem | null>;
+  putMany: (items: MisubItem[]) => Promise<boolean>;
+  deleteById: (id: string) => Promise<boolean>;
+  deleteManyByIds: (ids: string[]) => Promise<number>;
+  compareAndSwap: (
+    item: MisubItem,
+    expectedConfigVersion: number,
+    options?: { skipOtherTableDelete?: boolean },
+  ) => Promise<{ updated: boolean; current: MisubItem | null }>;
 }
 
-function buildStorageSaveErrorResponse(error: unknown): Response {
-  const message = getErrorMessage(error);
-  return createJsonResponse(
-    {
-      success: false,
-      message: `数据保存失败: ${message || '存储服务暂时不可用，请稍后重试'}`,
-    },
-    500,
-  );
+interface MisubResourceDescriptor {
+  kind: 'subscription' | 'node';
+  missingIdMessage: string;
+  notFoundMessage: string;
+  invalidUrlMessage: string;
+  invalidParamMessage: string;
+  invalidBatchItemMessage: string;
+  deleteIdsMissingMessage: string;
+  editableFields: readonly string[];
+  runtimeFields: readonly string[];
+  matchesRecord: (item: MisubItem) => boolean;
+  validateUrl: (url: string) => boolean;
+  generateId: () => string;
+  getRepo: (repos: Repositories) => MisubWriteRepo;
+  prepareCreatedExtras?: (rawBody: RecordObj) => RecordObj;
+  preparePatchExtras?: (patch: RecordObj) => void;
+  clearRuntimeOnUrlChange: (nextObj: RecordObj) => void;
+  notify?: (items: MisubItem[], repos: Repositories, env: EnvLike, context: BoundRequestContext | null) => void;
+  pruneKey: 'subscriptionIds' | 'manualNodeIds';
 }
 
-async function runStorageWrite(operation: () => Promise<Response>): Promise<Response> {
-  try {
-    return await operation();
-  } catch (error) {
-    console.error('[Resource CRUD] Storage write failed:', error);
-    return buildStorageSaveErrorResponse(error);
-  }
-}
+const SUBSCRIPTION_DESCRIPTOR: MisubResourceDescriptor = {
+  kind: 'subscription',
+  missingIdMessage: '缺少订阅 ID',
+  notFoundMessage: '订阅源不存在',
+  invalidUrlMessage: '请输入有效的 http:// 或 https:// 订阅链接',
+  invalidParamMessage: '订阅参数无效',
+  invalidBatchItemMessage: '批量导入条目格式无效',
+  deleteIdsMissingMessage: '请提供要删除的订阅 ID 列表或 all: true',
+  editableFields: SUBSCRIPTION_EDITABLE_FIELDS,
+  runtimeFields: SUBSCRIPTION_RUNTIME_FIELDS,
+  matchesRecord: (item) => !isManualNodeRecord(item),
+  validateUrl: isValidRemoteSubscriptionUrl,
+  generateId: generateSubscriptionId,
+  getRepo: (repos) => repos.subscriptions as unknown as MisubWriteRepo,
+  prepareCreatedExtras: (rawBody) => ({ autoUpdate: rawBody.autoUpdate !== false }),
+  preparePatchExtras: (patch) => {
+    if (Object.prototype.hasOwnProperty.call(patch, 'autoUpdate')) {
+      patch.autoUpdate = patch.autoUpdate !== false;
+    }
+  },
+  clearRuntimeOnUrlChange: (nextObj) => {
+    nextObj.nodeCount = 0;
+    nextObj.userInfo = null;
+    nextObj.lastError = null;
+    nextObj.lastUpdate = null;
+    delete nextObj.lastGoodNodeCount;
+    delete nextObj.detectedName;
+  },
+  notify: (items, repos, env, context) => triggerSubscriptionNotifications(items, repos, env, context),
+  pruneKey: 'subscriptionIds',
+};
 
-// ==================== Subscriptions Handlers ====================
+const NODE_DESCRIPTOR: MisubResourceDescriptor = {
+  kind: 'node',
+  missingIdMessage: '缺少节点 ID',
+  notFoundMessage: '手动节点不存在',
+  invalidUrlMessage: '请输入有效的代理节点链接',
+  invalidParamMessage: '节点参数无效',
+  invalidBatchItemMessage: '批量导入节点格式无效',
+  deleteIdsMissingMessage: '请提供要删除的节点 ID 列表或 all: true',
+  editableFields: NODE_EDITABLE_FIELDS,
+  runtimeFields: NODE_RUNTIME_FIELDS,
+  matchesRecord: (item) => isManualNodeRecord(item),
+  validateUrl: isValidManualNodeUrl,
+  generateId: generateNodeId,
+  getRepo: (repos) => repos.nodes as unknown as MisubWriteRepo,
+  clearRuntimeOnUrlChange: (nextObj) => {
+    for (const field of NODE_RUNTIME_FIELDS) {
+      delete nextObj[field];
+    }
+  },
+  pruneKey: 'manualNodeIds',
+};
 
-function buildCreatedSubscription(
+function buildCreatedMisubItem(
+  desc: MisubResourceDescriptor,
   rawBody: RecordObj,
   sortIndex: number,
   timestamp: string,
-): { item?: SubscriptionItem; error?: string } {
+): { item?: MisubItem; error?: string } {
   const url = String(rawBody.url || '').trim();
-  if (!url || !isValidRemoteSubscriptionUrl(url)) {
-    return { error: '请输入有效的 http:// 或 https:// 订阅链接' };
+  if (!url || !desc.validateUrl(url)) {
+    return { error: desc.invalidUrlMessage };
   }
-  const id = typeof rawBody.id === 'string' && rawBody.id.trim() ? rawBody.id.trim() : generateSubscriptionId();
-  const picked = pickAllowedFields(rawBody, SUBSCRIPTION_EDITABLE_FIELDS);
+  const id = typeof rawBody.id === 'string' && rawBody.id.trim() ? rawBody.id.trim() : desc.generateId();
+  const picked = pickAllowedFields(rawBody, desc.editableFields);
   const { isUpdating: _omitUpdating, ...cleaned } = picked;
-  const item: SubscriptionItem = {
-    ...(cleaned as Partial<SubscriptionItem>),
+  const item: RecordObj = {
+    ...cleaned,
+    ...(desc.prepareCreatedExtras ? desc.prepareCreatedExtras(rawBody) : {}),
     id,
     name: String(rawBody.name ?? '').trim(),
     url,
     enabled: rawBody.enabled !== false,
-    autoUpdate: rawBody.autoUpdate !== false,
     tags: normalizeTagArray(rawBody.tags),
     sortIndex: Number.isFinite(Number(rawBody.sortIndex)) ? Number(rawBody.sortIndex) : sortIndex,
     configVersion: 1,
     createdAt: timestamp,
     updatedAt: timestamp,
   };
-  delete (item as RecordObj).version;
-  for (const field of SUBSCRIPTION_RUNTIME_FIELDS) {
-    delete (item as RecordObj)[field];
+  delete item.version;
+  for (const field of desc.runtimeFields) {
+    delete item[field];
   }
-  return { item };
+  return { item: item as unknown as MisubItem };
 }
 
-export async function handleSubscriptionCreate(
+async function createMisubSingle(
+  desc: MisubResourceDescriptor,
   request: Request,
   env: EnvLike,
-  context: BoundRequestContext | null = null,
+  context: BoundRequestContext | null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
-
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.normal, async (repos, body) => {
     const [existingAll, existingProfiles] = await Promise.all([
       repos.subscriptions.getAll({ fresh: true }),
       repos.profiles.getAll({ fresh: true }),
     ]);
-    const existingRemote = existingAll.filter((item) => !isManualNodeRecord(item));
-    const minSort = existingRemote.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
-    const nextSortIndex = existingRemote.length > 0 ? minSort - 1 : 0;
+    const peers = existingAll.filter((item) => desc.matchesRecord(item));
+    const minSort = peers.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
+    const nextSortIndex = peers.length > 0 ? minSort - 1 : 0;
 
-    const { item, error } = buildCreatedSubscription(body, nextSortIndex, nowIso());
+    const { item, error } = buildCreatedMisubItem(desc, body, nextSortIndex, nowIso());
     if (error || !item) {
-      return createJsonResponse({ success: false, message: error || '订阅参数无效' }, 400);
+      return createJsonResponse({ success: false, message: error || desc.invalidParamMessage }, 400);
     }
 
-    const saved = (await repos.subscriptions.save(item, { skipOtherTableDelete: true })) || item;
+    const saved = (await desc.getRepo(repos).save(item, { skipOtherTableDelete: true })) || item;
     const nextAll = [saved, ...existingAll.filter((entry) => entry.id !== saved.id)];
 
-    triggerSubscriptionNotifications(
-      shouldCheckSubscriptionNotification(saved, undefined) ? [saved] : [],
-      repos,
-      env,
-      context,
-    );
+    if (desc.notify && shouldCheckSubscriptionNotification(saved, undefined)) {
+      desc.notify([saved], repos, env, context);
+    }
     await invalidateNodeCachesIncremental(repos, {
       previousMisubs: existingAll,
       finalMisubs: nextAll,
@@ -533,15 +774,8 @@ export async function handleSubscriptionCreate(
   });
 }
 
-export async function handleSubscriptionsBatchCreate(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await handleSubscriptionsBatch(request, env, context);
-}
-
-async function createSubscriptionsBatchFromBody(
+async function createMisubBatchFromBody(
+  desc: MisubResourceDescriptor,
   repos: Repositories,
   env: EnvLike,
   context: BoundRequestContext | null,
@@ -556,34 +790,36 @@ async function createSubscriptionsBatchFromBody(
     repos.subscriptions.getAll({ fresh: true }),
     repos.profiles.getAll({ fresh: true }),
   ]);
-  const existingRemote = existingAll.filter((item) => !isManualNodeRecord(item));
-  const minSort = existingRemote.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
-  const baseSort = existingRemote.length > 0 ? minSort - rawItems.length : 0;
+  const peers = existingAll.filter((item) => desc.matchesRecord(item));
+  const minSort = peers.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
+  const baseSort = peers.length > 0 ? minSort - rawItems.length : 0;
   const timestamp = nowIso();
 
-  const createdItems: SubscriptionItem[] = [];
+  const createdItems: MisubItem[] = [];
   for (let i = 0; i < rawItems.length; i++) {
     const rawEntry = rawItems[i];
     if (!isRecord(rawEntry)) {
-      return createJsonResponse({ success: false, message: '批量导入条目格式无效' }, 400);
+      return createJsonResponse({ success: false, message: desc.invalidBatchItemMessage }, 400);
     }
-    const { item, error } = buildCreatedSubscription(rawEntry, baseSort + i, timestamp);
+    const { item, error } = buildCreatedMisubItem(desc, rawEntry, baseSort + i, timestamp);
     if (error || !item) {
-      return createJsonResponse({ success: false, message: error || '订阅参数无效' }, 400);
+      return createJsonResponse({ success: false, message: error || desc.invalidParamMessage }, 400);
     }
     createdItems.push(item);
   }
 
-  await repos.subscriptions.putMany(createdItems);
+  await desc.getRepo(repos).putMany(createdItems);
   const createdIds = new Set(createdItems.map((item) => item.id));
   const nextAll = [...createdItems, ...existingAll.filter((entry) => !createdIds.has(entry.id))];
 
-  triggerSubscriptionNotifications(
-    createdItems.filter((item) => shouldCheckSubscriptionNotification(item, undefined)),
-    repos,
-    env,
-    context,
-  );
+  if (desc.notify) {
+    desc.notify(
+      createdItems.filter((item) => shouldCheckSubscriptionNotification(item, undefined)),
+      repos,
+      env,
+      context,
+    );
+  }
   await invalidateNodeCachesIncremental(repos, {
     previousMisubs: existingAll,
     finalMisubs: nextAll,
@@ -594,93 +830,18 @@ async function createSubscriptionsBatchFromBody(
   return createJsonResponse({ success: true, data: createdItems }, 201);
 }
 
-export async function handleSubscriptionsBatch(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-    if (parseErr || !body) return parseErr!;
-
-    if (Array.isArray(body.items)) {
-      return await createSubscriptionsBatchFromBody(repos, env, context, body);
-    }
-
-    const action = typeof body.action === 'string' ? body.action.trim().toLowerCase() : '';
-    if (action === 'enable' || action === 'disable') {
-      const enabled = action === 'enable';
-      const rawIds = Array.isArray(body.ids) ? body.ids : [];
-      const targetIdSet = new Set(rawIds.map((v) => String(v || '').trim()).filter(Boolean));
-      if (body.all !== true && targetIdSet.size === 0) {
-        return createJsonResponse({ success: true, data: [] });
-      }
-      const [previousMisubs, existingProfiles] = await Promise.all([
-        repos.subscriptions.getAll({ fresh: true }),
-        repos.profiles.getAll({ fresh: true }),
-      ]);
-      const timestamp = nowIso();
-      const updatedItems: SubscriptionItem[] = [];
-      for (const item of previousMisubs) {
-        if (isManualNodeRecord(item)) continue;
-        if (body.all !== true && !targetIdSet.has(item.id)) continue;
-        if (Boolean(item.enabled) === enabled) continue;
-        const next: SubscriptionItem = {
-          ...(item as SubscriptionItem),
-          enabled,
-          configVersion: Math.max(1, Number(item.configVersion) || 1) + 1,
-          updatedAt: timestamp,
-        };
-        delete (next as RecordObj).version;
-        updatedItems.push(next);
-      }
-      if (updatedItems.length > 0) {
-        await repos.subscriptions.putMany(updatedItems);
-        const updatedMap = new Map(updatedItems.map((item) => [item.id, item]));
-        const finalMisubs = previousMisubs.map((item) => updatedMap.get(item.id) || item);
-        await invalidateNodeCachesIncremental(repos, {
-          previousMisubs,
-          finalMisubs,
-          previousProfiles: existingProfiles,
-          finalProfiles: existingProfiles,
-        });
-      }
-      return createJsonResponse({ success: true, data: updatedItems });
-    }
-    if (action === 'delete') {
-      return await deleteSubscriptionsBatchFromBody(repos, body);
-    }
-    if (action === 'tags') {
-      return await tagsSubscriptionsBatchFromBody(repos, body);
-    }
-    if (action === 'reorder') {
-      return await reorderSubscriptionsFromBody(repos, body);
-    }
-
-    return createJsonResponse({ success: false, message: '不支持的批量操作或缺少 items 参数' }, 400);
-  });
-}
-
-export async function handleSubscriptionPatch(
+async function patchMisubSingle(
+  desc: MisubResourceDescriptor,
   request: Request,
   env: EnvLike,
   id: string,
-  context: BoundRequestContext | null = null,
+  context: BoundRequestContext | null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.normal, async (repos, body) => {
     const targetId = String(id || '').trim();
     if (!targetId) {
-      return createJsonResponse({ success: false, message: '缺少订阅 ID' }, 400);
+      return createJsonResponse({ success: false, message: desc.missingIdMessage }, 400);
     }
-
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
 
     const expected = getExpectedConfigVersionFromBody(body);
     if (!expected.valid) {
@@ -688,69 +849,52 @@ export async function handleSubscriptionPatch(
     }
     const force = Boolean(body.force);
 
-    const current = await repos.subscriptions.getById(targetId, { fresh: true });
-    if (!current || isManualNodeRecord(current)) {
-      return createJsonResponse({ success: false, message: '订阅源不存在' }, 404);
+    const repo = desc.getRepo(repos);
+    const current = await repo.getById(targetId, { fresh: true });
+    if (!current || !desc.matchesRecord(current)) {
+      return createJsonResponse({ success: false, message: desc.notFoundMessage }, 404);
     }
 
-    const patch = pickAllowedFields(body, SUBSCRIPTION_EDITABLE_FIELDS);
+    const patch = pickAllowedFields(body, desc.editableFields);
     if (Object.prototype.hasOwnProperty.call(patch, 'url')) {
       const nextUrl = String(patch.url || '').trim();
-      if (!nextUrl || !isValidRemoteSubscriptionUrl(nextUrl)) {
-        return createJsonResponse({ success: false, message: '请输入有效的 http:// 或 https:// 订阅链接' }, 400);
+      if (!nextUrl || !desc.validateUrl(nextUrl)) {
+        return createJsonResponse({ success: false, message: desc.invalidUrlMessage }, 400);
       }
       patch.url = nextUrl;
     }
-    if (Object.prototype.hasOwnProperty.call(patch, 'tags')) {
-      patch.tags = normalizeTagArray(patch.tags);
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'name')) {
-      patch.name = String(patch.name ?? '').trim();
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'enabled')) {
-      patch.enabled = patch.enabled !== false;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'autoUpdate')) {
-      patch.autoUpdate = patch.autoUpdate !== false;
-    }
+    if (Object.prototype.hasOwnProperty.call(patch, 'tags')) patch.tags = normalizeTagArray(patch.tags);
+    if (Object.prototype.hasOwnProperty.call(patch, 'name')) patch.name = String(patch.name ?? '').trim();
+    if (Object.prototype.hasOwnProperty.call(patch, 'enabled')) patch.enabled = patch.enabled !== false;
+    desc.preparePatchExtras?.(patch);
 
-    const currentConfigVersion = Math.max(1, Number(current.configVersion) || 1);
     const urlChanged = Object.prototype.hasOwnProperty.call(patch, 'url') && patch.url !== current.url;
     let nextObj: RecordObj = {
       ...(current as RecordObj),
       ...patch,
       id: current.id,
-      configVersion: currentConfigVersion + 1,
+      configVersion: bumpConfigVersion(current.configVersion),
       updatedAt: nowIso(),
     };
     delete nextObj.isUpdating;
     delete nextObj.version;
 
     if (urlChanged) {
-      nextObj.nodeCount = 0;
-      nextObj.userInfo = null;
-      nextObj.lastError = null;
-      nextObj.lastUpdate = null;
-      delete nextObj.lastGoodNodeCount;
-      delete nextObj.detectedName;
+      desc.clearRuntimeOnUrlChange(nextObj);
     } else {
-      nextObj = preserveRuntimeFields(nextObj, current as RecordObj, SUBSCRIPTION_RUNTIME_FIELDS);
+      nextObj = preserveRuntimeFields(nextObj, current as RecordObj, desc.runtimeFields);
     }
 
-    const nextItem = nextObj as SubscriptionItem;
-    let saved: SubscriptionItem;
-    if (expected.present && !force) {
-      const cas = await repos.subscriptions.compareAndSwap(nextItem, expected.value, { skipOtherTableDelete: true });
-      if (!cas.updated) {
-        if (!cas.current) {
-          return createJsonResponse({ success: false, message: '订阅源不存在' }, 404);
-        }
-        return buildVersionConflictResponse(cas.current);
-      }
-      saved = (cas.current || nextItem) as SubscriptionItem;
-    } else {
-      saved = ((await repos.subscriptions.save(nextItem, { skipOtherTableDelete: true })) || nextItem) as SubscriptionItem;
-    }
+    const casResult = await persistWithCas(
+      repo,
+      nextObj as unknown as MisubItem,
+      expected,
+      force,
+      desc.notFoundMessage,
+      { skipOtherTableDelete: true },
+    );
+    if (casResult.errorResponse) return casResult.errorResponse;
+    const saved = casResult.saved!;
 
     const [existingAll, existingProfiles] = await Promise.all([
       repos.subscriptions.getAll({ fresh: true }),
@@ -758,47 +902,43 @@ export async function handleSubscriptionPatch(
     ]);
     const previousMisubs = existingAll.map((entry) => (entry.id === current.id ? current : entry));
 
-    triggerSubscriptionNotifications(
-      shouldCheckSubscriptionNotification(saved, current) ? [saved] : [],
-      repos,
-      env,
-      context,
-    );
+    if (desc.notify && shouldCheckSubscriptionNotification(saved, current)) {
+      desc.notify([saved], repos, env, context);
+    }
     await invalidateNodeCachesIncremental(repos, {
       previousMisubs,
       finalMisubs: existingAll,
       previousProfiles: existingProfiles,
       finalProfiles: existingProfiles,
-      skipCachePreserveSubIds: urlChanged ? [saved.id] : [],
+      skipCachePreserveSubIds: urlChanged && desc.kind === 'subscription' ? [saved.id] : [],
     });
 
     return createJsonResponse({ success: true, data: saved });
   });
 }
 
-export async function handleSubscriptionDelete(
+async function deleteMisubSingle(
+  desc: MisubResourceDescriptor,
   env: EnvLike,
   id: string,
-  context: BoundRequestContext | null = null,
+  context: BoundRequestContext | null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
+  return await withWriteContext(env, context, async (repos) => {
     const targetId = String(id || '').trim();
     if (!targetId) {
-      return createJsonResponse({ success: false, message: '缺少订阅 ID' }, 400);
+      return createJsonResponse({ success: false, message: desc.missingIdMessage }, 400);
     }
 
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const current = await repos.subscriptions.getById(targetId, { fresh: true });
-    if (!current || isManualNodeRecord(current)) {
-      return createJsonResponse({ success: false, message: '订阅源不存在' }, 404);
+    const repo = desc.getRepo(repos);
+    const current = await repo.getById(targetId, { fresh: true });
+    if (!current || !desc.matchesRecord(current)) {
+      return createJsonResponse({ success: false, message: desc.notFoundMessage }, 404);
     }
 
     const previousMisubs = await repos.subscriptions.getAll({ fresh: true });
-    await repos.subscriptions.deleteById(targetId);
+    await repo.deleteById(targetId);
     const { previousProfiles, finalProfiles, updatedProfiles } = await pruneProfileReferencesAndPersist(repos, {
-      subscriptionIds: [targetId],
+      [desc.pruneKey]: [targetId],
     });
 
     await invalidateNodeCachesIncremental(repos, {
@@ -813,45 +953,25 @@ export async function handleSubscriptionDelete(
   });
 }
 
-export async function handleSubscriptionsBatchDelete(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
+async function deleteMisubBatchFromBody(
+  desc: MisubResourceDescriptor,
+  repos: Repositories,
+  body: RecordObj,
 ): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
-
-  return await deleteSubscriptionsBatchFromBody(repos, body);
-}
-
-async function deleteSubscriptionsBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   const previousMisubs = await repos.subscriptions.getAll({ fresh: true });
-  const existingRemoteIds = new Set(
-    previousMisubs.filter((item) => !isManualNodeRecord(item)).map((item) => item.id),
-  );
+  const existingPeerIds = new Set(previousMisubs.filter((item) => desc.matchesRecord(item)).map((item) => item.id));
+  const resolved = resolveBatchDeleteIds(body, existingPeerIds, desc.deleteIdsMissingMessage);
+  if (resolved.errorResponse) return resolved.errorResponse;
 
-  let targetIds: string[];
-  if (body.all === true) {
-    targetIds = Array.from(existingRemoteIds);
-  } else if (Array.isArray(body.ids)) {
-    targetIds = Array.from(
-      new Set(body.ids.map((v) => String(v || '').trim()).filter((v) => v && existingRemoteIds.has(v))),
-    );
-  } else {
-    return createJsonResponse({ success: false, message: '请提供要删除的订阅 ID 列表或 all: true' }, 400);
-  }
-
+  const targetIds = resolved.targetIds!;
   if (targetIds.length === 0) {
     return createJsonResponse({ success: true, data: { deletedIds: [], updatedProfiles: [] } });
   }
 
-  await repos.subscriptions.deleteManyByIds(targetIds);
+  await desc.getRepo(repos).deleteManyByIds(targetIds);
   const deleteSet = new Set(targetIds);
   const { previousProfiles, finalProfiles, updatedProfiles } = await pruneProfileReferencesAndPersist(repos, {
-    subscriptionIds: targetIds,
+    [desc.pruneKey]: targetIds,
   });
 
   await invalidateNodeCachesIncremental(repos, {
@@ -865,21 +985,11 @@ async function deleteSubscriptionsBatchFromBody(repos: Repositories, body: Recor
   return createJsonResponse({ success: true, data: { deletedIds: targetIds, updatedProfiles } });
 }
 
-export async function handleSubscriptionsBatchTags(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
+async function tagsMisubBatchFromBody(
+  desc: MisubResourceDescriptor,
+  repos: Repositories,
+  body: RecordObj,
 ): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-  if (parseErr || !body) return parseErr!;
-
-  return await tagsSubscriptionsBatchFromBody(repos, body);
-}
-
-async function tagsSubscriptionsBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   if (!Array.isArray(body.updates)) {
     return createJsonResponse({ success: false, message: 'updates 必须为数组' }, 400);
   }
@@ -891,28 +1001,11 @@ async function tagsSubscriptionsBatchFromBody(repos: Repositories, body: RecordO
     repos.subscriptions.getAll({ fresh: true }),
     repos.profiles.getAll({ fresh: true }),
   ]);
-  const byId = new Map(
-    previousMisubs.filter((item) => !isManualNodeRecord(item)).map((item) => [item.id, item]),
-  );
-
-  const timestamp = nowIso();
-  const updatedItems: SubscriptionItem[] = [];
-  for (const entry of body.updates) {
-    if (!isRecord(entry) || typeof entry.id !== 'string') continue;
-    const current = byId.get(entry.id.trim());
-    if (!current) continue;
-    const updated: SubscriptionItem = {
-      ...(current as SubscriptionItem),
-      tags: normalizeTagArray(entry.tags),
-      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (updated as RecordObj).version;
-    updatedItems.push(updated);
-  }
+  const byId = new Map(previousMisubs.filter((item) => desc.matchesRecord(item)).map((item) => [item.id, item]));
+  const updatedItems = buildTagUpdatedItems(byId, body.updates, nowIso());
 
   if (updatedItems.length > 0) {
-    await repos.subscriptions.putMany(updatedItems);
+    await desc.getRepo(repos).putMany(updatedItems);
     const updatedMap = new Map(updatedItems.map((item) => [item.id, item]));
     const finalMisubs = previousMisubs.map((item) => updatedMap.get(item.id) || item);
     await invalidateNodeCachesIncremental(repos, {
@@ -926,21 +1019,11 @@ async function tagsSubscriptionsBatchFromBody(repos: Repositories, body: RecordO
   return createJsonResponse({ success: true, data: updatedItems });
 }
 
-export async function handleSubscriptionsReorder(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
+async function reorderMisubFromBody(
+  desc: MisubResourceDescriptor,
+  repos: Repositories,
+  body: RecordObj,
 ): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
-
-  return await reorderSubscriptionsFromBody(repos, body);
-}
-
-async function reorderSubscriptionsFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   if (!Array.isArray(body.orderedIds)) {
     return createJsonResponse({ success: false, message: 'orderedIds 必须为数组' }, 400);
   }
@@ -949,46 +1032,11 @@ async function reorderSubscriptionsFromBody(repos: Repositories, body: RecordObj
     repos.subscriptions.getAll({ fresh: true }),
     repos.profiles.getAll({ fresh: true }),
   ]);
-  const remoteSubs = previousMisubs.filter((item) => !isManualNodeRecord(item));
-  const remoteById = new Map(remoteSubs.map((item) => [item.id, item]));
-  const seen = new Set<string>();
-  const ordered: SubscriptionItem[] = [];
-
-  for (const rawId of body.orderedIds) {
-    const id = typeof rawId === 'string' ? rawId.trim() : '';
-    if (!id || seen.has(id)) continue;
-    const found = remoteById.get(id);
-    if (found) {
-      seen.add(id);
-      ordered.push(found as SubscriptionItem);
-    }
-  }
-  for (const item of remoteSubs) {
-    if (!seen.has(item.id)) {
-      ordered.push(item as SubscriptionItem);
-    }
-  }
-
-  const timestamp = nowIso();
-  const changedItems: SubscriptionItem[] = [];
-  const reorderedItems: SubscriptionItem[] = ordered.map((item, idx) => {
-    const prevSort = Number(item.sortIndex);
-    if (Number.isFinite(prevSort) && prevSort === idx) {
-      return item;
-    }
-    const next: SubscriptionItem = {
-      ...item,
-      sortIndex: idx,
-      configVersion: Math.max(1, Number(item.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (next as RecordObj).version;
-    changedItems.push(next);
-    return next;
-  });
+  const peers = previousMisubs.filter((item) => desc.matchesRecord(item));
+  const { reorderedItems, changedItems } = buildReorderedItems(peers, body.orderedIds, nowIso());
 
   if (changedItems.length > 0) {
-    await repos.subscriptions.putMany(changedItems);
+    await desc.getRepo(repos).putMany(changedItems);
     const changedMap = new Map(changedItems.map((item) => [item.id, item]));
     const finalMisubs = previousMisubs.map((item) => changedMap.get(item.id) || item);
     await invalidateNodeCachesIncremental(repos, {
@@ -1002,523 +1050,124 @@ async function reorderSubscriptionsFromBody(repos: Repositories, body: RecordObj
   return createJsonResponse({ success: true, data: reorderedItems });
 }
 
-// ==================== Manual Nodes Handlers ====================
-
-function buildCreatedNode(
-  rawBody: RecordObj,
-  sortIndex: number,
-  timestamp: string,
-): { item?: ManualNodeItem; error?: string } {
-  const url = String(rawBody.url || '').trim();
-  if (!url || !isValidManualNodeUrl(url)) {
-    return { error: '请输入有效的代理节点链接' };
-  }
-  const id = typeof rawBody.id === 'string' && rawBody.id.trim() ? rawBody.id.trim() : generateNodeId();
-  const picked = pickAllowedFields(rawBody, NODE_EDITABLE_FIELDS);
-  const item: ManualNodeItem = {
-    ...(picked as Partial<ManualNodeItem>),
-    id,
-    name: String(rawBody.name ?? '').trim(),
-    url,
-    enabled: rawBody.enabled !== false,
-    tags: normalizeTagArray(rawBody.tags),
-    sortIndex: Number.isFinite(Number(rawBody.sortIndex)) ? Number(rawBody.sortIndex) : sortIndex,
-    configVersion: 1,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-  delete (item as RecordObj).version;
-  for (const field of NODE_RUNTIME_FIELDS) {
-    delete (item as RecordObj)[field];
-  }
-  return { item };
-}
-
-export async function handleNodeCreate(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
-
-    const [existingAll, existingProfiles] = await Promise.all([
-      repos.subscriptions.getAll({ fresh: true }),
-      repos.profiles.getAll({ fresh: true }),
-    ]);
-    const existingNodes = existingAll.filter((item) => isManualNodeRecord(item));
-    const minSort = existingNodes.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
-    const nextSortIndex = existingNodes.length > 0 ? minSort - 1 : 0;
-
-    const { item, error } = buildCreatedNode(body, nextSortIndex, nowIso());
-    if (error || !item) {
-      return createJsonResponse({ success: false, message: error || '节点参数无效' }, 400);
-    }
-
-    const saved = (await repos.nodes.save(item)) || item;
-    const nextAll = [saved, ...existingAll.filter((entry) => entry.id !== saved.id)];
-
-    await invalidateNodeCachesIncremental(repos, {
-      previousMisubs: existingAll,
-      finalMisubs: nextAll,
-      previousProfiles: existingProfiles,
-      finalProfiles: existingProfiles,
-    });
-
-    return createJsonResponse({ success: true, data: saved }, 201);
-  });
-}
-
-export async function handleNodesBatchCreate(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await handleNodesBatch(request, env, context);
-}
-
-async function createNodesBatchFromBody(
+async function toggleMisubBatchFromBody(
+  desc: MisubResourceDescriptor,
   repos: Repositories,
   body: RecordObj,
 ): Promise<Response> {
-  const rawItems = body.items;
-  if (!Array.isArray(rawItems) || rawItems.length === 0) {
-    return createJsonResponse({ success: false, message: 'items 必须为非空数组' }, 400);
+  const enabled = body.action === 'enable';
+  const rawIds = Array.isArray(body.ids) ? body.ids : [];
+  const targetIdSet = new Set(rawIds.map((v) => String(v || '').trim()).filter(Boolean));
+  if (body.all !== true && targetIdSet.size === 0) {
+    return createJsonResponse({ success: true, data: [] });
   }
 
-  const [existingAll, existingProfiles] = await Promise.all([
+  const [previousMisubs, existingProfiles] = await Promise.all([
     repos.subscriptions.getAll({ fresh: true }),
     repos.profiles.getAll({ fresh: true }),
   ]);
-  const existingNodes = existingAll.filter((item) => isManualNodeRecord(item));
-  const minSort = existingNodes.reduce((min, item) => Math.min(min, Number(item.sortIndex) || 0), 0);
-  const baseSort = existingNodes.length > 0 ? minSort - rawItems.length : 0;
-  const timestamp = nowIso();
+  const peers = previousMisubs.filter((item) => desc.matchesRecord(item));
+  const updatedItems = buildToggledItems(peers, { enabled, all: body.all === true, targetIdSet, timestamp: nowIso() });
 
-  const createdItems: ManualNodeItem[] = [];
-  for (let i = 0; i < rawItems.length; i++) {
-    const rawEntry = rawItems[i];
-    if (!isRecord(rawEntry)) {
-      return createJsonResponse({ success: false, message: '批量导入节点格式无效' }, 400);
-    }
-    const { item, error } = buildCreatedNode(rawEntry, baseSort + i, timestamp);
-    if (error || !item) {
-      return createJsonResponse({ success: false, message: error || '节点参数无效' }, 400);
-    }
-    createdItems.push(item);
+  if (updatedItems.length > 0) {
+    await desc.getRepo(repos).putMany(updatedItems);
+    const updatedMap = new Map(updatedItems.map((item) => [item.id, item]));
+    const finalMisubs = previousMisubs.map((item) => updatedMap.get(item.id) || item);
+    await invalidateNodeCachesIncremental(repos, {
+      previousMisubs,
+      finalMisubs,
+      previousProfiles: existingProfiles,
+      finalProfiles: existingProfiles,
+    });
   }
 
-  await repos.nodes.putMany(createdItems);
-  const createdIds = new Set(createdItems.map((item) => item.id));
-  const nextAll = [...createdItems, ...existingAll.filter((entry) => !createdIds.has(entry.id))];
-
-  await invalidateNodeCachesIncremental(repos, {
-    previousMisubs: existingAll,
-    finalMisubs: nextAll,
-    previousProfiles: existingProfiles,
-    finalProfiles: existingProfiles,
-  });
-
-  return createJsonResponse({ success: true, data: createdItems }, 201);
+  return createJsonResponse({ success: true, data: updatedItems });
 }
 
-export async function handleNodesBatch(
+async function dispatchMisubBatch(
+  desc: MisubResourceDescriptor,
   request: Request,
   env: EnvLike,
-  context: BoundRequestContext | null = null,
+  context: BoundRequestContext | null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-    if (parseErr || !body) return parseErr!;
-
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.large, async (repos, body) => {
     if (Array.isArray(body.items)) {
-      return await createNodesBatchFromBody(repos, body);
+      return await createMisubBatchFromBody(desc, repos, env, context, body);
     }
-
     const action = typeof body.action === 'string' ? body.action.trim().toLowerCase() : '';
     if (action === 'enable' || action === 'disable') {
-      const enabled = action === 'enable';
-      const rawIds = Array.isArray(body.ids) ? body.ids : [];
-      const targetIdSet = new Set(rawIds.map((v) => String(v || '').trim()).filter(Boolean));
-      if (body.all !== true && targetIdSet.size === 0) {
-        return createJsonResponse({ success: true, data: [] });
-      }
-      const [previousMisubs, existingProfiles] = await Promise.all([
-        repos.subscriptions.getAll({ fresh: true }),
-        repos.profiles.getAll({ fresh: true }),
-      ]);
-      const timestamp = nowIso();
-      const updatedItems: ManualNodeItem[] = [];
-      for (const item of previousMisubs) {
-        if (!isManualNodeRecord(item)) continue;
-        if (body.all !== true && !targetIdSet.has(item.id)) continue;
-        if (Boolean(item.enabled) === enabled) continue;
-        const next: ManualNodeItem = {
-          ...(item as ManualNodeItem),
-          enabled,
-          configVersion: Math.max(1, Number(item.configVersion) || 1) + 1,
-          updatedAt: timestamp,
-        };
-        delete (next as RecordObj).version;
-        updatedItems.push(next);
-      }
-      if (updatedItems.length > 0) {
-        await repos.nodes.putMany(updatedItems);
-        const updatedMap = new Map(updatedItems.map((item) => [item.id, item]));
-        const finalMisubs = previousMisubs.map((item) => updatedMap.get(item.id) || item);
-        await invalidateNodeCachesIncremental(repos, {
-          previousMisubs,
-          finalMisubs,
-          previousProfiles: existingProfiles,
-          finalProfiles: existingProfiles,
-        });
-      }
-      return createJsonResponse({ success: true, data: updatedItems });
+      return await toggleMisubBatchFromBody(desc, repos, { ...body, action });
     }
-    if (action === 'delete') {
-      return await deleteNodesBatchFromBody(repos, body);
-    }
-    if (action === 'tags') {
-      return await tagsNodesBatchFromBody(repos, body);
-    }
-    if (action === 'reorder') {
-      return await reorderNodesFromBody(repos, body);
-    }
-
+    if (action === 'delete') return await deleteMisubBatchFromBody(desc, repos, body);
+    if (action === 'tags') return await tagsMisubBatchFromBody(desc, repos, body);
+    if (action === 'reorder') return await reorderMisubFromBody(desc, repos, body);
     return createJsonResponse({ success: false, message: '不支持的批量操作或缺少 items 参数' }, 400);
   });
 }
 
-export async function handleNodePatch(
-  request: Request,
-  env: EnvLike,
-  id: string,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const targetId = String(id || '').trim();
-    if (!targetId) {
-      return createJsonResponse({ success: false, message: '缺少节点 ID' }, 400);
-    }
+// ==================== Subscriptions Handlers ====================
 
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
+export const handleSubscriptionCreate = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  createMisubSingle(SUBSCRIPTION_DESCRIPTOR, req, env, ctx);
 
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
+export const handleSubscriptionsBatchCreate = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  dispatchMisubBatch(SUBSCRIPTION_DESCRIPTOR, req, env, ctx);
 
-    const expected = getExpectedConfigVersionFromBody(body);
-    if (!expected.valid) {
-      return createJsonResponse({ success: false, message: 'configVersion 格式无效' }, 400);
-    }
-    const force = Boolean(body.force);
+export const handleSubscriptionsBatch = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  dispatchMisubBatch(SUBSCRIPTION_DESCRIPTOR, req, env, ctx);
 
-    const current = await repos.nodes.getById(targetId, { fresh: true });
-    if (!current || !isManualNodeRecord(current)) {
-      return createJsonResponse({ success: false, message: '手动节点不存在' }, 404);
-    }
+export const handleSubscriptionPatch = (req: Request, env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
+  patchMisubSingle(SUBSCRIPTION_DESCRIPTOR, req, env, id, ctx);
 
-    const patch = pickAllowedFields(body, NODE_EDITABLE_FIELDS);
-    if (Object.prototype.hasOwnProperty.call(patch, 'url')) {
-      const nextUrl = String(patch.url || '').trim();
-      if (!nextUrl || !isValidManualNodeUrl(nextUrl)) {
-        return createJsonResponse({ success: false, message: '请输入有效的代理节点链接' }, 400);
-      }
-      patch.url = nextUrl;
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'tags')) {
-      patch.tags = normalizeTagArray(patch.tags);
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'name')) {
-      patch.name = String(patch.name ?? '').trim();
-    }
-    if (Object.prototype.hasOwnProperty.call(patch, 'enabled')) {
-      patch.enabled = patch.enabled !== false;
-    }
+export const handleSubscriptionDelete = (env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
+  deleteMisubSingle(SUBSCRIPTION_DESCRIPTOR, env, id, ctx);
 
-    const currentConfigVersion = Math.max(1, Number(current.configVersion) || 1);
-    const urlChanged = Object.prototype.hasOwnProperty.call(patch, 'url') && patch.url !== current.url;
-    let nextObj: RecordObj = {
-      ...(current as RecordObj),
-      ...patch,
-      id: current.id,
-      configVersion: currentConfigVersion + 1,
-      updatedAt: nowIso(),
-    };
-    delete nextObj.version;
-
-    if (urlChanged) {
-      for (const field of NODE_RUNTIME_FIELDS) {
-        delete nextObj[field];
-      }
-    } else {
-      nextObj = preserveRuntimeFields(nextObj, current as RecordObj, NODE_RUNTIME_FIELDS);
-    }
-
-    const nextItem = nextObj as ManualNodeItem;
-    let saved: ManualNodeItem;
-    if (expected.present && !force) {
-      const cas = await repos.nodes.compareAndSwap(nextItem, expected.value, { skipOtherTableDelete: true });
-      if (!cas.updated) {
-        if (!cas.current) {
-          return createJsonResponse({ success: false, message: '手动节点不存在' }, 404);
-        }
-        return buildVersionConflictResponse(cas.current);
-      }
-      saved = (cas.current || nextItem) as ManualNodeItem;
-    } else {
-      saved = ((await repos.nodes.save(nextItem)) || nextItem) as ManualNodeItem;
-    }
-
-    const [existingAll, existingProfiles] = await Promise.all([
-      repos.subscriptions.getAll({ fresh: true }),
-      repos.profiles.getAll({ fresh: true }),
-    ]);
-    const previousMisubs = existingAll.map((entry) => (entry.id === current.id ? current : entry));
-
-    await invalidateNodeCachesIncremental(repos, {
-      previousMisubs,
-      finalMisubs: existingAll,
-      previousProfiles: existingProfiles,
-      finalProfiles: existingProfiles,
-    });
-
-    return createJsonResponse({ success: true, data: saved });
-  });
-}
-
-export async function handleNodeDelete(
-  env: EnvLike,
-  id: string,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const targetId = String(id || '').trim();
-    if (!targetId) {
-      return createJsonResponse({ success: false, message: '缺少节点 ID' }, 400);
-    }
-
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const current = await repos.nodes.getById(targetId, { fresh: true });
-    if (!current || !isManualNodeRecord(current)) {
-      return createJsonResponse({ success: false, message: '手动节点不存在' }, 404);
-    }
-
-    const previousMisubs = await repos.subscriptions.getAll({ fresh: true });
-    await repos.nodes.deleteById(targetId);
-    const { previousProfiles, finalProfiles, updatedProfiles } = await pruneProfileReferencesAndPersist(repos, {
-      manualNodeIds: [targetId],
-    });
-
-    await invalidateNodeCachesIncremental(repos, {
-      previousMisubs,
-      finalMisubs: previousMisubs.filter((item) => item.id !== targetId),
-      previousProfiles,
-      finalProfiles,
-      extraAffectedProfileIds: updatedProfiles.map((p) => p.id),
-    });
-
-    return createJsonResponse({ success: true, data: { id: targetId, updatedProfiles } });
-  });
-}
-
-export async function handleNodesBatchDelete(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
-
-  return await deleteNodesBatchFromBody(repos, body);
-}
-
-async function deleteNodesBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
-  const previousMisubs = await repos.subscriptions.getAll({ fresh: true });
-  const existingNodeIds = new Set(
-    previousMisubs.filter((item) => isManualNodeRecord(item)).map((item) => item.id),
+export const handleSubscriptionsBatchDelete = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, (repos, body) =>
+    deleteMisubBatchFromBody(SUBSCRIPTION_DESCRIPTOR, repos, body),
   );
 
-  let targetIds: string[];
-  if (body.all === true) {
-    targetIds = Array.from(existingNodeIds);
-  } else if (Array.isArray(body.ids)) {
-    targetIds = Array.from(
-      new Set(body.ids.map((v) => String(v || '').trim()).filter((v) => v && existingNodeIds.has(v))),
-    );
-  } else {
-    return createJsonResponse({ success: false, message: '请提供要删除的节点 ID 列表或 all: true' }, 400);
-  }
-
-  if (targetIds.length === 0) {
-    return createJsonResponse({ success: true, data: { deletedIds: [], updatedProfiles: [] } });
-  }
-
-  await repos.nodes.deleteManyByIds(targetIds);
-  const deleteSet = new Set(targetIds);
-  const { previousProfiles, finalProfiles, updatedProfiles } = await pruneProfileReferencesAndPersist(repos, {
-    manualNodeIds: targetIds,
-  });
-
-  await invalidateNodeCachesIncremental(repos, {
-    previousMisubs,
-    finalMisubs: previousMisubs.filter((item) => !deleteSet.has(item.id)),
-    previousProfiles,
-    finalProfiles,
-    extraAffectedProfileIds: updatedProfiles.map((p) => p.id),
-  });
-
-  return createJsonResponse({ success: true, data: { deletedIds: targetIds, updatedProfiles } });
-}
-
-export async function handleNodesBatchTags(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-  if (parseErr || !body) return parseErr!;
-
-  return await tagsNodesBatchFromBody(repos, body);
-}
-
-async function tagsNodesBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
-  if (!Array.isArray(body.updates)) {
-    return createJsonResponse({ success: false, message: 'updates 必须为数组' }, 400);
-  }
-  if (body.updates.length === 0) {
-    return createJsonResponse({ success: true, data: [] });
-  }
-
-  const [previousMisubs, existingProfiles] = await Promise.all([
-    repos.subscriptions.getAll({ fresh: true }),
-    repos.profiles.getAll({ fresh: true }),
-  ]);
-  const byId = new Map(
-    previousMisubs.filter((item) => isManualNodeRecord(item)).map((item) => [item.id, item as ManualNodeItem]),
+export const handleSubscriptionsBatchTags = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.large, (repos, body) =>
+    tagsMisubBatchFromBody(SUBSCRIPTION_DESCRIPTOR, repos, body),
   );
 
-  const timestamp = nowIso();
-  const updatedItems: ManualNodeItem[] = [];
-  for (const entry of body.updates) {
-    if (!isRecord(entry) || typeof entry.id !== 'string') continue;
-    const current = byId.get(entry.id.trim());
-    if (!current) continue;
-    const next: ManualNodeItem = {
-      ...current,
-      tags: normalizeTagArray(entry.tags),
-      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (next as RecordObj).version;
-    updatedItems.push(next);
-  }
+export const handleSubscriptionsReorder = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, (repos, body) =>
+    reorderMisubFromBody(SUBSCRIPTION_DESCRIPTOR, repos, body),
+  );
 
-  if (updatedItems.length > 0) {
-    await repos.nodes.putMany(updatedItems);
-    const updatedMap = new Map(updatedItems.map((item) => [item.id, item]));
-    const finalMisubs = previousMisubs.map((item) => updatedMap.get(item.id) || item);
-    await invalidateNodeCachesIncremental(repos, {
-      previousMisubs,
-      finalMisubs,
-      previousProfiles: existingProfiles,
-      finalProfiles: existingProfiles,
-    });
-  }
+// ==================== Manual Nodes Handlers ====================
 
-  return createJsonResponse({ success: true, data: updatedItems });
-}
+export const handleNodeCreate = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  createMisubSingle(NODE_DESCRIPTOR, req, env, ctx);
 
-export async function handleNodesReorder(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
+export const handleNodesBatchCreate = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  dispatchMisubBatch(NODE_DESCRIPTOR, req, env, ctx);
 
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
+export const handleNodesBatch = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  dispatchMisubBatch(NODE_DESCRIPTOR, req, env, ctx);
 
-  return await reorderNodesFromBody(repos, body);
-}
+export const handleNodePatch = (req: Request, env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
+  patchMisubSingle(NODE_DESCRIPTOR, req, env, id, ctx);
 
-async function reorderNodesFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
-  if (!Array.isArray(body.orderedIds)) {
-    return createJsonResponse({ success: false, message: 'orderedIds 必须为数组' }, 400);
-  }
+export const handleNodeDelete = (env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
+  deleteMisubSingle(NODE_DESCRIPTOR, env, id, ctx);
 
-  const [previousMisubs, existingProfiles] = await Promise.all([
-    repos.subscriptions.getAll({ fresh: true }),
-    repos.profiles.getAll({ fresh: true }),
-  ]);
-  const manualNodes = previousMisubs.filter((item) => isManualNodeRecord(item)) as ManualNodeItem[];
-  const byId = new Map(manualNodes.map((item) => [item.id, item]));
-  const seen = new Set<string>();
-  const ordered: ManualNodeItem[] = [];
+export const handleNodesBatchDelete = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, (repos, body) =>
+    deleteMisubBatchFromBody(NODE_DESCRIPTOR, repos, body),
+  );
 
-  for (const rawId of body.orderedIds) {
-    const id = typeof rawId === 'string' ? rawId.trim() : '';
-    if (!id || seen.has(id)) continue;
-    const found = byId.get(id);
-    if (found) {
-      seen.add(id);
-      ordered.push(found);
-    }
-  }
-  for (const item of manualNodes) {
-    if (!seen.has(item.id)) {
-      ordered.push(item);
-    }
-  }
+export const handleNodesBatchTags = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.large, (repos, body) =>
+    tagsMisubBatchFromBody(NODE_DESCRIPTOR, repos, body),
+  );
 
-  const timestamp = nowIso();
-  const changedItems: ManualNodeItem[] = [];
-  const reorderedItems: ManualNodeItem[] = ordered.map((item, idx) => {
-    const prevSort = Number(item.sortIndex);
-    if (Number.isFinite(prevSort) && prevSort === idx) {
-      return item;
-    }
-    const next: ManualNodeItem = {
-      ...item,
-      sortIndex: idx,
-      configVersion: Math.max(1, Number(item.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (next as RecordObj).version;
-    changedItems.push(next);
-    return next;
-  });
-
-  if (changedItems.length > 0) {
-    await repos.nodes.putMany(changedItems);
-    const changedMap = new Map(changedItems.map((item) => [item.id, item]));
-    const finalMisubs = previousMisubs.map((item) => changedMap.get(item.id) || item);
-    await invalidateNodeCachesIncremental(repos, {
-      previousMisubs,
-      finalMisubs,
-      previousProfiles: existingProfiles,
-      finalProfiles: existingProfiles,
-    });
-  }
-
-  return createJsonResponse({ success: true, data: reorderedItems });
-}
+export const handleNodesReorder = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, (repos, body) =>
+    reorderMisubFromBody(NODE_DESCRIPTOR, repos, body),
+  );
 
 // ==================== Profiles Handlers ====================
 
@@ -1527,13 +1176,7 @@ export async function handleProfileCreate(
   env: EnvLike,
   context: BoundRequestContext | null = null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
-
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.normal, async (repos, body) => {
     const name = String(body.name ?? '').trim();
     if (!name) {
       return createJsonResponse({ success: false, message: '订阅组名称不能为空' }, 400);
@@ -1589,17 +1232,11 @@ export async function handleProfilePatch(
   id: string,
   context: BoundRequestContext | null = null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.normal, async (repos, body) => {
     const targetId = String(id || '').trim();
     if (!targetId) {
       return createJsonResponse({ success: false, message: '缺少订阅组 ID' }, 400);
     }
-
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-    if (parseErr || !body) return parseErr!;
 
     const expected = getExpectedConfigVersionFromBody(body);
     if (!expected.valid) {
@@ -1656,7 +1293,6 @@ export async function handleProfilePatch(
       ? normalizeProfileIdentifier(baseProfile.linkId)
       : normalizeProfileIdentifier(patch.linkId);
 
-    const currentConfigVersion = Math.max(1, Number(current.configVersion) || 1);
     const merged = normalizeProfile(
       ensureProfileLinkId({
         ...baseProfile,
@@ -1664,26 +1300,16 @@ export async function handleProfilePatch(
         id: current.id,
         ...(preservedLinkId ? { linkId: preservedLinkId } : {}),
         downloadCount: Number(current.downloadCount) || 0,
-        configVersion: currentConfigVersion + 1,
+        configVersion: bumpConfigVersion(current.configVersion),
         updatedAt: nowIso(),
       }),
     ) as ProfileConfig;
     delete (merged as RecordObj).clashRuleLevel;
     delete (merged as RecordObj).version;
 
-    let saved: ProfileConfig;
-    if (expected.present && !force) {
-      const cas = await repos.profiles.compareAndSwap(merged, expected.value);
-      if (!cas.updated) {
-        if (!cas.current) {
-          return createJsonResponse({ success: false, message: '订阅组不存在' }, 404);
-        }
-        return buildVersionConflictResponse(cas.current);
-      }
-      saved = cas.current || merged;
-    } else {
-      saved = (await repos.profiles.save(merged)) || merged;
-    }
+    const casResult = await persistWithCas(repos.profiles, merged, expected, force, '订阅组不存在');
+    if (casResult.errorResponse) return casResult.errorResponse;
+    const saved = casResult.saved!;
 
     const allMisubs = await repos.subscriptions.getAll({ fresh: true });
     const finalProfiles = allProfiles.map((p) => (p.id === saved.id ? saved : p));
@@ -1704,14 +1330,11 @@ export async function handleProfileDelete(
   id: string,
   context: BoundRequestContext | null = null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
+  return await withWriteContext(env, context, async (repos) => {
     const targetId = String(id || '').trim();
     if (!targetId) {
       return createJsonResponse({ success: false, message: '缺少订阅组 ID' }, 400);
     }
-
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
 
     const current = await repos.profiles.getById(targetId, { fresh: true });
     if (!current) {
@@ -1741,38 +1364,16 @@ export async function handleProfileDelete(
   });
 }
 
-export async function handleProfilesBatchDelete(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
-
-  return await deleteProfilesBatchFromBody(repos, body);
-}
-
 async function deleteProfilesBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   const [allMisubs, previousProfiles] = await Promise.all([
     repos.subscriptions.getAll({ fresh: true }),
     repos.profiles.getAll({ fresh: true }),
   ]);
   const byId = new Map(previousProfiles.map((p) => [p.id, p]));
+  const resolved = resolveBatchDeleteIds(body, new Set(byId.keys()), '请提供要删除的订阅组 ID 列表或 all: true');
+  if (resolved.errorResponse) return resolved.errorResponse;
 
-  let targetIds: string[];
-  if (body.all === true) {
-    targetIds = previousProfiles.map((p) => p.id);
-  } else if (Array.isArray(body.ids)) {
-    targetIds = Array.from(
-      new Set(body.ids.map((v) => String(v || '').trim()).filter((v) => v && byId.has(v))),
-    );
-  } else {
-    return createJsonResponse({ success: false, message: '请提供要删除的订阅组 ID 列表或 all: true' }, 400);
-  }
-
+  const targetIds = resolved.targetIds!;
   if (targetIds.length === 0) {
     return createJsonResponse({ success: true, data: { deletedIds: [], updatedProfiles: [] } });
   }
@@ -1800,20 +1401,6 @@ async function deleteProfilesBatchFromBody(repos: Repositories, body: RecordObj)
   return createJsonResponse({ success: true, data: { deletedIds: targetIds, updatedProfiles } });
 }
 
-export async function handleProfilesBatchTags(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-  if (parseErr || !body) return parseErr!;
-
-  return await tagsProfilesBatchFromBody(repos, body);
-}
-
 async function tagsProfilesBatchFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   if (!Array.isArray(body.updates)) {
     return createJsonResponse({ success: false, message: 'updates 必须为数组' }, 400);
@@ -1824,23 +1411,9 @@ async function tagsProfilesBatchFromBody(repos: Repositories, body: RecordObj): 
 
   const previousProfiles = await repos.profiles.getAll({ fresh: true });
   const byId = new Map(previousProfiles.map((p) => [p.id, p]));
-  const timestamp = nowIso();
-  const updatedProfiles: ProfileConfig[] = [];
-
-  for (const entry of body.updates) {
-    if (!isRecord(entry) || typeof entry.id !== 'string') continue;
-    const current = byId.get(entry.id.trim());
-    if (!current) continue;
-    const next: ProfileConfig = {
-      ...current,
-      tags: normalizeTagArray(entry.tags),
-      downloadCount: Number(current.downloadCount) || 0,
-      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (next as RecordObj).version;
-    updatedProfiles.push(next);
-  }
+  const updatedProfiles = buildTagUpdatedItems(byId, body.updates, nowIso(), (p) => ({
+    downloadCount: Number(p.downloadCount) || 0,
+  }));
 
   if (updatedProfiles.length > 0) {
     await repos.profiles.putMany(updatedProfiles);
@@ -1849,63 +1422,15 @@ async function tagsProfilesBatchFromBody(repos: Repositories, body: RecordObj): 
   return createJsonResponse({ success: true, data: updatedProfiles });
 }
 
-export async function handleProfilesReorder(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-  if (storageErr || !repos) return storageErr!;
-
-  const { body, errorResponse: parseErr } = await parseJsonRequestBody(request);
-  if (parseErr || !body) return parseErr!;
-
-  return await reorderProfilesFromBody(repos, body);
-}
-
 async function reorderProfilesFromBody(repos: Repositories, body: RecordObj): Promise<Response> {
   if (!Array.isArray(body.orderedIds)) {
     return createJsonResponse({ success: false, message: 'orderedIds 必须为数组' }, 400);
   }
 
   const previousProfiles = await repos.profiles.getAll({ fresh: true });
-  const byId = new Map(previousProfiles.map((p) => [p.id, p]));
-  const seen = new Set<string>();
-  const ordered: ProfileConfig[] = [];
-
-  for (const rawId of body.orderedIds) {
-    const id = typeof rawId === 'string' ? rawId.trim() : '';
-    if (!id || seen.has(id)) continue;
-    const found = byId.get(id);
-    if (found) {
-      seen.add(id);
-      ordered.push(found);
-    }
-  }
-  for (const item of previousProfiles) {
-    if (!seen.has(item.id)) {
-      ordered.push(item);
-    }
-  }
-
-  const timestamp = nowIso();
-  const changedItems: ProfileConfig[] = [];
-  const reorderedItems: ProfileConfig[] = ordered.map((item, idx) => {
-    const prevSort = Number(item.sortIndex);
-    if (Number.isFinite(prevSort) && prevSort === idx) {
-      return item;
-    }
-    const next: ProfileConfig = {
-      ...item,
-      downloadCount: Number(item.downloadCount) || 0,
-      sortIndex: idx,
-      configVersion: Math.max(1, Number(item.configVersion) || 1) + 1,
-      updatedAt: timestamp,
-    };
-    delete (next as RecordObj).version;
-    changedItems.push(next);
-    return next;
-  });
+  const { reorderedItems, changedItems } = buildReorderedItems(previousProfiles, body.orderedIds, nowIso(), (p) => ({
+    downloadCount: Number(p.downloadCount) || 0,
+  }));
 
   if (changedItems.length > 0) {
     await repos.profiles.putMany(changedItems);
@@ -1914,18 +1439,21 @@ async function reorderProfilesFromBody(repos: Repositories, body: RecordObj): Pr
   return createJsonResponse({ success: true, data: reorderedItems });
 }
 
+export const handleProfilesBatchDelete = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, deleteProfilesBatchFromBody);
+
+export const handleProfilesBatchTags = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.large, tagsProfilesBatchFromBody);
+
+export const handleProfilesReorder = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
+  withJsonWriteContext(req, env, ctx, JSON_BODY_LIMITS.normal, reorderProfilesFromBody);
+
 export async function handleProfilesBatchAction(
   request: Request,
   env: EnvLike,
   context: BoundRequestContext | null = null,
 ): Promise<Response> {
-  return await runStorageWrite(async () => {
-    const { repos, errorResponse: storageErr } = ensureStorageAvailable(env, context);
-    if (storageErr || !repos) return storageErr!;
-
-    const { body, errorResponse: parseErr } = await parseJsonRequestBody(request, JSON_BODY_LIMITS.large);
-    if (parseErr || !body) return parseErr!;
-
+  return await withJsonWriteContext(request, env, context, JSON_BODY_LIMITS.large, async (repos, body) => {
     const action = typeof body.action === 'string' ? body.action.trim().toLowerCase() : '';
     if (action === 'enable' || action === 'disable') {
       const enabled = action === 'enable';
@@ -1938,21 +1466,13 @@ export async function handleProfilesBatchAction(
         repos.subscriptions.getAll({ fresh: true }),
         repos.profiles.getAll({ fresh: true }),
       ]);
-      const timestamp = nowIso();
-      const updatedProfiles: ProfileConfig[] = [];
-      for (const profile of previousProfiles) {
-        if (body.all !== true && !targetIdSet.has(profile.id)) continue;
-        if (Boolean(profile.enabled) === enabled) continue;
-        const next: ProfileConfig = {
-          ...profile,
-          enabled,
-          downloadCount: Number(profile.downloadCount) || 0,
-          configVersion: Math.max(1, Number(profile.configVersion) || 1) + 1,
-          updatedAt: timestamp,
-        };
-        delete (next as RecordObj).version;
-        updatedProfiles.push(next);
-      }
+      const updatedProfiles = buildToggledItems(previousProfiles, {
+        enabled,
+        all: body.all === true,
+        targetIdSet,
+        timestamp: nowIso(),
+        normalizeExtra: (p) => ({ downloadCount: Number(p.downloadCount) || 0 }),
+      });
       if (updatedProfiles.length > 0) {
         await repos.profiles.putMany(updatedProfiles);
         const updatedMap = new Map(updatedProfiles.map((p) => [p.id, p]));
@@ -1967,15 +1487,9 @@ export async function handleProfilesBatchAction(
       }
       return createJsonResponse({ success: true, data: updatedProfiles });
     }
-    if (action === 'delete') {
-      return await deleteProfilesBatchFromBody(repos, body);
-    }
-    if (action === 'tags') {
-      return await tagsProfilesBatchFromBody(repos, body);
-    }
-    if (action === 'reorder') {
-      return await reorderProfilesFromBody(repos, body);
-    }
+    if (action === 'delete') return await deleteProfilesBatchFromBody(repos, body);
+    if (action === 'tags') return await tagsProfilesBatchFromBody(repos, body);
+    if (action === 'reorder') return await reorderProfilesFromBody(repos, body);
 
     return createJsonResponse({ success: false, message: '不支持的批量操作' }, 400);
   });

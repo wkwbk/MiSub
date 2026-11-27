@@ -824,3 +824,443 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     expect(profTools.showProfileModal.value).toBe(false);
   });
 });
+
+describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions', () => {
+  it('Audit #1: post-create immediate follow-up edit/toggle works without refresh and preserves builtinTransform', async () => {
+    const db = createMemoryD1();
+    const { env, cookie } = await createAuthedEnv(db);
+
+    const subCreate = await handleApiRequest(
+      makeAuthedRequest('/api/subscriptions', cookie, {
+        method: 'POST',
+        body: { name: 'Immediate Sub', url: 'https://imm.example.com/sub' },
+      }),
+      env,
+    );
+    expect(subCreate.status).toBe(201);
+    const createdSub = (await subCreate.json()).data;
+    expect(createdSub.configVersion).toBe(1);
+
+    const subFollowUp = await handleApiRequest(
+      makeAuthedRequest(`/api/subscriptions/${createdSub.id}`, cookie, {
+        method: 'PATCH',
+        body: { enabled: false, configVersion: createdSub.configVersion },
+      }),
+      env,
+    );
+    expect(subFollowUp.status).toBe(200);
+    expect((await subFollowUp.json()).data).toMatchObject({
+      id: createdSub.id,
+      enabled: false,
+      configVersion: 2,
+    });
+
+    const nodeCreate = await handleApiRequest(
+      makeAuthedRequest('/api/nodes', cookie, {
+        method: 'POST',
+        body: { name: 'Immediate Node', url: 'vless://11111111-1111-4111-8111-111111111111@1.1.1.1:443' },
+      }),
+      env,
+    );
+    expect(nodeCreate.status).toBe(201);
+    const createdNode = (await nodeCreate.json()).data;
+    expect(createdNode.configVersion).toBe(1);
+
+    const nodeFollowUp = await handleApiRequest(
+      makeAuthedRequest(`/api/nodes/${createdNode.id}`, cookie, {
+        method: 'PATCH',
+        body: { enabled: false, configVersion: createdNode.configVersion },
+      }),
+      env,
+    );
+    expect(nodeFollowUp.status).toBe(200);
+    expect((await nodeFollowUp.json()).data.configVersion).toBe(2);
+
+    const profCreate = await handleApiRequest(
+      makeAuthedRequest('/api/profiles', cookie, {
+        method: 'POST',
+        body: {
+          name: 'Immediate Profile',
+          customId: 'imm-prof',
+          builtinTransform: { preset: 'default', enabled: true },
+        },
+      }),
+      env,
+    );
+    expect(profCreate.status).toBe(201);
+    const createdProf = (await profCreate.json()).data;
+    expect(createdProf.configVersion).toBe(1);
+    expect(createdProf.builtinTransform).toMatchObject({ preset: 'default', enabled: true });
+
+    const profFollowUp = await handleApiRequest(
+      makeAuthedRequest(`/api/profiles/${createdProf.id}`, cookie, {
+        method: 'PATCH',
+        body: { enabled: false, configVersion: createdProf.configVersion },
+      }),
+      env,
+    );
+    expect(profFollowUp.status).toBe(200);
+    expect((await profFollowUp.json()).data).toMatchObject({
+      id: createdProf.id,
+      enabled: false,
+      configVersion: 2,
+    });
+
+    setActivePinia(createPinia());
+    const { useDataStore } = await import('@/stores/useDataStore.js');
+    const store = useDataStore();
+
+    frontendMocks.apiPost.mockResolvedValueOnce({
+      success: true,
+      data: { id: 'sub-store-1', name: 'Store Sub', url: 'https://s.example.com' },
+    });
+    const storeSubRes = await store.createSubscription({ name: 'Store Sub', url: 'https://s.example.com' });
+    expect(storeSubRes.ok).toBe(true);
+    expect(storeSubRes.data.configVersion).toBe(1);
+    expect(store.subscriptions[0].configVersion).toBe(1);
+
+    frontendMocks.apiPost.mockResolvedValueOnce({
+      success: true,
+      data: { id: 'prof-store-1', name: 'Store Prof' },
+    });
+    const storeProfRes = await store.createProfile({ name: 'Store Prof' });
+    expect(storeProfRes.ok).toBe(true);
+    expect(storeProfRes.data.configVersion).toBe(1);
+    expect(store.profiles[0].configVersion).toBe(1);
+  });
+
+  it('Audit #2: modal drafts stay isolated from background runtime updates and proxy switch does not collapse', async () => {
+    setActivePinia(createPinia());
+    const { useDataStore } = await import('@/stores/useDataStore.js');
+    const { useSubscriptionForms } = await import('@/composables/useSubscriptionForms.js');
+    const { useNodeForms } = await import('@/composables/useNodeForms.js');
+    const { mount } = await import('@vue/test-utils');
+    const { i18n } = await import('@/i18n/index.js');
+    const { default: EditForm } = await import('@/components/modals/SubscriptionEditModal/EditForm.vue');
+    const { default: ProfileModal } = await import('@/components/modals/ProfileModal.vue');
+
+    const store = useDataStore();
+    const initialSub = {
+      id: 'sub-iso-1',
+      name: 'Iso Sub',
+      url: 'https://iso.example.com/sub',
+      enabled: true,
+      nodeCount: 5,
+      configVersion: 2,
+    };
+    const initialNode = {
+      id: 'node-iso-1',
+      name: 'Iso Node',
+      url: 'trojan://pw@1.2.3.4:443',
+      enabled: true,
+      tags: ['HK'],
+      configVersion: 3,
+    };
+    store.hydrateFromData({
+      misubs: [initialSub, initialNode],
+      profiles: [],
+    });
+
+    const subForms = useSubscriptionForms({
+      addSubscription: vi.fn(),
+      updateSubscription: vi.fn(),
+    });
+    subForms.openEdit(store.subscriptions[0]);
+    subForms.editingSubscription.value.name = 'User Edited Sub Name';
+    store.applySubscriptionRuntimeUpdate('sub-iso-1', {
+      nodeCount: 88,
+      lastUpdate: '2026-11-27T12:00:00Z',
+    });
+    expect(subForms.editingSubscription.value.name).toBe('User Edited Sub Name');
+
+    const nodeForms = useNodeForms({
+      addNode: vi.fn(),
+      updateNode: vi.fn(),
+    });
+    nodeForms.openEdit(store.subscriptions[1]);
+    store.subscriptions[1].name = 'Mutated Store Node';
+    store.subscriptions[1].tags.push('SG');
+    expect(nodeForms.editingNode.value.name).toBe('Iso Node');
+    expect(nodeForms.editingNode.value.tags).toEqual(['HK']);
+
+    const { default: Switch } = await import('@/components/ui/Switch.vue');
+    const editFormWrapper = mount(EditForm, {
+      props: {
+        editingSubscription: {
+          id: 'sub-iso-1',
+          name: 'Init',
+          url: 'https://iso.example.com/sub',
+          fetchProxy: '',
+          configVersion: 1,
+        },
+      },
+      global: { plugins: [i18n] },
+    });
+    editFormWrapper.findComponent(Switch).vm.$emit('update:modelValue', true);
+    await editFormWrapper.vm.$nextTick();
+    expect(editFormWrapper.find('#sub-edit-proxy').exists()).toBe(true);
+    await editFormWrapper.setProps({
+      editingSubscription: {
+        id: 'sub-iso-1',
+        name: 'Typed Name',
+        url: 'https://iso.example.com/sub',
+        fetchProxy: '',
+        configVersion: 1,
+      },
+    });
+    expect(editFormWrapper.find('#sub-edit-proxy').exists()).toBe(true);
+    editFormWrapper.unmount();
+
+    const profProp = {
+      id: 'prof-iso-1',
+      name: 'Initial Prof',
+      subscriptions: ['sub-iso-1'],
+      manualNodes: [],
+      configVersion: 2,
+    };
+    const profWrapper = mount(ProfileModal, {
+      props: {
+        show: true,
+        profile: profProp,
+        allSubscriptions: store.subscriptions,
+        allManualNodes: [],
+      },
+      global: {
+        plugins: [i18n],
+        stubs: {
+          ProfileForm: true,
+          SubscriptionSelector: true,
+          SubProfileSelector: true,
+          NodeSelector: true,
+        },
+      },
+    });
+    store.applySubscriptionRuntimeUpdate('sub-iso-1', { nodeCount: 120 });
+    await profWrapper.setProps({
+      allSubscriptions: [...store.subscriptions],
+    });
+    expect(profWrapper.props('profile')).toEqual(profProp);
+    profWrapper.unmount();
+  });
+
+  it('Audit #3: FIFO toggle serialization converges, surgical rollback preserves sibling & runtime fields, reorder settles cleanly, and bulk import prevents reentry', async () => {
+    frontendMocks.apiPatch.mockReset();
+    frontendMocks.apiPost.mockReset();
+    setActivePinia(createPinia());
+    const { useDataStore } = await import('@/stores/useDataStore.js');
+    const { useBulkImportLogic } = await import('@/composables/useBulkImportLogic.js');
+
+    const store = useDataStore();
+    store.hydrateFromData({
+      misubs: [
+        { id: 's1', name: 'S1', url: 'https://1.example.com', enabled: true, nodeCount: 5, sortIndex: 0, configVersion: 1 },
+        { id: 's2', name: 'S2', url: 'https://2.example.com', enabled: true, nodeCount: 8, sortIndex: 1, configVersion: 1 },
+      ],
+      profiles: [],
+    });
+
+    let resolveFirstPatch;
+    let resolveSecondPatch;
+    frontendMocks.apiPatch
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirstPatch = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecondPatch = resolve;
+          }),
+      );
+
+    const p1 = store.patchSubscription('s1', { enabled: false, configVersion: 1 });
+    const p2 = store.patchSubscription('s1', { enabled: true, configVersion: 2 });
+
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(frontendMocks.apiPatch).toHaveBeenCalledTimes(1);
+
+    resolveFirstPatch({
+      success: true,
+      data: { id: 's1', name: 'S1', url: 'https://1.example.com', enabled: false, nodeCount: 5, configVersion: 2 },
+    });
+    await p1;
+    await Promise.resolve();
+    expect(frontendMocks.apiPatch).toHaveBeenCalledTimes(2);
+
+    resolveSecondPatch({
+      success: true,
+      data: { id: 's1', name: 'S1', url: 'https://1.example.com', enabled: true, nodeCount: 5, configVersion: 3 },
+    });
+    await p2;
+    expect(store.subscriptions[0]).toMatchObject({ enabled: true, configVersion: 3 });
+
+    let rejectToggle;
+    frontendMocks.apiPatch.mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          rejectToggle = reject;
+        }),
+    );
+    const failedToggle = store.patchSubscription('s1', { enabled: false, configVersion: 3 });
+    expect(store.subscriptions[0].enabled).toBe(false);
+    store.applySubscriptionRuntimeUpdate('s1', { nodeCount: 42 });
+    store.applySubscriptionRuntimeUpdate('s2', { nodeCount: 99 });
+    await Promise.resolve();
+    rejectToggle(new Error('network blip'));
+    const failRes = await failedToggle;
+    expect(failRes.ok).toBe(false);
+    expect(store.subscriptions[0].enabled).toBe(true);
+    expect(store.subscriptions[0].nodeCount).toBe(42);
+    expect(store.subscriptions[1].nodeCount).toBe(99);
+
+    frontendMocks.apiPost.mockResolvedValueOnce({ success: false, error: 'reorder failed' });
+    const reorderFail = await store.reorderSubscriptionsRecord(['s2', 's1']);
+    expect(reorderFail.ok).toBe(false);
+    expect(store.subscriptions.map((s) => s.id)).toEqual(['s1', 's2']);
+    expect(store.subscriptions[0].nodeCount).toBe(42);
+
+    let resolveBulk;
+    const addNodesFromBulk = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveBulk = resolve;
+        }),
+    );
+    const bulk = useBulkImportLogic({
+      addSubscriptionsFromBulk: vi.fn(),
+      addNodesFromBulk,
+    });
+    const firstImport = bulk.handleBulkImport('vless://11111111-1111-4111-8111-111111111111@1.1.1.1:443#NodeA');
+    const secondImport = bulk.handleBulkImport('vless://11111111-1111-4111-8111-111111111111@1.1.1.1:443#NodeB');
+    expect(addNodesFromBulk).toHaveBeenCalledTimes(1);
+    expect(bulk.isImporting.value).toBe(true);
+    resolveBulk({ ok: true });
+    await Promise.all([firstImport, secondImport]);
+    expect(bulk.isImporting.value).toBe(false);
+  });
+
+  it('Audit #4: strips runtime/meta keys from PATCH payloads and preserves concurrent shortLink on profile save', async () => {
+    frontendMocks.apiPatch.mockReset();
+    setActivePinia(createPinia());
+    const { useDataStore } = await import('@/stores/useDataStore.js');
+    const { useProfiles } = await import('@/composables/useProfiles.js');
+
+    const store = useDataStore();
+    store.hydrateFromData({
+      misubs: [
+        { id: 'sub-strip', name: 'Old', url: 'https://a.example.com', enabled: true, nodeCount: 10, configVersion: 2 },
+      ],
+      profiles: [
+        {
+          id: 'prof-strip',
+          name: 'Prof Old',
+          subscriptions: [],
+          manualNodes: [],
+          shortLink: '',
+          configVersion: 4,
+        },
+      ],
+    });
+
+    frontendMocks.apiPatch.mockResolvedValueOnce({
+      success: true,
+      data: { id: 'sub-strip', name: 'New', url: 'https://a.example.com', enabled: true, configVersion: 3 },
+    });
+    await store.updateSubscriptionRecord(
+      'sub-strip',
+      {
+        name: 'New',
+        configVersion: 99,
+        nodeCount: 999,
+        userInfo: { upload: 100 },
+        downloadCount: 77,
+        lastUpdate: '2026-01-01',
+        latency: 80,
+        status: 'error',
+        sortIndex: 99,
+        version: 9,
+      },
+      { expectedConfigVersion: 2 },
+    );
+
+    const sentSubPatch = frontendMocks.apiPatch.mock.calls.at(-1)[1];
+    expect(sentSubPatch).toMatchObject({ name: 'New', configVersion: 2 });
+    for (const forbidden of ['nodeCount', 'userInfo', 'downloadCount', 'lastUpdate', 'latency', 'status', 'sortIndex', 'version']) {
+      expect(sentSubPatch).not.toHaveProperty(forbidden);
+    }
+
+    const profTools = useProfiles();
+    profTools.handleEditProfile('prof-strip');
+    store.profiles[0].shortLink = 'https://short.example/xyz';
+    frontendMocks.apiPatch.mockResolvedValueOnce({
+      success: true,
+      data: {
+        id: 'prof-strip',
+        name: 'Prof Renamed',
+        subscriptions: [],
+        manualNodes: [],
+        shortLink: 'https://short.example/xyz',
+        configVersion: 5,
+      },
+    });
+    await profTools.handleSaveProfile({
+      ...profTools.editingProfile.value,
+      name: 'Prof Renamed',
+      shortLink: '',
+    });
+    const sentProfPatch = frontendMocks.apiPatch.mock.calls.at(-1)[1];
+    expect(sentProfPatch.name).toBe('Prof Renamed');
+    expect(sentProfPatch).not.toHaveProperty('shortLink');
+  });
+
+  it('Audit #6: legacy v1 D1 database auto-migrates once via PRAGMA user_version v1 -> v2 and runs zero DDL thereafter', async () => {
+    const legacyDb = createMemoryD1(
+      {
+        subscriptions: [
+          {
+            id: 'sub-legacy-1',
+            name: 'Legacy Sub',
+            url: 'https://legacy.example.com/sub',
+            enabled: true,
+            sortIndex: 0,
+            version: 3,
+          },
+        ],
+      },
+      { userVersion: 1 },
+    );
+    expect(legacyDb.getUserVersion()).toBe(1);
+    expect(legacyDb.existingColumns.has('subscriptions.config_version')).toBe(false);
+
+    const prepareSpy = vi.spyOn(legacyDb, 'prepare');
+    const { env, cookie } = await createAuthedEnv(legacyDb);
+
+    const dataRes = await handleApiRequest(makeAuthedRequest('/api/data', cookie), env);
+    expect(dataRes.status).toBe(200);
+    expect(legacyDb.getUserVersion()).toBe(2);
+    expect(legacyDb.existingColumns.has('subscriptions.config_version')).toBe(true);
+    const payload = await dataRes.json();
+    expect(payload.misubs[0]).toMatchObject({ id: 'sub-legacy-1', configVersion: 3 });
+
+    prepareSpy.mockClear();
+    const patchRes = await handleApiRequest(
+      makeAuthedRequest('/api/subscriptions/sub-legacy-1', cookie, {
+        method: 'PATCH',
+        body: { enabled: false, configVersion: 3 },
+      }),
+      env,
+    );
+    expect(patchRes.status).toBe(200);
+    expect((await patchRes.json()).data).toMatchObject({
+      id: 'sub-legacy-1',
+      enabled: false,
+      configVersion: 4,
+    });
+
+    const postMigrationSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
+    expect(postMigrationSqls.some((sql) => /\b(CREATE|ALTER)\b|\bPRAGMA\s+user_version\b/i.test(sql))).toBe(false);
+  });
+});

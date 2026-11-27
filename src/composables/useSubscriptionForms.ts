@@ -117,6 +117,10 @@ export function useSubscriptionForms({ addSubscription, updateSubscription }: Us
       detectedName: _omitDetectedName,
       lastError: _omitLastError,
       lastUpdate: _omitLastUpdate,
+      latency: _omitLatency,
+      status: _omitStatus,
+      latencyMode: _omitLatencyMode,
+      lastTestedAt: _omitLastTestedAt,
       ...editableFields
     } = editingSubscription.value;
 

@@ -58,10 +58,9 @@ export function useNodeForms({ addNode, updateNode }: UseNodeFormsOptions) {
     }
     conflictState.value = null;
     isNew.value = false;
-    editingNode.value = {
-      ...node,
-      tags: getItemTags(node),
-    };
+    const cloned = JSON.parse(JSON.stringify(node)) as StoreMisubItem;
+    cloned.tags = getItemTags(cloned);
+    editingNode.value = cloned;
     showModal.value = true;
   };
 
@@ -90,7 +89,7 @@ export function useNodeForms({ addNode, updateNode }: UseNodeFormsOptions) {
     const expectedConfigVersion =
       editingNode.value.configVersion !== undefined ? Math.max(1, Number(editingNode.value.configVersion) || 1) : 1;
 
-    // 剥离 sortIndex、测速运行态与版本字段，避免覆盖并发重排或测速结果
+    // 剥离 sortIndex、测速与订阅运行态、版本字段，避免覆盖并发重排或测速结果
     const {
       sortIndex: _omitSortIndex,
       configVersion: _omitConfigVersion,
@@ -101,6 +100,13 @@ export function useNodeForms({ addNode, updateNode }: UseNodeFormsOptions) {
       status: _omitStatus,
       latencyMode: _omitLatencyMode,
       lastTestedAt: _omitLastTestedAt,
+      nodeCount: _omitNodeCount,
+      lastGoodNodeCount: _omitLastGood,
+      userInfo: _omitUserInfo,
+      detectedName: _omitDetectedName,
+      lastError: _omitLastError,
+      lastUpdate: _omitLastUpdate,
+      isUpdating: _omitUpdating,
       ...editableNodeFields
     } = editingNode.value;
 

@@ -145,6 +145,7 @@ export function useSettingsLogic() {
    * 保存设置到 API
    */
   const handleSave = async (): Promise<boolean> => {
+    if (isSaving.value) return false;
     if (hasWhitespace.value) {
       showToast(t('settings.noWhitespace'), 'error');
       return false;

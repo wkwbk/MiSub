@@ -83,6 +83,7 @@ export function useProfiles() {
 
   const isNewProfile = ref(false);
   const editingProfile = ref<EditableProfile | null>(null);
+  const openedShortLink = ref('');
   const profileConflict = ref<ProfileConflictState | null>(null);
   const showProfileModal = ref(false);
   const showDeleteProfilesModal = ref(false);
@@ -90,6 +91,7 @@ export function useProfiles() {
   watch(showProfileModal, (visible) => {
     if (!visible) {
       profileConflict.value = null;
+      openedShortLink.value = '';
     }
   });
 
@@ -109,10 +111,10 @@ export function useProfiles() {
     activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
   }
 
-  async function renameProfileTag(oldName: string, newName: string): Promise<void> {
+  async function renameProfileTag(oldName: string, newName: string): Promise<boolean> {
     const normalizedOld = normalizeTagName(oldName);
     const normalizedNew = normalizeTagName(newName);
-    if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
+    if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return false;
 
     const tagUpdates: Array<{ id: string; tags: string[] }> = [];
     profiles.value.forEach((profile) => {
@@ -123,7 +125,8 @@ export function useProfiles() {
     });
 
     if (tagUpdates.length > 0) {
-      await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+      const res = await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+      if (!res.ok) return false;
     }
 
     const customOrder = settingsStore.config.profileTagOrder || [];
@@ -140,11 +143,12 @@ export function useProfiles() {
         activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag)),
       );
     }
+    return true;
   }
 
-  async function deleteProfileTag(tagName: string): Promise<void> {
+  async function deleteProfileTag(tagName: string): Promise<boolean> {
     const normalized = normalizeTagName(tagName);
-    if (!normalized) return;
+    if (!normalized) return false;
 
     const tagUpdates: Array<{ id: string; tags: string[] }> = [];
     profiles.value.forEach((profile) => {
@@ -155,7 +159,8 @@ export function useProfiles() {
     });
 
     if (tagUpdates.length > 0) {
-      await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+      const res = await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+      if (!res.ok) return false;
     }
 
     const customOrder = settingsStore.config.profileTagOrder || [];
@@ -170,6 +175,7 @@ export function useProfiles() {
     if (activeTagFilters.value.includes(normalized)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
     }
+    return true;
   }
 
   function reorderProfileTags(newOrder: string[]): void {
@@ -212,15 +218,26 @@ export function useProfiles() {
   const isSavingProfile = ref(false);
 
   const handleProfileToggle = async (updatedProfile: Partial<StoreProfileConfig> & { id: string }): Promise<void> => {
-    const patch: Partial<StoreProfileConfig> = {
-      enabled: Boolean(updatedProfile.enabled),
-      ...(updatedProfile.isPublic !== undefined ? { isPublic: updatedProfile.isPublic } : {}),
-    };
+    const existing = profiles.value.find((p) => p.id === updatedProfile.id);
+    const patch: Partial<StoreProfileConfig> = {};
+    if (updatedProfile.enabled !== undefined && (!existing || Boolean(existing.enabled) !== Boolean(updatedProfile.enabled))) {
+      patch.enabled = Boolean(updatedProfile.enabled);
+    }
+    if (updatedProfile.isPublic !== undefined && (!existing || Boolean(existing.isPublic) !== Boolean(updatedProfile.isPublic))) {
+      patch.isPublic = Boolean(updatedProfile.isPublic);
+    }
+    if (Object.keys(patch).length === 0) {
+      patch.enabled = Boolean(updatedProfile.enabled);
+      if (updatedProfile.isPublic !== undefined) {
+        patch.isPublic = Boolean(updatedProfile.isPublic);
+      }
+    }
     await dataStore.patchProfile(updatedProfile.id, patch);
   };
 
   const handleAddProfile = (): void => {
     profileConflict.value = null;
+    openedShortLink.value = '';
     isNewProfile.value = true;
     editingProfile.value = {
       name: '',
@@ -260,6 +277,7 @@ export function useProfiles() {
     if (profile) {
       profileConflict.value = null;
       isNewProfile.value = false;
+      openedShortLink.value = String(profile.shortLink || '').trim();
       editingProfile.value = cloneProfileForEdit(profile);
       showProfileModal.value = true;
     }
@@ -319,12 +337,13 @@ export function useProfiles() {
     } = normalizedProfile as EditableProfile;
 
     const editableFields = { ...rawEditableFields };
-    if (
-      !isNewProfile.value &&
-      existingProfile &&
-      String(editableFields.shortLink || '').trim() === String(existingProfile.shortLink || '').trim()
-    ) {
-      delete editableFields.shortLink;
+    if (!isNewProfile.value) {
+      const formShortLink = String(editableFields.shortLink || '').trim();
+      const latestStoreShortLink = String(existingProfile?.shortLink || '').trim();
+      // 未改动弹窗打开时的短链快照，则不随 PATCH 提交，防止并发生成的 shortLink 被覆盖回空字符串
+      if (formShortLink === openedShortLink.value || (existingProfile && formShortLink === latestStoreShortLink)) {
+        delete editableFields.shortLink;
+      }
     }
 
     isSavingProfile.value = true;
@@ -384,6 +403,7 @@ export function useProfiles() {
       profileConflict.value = null;
       return;
     }
+    openedShortLink.value = String(serverCurrent.shortLink || '').trim();
     editingProfile.value = cloneProfileForEdit(serverCurrent);
     profileConflict.value = null;
     showToast(t('store.reloadedLatestRecord'), 'info');

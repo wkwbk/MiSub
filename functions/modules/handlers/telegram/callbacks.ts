@@ -652,10 +652,6 @@ export async function handleCallbackQuery(
                 originalSubs.splice(realIdx, 1);
                 if (typeof storageAdapter.deleteSubscriptionById === 'function') {
                   await storageAdapter.deleteSubscriptionById(deletedId);
-                } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
-                  await storageAdapter.syncAllSubscriptions(originalSubs);
-                } else {
-                  await storageAdapter.putAllSubscriptions(originalSubs);
                 }
                 await answerCallbackQuery(callbackQuery.id, '已删除', env);
                 await sendTelegramMessage(chatId, `🗑️ 已删除订阅: <b>${escapeHtml(deletedName)}</b>`, env);

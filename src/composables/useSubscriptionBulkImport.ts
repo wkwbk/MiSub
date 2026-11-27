@@ -44,87 +44,94 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk }: UseSubsc
   const { showToast } = useToastStore();
   const dataStore = useDataStore();
   const showModal = ref(false);
+  const isImporting = ref(false);
 
-  const handleSubscriptionBulkImport = async (importText: string, tagsInput: string | string[] = []): Promise<void> => {
-    if (!importText || !String(importText).trim()) return;
+  const handleSubscriptionBulkImport = async (importText: string, tagsInput: string | string[] = []): Promise<boolean> => {
+    if (!importText || !String(importText).trim() || isImporting.value) return false;
+    isImporting.value = true;
+    try {
+      const existingUrls = new Set((dataStore.subscriptions || []).map((s) => s.url).filter(Boolean));
+      const seenInBatch = new Set<string>();
 
-    const existingUrls = new Set((dataStore.subscriptions || []).map((s) => s.url).filter(Boolean));
-    const seenInBatch = new Set<string>();
+      const lines = String(importText)
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean);
 
-    const lines = String(importText)
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean);
+      const validSubs: StoreMisubItem[] = [];
+      let duplicateCount = 0;
+      let invalidCount = 0;
 
-    const validSubs: StoreMisubItem[] = [];
-    let duplicateCount = 0;
-    let invalidCount = 0;
+      for (const line of lines) {
+        if (!isValidSubscriptionUrl(line)) {
+          invalidCount++;
+          continue;
+        }
+        if (existingUrls.has(line) || seenInBatch.has(line)) {
+          duplicateCount++;
+          continue;
+        }
+        seenInBatch.add(line);
 
-    for (const line of lines) {
-      if (!isValidSubscriptionUrl(line)) {
-        invalidCount++;
-        continue;
+        validSubs.push(
+          applyItemTags<StoreMisubItem>(
+            {
+              id: generateSubscriptionId(),
+              name: extractNodeName(line) || t('bulkImport.unnamed'),
+              url: line,
+              enabled: true,
+              status: 'unchecked',
+              exclude: '',
+              customUserAgent: '',
+              notes: '',
+              tags: [],
+            },
+            tagsInput,
+          ),
+        );
       }
-      if (existingUrls.has(line) || seenInBatch.has(line)) {
-        duplicateCount++;
-        continue;
-      }
-      seenInBatch.add(line);
 
-      validSubs.push(
-        applyItemTags<StoreMisubItem>(
-          {
-            id: generateSubscriptionId(),
-            name: extractNodeName(line) || t('bulkImport.unnamed'),
-            url: line,
-            enabled: true,
-            status: 'unchecked',
-            exclude: '',
-            customUserAgent: '',
-            notes: '',
-            tags: [],
-          },
-          tagsInput,
-        ),
-      );
-    }
-
-    let hasFailure = false;
-    if (validSubs.length > 0) {
-      const outcome = await addSubscriptionsFromBulk?.(validSubs);
-      if (!isBatchOutcomeOk(outcome)) {
-        hasFailure = true;
+      let hasFailure = false;
+      if (validSubs.length > 0) {
+        const outcome = await addSubscriptionsFromBulk?.(validSubs);
+        if (!isBatchOutcomeOk(outcome)) {
+          hasFailure = true;
+        } else {
+          const parts = [t('bulkImport.importedSubscriptions', { count: validSubs.length })];
+          if (duplicateCount > 0) {
+            parts.push(t('bulkImport.skippedDuplicates', { count: duplicateCount }));
+          }
+          if (invalidCount > 0) {
+            parts.push(t('subscriptionBulkImport.ignoredInvalid', { count: invalidCount }));
+          }
+          const [main, ...details] = parts;
+          showToast(details.length > 0 ? `${main} (${details.join('，')})` : main, 'success');
+        }
+      } else if (duplicateCount > 0) {
+        showToast(t('subscriptionBulkImport.allDuplicates', { count: duplicateCount }), 'info');
+      } else if (invalidCount > 0) {
+        showToast(
+          t('subscriptionBulkImport.noValidSubscriptionsWithInvalid', {
+            count: invalidCount,
+          }),
+          'warning',
+        );
       } else {
-        const parts = [t('bulkImport.importedSubscriptions', { count: validSubs.length })];
-        if (duplicateCount > 0) {
-          parts.push(t('bulkImport.skippedDuplicates', { count: duplicateCount }));
-        }
-        if (invalidCount > 0) {
-          parts.push(t('subscriptionBulkImport.ignoredInvalid', { count: invalidCount }));
-        }
-        const [main, ...details] = parts;
-        showToast(details.length > 0 ? `${main} (${details.join('，')})` : main, 'success');
+        showToast(t('subscriptionBulkImport.noValidSubscriptions'), 'warning');
       }
-    } else if (duplicateCount > 0) {
-      showToast(t('subscriptionBulkImport.allDuplicates', { count: duplicateCount }), 'info');
-    } else if (invalidCount > 0) {
-      showToast(
-        t('subscriptionBulkImport.noValidSubscriptionsWithInvalid', {
-          count: invalidCount,
-        }),
-        'warning',
-      );
-    } else {
-      showToast(t('subscriptionBulkImport.noValidSubscriptions'), 'warning');
-    }
 
-    if (!hasFailure) {
-      showModal.value = false;
+      if (!hasFailure) {
+        showModal.value = false;
+      }
+      return !hasFailure;
+    } finally {
+      isImporting.value = false;
     }
   };
 
   return {
     showModal,
+    isImporting,
     handleSubscriptionBulkImport,
   };
 }

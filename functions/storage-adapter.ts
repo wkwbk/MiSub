@@ -25,14 +25,12 @@ import {
   computeCacheExpiresAt,
   D1_KNOWN_SETTINGS_KEYS,
   DATA_KEYS,
-  ensureD1Schema,
   ID_DATA_TABLES,
   isCacheKey,
   isManualNodeRecord,
-  isNoSuchTableError,
-  isSchemaMismatchError,
   KEY_VALUE_TABLES,
   parseTimestampMs,
+  runD1Migrations,
   STORAGE_TYPES,
 } from './storage/d1-schema.js';
 import {
@@ -72,6 +70,14 @@ interface CacheRow {
   key?: string;
   value: string;
   expires_at?: number | string | null;
+}
+
+interface ManagedStatement {
+  bind: (...args: unknown[]) => ManagedStatement;
+  first: <T = Record<string, unknown>>() => Promise<T | null>;
+  all: <T = Record<string, unknown>>() => Promise<D1Result<T>>;
+  run: () => ReturnType<D1PreparedStatement['run']>;
+  materialize: () => D1PreparedStatement;
 }
 
 let settingsCaches = new WeakMap<D1Database, SettingsCacheEntry>();
@@ -179,8 +185,37 @@ function stableStringify(value: unknown): string {
   return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify(record[key])}`).join(',')}}`;
 }
 
+function extractProfileKeys(item: { customId?: unknown; linkId?: unknown } | null | undefined): {
+  customId: string | null;
+  linkId: string | null;
+} {
+  return {
+    customId: typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null,
+    linkId: typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null,
+  };
+}
+
+function resolveSyncedEntityDiff<T extends { configVersion?: unknown }>(
+  existing: T | undefined,
+  incoming: T,
+): { changed: boolean; candidate: T } {
+  if (!existing) {
+    return { changed: true, candidate: incoming };
+  }
+  const rawRecord = incoming as unknown as Record<string, unknown>;
+  const hasExplicitVersion = rawRecord.configVersion !== undefined || rawRecord.version !== undefined;
+  const versionChanged =
+    hasExplicitVersion &&
+    normalizeConfigVersion(rawRecord.configVersion, rawRecord.version) !== normalizeConfigVersion(existing.configVersion);
+  const changed =
+    versionChanged || stableStringify(stripVersionFields(existing)) !== stableStringify(stripVersionFields(incoming));
+  const candidate = hasExplicitVersion ? incoming : { ...incoming, configVersion: existing.configVersion };
+  return { changed, candidate };
+}
+
 /**
  * D1 存储适配器（八表职责分离与索引行级存储）
+ * 在单点 SQL 执行网关前自动运行基于 PRAGMA user_version 的线性版本迁移，业务层零 DDL 容错分支。
  */
 class D1StorageAdapter implements StorageAdapter {
   db: D1Database;
@@ -191,29 +226,47 @@ class D1StorageAdapter implements StorageAdapter {
     this.type = STORAGE_TYPES.D1;
   }
 
-  async _withSchemaRetry<T>(operation: () => Promise<T>): Promise<T> {
-    try {
-      return await operation();
-    } catch (error) {
-      if (isSchemaMismatchError(error)) {
-        await ensureD1Schema(this.db);
-        return await operation();
-      }
-      throw error;
-    }
+  _createManagedStatement(sql: string, args: unknown[] = [], hasArgs = false): ManagedStatement {
+    const materialize = (): D1PreparedStatement => {
+      const stmt = this.db.prepare(sql);
+      return hasArgs ? stmt.bind(...args) : stmt;
+    };
+
+    return {
+      bind: (...nextArgs: unknown[]) => this._createManagedStatement(sql, nextArgs, true),
+      materialize,
+      first: async <T = Record<string, unknown>>() => {
+        await runD1Migrations(this.db);
+        return await materialize().first<T>();
+      },
+      all: async <T = Record<string, unknown>>() => {
+        await runD1Migrations(this.db);
+        return await materialize().all<T>();
+      },
+      run: async () => {
+        await runD1Migrations(this.db);
+        return await materialize().run();
+      },
+    };
   }
 
-  async _runBatchOrSequential(statements: D1PreparedStatement[], chunkSize = 80): Promise<void> {
+  _prepare(sql: string): ManagedStatement {
+    return this._createManagedStatement(sql);
+  }
+
+  async _runBatchOrSequential(statements: ManagedStatement[], chunkSize = 80): Promise<void> {
     if (!Array.isArray(statements) || statements.length === 0) return;
+    await runD1Migrations(this.db);
     if (typeof this.db.batch === 'function') {
       const safeChunkSize = Math.max(1, Number(chunkSize) || 80);
       for (let i = 0; i < statements.length; i += safeChunkSize) {
-        await this.db.batch(statements.slice(i, i + safeChunkSize));
+        const chunk = statements.slice(i, i + safeChunkSize).map((stmt) => stmt.materialize());
+        await this.db.batch(chunk);
       }
       return;
     }
     for (const stmt of statements) {
-      await stmt.run();
+      await stmt.materialize().run();
     }
   }
 
@@ -237,8 +290,9 @@ class D1StorageAdapter implements StorageAdapter {
       const { table, queryField, queryValue } = this._parseKey(key);
       const isKvTable = KEY_VALUE_TABLES.has(table);
 
-      const result = await this.db
-        .prepare(`SELECT ${isKvTable ? 'value as data' : 'data'} FROM ${table} WHERE ${queryField} = ?`)
+      const result = await this._prepare(
+        `SELECT ${isKvTable ? 'value as data' : 'data'} FROM ${table} WHERE ${queryField} = ?`,
+      )
         .bind(queryValue)
         .first<DataRow>();
 
@@ -259,9 +313,6 @@ class D1StorageAdapter implements StorageAdapter {
       }
       return parsed as T;
     } catch (error) {
-      if (isSchemaMismatchError(error)) {
-        return null;
-      }
       console.error(`[D1] Failed to get key ${key}:`, error);
       return null;
     }
@@ -280,40 +331,29 @@ class D1StorageAdapter implements StorageAdapter {
       const isKvTable = KEY_VALUE_TABLES.has(table);
       const data = typeof value === 'string' ? value : JSON.stringify(value);
 
-      await this._withSchemaRetry(async () => {
-        if (table === 'cache') {
-          const expiresAt = computeCacheExpiresAt(queryValue, value);
-          await this.db
-            .prepare(
-              `
-                        INSERT OR REPLACE INTO cache (key, value, expires_at, updated_at)
-                        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-                    `,
-            )
-            .bind(queryValue, data, expiresAt)
-            .run();
-        } else if (isKvTable) {
-          await this.db
-            .prepare(
-              `
-                        INSERT OR REPLACE INTO ${table} (key, value, updated_at)
-                        VALUES (?, ?, CURRENT_TIMESTAMP)
-                    `,
-            )
-            .bind(queryValue, data)
-            .run();
-        } else {
-          await this.db
-            .prepare(
-              `
-                        INSERT OR REPLACE INTO ${table} (id, data, updated_at)
-                        VALUES (?, ?, CURRENT_TIMESTAMP)
-                    `,
-            )
-            .bind(queryValue, data)
-            .run();
-        }
-      });
+      if (table === 'cache') {
+        const expiresAt = computeCacheExpiresAt(queryValue, value);
+        await this._prepare(
+          `INSERT OR REPLACE INTO cache (key, value, expires_at, updated_at)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        )
+          .bind(queryValue, data, expiresAt)
+          .run();
+      } else if (isKvTable) {
+        await this._prepare(
+          `INSERT OR REPLACE INTO ${table} (key, value, updated_at)
+           VALUES (?, ?, CURRENT_TIMESTAMP)`,
+        )
+          .bind(queryValue, data)
+          .run();
+      } else {
+        await this._prepare(
+          `INSERT OR REPLACE INTO ${table} (id, data, updated_at)
+           VALUES (?, ?, CURRENT_TIMESTAMP)`,
+        )
+          .bind(queryValue, data)
+          .run();
+      }
 
       if (key === DATA_KEYS.SETTINGS) {
         settingsCaches.delete(this.db);
@@ -336,21 +376,13 @@ class D1StorageAdapter implements StorageAdapter {
   async delete(key: string): Promise<boolean> {
     if (key === DATA_KEYS.SUBSCRIPTIONS) {
       for (const tbl of ['subscriptions', 'nodes']) {
-        try {
-          await this.db.prepare(`DELETE FROM ${tbl}`).run();
-        } catch (error) {
-          if (!isNoSuchTableError(error)) throw error;
-        }
+        await this._prepare(`DELETE FROM ${tbl}`).run();
         invalidateD1CollectionCache(this.db, tbl);
       }
       return true;
     }
     if (key === DATA_KEYS.PROFILES) {
-      try {
-        await this.db.prepare('DELETE FROM profiles').run();
-      } catch (error) {
-        if (!isNoSuchTableError(error)) throw error;
-      }
+      await this._prepare('DELETE FROM profiles').run();
       invalidateD1CollectionCache(this.db, 'profiles');
       return true;
     }
@@ -358,7 +390,7 @@ class D1StorageAdapter implements StorageAdapter {
     try {
       const { table, queryField, queryValue } = this._parseKey(key);
 
-      await this.db.prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue).run();
+      await this._prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue).run();
 
       if (key === DATA_KEYS.SETTINGS) {
         settingsCaches.delete(this.db);
@@ -373,9 +405,6 @@ class D1StorageAdapter implements StorageAdapter {
       }
       return true;
     } catch (error) {
-      if (isSchemaMismatchError(error)) {
-        return true;
-      }
       console.error(`[D1] Failed to delete key ${key}:`, error);
       throw error;
     }
@@ -407,36 +436,24 @@ class D1StorageAdapter implements StorageAdapter {
       }
 
       for (const table of targetTables) {
-        try {
-          let results: D1Result<Record<string, unknown>>;
-          if (KEY_VALUE_TABLES.has(table.name) && effectivePrefix) {
-            results = await this.db
-              .prepare(`SELECT ${table.keyField} FROM ${table.name} WHERE ${table.keyField} LIKE ?`)
-              .bind(`${effectivePrefix}%`)
-              .all();
-          } else {
-            results = await this.db.prepare(`SELECT ${table.keyField} FROM ${table.name}`).all();
-          }
+        const results =
+          KEY_VALUE_TABLES.has(table.name) && effectivePrefix
+            ? await this._prepare(`SELECT ${table.keyField} FROM ${table.name} WHERE ${table.keyField} LIKE ?`)
+                .bind(`${effectivePrefix}%`)
+                .all()
+            : await this._prepare(`SELECT ${table.keyField} FROM ${table.name}`).all();
 
-          (results?.results || []).forEach((row) => {
-            const rawVal = row[table.keyField];
-            const key = this._buildKey(table.name, typeof rawVal === 'string' ? rawVal : String(rawVal ?? ''));
-            if (key.startsWith(effectivePrefix)) {
-              keys.push({ name: key });
-            }
-          });
-        } catch (tableError) {
-          if (!isNoSuchTableError(tableError)) {
-            throw tableError;
+        (results?.results || []).forEach((row) => {
+          const rawVal = row[table.keyField];
+          const key = this._buildKey(table.name, typeof rawVal === 'string' ? rawVal : String(rawVal ?? ''));
+          if (key.startsWith(effectivePrefix)) {
+            keys.push({ name: key });
           }
-        }
+        });
       }
 
       return keys;
     } catch (error) {
-      if (isNoSuchTableError(error)) {
-        return [];
-      }
       console.error(`[D1] Failed to list keys with prefix ${prefix}:`, error);
       return [];
     }
@@ -452,9 +469,7 @@ class D1StorageAdapter implements StorageAdapter {
       async () => {
         try {
           const selectCols = table === 'guestbook' ? 'data' : 'data, config_version';
-          const results = await this._withSchemaRetry(() =>
-            this.db.prepare(`SELECT ${selectCols} FROM ${table}`).all<DataRow>(),
-          );
+          const results = await this._prepare(`SELECT ${selectCols} FROM ${table}`).all<DataRow>();
           if (!Array.isArray(results?.results)) return [];
 
           const deduped = new Map<string, T>();
@@ -479,7 +494,6 @@ class D1StorageAdapter implements StorageAdapter {
           return Array.from(deduped.values()).sort((a, b) => (Number(a.sortIndex) || 0) - (Number(b.sortIndex) || 0));
         } catch (error) {
           invalidateD1CollectionCache(this.db, table);
-          if (isNoSuchTableError(error)) return [];
           console.error(`[D1] Failed to read ${table}:`, error);
           return [];
         }
@@ -505,16 +519,14 @@ class D1StorageAdapter implements StorageAdapter {
   async getSubscriptionById(id: string): Promise<MisubItem | null> {
     for (const table of ['subscriptions', 'nodes']) {
       try {
-        const result = await this._withSchemaRetry(() =>
-          this.db.prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`).bind(id).first<DataRow>(),
-        );
+        const result = await this._prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`)
+          .bind(id)
+          .first<DataRow>();
         if (result) {
           return hydrateEntityConfigVersion(JSON.parse(result.data) as MisubItem, result.config_version);
         }
       } catch (error) {
-        if (!isNoSuchTableError(error)) {
-          console.error(`[D1] Failed to get ${table} item ${id}:`, error);
-        }
+        console.error(`[D1] Failed to get ${table} item ${id}:`, error);
       }
     }
     return null;
@@ -547,15 +559,13 @@ class D1StorageAdapter implements StorageAdapter {
     if (!target) return null;
 
     try {
-      const result = await this._withSchemaRetry(() =>
-        this.db
-          .prepare('SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
-          .bind(target, target, target)
-          .first<DataRow>(),
-      );
+      const result = await this._prepare(
+        'SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1',
+      )
+        .bind(target, target, target)
+        .first<DataRow>();
       return result?.data ? hydrateEntityConfigVersion(JSON.parse(result.data) as ProfileConfig, result.config_version) : null;
     } catch (error) {
-      if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to get profile ${idOrCustomId}:`, error);
       return null;
     }
@@ -570,14 +580,11 @@ class D1StorageAdapter implements StorageAdapter {
     if (!target) return null;
 
     try {
-      const rows = await this._withSchemaRetry(() =>
-        this.db
-          .prepare(
-            'SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? OR LOWER(custom_id) = LOWER(?) OR LOWER(link_id) = LOWER(?)',
-          )
-          .bind(target, target, target, target, target)
-          .all<DataRow>(),
-      );
+      const rows = await this._prepare(
+        'SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? OR LOWER(custom_id) = LOWER(?) OR LOWER(link_id) = LOWER(?)',
+      )
+        .bind(target, target, target, target, target)
+        .all<DataRow>();
       const candidates = (rows?.results || [])
         .map((row): ProfileConfig | null => {
           try {
@@ -589,7 +596,6 @@ class D1StorageAdapter implements StorageAdapter {
         .filter((item): item is ProfileConfig => Boolean(item));
       return resolvePublicProfile(candidates, target);
     } catch (error) {
-      if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to resolve public profile ${identifier}:`, error);
       return null;
     }
@@ -608,22 +614,19 @@ class D1StorageAdapter implements StorageAdapter {
     if (!target) return null;
 
     try {
-      const updatedRow = await this._withSchemaRetry(() =>
-        this.db
-          .prepare(
-            `UPDATE profiles
-                         SET data = json_set(
-                                 data,
-                                 '$.downloadCount',
-                                 COALESCE(CAST(json_extract(data, '$.downloadCount') AS INTEGER), 0) + 1
-                             ),
-                             updated_at = CURRENT_TIMESTAMP
-                         WHERE id = ? OR custom_id = ?
-                         RETURNING json_extract(data, '$.downloadCount') AS downloadCount`,
-          )
-          .bind(target, target)
-          .first<{ downloadCount?: unknown }>(),
-      );
+      const updatedRow = await this._prepare(
+        `UPDATE profiles
+         SET data = json_set(
+                 data,
+                 '$.downloadCount',
+                 COALESCE(CAST(json_extract(data, '$.downloadCount') AS INTEGER), 0) + 1
+             ),
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? OR custom_id = ?
+         RETURNING json_extract(data, '$.downloadCount') AS downloadCount`,
+      )
+        .bind(target, target)
+        .first<{ downloadCount?: unknown }>();
 
       if (updatedRow && updatedRow.downloadCount !== undefined) {
         invalidateD1CollectionCache(this.db, 'profiles');
@@ -647,31 +650,25 @@ class D1StorageAdapter implements StorageAdapter {
   async resetProfileDownloadCounts({ profileId = '' }: { profileId?: string } = {}): Promise<boolean> {
     const trimmedId = typeof profileId === 'string' ? profileId.trim() : '';
     try {
-      await this._withSchemaRetry(async () => {
-        if (trimmedId) {
-          await this.db
-            .prepare(
-              `UPDATE profiles
-               SET data = json_set(data, '$.downloadCount', 0),
-                   updated_at = CURRENT_TIMESTAMP
-               WHERE id = ?`,
-            )
-            .bind(trimmedId)
-            .run();
-        } else {
-          await this.db
-            .prepare(
-              `UPDATE profiles
-               SET data = json_set(data, '$.downloadCount', 0),
-                   updated_at = CURRENT_TIMESTAMP`,
-            )
-            .run();
-        }
-      });
+      if (trimmedId) {
+        await this._prepare(
+          `UPDATE profiles
+           SET data = json_set(data, '$.downloadCount', 0),
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ?`,
+        )
+          .bind(trimmedId)
+          .run();
+      } else {
+        await this._prepare(
+          `UPDATE profiles
+           SET data = json_set(data, '$.downloadCount', 0),
+               updated_at = CURRENT_TIMESTAMP`,
+        ).run();
+      }
       invalidateD1CollectionCache(this.db, 'profiles');
       return true;
     } catch (error) {
-      if (isSchemaMismatchError(error)) return false;
       console.error('[D1] Failed to reset profile download counts:', error);
       return false;
     }
@@ -686,40 +683,29 @@ class D1StorageAdapter implements StorageAdapter {
 
   async getGuestbookMessageById(id: string): Promise<GuestbookMessage | null> {
     try {
-      const result = await this.db.prepare('SELECT data FROM guestbook WHERE id = ?').bind(id).first<DataRow>();
+      const result = await this._prepare('SELECT data FROM guestbook WHERE id = ?').bind(id).first<DataRow>();
       return result ? (JSON.parse(result.data) as GuestbookMessage) : null;
     } catch (error) {
-      if (isNoSuchTableError(error)) return null;
       console.error(`[D1] Failed to get guestbook message ${id}:`, error);
       return null;
     }
   }
 
   async putGuestbookMessage(message: GuestbookMessage): Promise<GuestbookMessage> {
-    await this._withSchemaRetry(async () => {
-      await this.db
-        .prepare(
-          `
-                INSERT OR REPLACE INTO guestbook (id, data, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-            `,
-        )
-        .bind(message.id, JSON.stringify(message))
-        .run();
-    });
+    await this._prepare(
+      `INSERT OR REPLACE INTO guestbook (id, data, updated_at)
+       VALUES (?, ?, CURRENT_TIMESTAMP)`,
+    )
+      .bind(message.id, JSON.stringify(message))
+      .run();
     invalidateD1CollectionCache(this.db, 'guestbook');
     return message;
   }
 
   async deleteGuestbookMessageById(id: string): Promise<boolean> {
-    try {
-      const result = await this.db.prepare('DELETE FROM guestbook WHERE id = ?').bind(id).run();
-      invalidateD1CollectionCache(this.db, 'guestbook');
-      return Boolean(result?.success);
-    } catch (error) {
-      if (isNoSuchTableError(error)) return false;
-      throw error;
-    }
+    const result = await this._prepare('DELETE FROM guestbook WHERE id = ?').bind(id).run();
+    invalidateD1CollectionCache(this.db, 'guestbook');
+    return Boolean(result?.success);
   }
 
   // ========== 访问日志专用行级表操作 (access_logs) ==========
@@ -734,38 +720,31 @@ class D1StorageAdapter implements StorageAdapter {
     const validEntries = entries.filter((item) => item && typeof item === 'object');
     if (validEntries.length === 0) return 0;
 
-    await this._withSchemaRetry(async () => {
-      const statements = validEntries.map((item) => {
-        const id = item.id || crypto.randomUUID();
-        const ts = parseTimestampMs(item.timestamp) || now;
-        const payload = JSON.stringify({ ...item, id, timestamp: ts });
-        return this.db
-          .prepare(
-            `INSERT OR REPLACE INTO access_logs (id, timestamp, data, created_at)
-                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(id, ts, payload);
-      });
-
-      if (maxAgeMs > 0) {
-        statements.push(this.db.prepare('DELETE FROM access_logs WHERE timestamp < ?').bind(now - maxAgeMs));
-      }
-      if (maxEntries > 0) {
-        statements.push(
-          this.db
-            .prepare(
-              `DELETE FROM access_logs
-                             WHERE id NOT IN (
-                                 SELECT id FROM access_logs ORDER BY timestamp DESC LIMIT ?
-                             )`,
-            )
-            .bind(maxEntries),
-        );
-      }
-
-      await this._runBatchOrSequential(statements);
+    const statements = validEntries.map((item) => {
+      const id = item.id || crypto.randomUUID();
+      const ts = parseTimestampMs(item.timestamp) || now;
+      const payload = JSON.stringify({ ...item, id, timestamp: ts });
+      return this._prepare(
+        `INSERT OR REPLACE INTO access_logs (id, timestamp, data, created_at)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      ).bind(id, ts, payload);
     });
 
+    if (maxAgeMs > 0) {
+      statements.push(this._prepare('DELETE FROM access_logs WHERE timestamp < ?').bind(now - maxAgeMs));
+    }
+    if (maxEntries > 0) {
+      statements.push(
+        this._prepare(
+          `DELETE FROM access_logs
+           WHERE id NOT IN (
+               SELECT id FROM access_logs ORDER BY timestamp DESC LIMIT ?
+           )`,
+        ).bind(maxEntries),
+      );
+    }
+
+    await this._runBatchOrSequential(statements);
     return validEntries.length;
   }
 
@@ -776,13 +755,12 @@ class D1StorageAdapter implements StorageAdapter {
     try {
       const safeLimit = Math.max(1, Math.min(Number(limit) || 200, 1000));
       const safeMinTs = Math.max(0, Number(minTimestamp) || 0);
-      const result = await this.db
-        .prepare(
-          `SELECT data FROM access_logs
-                     WHERE timestamp >= ?
-                     ORDER BY timestamp DESC
-                     LIMIT ?`,
-        )
+      const result = await this._prepare(
+        `SELECT data FROM access_logs
+         WHERE timestamp >= ?
+         ORDER BY timestamp DESC
+         LIMIT ?`,
+      )
         .bind(safeMinTs, safeLimit)
         .all<DataRow>();
 
@@ -796,7 +774,6 @@ class D1StorageAdapter implements StorageAdapter {
         })
         .filter((entry): entry is AccessLogEntry => Boolean(entry));
     } catch (error) {
-      if (isSchemaMismatchError(error)) return [];
       console.error('[D1] Failed to read access_logs:', error);
       return [];
     }
@@ -806,38 +783,24 @@ class D1StorageAdapter implements StorageAdapter {
     const targetProfileId = typeof profileId === 'string' ? profileId.trim() : '';
     const targetProfileName = typeof profileName === 'string' ? profileName.trim() : '';
     if (targetProfileId) {
-      try {
-        await this.db
-          .prepare(
-            `DELETE FROM access_logs
-             WHERE json_extract(data, '$.profileId') = ?
-                OR (json_extract(data, '$.profileId') IS NULL AND ? != '' AND json_extract(data, '$.profileName') = ?)`,
-          )
-          .bind(targetProfileId, targetProfileName, targetProfileName)
-          .run();
-      } catch (error) {
-        if (!isSchemaMismatchError(error)) throw error;
-      }
+      await this._prepare(
+        `DELETE FROM access_logs
+         WHERE json_extract(data, '$.profileId') = ?
+            OR (json_extract(data, '$.profileId') IS NULL AND ? != '' AND json_extract(data, '$.profileName') = ?)`,
+      )
+        .bind(targetProfileId, targetProfileName, targetProfileName)
+        .run();
       return true;
     }
 
     if (targetProfileName) {
-      try {
-        await this.db
-          .prepare("DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?")
-          .bind(targetProfileName)
-          .run();
-      } catch (error) {
-        if (!isSchemaMismatchError(error)) throw error;
-      }
+      await this._prepare("DELETE FROM access_logs WHERE json_extract(data, '$.profileName') = ?")
+        .bind(targetProfileName)
+        .run();
       return true;
     }
 
-    try {
-      await this.db.prepare('DELETE FROM access_logs').run();
-    } catch (error) {
-      if (!isSchemaMismatchError(error)) throw error;
-    }
+    await this._prepare('DELETE FROM access_logs').run();
     return true;
   }
 
@@ -849,38 +812,30 @@ class D1StorageAdapter implements StorageAdapter {
     const ts = parseTimestampMs(report.receivedAt) || Date.now();
     const payload = JSON.stringify({ ...report, id });
 
-    await this._withSchemaRetry(async () => {
-      const statements = [
-        this.db
-          .prepare(
-            `INSERT OR REPLACE INTO error_reports (id, timestamp, data, created_at)
-                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(id, ts, payload),
-      ];
-      if (maxEntries > 0) {
-        statements.push(
-          this.db
-            .prepare(
-              `DELETE FROM error_reports
-                             WHERE id NOT IN (
-                                 SELECT id FROM error_reports ORDER BY timestamp DESC LIMIT ?
-                             )`,
-            )
-            .bind(maxEntries),
-        );
-      }
-      await this._runBatchOrSequential(statements);
-    });
-
+    const statements: ManagedStatement[] = [
+      this._prepare(
+        `INSERT OR REPLACE INTO error_reports (id, timestamp, data, created_at)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      ).bind(id, ts, payload),
+    ];
+    if (maxEntries > 0) {
+      statements.push(
+        this._prepare(
+          `DELETE FROM error_reports
+           WHERE id NOT IN (
+               SELECT id FROM error_reports ORDER BY timestamp DESC LIMIT ?
+           )`,
+        ).bind(maxEntries),
+      );
+    }
+    await this._runBatchOrSequential(statements);
     return true;
   }
 
   async getErrorReports(limit = 100): Promise<ErrorReportEntry[]> {
     try {
       const safeLimit = Math.max(1, Math.min(Number(limit) || 100, 500));
-      const result = await this.db
-        .prepare('SELECT data FROM error_reports ORDER BY timestamp DESC LIMIT ?')
+      const result = await this._prepare('SELECT data FROM error_reports ORDER BY timestamp DESC LIMIT ?')
         .bind(safeLimit)
         .all<DataRow>();
       return (result?.results || [])
@@ -893,18 +848,13 @@ class D1StorageAdapter implements StorageAdapter {
         })
         .filter((entry): entry is ErrorReportEntry => Boolean(entry));
     } catch (error) {
-      if (isSchemaMismatchError(error)) return [];
       console.error('[D1] Failed to read error_reports:', error);
       return [];
     }
   }
 
   async clearErrorReports(): Promise<boolean> {
-    try {
-      await this.db.prepare('DELETE FROM error_reports').run();
-    } catch (error) {
-      if (!isSchemaMismatchError(error)) throw error;
-    }
+    await this._prepare('DELETE FROM error_reports').run();
     return true;
   }
 
@@ -915,18 +865,16 @@ class D1StorageAdapter implements StorageAdapter {
     let sourceTable: string | null = null;
     for (const table of ['subscriptions', 'nodes']) {
       try {
-        const result = await this._withSchemaRetry(() =>
-          this.db.prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`).bind(id).first<DataRow>(),
-        );
+        const result = await this._prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`)
+          .bind(id)
+          .first<DataRow>();
         if (result) {
           existing = hydrateEntityConfigVersion(JSON.parse(result.data) as MisubItem, result.config_version);
           sourceTable = table;
           break;
         }
       } catch (error) {
-        if (!isNoSuchTableError(error)) {
-          console.error(`[D1] Failed to get ${table} item ${id}:`, error);
-        }
+        console.error(`[D1] Failed to get ${table} item ${id}:`, error);
       }
     }
     if (!existing) return null;
@@ -940,12 +888,9 @@ class D1StorageAdapter implements StorageAdapter {
     const targetTable = isManualNodeRecord(cleanItem) ? 'nodes' : 'subscriptions';
     if (sourceTable === targetTable) {
       // 运行态局部分支只刷新 data，绝不触发 config_version 自增
-      await this._withSchemaRetry(() =>
-        this.db
-          .prepare(`UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
-          .bind(serialized, cleanItem.id)
-          .run(),
-      );
+      await this._prepare(`UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+        .bind(serialized, cleanItem.id)
+        .run();
       invalidateD1CollectionCache(this.db, targetTable);
       return cleanItem;
     }
@@ -969,14 +914,11 @@ class D1StorageAdapter implements StorageAdapter {
     const searchTables =
       options?.preferredTable === 'nodes' ? (['nodes', 'subscriptions'] as const) : (['subscriptions', 'nodes'] as const);
     for (const table of searchTables) {
-      const result = await this._withSchemaRetry(() =>
-        this.db
-          .prepare(
-            `UPDATE ${table} SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          )
-          .bind(...values, targetId)
-          .run(),
-      );
+      const result = await this._prepare(
+        `UPDATE ${table} SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      )
+        .bind(...values, targetId)
+        .run();
       if (extractD1Changes(result) > 0) {
         invalidateD1CollectionCache(this.db, table);
         return await this.getSubscriptionById(targetId);
@@ -991,24 +933,17 @@ class D1StorageAdapter implements StorageAdapter {
     const otherTable = isManual ? 'subscriptions' : 'nodes';
     const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
 
-    await this._withSchemaRetry(async () => {
-      await this.db
-        .prepare(
-          `
-                INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
-                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            `,
-        )
-        .bind(cleanItem.id, serialized, configVersion)
-        .run();
-    });
+    await this._prepare(
+      `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+    )
+      .bind(cleanItem.id, serialized, configVersion)
+      .run();
     invalidateD1CollectionCache(this.db, targetTable);
 
     if (!skipOtherTableDelete) {
-      try {
-        await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
-        invalidateD1CollectionCache(this.db, otherTable);
-      } catch {}
+      await this._prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
+      invalidateD1CollectionCache(this.db, otherTable);
     }
 
     return cleanItem;
@@ -1029,22 +964,17 @@ class D1StorageAdapter implements StorageAdapter {
     };
     const { cleanItem, serialized } = prepareEntityForWrite(nextItem);
 
-    const result = await this._withSchemaRetry(async () =>
-      this.db
-        .prepare(
-          `UPDATE ${targetTable} SET data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
-        )
-        .bind(serialized, cleanItem.id, expectedVer)
-        .run(),
-    );
+    const result = await this._prepare(
+      `UPDATE ${targetTable} SET data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
+    )
+      .bind(serialized, cleanItem.id, expectedVer)
+      .run();
 
     if (extractD1Changes(result) > 0) {
       invalidateD1CollectionCache(this.db, targetTable);
       if (!skipOtherTableDelete) {
-        try {
-          await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
-          invalidateD1CollectionCache(this.db, otherTable);
-        } catch {}
+        await this._prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
+        invalidateD1CollectionCache(this.db, otherTable);
       }
       return { updated: true, current: cleanItem };
     }
@@ -1056,13 +986,9 @@ class D1StorageAdapter implements StorageAdapter {
   async deleteSubscriptionById(id: string): Promise<boolean> {
     let deleted = false;
     for (const table of ['subscriptions', 'nodes']) {
-      try {
-        const result = await this.db.prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run();
-        invalidateD1CollectionCache(this.db, table);
-        if (result?.success) deleted = true;
-      } catch (error) {
-        if (!isNoSuchTableError(error)) throw error;
-      }
+      const result = await this._prepare(`DELETE FROM ${table} WHERE id = ?`).bind(id).run();
+      invalidateD1CollectionCache(this.db, table);
+      if (result?.success) deleted = true;
     }
 
     if (id) {
@@ -1078,37 +1004,31 @@ class D1StorageAdapter implements StorageAdapter {
     );
     if (uniqueIds.length === 0) return 0;
 
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     for (const id of uniqueIds) {
-      statements.push(this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(id));
-      statements.push(this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(id));
+      statements.push(this._prepare('DELETE FROM subscriptions WHERE id = ?').bind(id));
+      statements.push(this._prepare('DELETE FROM nodes WHERE id = ?').bind(id));
       statements.push(
-        this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_subscription_${encodeURIComponent(id)}`),
+        this._prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_subscription_${encodeURIComponent(id)}`),
       );
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'subscriptions');
     invalidateD1CollectionCache(this.db, 'nodes');
     return uniqueIds.length;
   }
 
   async putProfile(item: ProfileConfig): Promise<ProfileConfig> {
-    const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
-    const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+    const { customId, linkId } = extractProfileKeys(item);
     const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
 
-    await this._withSchemaRetry(async () => {
-      await this.db
-        .prepare(
-          `
-                INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
-                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-            `,
-        )
-        .bind(cleanItem.id, customId, linkId, serialized, configVersion)
-        .run();
-    });
+    await this._prepare(
+      `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+       VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+    )
+      .bind(cleanItem.id, customId, linkId, serialized, configVersion)
+      .run();
     invalidateD1CollectionCache(this.db, 'profiles');
     return cleanItem;
   }
@@ -1123,26 +1043,21 @@ class D1StorageAdapter implements StorageAdapter {
     }
 
     try {
-      const matched = await this._withSchemaRetry(() =>
-        this.db
-          .prepare('SELECT id, data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
-          .bind(target, target, target)
-          .first<ProfileIdRow>(),
-      );
+      const matched = await this._prepare(
+        'SELECT id, data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1',
+      )
+        .bind(target, target, target)
+        .first<ProfileIdRow>();
       if (!matched?.id) return null;
 
-      await this._withSchemaRetry(() =>
-        this.db
-          .prepare(
-            `UPDATE profiles SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-          )
-          .bind(...values, matched.id)
-          .run(),
-      );
+      await this._prepare(
+        `UPDATE profiles SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+      )
+        .bind(...values, matched.id)
+        .run();
       invalidateD1CollectionCache(this.db, 'profiles');
       return await this.getProfileById(matched.id);
     } catch (error) {
-      if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to update profile runtime fields ${idOrCustomId}:`, error);
       return null;
     }
@@ -1152,8 +1067,7 @@ class D1StorageAdapter implements StorageAdapter {
     item: ProfileConfig,
     expectedConfigVersion: number,
   ): Promise<{ updated: boolean; current: ProfileConfig | null }> {
-    const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
-    const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+    const { customId, linkId } = extractProfileKeys(item);
     const expectedVer = normalizeConfigVersion(expectedConfigVersion);
     const nextItem: ProfileConfig = {
       ...item,
@@ -1161,14 +1075,11 @@ class D1StorageAdapter implements StorageAdapter {
     };
     const { cleanItem, serialized } = prepareEntityForWrite(nextItem);
 
-    const result = await this._withSchemaRetry(async () =>
-      this.db
-        .prepare(
-          `UPDATE profiles SET custom_id = ?, link_id = ?, data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
-        )
-        .bind(customId, linkId, serialized, cleanItem.id, expectedVer)
-        .run(),
-    );
+    const result = await this._prepare(
+      `UPDATE profiles SET custom_id = ?, link_id = ?, data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
+    )
+      .bind(customId, linkId, serialized, cleanItem.id, expectedVer)
+      .run();
 
     if (extractD1Changes(result) > 0) {
       invalidateD1CollectionCache(this.db, 'profiles');
@@ -1180,18 +1091,16 @@ class D1StorageAdapter implements StorageAdapter {
   }
 
   async deleteProfileById(id: string): Promise<boolean> {
-    let customId = '';
-    let linkId = '';
+    let customId: string | null = null;
+    let linkId: string | null = null;
     try {
-      const existingRow = await this.db.prepare('SELECT data FROM profiles WHERE id = ?').bind(id).first<DataRow>();
+      const existingRow = await this._prepare('SELECT data FROM profiles WHERE id = ?').bind(id).first<DataRow>();
       if (existingRow?.data) {
-        const parsed = JSON.parse(existingRow.data) as Partial<ProfileConfig> | null;
-        customId = typeof parsed?.customId === 'string' ? parsed.customId.trim() : '';
-        linkId = typeof parsed?.linkId === 'string' ? parsed.linkId.trim() : '';
+        ({ customId, linkId } = extractProfileKeys(JSON.parse(existingRow.data) as Partial<ProfileConfig> | null));
       }
     } catch {}
 
-    const result = await this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
+    const result = await this._prepare('DELETE FROM profiles WHERE id = ?').bind(id).run();
     invalidateD1CollectionCache(this.db, 'profiles');
 
     const idsToClean = new Set([id, customId, linkId].filter(Boolean));
@@ -1214,21 +1123,20 @@ class D1StorageAdapter implements StorageAdapter {
       cacheKeysToClean.add(`node_cache_profile_${id}`);
     }
     for (const profile of existingProfiles) {
-      const customId = typeof profile?.customId === 'string' ? profile.customId.trim() : '';
-      const linkId = typeof profile?.linkId === 'string' ? profile.linkId.trim() : '';
+      const { customId, linkId } = extractProfileKeys(profile);
       if (customId) cacheKeysToClean.add(`node_cache_profile_${customId}`);
       if (linkId) cacheKeysToClean.add(`node_cache_profile_${linkId}`);
     }
 
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     for (const id of uniqueIds) {
-      statements.push(this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id));
+      statements.push(this._prepare('DELETE FROM profiles WHERE id = ?').bind(id));
     }
     for (const cacheKey of cacheKeysToClean) {
-      statements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(cacheKey));
+      statements.push(this._prepare('DELETE FROM cache WHERE key = ?').bind(cacheKey));
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'profiles');
     return uniqueIds.length;
   }
@@ -1240,23 +1148,16 @@ class D1StorageAdapter implements StorageAdapter {
     for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
       const chunk = ids.slice(i, i + CHUNK_SIZE);
       const placeholders = chunk.map(() => '?').join(',');
-      try {
-        const results = await this._withSchemaRetry(() =>
-          this.db
-            .prepare(`SELECT ${selectCols} FROM ${table} WHERE id IN (${placeholders})`)
-            .bind(...chunk)
-            .all<DataRow>(),
+      const results = await this._prepare(`SELECT ${selectCols} FROM ${table} WHERE id IN (${placeholders})`)
+        .bind(...chunk)
+        .all<DataRow>();
+      if (Array.isArray(results?.results)) {
+        hits.push(
+          ...results.results.map((row) => {
+            const parsed = JSON.parse(row.data) as T;
+            return table === 'guestbook' ? parsed : hydrateEntityConfigVersion(parsed, row.config_version);
+          }),
         );
-        if (Array.isArray(results?.results)) {
-          hits.push(
-            ...results.results.map((row) => {
-              const parsed = JSON.parse(row.data) as T;
-              return table === 'guestbook' ? parsed : hydrateEntityConfigVersion(parsed, row.config_version);
-            }),
-          );
-        }
-      } catch (error) {
-        if (!isNoSuchTableError(error)) throw error;
       }
     }
     return hits;
@@ -1286,7 +1187,6 @@ class D1StorageAdapter implements StorageAdapter {
 
       return Array.from(foundMap.values());
     } catch (error) {
-      if (isNoSuchTableError(error)) return [];
       console.error('[D1] Failed to get profile sources:', error);
       return [];
     }
@@ -1312,7 +1212,6 @@ class D1StorageAdapter implements StorageAdapter {
 
       return Array.from(foundMap.values());
     } catch (error) {
-      if (isNoSuchTableError(error)) return [];
       console.error('[D1] Failed to get subscriptions/nodes by ids:', error);
       return [];
     }
@@ -1323,24 +1222,22 @@ class D1StorageAdapter implements StorageAdapter {
     const validItems = items.filter((item) => item?.id);
     if (validItems.length === 0) return true;
 
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     for (const item of validItems) {
       const isManual = isManualNodeRecord(item);
       const targetTable = isManual ? 'nodes' : 'subscriptions';
       const otherTable = isManual ? 'subscriptions' : 'nodes';
       const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
-        this.db
-          .prepare(
-            `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
-                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(cleanItem.id, serialized, configVersion),
+        this._prepare(
+          `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        ).bind(cleanItem.id, serialized, configVersion),
       );
-      statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
+      statements.push(this._prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'subscriptions');
     invalidateD1CollectionCache(this.db, 'nodes');
     return true;
@@ -1352,18 +1249,15 @@ class D1StorageAdapter implements StorageAdapter {
     if (validItems.length === 0) return true;
 
     const statements = validItems.map((item) => {
-      const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
-      const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+      const { customId, linkId } = extractProfileKeys(item);
       const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
-      return this.db
-        .prepare(
-          `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
-                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-        )
-        .bind(cleanItem.id, customId, linkId, serialized, configVersion);
+      return this._prepare(
+        `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      ).bind(cleanItem.id, customId, linkId, serialized, configVersion);
     });
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'profiles');
     return true;
   }
@@ -1398,24 +1292,8 @@ class D1StorageAdapter implements StorageAdapter {
       const existing = currentMap.get(item.id);
       const isManual = isManualNodeRecord(item);
       const needsMigration = isManual ? inSubscriptions.has(item.id) : inNodes.has(item.id);
-      const rawRecord = item as unknown as Record<string, unknown>;
-      const hasExplicitVersion = rawRecord.configVersion !== undefined || rawRecord.version !== undefined;
-      const versionChanged = Boolean(
-        existing &&
-          hasExplicitVersion &&
-          normalizeConfigVersion(rawRecord.configVersion, rawRecord.version) !==
-            normalizeConfigVersion(existing.configVersion),
-      );
-      if (
-        !existing ||
-        needsMigration ||
-        versionChanged ||
-        stableStringify(stripVersionFields(existing)) !== stableStringify(stripVersionFields(item))
-      ) {
-        const candidate =
-          existing && !hasExplicitVersion
-            ? ({ ...item, configVersion: existing.configVersion } as MisubItem)
-            : item;
+      const { changed, candidate } = resolveSyncedEntityDiff(existing, item);
+      if (changed || needsMigration) {
         toUpsert.push({ item: candidate, isManual, needsMigration });
       }
     }
@@ -1425,41 +1303,37 @@ class D1StorageAdapter implements StorageAdapter {
       return true;
     }
 
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     for (const { item, isManual, needsMigration } of toUpsert) {
       const targetTable = isManual ? 'nodes' : 'subscriptions';
       const otherTable = isManual ? 'subscriptions' : 'nodes';
       const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
-        this.db
-          .prepare(
-            `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
-                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(cleanItem.id, serialized, configVersion),
+        this._prepare(
+          `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+           VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        ).bind(cleanItem.id, serialized, configVersion),
       );
       if (needsMigration) {
-        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
+        statements.push(this._prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
       }
     }
 
     for (const item of toDelete) {
       if (inSubscriptions.has(item.id)) {
-        statements.push(this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(item.id));
+        statements.push(this._prepare('DELETE FROM subscriptions WHERE id = ?').bind(item.id));
       }
       if (inNodes.has(item.id)) {
-        statements.push(this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(item.id));
+        statements.push(this._prepare('DELETE FROM nodes WHERE id = ?').bind(item.id));
       }
       if (!isManualNodeRecord(item)) {
         statements.push(
-          this.db
-            .prepare('DELETE FROM cache WHERE key = ?')
-            .bind(`node_cache_subscription_${encodeURIComponent(item.id)}`),
+          this._prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_subscription_${encodeURIComponent(item.id)}`),
         );
       }
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'subscriptions');
     invalidateD1CollectionCache(this.db, 'nodes');
     return true;
@@ -1476,27 +1350,15 @@ class D1StorageAdapter implements StorageAdapter {
       if (!item?.id) continue;
       nextIds.add(item.id);
       const existing = currentMap.get(item.id);
-      const rawRecord = item as unknown as Record<string, unknown>;
-      const hasExplicitVersion = rawRecord.configVersion !== undefined || rawRecord.version !== undefined;
       const nextItem = existing
         ? {
             ...item,
-            ...(!hasExplicitVersion ? { configVersion: existing.configVersion } : {}),
             downloadCount: Math.max(Number(existing.downloadCount) || 0, Number(item.downloadCount) || 0),
           }
         : item;
-      const versionChanged = Boolean(
-        existing &&
-          hasExplicitVersion &&
-          normalizeConfigVersion(rawRecord.configVersion, rawRecord.version) !==
-            normalizeConfigVersion(existing.configVersion),
-      );
-      if (
-        !existing ||
-        versionChanged ||
-        stableStringify(stripVersionFields(existing)) !== stableStringify(stripVersionFields(nextItem))
-      ) {
-        toUpsert.push(nextItem);
+      const { changed, candidate } = resolveSyncedEntityDiff(existing, nextItem);
+      if (changed) {
+        toUpsert.push(candidate);
       }
     }
 
@@ -1505,39 +1367,36 @@ class D1StorageAdapter implements StorageAdapter {
       return true;
     }
 
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     for (const item of toUpsert) {
-      const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
-      const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+      const { customId, linkId } = extractProfileKeys(item);
       const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
-        this.db
-          .prepare(
-            `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
-                         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(cleanItem.id, customId, linkId, serialized, configVersion),
+        this._prepare(
+          `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+           VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+        ).bind(cleanItem.id, customId, linkId, serialized, configVersion),
       );
     }
 
     for (const item of toDelete) {
-      statements.push(this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(item.id));
+      statements.push(this._prepare('DELETE FROM profiles WHERE id = ?').bind(item.id));
       const customId = typeof item?.customId === 'string' ? item.customId.trim() : '';
       const linkId = typeof item?.linkId === 'string' ? item.linkId.trim() : '';
       const idsToClean = new Set([item.id, customId, linkId].filter(Boolean));
       for (const pid of idsToClean) {
-        statements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`));
+        statements.push(this._prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_profile_${pid}`));
       }
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
     invalidateD1CollectionCache(this.db, 'profiles');
     return true;
   }
 
   /**
    * 定期维护任务：
-   * 1. 表结构由 schema.sql 部署初始化，仅在捕获缺表/缺列异常时按需触发 ensureD1Schema；
+   * 1. 表结构与线性版本迁移在存储访问入口自动通过 PRAGMA user_version 一次性校验完成；
    * 2. 利用 cache.expires_at 索引批量清理过期缓存，并仅按 key 清理孤儿节点缓存；
    * 3. 修剪过期的访问日志。
    */
@@ -1560,80 +1419,73 @@ class D1StorageAdapter implements StorageAdapter {
 
     // 清理 cache 表：先用 expires_at 索引直接批量删除过期行（无需读取大体积 value）
     try {
-      const removedFromCache = await this._withSchemaRetry(async () => {
-        let removedInPass = 0;
-        const expiredResult = await this.db
-          .prepare('DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= ?')
-          .bind(now)
-          .run();
-        removedInPass += extractD1Changes(expiredResult);
+      let removedInPass = 0;
+      const expiredResult = await this._prepare('DELETE FROM cache WHERE expires_at IS NOT NULL AND expires_at <= ?')
+        .bind(now)
+        .run();
+      removedInPass += extractD1Changes(expiredResult);
 
-        // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填过期时间
-        const nullExpRows = await this.db.prepare('SELECT key FROM cache WHERE expires_at IS NULL').all<{ key?: string }>();
-        const cacheCleanupStatements: D1PreparedStatement[] = [];
-        for (const row of nullExpRows?.results || []) {
-          const key = String(row?.key || '');
-          if (!key) continue;
+      // 仅读取 expires_at IS NULL 的缓存键名（零 value 读取），检查孤儿节点缓存并回填过期时间
+      const nullExpRows = await this._prepare('SELECT key FROM cache WHERE expires_at IS NULL').all<{ key?: string }>();
+      const cacheCleanupStatements: ManagedStatement[] = [];
+      for (const row of nullExpRows?.results || []) {
+        const key = String(row?.key || '');
+        if (!key) continue;
 
-          let shouldDelete = false;
-          if (key.startsWith('node_cache_profile_')) {
-            const pid = key.slice('node_cache_profile_'.length);
-            if (pid && profileByIdentifier.size > 0 && !profileByIdentifier.has(pid)) {
-              shouldDelete = true;
-            }
-          } else if (key.startsWith('node_cache_subscription_') && !key.startsWith('node_cache_subscription_url_')) {
-            const subId = decodeURIComponent(key.slice('node_cache_subscription_'.length));
-            if (subId && validSubIds.size > 0 && !validSubIds.has(subId)) {
-              shouldDelete = true;
-            }
-          } else if (key.startsWith('misub_test_')) {
+        let shouldDelete = false;
+        if (key.startsWith('node_cache_profile_')) {
+          const pid = key.slice('node_cache_profile_'.length);
+          if (pid && profileByIdentifier.size > 0 && !profileByIdentifier.has(pid)) {
             shouldDelete = true;
           }
+        } else if (key.startsWith('node_cache_subscription_') && !key.startsWith('node_cache_subscription_url_')) {
+          const subId = decodeURIComponent(key.slice('node_cache_subscription_'.length));
+          if (subId && validSubIds.size > 0 && !validSubIds.has(subId)) {
+            shouldDelete = true;
+          }
+        } else if (key.startsWith('misub_test_')) {
+          shouldDelete = true;
+        }
 
-          if (shouldDelete) {
-            cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
+        if (shouldDelete) {
+          cacheCleanupStatements.push(this._prepare('DELETE FROM cache WHERE key = ?').bind(key));
+          removedInPass += 1;
+          continue;
+        }
+
+        const needsBackfill =
+          key.startsWith('tg_push_rate:') ||
+          key === 'misub_webdav_backup_lock' ||
+          key === 'misub_maintenance_lock' ||
+          key === 'misub_last_maintenance_at' ||
+          key.startsWith('github_release_') ||
+          key.startsWith('appstore_release_') ||
+          (key.startsWith('node_cache_') && !key.startsWith('node_cache_subscription_'));
+
+        if (needsBackfill) {
+          const fullRow = await this._prepare('SELECT value FROM cache WHERE key = ?').bind(key).first<{ value?: string }>();
+          const computedExp = computeCacheExpiresAt(key, fullRow?.value, now);
+          if (computedExp && computedExp <= now) {
+            cacheCleanupStatements.push(this._prepare('DELETE FROM cache WHERE key = ?').bind(key));
             removedInPass += 1;
-            continue;
-          }
-
-          const needsBackfill =
-            key.startsWith('tg_push_rate:') ||
-            key === 'misub_webdav_backup_lock' ||
-            key === 'misub_maintenance_lock' ||
-            key === 'misub_last_maintenance_at' ||
-            key.startsWith('github_release_') ||
-            key.startsWith('appstore_release_') ||
-            (key.startsWith('node_cache_') && !key.startsWith('node_cache_subscription_'));
-
-          if (needsBackfill) {
-            const fullRow = await this.db.prepare('SELECT value FROM cache WHERE key = ?').bind(key).first<{ value?: string }>();
-            const computedExp = computeCacheExpiresAt(key, fullRow?.value, now);
-            if (computedExp && computedExp <= now) {
-              cacheCleanupStatements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(key));
-              removedInPass += 1;
-            } else if (computedExp) {
-              cacheCleanupStatements.push(
-                this.db.prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key),
-              );
-            }
+          } else if (computedExp) {
+            cacheCleanupStatements.push(
+              this._prepare('UPDATE cache SET expires_at = ? WHERE key = ?').bind(computedExp, key),
+            );
           }
         }
-        if (cacheCleanupStatements.length > 0) {
-          await this._runBatchOrSequential(cacheCleanupStatements);
-        }
-        return removedInPass;
-      });
-      stats.removedExpiredCache += removedFromCache;
-    } catch (error) {
-      if (!isNoSuchTableError(error)) {
-        console.warn('[D1 Maintenance] Failed to clean expired cache:', getErrorMessage(error));
       }
+      if (cacheCleanupStatements.length > 0) {
+        await this._runBatchOrSequential(cacheCleanupStatements);
+      }
+      stats.removedExpiredCache += removedInPass;
+    } catch (error) {
+      console.warn('[D1 Maintenance] Failed to clean expired cache:', getErrorMessage(error));
     }
 
     // 定期修剪 access_logs 过期数据
     try {
-      await this.db
-        .prepare('DELETE FROM access_logs WHERE timestamp < ?')
+      await this._prepare('DELETE FROM access_logs WHERE timestamp < ?')
         .bind(now - ACCESS_LOG_MAX_AGE_MS)
         .run();
     } catch {}
@@ -1655,8 +1507,7 @@ class D1StorageAdapter implements StorageAdapter {
       for (let i = 0; i < uniqueKeys.length; i += CHUNK_SIZE) {
         const chunk = uniqueKeys.slice(i, i + CHUNK_SIZE);
         const placeholders = chunk.map(() => '?').join(',');
-        const queryResult = await this.db
-          .prepare(`SELECT key, value, expires_at FROM cache WHERE key IN (${placeholders})`)
+        const queryResult = await this._prepare(`SELECT key, value, expires_at FROM cache WHERE key IN (${placeholders})`)
           .bind(...chunk)
           .all<CacheRow>();
         for (const row of queryResult?.results || []) {
@@ -1673,9 +1524,7 @@ class D1StorageAdapter implements StorageAdapter {
         }
       }
     } catch (error) {
-      if (!isSchemaMismatchError(error)) {
-        console.error('[D1] Failed to batch get cache entries:', error);
-      }
+      console.error('[D1] Failed to batch get cache entries:', error);
     }
     return result;
   }
@@ -1686,20 +1535,16 @@ class D1StorageAdapter implements StorageAdapter {
     );
     if (validEntries.length === 0) return true;
 
-    await this._withSchemaRetry(async () => {
-      const statements = validEntries.map((entry) => {
-        const data = typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);
-        const expiresAt =
-          entry.expiresAt !== undefined ? entry.expiresAt : computeCacheExpiresAt(entry.key, entry.value);
-        return this.db
-          .prepare(
-            `INSERT OR REPLACE INTO cache (key, value, expires_at, updated_at)
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(entry.key, data, expiresAt);
-      });
-      await this._runBatchOrSequential(statements);
+    const statements = validEntries.map((entry) => {
+      const data = typeof entry.value === 'string' ? entry.value : JSON.stringify(entry.value);
+      const expiresAt =
+        entry.expiresAt !== undefined ? entry.expiresAt : computeCacheExpiresAt(entry.key, entry.value);
+      return this._prepare(
+        `INSERT OR REPLACE INTO cache (key, value, expires_at, updated_at)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+      ).bind(entry.key, data, expiresAt);
     });
+    await this._runBatchOrSequential(statements);
 
     notifyCacheInvalidation(this.db, 'inspect_cache');
     return true;
@@ -1714,17 +1559,17 @@ class D1StorageAdapter implements StorageAdapter {
     let touchedSettings = false;
     let touchedCache = false;
     const touchedIdTables = new Set<string>();
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
 
     for (const key of uniqueKeys) {
       const { table, queryField, queryValue } = this._parseKey(key);
       if (table === 'settings') touchedSettings = true;
       if (table === 'cache') touchedCache = true;
       if (ID_DATA_TABLES.has(table)) touchedIdTables.add(table);
-      statements.push(this.db.prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue));
+      statements.push(this._prepare(`DELETE FROM ${table} WHERE ${queryField} = ?`).bind(queryValue));
     }
 
-    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    await this._runBatchOrSequential(statements);
 
     if (touchedSettings) {
       settingsCaches.delete(this.db);
@@ -1774,7 +1619,7 @@ class D1StorageAdapter implements StorageAdapter {
     if (foundById.size === 0) return [];
 
     const updatedItems: MisubItem[] = [];
-    const statements: D1PreparedStatement[] = [];
+    const statements: ManagedStatement[] = [];
     const touchedTables = new Set<string>();
 
     for (const id of ids) {
@@ -1799,30 +1644,26 @@ class D1StorageAdapter implements StorageAdapter {
       if (record.sourceTable === targetTable) {
         // 运行态批量更新仅覆盖 JSON data，不触发 config_version 列自增
         statements.push(
-          this.db
-            .prepare(
-              `UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-            )
-            .bind(serialized, cleanItem.id),
+          this._prepare(
+            `UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          ).bind(serialized, cleanItem.id),
         );
       } else {
         statements.push(
-          this.db
-            .prepare(
-              `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
-               VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-            )
-            .bind(cleanItem.id, serialized, preservedVersion),
+          this._prepare(
+            `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+          ).bind(cleanItem.id, serialized, preservedVersion),
         );
         touchedTables.add(otherTable);
-        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
+        statements.push(this._prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
       }
 
       updatedItems.push(cleanItem);
     }
 
     if (statements.length > 0) {
-      await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+      await this._runBatchOrSequential(statements);
       for (const tbl of touchedTables) {
         invalidateD1CollectionCache(this.db, tbl);
       }
@@ -1833,16 +1674,11 @@ class D1StorageAdapter implements StorageAdapter {
 
   async resetAllSettings(): Promise<boolean> {
     try {
-      await this.db.prepare('DELETE FROM settings').run();
+      await this._prepare('DELETE FROM settings').run();
       settingsCaches.delete(this.db);
       notifyCacheInvalidation(this.db, 'settings');
       return true;
     } catch (error) {
-      if (isNoSuchTableError(error)) {
-        settingsCaches.delete(this.db);
-        notifyCacheInvalidation(this.db, 'settings');
-        return true;
-      }
       console.error('[D1] Failed to reset settings:', error);
       throw error;
     }

@@ -412,9 +412,11 @@ const handleDeleteAllNodesWithCleanup = () => {
   // cleanup 已在 deleteAllNodes 内部通过 removeManualNodeFromProfiles 实现
   showDeleteNodesModal.value = false;
 };
-const handleAutoSortNodes = () => {
-  autoSortNodes();
-  showToast(t('manualNodes.sortedByRegion'), 'success');
+const handleAutoSortNodes = async () => {
+  const res = await autoSortNodes();
+  if (res.ok) {
+    showToast(t('manualNodes.sortedByRegion'), 'success');
+  }
 };
 
 const handleDeduplicateNodes = () => {
@@ -496,51 +498,60 @@ const handleOpenNodeTagManagement = () => {
   showNodeTagManagementModal.value = true;
 };
 
-const handleNodeTagRename = (oldName: string, newName: string) => {
-  renameTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleNodeTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleNodeTagDelete = (tagName: string) => {
-  deleteTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleNodeTagDelete = async (tagName: string) => {
+  const ok = await deleteTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleNodeTagReorder = (newOrder: string[]) => {
   reorderTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
 const showSubTagManagementModal = ref(false);
 
-const handleSubTagRename = (oldName: string, newName: string) => {
-  renameSubscriptionTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleSubTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameSubscriptionTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleSubTagDelete = (tagName: string) => {
-  deleteSubscriptionTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleSubTagDelete = async (tagName: string) => {
+  const ok = await deleteSubscriptionTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleSubTagReorder = (newOrder: string[]) => {
   reorderSubscriptionTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleProfileTagRename = (oldName: string, newName: string) => {
-  renameProfileTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleProfileTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameProfileTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleProfileTagDelete = (tagName: string) => {
-  deleteProfileTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleProfileTagDelete = async (tagName: string) => {
+  const ok = await deleteProfileTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleProfileTagReorder = (newOrder: string[]) => {
   reorderProfileTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
 const handleApplyDetectedName = async (subscriptionId: string | undefined, name: string) => {

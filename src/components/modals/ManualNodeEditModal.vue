@@ -226,6 +226,7 @@ const handleConfirm = async () => {
     v-if="editingNode"
     :close-on-confirm="false"
     :confirm-disabled="Boolean(isSaving) || isImportingBulk || isReadingFile"
+    :confirm-loading="Boolean(isSaving) || isImportingBulk"
     :show="show"
     size="2xl"
     @confirm="handleConfirm"

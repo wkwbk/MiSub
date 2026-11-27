@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { StorageFactory } from '../../functions/storage-adapter.js';
-import { ensureD1Schema } from '../../functions/storage/d1-schema.js';
+import { LATEST_SCHEMA_VERSION, runD1Migrations } from '../../functions/storage/d1-schema.js';
 import { handleMisubRequest } from '../../functions/modules/subscription/core/main-handler.js';
 import { handleErrorReportRequest } from '../../functions/modules/handlers/error-report-handler.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
@@ -169,130 +169,164 @@ describe('Storage adapter 8-table D1 architecture & query optimizations', () => 
     expect(batchSpy.mock.calls.flatMap((c) => c[0]).length).toBeGreaterThan(0);
   });
 
-  it('triggers ensureD1Schema on-demand only when cleanupMaintenance hits a schema mismatch error', async () => {
-    const now = 1_800_000_000_000;
-    const rawDb = createMemoryD1({
-      profiles: [{ id: 'active-profile', name: 'Active', downloadCount: 1 }],
+  it('initializes an empty D1 database from v0 -> v1 -> v2 on first storage access', async () => {
+    const emptyDb = createMemoryD1({}, { userVersion: 0 });
+    expect(emptyDb.existingTables.size).toBe(0);
+    expect(emptyDb.getUserVersion()).toBe(0);
+
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: emptyDb });
+    const created = await adapter.putSubscription({
+      id: 'sub-init-1',
+      name: 'Init Sub',
+      url: 'https://init.example.com/sub',
     });
-    let cacheMissing = true;
-    const db = {
-      prepare(sql) {
-        const stmt = rawDb.prepare(sql);
-        const isCacheDelete = /DELETE FROM cache WHERE expires_at/i.test(sql);
-        if (!isCacheDelete) return stmt;
-        return {
-          bind(...args) {
-            const bound = stmt.bind(...args);
-            return {
-              ...bound,
-              async run() {
-                if (cacheMissing) {
-                  throw new Error('D1_ERROR: no such table: cache');
-                }
-                return bound.run();
-              },
-            };
-          },
-        };
-      },
-      async batch(statements) {
-        cacheMissing = false;
-        return rawDb.batch(statements);
-      },
-    };
 
-    const batchSpy = vi.spyOn(db, 'batch');
-    const adapter = StorageFactory.createAdapter({ MISUB_DB: db });
-    const stats = await adapter.cleanupMaintenance({ now });
+    expect(emptyDb.getUserVersion()).toBe(LATEST_SCHEMA_VERSION);
+    for (const tbl of ['subscriptions', 'nodes', 'profiles', 'guestbook', 'settings', 'cache', 'access_logs', 'error_reports']) {
+      expect(emptyDb.existingTables.has(tbl)).toBe(true);
+    }
+    expect(emptyDb.existingColumns.has('subscriptions.config_version')).toBe(true);
+    expect(emptyDb.existingColumns.has('nodes.config_version')).toBe(true);
+    expect(emptyDb.existingColumns.has('profiles.config_version')).toBe(true);
+    expect(created.configVersion).toBe(1);
 
-    expect(stats).toEqual({ removedExpiredCache: 0 });
-    expect(batchSpy).toHaveBeenCalledTimes(1);
+    const casRes = await adapter.compareAndSwapSubscription({ ...created, name: 'Init Sub Updated' }, 1);
+    expect(casRes.updated).toBe(true);
+    expect(casRes.current).toMatchObject({ id: 'sub-init-1', name: 'Init Sub Updated', configVersion: 2 });
   });
 
-  it('batches DDL statements in ensureD1Schema, caches initialized instances, handles legacy ALTER fallback, and does not cache failures', async () => {
-    // 1. Fast path: single batch() call, second call hits initializedSchemas cache
-    const freshDb = createMemoryD1();
-    const prepareSpy = vi.spyOn(freshDb, 'prepare');
-    const batchSpy = vi.spyOn(freshDb, 'batch');
+  it('migrates legacy v1 D1 database to v2 and backfills historical config_version without running v1 DDL', async () => {
+    const legacyV1Db = createMemoryD1(
+      {
+        subscriptions: [
+          { id: 's-ver', name: 'Legacy V4', url: 'https://a.example.com/sub', version: 4 },
+          { id: 's-cv', name: 'Legacy CV3', url: 'https://b.example.com/sub', configVersion: 3 },
+          { id: 'n-def', name: 'Default Node', url: 'trojan://pw@1.2.3.4:443#N' },
+        ],
+        profiles: [{ id: 'p-ver', name: 'Legacy Prof V5', version: 5 }],
+      },
+      { userVersion: 1 },
+    );
+    expect(legacyV1Db.getUserVersion()).toBe(1);
+    expect(legacyV1Db.existingColumns.has('subscriptions.config_version')).toBe(false);
 
-    await ensureD1Schema(freshDb);
-    expect(batchSpy).toHaveBeenCalledTimes(1);
-    expect(batchSpy.mock.calls[0][0].length).toBeGreaterThan(15);
+    const prepareSpy = vi.spyOn(legacyV1Db, 'prepare');
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: legacyV1Db });
 
-    prepareSpy.mockClear();
-    batchSpy.mockClear();
+    const subs = await adapter.getAllSubscriptions({ fresh: true });
+    const profs = await adapter.getAllProfiles({ fresh: true });
 
-    await ensureD1Schema(freshDb);
-    expect(batchSpy).not.toHaveBeenCalled();
-    expect(prepareSpy).not.toHaveBeenCalled();
+    expect(legacyV1Db.getUserVersion()).toBe(2);
+    expect(subs.find((s) => s.id === 's-ver')?.configVersion).toBe(4);
+    expect(subs.find((s) => s.id === 's-cv')?.configVersion).toBe(3);
+    expect(subs.find((s) => s.id === 'n-def')?.configVersion).toBe(1);
+    expect(profs[0]?.configVersion).toBe(5);
 
-    // 2. Legacy fallback: fast-path batch fails with missing column, falls back to ALTER TABLE + backfill/index batch
-    let legacyMissingColumn = true;
-    const legacySqlLog = [];
-    const legacyDb = {
+    const executedSqls = prepareSpy.mock.calls.map((c) => c[0].replace(/\s+/g, ' ').trim());
+    expect(executedSqls.some((sql) => /^CREATE TABLE/i.test(sql))).toBe(false);
+    expect(executedSqls.some((sql) => /^ALTER TABLE subscriptions ADD COLUMN config_version/i.test(sql))).toBe(true);
+    expect(executedSqls.some((sql) => /^PRAGMA user_version = 2/i.test(sql))).toBe(true);
+  });
+
+  it('skips duplicate column errors when Wrangler already applied migrations, yet rethrows real DDL errors', async () => {
+    const wranglerMigratedDb = createMemoryD1(
+      {
+        subscriptions: [{ id: 's-w1', name: 'Wrangler Sub', url: 'https://w.example.com/sub', version: 3 }],
+      },
+      {
+        userVersion: 0,
+        existingTables: [
+          'subscriptions',
+          'nodes',
+          'profiles',
+          'guestbook',
+          'settings',
+          'cache',
+          'access_logs',
+          'error_reports',
+        ],
+        hasConfigVersionColumns: true,
+      },
+    );
+    wranglerMigratedDb.existingColumns.add('profiles.custom_id');
+    wranglerMigratedDb.existingColumns.add('profiles.link_id');
+    wranglerMigratedDb.existingColumns.add('cache.expires_at');
+
+    await runD1Migrations(wranglerMigratedDb);
+    expect(wranglerMigratedDb.getUserVersion()).toBe(LATEST_SCHEMA_VERSION);
+    const adapter = StorageFactory.createAdapter({ MISUB_DB: wranglerMigratedDb });
+    expect((await adapter.getSubscriptionById('s-w1'))?.configVersion).toBe(3);
+
+    const brokenAlterDb = {
       prepare(sql) {
         return {
+          async first() {
+            if (/^PRAGMA\s+user_version/i.test(sql)) return { user_version: 1 };
+            return null;
+          },
           async run() {
-            legacySqlLog.push(sql.replace(/\s+/g, ' ').trim());
-            if (/ALTER TABLE profiles ADD COLUMN custom_id/i.test(sql)) {
-              legacyMissingColumn = false;
-              return { success: true };
-            }
-            if (/ALTER TABLE /i.test(sql)) {
-              throw new Error('duplicate column name');
-            }
-            if (legacyMissingColumn && /UPDATE profiles|CREATE INDEX/i.test(sql)) {
-              throw new Error('no such column: custom_id');
+            if (/^ALTER TABLE/i.test(sql)) {
+              throw new Error('SQLITE_AUTH: disk I/O error');
             }
             return { success: true };
           },
         };
       },
+    };
+    await expect(runD1Migrations(brokenAlterDb)).rejects.toThrow('SQLITE_AUTH: disk I/O error');
+  });
+
+  it('runs zero DDL on v2 databases, caches migration state per isolate, deduplicates concurrent calls, and does not cache failures', async () => {
+    // 1. Up-to-date v2 DB: first access checks PRAGMA user_version once with zero DDL, second access does zero queries
+    const freshV2Db = createMemoryD1({}, { userVersion: 2 });
+    const prepareSpy = vi.spyOn(freshV2Db, 'prepare');
+
+    await runD1Migrations(freshV2Db);
+    expect(prepareSpy.mock.calls.map((c) => c[0])).toEqual(['PRAGMA user_version']);
+
+    prepareSpy.mockClear();
+    await runD1Migrations(freshV2Db);
+    expect(prepareSpy).not.toHaveBeenCalled();
+
+    // 2. Concurrent cold-start callers share one in-flight migration promise
+    const concurrentDb = createMemoryD1({}, { userVersion: 2 });
+    const concurrentPrepareSpy = vi.spyOn(concurrentDb, 'prepare');
+    await Promise.all([runD1Migrations(concurrentDb), runD1Migrations(concurrentDb), runD1Migrations(concurrentDb)]);
+    expect(concurrentPrepareSpy).toHaveBeenCalledTimes(1);
+
+    // 3. Failure must not poison migratedDatabases cache
+    let shouldFail = true;
+    let fakeVersion = 0;
+    const flakyDb = {
+      prepare(sql) {
+        return {
+          async first() {
+            if (shouldFail) throw new Error('D1 transient failure');
+            if (/^PRAGMA\s+user_version/i.test(sql)) return { user_version: fakeVersion };
+            return null;
+          },
+          async run() {
+            if (shouldFail) throw new Error('D1 transient failure');
+            const m = sql.match(/^PRAGMA\s+user_version\s*=\s*(\d+)/i);
+            if (m) fakeVersion = Number(m[1]);
+            return { success: true };
+          },
+        };
+      },
       async batch(statements) {
+        if (shouldFail) throw new Error('D1 transient failure');
         for (const stmt of statements) {
           await stmt.run();
         }
         return statements.map(() => ({ success: true }));
       },
     };
-    const legacyBatchSpy = vi.spyOn(legacyDb, 'batch');
 
-    await ensureD1Schema(legacyDb);
-    expect(legacyMissingColumn).toBe(false);
-    expect(legacyBatchSpy).toHaveBeenCalledTimes(3);
-    expect(legacySqlLog.some((sql) => /^ALTER TABLE profiles ADD COLUMN custom_id/i.test(sql))).toBe(true);
-
-    legacyBatchSpy.mockClear();
-    await ensureD1Schema(legacyDb);
-    expect(legacyBatchSpy).not.toHaveBeenCalled();
-
-    // 3. Failure must not poison initializedSchemas cache
-    let shouldFail = true;
-    const flakyDb = {
-      prepare() {
-        return {
-          async run() {
-            if (shouldFail) {
-              throw new Error('D1 transient failure');
-            }
-            return { success: true };
-          },
-        };
-      },
-      async batch(statements) {
-        if (shouldFail) {
-          throw new Error('D1 transient failure');
-        }
-        return statements.map(() => ({ success: true }));
-      },
-    };
-
-    await expect(ensureD1Schema(flakyDb)).rejects.toThrow('D1 transient failure');
+    await expect(runD1Migrations(flakyDb)).rejects.toThrow('D1 transient failure');
 
     shouldFail = false;
-    const retryBatchSpy = vi.spyOn(flakyDb, 'batch');
-    await ensureD1Schema(flakyDb);
-    expect(retryBatchSpy).toHaveBeenCalledTimes(1);
+    await runD1Migrations(flakyDb);
+    expect(fakeVersion).toBe(LATEST_SCHEMA_VERSION);
   });
 
   it('avoids full-table scans on subscription group pull and invalid-token / disguise requests', async () => {

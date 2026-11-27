@@ -234,26 +234,20 @@ export async function applyTagOperation(
 
   if (op === 'delete') {
     const deletedIds: string[] = [];
-    const remaining = allSubscriptions.filter((sub) => {
+    for (const sub of allSubscriptions) {
       const isSub = /^https?:\/\//i.test(sub.url || '');
       const sameType = type === 'sub' ? isSub : !isSub;
       const hasTag = getTelegramItemTags(sub).includes(tagName);
-      if (sameType && hasTag) {
-        if (sub.id) deletedIds.push(sub.id);
-        return false;
+      if (sameType && hasTag && sub.id) {
+        deletedIds.push(sub.id);
       }
-      return true;
-    });
+    }
     if (typeof storageAdapter.deleteSubscriptionsByIds === 'function') {
       await storageAdapter.deleteSubscriptionsByIds(deletedIds);
     } else if (typeof storageAdapter.deleteSubscriptionById === 'function') {
       for (const id of deletedIds) {
         await storageAdapter.deleteSubscriptionById(id);
       }
-    } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
-      await storageAdapter.syncAllSubscriptions(remaining);
-    } else {
-      await storageAdapter.putAllSubscriptions(remaining);
     }
   } else {
     if (changed === 0) return 0;

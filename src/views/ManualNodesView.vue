@@ -125,9 +125,11 @@ const handleDeleteAllNodesWithCleanup = () => {
   showDeleteNodesModal.value = false;
 };
 
-const handleAutoSortNodes = () => {
-  autoSortNodes();
-  showToast(t('manualNodes.sortedByRegion'), 'success');
+const handleAutoSortNodes = async () => {
+  const res = await autoSortNodes();
+  if (res.ok) {
+    showToast(t('manualNodes.sortedByRegion'), 'success');
+  }
 };
 
 const handleSortByLatency = async () => {
@@ -172,19 +174,22 @@ const handleOpenTagManagement = () => {
   showTagManagementModal.value = true;
 };
 
-const handleTagRename = (oldName: string, newName: string) => {
-  renameTag(oldName, newName);
-  showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+const handleTagRename = async (oldName: string, newName: string) => {
+  const ok = await renameTag(oldName, newName);
+  if (ok) {
+    showToast(t('tags.tagRenamed', { oldName, newName }), 'success');
+  }
 };
 
-const handleTagDelete = (tagName: string) => {
-  deleteTag(tagName);
-  showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+const handleTagDelete = async (tagName: string) => {
+  const ok = await deleteTag(tagName);
+  if (ok) {
+    showToast(t('tags.tagDeleted', { name: tagName }), 'success');
+  }
 };
 
 const handleTagReorder = (newOrder: string[]) => {
   reorderTags(newOrder);
-  showToast(t('tags.tagOrderUpdated'), 'success');
 };
 </script>
 

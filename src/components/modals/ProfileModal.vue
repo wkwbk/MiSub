@@ -262,8 +262,13 @@ const filteredManualNodes = computed(() => {
 });
 
 watch(
-  () => props.profile,
-  (newProfile) => {
+  [() => props.show, () => props.profile],
+  ([isShown, newProfile], prev) => {
+    const justOpened = Boolean(isShown && (!prev || !prev[0]));
+    const profileRefChanged = !prev || newProfile !== prev[1];
+    if (!justOpened && !profileRefChanged) {
+      return;
+    }
     if (newProfile) {
       const profileCopy = JSON.parse(JSON.stringify(newProfile));
       profileCopy.tags = getItemTags(profileCopy);
@@ -362,7 +367,7 @@ watch(
       };
     }
   },
-  { deep: true, immediate: true },
+  { immediate: true },
 );
 
 function buildPreparedProfile(): EditableProfile {
@@ -485,6 +490,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
   <Modal
     :close-on-confirm="false"
     :confirm-disabled="Boolean(isSaving)"
+    :confirm-loading="Boolean(isSaving)"
     :show="show"
     size="7xl"
     @confirm="handleConfirm"
