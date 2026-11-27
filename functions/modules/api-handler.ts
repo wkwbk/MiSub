@@ -26,6 +26,13 @@ import {
   normalizeProfileIdentifier,
 } from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
+import {
+  normalizeOptionalBooleanOverride,
+  normalizeOptionalListenOverride,
+  normalizeProfilePortalMode,
+  parseOptionalInteger,
+} from '@misub/core/domain/multi-socks.js';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { type AccessControlConfig, enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
@@ -75,6 +82,35 @@ export function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
   normalized.downloadCount = Number(profile.downloadCount) || 0;
   const rawShortLink = typeof profile.shortLink === 'string' ? profile.shortLink.trim() : '';
   normalized.shortLink = /^https?:\/\//i.test(rawShortLink) ? rawShortLink : '';
+  if (profile.portalMode !== undefined) {
+    normalized.portalMode = normalizeProfilePortalMode(profile.portalMode);
+  }
+  if (profile.portalRedirectUrl !== undefined) {
+    normalized.portalRedirectUrl = typeof profile.portalRedirectUrl === 'string' ? profile.portalRedirectUrl.trim() : '';
+  }
+  if (profile.portalNotice !== undefined) {
+    normalized.portalNotice = typeof profile.portalNotice === 'string' ? profile.portalNotice.trim() : '';
+  }
+  if (profile.multiSocksEnabled !== undefined) {
+    normalized.multiSocksEnabled = normalizeOptionalBooleanOverride(profile.multiSocksEnabled);
+  }
+  if (profile.multiSocksStartPort !== undefined) {
+    normalized.multiSocksStartPort = parseOptionalInteger(profile.multiSocksStartPort);
+  }
+  if (profile.multiSocksListen !== undefined) {
+    normalized.multiSocksListen = normalizeOptionalListenOverride(profile.multiSocksListen);
+  }
+  if (profile.multiSocksUsername !== undefined) {
+    normalized.multiSocksUsername =
+      typeof profile.multiSocksUsername === 'string' ? profile.multiSocksUsername.trim() : '';
+  }
+  if (profile.multiSocksPassword !== undefined) {
+    normalized.multiSocksPassword =
+      typeof profile.multiSocksPassword === 'string' ? profile.multiSocksPassword.trim() : '';
+  }
+  if (profile.multiSocksMaxPorts !== undefined) {
+    normalized.multiSocksMaxPorts = parseOptionalInteger(profile.multiSocksMaxPorts);
+  }
   return normalized;
 }
 
@@ -525,6 +561,67 @@ export async function handleSettingsSave(
       hasEnvCronSecret: _omitHasEnvCronSecret,
       ...incomingSettings
     } = newSettings;
+
+    if ('subPortalMode' in incomingSettings) {
+      const mode = incomingSettings.subPortalMode;
+      if (mode !== 'portal' && mode !== 'redirect' && mode !== 'raw') {
+        return createJsonResponse({ success: false, message: '浏览器门户默认行为配置无效' }, 400);
+      }
+    }
+    if ('subPortalRedirectUrl' in incomingSettings) {
+      const trimmedUrl = String(incomingSettings.subPortalRedirectUrl ?? '').trim();
+      if (trimmedUrl && !isValidHttpUrlString(trimmedUrl)) {
+        return createJsonResponse(
+          { success: false, message: '门户跳转链接必须是有效的 http:// 或 https:// 地址' },
+          400,
+        );
+      }
+      incomingSettings.subPortalRedirectUrl = trimmedUrl;
+    }
+    if ('subPortalTitle' in incomingSettings) {
+      incomingSettings.subPortalTitle = String(incomingSettings.subPortalTitle ?? '').trim();
+    }
+    if ('subPortalNotice' in incomingSettings) {
+      incomingSettings.subPortalNotice = String(incomingSettings.subPortalNotice ?? '').trim();
+    }
+    if ('defaultMultiSocksEnabled' in incomingSettings) {
+      incomingSettings.defaultMultiSocksEnabled =
+        incomingSettings.defaultMultiSocksEnabled === true || incomingSettings.defaultMultiSocksEnabled === 'true';
+    }
+    if ('defaultMultiSocksStartPort' in incomingSettings) {
+      const parsedPort = Number(incomingSettings.defaultMultiSocksStartPort);
+      if (!Number.isInteger(parsedPort) || parsedPort < 1024 || parsedPort > 60000) {
+        return createJsonResponse(
+          { success: false, message: '默认多端口起始端口必须为 1024 到 60000 之间的整数' },
+          400,
+        );
+      }
+      incomingSettings.defaultMultiSocksStartPort = parsedPort;
+    }
+    if ('defaultMultiSocksListen' in incomingSettings) {
+      if (
+        incomingSettings.defaultMultiSocksListen !== '127.0.0.1' &&
+        incomingSettings.defaultMultiSocksListen !== '0.0.0.0'
+      ) {
+        return createJsonResponse({ success: false, message: '默认监听地址仅支持 127.0.0.1 或 0.0.0.0' }, 400);
+      }
+    }
+    if ('portalCustomPage' in incomingSettings) {
+      const rawPortalPage = isRecord(incomingSettings.portalCustomPage) ? incomingSettings.portalCustomPage : {};
+      incomingSettings.portalCustomPage = {
+        enabled: rawPortalPage.enabled === true || rawPortalPage.enabled === 'true',
+        type: 'html',
+        content: typeof rawPortalPage.content === 'string' ? rawPortalPage.content : '',
+        css: typeof rawPortalPage.css === 'string' ? rawPortalPage.css : '',
+        useDefaultLayout:
+          rawPortalPage.useDefaultLayout === undefined
+            ? true
+            : rawPortalPage.useDefaultLayout === true || rawPortalPage.useDefaultLayout === 'true',
+        hideBranding: rawPortalPage.hideBranding === true || rawPortalPage.hideBranding === 'true',
+        hideHeader: rawPortalPage.hideHeader === true || rawPortalPage.hideHeader === 'true',
+        hideFooter: rawPortalPage.hideFooter === true || rawPortalPage.hideFooter === 'true',
+      };
+    }
 
     if ('botToken' in incomingSettings) {
       const incomingBotToken = String(incomingSettings.botToken || '').trim();

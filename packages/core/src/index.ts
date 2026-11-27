@@ -16,6 +16,7 @@ export * from './domain/airport-domain.js';
 export * from './domain/auto-update.js';
 export * from './domain/default-settings.js';
 export * from './domain/disabled-nodes.js';
+export * from './domain/multi-socks.js';
 export * from './domain/profile-alias.js';
 export * from './domain/profile-link.js';
 export * from './domain/profile-subscription-ref.js';

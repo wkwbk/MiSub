@@ -15,6 +15,7 @@ const loadGlobalSettings = () => import('@/components/settings/sections/GlobalSe
 const loadTransformSettings = () => import('@/components/settings/sections/TransformSettings.vue');
 const loadServiceSettings = () => import('@/components/settings/sections/ServiceSettings.vue');
 const loadCustomPageSettings = () => import('@/components/settings/sections/CustomPageSettings.vue');
+const loadPortalCustomPageSettings = () => import('@/components/settings/sections/PortalCustomPageSettings.vue');
 const loadWebdavBackupSettings = () => import('@/components/settings/sections/WebdavBackupSettings.vue');
 const loadSystemSettings = () => import('@/components/settings/sections/SystemSettings.vue');
 
@@ -24,6 +25,7 @@ const GlobalSettings = defineAsyncComponent(loadGlobalSettings);
 const TransformSettings = defineAsyncComponent(loadTransformSettings);
 const ServiceSettings = defineAsyncComponent(loadServiceSettings);
 const CustomPageSettings = defineAsyncComponent(loadCustomPageSettings);
+const PortalCustomPageSettings = defineAsyncComponent(loadPortalCustomPageSettings);
 const WebdavBackupSettings = defineAsyncComponent(loadWebdavBackupSettings);
 const SystemSettings = defineAsyncComponent(loadSystemSettings);
 
@@ -96,6 +98,7 @@ const disguiseConfigModel = computed<DisguiseConfig>({
 
 // 仅在首次访问对应 tab 时才挂载该分区组件，后续切换通过 v-show 保留内部状态
 const visitedTabs = ref<Set<string>>(new Set(props.activeTab ? [props.activeTab] : []));
+const customPageSubTab = ref<'public' | 'portal'>('public');
 watch(
   () => props.activeTab,
   (tab) => {
@@ -169,6 +172,7 @@ onMounted(() => {
     loadTransformSettings,
     loadServiceSettings,
     loadCustomPageSettings,
+    loadPortalCustomPageSettings,
     loadWebdavBackupSettings,
     loadSystemSettings,
   ]);
@@ -224,15 +228,56 @@ onUnmounted(() => {
         v-show="activeTab === 'service'"
         v-model:settings="settingsModel"
       />
-      <CustomPageSettings
-        v-if="visitedTabs.has('custom-page')"
-        v-show="activeTab === 'custom-page'"
-        v-model:settings="settingsModel"
-        :is-active="activeTab === 'custom-page'"
-        :is-saving="isSaving"
-        :save-disabled="saveDisabled"
-        @save="handleSaveClick"
-      />
+      <div v-if="visitedTabs.has('custom-page')" v-show="activeTab === 'custom-page'" class="space-y-4">
+        <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+          <button
+            :aria-pressed="customPageSubTab === 'public'"
+            :class="
+              customPageSubTab === 'public'
+                ? 'bg-accent text-accent-fg'
+                : 'text-fg-muted hover:text-fg hover:bg-hover'
+            "
+            class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+            data-testid="custom-page-subtab-public"
+            type="button"
+            @click="customPageSubTab = 'public'"
+          >
+            {{ t('settings.customPageTitle') }}
+          </button>
+          <button
+            :aria-pressed="customPageSubTab === 'portal'"
+            :class="
+              customPageSubTab === 'portal'
+                ? 'bg-accent text-accent-fg'
+                : 'text-fg-muted hover:text-fg hover:bg-hover'
+            "
+            class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+            data-testid="custom-page-subtab-portal"
+            type="button"
+            @click="customPageSubTab = 'portal'"
+          >
+            {{ t('settings.portalCustomPageTitle') }}
+          </button>
+        </div>
+
+        <CustomPageSettings
+          v-show="customPageSubTab === 'public'"
+          v-model:settings="settingsModel"
+          :is-active="activeTab === 'custom-page' && customPageSubTab === 'public'"
+          :is-saving="isSaving"
+          :save-disabled="saveDisabled"
+          @save="handleSaveClick"
+        />
+
+        <PortalCustomPageSettings
+          v-if="customPageSubTab === 'portal'"
+          v-model:settings="settingsModel"
+          :is-active="activeTab === 'custom-page' && customPageSubTab === 'portal'"
+          :is-saving="isSaving"
+          :save-disabled="saveDisabled"
+          @save="handleSaveClick"
+        />
+      </div>
       <div v-if="visitedTabs.has('system')" v-show="activeTab === 'system'" class="space-y-4">
         <WebdavBackupSettings v-model:settings="settingsModel" />
         <SystemSettings

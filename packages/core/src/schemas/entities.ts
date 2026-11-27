@@ -307,6 +307,15 @@ export const ProfileSchema = z
     nodeTransform: z.record(z.string(), z.unknown()).nullable().optional(),
     nodeTransformPresetId: z.string().optional(),
     expiresAt: z.string().nullable().optional(),
+    portalMode: z.enum(['inherit', 'portal', 'redirect', 'raw']).optional(),
+    portalRedirectUrl: z.string().optional(),
+    portalNotice: z.string().optional(),
+    multiSocksEnabled: z.boolean().nullable().optional(),
+    multiSocksStartPort: z.number().int().min(1024).max(60000).nullable().optional(),
+    multiSocksListen: z.enum(['', '127.0.0.1', '0.0.0.0']).nullable().optional(),
+    multiSocksUsername: z.string().optional(),
+    multiSocksPassword: z.string().optional(),
+    multiSocksMaxPorts: z.number().int().min(1).max(65535).nullable().optional(),
     sortIndex: z.number().optional(),
     configVersion: z.number().int().positive().optional(),
     createdAt: z.string().nullable().optional(),
@@ -458,6 +467,19 @@ export const CustomPageConfigSchema = z
   })
   .passthrough();
 
+export const PortalCustomPageConfigSchema = z
+  .object({
+    enabled: z.boolean().default(false),
+    type: z.literal('html').default('html'),
+    content: z.string().default(''),
+    css: z.string().default(''),
+    useDefaultLayout: z.boolean().default(true),
+    hideBranding: z.boolean().default(false),
+    hideHeader: z.boolean().default(false),
+    hideFooter: z.boolean().default(false),
+  })
+  .passthrough();
+
 export const RegionOverrideRuleSchema = z
   .object({
     pattern: z.string().default(''),
@@ -515,6 +537,13 @@ export const SettingsSchema = z
     enableFlagEmoji: z.boolean().optional(),
     enablePublicPage: z.boolean().optional(),
     allowBrowserSubAccess: z.boolean().optional(),
+    subPortalMode: z.enum(['portal', 'redirect', 'raw']).optional(),
+    subPortalRedirectUrl: z.string().optional(),
+    subPortalTitle: z.string().optional(),
+    subPortalNotice: z.string().optional(),
+    defaultMultiSocksEnabled: z.boolean().optional(),
+    defaultMultiSocksStartPort: z.number().int().min(1024).max(60000).optional(),
+    defaultMultiSocksListen: z.enum(['127.0.0.1', '0.0.0.0']).optional(),
     disguise: DisguiseConfigSchema.optional(),
     storageType: z.string().optional(),
     autoUpdateInterval: z.number().nonnegative().optional(),
@@ -539,6 +568,7 @@ export const SettingsSchema = z
     telegramPushConfig: TelegramPushConfigSchema.optional(),
     customDnsOverride: z.string().optional(),
     customPage: CustomPageConfigSchema.optional(),
+    portalCustomPage: PortalCustomPageConfigSchema.optional(),
     hero: HeroConfigSchema.optional(),
     heroTitle1: z.string().optional(),
     heroTitle2: z.string().optional(),

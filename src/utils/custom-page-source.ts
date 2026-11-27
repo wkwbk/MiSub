@@ -33,6 +33,24 @@ export const CUSTOM_PAGE_COMPONENT_PLACEHOLDERS = [
   'theme_toggle',
 ] as const;
 
+export const PORTAL_PAGE_COMPONENT_PLACEHOLDERS = [
+  'overview',
+  'quick_import',
+  'quickImport',
+  'multi_socks',
+  'multiSocksTable',
+  'theme_toggle',
+] as const;
+
+export const CUSTOM_PAGE_SLOT_ALIASES: Record<string, string> = {
+  announcement: 'announcements',
+};
+
+export const PORTAL_PAGE_SLOT_ALIASES: Record<string, string> = {
+  quickImport: 'quick_import',
+  multiSocksTable: 'multi_socks',
+};
+
 export function sanitizeCustomPageHtml(html: string): string {
   return DOMPurify.sanitize(html || '', CUSTOM_PAGE_DOMPURIFY_CONFIG);
 }
@@ -45,16 +63,25 @@ export function escapeCustomPageText(value: unknown): string {
     .replace(/>/g, '&gt;');
 }
 
-export function renderCustomPageHtml(parsedHtml: string, textVars: Record<string, string | number>): string {
+export function renderCustomPageHtml(
+  parsedHtml: string,
+  textVars: Record<string, string | number>,
+  options: {
+    componentPlaceholders?: readonly string[];
+    slotAliases?: Record<string, string>;
+  } = {},
+): string {
   let html = parsedHtml || '';
+  const componentPlaceholders = options.componentPlaceholders ?? CUSTOM_PAGE_COMPONENT_PLACEHOLDERS;
+  const slotAliases = options.slotAliases ?? CUSTOM_PAGE_SLOT_ALIASES;
 
   for (const [key, val] of Object.entries(textVars)) {
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'gi');
     html = html.replace(regex, escapeCustomPageText(val));
   }
 
-  CUSTOM_PAGE_COMPONENT_PLACEHOLDERS.forEach((p) => {
-    const slotName = p === 'announcement' ? 'announcements' : p;
+  componentPlaceholders.forEach((p) => {
+    const slotName = slotAliases[p] ?? p;
     const regex = new RegExp(`{{\\s*${p}\\s*}}`, 'gi');
     html = html.replace(regex, `<div data-slot="${slotName}"></div>`);
   });

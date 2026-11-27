@@ -75,7 +75,10 @@ const BUILTIN_CLIENT_ADAPTERS: ClientAdapter[] = [
     async renderIniTemplate(templateText: string, options: ClientAdapterOptions = {}) {
       const model = buildOptimizedIniTemplateModel(templateText, options);
       const { renderClashFromTemplateModel } = await (this.loadRenderer as typeof loadClashRenderer)();
-      return renderClashFromTemplateModel(model, { isChinaClient: options.isChinaClient });
+      return renderClashFromTemplateModel(model, {
+        isChinaClient: options.isChinaClient,
+        multiSocks: options.multiSocks,
+      });
     },
   },
   {

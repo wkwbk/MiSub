@@ -1,7 +1,8 @@
 import type { BuiltinTransformConfig, ClashProxy, NodeIRBatchParseOptions } from '@misub/core/types.js';
 import type { BoundRequestContext, StorageAdapter } from '../../../types.js';
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
-import { cleanControlChars, getUniqueName } from './name-utils.js';
+import { deduplicateNamesCollisionFree, type EffectiveMultiSocksConfig } from '@misub/core/domain/multi-socks.js';
+import { cleanControlChars } from './name-utils.js';
 import {
   DEFAULT_SELECT_GROUP,
   POLICY_GROUPS,
@@ -42,6 +43,7 @@ export interface BuiltinGeneratorOptions extends NodeIRBatchParseOptions {
   preferredProxyKeys?: string[];
   compactNames?: boolean;
   ruleBundle?: ShadowrocketRuleBundleEntry[] | null;
+  multiSocks?: EffectiveMultiSocksConfig | null;
   storageAdapter?: StorageAdapter | null;
   waitUntil?: BoundRequestContext['waitUntil'] | null;
   [key: string]: unknown;
@@ -128,13 +130,7 @@ export function resolveModelProxies(
  * 原地为代理数组生成唯一名称
  */
 export function deduplicateProxyNames<T extends { name?: string }>(proxies: T[]): void {
-  if (!Array.isArray(proxies)) return;
-  const usedNames = new Map<string, number>();
-  proxies.forEach((proxy) => {
-    if (proxy && proxy.name) {
-      proxy.name = getUniqueName(proxy.name, usedNames);
-    }
-  });
+  deduplicateNamesCollisionFree(proxies);
 }
 
 /**

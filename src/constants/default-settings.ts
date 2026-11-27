@@ -54,6 +54,17 @@ export const DEFAULT_SETTINGS = {
     hideHeader: false,
     hideFooter: false,
   },
+  // 自定义订阅门户页
+  portalCustomPage: {
+    enabled: false,
+    type: 'html' as const,
+    content: '',
+    css: '',
+    useDefaultLayout: true,
+    hideBranding: false,
+    hideHeader: false,
+    hideFooter: false,
+  },
 };
 
 export const DEFAULT_PROFILE_FORM = {
@@ -88,4 +99,13 @@ export const DEFAULT_PROFILE_FORM = {
   },
   nodeTransform: null as Record<string, unknown> | null,
   nodeTransformPresetId: '',
+  portalMode: 'inherit' as 'inherit' | 'portal' | 'redirect' | 'raw',
+  portalRedirectUrl: '',
+  portalNotice: '',
+  multiSocksEnabled: null as boolean | null,
+  multiSocksStartPort: '' as string | number | null,
+  multiSocksListen: '' as '' | '127.0.0.1' | '0.0.0.0',
+  multiSocksUsername: '',
+  multiSocksPassword: '',
+  multiSocksMaxPorts: '' as string | number | null,
 };

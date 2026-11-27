@@ -32,7 +32,17 @@ import { resolveRequestContext } from './request-context.js';
 import { resolveNodeListWithCache, type CachedNodeEntry } from '../cache/cache-manager.js';
 import { ProcessorService } from '../../../services/processor-service.js';
 import { logAccessSuccess, shouldSkipLogging as shouldSkipAccessLog } from '../cache/access-logger.js';
-import { determineTargetFormat, isBrowserAgent, isMetaCore } from './user-agent-utils.js';
+import {
+  buildMultiSocksBindings,
+  prepareClashProxiesFromNodeList,
+  resolveEffectiveMultiSocksConfig,
+  resolveEffectivePortalConfig,
+  type EffectiveMultiSocksConfig,
+  type EffectivePortalConfig,
+} from '@misub/core/domain/multi-socks.js';
+import { isVirtualInfoProxy } from '@misub/core/protocols/clash-parsers/common.js';
+import { determineTargetFormat, isBrowserAgent, isMetaCore, shouldRouteToBrowserPortal } from './user-agent-utils.js';
+import { renderSubscriptionPortalPage } from './portal-page.js';
 import { getClientAdapter } from '../adapters/adapter-registry.js';
 import { handleProfileMode } from './profile-handler.js';
 import { manualProxyKeys, sortShadowrocketNodeList } from './shadowrocket-order.js';
@@ -255,6 +265,69 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const fetchGuardScopeBase = profileIdentifier ? `profile:${profileIdentifier}` : `token:${token}`;
   let fetchGuardScopeKey = fetchGuardScopeBase;
 
+  const wantsBrowserPortal = shouldRouteToBrowserPortal(request, url);
+  let effectivePortal: EffectivePortalConfig = resolveEffectivePortalConfig({
+    profile: null,
+    settings: config,
+    subName,
+  });
+  let effectiveMultiSocks: EffectiveMultiSocksConfig = resolveEffectiveMultiSocksConfig({
+    searchParams: url.searchParams,
+    profile: null,
+    settings: config,
+  });
+  let isPortalHtmlResponse = false;
+
+  const applyResolvedProfileContext = (
+    activeProfile: (ProfileConfig & Record<string, unknown>) | null,
+  ): Response | null => {
+    effectivePortal = resolveEffectivePortalConfig({
+      profile: activeProfile,
+      settings: config,
+      subName,
+    });
+    effectiveMultiSocks = resolveEffectiveMultiSocksConfig({
+      searchParams: url.searchParams,
+      profile: activeProfile,
+      settings: config,
+    });
+
+    if (wantsBrowserPortal && effectivePortal.mode === 'redirect' && effectivePortal.redirectUrl) {
+      return new Response(null, {
+        status: 302,
+        headers: {
+          Location: effectivePortal.redirectUrl,
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'CDN-Cache-Control': 'no-store',
+          'Surrogate-Control': 'no-store',
+          'X-MiSub-Mode': 'subscription-portal-redirect',
+        },
+      });
+    }
+
+    isPortalHtmlResponse =
+      wantsBrowserPortal &&
+      (effectivePortal.mode === 'portal' || (effectivePortal.mode === 'redirect' && !effectivePortal.redirectUrl));
+
+    if (
+      !isPortalHtmlResponse &&
+      effectiveMultiSocks.explicitByQuery &&
+      targetFormat === 'base64' &&
+      !url.searchParams.has('target') &&
+      !url.searchParams.has('base64') &&
+      !url.searchParams.has('v2ray') &&
+      !url.searchParams.has('trojan')
+    ) {
+      targetFormat = 'clash';
+    }
+
+    return null;
+  };
+
+  const isEffectiveMetaCore = (): boolean =>
+    isMetaCore(userAgentHeader, url.searchParams) ||
+    (effectiveMultiSocks.enabled && effectiveMultiSocks.explicitByQuery && targetFormat === 'clash');
+
   const evaluateFetchGuard = async (
     activeProfile: (ProfileConfig & Record<string, unknown>) | null,
     expired: boolean,
@@ -282,8 +355,8 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     const cacheVersion = profileUpdatedAt ? `${baseVersion}:${profileUpdatedAt}` : baseVersion;
     edgeCacheRequest = buildEdgeCacheRequest({
       requestUrl: request.url,
-      targetFormat,
-      isMeta: isMetaCore(userAgentHeader, url.searchParams),
+      targetFormat: isPortalHtmlResponse ? 'portal-html' : targetFormat,
+      isMeta: isEffectiveMetaCore(),
       isChinaClient,
       cacheVersion,
       isProfileExpired: expired,
@@ -324,6 +397,12 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     initEngineFlags(currentProfile);
     const profile = currentProfile;
     if (profile && profile.enabled) {
+      subName = profile.name || subName;
+      const portalRedirectResponse = applyResolvedProfileContext(profile);
+      if (portalRedirectResponse) {
+        return portalRedirectResponse;
+      }
+
       if (profile.expiresAt) {
         const expiryDate = new Date(profile.expiresAt);
         const now = new Date();
@@ -449,6 +528,10 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     if (!config.myToken || !token || token !== config.myToken) {
       // [伪装加固] 同 profile token：统一走访问控制拦截响应
       return createBlockedResponse(config.disguise as Parameters<typeof createBlockedResponse>[0], request.url);
+    }
+    const portalRedirectResponse = applyResolvedProfileContext(null);
+    if (portalRedirectResponse) {
+      return portalRedirectResponse;
     }
     const guardedResponse = await evaluateFetchGuard(null, false);
     if (guardedResponse) {
@@ -719,6 +802,65 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const nodeCount = isProfileExpired ? 0 : countSubscriptionNodes(combinedNodeList, prependedContentForSubconverter);
   const nodeCountText = `<b>节点数:</b> <code>${nodeCount}</code>`;
 
+  if (isPortalHtmlResponse) {
+    const finalAddFlagEmoji =
+      urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
+    const finalPortalSkipCertVerify =
+      urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
+    const finalPortalEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
+    const finalPortalEnableTfo = urlTfo === 'true' || urlTfo === '1';
+
+    const mergedInfo = mergeSubscriptionUserInfo(context, targetMisubs);
+    const usedBytes = (mergedInfo.upload || 0) + (mergedInfo.download || 0);
+    const remainingBytes = Math.max(0, (mergedInfo.total || 0) - usedBytes);
+    const preparedProxies = isProfileExpired
+      ? []
+      : prepareClashProxiesFromNodeList(combinedNodeList, {
+          addFlagEmoji: finalAddFlagEmoji,
+          skipCertVerify: finalPortalSkipCertVerify,
+          enableUdp: finalPortalEnableUdp,
+          enableTfo: finalPortalEnableTfo,
+        });
+    const realProxies = preparedProxies.filter((proxy) => !isVirtualInfoProxy(proxy));
+    const bindings = effectiveMultiSocks.enabled ? buildMultiSocksBindings(realProxies, effectiveMultiSocks) : [];
+
+    const portalResponse = await renderSubscriptionPortalPage(
+      {
+        title: effectivePortal.title,
+        subName,
+        siteTitle: typeof config.hero?.title1 === 'string' && config.hero.title1 ? config.hero.title1 : config.fileName || 'MiSub',
+        notice: effectivePortal.notice,
+        subscriptionUrl: buildManagedConfigUrl(request.url),
+        pathname: url.pathname,
+        isExpired: isProfileExpired,
+        traffic: {
+          upload: mergedInfo.upload || 0,
+          download: mergedInfo.download || 0,
+          total: mergedInfo.total || 0,
+          remaining: remainingBytes,
+        },
+        expireText: expireTime,
+        expireStatus,
+        nodeCount: isProfileExpired ? 0 : realProxies.length,
+        defaultLocale: typeof config.defaultLocale === 'string' ? config.defaultLocale : 'zh-CN',
+        portalCustomPage: config.portalCustomPage as Record<string, unknown> | undefined,
+        multiSocks: {
+          enabled: effectiveMultiSocks.enabled,
+          listen: effectiveMultiSocks.listen,
+          startPort: effectiveMultiSocks.startPort,
+          maxPorts: effectiveMultiSocks.maxPorts,
+          hasAuth: Boolean(effectiveMultiSocks.username && effectiveMultiSocks.password),
+          totalRealNodes: realProxies.length,
+          bindings,
+        },
+      },
+      {
+        fetchSpaEntry: context.fetchSpaEntry,
+      },
+    );
+    return finalizeGuardedResponse(portalResponse);
+  }
+
   if (targetFormat === 'nodes') {
     const contentToReturn = isProfileExpired ? DEFAULT_EXPIRED_NODE + '\n' : combinedNodeList;
     const userInfoHeader = buildUserInfoHeaderFromSubscriptions(
@@ -784,7 +926,8 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
           regionOverrides: (Array.isArray(config.regionOverrides)
             ? config.regionOverrides
             : []) as unknown as RenderOutputBuiltinOptions['regionOverrides'],
-          isMeta: isMetaCore(userAgentHeader, url.searchParams),
+          isMeta: isEffectiveMetaCore(),
+          multiSocks: effectiveMultiSocks.enabled && targetFormat === 'clash' ? effectiveMultiSocks : null,
           customDnsOverride: typeof config.customDnsOverride === 'string' ? config.customDnsOverride : '',
           dnsMode:
             url.searchParams.get('dns-mode') ||
@@ -979,7 +1122,8 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     regionOverrides: (Array.isArray(config.regionOverrides)
       ? config.regionOverrides
       : []) as unknown as RenderOutputBuiltinOptions['regionOverrides'],
-    isMeta: isMetaCore(userAgentHeader, url.searchParams),
+    isMeta: isEffectiveMetaCore(),
+    multiSocks: effectiveMultiSocks.enabled && targetFormat === 'clash' ? effectiveMultiSocks : null,
     customDnsOverride: typeof config.customDnsOverride === 'string' ? config.customDnsOverride : '',
     dnsMode:
       url.searchParams.get('dns-mode') ||

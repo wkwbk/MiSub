@@ -85,6 +85,8 @@ type DefaultSettingsShape = Omit<
   typeof DEFAULT_SETTINGS,
   | 'mergeExpireStrategy'
   | 'subFetchLimitMode'
+  | 'subPortalMode'
+  | 'defaultMultiSocksListen'
   | 'builtinTransform'
   | 'tokenAutoRotate'
   | 'disguise'
@@ -97,17 +99,25 @@ type DefaultSettingsShape = Omit<
   | 'shortLink'
   | 'turnstile'
   | 'customPage'
+  | 'portalCustomPage'
   | 'regionOverrides'
   | 'defaultOperators'
 >;
 
 export type AppSettingsConfig = Omit<
   KnownKeys<SettingsConfig>,
-  'builtinTransform' | 'telegramPushConfig' | 'mergeExpireStrategy' | 'subFetchLimitMode'
+  | 'builtinTransform'
+  | 'telegramPushConfig'
+  | 'mergeExpireStrategy'
+  | 'subFetchLimitMode'
+  | 'subPortalMode'
+  | 'defaultMultiSocksListen'
 > &
   DefaultSettingsShape & {
     mergeExpireStrategy?: 'max' | 'min';
     subFetchLimitMode?: 'cache' | 'strict';
+    subPortalMode?: 'portal' | 'redirect' | 'raw';
+    defaultMultiSocksListen?: '127.0.0.1' | '0.0.0.0';
     builtinTransform?: BuiltinTransformConfig;
     customLoginPath?: string;
     clashRuleLevel?: string;

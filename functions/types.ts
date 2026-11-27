@@ -162,6 +162,7 @@ export interface BoundRequestContext {
   waitUntil?: (promise: Promise<unknown>) => void;
   passThroughOnException?: () => void;
   next?: (input?: Request | string, init?: RequestInit) => Promise<Response>;
+  fetchSpaEntry?: () => Promise<Response>;
   storage?: StorageAdapter;
   settings?: Partial<SettingsConfig> & Record<string, unknown>;
   config?: SettingsConfig & Record<string, unknown>;

@@ -23,6 +23,7 @@ import { useI18n } from '@/i18n/index.js';
 import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/utils/tags.js';
 import { ensureProfileLinkId, generateProfileLinkId } from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
+import { normalizeProfilePortalSocksOverrides } from '@misub/core/domain/multi-socks.js';
 import { normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t } = useI18n();
@@ -66,6 +67,7 @@ const activeSubscriptionTagFilters = ref<string[]>([]);
 const activeManualNodeTagFilters = ref<string[]>([]);
 const activeSubProfileTagFilters = ref<string[]>([]);
 const showAdvanced = ref(false);
+const showPortalMultiSocks = ref(false);
 const uiText = computed(() => ({
   prefixTitle: t('profileModal.nodeNameVisibility'),
   manualPrefixLabel: t('profileModal.manualPrefixText'),
@@ -336,6 +338,7 @@ watch(
         profileCopy.fetchLimitMode === 'strict' || profileCopy.fetchLimitMode === 'cache'
           ? profileCopy.fetchLimitMode
           : '';
+      Object.assign(profileCopy, normalizeProfilePortalSocksOverrides(profileCopy, { stringifyNumbers: true }));
 
       localProfile.value = ensureProfileLinkId(profileCopy) as EditableProfile;
     } else {
@@ -352,6 +355,15 @@ watch(
         expiresAt: '',
         fetchMinInterval: '',
         fetchLimitMode: '',
+        portalMode: 'inherit',
+        portalRedirectUrl: '',
+        portalNotice: '',
+        multiSocksEnabled: null,
+        multiSocksStartPort: '',
+        multiSocksListen: '',
+        multiSocksUsername: '',
+        multiSocksPassword: '',
+        multiSocksMaxPorts: '',
         isPublic: true,
         description: '',
         transformConfigMode: 'global',
@@ -397,6 +409,7 @@ function buildPreparedProfile(): EditableProfile {
   if (profileToSave.fetchLimitMode !== 'strict' && profileToSave.fetchLimitMode !== 'cache') {
     delete profileToSave.fetchLimitMode;
   }
+  Object.assign(profileToSave, normalizeProfilePortalSocksOverrides(profileToSave));
   const isVisualMode =
     profileToSave.transformConfigMode === 'visual' ||
     (profileToSave.transformConfigMode === 'builtin' && Boolean(profileToSave.builtinTransform?.visualRulesEnabled));
@@ -524,9 +537,11 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
           :prefix-toggle-options="prefixToggleOptions"
           :profile-tags="allProfileTags"
           :show-advanced="showAdvanced"
+          :show-portal-multi-socks="showPortalMultiSocks"
           :tag-prefix-toggle-options="tagPrefixToggleOptions"
           :ui-text="uiText"
           @toggle-advanced="showAdvanced = !showAdvanced"
+          @toggle-portal-multi-socks="showPortalMultiSocks = !showPortalMultiSocks"
         />
 
         <!-- 资源选择区（节点 / 订阅 / 订阅组） -->

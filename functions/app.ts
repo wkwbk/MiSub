@@ -299,6 +299,7 @@ export function createApp() {
         (pathSegments.length === 2 ||
           (pathSegments.length === 3 && pathSegments[1] !== 'profiles' && /\.conf$/i.test(pathSegments[2])));
       if (isSubRoute) {
+        boundCtx.fetchSpaEntry = () => fetchSpaEntry(request, c.env, boundCtx.next);
         return await handleMisubRequest(boundCtx);
       }
     }

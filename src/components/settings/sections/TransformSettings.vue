@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import TransformCard from '@/components/settings/sections/ServiceSettings/TransformCard.vue';
 import DnsOverrideCard from '@/components/settings/sections/ServiceSettings/DnsOverrideCard.vue';
+import MultiSocksCard from '@/components/settings/sections/ServiceSettings/MultiSocksCard.vue';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
 const props = defineProps<{
@@ -21,6 +22,7 @@ const settingsModel = computed<AppSettingsConfig>({
 <template>
   <div class="space-y-4">
     <TransformCard v-model:settings="settingsModel" />
+    <MultiSocksCard v-model:settings="settingsModel" />
     <DnsOverrideCard v-model:settings="settingsModel" />
   </div>
 </template>

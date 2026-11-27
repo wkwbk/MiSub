@@ -5,6 +5,7 @@
  */
 
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
+import { buildMihomoSocksListeners, buildMultiSocksBindings } from '@misub/core/domain/multi-socks.js';
 import { cleanControlChars } from '../../core/name-utils.js';
 import { isMetaCore } from '../../core/user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../../security/safe-dns.js';
@@ -197,6 +198,14 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
 
     if (bt?.baseConfig?.clash) {
       config = applyClashBaseConfigOverride(config, bt.baseConfig.clash);
+    }
+
+    if (options.multiSocks?.enabled) {
+      const bindings = buildMultiSocksBindings(proxies, options.multiSocks);
+      const listeners = buildMihomoSocksListeners(bindings);
+      if (listeners.length > 0) {
+        config.listeners = listeners;
+      }
     }
 
     let yamlStr = yaml.dump(config, CLASH_YAML_DUMP_OPTIONS);

@@ -158,6 +158,51 @@ export function migrateConfigSettings<T extends Record<string, unknown>>(config:
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'allowBrowserSubAccess')) {
     migratedConfig.allowBrowserSubAccess = toBoolean(migratedConfig.allowBrowserSubAccess);
   }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'subPortalMode')) {
+    const mode = migratedConfig.subPortalMode;
+    migratedConfig.subPortalMode = mode === 'redirect' || mode === 'raw' ? mode : 'portal';
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'subPortalRedirectUrl')) {
+    migratedConfig.subPortalRedirectUrl =
+      typeof migratedConfig.subPortalRedirectUrl === 'string' ? migratedConfig.subPortalRedirectUrl.trim() : '';
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'subPortalTitle')) {
+    migratedConfig.subPortalTitle =
+      typeof migratedConfig.subPortalTitle === 'string' ? migratedConfig.subPortalTitle.trim() : '';
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'subPortalNotice')) {
+    migratedConfig.subPortalNotice =
+      typeof migratedConfig.subPortalNotice === 'string' ? migratedConfig.subPortalNotice.trim() : '';
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksEnabled')) {
+    migratedConfig.defaultMultiSocksEnabled = toBoolean(migratedConfig.defaultMultiSocksEnabled);
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksStartPort')) {
+    const parsedPort = Number(migratedConfig.defaultMultiSocksStartPort);
+    migratedConfig.defaultMultiSocksStartPort =
+      Number.isInteger(parsedPort) && parsedPort >= 1024 && parsedPort <= 60000 ? parsedPort : 42001;
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksListen')) {
+    migratedConfig.defaultMultiSocksListen =
+      migratedConfig.defaultMultiSocksListen === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'portalCustomPage')) {
+    const rawPortalCustom =
+      migratedConfig.portalCustomPage && typeof migratedConfig.portalCustomPage === 'object'
+        ? (migratedConfig.portalCustomPage as Record<string, unknown>)
+        : {};
+    migratedConfig.portalCustomPage = {
+      enabled: toBoolean(rawPortalCustom.enabled),
+      type: 'html',
+      content: typeof rawPortalCustom.content === 'string' ? rawPortalCustom.content : '',
+      css: typeof rawPortalCustom.css === 'string' ? rawPortalCustom.css : '',
+      useDefaultLayout:
+        rawPortalCustom.useDefaultLayout === undefined ? true : toBoolean(rawPortalCustom.useDefaultLayout),
+      hideBranding: toBoolean(rawPortalCustom.hideBranding),
+      hideHeader: toBoolean(rawPortalCustom.hideHeader),
+      hideFooter: toBoolean(rawPortalCustom.hideFooter),
+    };
+  }
   if (migratedConfig.disguise && typeof migratedConfig.disguise === 'object') {
     const rawDisguise = migratedConfig.disguise as Record<string, unknown>;
     migratedConfig.disguise = {

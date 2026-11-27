@@ -1,7 +1,13 @@
 import type { ClashProxy, SettingsConfig } from '@misub/core/types.js';
 import type { BoundRequestContext, StorageAdapter } from '../types.js';
 import type { ClashChainConfig } from '../modules/subscription/core/mihomo-chain-proxy.js';
-import type { ChainProxyConfig } from '../modules/subscription/templates/template-model.js';
+import type { ChainProxyConfig, TemplateProxy } from '../modules/subscription/templates/template-model.js';
+import {
+  buildMihomoSocksListeners,
+  buildMultiSocksBindings,
+  type EffectiveMultiSocksConfig,
+} from '@misub/core/domain/multi-socks.js';
+import { deduplicateProxyNames, stripInternalProxyFields } from '../modules/subscription/core/client-shared.js';
 import { generateCombinedNodeList, type SubscriptionSourceItem } from './subscription-service.js';
 import { getClientAdapter } from '../modules/subscription/adapters/adapter-registry.js';
 import {
@@ -51,6 +57,7 @@ export interface RenderOutputBuiltinOptions {
   isChinaClient?: boolean;
   preferredProxyKeys?: string[];
   compactNames?: boolean;
+  multiSocks?: EffectiveMultiSocksConfig | null;
   [key: string]: unknown;
 }
 
@@ -98,25 +105,6 @@ export function isIniTemplateSource(
   if (builtinTemplateEntry?.format === 'ini') return true;
   if (templateSource?.kind === 'custom') return true;
   return getTemplateExtension(templateSource?.value) === 'ini';
-}
-
-function stripInternalProxyFields(proxy: ClashProxy): ClashProxy {
-  if (!proxy || typeof proxy !== 'object') return proxy;
-  const { metadata: _metadata, ...publicProxy } = proxy;
-  return publicProxy as ClashProxy;
-}
-
-function deduplicateProxyNames(proxies: ClashProxy[]): void {
-  const seen = new Map<string, number>();
-  proxies.forEach((proxy) => {
-    if (!proxy?.name) return;
-    const originalName = proxy.name;
-    const count = seen.get(originalName) || 0;
-    seen.set(originalName, count + 1);
-    if (count > 0) {
-      proxy.name = `${originalName} ${count + 1}`;
-    }
-  });
 }
 
 export function isClashYamlProfileTemplate(templateText: unknown): boolean {
@@ -177,8 +165,15 @@ function renderClashYamlProfileTemplate(
     .split(/\r?\n+/)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'));
-  const proxies = urlsToClashProxies(nodeUrls, options).map(stripInternalProxyFields);
-  deduplicateProxyNames(proxies);
+  const rawProxies = urlsToClashProxies(nodeUrls, options);
+  deduplicateProxyNames(rawProxies);
+
+  const multiSocksListeners = options.multiSocks?.enabled
+    ? buildMihomoSocksListeners(buildMultiSocksBindings(rawProxies, options.multiSocks))
+    : [];
+  const proxies = stripInternalProxyFields(
+    rawProxies as Array<ClashProxy & Record<string, unknown>>,
+  ) as unknown as TemplateProxy[];
 
   const chainConfigs = normalizeYamlChainConfigs(config);
   config.proxies = proxies;
@@ -201,6 +196,7 @@ function renderClashYamlProfileTemplate(
         proxyGroup: '🌐 DNS 出口',
       }),
       proxies: config.proxies,
+      ...(multiSocksListeners.length > 0 ? { listeners: multiSocksListeners } : {}),
     },
     {
       indent: 2,
@@ -312,6 +308,7 @@ export class ProcessorService {
           customDnsOverride: builtinOptions.customDnsOverride || '',
           dnsMode: builtinOptions.dnsMode || 'clean',
           isChinaClient: builtinOptions.isChinaClient,
+          multiSocks: builtinOptions.multiSocks,
         };
 
         if (adapter.id === 'shadowrocket') {

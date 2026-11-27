@@ -18,9 +18,11 @@ import { useI18n } from '@/i18n/index.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { COMMON_DASHBOARD_ROUTE_LOADERS, configureAuthGuard, translateRouteTitle } from '@/router/index.js';
 import { scheduleIdlePrefetch } from '@/utils/prefetch.js';
+import { readBootstrappedPortalData } from '@/utils/portal-bootstrap.js';
 
 const Login = defineAsyncComponent(() => import('@/views/LoginView.vue'));
 const NotFound = defineAsyncComponent(() => import('@/views/NotFound.vue'));
+const SubscriptionPortalView = defineAsyncComponent(() => import('@/views/SubscriptionPortalView.vue'));
 const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
 const Footer = defineAsyncComponent(() => import('@/components/layout/Footer.vue'));
 const Dashboard = defineAsyncComponent(() => import('@/components/dashboard/Dashboard.vue'));
@@ -33,6 +35,7 @@ const router = useRouter();
 const { isNavigating, progress, isFadingOut, showSlowIndicator, pendingPath } = useRouteLoading(router);
 let cancelRoutePrefetch = () => {};
 const { t, locale } = useI18n();
+const portalData = ref(readBootstrappedPortalData());
 const themeStore = useThemeStore();
 const { theme } = storeToRefs(themeStore);
 const { initTheme } = themeStore;
@@ -125,8 +128,11 @@ const isModernSettingsPage = computed(
 );
 
 onMounted(async () => {
-  window.addEventListener('misub:unauthorized', handleUnauthorized);
   initTheme();
+  if (portalData.value) {
+    return;
+  }
+  window.addEventListener('misub:unauthorized', handleUnauthorized);
   await checkSession();
 });
 
@@ -135,11 +141,19 @@ watch(
     route.fullPath,
     sessionStore.publicConfig?.customPage?.enabled,
     sessionStore.publicConfig?.customPage?.hideBranding,
+    portalData.value?.title,
     // 切换语言时也要重算标题，否则会一直停在启动时的语言
     locale.value,
   ],
   () => {
     if (typeof document === 'undefined') return;
+    if (portalData.value) {
+      const hidePortalBranding = Boolean(
+        portalData.value.portalCustomPage?.enabled && portalData.value.portalCustomPage?.hideBranding,
+      );
+      document.title = hidePortalBranding ? portalData.value.title : `${portalData.value.title} - MiSub`;
+      return;
+    }
     const rawTitle = translateRouteTitle(route, t);
     document.title = shouldHidePublicBranding.value
       ? rawTitle || document.title || ''
@@ -249,6 +263,13 @@ const isCustomPageFullWidth = computed(() => {
 
 <template>
   <div :class="theme" class="min-h-screen flex flex-col text-fg transition-colors duration-200 bg-canvas">
+    <template v-if="portalData">
+      <SubscriptionPortalView :portal-data="portalData" />
+      <Toast />
+      <ScrollToTop />
+    </template>
+
+    <template v-else>
     <RouteProgressBar
       :is-fading-out="isFadingOut"
       :is-navigating="isNavigating"
@@ -392,6 +413,7 @@ const isCustomPageFullWidth = computed(() => {
     />
     <Footer v-if="shouldShowFooter" :has-mobile-nav="showModernNavBar" :hide-branding="shouldHidePublicBranding" />
     <ScrollToTop v-if="(isLoggedIn || isPublicRoute) && !isModernSettingsPage" />
+    </template>
   </div>
 </template>
 

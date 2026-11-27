@@ -4,7 +4,7 @@ import type { Ref } from 'vue';
 import type { BuiltinTransformConfig, RuleTemplate } from '@misub/core/types.js';
 import type { EditableProfile } from '@/composables/useProfiles.js';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
-import { ChevronDown, RotateCcw, SlidersHorizontal } from '@lucide/vue';
+import { ChevronDown, Globe, RotateCcw, SlidersHorizontal } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
 import VisualTransformCard from '@/components/settings/sections/ServiceSettings/VisualTransformCard.vue';
@@ -28,6 +28,7 @@ import {
 } from '@misub/core/domain/profile-link.js';
 import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 
 interface ToggleOption {
   label: string;
@@ -54,6 +55,7 @@ const props = withDefaults(
   defineProps<{
     localProfile: EditableProfile;
     showAdvanced?: boolean;
+    showPortalMultiSocks?: boolean;
     uiText: ProfileFormUiText;
     prefixToggleOptions?: ToggleOption[];
     tagPrefixToggleOptions?: ToggleOption[];
@@ -63,6 +65,7 @@ const props = withDefaults(
   }>(),
   {
     showAdvanced: false,
+    showPortalMultiSocks: false,
     prefixToggleOptions: () => [],
     tagPrefixToggleOptions: () => [],
     globalSettings: () => ({}),
@@ -73,6 +76,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'toggle-advanced': [];
+  'toggle-portal-multi-socks': [];
   'update:localProfile': [value: EditableProfile];
 }>();
 
@@ -146,12 +150,21 @@ const customIdError = computed(() => {
 
 const activeShareSuffix = computed(() => {
   const subPath = normalizeSubPath(props.globalSettings?.profileToken || '', 'sub');
-  const identifier = getProfileShareIdentifier(props.localProfile) || 'link-id';
+  const identifier =
+    getProfileShareIdentifier({
+      id: props.localProfile?.id,
+      customId: props.localProfile?.customId,
+      linkId: props.localProfile?.linkId,
+    }) || 'link-id';
   return `/${subPath}/${identifier}`;
 });
 
 const handleResetProfileLink = () => {
-  const rotated = rotateProfileLinkId(props.localProfile);
+  const rotated = rotateProfileLinkId({
+    id: props.localProfile?.id,
+    customId: props.localProfile?.customId,
+    linkId: props.localProfile?.linkId,
+  });
   updateLocalProfile({
     linkId: rotated.linkId,
     customId: '',
@@ -302,6 +315,86 @@ function handleRuleTemplatesSaved(savedTemplateId: string) {
     updateLocalProfile({ transformConfig: `custom:${savedTemplateId}` });
   }
 }
+
+const globalPortalModeLabel = computed(() => {
+  const mode = props.globalSettings?.subPortalMode || 'portal';
+  if (mode === 'redirect') return t('profileModal.portalModeRedirect');
+  if (mode === 'raw') return t('profileModal.portalModeRaw');
+  return t('profileModal.portalModePortal');
+});
+
+const globalMultiSocksStartPort = computed(() => {
+  const raw = Number(props.globalSettings?.defaultMultiSocksStartPort);
+  return Number.isInteger(raw) && raw >= 1024 && raw <= 60000 ? raw : 42001;
+});
+
+const globalMultiSocksListen = computed(() =>
+  props.globalSettings?.defaultMultiSocksListen === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1',
+);
+
+const globalMultiSocksLabel = computed(() =>
+  props.globalSettings?.defaultMultiSocksEnabled ? t('profileModal.on') : t('profileModal.off'),
+);
+
+const portalRedirectUrlError = computed(() => {
+  const val = String(props.localProfile?.portalRedirectUrl || '').trim();
+  if (!val) return '';
+  return isValidHttpUrlString(val) ? '' : t('profileModal.invalidHttpUrl');
+});
+
+const multiSocksStartPortError = computed(() => {
+  const raw = props.localProfile?.multiSocksStartPort;
+  if (raw === '' || raw === null || raw === undefined) return '';
+  const num = Number(raw);
+  return Number.isInteger(num) && num >= 1024 && num <= 60000 ? '' : t('profileModal.invalidPortRange');
+});
+
+const multiSocksMaxPortsError = computed(() => {
+  const raw = props.localProfile?.multiSocksMaxPorts;
+  if (raw === '' || raw === null || raw === undefined) return '';
+  const num = Number(raw);
+  return Number.isInteger(num) && num >= 1 && num <= 65535 ? '' : t('profileModal.invalidMaxPortsRange');
+});
+
+const effectiveStartPortPreview = computed(() => {
+  const raw = props.localProfile?.multiSocksStartPort;
+  if (raw !== '' && raw !== null && raw !== undefined) {
+    const num = Number(raw);
+    if (Number.isInteger(num) && num >= 1024 && num <= 60000) return num;
+  }
+  return globalMultiSocksStartPort.value;
+});
+
+const effectiveListenPreview = computed(() =>
+  props.localProfile?.multiSocksListen === '127.0.0.1' || props.localProfile?.multiSocksListen === '0.0.0.0'
+    ? props.localProfile.multiSocksListen
+    : globalMultiSocksListen.value,
+);
+
+const effectiveMaxPortsPreview = computed(() => {
+  const raw = props.localProfile?.multiSocksMaxPorts;
+  if (raw !== '' && raw !== null && raw !== undefined) {
+    const num = Number(raw);
+    if (Number.isInteger(num) && num >= 1 && num <= 65535) return num;
+  }
+  return 300;
+});
+
+const effectiveMultiSocksEnabledPreview = computed(() => {
+  if (typeof props.localProfile?.multiSocksEnabled === 'boolean') {
+    return props.localProfile.multiSocksEnabled;
+  }
+  return Boolean(props.globalSettings?.defaultMultiSocksEnabled);
+});
+
+const subscriptionBasePreviewUrl = computed(() => {
+  const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://your-domain';
+  return `${origin}${activeShareSuffix.value}`;
+});
+
+const subscriptionOverridePreviewUrl = computed(() => {
+  return `${subscriptionBasePreviewUrl.value}?mode=multi-socks&startPort=${effectiveStartPortPreview.value}&listen=${effectiveListenPreview.value}`;
+});
 
 const enforceExternalSchemeConstraints = () => {
   const enabled = isExternalEngine.value;
@@ -786,6 +879,198 @@ watch(
           :model-value="localProfile.operators || []"
           @update:model-value="updateLocalProfile({ operators: $event })"
         />
+      </div>
+    </div>
+  </div>
+
+  <!-- === 浏览器访问与多端口 SOCKS5 折叠配置区 === -->
+  <div class="rounded-md border border-line bg-transparent mt-4 overflow-hidden">
+    <button
+      :aria-expanded="showPortalMultiSocks"
+      class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-hover/40 focus-visible:outline-hidden"
+      data-testid="toggle-portal-multisocks-btn"
+      type="button"
+      @click="emit('toggle-portal-multi-socks')"
+    >
+      <div class="flex min-w-0 items-center gap-2.5">
+        <Globe class="h-3.5 w-3.5 shrink-0 text-fg-muted" />
+        <span class="text-xs font-medium text-fg shrink-0">{{ t('profileModal.portalMultiSocksTitle') }}</span>
+        <span class="hidden sm:inline truncate text-xs text-fg-subtle">{{
+          t('profileModal.portalMultiSocksDesc')
+        }}</span>
+      </div>
+      <ChevronDown
+        :class="{ 'rotate-180 text-fg': showPortalMultiSocks }"
+        class="h-4 w-4 shrink-0 text-fg-muted transition-transform duration-200"
+      />
+    </button>
+
+    <div v-show="showPortalMultiSocks" class="border-t border-line p-4 space-y-5 animate-fade-in-down">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- 浏览器打开行为 -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.portalModeLabel') }}</label>
+          <Select
+            :model-value="localProfile.portalMode ?? 'inherit'"
+            :options="[
+              { value: 'inherit', label: t('profileModal.portalModeInherit') },
+              { value: 'portal', label: t('profileModal.portalModePortal') },
+              { value: 'redirect', label: t('profileModal.portalModeRedirect') },
+              { value: 'raw', label: t('profileModal.portalModeRaw') },
+            ]"
+            size="sm"
+            @update:model-value="
+              updateLocalProfile({ portalMode: ($event as 'inherit' | 'portal' | 'redirect' | 'raw') ?? 'inherit' })
+            "
+          />
+          <div v-if="(localProfile.portalMode ?? 'inherit') === 'inherit'" class="flex items-center gap-1.5 mt-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+            <span class="text-xs text-fg-muted">
+              {{ t('profileModal.currentGlobal', { value: globalPortalModeLabel }) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 自定义跳转网址 -->
+        <div>
+          <Input
+            id="profile-portal-redirect-url"
+            :error="portalRedirectUrlError"
+            :label="t('profileModal.portalRedirectUrlLabel')"
+            :model-value="localProfile.portalRedirectUrl ?? ''"
+            :placeholder="t('profileModal.portalRedirectUrlPlaceholder')"
+            size="sm"
+            type="url"
+            @update:model-value="updateLocalProfile({ portalRedirectUrl: String($event ?? '') })"
+          />
+        </div>
+
+        <!-- 单订阅组专属公告 -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-fg-muted mb-1.5" for="profile-portal-notice">
+            {{ t('profileModal.portalNoticeLabel') }}
+          </label>
+          <Textarea
+            id="profile-portal-notice"
+            :model-value="localProfile.portalNotice ?? ''"
+            :placeholder="t('profileModal.portalNoticePlaceholder')"
+            class="px-3 py-2 text-xs text-fg placeholder:text-fg-subtle"
+            rows="2"
+            @update:model-value="updateLocalProfile({ portalNotice: String($event ?? '') })"
+          />
+        </div>
+      </div>
+
+      <div class="border-t border-line pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- 多端口 SOCKS5 开关 -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.multiSocksEnabledLabel') }}</label>
+          <Select
+            :model-value="localProfile.multiSocksEnabled ?? null"
+            :options="[
+              { value: null, label: t('profileModal.followGlobal') },
+              { value: true, label: t('profileModal.on') },
+              { value: false, label: t('profileModal.off') },
+            ]"
+            size="sm"
+            @update:model-value="updateLocalProfile({ multiSocksEnabled: ($event as boolean | null) ?? null })"
+          />
+          <div
+            v-if="localProfile.multiSocksEnabled === null || localProfile.multiSocksEnabled === undefined"
+            class="flex items-center gap-1.5 mt-1"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span>
+            <span class="text-xs text-fg-muted">
+              {{ t('profileModal.currentGlobal', { value: globalMultiSocksLabel }) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 监听地址 -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.multiSocksListenLabel') }}</label>
+          <Select
+            :model-value="localProfile.multiSocksListen ?? ''"
+            :options="[
+              { value: '', label: t('profileModal.multiSocksListenInherit', { listen: globalMultiSocksListen }) },
+              { value: '127.0.0.1', label: '127.0.0.1' },
+              { value: '0.0.0.0', label: '0.0.0.0' },
+            ]"
+            size="sm"
+            @update:model-value="
+              updateLocalProfile({ multiSocksListen: ($event as '' | '127.0.0.1' | '0.0.0.0') ?? '' })
+            "
+          />
+        </div>
+
+        <!-- 起始端口 -->
+        <div>
+          <Input
+            id="profile-multisocks-start-port"
+            :error="multiSocksStartPortError"
+            :label="t('profileModal.multiSocksStartPortLabel')"
+            :model-value="localProfile.multiSocksStartPort ?? ''"
+            :placeholder="t('profileModal.multiSocksStartPortPlaceholder', { port: globalMultiSocksStartPort })"
+            size="sm"
+            type="number"
+            @update:model-value="updateLocalProfile({ multiSocksStartPort: String($event ?? '') })"
+          />
+        </div>
+
+        <!-- 最大端口数 -->
+        <div>
+          <Input
+            id="profile-multisocks-max-ports"
+            :error="multiSocksMaxPortsError"
+            :label="t('profileModal.multiSocksMaxPortsLabel')"
+            :model-value="localProfile.multiSocksMaxPorts ?? ''"
+            :placeholder="t('profileModal.multiSocksMaxPortsPlaceholder')"
+            size="sm"
+            type="number"
+            @update:model-value="updateLocalProfile({ multiSocksMaxPorts: String($event ?? '') })"
+          />
+        </div>
+
+        <!-- 可选鉴权账号密码 -->
+        <div>
+          <Input
+            id="profile-multisocks-username"
+            :label="t('profileModal.multiSocksUsernameLabel')"
+            :model-value="localProfile.multiSocksUsername ?? ''"
+            :placeholder="t('profileModal.multiSocksUsernamePlaceholder')"
+            size="sm"
+            @update:model-value="updateLocalProfile({ multiSocksUsername: String($event ?? '') })"
+          />
+        </div>
+        <div>
+          <Input
+            id="profile-multisocks-password"
+            :label="t('profileModal.multiSocksPasswordLabel')"
+            :model-value="localProfile.multiSocksPassword ?? ''"
+            :placeholder="t('profileModal.multiSocksPasswordPlaceholder')"
+            size="sm"
+            type="text"
+            @update:model-value="updateLocalProfile({ multiSocksPassword: String($event ?? '') })"
+          />
+        </div>
+      </div>
+
+      <!-- 实时订阅地址与多端口参数预览 -->
+      <div class="rounded-md border border-line bg-inset/60 p-3 space-y-1.5">
+        <p class="text-xs font-medium text-fg">{{ t('profileModal.subscriptionPreviewLabel') }}</p>
+        <p class="font-mono text-xs text-fg-muted break-all">{{ subscriptionBasePreviewUrl }}</p>
+        <p v-if="effectiveMultiSocksEnabledPreview" class="text-xs text-emerald-500 dark:text-emerald-400">
+          {{
+            t('profileModal.subscriptionPreviewMultiSocksHint', {
+              listen: effectiveListenPreview,
+              start: effectiveStartPortPreview,
+              max: effectiveMaxPortsPreview,
+            })
+          }}
+        </p>
+        <p class="font-mono text-xs text-fg-subtle break-all">
+          {{ t('profileModal.subscriptionPreviewTempOverrideHint', { url: subscriptionOverridePreviewUrl }) }}
+        </p>
       </div>
     </div>
   </div>

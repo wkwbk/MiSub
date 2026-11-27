@@ -30,8 +30,9 @@ export const useThemeStore = defineStore('theme', () => {
     updateThemeClass();
   }
 
-  function toggleTheme(): void {
+  function toggleTheme(options?: { instant?: boolean } | Event): void {
     const nextTheme: ThemeMode = theme.value === 'light' ? 'dark' : 'light';
+    const isInstant = Boolean(options && typeof options === 'object' && 'instant' in options && options.instant);
 
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
@@ -39,7 +40,10 @@ export const useThemeStore = defineStore('theme', () => {
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const canUseViewTransition =
-      typeof document !== 'undefined' && typeof document.startViewTransition === 'function' && !prefersReducedMotion;
+      !isInstant &&
+      typeof document !== 'undefined' &&
+      typeof document.startViewTransition === 'function' &&
+      !prefersReducedMotion;
 
     if (!canUseViewTransition) {
       if (typeof document !== 'undefined') {

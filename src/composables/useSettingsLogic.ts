@@ -9,6 +9,7 @@ import { setLocale, t } from '@/i18n/index.js';
 import { confirmAction } from '@/composables/useConfirm.js';
 import { extractErrorMessage } from '@/utils/error-handler.js';
 import { clearAllPreferences } from '@/utils/local-preference.js';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 
 export interface DisguiseConfig {
   pageType: 'default' | 'redirect';
@@ -53,6 +54,23 @@ function normalizeSettingsObject(source: Partial<AppSettingsConfig> = {}): AppSe
   merged.turnstile = {
     ...DEFAULT_SETTINGS.turnstile,
     ...(source.turnstile && typeof source.turnstile === 'object' ? source.turnstile : {}),
+  };
+  merged.subPortalMode =
+    merged.subPortalMode === 'redirect' || merged.subPortalMode === 'raw' ? merged.subPortalMode : 'portal';
+  merged.subPortalRedirectUrl = typeof merged.subPortalRedirectUrl === 'string' ? merged.subPortalRedirectUrl : '';
+  merged.subPortalTitle = typeof merged.subPortalTitle === 'string' ? merged.subPortalTitle : '';
+  merged.subPortalNotice = typeof merged.subPortalNotice === 'string' ? merged.subPortalNotice : '';
+  merged.defaultMultiSocksEnabled = Boolean(merged.defaultMultiSocksEnabled);
+  const parsedStartPort = Number(merged.defaultMultiSocksStartPort);
+  merged.defaultMultiSocksStartPort =
+    Number.isInteger(parsedStartPort) && parsedStartPort >= 1024 && parsedStartPort <= 60000 ? parsedStartPort : 42001;
+  merged.defaultMultiSocksListen = merged.defaultMultiSocksListen === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
+  const rawPortalCustom =
+    source.portalCustomPage && typeof source.portalCustomPage === 'object' ? source.portalCustomPage : merged.portalCustomPage;
+  merged.portalCustomPage = {
+    ...DEFAULT_SETTINGS.portalCustomPage,
+    ...(rawPortalCustom && typeof rawPortalCustom === 'object' ? rawPortalCustom : {}),
+    type: 'html',
   };
   return merged as AppSettingsConfig;
 }
@@ -148,6 +166,16 @@ export function useSettingsLogic() {
     if (isSaving.value) return false;
     if (hasWhitespace.value) {
       showToast(t('settings.noWhitespace'), 'error');
+      return false;
+    }
+    const redirectUrl = String(settings.value.subPortalRedirectUrl || '').trim();
+    if (redirectUrl && !isValidHttpUrlString(redirectUrl)) {
+      showToast(t('settings.invalidPortalRedirectUrlError'), 'error');
+      return false;
+    }
+    const startPort = Number(settings.value.defaultMultiSocksStartPort);
+    if (!Number.isInteger(startPort) || startPort < 1024 || startPort > 60000) {
+      showToast(t('settings.invalidStartPortError'), 'error');
       return false;
     }
 

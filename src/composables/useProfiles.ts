@@ -12,6 +12,7 @@ import {
   normalizeProfileIdentifier,
 } from '@misub/core/domain/profile-link.js';
 import { PROFILE_ALIAS_MAX_LENGTH, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
+import { normalizeOptionalListenOverride, parseOptionalInteger } from '@misub/core/domain/multi-socks.js';
 import { useListPagination } from '@/composables/useListPagination.js';
 import {
   collectTags,
@@ -64,6 +65,15 @@ export interface EditableProfile {
   expiresAt?: string | null;
   fetchMinInterval?: string | number;
   fetchLimitMode?: '' | 'cache' | 'strict';
+  portalMode?: 'inherit' | 'portal' | 'redirect' | 'raw';
+  portalRedirectUrl?: string;
+  portalNotice?: string;
+  multiSocksEnabled?: boolean | null;
+  multiSocksStartPort?: number | string | null;
+  multiSocksListen?: '' | '127.0.0.1' | '0.0.0.0' | null;
+  multiSocksUsername?: string;
+  multiSocksPassword?: string;
+  multiSocksMaxPorts?: number | string | null;
   sortIndex?: number;
   configVersion?: number;
   version?: number;
@@ -324,6 +334,14 @@ export function useProfiles() {
       customId: aliasCheck.alias,
       tags: normalizeTagList(profileData.tags),
       prefixSettings: profileData.prefixSettings as StoreProfileConfig['prefixSettings'],
+      multiSocksStartPort:
+        profileData.multiSocksStartPort === undefined ? undefined : parseOptionalInteger(profileData.multiSocksStartPort),
+      multiSocksMaxPorts:
+        profileData.multiSocksMaxPorts === undefined ? undefined : parseOptionalInteger(profileData.multiSocksMaxPorts),
+      multiSocksListen:
+        profileData.multiSocksListen === undefined
+          ? undefined
+          : normalizeOptionalListenOverride(profileData.multiSocksListen),
     }) as StoreProfileConfig;
 
     const {
@@ -335,9 +353,9 @@ export function useProfiles() {
       createdAt: _createdAt,
       updatedAt: _updatedAt,
       ...rawEditableFields
-    } = normalizedProfile as EditableProfile;
+    } = normalizedProfile;
 
-    const editableFields = { ...rawEditableFields };
+    const editableFields: Partial<StoreProfileConfig> = { ...rawEditableFields };
     if (!isNewProfile.value) {
       const formShortLink = String(editableFields.shortLink || '').trim();
       const latestStoreShortLink = String(existingProfile?.shortLink || '').trim();

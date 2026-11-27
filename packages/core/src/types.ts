@@ -33,6 +33,7 @@ import type {
   OperatorScriptParamsSchema,
   OperatorSortKeySchema,
   OperatorSortParamsSchema,
+  PortalCustomPageConfigSchema,
   ProfilePrefixSettingsSchema,
   ProfileSchema,
   ProfileSubconverterSchema,
@@ -113,6 +114,7 @@ export type ShortLinkConfig = z.infer<typeof ShortLinkConfigSchema>;
 export type TurnstileConfig = z.infer<typeof TurnstileConfigSchema>;
 export type TelegramPushConfig = z.infer<typeof TelegramPushConfigSchema>;
 export type CustomPageConfig = z.infer<typeof CustomPageConfigSchema>;
+export type PortalCustomPageConfig = z.infer<typeof PortalCustomPageConfigSchema>;
 export type RegionOverrideRule = z.infer<typeof RegionOverrideRuleSchema>;
 export type RuleTemplate = z.infer<typeof RuleTemplateSchema>;
 export type SettingsConfig = z.infer<typeof SettingsSchema>;

@@ -7,10 +7,22 @@
  */
 
 import type { MisubItem, ProfileConfig, ProfileSubscriptionRef, SubscriptionItem } from '@misub/core/types.js';
-import { isValidManualNodeUrl, isValidRemoteSubscriptionUrl } from '@misub/core/utils/url-validators.js';
+import {
+  isValidHttpUrlString,
+  isValidManualNodeUrl,
+  isValidRemoteSubscriptionUrl,
+} from '@misub/core/utils/url-validators.js';
 import { generateNodeId, generateProfileId, generateSubscriptionId } from '@misub/core/utils/id.js';
 import { ensureProfileLinkId, normalizeProfileIdentifier, rotateProfileLinkId } from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
+import {
+  MAX_MULTI_SOCKS_START_PORT,
+  MAX_MULTI_SOCKS_TCP_PORT,
+  MIN_MULTI_SOCKS_PORT,
+  normalizeOptionalListenOverride,
+  normalizeProfilePortalMode,
+  parseOptionalInteger,
+} from '@misub/core/domain/multi-socks.js';
 import { validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
 import type { BoundRequestContext, Env, Repositories } from '../types.js';
 import { createRepositories } from '../repositories/index.js';
@@ -99,6 +111,15 @@ const PROFILE_EDITABLE_FIELDS = [
   'expiresAt',
   'fetchMinInterval',
   'fetchLimitMode',
+  'portalMode',
+  'portalRedirectUrl',
+  'portalNotice',
+  'multiSocksEnabled',
+  'multiSocksStartPort',
+  'multiSocksListen',
+  'multiSocksUsername',
+  'multiSocksPassword',
+  'multiSocksMaxPorts',
   'sortIndex',
 ] as const;
 
@@ -1171,6 +1192,87 @@ export const handleNodesReorder = (req: Request, env: EnvLike, ctx: BoundRequest
 
 // ==================== Profiles Handlers ====================
 
+function validateAndNormalizeProfilePortalSocksPatch(target: RecordObj): string | null {
+  if (Object.prototype.hasOwnProperty.call(target, 'portalMode')) {
+    const rawMode = target.portalMode;
+    if (rawMode === '' || rawMode === null) {
+      target.portalMode = 'inherit';
+    } else if (rawMode !== 'inherit' && normalizeProfilePortalMode(rawMode) !== rawMode) {
+      return '浏览器门户打开行为参数无效';
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'portalRedirectUrl')) {
+    const trimmedUrl = String(target.portalRedirectUrl ?? '').trim();
+    if (trimmedUrl && !isValidHttpUrlString(trimmedUrl)) {
+      return '门户跳转链接必须是有效的 http:// 或 https:// 地址';
+    }
+    target.portalRedirectUrl = trimmedUrl;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'portalNotice')) {
+    target.portalNotice = String(target.portalNotice ?? '').trim();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksEnabled')) {
+    const rawEnabled = target.multiSocksEnabled;
+    if (rawEnabled === '' || rawEnabled === null) {
+      target.multiSocksEnabled = null;
+    } else if (typeof rawEnabled !== 'boolean') {
+      return '多端口 SOCKS5 开关参数无效';
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksStartPort')) {
+    const rawPort = target.multiSocksStartPort;
+    if (rawPort === '' || rawPort === null) {
+      target.multiSocksStartPort = null;
+    } else {
+      const parsedPort = parseOptionalInteger(rawPort);
+      if (parsedPort === null || parsedPort < MIN_MULTI_SOCKS_PORT || parsedPort > MAX_MULTI_SOCKS_START_PORT) {
+        return `起始端口必须为 ${MIN_MULTI_SOCKS_PORT} 到 ${MAX_MULTI_SOCKS_START_PORT} 之间的整数`;
+      }
+      target.multiSocksStartPort = parsedPort;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksListen')) {
+    const rawListen = target.multiSocksListen;
+    if (rawListen === '' || rawListen === null) {
+      target.multiSocksListen = '';
+    } else {
+      const normalizedListen = normalizeOptionalListenOverride(rawListen);
+      if (!normalizedListen) {
+        return '监听地址仅支持 127.0.0.1 或 0.0.0.0';
+      }
+      target.multiSocksListen = normalizedListen;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksUsername')) {
+    target.multiSocksUsername = String(target.multiSocksUsername ?? '').trim();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksPassword')) {
+    target.multiSocksPassword = String(target.multiSocksPassword ?? '').trim();
+  }
+
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksMaxPorts')) {
+    const rawMaxPorts = target.multiSocksMaxPorts;
+    if (rawMaxPorts === '' || rawMaxPorts === null) {
+      target.multiSocksMaxPorts = null;
+    } else {
+      const parsedMaxPorts = parseOptionalInteger(rawMaxPorts);
+      if (parsedMaxPorts === null || parsedMaxPorts < 1 || parsedMaxPorts > MAX_MULTI_SOCKS_TCP_PORT) {
+        return `最大端口数必须为 1 到 ${MAX_MULTI_SOCKS_TCP_PORT} 之间的整数`;
+      }
+      target.multiSocksMaxPorts = parsedMaxPorts;
+    }
+  }
+
+  return null;
+}
+
 export async function handleProfileCreate(
   request: Request,
   env: EnvLike,
@@ -1203,6 +1305,10 @@ export async function handleProfileCreate(
     const picked = pickAllowedFields(body, PROFILE_EDITABLE_FIELDS);
     if (!Object.prototype.hasOwnProperty.call(picked, 'ruleLevel') && typeof body.clashRuleLevel === 'string') {
       picked.ruleLevel = body.clashRuleLevel;
+    }
+    const portalSocksValidationError = validateAndNormalizeProfilePortalSocksPatch(picked);
+    if (portalSocksValidationError) {
+      return createJsonResponse({ success: false, message: portalSocksValidationError }, 400);
     }
 
     const normalized = normalizeProfile(
@@ -1262,6 +1368,10 @@ export async function handleProfilePatch(
     }
     if (Object.prototype.hasOwnProperty.call(patch, 'tags')) {
       patch.tags = normalizeTagArray(patch.tags);
+    }
+    const portalSocksValidationError = validateAndNormalizeProfilePortalSocksPatch(patch);
+    if (portalSocksValidationError) {
+      return createJsonResponse({ success: false, message: portalSocksValidationError }, 400);
     }
 
     const shouldRotateLink = body.rotateLinkId === true;

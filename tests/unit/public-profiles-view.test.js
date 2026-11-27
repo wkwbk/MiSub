@@ -454,6 +454,11 @@ describe('PublicProfilesView hero loading state', () => {
     });
     await flushPromises();
 
+    const expandButton = wrapper.find('[data-testid="resource-collection-toggle"]');
+    expect(expandButton.exists()).toBe(true);
+    await expandButton.trigger('click');
+    await flushPromises();
+
     const addButton = wrapper
       .findAll('button')
       .find((btn) => btn.text().includes('新增网站') || btn.text().includes('Add website'));
@@ -554,6 +559,11 @@ describe('PublicProfilesView hero loading state', () => {
         },
       },
     });
+    await flushPromises();
+
+    const expandClientsBtn = wrapper.find('[data-testid="resource-collection-toggle"]');
+    expect(expandClientsBtn.exists()).toBe(true);
+    await expandClientsBtn.trigger('click');
     await flushPromises();
 
     expect(wrapper.text()).toContain('v2rayN');

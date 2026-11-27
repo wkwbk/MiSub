@@ -3,11 +3,16 @@ import { computed, onMounted, onUnmounted, ref, watch, type CSSProperties } from
 import { Eye, Monitor, Moon, Smartphone, Sun } from '@lucide/vue';
 import type { AnnouncementConfig } from '@misub/core/types.js';
 import { useI18n } from '@/i18n/index.js';
-import { buildCustomPagePreviewSrcdoc } from '@/utils/custom-page-preview.js';
+import { buildCustomPagePreviewSrcdoc, buildPortalCustomPagePreviewSrcdoc } from '@/utils/custom-page-preview.js';
 import packageJson from '../../../../package.json';
 
 const props = withDefaults(
   defineProps<{
+    mode?: 'public' | 'portal';
+    portalTitle?: string;
+    portalNotice?: string;
+    portalStartPort?: number;
+    portalListen?: string;
     content?: string;
     css?: string;
     useDefaultLayout?: boolean;
@@ -23,6 +28,11 @@ const props = withDefaults(
     fullscreen?: boolean;
   }>(),
   {
+    mode: 'public',
+    portalTitle: '',
+    portalNotice: '',
+    portalStartPort: 42001,
+    portalListen: '127.0.0.1',
     content: '',
     css: '',
     useDefaultLayout: true,
@@ -48,8 +58,25 @@ const { t, locale } = useI18n();
 
 const hasPreviewSource = computed(() => Boolean((props.content || '').trim() || (props.css || '').trim()));
 
-const buildSrcdoc = (): string =>
-  buildCustomPagePreviewSrcdoc({
+const buildSrcdoc = (): string => {
+  if (props.mode === 'portal') {
+    return buildPortalCustomPagePreviewSrcdoc({
+      content: props.content || '',
+      css: props.css || '',
+      theme: props.theme,
+      useDefaultLayout: props.useDefaultLayout,
+      hideBranding: props.hideBranding,
+      hideHeader: props.hideHeader,
+      hideFooter: props.hideFooter,
+      locale: locale.value,
+      portalTitle: props.portalTitle,
+      portalNotice: props.portalNotice,
+      portalStartPort: props.portalStartPort,
+      portalListen: props.portalListen,
+      version: packageJson.version,
+    });
+  }
+  return buildCustomPagePreviewSrcdoc({
     content: props.content || '',
     css: props.css || '',
     theme: props.theme,
@@ -64,6 +91,7 @@ const buildSrcdoc = (): string =>
     announcement: props.announcement,
     version: packageJson.version,
   });
+};
 
 const previewSrcdoc = ref<string>(buildSrcdoc());
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -88,6 +116,11 @@ watch(
 
 watch(
   () => [
+    props.mode,
+    props.portalTitle,
+    props.portalNotice,
+    props.portalStartPort,
+    props.portalListen,
     props.theme,
     props.useDefaultLayout,
     props.hideBranding,

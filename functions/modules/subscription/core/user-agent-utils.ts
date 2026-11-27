@@ -1,3 +1,50 @@
+const KNOWN_PROXY_CLIENT_REGEX =
+  /clash|flclash|flyclash|butterfly|verge|v2ray|surge|loon|shadowrocket|quantumult|stash|shadowsocks|mihomo|mihomo\.party|meta|nekobox|nekoray|sfi|sfa|sfra|sing-box|singbox|surfboard|hiddify|egern|yuetu|月兔|cfw|clashforwindows/i;
+
+const EXPLICIT_FORMAT_QUERY_KEYS = [
+  'target',
+  'flag',
+  'callback_token',
+  'clash',
+  'singbox',
+  'sing-box',
+  'surge',
+  'loon',
+  'base64',
+  'v2ray',
+  'trojan',
+  'quanx',
+  'egern',
+  'shadowrocket',
+  'nodes',
+] as const;
+
+export function isKnownProxyClientAgent(userAgent: string): boolean {
+  if (!userAgent) return false;
+  return KNOWN_PROXY_CLIENT_REGEX.test(userAgent);
+}
+
+/**
+ * 判断订阅请求是否应分流至浏览器门户/重定向分支
+ */
+export function shouldRouteToBrowserPortal(request: Request, url: URL): boolean {
+  const rawParam = url.searchParams.get('raw');
+  if (rawParam === '1' || rawParam === 'true') {
+    return false;
+  }
+  for (const key of EXPLICIT_FORMAT_QUERY_KEYS) {
+    if (url.searchParams.has(key)) {
+      return false;
+    }
+  }
+  const userAgent = request.headers.get('User-Agent') || '';
+  if (isKnownProxyClientAgent(userAgent)) {
+    return false;
+  }
+  const acceptHeader = (request.headers.get('Accept') || '').toLowerCase();
+  return acceptHeader.includes('text/html');
+}
+
 /**
  * 判断是否为浏览器请求（用于伪装/公开页逻辑）
  * 排除常见的代理客户端 User-Agent

@@ -63,6 +63,16 @@ export const DEFAULT_SETTINGS: SettingsConfig & {
     hideHeader: boolean;
     hideFooter: boolean;
   };
+  portalCustomPage: {
+    enabled: boolean;
+    type: 'html';
+    content: string;
+    css: string;
+    useDefaultLayout: boolean;
+    hideBranding: boolean;
+    hideHeader: boolean;
+    hideFooter: boolean;
+  };
   webdavBackup: {
     enabled: boolean;
     endpoint: string;

@@ -1,5 +1,10 @@
 import * as yaml from 'js-yaml';
 import {
+  buildMihomoSocksListeners,
+  buildMultiSocksBindings,
+  type EffectiveMultiSocksConfig,
+} from '@misub/core/domain/multi-socks.js';
+import {
   normalizeUnifiedTemplateModel,
   type TemplateRule,
   type TemplateRuleObject,
@@ -17,6 +22,7 @@ import {
 
 export interface RenderClashOptions {
   isChinaClient?: boolean;
+  multiSocks?: EffectiveMultiSocksConfig | null;
   [key: string]: unknown;
 }
 
@@ -226,6 +232,10 @@ export function renderClashFromTemplateModel(
     };
   });
 
+  const multiSocksListeners = options.multiSocks?.enabled
+    ? buildMihomoSocksListeners(buildMultiSocksBindings(normalizedModel.proxies || [], options.multiSocks))
+    : [];
+
   const config = createBaseClashConfig({
     dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
       mode: normalizedModel.settings?.dnsMode,
@@ -266,6 +276,7 @@ export function renderClashFromTemplateModel(
       'external-controller': '127.0.0.1:9090',
       // GEO 数据库走 jsDelivr 镜像，保证模板中 GEOIP/GEOSITE 规则与 geosite:* DNS 策略在大陆可用
       'geox-url': { ...GEOX_URLS },
+      ...(multiSocksListeners.length > 0 ? { listeners: multiSocksListeners } : {}),
     },
   });
 

@@ -1,5 +1,11 @@
 import DOMPurify from 'dompurify';
-import { escapeCustomPageText, parseCustomPageSource, renderCustomPageHtml } from '@/utils/custom-page-source.js';
+import {
+  PORTAL_PAGE_COMPONENT_PLACEHOLDERS,
+  PORTAL_PAGE_SLOT_ALIASES,
+  escapeCustomPageText,
+  parseCustomPageSource,
+  renderCustomPageHtml,
+} from '@/utils/custom-page-source.js';
 
 export interface CustomPagePreviewOptions {
   content: string;
@@ -19,6 +25,22 @@ export interface CustomPagePreviewOptions {
     content?: string;
     type?: string;
   };
+  version: string;
+}
+
+export interface PortalCustomPagePreviewOptions {
+  content: string;
+  css: string;
+  theme: 'light' | 'dark';
+  useDefaultLayout: boolean;
+  hideBranding: boolean;
+  hideHeader: boolean;
+  hideFooter: boolean;
+  locale: string;
+  portalTitle?: string;
+  portalNotice?: string;
+  portalStartPort?: number;
+  portalListen?: string;
   version: string;
 }
 
@@ -175,7 +197,7 @@ function buildMockThemeToggleHtml(theme: 'light' | 'dark', isZh: boolean): strin
 export function buildCustomPagePreviewSrcdoc(options: CustomPagePreviewOptions): string {
   const isZh = (options.locale || 'zh-CN').toLowerCase().startsWith('zh');
   const siteTitle = options.siteTitle?.trim() || 'MiSub';
-  const heroTitle2 = options.heroTitle2?.trim() || (isZh ? 'Subscription Hub' : 'Subscription Hub');
+  const heroTitle2 = options.heroTitle2?.trim() || 'Subscription Hub';
   const siteDescription =
     options.siteDescription?.trim() ||
     (isZh
@@ -199,6 +221,289 @@ export function buildCustomPagePreviewSrcdoc(options: CustomPagePreviewOptions):
     theme_toggle: buildMockThemeToggleHtml(options.theme, isZh),
   };
 
+  return assemblePreviewHtml({
+    sanitizedUserHtml,
+    mockSlots,
+    parsedCss: parsed.css,
+    theme: options.theme,
+    useDefaultLayout: options.useDefaultLayout,
+    hideBranding: options.hideBranding,
+    hideHeader: options.hideHeader,
+    hideFooter: options.hideFooter,
+    isZh,
+    headerTitle: siteTitle,
+    navLabels: [isZh ? '公开订阅' : 'Profiles', isZh ? '客户端' : 'Clients'],
+    version: options.version || '1.0.0',
+  });
+}
+
+function buildMockPortalOverviewHtml(portalTitle: string, portalNotice: string, isZh: boolean): string {
+  const overviewTitle = isZh ? '订阅概览' : 'Subscription Overview';
+  const subLabel = isZh ? `订阅名称：${portalTitle}` : `Profile: ${portalTitle}`;
+  const statusLabel = isZh ? '正常' : 'Active';
+
+  const noticeHtml = portalNotice
+    ? `<div class="misub-portal-notice">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-primary-500);flex-shrink:0;margin-top:1px"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M22 8c0-2.3-.8-4.3-2-6"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/><path d="M4 2C2.8 3.7 2 5.7 2 8"/></svg>
+  <div>${escapeCustomPageText(portalNotice)}</div>
+</div>`
+    : '';
+
+  return `<section class="misub-portal-card">
+  <div class="misub-portal-card-head">
+    <div style="min-width:0">
+      <h2 class="misub-portal-card-title">${escapeCustomPageText(overviewTitle)}</h2>
+      <p class="misub-portal-card-sub">${escapeCustomPageText(subLabel)}</p>
+    </div>
+    <span class="misub-portal-status-badge">
+      <span class="misub-portal-status-dot"></span>
+      <span>${escapeCustomPageText(statusLabel)}</span>
+    </span>
+  </div>
+  ${noticeHtml}
+  <div class="misub-portal-stats-grid">
+    <div class="misub-portal-stat-box">
+      <div class="misub-portal-stat-top">
+        <span>${escapeCustomPageText(isZh ? '总剩余流量' : 'Remaining Traffic')}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>
+      </div>
+      <div class="misub-portal-stat-value">428.5 GB / 500 GB</div>
+      <div class="misub-portal-progress-track"><div class="misub-portal-progress-fill" style="width:86%"></div></div>
+      <div class="misub-portal-stat-hint">${escapeCustomPageText(isZh ? '已用 71.5 GB · 剩余 86%' : 'Used 71.5 GB · 86% left')}</div>
+    </div>
+    <div class="misub-portal-stat-box">
+      <div class="misub-portal-stat-top">
+        <span>${escapeCustomPageText(isZh ? '最近过期时间' : 'Nearest Expiration')}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>
+      </div>
+      <div class="misub-portal-stat-value">2027-01-01</div>
+      <div class="misub-portal-stat-hint">${escapeCustomPageText(isZh ? `当前状态：${statusLabel}` : `Status: ${statusLabel}`)}</div>
+    </div>
+    <div class="misub-portal-stat-box">
+      <div class="misub-portal-stat-top">
+        <span>${escapeCustomPageText(isZh ? '当前可用节点数' : 'Available Nodes')}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><line x1="6" x2="6.01" y1="6" y2="6"/><line x1="6" x2="6.01" y1="18" y2="18"/></svg>
+      </div>
+      <div class="misub-portal-stat-value">68</div>
+      <div class="misub-portal-stat-hint">${escapeCustomPageText(isZh ? '已排除信息展示虚拟节点' : 'Excludes virtual info nodes')}</div>
+    </div>
+  </div>
+</section>`;
+}
+
+function buildMockPortalQuickImportHtml(isZh: boolean): string {
+  const linkIcon =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>';
+  const copyIcon =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+  const mockQrSvg =
+    '<svg width="96" height="96" viewBox="0 0 29 29" shape-rendering="crispEdges"><rect width="29" height="29" fill="#ffffff"/><path fill="#111111" d="M1 1h7v7H1zM2 2v5h5V2zM3 3h3v3H3zM21 1h7v7h-7zM22 2v5h5V2zM23 3h3v3h-3zM1 21h7v7H1zM2 22v5h5v-5zM3 23h3v3H3zM10 2h2v2h-2zM14 2h3v2h-3zM10 6h2v2h-2zM14 6h4v2h-4zM2 10h2v3H2zM6 10h3v2H6zM11 10h3v3h-3zM16 10h2v2h-2zM20 10h3v2h-3zM25 10h3v3h-3zM2 15h4v2H2zM8 14h2v3H8zM12 15h2v2h-2zM16 14h4v3h-4zM22 15h2v2h-2zM26 15h2v3h-2zM10 19h3v2h-3zM15 19h2v3h-2zM19 19h3v2h-3zM24 20h4v2h-4zM10 23h2v4h-2zM14 23h4v2h-4zM20 23h2v5h-2zM24 24h3v4h-3z"/></svg>';
+
+  return `<section class="misub-portal-card">
+  <div class="misub-portal-quick-grid">
+    <div class="misub-portal-quick-left">
+      <div>
+        <h2 class="misub-portal-card-title">${escapeCustomPageText(isZh ? '快捷接入' : 'Quick Import')}</h2>
+        <p class="misub-portal-card-sub">${escapeCustomPageText(
+          isZh
+            ? '复制订阅链接或点击下方客户端快捷导入，也可通过代理客户端直接拉取本链接。'
+            : 'Copy the subscription URL, scan the QR code, or launch a client directly.',
+        )}</p>
+      </div>
+      <div class="misub-portal-url-row">
+        <input class="misub-portal-url-input" type="text" readonly value="https://example.com/sub/token/vip" />
+        <button type="button" class="misub-portal-primary-btn">${copyIcon}<span>${escapeCustomPageText(isZh ? '复制链接' : 'Copy URL')}</span></button>
+      </div>
+      <div class="misub-portal-import-links">
+        <span class="misub-portal-client-btn">${linkIcon}<span>${escapeCustomPageText(isZh ? '导入 Clash Verge' : 'Import Clash Verge')}</span></span>
+        <span class="misub-portal-client-btn">${linkIcon}<span>${escapeCustomPageText(isZh ? '导入 Mihomo' : 'Import Mihomo')}</span></span>
+        <span class="misub-portal-client-btn">${linkIcon}<span>${escapeCustomPageText(isZh ? '导入 Shadowrocket' : 'Import Shadowrocket')}</span></span>
+      </div>
+    </div>
+    <div class="misub-portal-qr-panel">
+      <div class="misub-portal-qr-inner">${mockQrSvg}</div>
+      <span class="misub-portal-qr-caption">${escapeCustomPageText(isZh ? '扫码导入客户端' : 'Scan QR to Import')}</span>
+    </div>
+  </div>
+</section>`;
+}
+
+function buildMockPortalMultiSocksHtml(startPort: number, listen: string, isZh: boolean): string {
+  const copyIcon =
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+  const downloadIcon =
+    '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
+  const searchIcon =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+
+  const sampleRows = [
+    { port: startPort, listen, name: 'HK-BGP-01', region: isZh ? '香港 (HK)' : 'HK' },
+    { port: startPort + 1, listen, name: 'SG-Edge-02', region: isZh ? '新加坡 (SG)' : 'SG' },
+    { port: startPort + 2, listen, name: 'JP-Tokyo-03', region: isZh ? '日本 (JP)' : 'JP' },
+  ];
+  const rowsHtml = sampleRows
+    .map(
+      (r) =>
+        `<tr>
+          <td class="misub-portal-mono-bold">${r.port}</td>
+          <td class="misub-portal-mono-muted">${escapeCustomPageText(r.listen)}</td>
+          <td><span class="misub-portal-table-tag">SOCKS5</span></td>
+          <td style="color:var(--fg)">${escapeCustomPageText(r.name)}</td>
+          <td><span class="misub-portal-table-tag">${escapeCustomPageText(r.region)}</span></td>
+          <td style="text-align:right"><span class="misub-portal-row-copy-btn">${copyIcon}<span>${escapeCustomPageText(`${r.listen}:${r.port}`)}</span></span></td>
+        </tr>`,
+    )
+    .join('');
+
+  return `<section class="misub-portal-card">
+  <div class="misub-portal-card-head">
+    <div style="min-width:0">
+      <h2 class="misub-portal-card-title">${escapeCustomPageText(isZh ? '多端口 SOCKS5 映射表' : 'Multi-Port SOCKS5 Mapping')}</h2>
+      <p class="misub-portal-card-sub">${escapeCustomPageText(
+        isZh ? '每个本地端口确定性绑定到一个出站节点，与 Mihomo listeners 配置一致。' : 'Deterministic local port bindings matching Mihomo listeners configuration.',
+      )}</p>
+    </div>
+    <div class="misub-portal-action-group">
+      <button type="button" class="misub-portal-secondary-btn">${copyIcon}<span>${escapeCustomPageText(isZh ? '复制全部（IP:Port）' : 'Copy All (IP:Port)')}</span></button>
+      <button type="button" class="misub-portal-primary-btn">${downloadIcon}<span>${escapeCustomPageText(isZh ? '导出指纹浏览器 CSV' : 'Export Browser CSV')}</span></button>
+    </div>
+  </div>
+
+  <div class="misub-portal-meta-strip">
+    <div class="misub-portal-meta-cell">
+      <span class="misub-portal-meta-label">${escapeCustomPageText(isZh ? '已映射端口：' : 'Mapped ports:')}</span>
+      <span class="misub-portal-meta-val">3</span>
+    </div>
+    <div class="misub-portal-meta-cell">
+      <span class="misub-portal-meta-label">${escapeCustomPageText(isZh ? '端口区间：' : 'Port range:')}</span>
+      <span class="misub-portal-meta-val">${startPort} - ${startPort + 2}</span>
+    </div>
+    <div class="misub-portal-meta-cell">
+      <span class="misub-portal-meta-label">${escapeCustomPageText(isZh ? '监听地址：' : 'Listen:')}</span>
+      <span class="misub-portal-meta-val">${escapeCustomPageText(listen)}</span>
+    </div>
+    <div class="misub-portal-meta-cell">
+      <span class="misub-portal-meta-label">${escapeCustomPageText(isZh ? '鉴权：' : 'Auth:')}</span>
+      <span class="misub-portal-meta-val">${escapeCustomPageText(isZh ? '无密码' : 'None')}</span>
+    </div>
+  </div>
+
+  <div class="misub-portal-search-row">
+    <div class="misub-portal-search-box">
+      <span class="misub-portal-search-icon">${searchIcon}</span>
+      <input class="misub-portal-search-input" type="search" readonly placeholder="${escapeCustomPageText(
+        isZh ? '按节点名称、地区、国家代码或端口号实时搜索过滤...' : 'Filter by node name, region, country code, or port...',
+      )}" />
+    </div>
+    <span class="misub-portal-filter-count">3 / 3</span>
+  </div>
+
+  <div class="misub-portal-table-wrap">
+    <table class="misub-portal-table">
+      <thead>
+        <tr>
+          <th>${escapeCustomPageText(isZh ? '本地端口' : 'Local Port')}</th>
+          <th>${escapeCustomPageText(isZh ? '监听地址' : 'Listen')}</th>
+          <th>${escapeCustomPageText(isZh ? '协议' : 'Protocol')}</th>
+          <th>${escapeCustomPageText(isZh ? '对应出站节点名' : 'Outbound Proxy Name')}</th>
+          <th>${escapeCustomPageText(isZh ? '地区标签' : 'Region')}</th>
+          <th style="text-align:right">${escapeCustomPageText(isZh ? '操作' : 'Action')}</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  </div>
+</section>`;
+}
+
+export function buildPortalCustomPagePreviewSrcdoc(options: PortalCustomPagePreviewOptions): string {
+  const isZh = (options.locale || 'zh-CN').toLowerCase().startsWith('zh');
+  const portalTitle = options.portalTitle?.trim() || (isZh ? 'VIP 专线订阅门户' : 'VIP Subscription Portal');
+  const portalNotice =
+    options.portalNotice?.trim() ||
+    (isZh ? '欢迎使用订阅门户，支持一键客户端导入与 SOCKS5 多端口导出。' : 'Welcome to the subscription portal.');
+  const rawStartPort = Number(options.portalStartPort);
+  const sampleStartPort =
+    Number.isInteger(rawStartPort) && rawStartPort >= 1024 && rawStartPort <= 60000 ? rawStartPort : 42001;
+  const sampleListen = options.portalListen === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
+
+  const parsed = parseCustomPageSource(options.content, options.css);
+  const sanitizedUserHtml = renderCustomPageHtml(
+    parsed.html || '',
+    {
+      version: options.version || '1.0.0',
+      title: portalTitle,
+      sub_name: portalTitle,
+      notice: portalNotice,
+      remaining_traffic: '428.5 GB',
+      used_traffic: '71.5 GB',
+      total_traffic: '500 GB',
+      remaining_percent: 86,
+      expire_time: '2027-01-01',
+      expire_status: isZh ? '正常' : 'Active',
+      node_count: 68,
+      subscription_url: 'https://example.com/sub/token/vip',
+      socks_port_count: 3,
+      socks_listen: sampleListen,
+    },
+    {
+      componentPlaceholders: PORTAL_PAGE_COMPONENT_PLACEHOLDERS,
+      slotAliases: PORTAL_PAGE_SLOT_ALIASES,
+    },
+  );
+
+  const mockSlots: Record<string, string> = {
+    overview: buildMockPortalOverviewHtml(portalTitle, portalNotice, isZh),
+    quick_import: buildMockPortalQuickImportHtml(isZh),
+    multi_socks: buildMockPortalMultiSocksHtml(sampleStartPort, sampleListen, isZh),
+    theme_toggle: buildMockThemeToggleHtml(options.theme, isZh),
+  };
+
+  return assemblePreviewHtml({
+    sanitizedUserHtml,
+    mockSlots,
+    parsedCss: parsed.css,
+    theme: options.theme,
+    useDefaultLayout: options.useDefaultLayout,
+    hideBranding: options.hideBranding,
+    hideHeader: options.hideHeader,
+    hideFooter: options.hideFooter,
+    isZh,
+    headerTitle: portalTitle,
+    navLabels: [isZh ? '订阅概览' : 'Overview', isZh ? '快捷接入' : 'Import'],
+    version: options.version || '1.0.0',
+  });
+}
+
+function assemblePreviewHtml(params: {
+  sanitizedUserHtml: string;
+  mockSlots: Record<string, string>;
+  parsedCss: string;
+  theme: 'light' | 'dark';
+  useDefaultLayout: boolean;
+  hideBranding: boolean;
+  hideHeader: boolean;
+  hideFooter: boolean;
+  isZh: boolean;
+  headerTitle: string;
+  navLabels: [string, string];
+  version: string;
+}): string {
+  const {
+    sanitizedUserHtml,
+    mockSlots,
+    parsedCss,
+    theme,
+    useDefaultLayout,
+    hideBranding,
+    hideHeader,
+    hideFooter,
+    isZh,
+    headerTitle,
+    navLabels,
+    version,
+  } = params;
+
   // Inject mock component previews AFTER DOMPurify sanitization, mirroring production Teleport slots.
   const populatedHtml = sanitizedUserHtml.replace(
     /<div([^>]*?\bdata-slot=["']([a-z_]+)["'][^>]*)><\/div>/gi,
@@ -208,34 +513,34 @@ export function buildCustomPagePreviewSrcdoc(options: CustomPagePreviewOptions):
     },
   );
 
-  const headerHtml = !options.hideHeader
+  const headerHtml = !hideHeader
     ? `<header class="misub-preview-header">
   <div class="misub-preview-header-inner">
     ${
-      options.hideBranding
+      hideBranding
         ? '<span class="misub-preview-header-spacer"></span>'
-        : `<span class="misub-preview-brand"><span class="misub-preview-brand-dot"></span>${escapeCustomPageText(siteTitle)}</span>`
+        : `<span class="misub-preview-brand"><span class="misub-preview-brand-dot"></span>${escapeCustomPageText(headerTitle)}</span>`
     }
     <nav class="misub-preview-nav">
-      <span>${escapeCustomPageText(isZh ? '公开订阅' : 'Profiles')}</span>
-      <span>${escapeCustomPageText(isZh ? '客户端' : 'Clients')}</span>
+      <span>${escapeCustomPageText(navLabels[0])}</span>
+      <span>${escapeCustomPageText(navLabels[1])}</span>
     </nav>
   </div>
 </header>`
     : '';
 
-  const footerHtml = !options.hideFooter
+  const footerHtml = !hideFooter
     ? `<footer class="misub-preview-footer">
   <span>${
-    options.hideBranding
-      ? escapeCustomPageText(isZh ? '公开订阅服务' : 'Public Subscription Page')
-      : `Powered by MiSub · v${escapeCustomPageText(options.version || '1.0.0')}`
+    hideBranding
+      ? escapeCustomPageText(isZh ? '公开订阅服务' : 'Subscription Service')
+      : `Powered by MiSub · v${escapeCustomPageText(version || '1.0.0')}`
   }</span>
 </footer>`
     : '';
 
-  const safeCss = (parsed.css || '').replace(/<\/style/gi, '<\\/style');
-  const htmlClass = options.theme === 'dark' ? 'dark' : '';
+  const safeCss = (parsedCss || '').replace(/<\/style/gi, '<\\/style');
+  const htmlClass = theme === 'dark' ? 'dark' : '';
   const lang = isZh ? 'zh-CN' : 'en-US';
 
   return `<!DOCTYPE html>
@@ -260,6 +565,9 @@ export function buildCustomPagePreviewSrcdoc(options: CustomPagePreviewOptions):
   --line: rgba(0, 0, 0, 0.1);
   --line-strong: rgba(0, 0, 0, 0.2);
   --line-subtle: rgba(0, 0, 0, 0.06);
+  --status-success-fg: #065f46;
+  --status-success-bg: #ecfdf5;
+  --status-success-border: #a7f3d0;
   --color-primary: #7170ff;
   --color-primary-500: #7170ff;
   --color-primary-600: #5e6ad2;
@@ -285,6 +593,9 @@ html.dark {
   --line: rgba(255, 255, 255, 0.11);
   --line-strong: rgba(255, 255, 255, 0.2);
   --line-subtle: rgba(255, 255, 255, 0.055);
+  --status-success-fg: #6ee7b7;
+  --status-success-bg: rgba(16, 185, 129, 0.08);
+  --status-success-border: rgba(16, 185, 129, 0.25);
   --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.42);
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -523,6 +834,311 @@ html, body {
   padding: 8px;
   cursor: pointer;
 }
+
+/* Mock Portal Slot Cards aligned 1:1 with SubscriptionPortalView components */
+.misub-portal-card {
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.misub-portal-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.misub-portal-card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  letter-spacing: -0.01em;
+}
+.misub-portal-card-sub {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.misub-portal-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--status-success-border);
+  background: var(--status-success-bg);
+  color: var(--status-success-fg);
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.misub-portal-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #10b981;
+}
+.misub-portal-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg);
+}
+.misub-portal-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.misub-portal-stat-box {
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.misub-portal-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.misub-portal-stat-value {
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  color: var(--fg);
+}
+.misub-portal-progress-track {
+  height: 6px;
+  width: 100%;
+  border-radius: 9999px;
+  background: var(--active);
+  overflow: hidden;
+}
+.misub-portal-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: #10b981;
+}
+.misub-portal-stat-hint {
+  font-size: 11px;
+  color: var(--fg-subtle);
+}
+.misub-portal-quick-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 156px;
+  gap: 16px;
+  align-items: stretch;
+}
+.misub-portal-quick-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.misub-portal-url-row {
+  display: flex;
+  gap: 8px;
+}
+.misub-portal-url-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.misub-portal-import-links,
+.misub-portal-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.misub-portal-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.misub-portal-secondary-btn,
+.misub-portal-client-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.misub-portal-qr-panel {
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.misub-portal-qr-inner {
+  width: 112px;
+  height: 112px;
+  padding: 8px;
+  border-radius: 4px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.misub-portal-qr-caption {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg-muted);
+}
+.misub-portal-meta-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+}
+.misub-portal-meta-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-left: 1px solid var(--line);
+}
+.misub-portal-meta-cell:first-child { border-left: 0; }
+.misub-portal-meta-label { font-size: 11px; color: var(--fg-muted); }
+.misub-portal-meta-val { font-size: 12px; font-weight: 600; font-family: var(--font-mono); color: var(--fg); }
+.misub-portal-search-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.misub-portal-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.misub-portal-search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-subtle);
+  display: inline-flex;
+}
+.misub-portal-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 32px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  color: var(--fg);
+  font-size: 12px;
+}
+.misub-portal-filter-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+.misub-portal-table-wrap {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.misub-portal-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+.misub-portal-table thead tr {
+  background: var(--inset);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+.misub-portal-table th,
+.misub-portal-table td {
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+.misub-portal-table tbody tr { border-bottom: 1px solid var(--line); }
+.misub-portal-table tbody tr:last-child { border-bottom: 0; }
+.misub-portal-mono-bold { font-family: var(--font-mono); font-weight: 600; color: var(--fg); }
+.misub-portal-mono-muted { font-family: var(--font-mono); color: var(--fg-muted); }
+.misub-portal-table-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+.misub-portal-row-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: var(--inset);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg);
+}
+@media (max-width: 720px) {
+  .misub-portal-stats-grid { grid-template-columns: 1fr; }
+  .misub-portal-quick-grid { grid-template-columns: 1fr; }
+  .misub-portal-qr-panel { max-width: 168px; margin: 0 auto; }
+  .misub-portal-meta-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .misub-portal-meta-cell:nth-child(odd) { border-left: 0; }
+  .misub-portal-meta-cell:nth-child(n+3) { border-top: 1px solid var(--line); }
+}
+@media (max-width: 520px) {
+  .misub-portal-url-row { flex-direction: column; }
+}
 </style>
 <style data-custom-page-preview="true">
 ${safeCss}
@@ -531,7 +1147,7 @@ ${safeCss}
 <body>
 <div class="misub-preview-shell">
 ${headerHtml}
-<main class="misub-preview-main ${options.useDefaultLayout ? 'misub-preview-default-layout' : 'misub-preview-custom-layout'}">
+<main class="misub-preview-main ${useDefaultLayout ? 'misub-preview-default-layout' : 'misub-preview-custom-layout'}">
   <div class="custom-public-renderer">
     <div class="custom-html-container">${populatedHtml}</div>
   </div>

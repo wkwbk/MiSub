@@ -5,6 +5,8 @@ import SettingCard from '@/components/settings/SettingCard.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
+import Textarea from '@/components/ui/Textarea.vue';
+import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 import { computed, reactive, ref, watch } from 'vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { rotateMyToken } from '@/lib/api.js';
@@ -322,6 +324,12 @@ const disguisePageTypeOptions: Array<{
   { value: 'default', titleKey: 'settings.disguiseDefault404', descKey: 'settings.disguiseDefault404Desc' },
   { value: 'redirect', titleKey: 'settings.disguiseRedirect', descKey: 'settings.disguiseRedirectDesc' },
 ];
+
+const subPortalRedirectUrlError = computed(() => {
+  const val = String(props.settings.subPortalRedirectUrl || '').trim();
+  if (!val) return '';
+  return isValidHttpUrlString(val) ? '' : t('settings.invalidPortalRedirectUrlError');
+});
 </script>
 
 <template>
@@ -680,21 +688,90 @@ const disguisePageTypeOptions: Array<{
         <div
           v-for="row in webAccessSwitchRows"
           :key="row.key"
-          class="py-5 first:pt-0 last:pb-0 flex items-center justify-between gap-6"
+          :class="{ 'space-y-4': row.key === 'allowBrowserSubAccess' }"
+          class="py-5 first:pt-0 last:pb-0"
         >
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-fg">
-              {{ t(row.titleKey) }}
-            </p>
-            <p class="text-xs text-fg-muted leading-relaxed">
-              {{ t(row.descKey) }}
-            </p>
+          <div class="flex items-center justify-between gap-6">
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-fg">
+                {{ t(row.titleKey) }}
+              </p>
+              <p class="text-xs text-fg-muted leading-relaxed">
+                {{ t(row.descKey) }}
+              </p>
+            </div>
+            <Switch
+              :model-value="Boolean(settings[row.key])"
+              class="shrink-0"
+              @update:model-value="patchSettings({ [row.key]: Boolean($event) })"
+            />
           </div>
-          <Switch
-            :model-value="Boolean(settings[row.key])"
-            class="shrink-0"
-            @update:model-value="patchSettings({ [row.key]: Boolean($event) })"
-          />
+
+          <!-- 允许浏览器打开订阅链接时的默认门户行为（关闭时由下方拦截策略统一接管） -->
+          <div
+            v-if="row.key === 'allowBrowserSubAccess' && Boolean(settings.allowBrowserSubAccess)"
+            class="pl-4 border-l-2 border-line space-y-4 animate-fade-in-down"
+          >
+            <div class="space-y-1">
+              <p class="text-xs font-medium text-fg">{{ t('settings.browserPortalDefaultTitle') }}</p>
+              <p class="text-xs text-fg-muted leading-relaxed">{{ t('settings.browserPortalDefaultDesc') }}</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-fg-muted mb-1.5">{{
+                  t('settings.subPortalModeTitle')
+                }}</label>
+                <Select
+                  :model-value="settings.subPortalMode || 'portal'"
+                  :options="[
+                    { value: 'portal', label: t('settings.subPortalModePortal') },
+                    { value: 'redirect', label: t('settings.subPortalModeRedirect') },
+                    { value: 'raw', label: t('settings.subPortalModeRaw') },
+                  ]"
+                  @update:model-value="
+                    patchSettings({ subPortalMode: ($event as 'portal' | 'redirect' | 'raw') ?? 'portal' })
+                  "
+                />
+              </div>
+
+              <div>
+                <Input
+                  id="setting-subPortalTitle"
+                  :label="t('settings.subPortalTitleLabel')"
+                  :model-value="settings.subPortalTitle || ''"
+                  :placeholder="t('settings.subPortalTitlePlaceholder')"
+                  @update:model-value="patchSettings({ subPortalTitle: String($event ?? '') })"
+                />
+              </div>
+            </div>
+
+            <div v-if="settings.subPortalMode === 'redirect'" class="animate-fade-in-down">
+              <Input
+                id="setting-subPortalRedirectUrl"
+                :error="subPortalRedirectUrlError"
+                :label="t('settings.subPortalRedirectUrlLabel')"
+                :model-value="settings.subPortalRedirectUrl || ''"
+                :placeholder="t('settings.subPortalRedirectUrlPlaceholder')"
+                type="url"
+                @update:model-value="patchSettings({ subPortalRedirectUrl: String($event ?? '') })"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-fg-muted mb-1.5" for="setting-subPortalNotice">
+                {{ t('settings.subPortalNoticeLabel') }}
+              </label>
+              <Textarea
+                id="setting-subPortalNotice"
+                :model-value="settings.subPortalNotice || ''"
+                :placeholder="t('settings.subPortalNoticePlaceholder')"
+                class="px-3 py-2 text-xs text-fg placeholder:text-fg-subtle"
+                rows="2"
+                @update:model-value="patchSettings({ subPortalNotice: String($event ?? '') })"
+              />
+            </div>
+          </div>
         </div>
 
         <!-- 统一拦截响应方式 -->
