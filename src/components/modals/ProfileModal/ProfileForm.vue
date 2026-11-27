@@ -4,7 +4,7 @@ import type { Ref } from 'vue';
 import type { BuiltinTransformConfig, RuleTemplate } from '@misub/core/types.js';
 import type { EditableProfile } from '@/composables/useProfiles.js';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
-import { ChevronDown, Globe, RotateCcw, SlidersHorizontal } from '@lucide/vue';
+import { ChevronDown, Globe, Network, RotateCcw, SlidersHorizontal } from '@lucide/vue';
 import { getActivePinia, storeToRefs } from 'pinia';
 import TransformSelector from '@/components/forms/TransformSelector.vue';
 import VisualTransformCard from '@/components/settings/sections/ServiceSettings/VisualTransformCard.vue';
@@ -55,7 +55,8 @@ const props = withDefaults(
   defineProps<{
     localProfile: EditableProfile;
     showAdvanced?: boolean;
-    showPortalMultiSocks?: boolean;
+    showPortal?: boolean;
+    showMultiSocks?: boolean;
     uiText: ProfileFormUiText;
     prefixToggleOptions?: ToggleOption[];
     tagPrefixToggleOptions?: ToggleOption[];
@@ -65,7 +66,8 @@ const props = withDefaults(
   }>(),
   {
     showAdvanced: false,
-    showPortalMultiSocks: false,
+    showPortal: false,
+    showMultiSocks: false,
     prefixToggleOptions: () => [],
     tagPrefixToggleOptions: () => [],
     globalSettings: () => ({}),
@@ -76,7 +78,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'toggle-advanced': [];
-  'toggle-portal-multi-socks': [];
+  'toggle-portal': [];
+  'toggle-multi-socks': [];
   'update:localProfile': [value: EditableProfile];
 }>();
 
@@ -883,29 +886,29 @@ watch(
     </div>
   </div>
 
-  <!-- === 浏览器访问与多端口 SOCKS5 折叠配置区 === -->
+  <!-- === 浏览器访问与门户配置折叠区 === -->
   <div class="rounded-md border border-line bg-transparent mt-4 overflow-hidden">
     <button
-      :aria-expanded="showPortalMultiSocks"
+      :aria-expanded="showPortal"
       class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-hover/40 focus-visible:outline-hidden"
-      data-testid="toggle-portal-multisocks-btn"
+      data-testid="toggle-portal-btn"
       type="button"
-      @click="emit('toggle-portal-multi-socks')"
+      @click="emit('toggle-portal')"
     >
       <div class="flex min-w-0 items-center gap-2.5">
         <Globe class="h-3.5 w-3.5 shrink-0 text-fg-muted" />
-        <span class="text-xs font-medium text-fg shrink-0">{{ t('profileModal.portalMultiSocksTitle') }}</span>
+        <span class="text-xs font-medium text-fg shrink-0">{{ t('profileModal.portalSectionTitle') }}</span>
         <span class="hidden sm:inline truncate text-xs text-fg-subtle">{{
-          t('profileModal.portalMultiSocksDesc')
+          t('profileModal.portalSectionDesc')
         }}</span>
       </div>
       <ChevronDown
-        :class="{ 'rotate-180 text-fg': showPortalMultiSocks }"
+        :class="{ 'rotate-180 text-fg': showPortal }"
         class="h-4 w-4 shrink-0 text-fg-muted transition-transform duration-200"
       />
     </button>
 
-    <div v-show="showPortalMultiSocks" class="border-t border-line p-4 space-y-5 animate-fade-in-down">
+    <div v-show="showPortal" class="border-t border-line p-4 space-y-4 animate-fade-in-down">
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- 浏览器打开行为 -->
         <div class="space-y-1.5">
@@ -960,8 +963,33 @@ watch(
           />
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="border-t border-line pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+  <!-- === Mihomo 多端口 SOCKS5 出站折叠配置区 === -->
+  <div class="rounded-md border border-line bg-transparent mt-3 overflow-hidden">
+    <button
+      :aria-expanded="showMultiSocks"
+      class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-hover/40 focus-visible:outline-hidden"
+      data-testid="toggle-multisocks-btn"
+      type="button"
+      @click="emit('toggle-multi-socks')"
+    >
+      <div class="flex min-w-0 items-center gap-2.5">
+        <Network class="h-3.5 w-3.5 shrink-0 text-fg-muted" />
+        <span class="text-xs font-medium text-fg shrink-0">{{ t('profileModal.multiSocksSectionTitle') }}</span>
+        <span class="hidden sm:inline truncate text-xs text-fg-subtle">{{
+          t('profileModal.multiSocksSectionDesc')
+        }}</span>
+      </div>
+      <ChevronDown
+        :class="{ 'rotate-180 text-fg': showMultiSocks }"
+        class="h-4 w-4 shrink-0 text-fg-muted transition-transform duration-200"
+      />
+    </button>
+
+    <div v-show="showMultiSocks" class="border-t border-line p-4 space-y-4 animate-fade-in-down">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- 多端口 SOCKS5 开关 -->
         <div class="space-y-1.5">
           <label class="block text-xs font-medium text-fg-muted">{{ t('profileModal.multiSocksEnabledLabel') }}</label>

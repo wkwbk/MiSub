@@ -67,7 +67,8 @@ const activeSubscriptionTagFilters = ref<string[]>([]);
 const activeManualNodeTagFilters = ref<string[]>([]);
 const activeSubProfileTagFilters = ref<string[]>([]);
 const showAdvanced = ref(false);
-const showPortalMultiSocks = ref(false);
+const showPortal = ref(false);
+const showMultiSocks = ref(false);
 const uiText = computed(() => ({
   prefixTitle: t('profileModal.nodeNameVisibility'),
   manualPrefixLabel: t('profileModal.manualPrefixText'),
@@ -537,11 +538,13 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
           :prefix-toggle-options="prefixToggleOptions"
           :profile-tags="allProfileTags"
           :show-advanced="showAdvanced"
-          :show-portal-multi-socks="showPortalMultiSocks"
+          :show-multi-socks="showMultiSocks"
+          :show-portal="showPortal"
           :tag-prefix-toggle-options="tagPrefixToggleOptions"
           :ui-text="uiText"
           @toggle-advanced="showAdvanced = !showAdvanced"
-          @toggle-portal-multi-socks="showPortalMultiSocks = !showPortalMultiSocks"
+          @toggle-multi-socks="showMultiSocks = !showMultiSocks"
+          @toggle-portal="showPortal = !showPortal"
         />
 
         <!-- 资源选择区（节点 / 订阅 / 订阅组） -->
