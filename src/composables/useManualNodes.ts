@@ -32,6 +32,7 @@ import {
   renameTagInList,
   toggleTagFilterValue,
 } from '@/utils/tags.js';
+import { confirmAction } from '@/composables/useConfirm.js';
 import { t } from '@/i18n/index.js';
 
 export type PingMode = 'local' | 'tcping';
@@ -261,6 +262,15 @@ export function useManualNodes() {
   }
 
   async function deleteNode(nodeId: string) {
+    const target = manualNodes.value.find((n) => n.id === nodeId);
+    const displayName = target?.name?.trim() || t('manualNodes.unnamed');
+    const confirmed = await confirmAction({
+      title: t('manualNodes.deleteConfirmTitle'),
+      message: t('manualNodes.deleteConfirmBody', { name: displayName }),
+      confirmText: t('actions.delete'),
+      variant: 'danger',
+    });
+    if (!confirmed) return null;
     return await dataStore.deleteNodeRecord(nodeId);
   }
 

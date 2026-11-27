@@ -25,6 +25,7 @@ import {
   renameTagInList,
   toggleTagFilterValue,
 } from '@/utils/tags.js';
+import { confirmAction } from '@/composables/useConfirm.js';
 import { t } from '@/i18n/index.js';
 
 export interface EditableProfile {
@@ -414,6 +415,15 @@ export function useProfiles() {
   };
 
   const handleDeleteProfile = async (profileId: string): Promise<void> => {
+    const target = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
+    const displayName = target?.name?.trim() || profileId;
+    const confirmed = await confirmAction({
+      title: t('profiles.deleteConfirmTitle'),
+      message: t('profiles.deleteConfirmBody', { name: displayName }),
+      confirmText: t('actions.delete'),
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     await dataStore.deleteProfileRecord(profileId);
   };
 

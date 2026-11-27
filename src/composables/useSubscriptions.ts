@@ -7,6 +7,7 @@ import type { TagBatchMode, TagBatchUpdatePayload } from '@/composables/useManua
 import { batchUpdateNodes, fetchNodeCount } from '@/lib/api.js';
 import { handleError } from '@/utils/error-handler.js';
 import { TIMING } from '@/constants/timing.js';
+import { confirmAction } from '@/composables/useConfirm.js';
 import { t } from '@/i18n/index.js';
 import { isAutoUpdateEnabled } from '@misub/core/domain/auto-update.js';
 import { useListPagination } from '@/composables/useListPagination.js';
@@ -378,6 +379,15 @@ export function useSubscriptions() {
   }
 
   async function deleteSubscription(subId: string) {
+    const target = subscriptions.value.find((s) => s.id === subId);
+    const displayName = target?.name?.trim() || t('subscriptions.unnamed');
+    const confirmed = await confirmAction({
+      title: t('subscriptions.deleteConfirmTitle'),
+      message: t('subscriptions.deleteConfirmBody', { name: displayName }),
+      confirmText: t('actions.delete'),
+      variant: 'danger',
+    });
+    if (!confirmed) return null;
     return await dataStore.deleteSubscriptionRecord(subId);
   }
 
