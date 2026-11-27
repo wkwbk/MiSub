@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import type { BuiltinTransformConfig, RuleTemplate } from '@misub/core/types.js';
 import type { EditableProfile } from '@/composables/useProfiles.js';
@@ -129,6 +129,10 @@ const dataStore = activePinia ? useDataStore() : null;
 const ruleTemplates = dataStore
   ? (storeToRefs(dataStore).ruleTemplates as Ref<RuleTemplate[]>)
   : ref<RuleTemplate[]>([]);
+
+onMounted(() => {
+  void dataStore?.ensureRuleTemplatesLoaded?.();
+});
 const ruleTemplateCount = computed(() => (ruleTemplates.value || []).length);
 const toastStore = activePinia ? useToastStore() : null;
 const showToast = (msg: string, type: ToastType = 'info') => toastStore?.showToast?.(msg, type);

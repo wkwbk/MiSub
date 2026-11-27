@@ -14,6 +14,7 @@ import type {
   TelegramPushConfig,
 } from '@misub/core/types.js';
 import { api } from '@/lib/http.js';
+import { fetchSettings, type ApiFailureResult, type ApiResult } from '@/lib/api.js';
 import { QUERY_KEYS, resolveComponentQueryClient } from '@/lib/query-client.js';
 import { createStorageCache } from '@/utils/cache-helper.js';
 import { TIMING } from '@/constants/timing.js';
@@ -150,6 +151,7 @@ export interface SaveSettingsResponse {
   success?: boolean;
   message?: string;
   error?: string;
+  data?: Partial<AppSettingsConfig>;
   telegramSync?: {
     attempted?: boolean;
     success?: boolean;
@@ -175,7 +177,8 @@ export interface UseSaveSettingsMutationOptions
   queryClient?: QueryClient;
 }
 
-const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
+const MAX_SESSION_CACHE_BYTES = 1.5 * 1024 * 1024;
+const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS, { maxBytes: MAX_SESSION_CACHE_BYTES });
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
@@ -186,6 +189,9 @@ function sanitizeConfigForCache(config: Partial<AppSettingsConfig> | Record<stri
   const sanitized: Record<string, unknown> = { ...config };
   delete sanitized.botToken;
   delete sanitized.cronSecret;
+  delete sanitized.customPage;
+  delete sanitized.portalCustomPage;
+  delete sanitized.customDnsOverride;
 
   if (isPlainRecord(sanitized.webdavBackup)) {
     const { password: _omitPassword, ...restWebdav } = sanitized.webdavBackup;
@@ -262,7 +268,6 @@ function persistAppDataToSessionCache(snapshot: AppDataSnapshot | null | undefin
       return rest;
     }),
     profiles: snapshot.profiles || [],
-    ruleTemplates: snapshot.ruleTemplates || [],
     config: sanitizeConfigForCache(snapshot.config || {}),
   });
 }
@@ -400,6 +405,10 @@ export async function saveSettingsWithQueryClient(
       throw new Error(result.message || 'Failed to save settings');
     }
     syncSessionCachedConfig(mergedConfig);
+    const cachedSettings = queryClient.getQueryData<Record<string, unknown>>(QUERY_KEYS.settings);
+    if (cachedSettings) {
+      queryClient.setQueryData(QUERY_KEYS.settings, { ...cachedSettings, ...newSettings });
+    }
     return result;
   } catch (error: unknown) {
     if (previousSnapshot !== undefined) {
@@ -409,10 +418,72 @@ export async function saveSettingsWithQueryClient(
   }
 }
 
-export async function fetchRuleTemplatesWithQueryClient(queryClient: QueryClient): Promise<RuleTemplateItem[]> {
+export async function fetchSettingsWithQueryClient(
+  queryClient: QueryClient,
+  options: { force?: boolean } = {},
+): Promise<ApiResult<Record<string, unknown>>> {
+  const { force = false } = options;
+  if (force) {
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings });
+  }
+  try {
+    const data = await queryClient.fetchQuery({
+      queryKey: QUERY_KEYS.settings,
+      staleTime: force ? 0 : TIMING.CACHE_TTL_MS,
+      queryFn: async (): Promise<Record<string, unknown>> => {
+        const result = await fetchSettings();
+        if (!result.success) {
+          throw result;
+        }
+        return result.data;
+      },
+    });
+    return { success: true, data };
+  } catch (error: unknown) {
+    if (isPlainRecord(error) && error.success === false && typeof error.error === 'string') {
+      return error as unknown as ApiFailureResult;
+    }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch settings',
+      errorType: 'unknown',
+    };
+  }
+}
+
+export function syncSettingsSnapshotToCache(
+  queryClient: QueryClient | null | undefined,
+  savedSettings: Partial<AppSettingsConfig>,
+): void {
+  if (queryClient) {
+    const existingSettings = queryClient.getQueryData<Record<string, unknown>>(QUERY_KEYS.settings);
+    queryClient.setQueryData(QUERY_KEYS.settings, {
+      ...(existingSettings || {}),
+      ...savedSettings,
+    });
+
+    const currentAppData = queryClient.getQueryData<AppDataSnapshot>(QUERY_KEYS.appData);
+    if (currentAppData) {
+      queryClient.setQueryData(QUERY_KEYS.appData, {
+        ...currentAppData,
+        config: { ...currentAppData.config, ...savedSettings } as AppSettingsConfig,
+      });
+    }
+  }
+  syncSessionCachedConfig(savedSettings);
+}
+
+export async function fetchRuleTemplatesWithQueryClient(
+  queryClient: QueryClient,
+  options: { force?: boolean } = {},
+): Promise<RuleTemplateItem[]> {
+  const { force = false } = options;
+  if (force) {
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ruleTemplates });
+  }
   const result = await queryClient.fetchQuery({
     queryKey: QUERY_KEYS.ruleTemplates,
-    staleTime: 0,
+    staleTime: force ? 0 : TIMING.CACHE_TTL_MS,
     queryFn: async (): Promise<RuleTemplateItem[]> => {
       const response: unknown = await api.get(API_ENDPOINTS.RULE_TEMPLATES);
       const data = isPlainRecord(response) ? response.data : undefined;
@@ -454,6 +525,7 @@ export function clearAppDataQueryCache(queryClient?: QueryClient | null): void {
   dataCache.clear();
   if (queryClient) {
     queryClient.removeQueries({ queryKey: QUERY_KEYS.appData });
+    queryClient.removeQueries({ queryKey: QUERY_KEYS.settings });
     queryClient.removeQueries({ queryKey: QUERY_KEYS.ruleTemplates });
   }
 }

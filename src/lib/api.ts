@@ -360,7 +360,7 @@ export async function fetchNodeCount(
 
 export async function fetchSettings(): Promise<ApiResult<Record<string, unknown>>> {
   try {
-    const data = await api.get<Record<string, unknown>>(`${API_ENDPOINTS.SETTINGS}?t=${Date.now()}`);
+    const data = await api.get<Record<string, unknown>>(API_ENDPOINTS.SETTINGS);
     return { success: true, data };
   } catch (error) {
     return handleApiError(error, 'fetchSettings');

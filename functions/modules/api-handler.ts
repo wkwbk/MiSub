@@ -33,7 +33,6 @@ import {
   parseOptionalInteger,
 } from '@misub/core/domain/multi-socks.js';
 import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
-import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { type AccessControlConfig, enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
 import { getPublicTurnstileConfig } from './turnstile.js';
@@ -282,6 +281,29 @@ export function isStorageUnavailableError(error: unknown): boolean {
   );
 }
 
+const DATA_SCOPE_OMITTED_SETTINGS_KEYS = [
+  'customPage',
+  'portalCustomPage',
+  'announcement',
+  'webdavBackup',
+  'turnstile',
+  'telegramPushConfig',
+  'externalApi',
+  'disguise',
+  'guestbook',
+  'botToken',
+  'hasBotToken',
+  'chatId',
+  'cronSecret',
+  'hasCronSecret',
+  'hasEnvCronSecret',
+  'customDnsOverride',
+  'regionOverrides',
+  'nodeTransformPresets',
+  'defaultOperators',
+  'tokenAutoRotate',
+] as const;
+
 /**
  * 处理数据获取API
  */
@@ -296,14 +318,10 @@ export async function handleDataRequest(
     }
     const repos = createRepositories(env, context);
     const storageAdapter = repos.storage;
-    const [misubs, rawProfiles, rawSettings, ruleTemplates] = await Promise.all([
+    const [misubs, rawProfiles, rawSettings] = await Promise.all([
       repos.subscriptions.getAll({ fresh: true }),
       repos.profiles.getAll({ fresh: true }),
       repos.settings.getMain({ fresh: context?.settings === undefined }),
-      listRuleTemplates(storageAdapter).catch((error: unknown) => {
-        console.warn('[API /data] Failed to load custom rule templates:', getErrorMessage(error));
-        return [];
-      }),
     ]);
     const settings: Record<string, unknown> = isRecord(rawSettings) ? rawSettings : {};
     const rawList: ProfileConfig[] = Array.isArray(rawProfiles) ? rawProfiles : [];
@@ -328,7 +346,7 @@ export async function handleDataRequest(
       env,
       { scope: 'data' },
     );
-    return createJsonResponse({ misubs, profiles, ruleTemplates, config });
+    return createJsonResponse({ misubs, profiles, config });
   } catch (e) {
     console.error('[API Error /data] Failed to read from storage', {
       error: getErrorMessage(e),
@@ -360,6 +378,17 @@ function redactSettingsForResponse(
         hasToken: Boolean(String(rawShortLink.apiToken || '').trim()),
       }
     : { ...defaultSettings.shortLink, hasToken: false };
+
+  if (scope === 'data') {
+    for (const key of DATA_SCOPE_OMITTED_SETTINGS_KEYS) {
+      delete cleaned[key];
+    }
+    return {
+      ...cleaned,
+      shortLink,
+    };
+  }
+
   const hasEnvTurnstileKeys = Boolean(
     String(env?.TURNSTILE_SITE_KEY || '').trim() && String(env?.TURNSTILE_SECRET_KEY || '').trim(),
   );
@@ -402,7 +431,7 @@ function redactSettingsForResponse(
       }
     : cleaned.webdavBackup;
 
-  const redacted: Record<string, unknown> = {
+  return {
     ...cleaned,
     botToken: '',
     hasBotToken: Boolean(String(cleaned.botToken || '').trim()),
@@ -412,29 +441,6 @@ function redactSettingsForResponse(
     turnstile,
     ...(telegramPushConfig !== undefined ? { telegramPushConfig } : {}),
   };
-
-  if (scope === 'data') {
-    redacted.hasCronSecret = Boolean(String(cleaned.cronSecret || env?.CRON_SECRET || '').trim());
-    redacted.cronSecret = '';
-    if (isRecord(cleaned.externalApi)) {
-      const extApi = cleaned.externalApi;
-      redacted.externalApi = {
-        ...extApi,
-        tokens: Array.isArray(extApi.tokens)
-          ? extApi.tokens.map((item) => {
-              const itemObj = isRecord(item) ? item : {};
-              return {
-                name: itemObj.name || '',
-                token: '',
-                hasToken: Boolean(String(itemObj.token || '').trim()),
-              };
-            })
-          : [],
-      };
-    }
-  }
-
-  return redacted;
 }
 
 function pickLatestTimestamp(a: string | null | undefined, b: string | null | undefined): string | null {
@@ -472,14 +478,20 @@ export async function handleSettingsGet(
         lastCheckedAt: pickLatestTimestamp(merged.webdavBackup?.lastCheckedAt, cachedCheckedAt),
       };
     }
-    return createJsonResponse(redactSettingsForResponse(merged, env));
+    return createJsonResponse(redactSettingsForResponse(merged, env), 200, {
+      'Cache-Control': 'no-store',
+    });
   } catch (e) {
     if (isStorageUnavailableError(e)) {
-      return createJsonResponse({
-        ...defaultSettings,
-        storageType: 'd1',
-        storageUnavailable: true,
-      });
+      return createJsonResponse(
+        {
+          ...defaultSettings,
+          storageType: 'd1',
+          storageUnavailable: true,
+        },
+        200,
+        { 'Cache-Control': 'no-store' },
+      );
     }
     return createErrorResponse('读取设置失败', 500);
   }

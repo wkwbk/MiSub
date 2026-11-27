@@ -177,7 +177,7 @@ describe('Batch 2 hotpath, cache isolation, and Base64 optimizations', () => {
     expect(dataRes.status).toBe(200);
     const dataBody = await dataRes.json();
     expect(dataBody.config.fileName).toBe('MiSub-Cached');
-    expect(db.settingsSelects).toEqual(['main', 'rule_templates']);
+    expect(db.settingsSelects).toEqual(['main']);
 
     clearSettingsCache();
     db.settingsSelects.length = 0;

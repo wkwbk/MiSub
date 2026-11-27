@@ -253,12 +253,24 @@ describe('Batch 1 security and contract hardening', () => {
 
     const dataRes = await handleDataRequest(env);
     const dataBody = await dataRes.json();
-    expect(dataBody.config.botToken).toBe('');
-    expect(dataBody.config.cronSecret).toBe('');
-    expect(dataBody.config.hasCronSecret).toBe(true);
-    expect(dataBody.config.telegramPushConfig.botToken).toBe('');
-    expect(dataBody.config.telegramPushConfig.webhookSecret).toBe('');
-    expect(dataBody.config.externalApi.tokens).toEqual([{ name: 'cli', token: '', hasToken: true }]);
+    expect(dataBody.ruleTemplates).toBeUndefined();
+    expect(dataBody.config.botToken).toBeUndefined();
+    expect(dataBody.config.cronSecret).toBeUndefined();
+    expect(dataBody.config.hasCronSecret).toBeUndefined();
+    expect(dataBody.config.telegramPushConfig).toBeUndefined();
+    expect(dataBody.config.externalApi).toBeUndefined();
+    expect(dataBody.config.webdavBackup).toBeUndefined();
+    expect(dataBody.config.turnstile).toBeUndefined();
+    expect(dataBody.config.customPage).toBeUndefined();
+    expect(dataBody.config.portalCustomPage).toBeUndefined();
+    expect(dataBody.config.announcement).toBeUndefined();
+    expect(dataBody.config.shortLink).toEqual({
+      enabled: true,
+      provider: 'sink',
+      apiUrl: 'https://s.example.com',
+      apiToken: '',
+      hasToken: true,
+    });
 
     // Verify stored settings were preserved on blank save
     const persistedRaw = await db.prepare('SELECT value FROM settings WHERE key = ?').bind('main').first();

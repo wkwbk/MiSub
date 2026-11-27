@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { Ref } from 'vue';
 import { Braces, List } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
@@ -60,6 +60,12 @@ const emit = defineEmits<{
 }>();
 const dataStore = useDataStore();
 const { ruleTemplates } = storeToRefs(dataStore) as { ruleTemplates: Ref<RuleTemplateRecord[]> };
+
+onMounted(() => {
+  if (props.type === 'config' && !props.excludeBuiltinAssets) {
+    void dataStore.ensureRuleTemplatesLoaded?.();
+  }
+});
 
 const resolvedCustomPlaceholder = computed(() => props.customPlaceholder || t('transformSelector.customPlaceholder'));
 
@@ -154,6 +160,20 @@ watch(
     }
   },
   { immediate: true },
+);
+
+watch(
+  customTemplateAssets,
+  () => {
+    const current = String(props.modelValue || '').trim();
+    if (!current.startsWith('custom:') || props.forceCustom) return;
+    const found = assets.value.find((item) => item.url === current);
+    if (found) {
+      selectedUrl.value = current;
+      isCustom.value = false;
+      emit('select-asset', found);
+    }
+  },
 );
 
 watch(

@@ -271,6 +271,8 @@ export const useDataStore = defineStore('data', () => {
   const isLoading = ref(false);
   const lastUpdated = ref<Date | null>(null);
   const hasDataLoaded = computed(() => !!lastUpdated.value);
+  const hasLoadedRuleTemplates = ref(false);
+  let ruleTemplatesInFlight: Promise<RuleTemplateItem[]> | null = null;
   const isMutating = computed(() => editorStore.isMutating);
 
   // 实例级并发控制状态：按资源键串行排队、保留首次基线快照并在响应乱序/失败时精确收敛
@@ -314,7 +316,10 @@ export const useDataStore = defineStore('data', () => {
     if (!snapshot) return false;
     subscriptions.value = snapshot.misubs;
     profiles.value = snapshot.profiles;
-    ruleTemplates.value = snapshot.ruleTemplates;
+    if (snapshot.ruleTemplates.length > 0) {
+      ruleTemplates.value = snapshot.ruleTemplates;
+      hasLoadedRuleTemplates.value = true;
+    }
     settingsStore.setConfig(snapshot.config);
     lastUpdated.value = new Date();
     return true;
@@ -805,10 +810,32 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  async function fetchRuleTemplates(): Promise<RuleTemplateItem[]> {
-    const list = await fetchRuleTemplatesWithQueryClient(resolvePiniaQueryClient());
+  async function fetchRuleTemplates(options: { force?: boolean } = {}): Promise<RuleTemplateItem[]> {
+    const list = await fetchRuleTemplatesWithQueryClient(resolvePiniaQueryClient(), options);
     ruleTemplates.value = list;
+    hasLoadedRuleTemplates.value = true;
     return list;
+  }
+
+  async function ensureRuleTemplatesLoaded(options: { force?: boolean } = {}): Promise<RuleTemplateItem[]> {
+    if (!options.force && (hasLoadedRuleTemplates.value || ruleTemplates.value.length > 0)) {
+      return ruleTemplates.value;
+    }
+    if (!options.force && !hasDataLoaded.value) {
+      return ruleTemplates.value;
+    }
+    if (ruleTemplatesInFlight) {
+      return await ruleTemplatesInFlight;
+    }
+    ruleTemplatesInFlight = fetchRuleTemplates(options)
+      .catch((error: unknown) => {
+        console.warn('[Store] Failed to lazy-load rule templates:', error);
+        return ruleTemplates.value;
+      })
+      .finally(() => {
+        ruleTemplatesInFlight = null;
+      });
+    return await ruleTemplatesInFlight;
   }
 
   async function saveRuleTemplates(items: RuleTemplateItem[] = ruleTemplates.value): Promise<RuleTemplateItem[]> {
@@ -816,6 +843,7 @@ export const useDataStore = defineStore('data', () => {
     try {
       const savedList = await saveRuleTemplatesWithQueryClient(resolvePiniaQueryClient(), items);
       ruleTemplates.value = savedList;
+      hasLoadedRuleTemplates.value = true;
       showToast(t('store.ruleTemplatesSaved'), 'success');
       return savedList;
     } catch (error: unknown) {
@@ -828,6 +856,9 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function clearCachedData(): void {
+    ruleTemplates.value = [];
+    hasLoadedRuleTemplates.value = false;
+    ruleTemplatesInFlight = null;
     clearAppDataQueryCache(resolvePiniaQueryClient());
   }
 
@@ -875,6 +906,7 @@ export const useDataStore = defineStore('data', () => {
     isMutating,
     lastUpdated,
     hasDataLoaded,
+    hasLoadedRuleTemplates,
 
     activeSubscriptions,
     activeProfiles,
@@ -882,6 +914,7 @@ export const useDataStore = defineStore('data', () => {
     fetchData,
     saveSettings,
     fetchRuleTemplates,
+    ensureRuleTemplatesLoaded,
     saveRuleTemplates,
     hydrateFromData,
     clearCachedData,

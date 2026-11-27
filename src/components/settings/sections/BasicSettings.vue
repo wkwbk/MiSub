@@ -8,7 +8,11 @@ import Switch from '@/components/ui/Switch.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
 import { computed, reactive, ref, watch } from 'vue';
+import { getActivePinia } from 'pinia';
 import { useToastStore } from '@/stores/useToastStore.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { resolveComponentQueryClient } from '@/lib/query-client.js';
+import { syncSettingsSnapshotToCache } from '@/queries/useAppDataQueries.js';
 import { rotateMyToken } from '@/lib/api.js';
 import { useI18n } from '@/i18n/index.js';
 import { getPathRootSegment, isReservedPathRoot, isReservedSubPath } from '@misub/core/domain/reserved-paths.js';
@@ -29,6 +33,7 @@ const emit = defineEmits<{
 
 const { showToast } = useToastStore();
 const { t } = useI18n();
+const capturedQueryClient = getActivePinia() ? resolveComponentQueryClient() : null;
 
 const hasInvalidTokenChars = (value: string) => /[\s/?#]/.test(value);
 
@@ -95,13 +100,19 @@ const handleRotateTokenNow = async () => {
   try {
     const res = await rotateMyToken();
     if (res?.success && res.data?.myToken) {
-      patchSettings({
+      const nextTokenAutoRotate: TokenAutoRotateConfig = {
+        ...tokenAutoRotate.value,
+        lastRotatedAt: res.data.rotatedAt || new Date().toISOString(),
+      };
+      const rotatedPatch = {
         myToken: res.data.myToken,
-        tokenAutoRotate: {
-          ...tokenAutoRotate.value,
-          lastRotatedAt: res.data.rotatedAt || new Date().toISOString(),
-        },
-      });
+        tokenAutoRotate: nextTokenAutoRotate,
+      };
+      patchSettings(rotatedPatch);
+      if (getActivePinia()) {
+        useSettingsStore().updateConfig(rotatedPatch);
+        syncSettingsSnapshotToCache(capturedQueryClient || resolveComponentQueryClient(), rotatedPatch);
+      }
       showToast(
         res.data.notified ? t('settings.rotateTokenNowSuccessNotified') : t('settings.rotateTokenNowSuccess'),
         'success',

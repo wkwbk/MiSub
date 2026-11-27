@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Braces, Plus } from '@lucide/vue';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useI18n } from '@/i18n/index.js';
@@ -134,10 +134,14 @@ function removeTemplate(template: RuleTemplateItem) {
   selectTemplateAt(localTemplates.value.length ? 0 : -1);
 }
 
+onMounted(() => {
+  void dataStore.ensureRuleTemplatesLoaded?.();
+});
+
 async function refreshTemplates() {
   isLoading.value = true;
   try {
-    await dataStore.fetchRuleTemplates();
+    await dataStore.fetchRuleTemplates({ force: true });
     syncFromStore();
   } finally {
     isLoading.value = false;

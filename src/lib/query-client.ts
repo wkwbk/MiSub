@@ -12,6 +12,7 @@ export interface AccessLogsFilter {
 
 export const QUERY_KEYS = {
   appData: ['app', 'data'] as const,
+  settings: ['app', 'settings'] as const,
   ruleTemplates: ['app', 'ruleTemplates'] as const,
   publicProfiles: ['public', 'profiles'] as const,
   accessLogsRoot: ['app', 'accessLogs'] as const,

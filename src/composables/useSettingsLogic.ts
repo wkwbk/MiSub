@@ -1,8 +1,18 @@
-import { computed, getCurrentInstance, onUnmounted, ref } from 'vue';
+import { computed, ref } from 'vue';
+import { getActivePinia } from 'pinia';
 import { useToastStore } from '@/stores/useToastStore.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
 import type { ExternalApiConfig } from '@misub/core/types.js';
-import type { AppSettingsConfig, SaveSettingsResponse } from '@/queries/useAppDataQueries.js';
+import {
+  clearAppDataQueryCache,
+  fetchSettingsWithQueryClient,
+  syncSettingsSnapshotToCache,
+  type AppSettingsConfig,
+  type SaveSettingsResponse,
+} from '@/queries/useAppDataQueries.js';
+import { resolveComponentQueryClient } from '@/lib/query-client.js';
 import { fetchSettings, resetSettings, saveSettings } from '@/lib/api.js';
 import { useBackupLogic } from '@/composables/useBackupLogic.js';
 import { setLocale, t } from '@/i18n/index.js';
@@ -81,6 +91,11 @@ function normalizeSettingsObject(source: Partial<AppSettingsConfig> = {}): AppSe
  */
 export function useSettingsLogic() {
   const { showToast } = useToastStore();
+  const capturedQueryClient = getActivePinia() ? resolveComponentQueryClient() : null;
+  const getActiveQueryClient = () => {
+    if (!getActivePinia()) return null;
+    return capturedQueryClient || resolveComponentQueryClient();
+  };
 
   // 使用备份 composable
   const { exportBackup, importBackup } = useBackupLogic();
@@ -89,24 +104,29 @@ export function useSettingsLogic() {
   const settings = ref<AppSettingsConfig>(normalizeSettingsObject(DEFAULT_SETTINGS as Partial<AppSettingsConfig>));
   const isLoading = ref(false);
   const isSaving = ref(false);
-  let reloadTimer: ReturnType<typeof setTimeout> | null = null;
-
-  const clearReloadTimer = (): void => {
-    if (reloadTimer !== null) {
-      clearTimeout(reloadTimer);
-      reloadTimer = null;
-    }
-  };
-
-  if (getCurrentInstance()) {
-    onUnmounted(clearReloadTimer);
-  }
 
   // 嵌套配置对象（拦截响应策略）
   const disguiseConfig = ref<DisguiseConfig>({
     pageType: 'default',
     redirectUrl: '',
   });
+
+  const applyLoadedSettings = (incoming: Partial<AppSettingsConfig> = {}): void => {
+    settings.value = normalizeSettingsObject(incoming);
+
+    const incomingDisguise = settings.value.disguise || DEFAULT_SETTINGS.disguise;
+    disguiseConfig.value = {
+      pageType: incomingDisguise?.pageType === 'redirect' ? 'redirect' : 'default',
+      redirectUrl: typeof incomingDisguise?.redirectUrl === 'string' ? incomingDisguise.redirectUrl : '',
+    };
+
+    settings.value.storageType = 'd1';
+
+    // 应用默认显示语言设置
+    if (settings.value.defaultLocale) {
+      setLocale(settings.value.defaultLocale);
+    }
+  };
 
   // ========== 计算属性 ==========
   const hasWhitespace = computed(() => {
@@ -121,29 +141,19 @@ export function useSettingsLogic() {
   // ========== 核心函数 ==========
 
   /**
-   * 从 API 加载设置
+   * 从 API 加载设置（命中 Vue Query 缓存时零请求直返）
    */
-  const loadSettings = async (): Promise<void> => {
+  const loadSettings = async (options: { force?: boolean } = {}): Promise<void> => {
     isLoading.value = true;
     try {
-      const result = (await fetchSettings()) as ApiFailureShape & { data?: unknown };
+      const queryClient = getActiveQueryClient();
+      const result = (
+        queryClient ? await fetchSettingsWithQueryClient(queryClient, options) : await fetchSettings()
+      ) as ApiFailureShape & { success?: boolean; data?: unknown };
       if (result.success) {
         const incoming =
           result.data && typeof result.data === 'object' ? (result.data as Partial<AppSettingsConfig>) : {};
-        settings.value = normalizeSettingsObject(incoming);
-
-        const incomingDisguise = settings.value.disguise || DEFAULT_SETTINGS.disguise;
-        disguiseConfig.value = {
-          pageType: incomingDisguise?.pageType === 'redirect' ? 'redirect' : 'default',
-          redirectUrl: typeof incomingDisguise?.redirectUrl === 'string' ? incomingDisguise.redirectUrl : '',
-        };
-
-        settings.value.storageType = 'd1';
-
-        // 应用默认显示语言设置
-        if (settings.value.defaultLocale) {
-          setLocale(settings.value.defaultLocale);
-        }
+        applyLoadedSettings(incoming);
       } else {
         showToast(
           t('settings.loadFailedWithMessage', { message: result.error || result.message || t('settings.loadFailed') }),
@@ -203,16 +213,28 @@ export function useSettingsLogic() {
 
       const result = (await saveSettings(settingsToSave)) as SaveSettingsResponse & ApiFailureShape;
       if (result.success) {
+        const savedData = (
+          result.data && typeof result.data === 'object' ? result.data : settingsToSave
+        ) as Partial<AppSettingsConfig>;
+        applyLoadedSettings(savedData);
+
+        const queryClient = getActiveQueryClient();
+        if (getActivePinia()) {
+          const settingsStore = useSettingsStore();
+          const sessionStore = useSessionStore();
+          settingsStore.updateConfig(savedData);
+          sessionStore.subscriptionConfig = {
+            ...sessionStore.subscriptionConfig,
+            ...savedData,
+          };
+          syncSettingsSnapshotToCache(queryClient, savedData);
+        }
+
         if (result.telegramSync?.attempted && !result.telegramSync.success) {
           showToast(t('settings.savedTelegramSyncFailed'), 'warning');
         } else {
-          showToast(t('settings.savedReloading'), 'success');
+          showToast(t('store.settingsUpdated'), 'success');
         }
-        clearReloadTimer();
-        reloadTimer = setTimeout(() => {
-          reloadTimer = null;
-          window.location.reload();
-        }, 1200);
         return true;
       } else {
         throw new Error(result.error || result.message || t('settings.saveFailed'));
@@ -250,6 +272,10 @@ export function useSettingsLogic() {
       const result = (await resetSettings()) as ApiFailureShape;
       if (result.success) {
         clearAllPreferences();
+        const queryClient = getActiveQueryClient();
+        if (queryClient) {
+          clearAppDataQueryCache(queryClient);
+        }
         showToast(t('settings.resetSuccess'), 'success');
         setTimeout(() => window.location.reload(), 1500);
       } else {

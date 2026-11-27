@@ -114,13 +114,21 @@ function syncStateOnEnter() {
   }
 }
 
+let skipNextActivatedLoad = false;
+
 onMounted(() => {
-  loadSettings();
+  skipNextActivatedLoad = true;
+  void loadSettings();
   syncStateOnEnter();
 });
 
 onActivated(() => {
-  loadSettings();
+  if (skipNextActivatedLoad) {
+    skipNextActivatedLoad = false;
+    syncStateOnEnter();
+    return;
+  }
+  void loadSettings();
   syncStateOnEnter();
 });
 

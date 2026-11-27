@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
 import { useSettingsLogic } from '@/composables/useSettingsLogic.js';
+import { createAppQueryClient, QUERY_KEYS, bindPiniaQueryClient } from '@/lib/query-client.js';
+import { useSettingsStore } from '@/stores/useSettingsStore.js';
+import { useSessionStore } from '@/stores/useSessionStore.js';
 
 const { fetchSettings, saveSettings, resetSettings, showToast } = vi.hoisted(() => ({
   fetchSettings: vi.fn(),
@@ -49,24 +53,66 @@ describe('useSettingsLogic externalApi normalization', () => {
     expect(settings.value.externalApi.tokens).toEqual([{ name: 'default', token: '' }]);
   });
 
-  it('reloads automatically after saving settings', async () => {
-    vi.useFakeTimers();
-    saveSettings.mockResolvedValue({ success: true });
+  it('updates state and caches without reloading the page after saving settings', async () => {
+    saveSettings.mockResolvedValue({
+      success: true,
+      data: {
+        storageType: 'd1',
+        fileName: 'MiSub-Updated',
+        customLoginPath: '/secret-portal',
+      },
+    });
     const reload = vi.fn();
     const originalReload = window.location.reload;
     window.location.reload = reload;
 
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const queryClient = createAppQueryClient();
+    bindPiniaQueryClient(pinia, queryClient);
+
     try {
       const { settings, handleSave } = useSettingsLogic();
       settings.value.storageType = 'd1';
+      settings.value.fileName = 'MiSub-Updated';
 
       expect(await handleSave()).toBe(true);
-      await vi.advanceTimersByTimeAsync(1200);
-      expect(reload).toHaveBeenCalledTimes(1);
+      expect(reload).not.toHaveBeenCalled();
+      expect(showToast).toHaveBeenCalledWith(expect.any(String), 'success');
+      expect(useSettingsStore().config.fileName).toBe('MiSub-Updated');
+      expect(useSessionStore().subscriptionConfig.customLoginPath).toBe('/secret-portal');
+      expect(queryClient.getQueryData(QUERY_KEYS.settings)?.fileName).toBe('MiSub-Updated');
     } finally {
       window.location.reload = originalReload;
-      vi.useRealTimers();
     }
+  });
+
+  it('reuses cached settings across repeated loadSettings calls when Pinia is active', async () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const queryClient = createAppQueryClient();
+    bindPiniaQueryClient(pinia, queryClient);
+
+    fetchSettings.mockResolvedValue({
+      success: true,
+      data: {
+        storageType: 'd1',
+        fileName: 'CachedSite',
+      },
+    });
+
+    const first = useSettingsLogic();
+    await first.loadSettings();
+    expect(first.settings.value.fileName).toBe('CachedSite');
+    expect(fetchSettings).toHaveBeenCalledTimes(1);
+
+    const second = useSettingsLogic();
+    await second.loadSettings();
+    expect(second.settings.value.fileName).toBe('CachedSite');
+    expect(fetchSettings).toHaveBeenCalledTimes(1);
+
+    await second.loadSettings({ force: true });
+    expect(fetchSettings).toHaveBeenCalledTimes(2);
   });
 
   it('normalizes blank token names before saving', async () => {

@@ -6,13 +6,21 @@ import {
 
 const isDev = import.meta.env.DEV;
 
+export interface StorageCacheOptions {
+  maxBytes?: number;
+}
+
 export interface StorageCache<T = unknown> {
   get: () => T | null;
   set: (data: T) => void;
   clear: () => void;
 }
 
-export function createStorageCache<T = unknown>(keyBase: string, ttlMs: number): StorageCache<T> {
+export function createStorageCache<T = unknown>(
+  keyBase: string,
+  ttlMs: number,
+  options: StorageCacheOptions = {},
+): StorageCache<T> {
   const DATA_KEY = keyBase;
   const TS_KEY = `${keyBase}_ts`;
 
@@ -37,9 +45,23 @@ export function createStorageCache<T = unknown>(keyBase: string, ttlMs: number):
 
   function set(data: T): void {
     try {
-      writeSessionPreference(DATA_KEY, JSON.stringify(data));
-      writeSessionPreference(TS_KEY, String(Date.now()));
+      const serialized = JSON.stringify(data);
+      const estimatedBytes = serialized.length * 2;
+      if (typeof options.maxBytes === 'number' && options.maxBytes > 0 && estimatedBytes > options.maxBytes) {
+        clear();
+        if (isDev) {
+          console.warn(`[Cache] Skipped ${DATA_KEY}: payload ${estimatedBytes} bytes exceeds limit ${options.maxBytes}`);
+        }
+        return;
+      }
+
+      const wroteData = writeSessionPreference(DATA_KEY, serialized);
+      const wroteTs = wroteData ? writeSessionPreference(TS_KEY, String(Date.now())) : false;
+      if (!wroteData || !wroteTs) {
+        clear();
+      }
     } catch (e) {
+      clear();
       if (isDev) console.warn(`[Cache] Failed to write ${DATA_KEY}`, e);
     }
   }
