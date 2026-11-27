@@ -412,7 +412,7 @@ const handleModalConfirm = () => {
 
     <template #footer>
       <button
-        class="px-4 py-2 border border-line bg-transparent hover:bg-hover text-fg-muted hover:text-fg font-medium text-xs rounded-md transition-colors"
+        class="whitespace-nowrap px-4 py-2 border border-line bg-transparent hover:bg-hover text-fg-muted hover:text-fg font-medium text-xs rounded-md transition-colors"
         type="button"
         @click="emit('update:show', false)"
       >
@@ -421,7 +421,7 @@ const handleModalConfirm = () => {
       <button
         v-if="activeTab === 'url'"
         :disabled="isProcessing || !subscriptionUrl.trim()"
-        class="px-4 py-2 bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        class="whitespace-nowrap px-4 py-2 bg-accent hover:opacity-90 text-accent-fg font-semibold text-xs rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         type="button"
         @click="importSubscriptionUrl"
       >
@@ -430,7 +430,7 @@ const handleModalConfirm = () => {
       <button
         v-else-if="activeTab === 'text'"
         :disabled="isProcessing || (isSubscriptionsMode && !importText.trim())"
-        class="px-4 py-2 bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
+        class="whitespace-nowrap px-4 py-2 bg-accent hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none text-accent-fg font-semibold text-xs rounded-md transition-colors"
         type="button"
         @click="handleTextConfirm"
       >
@@ -452,7 +452,7 @@ const handleModalConfirm = () => {
                 ? 'bg-accent text-accent-fg font-semibold'
                 : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="py-1.5 text-xs font-medium transition-colors"
+            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'url'"
           >
@@ -465,7 +465,7 @@ const handleModalConfirm = () => {
                 ? 'bg-accent text-accent-fg font-semibold'
                 : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="py-1.5 text-xs font-medium transition-colors"
+            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'text'"
           >
@@ -477,7 +477,7 @@ const handleModalConfirm = () => {
                 ? 'bg-accent text-accent-fg font-semibold'
                 : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="py-1.5 text-xs font-medium transition-colors"
+            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'file'"
           >

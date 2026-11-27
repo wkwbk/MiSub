@@ -174,11 +174,19 @@ const closeModal = (): void => {
 </script>
 
 <template>
-  <Modal :show="show" :z-index="zIndex" body-class="px-6 py-4" size="2xl" @update:show="emit('update:show', $event)">
+  <Modal
+    :show="show"
+    :show-cancel="false"
+    :show-confirm="false"
+    :z-index="zIndex"
+    body-class="px-4 py-3.5 sm:px-6 sm:py-4"
+    size="2xl"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0 flex-1">
-          <div class="flex items-center gap-2.5">
+          <div class="flex min-w-0 items-center gap-2.5">
             <span
               class="inline-flex shrink-0 items-center rounded-sm border border-line-strong bg-active px-2 py-0.5 text-xs font-mono font-semibold uppercase tracking-wide text-fg"
             >
@@ -198,7 +206,7 @@ const closeModal = (): void => {
         </div>
         <button
           :aria-label="t('nodeDetail.close')"
-          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line hover:bg-hover hover:text-fg"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line hover:bg-hover hover:text-fg"
           type="button"
           @click="closeModal"
         >
@@ -209,10 +217,17 @@ const closeModal = (): void => {
 
     <template #body>
       <div class="space-y-5">
-        <div v-if="detail.parsed || detail.rawUrl" class="modal-inset-surface inline-flex items-center gap-0.5 rounded-md p-1">
+        <div
+          v-if="detail.parsed || detail.rawUrl"
+          class="modal-inset-surface inline-flex max-w-full flex-nowrap items-center gap-0.5 overflow-x-auto no-scrollbar rounded-md p-1"
+          data-testid="node-detail-tabs"
+          role="tablist"
+        >
           <button
+            :aria-selected="activeTab === 'structured'"
             :class="activeTab === 'structured' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
-            class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
+            class="shrink-0 whitespace-nowrap rounded-sm px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs font-medium transition-all"
+            role="tab"
             type="button"
             @click="activeTab = 'structured'"
           >
@@ -220,8 +235,10 @@ const closeModal = (): void => {
           </button>
           <button
             v-if="detail.parsed"
+            :aria-selected="activeTab === 'yaml'"
             :class="activeTab === 'yaml' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
-            class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
+            class="shrink-0 whitespace-nowrap rounded-sm px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs font-medium transition-all"
+            role="tab"
             type="button"
             @click="activeTab = 'yaml'"
           >
@@ -229,8 +246,10 @@ const closeModal = (): void => {
           </button>
           <button
             v-if="detail.parsed"
+            :aria-selected="activeTab === 'json'"
             :class="activeTab === 'json' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
-            class="rounded-sm px-3 py-1 text-xs font-medium transition-all"
+            class="shrink-0 whitespace-nowrap rounded-sm px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs font-medium transition-all"
+            role="tab"
             type="button"
             @click="activeTab = 'json'"
           >
@@ -238,13 +257,15 @@ const closeModal = (): void => {
           </button>
           <button
             v-if="detail.rawUrl"
+            :aria-selected="activeTab === 'qrcode'"
             :class="activeTab === 'qrcode' ? 'modal-tab-active text-fg' : 'text-fg-muted hover:text-fg'"
-            class="inline-flex items-center gap-1.5 rounded-sm px-3 py-1 text-xs font-medium transition-all"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 sm:gap-1.5 rounded-sm px-2.5 py-1.5 sm:px-3 sm:py-1 text-xs font-medium transition-all"
             data-testid="node-detail-qrcode-tab"
+            role="tab"
             type="button"
             @click="activeTab = 'qrcode'"
           >
-            <QrCode class="h-3.5 w-3.5" />
+            <QrCode class="h-3.5 w-3.5 shrink-0" />
             {{ t('nodeDetail.tabQrCode') }}
           </button>
         </div>
@@ -268,7 +289,7 @@ const closeModal = (): void => {
                   :key="item.key"
                   class="modal-row-hover flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors"
                 >
-                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[110px] sm:min-w-[140px]">
+                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[96px] sm:min-w-[140px]">
                     {{ item.label }}
                   </span>
                   <div class="flex min-w-0 flex-1 items-start justify-end gap-1.5">
@@ -303,7 +324,7 @@ const closeModal = (): void => {
                   :key="item.key"
                   class="modal-row-hover flex items-start justify-between gap-3 px-3.5 py-2.5 text-xs transition-colors"
                 >
-                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[110px] sm:min-w-[140px]">
+                  <span class="shrink-0 font-medium leading-5 text-fg-muted min-w-[96px] sm:min-w-[140px]">
                     {{ item.label }}
                   </span>
                   <div class="flex min-w-0 flex-1 items-start justify-end gap-1.5">
@@ -409,22 +430,14 @@ const closeModal = (): void => {
       </div>
     </template>
 
-    <template #footer>
+    <template v-if="detail.rawUrl" #footer>
       <button
-        class="rounded-md border border-line hover:border-line-strong bg-transparent px-4 py-2 text-sm font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
-        type="button"
-        @click="closeModal"
-      >
-        {{ t('nodeDetail.close') }}
-      </button>
-      <button
-        v-if="detail.rawUrl"
-        class="inline-flex items-center gap-1.5 rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-opacity hover:opacity-90"
+        class="inline-flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-md border border-accent bg-accent px-4 py-2 text-sm font-semibold text-accent-fg transition-opacity hover:opacity-90 sm:w-auto"
         type="button"
         @click="copyText(detail.rawUrl, '__footer_url__')"
       >
-        <Check v-if="copiedKey === '__footer_url__'" class="h-4 w-4 text-emerald-500" />
-        <Copy v-else class="h-4 w-4" />
+        <Check v-if="copiedKey === '__footer_url__'" class="h-4 w-4 shrink-0 text-emerald-500" />
+        <Copy v-else class="h-4 w-4 shrink-0" />
         {{ t('actions.copyLink') }}
       </button>
     </template>

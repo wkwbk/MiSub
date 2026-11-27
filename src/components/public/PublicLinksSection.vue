@@ -80,7 +80,7 @@ const getLinkHostname = (rawUrl: string): string => {
               ? 'bg-accent text-accent-fg border-accent font-semibold'
               : 'bg-surface text-fg-muted border-line hover:border-line-strong hover:text-fg'
           "
-          class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border"
+          class="px-3.5 py-1.5 rounded-md font-mono text-xs font-medium transition-colors border whitespace-nowrap"
           type="button"
           @click="activeLinkCategory = tab.value"
         >

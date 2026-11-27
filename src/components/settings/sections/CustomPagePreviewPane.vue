@@ -175,7 +175,7 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
                 : 'text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewDesktop')"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
             data-testid="preview-viewport-desktop"
             type="button"
             @click="emit('update:viewport', 'desktop')"
@@ -191,7 +191,7 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
                 : 'text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewMobile')"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
             data-testid="preview-viewport-mobile"
             type="button"
             @click="emit('update:viewport', 'mobile')"
@@ -210,7 +210,7 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
                 : 'text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewLight')"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
             data-testid="preview-theme-light"
             type="button"
             @click="emit('update:theme', 'light')"
@@ -226,7 +226,7 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
                 : 'text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewDark')"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
             data-testid="preview-theme-dark"
             type="button"
             @click="emit('update:theme', 'dark')"

@@ -538,7 +538,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
                   activeResourceTab === 'manualNodes'
                     ? 'text-fg font-semibold'
                     : 'text-fg-muted hover:text-fg font-medium',
-                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                  'relative shrink-0 whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                 ]"
                 type="button"
                 @click="activeResourceTab = 'manualNodes'"
@@ -564,7 +564,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
                   activeResourceTab === 'subscriptions'
                     ? 'text-fg font-semibold'
                     : 'text-fg-muted hover:text-fg font-medium',
-                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                  'relative shrink-0 whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                 ]"
                 type="button"
                 @click="activeResourceTab = 'subscriptions'"
@@ -590,7 +590,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
                   activeResourceTab === 'subProfiles'
                     ? 'text-fg font-semibold'
                     : 'text-fg-muted hover:text-fg font-medium',
-                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                  'relative shrink-0 whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                 ]"
                 type="button"
                 @click="activeResourceTab = 'subProfiles'"
@@ -614,7 +614,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
               <button
                 :class="[
                   activeResourceTab === 'all' ? 'text-fg font-semibold' : 'text-fg-muted hover:text-fg font-medium',
-                  'relative whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
+                  'relative shrink-0 whitespace-nowrap pb-2.5 pt-1.5 px-3 !rounded-t-md !rounded-b-none text-xs flex items-center gap-1.5 transition-colors cursor-pointer',
                 ]"
                 type="button"
                 @click="activeResourceTab = 'all'"

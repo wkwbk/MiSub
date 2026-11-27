@@ -331,27 +331,27 @@ function clearActiveBaseConfig() {
           <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualCustomRulesTitle') }}</h4>
           <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualCustomRulesDesc') }}</p>
         </div>
-        <div class="flex rounded-md border border-line bg-inset p-0.5">
+        <div class="flex shrink-0 rounded-md border border-line bg-inset p-0.5">
           <button
             :class="
               customRuleMode === 'form' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'form'"
           >
-            <Sliders class="h-3 w-3" />
+            <Sliders class="h-3 w-3 shrink-0" />
             {{ t('settings.visualModeForm') }}
           </button>
           <button
             :class="
               customRuleMode === 'json' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'json'"
           >
-            <Code2 class="h-3 w-3" />
+            <Code2 class="h-3 w-3 shrink-0" />
             {{ t('settings.visualModeJson') }}
           </button>
         </div>

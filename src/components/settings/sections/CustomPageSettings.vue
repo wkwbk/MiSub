@@ -399,7 +399,7 @@ onUnmounted(() => {
           <div class="flex flex-wrap items-center justify-between gap-2">
             <!-- 左侧：HTML / CSS 切换 + 安全规则 Tooltip -->
             <div class="flex items-center gap-2 flex-wrap">
-              <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex shrink-0 items-center rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
                   :class="
@@ -407,16 +407,16 @@ onUnmounted(() => {
                       ? 'bg-accent text-accent-fg'
                       : 'text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
                   data-testid="custom-page-tab-html"
                   type="button"
                   @click="activeCodeTab = 'html'"
                 >
-                  <Code2 class="w-3.5 h-3.5" />
+                  <Code2 class="w-3.5 h-3.5 shrink-0" />
                   <span>{{ t('settings.customPageTabHtml') }}</span>
                   <span
                     v-if="(customPage.content || '').trim()"
-                    class="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                    class="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-400"
                     aria-hidden="true"
                   ></span>
                 </button>
@@ -427,7 +427,7 @@ onUnmounted(() => {
                       ? 'bg-accent text-accent-fg'
                       : 'text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
                   data-testid="custom-page-tab-css"
                   type="button"
                   @click="activeCodeTab = 'css'"
@@ -435,7 +435,7 @@ onUnmounted(() => {
                   <span>{{ t('settings.customPageTabCss') }}</span>
                   <span
                     v-if="(customPage.css || '').trim()"
-                    class="w-1.5 h-1.5 rounded-full bg-emerald-400"
+                    class="w-1.5 h-1.5 shrink-0 rounded-full bg-emerald-400"
                     aria-hidden="true"
                   ></span>
                 </button>
@@ -804,7 +804,7 @@ onUnmounted(() => {
           <!-- 全屏左侧代码区 -->
           <div class="min-h-0 h-full flex flex-col bg-inset overflow-hidden">
             <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-line bg-surface/70 shrink-0">
-              <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex shrink-0 items-center rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
                   :class="
@@ -812,11 +812,11 @@ onUnmounted(() => {
                       ? 'bg-accent text-accent-fg'
                       : 'text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'html'"
                 >
-                  <Code2 class="w-3.5 h-3.5" />
+                  <Code2 class="w-3.5 h-3.5 shrink-0" />
                   <span>{{ t('settings.customPageTabHtml') }}</span>
                 </button>
                 <button
@@ -826,7 +826,7 @@ onUnmounted(() => {
                       ? 'bg-accent text-accent-fg'
                       : 'text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'css'"
                 >

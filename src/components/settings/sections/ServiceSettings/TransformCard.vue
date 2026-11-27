@@ -335,12 +335,12 @@ watch(
         <FileText class="h-4 w-4" />
       </template>
       <template #actions>
-        <div class="flex rounded-md border border-line bg-inset p-0.5 shrink-0">
+        <div class="flex max-w-full rounded-md border border-line bg-inset p-0.5 shrink-0">
           <button
             :class="
               isBuiltinEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+            class="whitespace-nowrap rounded-md px-3 sm:px-4 py-1.5 text-xs font-semibold transition-colors"
             type="button"
             @click="switchToBuiltinEngine"
           >
@@ -350,7 +350,7 @@ watch(
             :class="
               isExternalEngine ? 'bg-accent text-accent-fg shadow-none' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="rounded-md px-4 py-1.5 text-xs font-semibold transition-colors"
+            class="whitespace-nowrap rounded-md px-3 sm:px-4 py-1.5 text-xs font-semibold transition-colors"
             type="button"
             @click="patchSubconverter({ engineMode: 'external' })"
           >

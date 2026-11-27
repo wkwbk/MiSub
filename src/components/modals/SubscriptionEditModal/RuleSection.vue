@@ -146,15 +146,15 @@ const handleRemoveExclude = (index: number) => {
           </span>
         </div>
       </button>
-      <div class="flex items-center gap-2" @click.stop>
+      <div class="flex shrink-0 items-center gap-2" @click.stop>
         <button
           v-if="!isAdvancedMode"
-          class="text-xs text-fg-muted hover:text-fg hover:underline"
+          class="whitespace-nowrap text-xs text-fg-muted hover:text-fg hover:underline"
           @click="switchToAdvanced"
         >
           {{ t('subscriptions.advancedMode') }}
         </button>
-        <button v-else class="text-xs text-fg-muted hover:text-fg hover:underline" @click="switchToVisual">
+        <button v-else class="whitespace-nowrap text-xs text-fg-muted hover:text-fg hover:underline" @click="switchToVisual">
           {{ t('subscriptions.visualMode') }}
         </button>
       </div>
@@ -170,7 +170,7 @@ const handleRemoveExclude = (index: number) => {
             <button
               :aria-pressed="ruleModeModel === 'keep'"
               :class="[
-                'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
+                'flex-1 sm:flex-none whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                 ruleModeModel === 'keep'
                   ? 'bg-active text-fg border-line-strong font-semibold'
                   : 'bg-transparent text-fg-subtle border-line hover:bg-hover',
@@ -178,11 +178,11 @@ const handleRemoveExclude = (index: number) => {
               type="button"
               @click="ruleModeModel = 'keep'"
             >
-              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span>
               <span>{{ t('subscriptions.keepMode') }}</span>
               <span
                 v-if="effectiveKeepRules.length > 0"
-                class="px-1.5 py-0.2 rounded-md text-xs font-mono border border-current/20"
+                class="shrink-0 px-1.5 py-0.2 rounded-md text-xs font-mono border border-current/20"
               >
                 {{ effectiveKeepRules.length }}
               </span>
@@ -190,7 +190,7 @@ const handleRemoveExclude = (index: number) => {
             <button
               :aria-pressed="ruleModeModel === 'exclude'"
               :class="[
-                'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
+                'flex-1 sm:flex-none whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md border transition-all !min-h-0 !min-w-0 cursor-pointer',
                 ruleModeModel === 'exclude'
                   ? 'bg-active text-fg border-line-strong font-semibold'
                   : 'bg-transparent text-fg-subtle border-line hover:bg-hover',
@@ -198,11 +198,11 @@ const handleRemoveExclude = (index: number) => {
               type="button"
               @click="ruleModeModel = 'exclude'"
             >
-              <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+              <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500"></span>
               <span>{{ t('subscriptions.excludeMode') }}</span>
               <span
                 v-if="effectiveExcludeRules.length > 0"
-                class="px-1.5 py-0.2 rounded-md text-xs font-mono border border-current/20"
+                class="shrink-0 px-1.5 py-0.2 rounded-md text-xs font-mono border border-current/20"
               >
                 {{ effectiveExcludeRules.length }}
               </span>

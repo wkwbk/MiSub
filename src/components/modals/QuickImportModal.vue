@@ -199,7 +199,7 @@ onMounted(() => {
   <Modal :show="show" size="4xl" @update:show="(value) => !value && closeModal()">
     <template #title>
       <div class="flex items-center justify-between gap-4">
-        <div>
+        <div class="min-w-0 flex-1">
           <h3 class="text-base font-semibold text-fg">
             {{ t('quickImport.title') }}
           </h3>
@@ -209,7 +209,8 @@ onMounted(() => {
         </div>
         <button
           :aria-label="t('common.close')"
-          class="w-8 h-8 flex items-center justify-center rounded-md border border-line bg-transparent text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
+          class="w-8 h-8 shrink-0 flex items-center justify-center rounded-md border border-line bg-transparent text-fg-subtle hover:text-fg hover:bg-hover transition-colors"
+          type="button"
           @click="closeModal"
         >
           <X class="w-4 h-4" />
@@ -240,16 +241,16 @@ onMounted(() => {
             <p class="font-semibold text-fg">{{ t('quickImport.shadowrocketConfigTitle') }}</p>
             <p class="mt-0.5 text-fg-muted">{{ t('quickImport.shadowrocketConfigHint') }}</p>
           </div>
-          <div class="flex items-center gap-2 shrink-0">
+          <div class="flex flex-wrap items-center gap-2">
             <button
-              class="px-2.5 py-1.5 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover transition-colors"
+              class="whitespace-nowrap px-2.5 py-1.5 rounded-md border border-line bg-transparent text-fg-muted hover:text-fg hover:bg-hover transition-colors"
               type="button"
               @click="copyShadowrocketConfig"
             >
               {{ fullConfigCopied ? t('quickImport.fullConfigCopied') : t('quickImport.copyFullConfig') }}
             </button>
             <button
-              class="px-2.5 py-1.5 rounded-md bg-accent text-accent-fg font-medium hover:opacity-90 transition-opacity"
+              class="whitespace-nowrap px-2.5 py-1.5 rounded-md bg-accent text-accent-fg font-medium hover:opacity-90 transition-opacity"
               type="button"
               @click="openShadowrocketConfigImport"
             >

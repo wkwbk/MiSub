@@ -94,7 +94,7 @@ const handleConfirm = () => {
                 ? 'bg-active text-fg border-line-strong font-semibold'
                 : 'bg-transparent text-fg-muted border-line hover:bg-hover'
             "
-            class="px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer"
+            class="px-2.5 py-1.5 text-xs font-medium rounded-md border transition-colors cursor-pointer whitespace-nowrap"
             type="button"
             @click="mode = item.key"
           >

@@ -148,7 +148,7 @@ useScrollLock(() => props.show);
         :aria-labelledby="titleId"
         :style="{ zIndex }"
         aria-modal="true"
-        class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4"
+        class="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4"
         role="dialog"
         @click="handleBackdropClick"
         @pointerdown.capture="handleBackdropPointerDown"
@@ -172,7 +172,7 @@ useScrollLock(() => props.show);
             tabindex="-1"
             @click.stop
           >
-            <div :id="titleId" class="modal-chrome-header px-6 py-4 shrink-0">
+            <div :id="titleId" class="modal-chrome-header px-4 py-3.5 sm:px-6 sm:py-4 shrink-0">
               <slot name="title">
                 <h3 class="text-base font-semibold text-fg">
                   {{ title || t('common.confirmAction') }}
@@ -181,7 +181,7 @@ useScrollLock(() => props.show);
             </div>
 
             <div
-              :class="bodyClass || 'px-6 py-5'"
+              :class="bodyClass || 'px-4 py-4 sm:px-6 sm:py-5'"
               class="modal-scrollbar grow min-h-0 overflow-y-auto overscroll-contain"
             >
               <slot name="body">
@@ -193,12 +193,12 @@ useScrollLock(() => props.show);
 
             <div
               v-if="$slots.footer || showCancel || showConfirm"
-              class="modal-chrome-footer px-6 py-3.5 flex justify-end items-center gap-2.5 shrink-0"
+              class="modal-chrome-footer px-4 py-3 sm:px-6 sm:py-3.5 flex justify-end items-center gap-2.5 shrink-0"
             >
               <slot name="footer">
                 <button
                   v-if="showCancel"
-                  class="px-4 py-2 bg-transparent hover:bg-hover border border-line hover:border-line-strong text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
+                  class="whitespace-nowrap px-4 py-2 bg-transparent hover:bg-hover border border-line hover:border-line-strong text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
                   @click="emit('update:show', false)"
                 >
                   {{ cancelLabel }}
@@ -212,7 +212,7 @@ useScrollLock(() => props.show);
                   "
                   :disabled="confirmDisabled || confirmLoading || Boolean(confirmKeyword && confirmInput !== confirmKeyword)"
                   :title="confirmDisabled || confirmLoading ? confirmTitle : t('actions.confirm')"
-                  class="inline-flex items-center justify-center gap-1.5 px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="whitespace-nowrap inline-flex items-center justify-center gap-1.5 px-4 py-2 font-semibold text-sm rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   @click="handleConfirm"
                 >
                   <Loader2 v-if="confirmLoading" class="h-3.5 w-3.5 animate-spin shrink-0" />

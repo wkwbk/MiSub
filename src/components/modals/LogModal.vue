@@ -220,7 +220,14 @@ watch(
 </script>
 
 <template>
-  <Modal :show="show" :show-confirm="false" class="log-modal" size="4xl" @update:show="emit('update:show', $event)">
+  <Modal
+    :cancel-text="t('common.close')"
+    :show="show"
+    :show-confirm="false"
+    class="log-modal"
+    size="4xl"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex justify-between items-center w-full gap-2">
         <div class="flex items-center gap-2 min-w-0">
@@ -236,14 +243,14 @@ watch(
         <div class="flex gap-2 shrink-0">
           <button
             :disabled="isLoading || isClearing"
-            class="text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            class="whitespace-nowrap text-xs px-2.5 py-1 rounded-md border border-line bg-transparent hover:bg-hover transition-colors text-fg-muted hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             @click="fetchLogs"
           >
             {{ t('common.refresh') }}
           </button>
           <button
             :disabled="!canClearLogs"
-            class="text-xs px-2.5 py-1 rounded-md border border-red-900/60 bg-transparent hover:bg-red-950/30 transition-colors text-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            class="whitespace-nowrap text-xs px-2.5 py-1 rounded-md border border-red-900/60 bg-transparent hover:bg-red-950/30 transition-colors text-red-400 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
             @click="clearLogs"
           >
             {{ t('common.clear') }}
@@ -367,7 +374,7 @@ watch(
 
         <div
           v-if="filteredLogs.length > 0"
-          class="pt-4 mt-2 border-t border-line flex justify-between items-center shrink-0"
+          class="pt-4 mt-2 border-t border-line flex flex-wrap justify-between items-center gap-2 shrink-0"
         >
           <span class="font-mono text-xs text-fg-muted">
             {{
@@ -381,14 +388,14 @@ watch(
           <div class="flex gap-2">
             <button
               :disabled="currentPage === 1"
-              class="px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
+              class="whitespace-nowrap px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
               @click="prevPage"
             >
               {{ t('common.previousPage') }}
             </button>
             <button
               :disabled="currentPage === totalPages"
-              class="px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
+              class="whitespace-nowrap px-3 py-1 text-xs border border-line rounded-md bg-transparent text-fg-muted hover:bg-hover hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
               @click="nextPage"
             >
               {{ t('common.nextPage') }}

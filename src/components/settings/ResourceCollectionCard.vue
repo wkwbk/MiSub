@@ -382,7 +382,7 @@ const executeReset = async () => {
                 ? 'bg-accent text-accent-fg border-accent font-semibold'
                 : 'bg-transparent text-fg-muted border-line hover:bg-hover hover:text-fg'
             "
-            class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border"
+            class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors border whitespace-nowrap"
             type="button"
             @click="activeTab = tab.value"
           >

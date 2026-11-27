@@ -800,10 +800,16 @@ const goToPage = (page: number) => {
 </script>
 
 <template>
-  <Modal :show="show" size="6xl" @update:show="(value) => !value && !showDetailModal && closeModal()">
+  <Modal
+    :show="show"
+    :show-cancel="false"
+    :show-confirm="false"
+    size="6xl"
+    @update:show="(value) => !value && !showDetailModal && closeModal()"
+  >
     <template #title>
       <div class="flex items-start justify-between gap-3">
-        <div class="min-w-0 space-y-0.5">
+        <div class="min-w-0 flex-1 space-y-0.5">
           <div class="flex items-center gap-2">
             <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0"></span>
             <h3 class="truncate text-base font-semibold text-fg sm:text-lg tracking-tight">
@@ -829,7 +835,8 @@ const goToPage = (page: number) => {
           </button>
           <button
             :aria-label="t('common.close')"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-line bg-inset text-fg-subtle hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line bg-inset text-fg-subtle hover:text-fg hover:bg-hover hover:border-line-strong transition-colors"
+            type="button"
             @click="closeModal"
           >
             <X class="w-4 h-4" />
@@ -906,7 +913,7 @@ const goToPage = (page: number) => {
         <div class="flex flex-wrap items-center gap-2">
           <button
             :disabled="isTestingLatency || filteredNodes.length === 0"
-            class="inline-flex items-center gap-1.5 rounded-md border border-line-strong bg-elevated-card px-2.5 py-1.5 font-medium text-fg hover:bg-hover disabled:opacity-50 transition-colors"
+            class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border border-line-strong bg-elevated-card px-2.5 py-1.5 font-medium text-fg hover:bg-hover disabled:opacity-50 transition-colors"
             data-testid="preview-test-latency-btn"
             type="button"
             @click="testFilteredNodes"
@@ -916,12 +923,12 @@ const goToPage = (page: number) => {
             <span>{{ isTestingLatency ? t('nodePreview.testingLatency') : t('nodePreview.testFilteredLatency') }}</span>
           </button>
 
-          <div class="inline-flex items-center rounded-md border border-line overflow-hidden divide-x divide-line">
+          <div class="inline-flex shrink-0 items-center rounded-md border border-line overflow-hidden divide-x divide-line">
             <button
               :class="
                 pingMode === 'tcping' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
               "
-              class="px-2 py-1 transition-colors"
+              class="px-2 py-1 whitespace-nowrap transition-colors"
               type="button"
               @click="pingMode = 'tcping'"
             >
@@ -931,7 +938,7 @@ const goToPage = (page: number) => {
               :class="
                 pingMode === 'local' ? 'bg-active text-fg font-semibold' : 'bg-transparent text-fg-muted hover:text-fg'
               "
-              class="px-2 py-1 transition-colors"
+              class="px-2 py-1 whitespace-nowrap transition-colors"
               type="button"
               @click="pingMode = 'local'"
             >
@@ -941,7 +948,7 @@ const goToPage = (page: number) => {
 
           <button
             v-if="canManageSubscriptionNodes && failedFilteredUrls.length > 0"
-            class="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-red-400 hover:bg-red-500/20 transition-colors"
+            class="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-red-400 hover:bg-red-500/20 transition-colors"
             type="button"
             @click="disableFailedNodes"
           >
@@ -950,7 +957,7 @@ const goToPage = (page: number) => {
 
           <button
             v-if="canManageSubscriptionNodes && disabledCount > 0"
-            class="inline-flex items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1 text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
+            class="inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-line bg-transparent px-2.5 py-1 text-fg-muted hover:border-line-strong hover:text-fg transition-colors"
             type="button"
             @click="enableAllNodes"
           >
@@ -1058,8 +1065,8 @@ const goToPage = (page: number) => {
       />
     </template>
 
-    <template #footer>
-      <div v-if="pickingMode" class="flex w-full flex-wrap items-center justify-between gap-3">
+    <template v-if="pickingMode" #footer>
+      <div class="flex w-full flex-wrap items-center justify-between gap-3">
         <div class="flex flex-col">
           <span class="text-xs text-fg-muted uppercase tracking-wider font-semibold">
             {{ t('nodePreview.pickingMode') }}
@@ -1072,39 +1079,25 @@ const goToPage = (page: number) => {
         </div>
         <div class="flex flex-wrap items-center justify-end gap-3">
           <button
-            class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
+            class="whitespace-nowrap px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
             @click="selectAll"
           >
             {{ t('actions.selectAll') }}
           </button>
           <button
-            class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
+            class="whitespace-nowrap px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
             @click="clearSelection"
           >
             {{ t('common.clear') }}
           </button>
           <button
-            class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-accent text-accent-fg hover:opacity-90 border border-accent"
+            class="whitespace-nowrap px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-accent text-accent-fg hover:opacity-90 border border-accent"
             @click="handleSaveSelection"
           >
             {{ t('nodePreview.saveSelection') }}
           </button>
         </div>
       </div>
-      <template v-else>
-        <button
-          class="px-4 py-2 bg-transparent hover:bg-hover border border-line text-fg-muted hover:text-fg font-medium text-sm rounded-md transition-colors"
-          @click="closeModal"
-        >
-          {{ t('actions.cancel') }}
-        </button>
-        <button
-          class="px-4 py-2 font-semibold text-sm rounded-md transition-colors bg-accent text-accent-fg hover:opacity-90 border border-accent"
-          @click="closeModal"
-        >
-          {{ t('actions.confirm') }}
-        </button>
-      </template>
     </template>
   </Modal>
 

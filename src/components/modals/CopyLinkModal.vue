@@ -2,7 +2,7 @@
 import { useI18n } from '@/i18n/index.js';
 import { computed, markRaw, ref, watch } from 'vue';
 import type { ProfileConfig } from '@misub/core/types.js';
-import { Box, Code2, Copy, Download, Link2, Loader2, Monitor, RefreshCw, Send, Zap } from '@lucide/vue';
+import { Box, Code2, Copy, Download, Link2, Loader2, Monitor, RefreshCw, Send, X, Zap } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
@@ -173,9 +173,19 @@ const handleCreateShortLink = async () => {
 <template>
   <Modal :show="show" :show-cancel="false" :show-confirm="false" size="md" @update:show="close">
     <template #title>
-      <h3 class="text-base font-semibold text-fg">
-        {{ t('copyLink.title') }}
-      </h3>
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="truncate text-base font-semibold text-fg">
+          {{ t('copyLink.title') }}
+        </h3>
+        <button
+          :aria-label="t('common.close')"
+          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-transparent text-fg-muted transition-colors hover:border-line hover:bg-hover hover:text-fg"
+          type="button"
+          @click="close"
+        >
+          <X class="h-4 w-4" />
+        </button>
+      </div>
     </template>
 
     <template #body>

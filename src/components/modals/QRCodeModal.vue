@@ -91,7 +91,7 @@ const downloadQRCode = () => {
 </script>
 
 <template>
-  <Modal :show="show" :show-confirm="false" @update:show="emit('update:show', $event)">
+  <Modal :cancel-text="t('common.close')" :show="show" :show-confirm="false" @update:show="emit('update:show', $event)">
     <template #title>
       <h3 class="truncate text-base font-semibold text-fg">
         {{ title || t('qr.title') }}
