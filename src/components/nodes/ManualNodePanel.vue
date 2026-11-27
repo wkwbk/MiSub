@@ -64,7 +64,6 @@ const emit = defineEmits<{
   changePage: [page: number];
   'update:searchTerm': [value: string];
   toggleSort: [];
-  markDirty: [];
   autoSort: [];
   deduplicate: [];
   import: [];
@@ -177,7 +176,6 @@ const handleToggleSort = () => {
   });
 };
 const handleSortEnd = () => {
-  emit('markDirty');
   if (!props.searchTerm) {
     emit('changePage', 1);
   }

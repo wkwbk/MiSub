@@ -27,12 +27,11 @@ const TagManagementModal = defineAsyncComponent(loadTagManagementModal);
 
 const dataStore = useDataStore();
 const { showToast } = useToastStore();
-const { markDirty } = dataStore;
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const isSortingSubs = useSortingMode(dataStore);
+const isSortingSubs = useSortingMode();
 const showDeleteSubsModal = ref(false);
 const showBatchDeleteModal = ref(false);
 const batchDeleteIds = ref<string[]>([]);
@@ -53,6 +52,7 @@ const {
   subscriptionsCurrentPage,
   subscriptionsPerPage,
   changeSubscriptionsPage,
+  toggleSubscription,
   addSubscription,
   updateSubscription,
   deleteSubscription,
@@ -66,16 +66,20 @@ const {
   isRefreshing,
   refreshError,
   lastRefreshAt,
-} = useSubscriptions(markDirty);
+} = useSubscriptions();
 const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
 const {
   showModal: showSubModal,
   isNew: isNewSubscription,
   editingSubscription,
+  conflictState: subscriptionConflict,
   openAdd: handleAddSubscription,
   openEdit: handleEditSubscription,
+  isSaving: isSavingSub,
   handleSave: handleSaveSubscription,
+  reloadFromConflict: reloadSubscriptionConflict,
+  forceSaveFromConflict: forceSaveSubscriptionConflict,
 } = useSubscriptionForms({ addSubscription, updateSubscription });
 
 const { showModal: showBulkImportModal, handleSubscriptionBulkImport } = useSubscriptionBulkImport({
@@ -92,9 +96,7 @@ const handleDeleteSubscriptionWithCleanup = (subId: string) => {
 };
 
 const handleToggleSubscription = ({ id, enabled }: { id: string; enabled: boolean }) => {
-  const target = subscriptions.value.find((s) => s.id === id);
-  if (!target) return;
-  updateSubscription({ ...target, enabled });
+  void toggleSubscription(id, enabled);
 };
 
 const handleDeleteAllSubscriptionsWithCleanup = () => {
@@ -146,17 +148,16 @@ const handleTagReorder = (newOrder: string[]) => {
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleApplyDetectedName = (subscriptionId: string | undefined, name: string) => {
+const handleApplyDetectedName = async (subscriptionId: string | undefined, name: string) => {
   if (!subscriptionId) return;
   const target = String(name || '').trim();
   if (!target) return;
   const targetSub = subscriptions.value.find((s) => s.id === subscriptionId);
   if (!targetSub) return;
-  updateSubscription({
-    ...targetSub,
-    name: target,
-  });
-  showToast(t('subscriptions.nameApplied', { name: target }), 'success');
+  const res = await dataStore.patchSubscription(subscriptionId, { name: target });
+  if (res.ok) {
+    showToast(t('subscriptions.nameApplied', { name: target }), 'success');
+  }
 };
 
 const handlePreviewSubscription = (subscriptionId: string) => {
@@ -273,7 +274,6 @@ const visibleSubscriptions = computed(() =>
       @update-node-count="handleUpdateNodeCount"
       @refresh-all="batchUpdateAllSubscriptions"
       @toggle-sort="isSortingSubs = !isSortingSubs"
-      @mark-dirty="markDirty"
       @delete-all="showDeleteSubsModal = true"
       @update-search="subscriptionSearchQuery = $event"
       @open-batch-tag-modal="handleOpenBatchTagModal"
@@ -306,8 +306,12 @@ const visibleSubscriptions = computed(() =>
     <SubscriptionEditModal
       v-model:editing-subscription="editingSubscription"
       v-model:show="showSubModal"
+      :conflict="subscriptionConflict"
       :is-new="isNewSubscription"
+      :is-saving="isSavingSub"
       @confirm="handleSaveSubscription"
+      @force-save-conflict="forceSaveSubscriptionConflict"
+      @reload-conflict="reloadSubscriptionConflict"
     />
 
     <Modal v-model:show="showDeleteSubsModal" @confirm="handleDeleteAllSubscriptionsWithCleanup">

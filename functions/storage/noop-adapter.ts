@@ -32,13 +32,13 @@ export class NoopStorageAdapter implements StorageAdapter {
   async getSubscriptionById(_id: string): Promise<MisubItem | null> {
     return null;
   }
-  async getRemoteSubscriptions(): Promise<SubscriptionItem[]> {
+  async getRemoteSubscriptions(_options?: { fresh?: boolean }): Promise<SubscriptionItem[]> {
     return [];
   }
-  async getManualNodes(): Promise<ManualNodeItem[]> {
+  async getManualNodes(_options?: { fresh?: boolean }): Promise<ManualNodeItem[]> {
     return [];
   }
-  async getAllSubscriptions(): Promise<MisubItem[]> {
+  async getAllSubscriptions(_options?: { fresh?: boolean }): Promise<MisubItem[]> {
     return [];
   }
   async getProfileById(_idOrCustomId: string): Promise<ProfileConfig | null> {
@@ -47,7 +47,7 @@ export class NoopStorageAdapter implements StorageAdapter {
   async getPublicProfileByIdentifier(_identifier: string): Promise<ProfileConfig | null> {
     return null;
   }
-  async getAllProfiles(): Promise<ProfileConfig[]> {
+  async getAllProfiles(_options?: { fresh?: boolean }): Promise<ProfileConfig[]> {
     return [];
   }
   async incrementProfileDownloadCount(_idOrCustomId: string): Promise<number | null> {
@@ -98,17 +98,49 @@ export class NoopStorageAdapter implements StorageAdapter {
   async updateSubscriptionById(_id: string, _updater: (item: MisubItem) => MisubItem): Promise<MisubItem | null> {
     return null;
   }
+  async updateSubscriptionRuntimeFields(
+    _id: string,
+    _fields: Record<string, unknown>,
+    _options?: { preferredTable?: 'subscriptions' | 'nodes' },
+  ): Promise<MisubItem | null> {
+    return null;
+  }
   async putSubscription(item: MisubItem, _options?: { skipOtherTableDelete?: boolean }): Promise<MisubItem> {
     return item;
+  }
+  async compareAndSwapSubscription(
+    item: MisubItem,
+    _expectedConfigVersion: number,
+    _options?: { skipOtherTableDelete?: boolean },
+  ): Promise<{ updated: boolean; current: MisubItem | null }> {
+    return { updated: true, current: item };
   }
   async deleteSubscriptionById(_id: string): Promise<boolean> {
     return false;
   }
+  async deleteSubscriptionsByIds(_ids: string[]): Promise<number> {
+    return 0;
+  }
   async putProfile(item: ProfileConfig): Promise<ProfileConfig> {
     return item;
   }
+  async updateProfileRuntimeFields(
+    _idOrCustomId: string,
+    _fields: Record<string, unknown>,
+  ): Promise<ProfileConfig | null> {
+    return null;
+  }
+  async compareAndSwapProfile(
+    item: ProfileConfig,
+    _expectedConfigVersion: number,
+  ): Promise<{ updated: boolean; current: ProfileConfig | null }> {
+    return { updated: true, current: item };
+  }
   async deleteProfileById(_id: string): Promise<boolean> {
     return false;
+  }
+  async deleteProfilesByIds(_ids: string[]): Promise<number> {
+    return 0;
   }
   async putAllSubscriptions(_items: MisubItem[]): Promise<boolean> {
     return true;

@@ -15,10 +15,17 @@ export function createMemoryD1(initial = {}) {
     error_reports: new Map(),
     logs: new Map(),
   };
+  const configVersions = {
+    subscriptions: new Map(),
+    nodes: new Map(),
+    profiles: new Map(),
+  };
   const profileCustomIds = new Map();
   const profileLinkIds = new Map();
   const cacheExpiresAt = new Map();
   let legacyLogsDropped = false;
+
+  const resolveInitialVersion = (item) => Math.max(1, Number(item?.configVersion ?? item?.version) || 1);
 
   const isManualNode = (item) => {
     const url = typeof item?.url === 'string' ? item.url.trim() : '';
@@ -65,8 +72,13 @@ export function createMemoryD1(initial = {}) {
         arr.forEach((item, idx) => {
           if (item) {
             const id = item.id || `sub-${idx + 1}`;
-            const target = isManualNode(item) ? tables.nodes : tables.subscriptions;
-            target.set(id, JSON.stringify({ ...item, id }));
+            const tblName = isManualNode(item) ? 'nodes' : 'subscriptions';
+            const ver = resolveInitialVersion(item);
+            const clean = { ...item, id };
+            delete clean.version;
+            delete clean.configVersion;
+            tables[tblName].set(id, JSON.stringify(clean));
+            configVersions[tblName].set(id, ver);
           }
         });
       }
@@ -76,7 +88,12 @@ export function createMemoryD1(initial = {}) {
         arr.forEach((item, idx) => {
           if (item) {
             const id = item.id || `node-${idx + 1}`;
-            tables.nodes.set(id, JSON.stringify({ ...item, id }));
+            const ver = resolveInitialVersion(item);
+            const clean = { ...item, id };
+            delete clean.version;
+            delete clean.configVersion;
+            tables.nodes.set(id, JSON.stringify(clean));
+            configVersions.nodes.set(id, ver);
           }
         });
       }
@@ -88,7 +105,12 @@ export function createMemoryD1(initial = {}) {
             const id = item.id || `profile-${idx + 1}`;
             const customId = typeof item.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
             const linkId = typeof item.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
-            tables.profiles.set(id, JSON.stringify({ ...item, id }));
+            const ver = resolveInitialVersion(item);
+            const clean = { ...item, id };
+            delete clean.version;
+            delete clean.configVersion;
+            tables.profiles.set(id, JSON.stringify(clean));
+            configVersions.profiles.set(id, ver);
             profileCustomIds.set(id, customId);
             profileLinkIds.set(id, linkId);
           }
@@ -147,16 +169,31 @@ export function createMemoryD1(initial = {}) {
           tables.profiles.set(matchedId, JSON.stringify(parsed));
           return { downloadCount: nextCount };
         }
+        if (/SELECT id,\s*data(?:,\s*config_version)? FROM profiles WHERE id = \? OR custom_id = \?(?: OR link_id = \?)?/i.test(normalized)) {
+          const matchedId = findProfileIdByIdOrCustomId(args[0]);
+          if (!matchedId) return null;
+          return {
+            id: matchedId,
+            data: tables.profiles.get(matchedId),
+            config_version: configVersions.profiles.get(matchedId) ?? 1,
+          };
+        }
         if (/FROM profiles WHERE id = \? OR custom_id = \?(?: OR link_id = \?)?/i.test(normalized)) {
           const matchedId = findProfileIdByIdOrCustomId(args[0]);
           if (!matchedId) return null;
-          return { data: tables.profiles.get(matchedId) };
+          return {
+            data: tables.profiles.get(matchedId),
+            config_version: configVersions.profiles.get(matchedId) ?? 1,
+          };
         }
         const idMatch = normalized.match(/FROM (subscriptions|nodes|profiles|guestbook) WHERE id = \?/i);
         if (idMatch) {
-          const tbl = tables[idMatch[1].toLowerCase()];
+          const tblName = idMatch[1].toLowerCase();
+          const tbl = tables[tblName];
           const data = tbl.get(args[0]);
-          return data === undefined ? null : { data };
+          if (data === undefined) return null;
+          if (tblName === 'guestbook') return { data };
+          return { data, config_version: configVersions[tblName].get(args[0]) ?? 1 };
         }
         const kvMatch = normalized.match(/FROM (settings|cache|logs) WHERE key = \?/i);
         if (kvMatch) {
@@ -174,7 +211,7 @@ export function createMemoryD1(initial = {}) {
         if (/FROM logs\b/i.test(normalized) && legacyLogsDropped) {
           throw new Error('D1_ERROR: no such table: logs');
         }
-        if (/SELECT data FROM profiles WHERE id = \? OR custom_id = \? OR link_id = \?/i.test(normalized)) {
+        if (/SELECT data(?:,\s*config_version)? FROM profiles WHERE id = \? OR custom_id = \? OR link_id = \?/i.test(normalized)) {
           const targetLower = String(args[0] ?? '')
             .trim()
             .toLowerCase();
@@ -183,7 +220,7 @@ export function createMemoryD1(initial = {}) {
             const cid = String(profileCustomIds.get(id) || '').toLowerCase();
             const lid = String(profileLinkIds.get(id) || '').toLowerCase();
             if (targetLower && (id.toLowerCase() === targetLower || cid === targetLower || lid === targetLower)) {
-              rows.push({ data });
+              rows.push({ data, config_version: configVersions.profiles.get(id) ?? 1 });
             }
           }
           return { results: rows };
@@ -236,11 +273,18 @@ export function createMemoryD1(initial = {}) {
               })),
           };
         }
-        const idInMatch = normalized.match(/SELECT data FROM (subscriptions|nodes|profiles|guestbook) WHERE id IN/i);
+        const idInMatch = normalized.match(/SELECT data(?:,\s*config_version)? FROM (subscriptions|nodes|profiles|guestbook) WHERE id IN/i);
         if (idInMatch) {
-          const tbl = tables[idInMatch[1].toLowerCase()];
+          const tblName = idInMatch[1].toLowerCase();
+          const tbl = tables[tblName];
           return {
-            results: args.filter((id) => tbl.has(id)).map((id) => ({ data: tbl.get(id) })),
+            results: args
+              .filter((id) => tbl.has(id))
+              .map((id) =>
+                tblName === 'guestbook'
+                  ? { data: tbl.get(id) }
+                  : { data: tbl.get(id), config_version: configVersions[tblName].get(id) ?? 1 },
+              ),
           };
         }
         const idDataBothAll = normalized.match(/SELECT id,\s*data FROM (subscriptions|nodes|profiles|guestbook)/i);
@@ -250,11 +294,16 @@ export function createMemoryD1(initial = {}) {
             results: Array.from(tbl.entries()).map(([id, data]) => ({ id, data })),
           };
         }
-        const idDataAll = normalized.match(/SELECT data FROM (subscriptions|nodes|profiles|guestbook)/i);
+        const idDataAll = normalized.match(/SELECT data(?:,\s*config_version)? FROM (subscriptions|nodes|profiles|guestbook)/i);
         if (idDataAll) {
-          const tbl = tables[idDataAll[1].toLowerCase()];
+          const tblName = idDataAll[1].toLowerCase();
+          const tbl = tables[tblName];
           return {
-            results: Array.from(tbl.values()).map((data) => ({ data })),
+            results: Array.from(tbl.entries()).map(([id, data]) =>
+              tblName === 'guestbook'
+                ? { data }
+                : { data, config_version: configVersions[tblName].get(id) ?? 1 },
+            ),
           };
         }
         const idOnlyAll = normalized.match(/SELECT id FROM (subscriptions|nodes|profiles|guestbook)/i);
@@ -299,7 +348,91 @@ export function createMemoryD1(initial = {}) {
           legacyLogsDropped = true;
           return { success: true, meta: { changes: 0 } };
         }
-        if (/UPDATE profiles SET custom_id =/i.test(normalized)) {
+        if (/^UPDATE (subscriptions|nodes) SET data = \?, config_version = COALESCE\(config_version, 1\) \+ 1, updated_at = CURRENT_TIMESTAMP WHERE id = \? AND COALESCE\(config_version, 1\) = \?/i.test(normalized)) {
+          const match = normalized.match(/^UPDATE (subscriptions|nodes) SET/i);
+          const tblName = match[1].toLowerCase();
+          const tbl = tables[tblName];
+          const [nextData, targetId, expectedVer] = args;
+          if (!tbl.has(targetId)) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          const currentVer = configVersions[tblName].get(targetId) ?? 1;
+          if (currentVer !== Math.max(1, Number(expectedVer) || 1)) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          const nextVer = currentVer + 1;
+          tbl.set(targetId, nextData);
+          configVersions[tblName].set(targetId, nextVer);
+          return { success: true, meta: { changes: 1 } };
+        }
+        if (/^UPDATE (subscriptions|nodes) SET data = \?, updated_at = CURRENT_TIMESTAMP WHERE id = \?$/i.test(normalized)) {
+          const match = normalized.match(/^UPDATE (subscriptions|nodes) SET/i);
+          const tblName = match[1].toLowerCase();
+          const tbl = tables[tblName];
+          const [nextData, targetId] = args;
+          if (!tbl.has(targetId)) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          tbl.set(targetId, nextData);
+          return { success: true, meta: { changes: 1 } };
+        }
+        const jsonSetMatch = normalized.match(
+          /^UPDATE (subscriptions|nodes|profiles) SET data = json_set\(data,\s*(.+?)\),\s*updated_at = CURRENT_TIMESTAMP WHERE id = \?$/i,
+        );
+        if (jsonSetMatch) {
+          const tblName = jsonSetMatch[1].toLowerCase();
+          const clausesStr = jsonSetMatch[2];
+          const pairRegex = /'\$\.([A-Za-z0-9_]+)'\s*,\s*(json\(\?\)|\?)/gi;
+          const pairs = [];
+          let m;
+          while ((m = pairRegex.exec(clausesStr)) !== null) {
+            pairs.push({ key: m[1], isJson: m[2].toLowerCase() === 'json(?)' });
+          }
+          const targetId = args[pairs.length];
+          const tbl = tables[tblName];
+          const existingRaw = tbl.get(targetId);
+          if (!existingRaw) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          const parsed = JSON.parse(existingRaw);
+          pairs.forEach((pair, idx) => {
+            const rawArg = args[idx];
+            parsed[pair.key] = pair.isJson && typeof rawArg === 'string' ? JSON.parse(rawArg) : rawArg;
+          });
+          tbl.set(targetId, JSON.stringify(parsed));
+          return { success: true, meta: { changes: 1 } };
+        }
+        if (/^UPDATE profiles SET custom_id = \?, link_id = \?, data = \?, config_version = COALESCE\(config_version, 1\) \+ 1, updated_at = CURRENT_TIMESTAMP WHERE id = \? AND COALESCE\(config_version, 1\) = \?/i.test(normalized)) {
+          const [customId, linkId, nextData, targetId, expectedVer] = args;
+          if (!tables.profiles.has(targetId)) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          const currentVer = configVersions.profiles.get(targetId) ?? 1;
+          if (currentVer !== Math.max(1, Number(expectedVer) || 1)) {
+            return { success: true, meta: { changes: 0 } };
+          }
+          const nextVer = currentVer + 1;
+          tables.profiles.set(targetId, nextData);
+          configVersions.profiles.set(targetId, nextVer);
+          profileCustomIds.set(targetId, customId || null);
+          profileLinkIds.set(targetId, linkId || null);
+          return { success: true, meta: { changes: 1 } };
+        }
+        const verBackfillMatch = normalized.match(/^UPDATE (subscriptions|nodes|profiles) SET config_version = MAX\(1,/i);
+        if (verBackfillMatch) {
+          const tblName = verBackfillMatch[1].toLowerCase();
+          for (const [id, data] of tables[tblName].entries()) {
+            if (!configVersions[tblName].has(id)) {
+              try {
+                configVersions[tblName].set(id, resolveInitialVersion(JSON.parse(data)));
+              } catch {
+                configVersions[tblName].set(id, 1);
+              }
+            }
+          }
+          return { success: true, meta: { changes: 0 } };
+        }
+        if (/UPDATE profiles SET custom_id = json_extract/i.test(normalized)) {
           for (const [id, data] of tables.profiles.entries()) {
             if (!profileCustomIds.get(id)) {
               try {
@@ -312,7 +445,7 @@ export function createMemoryD1(initial = {}) {
           }
           return { success: true, meta: { changes: 0 } };
         }
-        if (/UPDATE profiles SET link_id =/i.test(normalized)) {
+        if (/UPDATE profiles SET link_id = json_extract/i.test(normalized)) {
           for (const [id, data] of tables.profiles.entries()) {
             if (!profileLinkIds.get(id)) {
               try {
@@ -325,14 +458,23 @@ export function createMemoryD1(initial = {}) {
           }
           return { success: true, meta: { changes: 0 } };
         }
+        if (/INSERT OR REPLACE INTO profiles \(id, custom_id, link_id, data, config_version/i.test(normalized)) {
+          tables.profiles.set(args[0], args[3]);
+          configVersions.profiles.set(args[0], Math.max(1, Number(args[4]) || 1));
+          profileCustomIds.set(args[0], args[1] || null);
+          profileLinkIds.set(args[0], args[2] || null);
+          return { success: true, meta: { changes: 1 } };
+        }
         if (/INSERT OR REPLACE INTO profiles \(id, custom_id, link_id, data/i.test(normalized)) {
           tables.profiles.set(args[0], args[3]);
+          configVersions.profiles.set(args[0], resolveInitialVersion(parseIfJson(args[3])));
           profileCustomIds.set(args[0], args[1] || null);
           profileLinkIds.set(args[0], args[2] || null);
           return { success: true, meta: { changes: 1 } };
         }
         if (/INSERT OR REPLACE INTO profiles \(id, custom_id, data/i.test(normalized)) {
           tables.profiles.set(args[0], args[2]);
+          configVersions.profiles.set(args[0], resolveInitialVersion(parseIfJson(args[2])));
           profileCustomIds.set(args[0], args[1] || null);
           return { success: true, meta: { changes: 1 } };
         }
@@ -445,15 +587,32 @@ export function createMemoryD1(initial = {}) {
           }
           return { success: true, meta: { changes } };
         }
+        const idInsertVer = normalized.match(/INSERT OR REPLACE INTO (subscriptions|nodes) \(id, data, config_version/i);
+        if (idInsertVer) {
+          const tblName = idInsertVer[1].toLowerCase();
+          tables[tblName].set(args[0], args[1]);
+          configVersions[tblName].set(args[0], Math.max(1, Number(args[2]) || 1));
+          return { success: true, meta: { changes: 1 } };
+        }
         const idInsertIgnore = normalized.match(/INSERT OR IGNORE INTO (subscriptions|nodes|profiles|guestbook)/i);
         if (idInsertIgnore) {
-          const tbl = tables[idInsertIgnore[1].toLowerCase()];
-          if (!tbl.has(args[0])) tbl.set(args[0], args[1]);
+          const tblName = idInsertIgnore[1].toLowerCase();
+          const tbl = tables[tblName];
+          if (!tbl.has(args[0])) {
+            tbl.set(args[0], args[1]);
+            if (configVersions[tblName]) {
+              configVersions[tblName].set(args[0], resolveInitialVersion(parseIfJson(args[1])));
+            }
+          }
           return { success: true, meta: { changes: 1 } };
         }
         const idInsert = normalized.match(/INSERT OR REPLACE INTO (subscriptions|nodes|profiles|guestbook)/i);
         if (idInsert) {
-          tables[idInsert[1].toLowerCase()].set(args[0], args[1]);
+          const tblName = idInsert[1].toLowerCase();
+          tables[tblName].set(args[0], args[1]);
+          if (configVersions[tblName]) {
+            configVersions[tblName].set(args[0], resolveInitialVersion(parseIfJson(args[1])));
+          }
           return { success: true, meta: { changes: 1 } };
         }
         const kvInsertIgnore = normalized.match(/INSERT OR IGNORE INTO (settings|cache|logs)/i);
@@ -478,6 +637,7 @@ export function createMemoryD1(initial = {}) {
         if (idDelete) {
           const tblName = idDelete[1].toLowerCase();
           tables[tblName].delete(args[0]);
+          if (configVersions[tblName]) configVersions[tblName].delete(args[0]);
           if (tblName === 'profiles') {
             profileCustomIds.delete(args[0]);
             profileLinkIds.delete(args[0]);
@@ -490,6 +650,7 @@ export function createMemoryD1(initial = {}) {
         if (clearMatch) {
           const tblName = clearMatch[1].toLowerCase();
           tables[tblName].clear();
+          if (configVersions[tblName]) configVersions[tblName].clear();
           if (tblName === 'profiles') {
             profileCustomIds.clear();
             profileLinkIds.clear();
@@ -504,7 +665,9 @@ export function createMemoryD1(initial = {}) {
 
   return {
     tables,
+    configVersions,
     profileCustomIds,
+    profileLinkIds,
     cacheExpiresAt,
     async batch(statements = []) {
       const results = [];

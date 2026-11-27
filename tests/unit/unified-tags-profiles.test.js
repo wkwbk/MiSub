@@ -14,12 +14,57 @@ import { createI18n } from '@/i18n/index.js';
 import { UNTAGGED_KEY } from '@/utils/tags.js';
 import { generateCombinedNodeList } from '../../functions/services/subscription-service.js';
 
+vi.mock('@/lib/http.js', async () => {
+  const actual = await vi.importActual('@/lib/http.js');
+  return {
+    ...actual,
+    api: {
+      get: vi.fn(),
+      post: vi.fn(async (url, body) => {
+        const dataStore = useDataStore();
+        if (url === '/api/profiles/batch-tags') {
+          return {
+            success: true,
+            data: (body.updates || []).map((u) => {
+              const existing = dataStore.profiles.find((p) => p.id === u.id) || { id: u.id, name: u.id };
+              return { ...existing, tags: u.tags, version: (existing.version || 0) + 1 };
+            }),
+          };
+        }
+        if (url === '/api/subscriptions/batch-tags') {
+          return {
+            success: true,
+            data: (body.updates || []).map((u) => {
+              const existing = dataStore.subscriptions.find((s) => s.id === u.id) || {
+                id: u.id,
+                name: u.id,
+                url: `https://${u.id}.test/sub`,
+                enabled: true,
+              };
+              return { ...existing, tags: u.tags, version: (existing.version || 0) + 1 };
+            }),
+          };
+        }
+        if (url === '/api/subscriptions/batch-delete' || url === '/api/profiles/batch-delete') {
+          return {
+            success: true,
+            data: { deletedIds: body.ids || [], updatedProfiles: [] },
+          };
+        }
+        return { success: true, data: body };
+      }),
+      patch: vi.fn(),
+      del: vi.fn(),
+    },
+  };
+});
+
 describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
   });
 
-  it('useProfiles 支持按多标签交集筛选、无标签筛选、关键词搜标签，以及标签重命名/删除/排序', () => {
+  it('useProfiles 支持按多标签交集筛选、无标签筛选、关键词搜标签，以及标签重命名/删除/排序', async () => {
     const dataStore = useDataStore();
     dataStore.profiles = [
       { id: 'p1', name: '家庭主力', customId: 'home', tags: ['Clash', '家人', '流媒体'] },
@@ -36,7 +81,7 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
       renameProfileTag,
       deleteProfileTag,
       reorderProfileTags,
-    } = useProfiles(vi.fn());
+    } = useProfiles();
 
     expect(profileTags.value).toEqual(['Clash', '家人', '流媒体', '路由器']);
 
@@ -60,10 +105,10 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
     reorderProfileTags(['路由器', 'Clash', '家人', '流媒体']);
     expect(profileTags.value[0]).toBe('路由器');
 
-    renameProfileTag('Clash', 'Mihomo');
+    await renameProfileTag('Clash', 'Mihomo');
     expect(dataStore.profiles[0].tags).toEqual(['Mihomo', '家人', '流媒体']);
 
-    deleteProfileTag('家人');
+    await deleteProfileTag('家人');
     expect(dataStore.profiles[0].tags).toEqual(['Mihomo', '流媒体']);
   });
 
@@ -181,14 +226,14 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
       },
     ];
 
-    const { batchUpdateSubscriptionTags, batchDeleteSubscriptions } = useSubscriptions(vi.fn());
-    const { batchUpdateProfileTags, batchDeleteProfiles } = useProfiles(vi.fn());
+    const { batchUpdateSubscriptionTags, batchDeleteSubscriptions } = useSubscriptions();
+    const { batchUpdateProfileTags, batchDeleteProfiles } = useProfiles();
 
-    batchUpdateSubscriptionTags(['s1', 's2'], { mode: 'append', tags: ['流媒体'] });
+    await batchUpdateSubscriptionTags(['s1', 's2'], { mode: 'append', tags: ['流媒体'] });
     expect(dataStore.subscriptions[0].tags).toEqual(['主力', '流媒体']);
     expect(dataStore.subscriptions[1].tags).toEqual(['流媒体']);
 
-    batchUpdateProfileTags(['p1', 'p2'], { mode: 'append', tags: ['家人'] });
+    await batchUpdateProfileTags(['p1', 'p2'], { mode: 'append', tags: ['家人'] });
     expect(dataStore.profiles[0].tags).toEqual(['Clash', '家人']);
     expect(dataStore.profiles[1].tags).toEqual(['家人']);
 
@@ -256,11 +301,11 @@ describe('分享管理（Profiles）标签功能与公开卡片展示', () => {
     expect(profilePanelWrapper.text()).toContain('全选本页');
 
     // 批量删除
-    batchDeleteSubscriptions(['s1']);
+    await batchDeleteSubscriptions(['s1']);
     expect(dataStore.subscriptions.map((s) => s.id)).toEqual(['s2']);
     expect(dataStore.profiles[0].subscriptions).toEqual(['s2']);
 
-    batchDeleteProfiles(['p2']);
+    await batchDeleteProfiles(['p2']);
     expect(dataStore.profiles.map((p) => p.id)).toEqual(['p1']);
   });
 });

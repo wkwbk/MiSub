@@ -9,8 +9,16 @@ import { applyItemTags, collectTags } from '@/utils/tags.js';
 import { t } from '@/i18n/index.js';
 
 export interface UseSubscriptionBulkImportOptions {
-  addSubscriptionsFromBulk?: (subs: StoreMisubItem[]) => void | Promise<void>;
+  addSubscriptionsFromBulk?: (subs: StoreMisubItem[]) => unknown | Promise<unknown>;
   updateSubscription?: (sub: StoreMisubItem) => void;
+}
+
+function isBatchOutcomeOk(result: unknown): boolean {
+  if (result === false) return false;
+  if (result && typeof result === 'object' && 'ok' in result) {
+    return Boolean((result as { ok?: boolean }).ok);
+  }
+  return true;
 }
 
 /**
@@ -37,7 +45,7 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk }: UseSubsc
   const dataStore = useDataStore();
   const showModal = ref(false);
 
-  const handleSubscriptionBulkImport = (importText: string, tagsInput: string | string[] = []): void => {
+  const handleSubscriptionBulkImport = async (importText: string, tagsInput: string | string[] = []): Promise<void> => {
     if (!importText || !String(importText).trim()) return;
 
     const existingUrls = new Set((dataStore.subscriptions || []).map((s) => s.url).filter(Boolean));
@@ -81,17 +89,22 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk }: UseSubsc
       );
     }
 
+    let hasFailure = false;
     if (validSubs.length > 0) {
-      addSubscriptionsFromBulk?.(validSubs);
-      const parts = [t('bulkImport.importedSubscriptions', { count: validSubs.length })];
-      if (duplicateCount > 0) {
-        parts.push(t('bulkImport.skippedDuplicates', { count: duplicateCount }));
+      const outcome = await addSubscriptionsFromBulk?.(validSubs);
+      if (!isBatchOutcomeOk(outcome)) {
+        hasFailure = true;
+      } else {
+        const parts = [t('bulkImport.importedSubscriptions', { count: validSubs.length })];
+        if (duplicateCount > 0) {
+          parts.push(t('bulkImport.skippedDuplicates', { count: duplicateCount }));
+        }
+        if (invalidCount > 0) {
+          parts.push(t('subscriptionBulkImport.ignoredInvalid', { count: invalidCount }));
+        }
+        const [main, ...details] = parts;
+        showToast(details.length > 0 ? `${main} (${details.join('，')})` : main, 'success');
       }
-      if (invalidCount > 0) {
-        parts.push(t('subscriptionBulkImport.ignoredInvalid', { count: invalidCount }));
-      }
-      const [main, ...details] = parts;
-      showToast(details.length > 0 ? `${main} (${details.join('，')})` : main, 'success');
     } else if (duplicateCount > 0) {
       showToast(t('subscriptionBulkImport.allDuplicates', { count: duplicateCount }), 'info');
     } else if (invalidCount > 0) {
@@ -105,7 +118,9 @@ export function useSubscriptionBulkImport({ addSubscriptionsFromBulk }: UseSubsc
       showToast(t('subscriptionBulkImport.noValidSubscriptions'), 'warning');
     }
 
-    showModal.value = false;
+    if (!hasFailure) {
+      showModal.value = false;
+    }
   };
 
   return {

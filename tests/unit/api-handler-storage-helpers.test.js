@@ -83,76 +83,22 @@ describe('api-handler storage helper usage', () => {
     infoSpy?.mockRestore();
   });
 
-  it('handleDataRequest loads subscriptions and profiles through getAll helper APIs', async () => {
+  it('handleDataRequest loads fresh subscriptions, profiles, and settings without legacy revision hashes', async () => {
     const { handleDataRequest } = await import('../../functions/modules/api-handler.js');
 
     getAllSubscriptions.mockResolvedValue([{ id: 'sub-1', name: 'Sub One', url: 'https://a.example.com' }]);
-    getAllProfiles.mockResolvedValue([{ id: 'profile-1', name: 'Profile One', subscriptions: [], manualNodes: [] }]);
+    getAllProfiles.mockResolvedValue([
+      { id: 'profile-1', name: 'Profile One', linkId: 'p_existing123456', subscriptions: [], manualNodes: [] },
+    ]);
 
     const response = await handleDataRequest({ MISUB_DB: {} });
     const payload = await response.json();
 
-    expect(getAllSubscriptions).toHaveBeenCalled();
-    expect(getAllProfiles).toHaveBeenCalled();
+    expect(getAllSubscriptions).toHaveBeenCalledWith({ fresh: true });
+    expect(getAllProfiles).toHaveBeenCalledWith({ fresh: true });
+    expect(get).toHaveBeenCalledWith('main', 'json', { fresh: true });
     expect(payload.misubs).toHaveLength(1);
     expect(payload.profiles).toHaveLength(1);
-  });
-
-  it('handleMisubsSave preserves protective caches only for subscriptions with node cache enabled', async () => {
-    const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
-
-    get.mockResolvedValue({});
-
-    const request = {
-      async json() {
-        return {
-          misubs: [
-            {
-              id: 'sub-enabled',
-              name: 'Enabled',
-              url: 'https://a.example.com',
-              enableNodeCache: true,
-            },
-            {
-              id: 'sub-disabled',
-              name: 'Disabled',
-              url: 'https://b.example.com',
-              enableNodeCache: false,
-            },
-          ],
-          profiles: [],
-        };
-      },
-    };
-
-    const response = await handleMisubsSave(request, { MISUB_DB: {} });
-
-    expect(response.status).toBe(200);
-    expect(clearAllNodeCaches).toHaveBeenCalledWith(expect.any(Object), {
-      preserveKeys: ['node_cache_subscription_sub-enabled'],
-    });
-    expect(infoSpy).toHaveBeenCalledWith('[API] Cleared 0 node caches after subscription update, preserved 0');
-  });
-
-  it('handleMisubsSave delegates full save directly to syncAllSubscriptions and syncAllProfiles', async () => {
-    const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
-
-    get.mockResolvedValue({});
-
-    const request = {
-      async json() {
-        return {
-          misubs: [{ id: 'sub-new', name: 'New', url: 'https://new.example.com' }],
-          profiles: [{ id: 'profile-new', name: 'New Profile', subscriptions: [], manualNodes: [] }],
-        };
-      },
-    };
-
-    const response = await handleMisubsSave(request, { MISUB_DB: {} });
-
-    expect(response.status).toBe(200);
-    expect(syncAllSubscriptions).toHaveBeenCalledWith([expect.objectContaining({ id: 'sub-new', sortIndex: 0 })]);
-    expect(syncAllProfiles).toHaveBeenCalledWith([expect.objectContaining({ id: 'profile-new', sortIndex: 0 })]);
-    expect(put).not.toHaveBeenCalled();
+    expect(payload).not.toHaveProperty('dataRevision');
   });
 });

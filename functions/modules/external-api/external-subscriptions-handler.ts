@@ -87,6 +87,7 @@ async function removeSubscriptionIdFromProfiles(storageAdapter: StorageAdapter, 
     const updated = {
       ...profile,
       subscriptions: subscriptions.filter((item) => item !== id),
+      configVersion: Math.max(1, Number(profile.configVersion) || 1) + 1,
       updatedAt: nowIso(),
     };
     await storageAdapter.putProfile(updated);
@@ -382,6 +383,7 @@ export async function handleExternalSubscriptionsRequest(
       proxy: String(payload.proxy || '').trim(),
       fetchProxy: String(payload.proxy || '').trim(),
       sortIndex: Number.isFinite(Number(payload.sortIndex)) ? Number(payload.sortIndex) : nextSortIndex(all),
+      configVersion: 1,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -413,6 +415,7 @@ export async function handleExternalSubscriptionsRequest(
           }
         : {}),
       ...(payload.sortIndex !== undefined ? { sortIndex: Number(payload.sortIndex) || 0 } : {}),
+      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
       updatedAt: nowIso(),
     };
     if (!String(updated.name || '').trim())

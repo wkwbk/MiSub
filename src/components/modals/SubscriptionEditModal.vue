@@ -7,6 +7,8 @@ import { Link2 } from '@lucide/vue';
 import { useToastStore } from '@/stores/useToastStore.js';
 import { useI18n } from '@/i18n/index.js';
 import Modal from '@/components/ui/Modal.vue';
+import RecordConflictBanner from '@/components/ui/RecordConflictBanner.vue';
+import type { RecordConflictBannerModel } from '@/stores/useDataStore.js';
 import EditForm from '@/components/modals/SubscriptionEditModal/EditForm.vue';
 import RuleSection from '@/components/modals/SubscriptionEditModal/RuleSection.vue';
 import AdvancedOptions from '@/components/modals/SubscriptionEditModal/AdvancedOptions.vue';
@@ -27,12 +29,16 @@ const props = withDefaults(
   defineProps<{
     show?: boolean;
     isNew?: boolean;
+    isSaving?: boolean;
     editingSubscription?: EditableSubscriptionModel | null;
+    conflict?: RecordConflictBannerModel | null;
   }>(),
   {
     show: false,
     isNew: false,
+    isSaving: false,
     editingSubscription: null,
+    conflict: null,
   },
 );
 
@@ -40,6 +46,8 @@ const emit = defineEmits<{
   'update:show': [value: boolean];
   'update:editingSubscription': [value: EditableSubscriptionModel];
   confirm: [];
+  'reload-conflict': [];
+  'force-save-conflict': [];
 }>();
 
 const editingSubscriptionModel = computed<EditableSubscriptionModel | null>({
@@ -425,8 +433,9 @@ const switchToVisual = () => {
 <template>
   <Modal
     v-if="editingSubscription"
+    :close-on-confirm="false"
     :confirm-button-title="t('subscriptions.fixRulesFirst')"
-    :confirm-disabled="isAdvancedMode && excludeRuleState.errors.length > 0"
+    :confirm-disabled="Boolean(isSaving) || (isAdvancedMode && excludeRuleState.errors.length > 0)"
     :show="show"
     size="2xl"
     @confirm="handleConfirm"
@@ -447,6 +456,12 @@ const switchToVisual = () => {
     </template>
     <template #body>
       <div v-if="editingSubscriptionModel" class="space-y-4">
+        <RecordConflictBanner
+          :conflict="conflict"
+          :is-saving="isSaving"
+          @force-save="emit('force-save-conflict')"
+          @reload="emit('reload-conflict')"
+        />
         <EditForm v-model:editing-subscription="editingSubscriptionModel" />
 
         <RuleSection

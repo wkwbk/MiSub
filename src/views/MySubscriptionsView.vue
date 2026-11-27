@@ -30,9 +30,8 @@ const { t } = useI18n();
 const route = useRoute();
 
 const dataStore = useDataStore();
-const { markDirty } = dataStore;
 const { showToast } = useToastStore();
-const isProfileSorting = useSortingMode(dataStore);
+const isProfileSorting = useSortingMode();
 
 const profilesSectionRef = ref<HTMLDivElement | null>(null);
 const showTagManagementModal = ref(false);
@@ -77,12 +76,16 @@ const {
   reorderProfileTags,
   editingProfile,
   isNewProfile,
+  isSavingProfile,
+  profileConflict,
   showProfileModal,
   showDeleteProfilesModal,
   handleProfileToggle,
   handleAddProfile,
   handleEditProfile,
   handleSaveProfile,
+  reloadProfileFromConflict,
+  handleForceSaveProfile,
   handleDeleteProfile,
   handleDeleteAllProfiles,
   batchUpdateProfileTags,
@@ -95,12 +98,12 @@ const {
   profilesTotalPages,
   paginatedProfiles,
   changeProfilesPage,
-} = useProfiles(markDirty);
+} = useProfiles();
 const profiles = rawProfiles as unknown as Ref<ProfileConfig[]>;
 
 const { subscriptions: rawSubscriptions } = storeToRefs(dataStore);
 const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
-const { manualNodes: rawManualNodes } = useManualNodes(markDirty);
+const { manualNodes: rawManualNodes } = useManualNodes();
 const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 const toggleProfileSorting = () => {
@@ -277,8 +280,12 @@ const handleQRCode = (profileId: string) => {
       v-model:show="showProfileModal"
       :all-manual-nodes="manualNodes"
       :all-subscriptions="subscriptions"
+      :conflict="profileConflict"
       :is-new="isNewProfile"
+      :is-saving="isSavingProfile"
       :profile="editingProfile"
+      @force-save-conflict="handleForceSaveProfile"
+      @reload-conflict="reloadProfileFromConflict"
       @save="handleSaveProfile"
     />
 

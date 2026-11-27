@@ -84,12 +84,12 @@ export interface StorageAdapter {
   delete(key: string): Promise<boolean>;
   list(prefix?: string): Promise<Array<{ name: string }>>;
   getSubscriptionById(id: string): Promise<MisubItem | null>;
-  getRemoteSubscriptions(): Promise<SubscriptionItem[]>;
-  getManualNodes(): Promise<ManualNodeItem[]>;
-  getAllSubscriptions(): Promise<MisubItem[]>;
+  getRemoteSubscriptions(options?: { fresh?: boolean }): Promise<SubscriptionItem[]>;
+  getManualNodes(options?: { fresh?: boolean }): Promise<ManualNodeItem[]>;
+  getAllSubscriptions(options?: { fresh?: boolean }): Promise<MisubItem[]>;
   getProfileById(idOrCustomId: string): Promise<ProfileConfig | null>;
   getPublicProfileByIdentifier(identifier: string): Promise<ProfileConfig | null>;
-  getAllProfiles(): Promise<ProfileConfig[]>;
+  getAllProfiles(options?: { fresh?: boolean }): Promise<ProfileConfig[]>;
   incrementProfileDownloadCount(idOrCustomId: string): Promise<number | null>;
   resetProfileDownloadCounts(options?: { profileId?: string }): Promise<boolean>;
   getAllGuestbookMessages(): Promise<GuestbookMessage[]>;
@@ -108,10 +108,27 @@ export interface StorageAdapter {
   getProfileSources(subscriptionIds?: string[], manualNodeIds?: string[]): Promise<MisubItem[]>;
   getSubscriptionsByIds(ids?: string[]): Promise<MisubItem[]>;
   updateSubscriptionById(id: string, updater: (item: MisubItem) => MisubItem): Promise<MisubItem | null>;
+  updateSubscriptionRuntimeFields?(
+    id: string,
+    fields: Record<string, unknown>,
+    options?: { preferredTable?: 'subscriptions' | 'nodes' },
+  ): Promise<MisubItem | null>;
   putSubscription(item: MisubItem, options?: { skipOtherTableDelete?: boolean }): Promise<MisubItem>;
+  compareAndSwapSubscription?(
+    item: MisubItem,
+    expectedConfigVersion: number,
+    options?: { skipOtherTableDelete?: boolean },
+  ): Promise<{ updated: boolean; current: MisubItem | null }>;
   deleteSubscriptionById(id: string): Promise<boolean>;
+  deleteSubscriptionsByIds?(ids: string[]): Promise<number>;
   putProfile(item: ProfileConfig): Promise<ProfileConfig>;
+  updateProfileRuntimeFields?(idOrCustomId: string, fields: Record<string, unknown>): Promise<ProfileConfig | null>;
+  compareAndSwapProfile?(
+    item: ProfileConfig,
+    expectedConfigVersion: number,
+  ): Promise<{ updated: boolean; current: ProfileConfig | null }>;
   deleteProfileById(id: string): Promise<boolean>;
+  deleteProfilesByIds?(ids: string[]): Promise<number>;
   putAllSubscriptions(items: MisubItem[]): Promise<boolean>;
   syncAllSubscriptions(items: MisubItem[]): Promise<boolean | { upserted: number; deleted: number }>;
   putAllProfiles(items: ProfileConfig[]): Promise<boolean>;

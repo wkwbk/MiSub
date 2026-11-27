@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue';
+import { ref, type Ref } from 'vue';
 
 export interface DragEndEvent {
   oldIndex?: number;
@@ -6,21 +6,8 @@ export interface DragEndEvent {
   [key: string]: unknown;
 }
 
-export function useSortingMode(dataStore?: { isDirty: boolean } | null): Ref<boolean> {
-  const isSorting = ref(false);
-
-  if (dataStore) {
-    watch(
-      () => dataStore.isDirty,
-      (newVal, oldVal) => {
-        if (oldVal && !newVal && isSorting.value) {
-          isSorting.value = false;
-        }
-      },
-    );
-  }
-
-  return isSorting;
+export function useSortingMode(_unused?: unknown): Ref<boolean> {
+  return ref(false);
 }
 
 export function hasDragOrderChanged(evt: DragEndEvent | null | undefined): boolean {

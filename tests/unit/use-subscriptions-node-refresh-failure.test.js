@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   subscriptionsRef: { value: [] },
-  saveData: vi.fn(),
+  applySubscriptionRuntimeUpdate: vi.fn((id, patch) => {
+    const target = mocks.subscriptionsRef.value.find((s) => s.id === id);
+    if (target) Object.assign(target, patch);
+  }),
   showToast: vi.fn(),
   fetchNodeCount: vi.fn(),
   batchUpdateNodes: vi.fn(),
@@ -17,7 +20,7 @@ vi.mock('pinia', () => ({
 
 vi.mock('@/stores/useDataStore', () => ({
   useDataStore: () => ({
-    saveData: mocks.saveData,
+    applySubscriptionRuntimeUpdate: mocks.applySubscriptionRuntimeUpdate,
   }),
 }));
 
@@ -40,7 +43,7 @@ describe('useSubscriptions manual node refresh failures', () => {
   beforeEach(() => {
     vi.resetModules();
     mocks.subscriptionsRef.value = [];
-    mocks.saveData.mockReset();
+    mocks.applySubscriptionRuntimeUpdate.mockClear();
     mocks.showToast.mockReset();
     mocks.fetchNodeCount.mockReset();
     mocks.batchUpdateNodes.mockReset();
@@ -68,8 +71,7 @@ describe('useSubscriptions manual node refresh failures', () => {
     });
 
     const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
-    const markDirty = vi.fn();
-    const { handleUpdateNodeCount } = useSubscriptions(markDirty);
+    const { handleUpdateNodeCount } = useSubscriptions();
 
     try {
       await handleUpdateNodeCount('sub-1');
@@ -78,8 +80,18 @@ describe('useSubscriptions manual node refresh failures', () => {
       expect(mocks.subscriptionsRef.value[0].userInfo).toBeNull();
       expect(mocks.subscriptionsRef.value[0].lastError).toBe('HTTP 403: Forbidden');
       expect(errorSpy).toHaveBeenCalledWith('[handleUpdateNodeCount] Failed for Airport:', 'HTTP 403: Forbidden');
-      expect(markDirty).toHaveBeenCalledTimes(1);
-      expect(mocks.saveData).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchNodeCount).toHaveBeenCalledWith(
+        'https://airport.example/sub',
+        undefined,
+        false,
+        undefined,
+        { subscriptionId: 'sub-1', persist: true },
+      );
+      expect(mocks.applySubscriptionRuntimeUpdate).toHaveBeenCalledWith('sub-1', {
+        lastError: 'HTTP 403: Forbidden',
+        nodeCount: 0,
+        userInfo: null,
+      });
     } finally {
       errorSpy.mockRestore();
     }
@@ -107,8 +119,7 @@ describe('useSubscriptions manual node refresh failures', () => {
     });
 
     const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
-    const markDirty = vi.fn();
-    const { handleUpdateNodeCount } = useSubscriptions(markDirty);
+    const { handleUpdateNodeCount } = useSubscriptions();
 
     try {
       await handleUpdateNodeCount('sub-1');
@@ -117,8 +128,9 @@ describe('useSubscriptions manual node refresh failures', () => {
       expect(mocks.subscriptionsRef.value[0].userInfo).toBe(oldUserInfo);
       expect(mocks.subscriptionsRef.value[0].lastError).toBe('HTTP 403: Forbidden');
       expect(errorSpy).toHaveBeenCalledWith('[handleUpdateNodeCount] Failed for Airport:', 'HTTP 403: Forbidden');
-      expect(markDirty).not.toHaveBeenCalled();
-      expect(mocks.saveData).not.toHaveBeenCalled();
+      expect(mocks.applySubscriptionRuntimeUpdate).toHaveBeenCalledWith('sub-1', {
+        lastError: 'HTTP 403: Forbidden',
+      });
     } finally {
       errorSpy.mockRestore();
     }

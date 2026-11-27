@@ -60,16 +60,33 @@ describe('Batch 1 security and contract hardening', () => {
       config: {},
     });
 
-    // Trigger prune via saveData failure/mock or directly via hydrate + removeSubscriptionFromProfiles
+    // Trigger prune via hydrate + removeSubscriptionFromProfiles
     dataStore.removeSubscriptionFromProfiles('sub-2');
     expect(dataStore.profiles[0].subscriptions).toEqual([subObj, 'sub-stale']);
 
-    // Re-save path triggers pruneInvalidReferences()
+    // Force-fetch path triggers pruneInvalidReferences() while keeping object entries
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ success: true }), { status: 200 })),
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            misubs: [{ id: 'sub-1', name: 'Airport 1', url: 'https://example.com/1' }],
+            profiles: [
+              {
+                id: 'profile-1',
+                name: 'Mixed Profile',
+                subscriptions: [subObj, 'sub-stale'],
+                manualNodes: [],
+              },
+            ],
+            ruleTemplates: [],
+            config: {},
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
     );
-    return dataStore.saveData().then((ok) => {
+    return dataStore.fetchData(true).then((ok) => {
       expect(ok).toBe(true);
       expect(dataStore.profiles[0].subscriptions).toEqual([subObj]);
     });

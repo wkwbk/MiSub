@@ -30,10 +30,9 @@ onUnmounted(() => {
 
 const dataStore = useDataStore();
 const { showToast } = useToastStore();
-const { markDirty } = dataStore;
 const { t } = useI18n();
 
-const isSortingNodes = useSortingMode(dataStore);
+const isSortingNodes = useSortingMode();
 const showDeleteNodesModal = ref(false);
 const showBatchDeleteModal = ref(false);
 const batchDeleteIds = ref<string[]>([]);
@@ -86,7 +85,7 @@ const {
   pingNodeId,
   pingAllNodes,
   sortNodesByLatency,
-} = useManualNodes(markDirty);
+} = useManualNodes();
 const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 watch(
@@ -107,10 +106,14 @@ const {
   showModal: showNodeModal,
   isNew: isNewNode,
   editingNode,
+  conflictState: nodeConflict,
   openAdd: handleAddNode,
   openEdit: handleEditNode,
   handleUrlInput: handleNodeUrlInput,
+  isSaving: isSavingNode,
   handleSave: handleSaveNode,
+  reloadFromConflict: reloadNodeConflict,
+  forceSaveFromConflict: forceSaveNodeConflict,
 } = useNodeForms({ addNode, updateNode });
 
 const handleDeleteNodeWithCleanup = (nodeId: string) => {
@@ -127,8 +130,8 @@ const handleAutoSortNodes = () => {
   showToast(t('manualNodes.sortedByRegion'), 'success');
 };
 
-const handleSortByLatency = () => {
-  const ok = sortNodesByLatency();
+const handleSortByLatency = async () => {
+  const ok = await sortNodesByLatency();
   showToast(ok ? t('manualNodes.sortByLatencyDone') : t('manualNodes.sortByLatencyNoData'), ok ? 'success' : 'warning');
 };
 
@@ -217,7 +220,6 @@ const handleTagReorder = (newOrder: string[]) => {
       @change-page="changeManualNodesPage"
       @update:search-term="handleSearchTermUpdate"
       @toggle-sort="isSortingNodes = !isSortingNodes"
-      @mark-dirty="markDirty"
       @auto-sort="handleAutoSortNodes"
       @delete-all="showDeleteNodesModal = true"
       @set-tag-filters="setTagFilters"
@@ -236,10 +238,14 @@ const handleTagReorder = (newOrder: string[]) => {
     <ManualNodeEditModal
       v-model:editing-node="editingNode"
       v-model:show="showNodeModal"
+      :conflict="nodeConflict"
       :is-new="isNewNode"
+      :is-saving="isSavingNode"
       :tags="manualNodeTags"
       @confirm="handleSaveNode"
+      @force-save-conflict="forceSaveNodeConflict"
       @input-url="handleNodeUrlInput"
+      @reload-conflict="reloadNodeConflict"
     />
     <ManualNodeDedupModal
       v-model:show="showDedupModal"

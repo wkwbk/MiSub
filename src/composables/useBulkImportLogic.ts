@@ -15,8 +15,16 @@ import { parseSubscriptionContent } from '@/lib/api.js';
 import { t } from '@/i18n/index.js';
 
 export interface UseBulkImportLogicOptions {
-  addSubscriptionsFromBulk: (subs: StoreMisubItem[]) => void | Promise<void>;
-  addNodesFromBulk: (nodes: StoreMisubItem[], tags?: string[]) => void;
+  addSubscriptionsFromBulk: (subs: StoreMisubItem[]) => unknown | Promise<unknown>;
+  addNodesFromBulk: (nodes: StoreMisubItem[], tags?: string[]) => unknown | Promise<unknown>;
+}
+
+function isBatchOutcomeOk(result: unknown): boolean {
+  if (result === false) return false;
+  if (result && typeof result === 'object' && 'ok' in result) {
+    return Boolean((result as { ok?: boolean }).ok);
+  }
+  return true;
 }
 
 export function needsServerParsing(text: string): boolean {
@@ -50,8 +58,8 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     }
   };
 
-  const handleBulkImport = async (importText: string, tagsInput: string | string[] = []): Promise<void> => {
-    if (!importText) return;
+  const handleBulkImport = async (importText: string, tagsInput: string | string[] = []): Promise<boolean> => {
+    if (!importText) return false;
 
     const normalizedTags = normalizeTagList(tagsInput);
 
@@ -134,20 +142,24 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
     });
 
     const messageParts: string[] = [];
+    let hasFailure = false;
 
-    // 先写入手动节点再触发异步订阅导入，避免订阅测速完成后的自动保存（saveData）
-    // 在 addNodesFromBulk 执行前发出并在响应回写时覆盖掉刚导入的手动节点。
     if (validNodes.length > 0) {
-      addNodesFromBulk(validNodes, normalizedTags);
+      const nodesOutcome = await addNodesFromBulk(validNodes, normalizedTags);
+      if (isBatchOutcomeOk(nodesOutcome)) {
+        messageParts.push(t('bulkImport.importedNodes', { count: validNodes.length }));
+      } else {
+        hasFailure = true;
+      }
     }
 
     if (validSubs.length > 0) {
-      await addSubscriptionsFromBulk(validSubs);
-      messageParts.push(t('bulkImport.importedSubscriptions', { count: validSubs.length }));
-    }
-
-    if (validNodes.length > 0) {
-      messageParts.push(t('bulkImport.importedNodes', { count: validNodes.length }));
+      const subsOutcome = await addSubscriptionsFromBulk(validSubs);
+      if (isBatchOutcomeOk(subsOutcome)) {
+        messageParts.unshift(t('bulkImport.importedSubscriptions', { count: validSubs.length }));
+      } else {
+        hasFailure = true;
+      }
     }
 
     const message = messageParts.join(' ');
@@ -158,14 +170,18 @@ export function useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk 
         duplicateCount > 0
           ? `${trimmedMessage} (${t('bulkImport.skippedDuplicates', { count: duplicateCount })})`
           : trimmedMessage,
-        'success',
+        hasFailure ? 'warning' : 'success',
       );
-    } else if (duplicateCount > 0) {
+    } else if (!hasFailure && duplicateCount > 0) {
       showToast(t('bulkImport.allDuplicates', { count: duplicateCount }), 'info');
-    } else {
+    } else if (!hasFailure) {
       showToast(t('bulkImport.noValidLinks'), 'warning');
     }
-    showModal.value = false;
+
+    if (!hasFailure) {
+      showModal.value = false;
+    }
+    return !hasFailure;
   };
 
   return {

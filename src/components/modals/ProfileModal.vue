@@ -10,6 +10,8 @@ import type {
 } from '@misub/core/types.js';
 import { Folder } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
+import RecordConflictBanner from '@/components/ui/RecordConflictBanner.vue';
+import type { RecordConflictBannerModel } from '@/stores/useDataStore.js';
 import ProfileForm from '@/components/modals/ProfileModal/ProfileForm.vue';
 import SubscriptionSelector from '@/components/modals/ProfileModal/SubscriptionSelector.vue';
 import SubProfileSelector from '@/components/modals/ProfileModal/SubProfileSelector.vue';
@@ -32,21 +34,27 @@ const props = withDefaults(
     show?: boolean;
     profile?: EditableProfile | ProfileConfig | null;
     isNew?: boolean;
+    isSaving?: boolean;
     allSubscriptions?: SubscriptionItem[];
     allManualNodes?: ManualNodeItem[];
+    conflict?: RecordConflictBannerModel | null;
   }>(),
   {
     show: false,
     profile: null,
     isNew: false,
+    isSaving: false,
     allSubscriptions: () => [],
     allManualNodes: () => [],
+    conflict: null,
   },
 );
 
 const emit = defineEmits<{
   'update:show': [value: boolean];
   save: [profile: EditableProfile];
+  'reload-conflict': [];
+  'force-save-conflict': [profile: EditableProfile];
 }>();
 
 const localProfile = ref<EditableProfile>({});
@@ -357,7 +365,7 @@ watch(
   { deep: true, immediate: true },
 );
 
-const handleConfirm = () => {
+function buildPreparedProfile(): EditableProfile {
   const profileToSave = JSON.parse(JSON.stringify(localProfile.value));
   profileToSave.tags = normalizeTagList(profileToSave.tags);
   if (profileToSave.expiresAt) {
@@ -399,7 +407,15 @@ const handleConfirm = () => {
   } else {
     delete profileToSave.builtinTransform;
   }
-  emit('save', profileToSave);
+  return profileToSave as EditableProfile;
+}
+
+const handleConfirm = () => {
+  emit('save', buildPreparedProfile());
+};
+
+const handleForceSaveConflict = () => {
+  emit('force-save-conflict', buildPreparedProfile());
 };
 
 type SelectionListName = 'subscriptions' | 'manualNodes' | 'subProfiles';
@@ -468,6 +484,7 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
 <template>
   <Modal
     :close-on-confirm="false"
+    :confirm-disabled="Boolean(isSaving)"
     :show="show"
     size="7xl"
     @confirm="handleConfirm"
@@ -488,6 +505,12 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
     </template>
     <template #body>
       <div v-if="localProfile" class="space-y-6">
+        <RecordConflictBanner
+          :conflict="conflict"
+          :is-saving="isSaving"
+          @force-save="handleForceSaveConflict"
+          @reload="emit('reload-conflict')"
+        />
         <ProfileForm
           v-model:local-profile="localProfile"
           :global-settings="dataStore.settings"

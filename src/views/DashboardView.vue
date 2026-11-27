@@ -37,17 +37,16 @@ const { showToast } = useToastStore();
 
 const dataStore = useDataStore();
 const { settings, profiles, activeProfiles, isLoading, lastUpdated } = storeToRefs(dataStore);
-const { markDirty } = dataStore;
 
 const {
   totalRemainingTraffic: trafficVal,
   enabledSubscriptionsCount,
   subscriptions: rawSubscriptions,
   addSubscriptionsFromBulk,
-} = useSubscriptions(markDirty);
+} = useSubscriptions();
 const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
-const { manualNodes: rawManualNodes, addNodesFromBulk } = useManualNodes(markDirty);
+const { manualNodes: rawManualNodes, addNodesFromBulk } = useManualNodes();
 const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 const router = useRouter();
@@ -172,7 +171,17 @@ const openBulkImportModal = () => {
 
 const ImportModal = defineAsyncComponent(loadImportModal);
 
-const { handleAddProfile, handleSaveProfile, editingProfile, isNewProfile, showProfileModal } = useProfiles(markDirty);
+const {
+  handleAddProfile,
+  handleSaveProfile,
+  reloadProfileFromConflict,
+  handleForceSaveProfile,
+  editingProfile,
+  isNewProfile,
+  isSavingProfile,
+  profileConflict,
+  showProfileModal,
+} = useProfiles();
 
 const ProfileModal = defineAsyncComponent(loadProfileModal);
 
@@ -546,8 +555,12 @@ const handleQRCode = (url: string, title: string) => {
         v-model:show="showProfileModal"
         :all-manual-nodes="manualNodes"
         :all-subscriptions="subscriptions"
+        :conflict="profileConflict"
         :is-new="isNewProfile"
+        :is-saving="isSavingProfile"
         :profile="editingProfile"
+        @force-save-conflict="handleForceSaveProfile"
+        @reload-conflict="reloadProfileFromConflict"
         @save="handleSaveProfile"
       />
 

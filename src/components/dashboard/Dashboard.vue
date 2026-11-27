@@ -30,7 +30,6 @@ import ManualNodePanel from '@/components/nodes/ManualNodePanel.vue';
 import Modal from '@/components/ui/Modal.vue';
 import SkeletonLoader from '@/components/ui/SkeletonLoader.vue';
 import DashboardHeader from '@/components/dashboard/DashboardHeader.vue';
-import SavePrompt from '@/components/ui/SavePrompt.vue';
 
 const isDev = import.meta.env.DEV;
 
@@ -61,20 +60,12 @@ const { showToast } = useToastStore();
 const { t } = useI18n();
 const uiStore = useUIStore();
 const dataStore = useDataStore();
-const { settings, isDirty, isLoading } = storeToRefs(dataStore);
-const { clearDirty } = dataStore;
+const { settings, isLoading } = storeToRefs(dataStore);
 if (isDev) {
   console.debug('Dashboard: setup running');
 }
 
-const saveState = ref<'idle' | 'saving' | 'success'>('idle');
-const isDiscarding = ref(false);
 let cancelModalPrefetch = () => {};
-
-const markDirty = () => {
-  dataStore.markDirty();
-  saveState.value = 'idle';
-};
 
 // --- 將狀態和邏輯委託給 Composables ---
 const isSortingSubs = ref(false);
@@ -135,6 +126,7 @@ const {
   refreshError: subscriptionRefreshError,
   lastRefreshAt: lastSubscriptionRefreshAt,
   totalRemainingTraffic,
+  toggleSubscription,
   addSubscription,
   updateSubscription,
   deleteSubscription,
@@ -148,7 +140,7 @@ const {
   stopAutoUpdate,
   restartAutoUpdate,
   reorderSubscriptions,
-} = useSubscriptions(markDirty);
+} = useSubscriptions();
 const subscriptions = rawSubscriptions as unknown as Ref<SubscriptionItem[]>;
 
 const {
@@ -193,7 +185,7 @@ const {
   pingNodeId,
   pingAllNodes,
   sortNodesByLatency,
-} = useManualNodes(markDirty);
+} = useManualNodes();
 const manualNodes = rawManualNodes as unknown as Ref<ManualNodeItem[]>;
 
 watch(
@@ -206,8 +198,8 @@ watch(
   { immediate: true },
 );
 
-const handleSortByLatency = () => {
-  const ok = sortNodesByLatency();
+const handleSortByLatency = async () => {
+  const ok = await sortNodesByLatency();
   showToast(ok ? t('manualNodes.sortByLatencyDone') : t('manualNodes.sortByLatencyNoData'), ok ? 'success' : 'warning');
 };
 
@@ -225,12 +217,16 @@ const {
   reorderProfileTags,
   editingProfile,
   isNewProfile,
+  isSavingProfile,
+  profileConflict,
   showProfileModal,
   showDeleteProfilesModal,
   handleProfileToggle,
   handleAddProfile,
   handleEditProfile,
   handleSaveProfile,
+  reloadProfileFromConflict,
+  handleForceSaveProfile,
   handleDeleteProfile,
   handleDeleteAllProfiles,
   batchUpdateProfileTags,
@@ -243,26 +239,34 @@ const {
   profilesTotalPages,
   paginatedProfiles,
   changeProfilesPage,
-} = useProfiles(markDirty);
+} = useProfiles();
 const profiles = rawProfiles as unknown as Ref<ProfileConfig[]>;
 
 const {
   showModal: showSubModal,
   isNew: isNewSubscription,
+  isSaving: isSavingSub,
   editingSubscription,
+  conflictState: subscriptionConflict,
   openAdd: handleAddSubscription,
   openEdit: handleEditSubscription,
   handleSave: handleSaveSubscription,
+  reloadFromConflict: reloadSubscriptionConflict,
+  forceSaveFromConflict: forceSaveSubscriptionConflict,
 } = useSubscriptionForms({ addSubscription, updateSubscription });
 
 const {
   showModal: showNodeModal,
   isNew: isNewNode,
+  isSaving: isSavingNode,
   editingNode,
+  conflictState: nodeConflict,
   openAdd: handleAddNode,
   openEdit: handleEditNode,
   handleUrlInput: handleNodeUrlInput,
   handleSave: handleSaveNode,
+  reloadFromConflict: reloadNodeConflict,
+  forceSaveFromConflict: forceSaveNodeConflict,
 } = useNodeForms({ addNode, updateNode });
 
 const { showModal: showBulkImportModal, handleBulkImport } = useBulkImportLogic({
@@ -317,16 +321,8 @@ const initializeState = async () => {
         nodes: manualNodes.value?.length,
       });
     }
-    clearDirty();
   } catch (e) {
     console.error('Dashboard: initializeState error', e);
-  }
-};
-
-const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-  if (isDirty.value) {
-    event.preventDefault();
-    event.returnValue = t('common.unsavedLeaveConfirm');
   }
 };
 
@@ -377,14 +373,12 @@ onMounted(() => {
     loadCopyLinkModal,
     loadQRCodeModal,
   ]);
-  window.addEventListener('beforeunload', handleBeforeUnload);
   // 启动订阅自动更新定时器（每30分钟）
   startAutoUpdate();
 });
 
 onUnmounted(() => {
   cancelModalPrefetch();
-  window.removeEventListener('beforeunload', handleBeforeUnload);
   // 停止订阅自动更新定时器
   stopAutoUpdate();
 });
@@ -400,45 +394,6 @@ watch(
 );
 
 // --- 其他 JS 逻辑 (省略) ---
-const handleDiscard = async () => {
-  if (isDiscarding.value || saveState.value !== 'idle') return;
-  isDiscarding.value = true;
-  try {
-    // 强制刷新数据，忽略缓存
-    await dataStore.fetchData(true);
-    isSortingSubs.value = false;
-    isSortingNodes.value = false;
-    isSortingProfiles.value = false;
-    showToast(t('notices.discardedChanges'));
-  } finally {
-    isDiscarding.value = false;
-  }
-};
-
-const handleSave = async () => {
-  saveState.value = 'saving';
-
-  try {
-    const ok = await dataStore.saveData();
-    if (!ok) {
-      saveState.value = 'idle';
-      return;
-    }
-
-    saveState.value = 'success';
-
-    isSortingSubs.value = false;
-    isSortingNodes.value = false;
-    isSortingProfiles.value = false;
-
-    setTimeout(() => {
-      saveState.value = 'idle';
-    }, 1500);
-  } catch {
-    saveState.value = 'idle';
-  }
-};
-
 const handleDeleteSubscriptionWithCleanup = (subId: string) => {
   deleteSubscription(subId);
   // cleanup 已在 deleteSubscription 内部通过 removeSubscriptionFromProfiles 实现
@@ -588,16 +543,18 @@ const handleProfileTagReorder = (newOrder: string[]) => {
   showToast(t('tags.tagOrderUpdated'), 'success');
 };
 
-const handleApplyDetectedName = (subscriptionId: string | undefined, name: string) => {
+const handleApplyDetectedName = async (subscriptionId: string | undefined, name: string) => {
   if (!subscriptionId) return;
   const target = String(name || '').trim();
   if (!target) return;
   const subscription = subscriptions.value.find((s) => s.id === subscriptionId);
   if (!subscription) return;
-  updateSubscription({ ...subscription, name: target });
-  const domain = inferAirportRootDomain(subscription.url);
-  if (domain) rememberDomainName(domain, target);
-  showToast(t('subscriptions.nameApplied', { name: target }), 'success');
+  const res = await dataStore.patchSubscription(subscriptionId, { name: target });
+  if (res.ok) {
+    const domain = inferAirportRootDomain(subscription.url);
+    if (domain) rememberDomainName(domain, target);
+    showToast(t('subscriptions.nameApplied', { name: target }), 'success');
+  }
 };
 
 // 节点预览处理函数
@@ -652,14 +609,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
         showLogModal = true;
       "
       @open-bulk-import="showBulkImportModal = true"
-    />
-
-    <SavePrompt
-      :is-dirty="isDirty"
-      :is-discarding="isDiscarding"
-      :save-state="saveState"
-      @discard="handleDiscard"
-      @save="handleSave"
     />
 
     <div class="grid grid-cols-1 gap-4 items-start lg:grid-cols-3">
@@ -744,8 +693,8 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @manage-tags="showSubTagManagementModal = true"
           @update-node-count="handleUpdateNodeCount"
           @refresh-all="batchUpdateAllSubscriptions"
+          @toggle="({ id, enabled }) => toggleSubscription(id, enabled)"
           @toggle-sort="isSortingSubs = !isSortingSubs"
-          @mark-dirty="markDirty"
           @delete-all="showDeleteSubsModal = true"
           @open-batch-tag-modal="(ids) => handleOpenBatchTagModal(ids, 'subscription')"
           @batch-delete-subscriptions="(ids) => handleBatchDeleteRequest(ids, 'subscription')"
@@ -783,7 +732,6 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
           @update:ping-mode="setPingMode"
           @update:search-term="handleSearchTermUpdate"
           @toggle-sort="isSortingNodes = !isSortingNodes"
-          @mark-dirty="markDirty"
           @auto-sort="handleAutoSortNodes"
           @delete-all="showDeleteNodesModal = true"
           @set-tag-filters="setTagFilters"
@@ -898,18 +846,26 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
     v-model:show="showProfileModal"
     :all-manual-nodes="manualNodes"
     :all-subscriptions="subscriptions"
+    :conflict="profileConflict"
     :is-new="isNewProfile"
+    :is-saving="isSavingProfile"
     :profile="editingProfile"
+    @force-save-conflict="handleForceSaveProfile"
+    @reload-conflict="reloadProfileFromConflict"
     @save="handleSaveProfile"
   />
 
   <ManualNodeEditModal
     v-model:editing-node="editingNode"
     v-model:show="showNodeModal"
+    :conflict="nodeConflict"
     :is-new="isNewNode"
+    :is-saving="isSavingNode"
     :tags="manualNodeTags"
     @confirm="handleSaveNode"
+    @force-save-conflict="forceSaveNodeConflict"
     @input-url="handleNodeUrlInput"
+    @reload-conflict="reloadNodeConflict"
   />
   <ManualNodeDedupModal
     v-model:show="showDedupModal"
@@ -950,8 +906,12 @@ const formattedTotalRemainingTraffic = computed(() => formatBytes(totalRemaining
   <SubscriptionEditModal
     v-model:editing-subscription="editingSubscription"
     v-model:show="showSubModal"
+    :conflict="subscriptionConflict"
     :is-new="isNewSubscription"
+    :is-saving="isSavingSub"
     @confirm="handleSaveSubscription"
+    @force-save-conflict="forceSaveSubscriptionConflict"
+    @reload-conflict="reloadSubscriptionConflict"
   />
 
   <SettingsModal

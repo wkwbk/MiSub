@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDataStore } from '@/stores/useDataStore.js';
+import { useDataStore, type MutationResult, type RecordPatchOptions } from '@/stores/useDataStore.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
 import type { TagBatchMode, TagBatchUpdatePayload } from '@/composables/useManualNodes.js';
@@ -58,7 +58,7 @@ interface BatchUpdateResponseShape {
 
 const isDev = import.meta.env.DEV;
 
-export function useSubscriptions(markDirty: () => void) {
+export function useSubscriptions() {
   const { showToast } = useToastStore();
   const dataStore = useDataStore();
   const { subscriptions: allSubscriptions } = storeToRefs(dataStore);
@@ -93,19 +93,22 @@ export function useSubscriptions(markDirty: () => void) {
     activeTagFilters.value = normalizeActiveTagFilters(filters);
   }
 
-  function renameSubscriptionTag(oldName: string, newName: string): void {
+  async function renameSubscriptionTag(oldName: string, newName: string): Promise<void> {
     const normalizedOld = normalizeTagName(oldName);
     const normalizedNew = normalizeTagName(newName);
     if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
 
-    let changed = false;
+    const updates: Array<{ id: string; tags: string[] }> = [];
     subscriptions.value.forEach((sub) => {
       const { nextTags, changed: itemChanged } = renameTagInList(getItemTags(sub), normalizedOld, normalizedNew);
       if (itemChanged) {
-        dataStore.updateSubscription(sub.id, applyItemTags(sub, nextTags));
-        changed = true;
+        updates.push({ id: sub.id, tags: nextTags });
       }
     });
+
+    if (updates.length > 0) {
+      await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+    }
 
     const customOrder = getSubscriptionTagOrder();
     if (customOrder.includes(normalizedOld)) {
@@ -118,22 +121,23 @@ export function useSubscriptions(markDirty: () => void) {
         activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag)),
       );
     }
-
-    if (changed) markDirty();
   }
 
-  function deleteSubscriptionTag(tagName: string): void {
+  async function deleteSubscriptionTag(tagName: string): Promise<void> {
     const normalized = normalizeTagName(tagName);
     if (!normalized) return;
 
-    let changed = false;
+    const updates: Array<{ id: string; tags: string[] }> = [];
     subscriptions.value.forEach((sub) => {
       const { nextTags, changed: itemChanged } = removeTagFromList(getItemTags(sub), normalized);
       if (itemChanged) {
-        dataStore.updateSubscription(sub.id, applyItemTags(sub, nextTags));
-        changed = true;
+        updates.push({ id: sub.id, tags: nextTags });
       }
     });
+
+    if (updates.length > 0) {
+      await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+    }
 
     const customOrder = getSubscriptionTagOrder();
     const nextOrder = customOrder.filter((tag) => tag !== normalized);
@@ -144,8 +148,6 @@ export function useSubscriptions(markDirty: () => void) {
     if (activeTagFilters.value.includes(normalized)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
     }
-
-    if (changed) markDirty();
   }
 
   function reorderSubscriptionTags(newOrder: string[]): void {
@@ -240,6 +242,10 @@ export function useSubscriptions(markDirty: () => void) {
         subToUpdate.fetchProxy,
         Boolean(subToUpdate.plusAsSpace),
         subToUpdate.customUserAgent,
+        {
+          subscriptionId: subToUpdate.id,
+          persist: true,
+        },
       )) as FetchNodeCountResult;
 
       clearTimeout(timeoutId);
@@ -277,22 +283,19 @@ export function useSubscriptions(markDirty: () => void) {
         if (!isInitialLoad) showToast(userMessage, 'error');
         console.error(`[handleUpdateNodeCount] Failed for ${subToUpdate.name}:`, result.error);
 
-        subToUpdate.lastError = result.error;
-        if (subToUpdate.enableNodeCache !== true) {
-          subToUpdate.nodeCount = 0;
-          subToUpdate.userInfo = null;
-          if (!isInitialLoad) {
-            markDirty();
-            void dataStore.saveData();
-          }
-        }
+        dataStore.applySubscriptionRuntimeUpdate(subToUpdate.id, {
+          lastError: result.error,
+          ...(subToUpdate.enableNodeCache !== true ? { nodeCount: 0, userInfo: null } : {}),
+        });
         return false;
       }
 
       const data = result.data?.data || result.data || {};
-      subToUpdate.nodeCount = data.count || 0;
-      subToUpdate.userInfo = data.userInfo || null;
-      subToUpdate.lastError = null;
+      dataStore.applySubscriptionRuntimeUpdate(subToUpdate.id, {
+        nodeCount: data.count || 0,
+        userInfo: data.userInfo || null,
+        lastError: null,
+      });
 
       if (!isInitialLoad) {
         showToast(
@@ -301,8 +304,6 @@ export function useSubscriptions(markDirty: () => void) {
           }),
           'success',
         );
-        markDirty();
-        void dataStore.saveData();
       }
       return true;
     } catch (error: unknown) {
@@ -322,44 +323,67 @@ export function useSubscriptions(markDirty: () => void) {
       }
       return false;
     } finally {
-      if (subToUpdate) subToUpdate.isUpdating = false;
+      dataStore.applySubscriptionRuntimeUpdate(subId, { isUpdating: false });
     }
   }
 
-  function addSubscription(sub: StoreMisubItem): void {
+  async function toggleSubscription(id: string, enabled: boolean): Promise<MutationResult<StoreMisubItem>> {
+    return await dataStore.patchSubscription(id, { enabled });
+  }
+
+  async function addSubscription(sub: StoreMisubItem): Promise<MutationResult<StoreMisubItem>> {
     const normalized = applyItemTags(sub, sub.tags);
-    dataStore.addSubscription(normalized);
-    void handleUpdateNodeCount(normalized.id);
-    markDirty();
-  }
-
-  function updateSubscription(updatedSub: StoreMisubItem): void {
-    const originalSub = subscriptions.value.find((s) => s.id === updatedSub.id);
-    if (originalSub) {
-      const urlChanged = originalSub.url !== updatedSub.url;
-      const rawTags = updatedSub.tags !== undefined ? updatedSub.tags : getItemTags(updatedSub);
-      const normalized = applyItemTags(updatedSub, rawTags);
-      dataStore.updateSubscription(normalized.id, normalized);
-
-      if (urlChanged) {
-        const sub = subscriptions.value.find((s) => s.id === normalized.id);
-        if (sub) {
-          sub.nodeCount = 0;
-          void handleUpdateNodeCount(sub.id);
-        }
-      }
-      markDirty();
+    const res = await dataStore.createSubscription(normalized);
+    if (res.ok && res.data?.id) {
+      void handleUpdateNodeCount(res.data.id);
     }
+    return res;
   }
 
-  function deleteSubscription(subId: string): void {
-    dataStore.removeSubscription(subId);
-    dataStore.removeSubscriptionFromProfiles(subId);
-    markDirty();
+  async function updateSubscription(
+    updatedSub: StoreMisubItem,
+    options: RecordPatchOptions = {},
+  ): Promise<MutationResult<StoreMisubItem>> {
+    const originalSub = subscriptions.value.find((s) => s.id === updatedSub.id);
+    const urlChanged = Boolean(originalSub && originalSub.url !== updatedSub.url);
+    const rawTags = updatedSub.tags !== undefined ? updatedSub.tags : getItemTags(updatedSub);
+    const normalized = applyItemTags(updatedSub, rawTags);
+    const {
+      id: _id,
+      sortIndex: _sortIndex,
+      configVersion: _configVersion,
+      version: _version,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      isUpdating: _isUpdating,
+      nodeCount: _nodeCount,
+      lastGoodNodeCount: _lastGood,
+      userInfo: _userInfo,
+      detectedName: _detectedName,
+      lastError: _lastError,
+      lastUpdate: _lastUpdate,
+      ...patchFields
+    } = normalized;
+
+    const res = await dataStore.updateSubscriptionRecord(normalized.id, patchFields, options);
+    if (res.ok && urlChanged) {
+      dataStore.applySubscriptionRuntimeUpdate(normalized.id, { nodeCount: 0 });
+      void handleUpdateNodeCount(normalized.id);
+    }
+    return res;
   }
 
-  function batchUpdateSubscriptionTags(subIds: string[], payload: TagBatchUpdatePayload): void {
-    if (!subIds || subIds.length === 0) return;
+  async function deleteSubscription(subId: string) {
+    return await dataStore.deleteSubscriptionRecord(subId);
+  }
+
+  async function batchUpdateSubscriptionTags(
+    subIds: string[],
+    payload: TagBatchUpdatePayload,
+  ): Promise<MutationResult<StoreMisubItem[]>> {
+    if (!subIds || subIds.length === 0) {
+      return { ok: true, data: [] };
+    }
 
     let mode: TagBatchMode = 'replace';
     let inputTags: unknown = payload;
@@ -374,55 +398,57 @@ export function useSubscriptions(markDirty: () => void) {
       .map((s) => {
         const { nextTags, changed } = computeBatchUpdatedTags(getItemTags(s), inputTags, mode);
         if (!changed) return null;
-        return { id: s.id, updates: applyItemTags(s, nextTags) };
+        return { id: s.id, tags: nextTags };
       })
-      .filter((item): item is { id: string; updates: StoreMisubItem } => item !== null);
+      .filter((item): item is { id: string; tags: string[] } => item !== null);
 
-    if (updates.length > 0) {
-      updates.forEach(({ id, updates: nextSub }) => {
-        dataStore.updateSubscription(id, nextSub);
-      });
-      markDirty();
+    if (updates.length === 0) {
+      return { ok: true, data: [] };
+    }
+
+    const res = await dataStore.batchUpdateSubscriptionTagsRecord(updates);
+    if (res.ok) {
       showToast(t('subscriptions.batchTagsUpdated', { count: updates.length }), 'success');
     }
+    return res;
   }
 
-  function batchDeleteSubscriptions(subIds: string[]): void {
-    if (!subIds || subIds.length === 0) return;
+  async function batchDeleteSubscriptions(subIds: string[]) {
+    if (!subIds || subIds.length === 0) {
+      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
+    }
 
-    subIds.forEach((id) => {
-      dataStore.removeSubscription(id);
-    });
-    dataStore.removeSubscriptionFromProfiles(subIds);
-
-    markDirty();
-    showToast(t('subscriptions.deletedCount', { count: subIds.length }), 'success');
+    const res = await dataStore.batchDeleteSubscriptionsRecord({ ids: subIds });
+    if (res.ok) {
+      showToast(t('subscriptions.deletedCount', { count: subIds.length }), 'success');
+    }
+    return res;
   }
 
-  function deleteAllSubscriptions(): void {
+  async function deleteAllSubscriptions() {
     const idsToRemove = subscriptions.value.map((s) => s.id);
 
     if (idsToRemove.length === 0) {
       showToast(t('subscriptions.noSubscriptionsToDelete'), 'info');
-      return;
+      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
     }
 
-    idsToRemove.forEach((id) => dataStore.removeSubscription(id));
-    dataStore.removeSubscriptionFromProfiles(idsToRemove);
-
-    markDirty();
-    showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
+    const res = await dataStore.batchDeleteSubscriptionsRecord({ all: true });
+    if (res.ok) {
+      showToast(t('subscriptions.clearedCount', { count: idsToRemove.length }), 'success');
+    }
+    return res;
   }
 
-  async function addSubscriptionsFromBulk(subs: StoreMisubItem[]): Promise<void> {
-    for (let i = subs.length - 1; i >= 0; i--) {
-      const raw = subs[i];
-      const normalized = applyItemTags(raw, raw.tags);
-      dataStore.addSubscription(normalized);
+  async function addSubscriptionsFromBulk(subs: StoreMisubItem[]): Promise<MutationResult<StoreMisubItem[]>> {
+    const prepared = subs.map((raw) => applyItemTags(raw, raw.tags));
+    const createRes = await dataStore.createSubscriptionsBatch(prepared);
+    if (!createRes.ok) {
+      return createRes;
     }
-    markDirty();
 
-    const subsToUpdate = subs.filter((sub) => sub.url && sub.url.startsWith('http'));
+    const createdList = createRes.data || prepared;
+    const subsToUpdate = createdList.filter((sub) => sub.url && sub.url.startsWith('http'));
 
     if (subsToUpdate.length > 0) {
       showToast(t('subscriptions.batchUpdating', { count: subsToUpdate.length }), 'info');
@@ -444,6 +470,8 @@ export function useSubscriptions(markDirty: () => void) {
     } else {
       showToast(t('subscriptions.bulkImportDone'), 'success');
     }
+
+    return createRes;
   }
 
   function finalizeRefreshSummary(successCount: number, totalCount: number): void {
@@ -457,11 +485,6 @@ export function useSubscriptions(markDirty: () => void) {
       }),
       failedCount === 0 ? 'success' : successCount > 0 ? 'warning' : 'error',
     );
-
-    if (successCount > 0) {
-      markDirty();
-      void dataStore.saveData();
-    }
   }
 
   async function runSequentialFallbackUpdate(subsToUpdate: StoreMisubItem[]): Promise<void> {
@@ -528,18 +551,17 @@ export function useSubscriptions(markDirty: () => void) {
         for (const sub of subsToUpdate) {
           const updateResult = resultMap.get(sub.id);
           if (updateResult?.success) {
-            sub.nodeCount = updateResult.nodeCount ?? 0;
-            if (updateResult.userInfo !== undefined) {
-              sub.userInfo = updateResult.userInfo;
-            }
-            sub.lastError = null;
+            dataStore.applySubscriptionRuntimeUpdate(sub.id, {
+              nodeCount: updateResult.nodeCount ?? 0,
+              ...(updateResult.userInfo !== undefined ? { userInfo: updateResult.userInfo } : {}),
+              lastError: null,
+            });
             successCount++;
           } else {
-            sub.lastError = updateResult?.error || t('subscriptions.unknownError');
-            if (sub.enableNodeCache !== true) {
-              sub.nodeCount = 0;
-              sub.userInfo = null;
-            }
+            dataStore.applySubscriptionRuntimeUpdate(sub.id, {
+              lastError: updateResult?.error || t('subscriptions.unknownError'),
+              ...(sub.enableNodeCache !== true ? { nodeCount: 0, userInfo: null } : {}),
+            });
           }
         }
 
@@ -635,13 +657,15 @@ export function useSubscriptions(markDirty: () => void) {
     startAutoUpdate(intervalMinutes ?? null);
   }
 
-  function reorderSubscriptions(newOrder: StoreMisubItem[]): void {
+  async function reorderSubscriptions(newOrder: StoreMisubItem[]): Promise<MutationResult<StoreMisubItem[]>> {
     const currentManualNodes = (allSubscriptions.value || []).filter(
       (item) => !item.url || !/^https?:\/\//.test(item.url),
     );
-    const mergedList = [...currentManualNodes, ...newOrder];
-    dataStore.overwriteSubscriptions(mergedList);
-    markDirty();
+    const mergedList = [...newOrder, ...currentManualNodes];
+    return await dataStore.reorderSubscriptionsRecord(
+      newOrder.map((s) => s.id),
+      mergedList,
+    );
   }
 
   return {
@@ -665,6 +689,7 @@ export function useSubscriptions(markDirty: () => void) {
     lastRefreshAt,
     totalRemainingTraffic,
     enabledSubscriptionsCount: computed(() => enabledSubscriptions.value.length),
+    toggleSubscription,
     addSubscription,
     updateSubscription,
     deleteSubscription,

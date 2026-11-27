@@ -154,6 +154,16 @@ async function readBusinessData(storageAdapter: StorageAdapter) {
   };
 }
 
+function stripEntityConfigVersion<T>(items: T[]): T[] {
+  return items.map((item) => {
+    if (!isRecord(item)) return item;
+    const copy: Record<string, unknown> = { ...item };
+    delete copy.configVersion;
+    delete copy.version;
+    return copy as T;
+  });
+}
+
 export async function buildBackupPayload(
   env: Env,
   options: { scope?: unknown; trigger?: string } = {},
@@ -176,8 +186,8 @@ export async function buildBackupPayload(
       trigger: options.trigger || 'manual',
     },
     data: {
-      subscriptions: cloneJson(businessData.subscriptions),
-      profiles: cloneJson(businessData.profiles),
+      subscriptions: stripEntityConfigVersion(cloneJson(businessData.subscriptions)),
+      profiles: stripEntityConfigVersion(cloneJson(businessData.profiles)),
       ruleTemplates: cloneJson(businessData.ruleTemplates),
       settings: null,
     },

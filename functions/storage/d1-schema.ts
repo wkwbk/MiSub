@@ -45,12 +45,14 @@ const D1_TABLE_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS subscriptions (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL,
+        config_version INTEGER NOT NULL DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
   `CREATE TABLE IF NOT EXISTS nodes (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL,
+        config_version INTEGER NOT NULL DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
@@ -59,6 +61,7 @@ const D1_TABLE_STATEMENTS = [
         custom_id TEXT,
         link_id TEXT,
         data TEXT NOT NULL,
+        config_version INTEGER NOT NULL DEFAULT 1,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`,
@@ -96,8 +99,11 @@ const D1_TABLE_STATEMENTS = [
 ];
 
 const D1_COLUMN_MIGRATIONS = [
+  `ALTER TABLE subscriptions ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
+  `ALTER TABLE nodes ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
   `ALTER TABLE profiles ADD COLUMN custom_id TEXT;`,
   `ALTER TABLE profiles ADD COLUMN link_id TEXT;`,
+  `ALTER TABLE profiles ADD COLUMN config_version INTEGER NOT NULL DEFAULT 1;`,
   `ALTER TABLE cache ADD COLUMN expires_at INTEGER;`,
 ];
 
@@ -233,6 +239,15 @@ const D1_BACKFILL_STATEMENTS = [
   `UPDATE profiles
    SET link_id = NULLIF(TRIM(json_extract(data, '$.linkId')), '')
    WHERE link_id IS NULL AND json_extract(data, '$.linkId') IS NOT NULL`,
+  `UPDATE subscriptions
+   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
+   WHERE config_version IS NULL OR config_version < 1`,
+  `UPDATE nodes
+   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
+   WHERE config_version IS NULL OR config_version < 1`,
+  `UPDATE profiles
+   SET config_version = MAX(1, COALESCE(CAST(json_extract(data, '$.configVersion') AS INTEGER), CAST(json_extract(data, '$.version') AS INTEGER), 1))
+   WHERE config_version IS NULL OR config_version < 1`,
 ];
 
 async function runStatementsBatchOrSequential(d1Db: D1Database, statements: string[]): Promise<void> {

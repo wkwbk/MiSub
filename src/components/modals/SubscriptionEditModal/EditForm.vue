@@ -77,6 +77,10 @@ const testProxyConnectivity = async (): Promise<void> => {
       props.editingSubscription.fetchProxy,
       props.editingSubscription.plusAsSpace,
       props.editingSubscription.customUserAgent,
+      {
+        subscriptionId: props.editingSubscription.id,
+        persist: false,
+      },
     );
     if (res.success) {
       showToast(t('subscriptions.proxyTestSuccess', { count: res.data.count }), 'success');

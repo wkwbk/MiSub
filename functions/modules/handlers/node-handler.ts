@@ -9,8 +9,9 @@ import { NODE_PROTOCOL_GLOBAL_REGEX } from '@misub/core/protocols/constants.js';
 import { tryDecodeBase64Utf8 } from '@misub/core/utils/base64.js';
 import { getProcessedUserAgent } from '@misub/core/utils/format-utils.js';
 import { filterAutoUpdateSubscriptions } from '@misub/core/domain/auto-update.js';
-import type { Env, StorageAdapter } from '../../types.js';
+import type { BatchItemUpdate, Env, StorageAdapter } from '../../types.js';
 import { StorageFactory } from '../../storage-adapter.js';
+import { createRepositories } from '../../repositories/index.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import {
   createErrorResponse,
@@ -207,6 +208,8 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
     const fetchProxy = body.fetchProxy;
     const plusAsSpace = body.plusAsSpace;
     const customUserAgent = body.userAgent;
+    const subscriptionId = typeof body.subscriptionId === 'string' ? body.subscriptionId.trim() : '';
+    const shouldPersist = body.persist !== false;
 
     if (!subUrl || typeof subUrl !== 'string' || !/^https?:\/\//i.test(subUrl)) {
       return createErrorResponse('Invalid or missing url', 400);
@@ -376,6 +379,19 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
         }
 
         console.error(`[Node Count] Node count update failed for ${subUrl}: ${errorMessage}`);
+        if (shouldPersist && subscriptionId) {
+          try {
+            const repos = createRepositories(env);
+            await repos.subscriptions.updateRuntimeState(subscriptionId, (current) => ({
+              ...current,
+              ...(current.enableNodeCache !== true ? { nodeCount: 0, userInfo: null } : {}),
+              lastError: errorMessage,
+              lastUpdate: new Date().toISOString(),
+            }));
+          } catch (persistErr: unknown) {
+            console.warn('[Node Count] Failed to persist failure runtime state:', toHttpError(persistErr).message);
+          }
+        }
         return createJsonResponse({
           success: false,
           error: errorMessage,
@@ -387,10 +403,17 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
       }
 
       // 只有在至少获取到一个有效信息时，才更新数据库
-      if (result.count > 0) {
-        const storageAdapter = StorageFactory.createAdapter(env) as unknown as StorageAdapter;
-        const originalSubs = (await storageAdapter.getAllSubscriptions()) || [];
-        const subToUpdate = originalSubs.find((s) => s.url === subUrl);
+      if (shouldPersist && result.count > 0) {
+        const repos = createRepositories(env);
+        const storageAdapter = repos.storage;
+        let subToUpdate: Awaited<ReturnType<StorageAdapter['getSubscriptionById']>> = null;
+        if (subscriptionId && typeof storageAdapter.getSubscriptionById === 'function') {
+          subToUpdate = await storageAdapter.getSubscriptionById(subscriptionId);
+        }
+        if (!subToUpdate) {
+          const originalSubs = (await storageAdapter.getAllSubscriptions({ fresh: true })) || [];
+          subToUpdate = originalSubs.find((s) => (subscriptionId ? s.id === subscriptionId : s.url === subUrl)) || null;
+        }
 
         if (subToUpdate) {
           const subExtra = subToUpdate as SubscriptionItem & { lastGoodNodeCount?: number };
@@ -412,7 +435,7 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
             });
           }
 
-          await storageAdapter.updateSubscriptionById(subToUpdate.id, (current) => ({
+          await repos.subscriptions.updateRuntimeState(subToUpdate.id, (current) => ({
             ...current,
             nodeCount: result.count,
             ...(result.count >= 10 ? { lastGoodNodeCount: result.count } : {}),
@@ -611,6 +634,43 @@ export async function handleBatchUpdateNodesRequest(request: Request, env: Env):
 
     // 等待所有更新完成
     const results = await Promise.all(updatePromises);
+
+    // 仅持久化数据库中实际存在的订阅的运行态字段（绝不触碰 version）
+    if (storageAdapter && storageAdapter.type !== 'noop') {
+      const persistedIdSet = new Set(allSubscriptions.map((s) => s?.id).filter((id): id is string => Boolean(id)));
+      const runtimeUpdates: BatchItemUpdate[] = results
+        .filter((r) => persistedIdSet.has(r.subscriptionId))
+        .map((r) => ({
+          id: r.subscriptionId,
+          updater: (current) => {
+            if (r.success) {
+              return {
+                ...current,
+                nodeCount: r.nodeCount,
+                ...(r.nodeCount >= 10 ? { lastGoodNodeCount: r.nodeCount } : {}),
+                userInfo: r.userInfo as SubscriptionUserInfo,
+                lastError: null as unknown as string,
+                lastUpdate: r.lastUpdated,
+              };
+            }
+            return {
+              ...current,
+              ...(current.enableNodeCache !== true ? { nodeCount: 0, userInfo: null } : {}),
+              lastError: r.error || '更新失败',
+              lastUpdate: r.lastUpdated,
+            };
+          },
+        }));
+
+      if (runtimeUpdates.length > 0) {
+        try {
+          const repos = createRepositories(env, null, { storage: storageAdapter });
+          await repos.subscriptions.batchUpdateRuntimeStates(runtimeUpdates);
+        } catch (persistError: unknown) {
+          console.warn('[Batch Update] Failed to persist runtime states:', toHttpError(persistError).message);
+        }
+      }
+    }
 
     // 统计结果
     const successfulUpdates = results.filter((r) => r.success);

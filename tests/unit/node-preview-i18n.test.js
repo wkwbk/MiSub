@@ -10,24 +10,32 @@ const toastMock = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/http.js', () => ({
   APIError: class APIError extends Error {},
   api: {
-    post: vi.fn(async () => ({
-      success: true,
-      nodes: [
-        {
-          id: 'node-1',
-          name: 'Demo HK',
-          url: 'vless://demo@example.com:443#Demo',
-          type: 'vless',
-          server: 'example.com',
-          port: 443,
-          region: 'Hong Kong',
+    post: vi.fn(async (url, body) => {
+      if (url === '/api/nodes/batch') {
+        return {
+          success: true,
+          data: (body?.items || []).map((item) => ({ ...item, version: 1 })),
+        };
+      }
+      return {
+        success: true,
+        nodes: [
+          {
+            id: 'node-1',
+            name: 'Demo HK',
+            url: 'vless://demo@example.com:443#Demo',
+            type: 'vless',
+            server: 'example.com',
+            port: 443,
+            region: 'Hong Kong',
+          },
+        ],
+        stats: {
+          protocols: { vless: 1 },
+          regions: { 'Hong Kong': 1 },
         },
-      ],
-      stats: {
-        protocols: { vless: 1 },
-        regions: { 'Hong Kong': 1 },
-      },
-    })),
+      };
+    }),
   },
 }));
 

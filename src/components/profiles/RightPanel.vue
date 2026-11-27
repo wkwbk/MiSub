@@ -201,9 +201,13 @@ const handleGenerateShortLink = async () => {
     customSlug.value = '';
 
     if (result.savedToProfile && activeProfile) {
-      const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === activeProfile.id);
-      if (target) {
-        target.shortLink = result.shortUrl;
+      if (result.profile) {
+        dataStore.syncProfileFromServer(result.profile);
+      } else {
+        const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === activeProfile.id);
+        if (target) {
+          target.shortLink = result.shortUrl;
+        }
       }
       showToast(t('dashboard.linkCard.shortLinkCreatedAndSaved'), 'success');
     } else {

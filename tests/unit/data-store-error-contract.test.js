@@ -53,21 +53,38 @@ describe('useDataStore 错误提示契约（单次提示、不冒泡拒绝）', 
     expect(showToast).not.toHaveBeenCalled();
   });
 
-  it('saveData 失败时提示一次、返回 false 且不抛出', async () => {
+  it('createSubscription 失败时提示一次、返回 { ok: false } 且不抛出', async () => {
     apiPost.mockRejectedValue(new Error('save failed'));
     const { useDataStore } = await import('@/stores/useDataStore.js');
     const store = useDataStore();
 
-    await expect(store.saveData()).resolves.toBe(false);
+    const result = await store.createSubscription({
+      id: 'sub-1',
+      name: 'Sub 1',
+      url: 'https://sub1.example.com/sub',
+      enabled: true,
+      tags: [],
+    });
+    expect(result.ok).toBe(false);
     expect(showToast).toHaveBeenCalledTimes(1);
     expect(showToast.mock.calls[0][1]).toBe('error');
   });
 
-  it('saveData 成功时返回 true', async () => {
-    apiPost.mockResolvedValue({ success: true, data: { misubs: [], profiles: [] } });
+  it('createSubscription 成功时返回 { ok: true, data }', async () => {
+    const created = {
+      id: 'sub-1',
+      name: 'Sub 1',
+      url: 'https://sub1.example.com/sub',
+      enabled: true,
+      tags: [],
+      version: 1,
+    };
+    apiPost.mockResolvedValue({ success: true, data: created });
     const { useDataStore } = await import('@/stores/useDataStore.js');
     const store = useDataStore();
 
-    await expect(store.saveData()).resolves.toBe(true);
+    const result = await store.createSubscription(created);
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ id: 'sub-1', version: 1 });
   });
 });

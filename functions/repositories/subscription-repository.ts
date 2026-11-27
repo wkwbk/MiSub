@@ -46,7 +46,7 @@ export class SubscriptionRepository extends BaseRepository {
       fresh,
       edgeCache: this.edgeCache,
       loader: async () => {
-        const list = await this.storage.getAllSubscriptions();
+        const list = await this.storage.getAllSubscriptions({ fresh });
         return Array.isArray(list) ? list : [];
       },
     });
@@ -64,7 +64,7 @@ export class SubscriptionRepository extends BaseRepository {
       edgeCache: this.edgeCache,
       loader: async () => {
         if (typeof this.storage.getRemoteSubscriptions === 'function') {
-          const rows = await this.storage.getRemoteSubscriptions();
+          const rows = await this.storage.getRemoteSubscriptions({ fresh });
           return Array.isArray(rows) ? rows : [];
         }
         const all = await this.getAll({ fresh });
@@ -155,6 +155,51 @@ export class SubscriptionRepository extends BaseRepository {
     return deleted;
   }
 
+  async compareAndSwap(
+    item: MisubItem,
+    expectedConfigVersion: number,
+    options: { skipOtherTableDelete?: boolean } = {},
+  ): Promise<{ updated: boolean; current: MisubItem | null }> {
+    if (!item?.id) return { updated: false, current: null };
+    if (typeof this.storage.compareAndSwapSubscription === 'function') {
+      const result = await this.storage.compareAndSwapSubscription(item, expectedConfigVersion, options);
+      if (result.updated) {
+        this.invalidateCaches();
+      }
+      return result;
+    }
+    const current = await this.getById(item.id, { fresh: true });
+    const currentVer = Math.max(1, Number(current?.configVersion) || 1);
+    const expectedVer = Math.max(1, Number(expectedConfigVersion) || 1);
+    if (!current || currentVer !== expectedVer) {
+      return { updated: false, current };
+    }
+    const nextItem: MisubItem = {
+      ...item,
+      configVersion: currentVer + 1,
+    };
+    const saved = await this.save(nextItem, options);
+    return { updated: true, current: saved };
+  }
+
+  async deleteManyByIds(ids: string[] = []): Promise<number> {
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean)),
+    );
+    if (uniqueIds.length === 0) return 0;
+    if (typeof this.storage.deleteSubscriptionsByIds === 'function') {
+      const count = await this.storage.deleteSubscriptionsByIds(uniqueIds);
+      this.invalidateCaches();
+      return count;
+    }
+    let deletedCount = 0;
+    for (const id of uniqueIds) {
+      if (await this.storage.deleteSubscriptionById(id)) deletedCount++;
+    }
+    this.invalidateCaches();
+    return deletedCount;
+  }
+
   async updateRuntimeState(
     id: string,
     updater: (item: MisubItem) => MisubItem | void,
@@ -162,17 +207,25 @@ export class SubscriptionRepository extends BaseRepository {
     if (!id || typeof updater !== 'function') return null;
     if (typeof this.storage.updateSubscriptionById === 'function') {
       const updated = await this.storage.updateSubscriptionById(id, (current) => {
-        const next = updater(current);
-        return next && typeof next === 'object' ? next : current;
+        const preservedVersion = Math.max(1, Number(current.configVersion) || 1);
+        const next = updater({ ...current });
+        if (next && typeof next === 'object') {
+          return { ...next, configVersion: preservedVersion };
+        }
+        return { ...current, configVersion: preservedVersion };
       });
       this.invalidateCaches();
       return updated;
     }
     const existing = await this.getById(id, { fresh: true });
     if (!existing) return null;
+    const preservedVersion = Math.max(1, Number(existing.configVersion) || 1);
     const candidate = { ...existing };
     const next = updater(candidate);
-    const updated = next && typeof next === 'object' ? next : candidate;
+    const updated: MisubItem = {
+      ...(next && typeof next === 'object' ? next : candidate),
+      configVersion: preservedVersion,
+    };
     await this.save(updated);
     return updated;
   }

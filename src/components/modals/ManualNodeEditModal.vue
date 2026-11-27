@@ -3,6 +3,8 @@ import { computed, ref } from 'vue';
 import type { ManualNodeItem } from '@misub/core/types.js';
 import { ArrowRightCircle, ClipboardList, CloudUpload, Link2, Tag } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
+import RecordConflictBanner from '@/components/ui/RecordConflictBanner.vue';
+import type { RecordConflictBannerModel } from '@/stores/useDataStore.js';
 import Input from '@/components/ui/Input.vue';
 import TagInput from '@/components/ui/TagInput.vue';
 import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
@@ -22,14 +24,18 @@ const props = withDefaults(
   defineProps<{
     show?: boolean;
     isNew?: boolean;
+    isSaving?: boolean;
     editingNode?: ManualNodeItem | null;
     tags?: string[];
+    conflict?: RecordConflictBannerModel | null;
   }>(),
   {
     show: false,
     isNew: false,
+    isSaving: false,
     editingNode: null,
     tags: () => [],
+    conflict: null,
   },
 );
 
@@ -38,6 +44,8 @@ const emit = defineEmits<{
   'update:editingNode': [value: ManualNodeItem | null];
   confirm: [];
   'input-url': [event: Event];
+  'reload-conflict': [];
+  'force-save-conflict': [];
 }>();
 
 const updateEditingNode = (patch: Partial<ManualNodeItem>): ManualNodeItem | null => {
@@ -50,11 +58,10 @@ const updateEditingNode = (patch: Partial<ManualNodeItem>): ManualNodeItem | nul
   return nextNode;
 };
 const dataStore = useDataStore();
-const { markDirty } = dataStore;
 const { t } = useI18n();
 
-const { addSubscriptionsFromBulk } = useSubscriptions(markDirty);
-const { addNodesFromBulk } = useManualNodes(markDirty);
+const { addSubscriptionsFromBulk } = useSubscriptions();
+const { addNodesFromBulk } = useManualNodes();
 const { handleBulkImport } = useBulkImportLogic({ addSubscriptionsFromBulk, addNodesFromBulk });
 
 // [文件导入] 新增节点时支持选择本地文件，内容直接填入编辑框，复用多行预览与批量导入流程
@@ -62,6 +69,7 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const fileAccept = IMPORT_FILE_ACCEPT;
 const fileNameHint = ref('');
 const isReadingFile = ref(false);
+const isImportingBulk = ref(false);
 
 const openFilePicker = () => {
   fileInputRef.value?.click();
@@ -177,8 +185,16 @@ const handleConfirm = async () => {
       targetTags = autoTag ? [autoTag] : [];
       updateEditingNode({ tags: targetTags });
     }
-    await handleBulkImport(props.editingNode.url, targetTags);
-    emit('update:show', false);
+    if (isImportingBulk.value) return;
+    isImportingBulk.value = true;
+    try {
+      const ok = await handleBulkImport(props.editingNode.url, targetTags);
+      if (ok !== false) {
+        emit('update:show', false);
+      }
+    } finally {
+      isImportingBulk.value = false;
+    }
     return;
   }
 
@@ -206,7 +222,15 @@ const handleConfirm = async () => {
 </script>
 
 <template>
-  <Modal v-if="editingNode" :show="show" size="2xl" @confirm="handleConfirm" @update:show="emit('update:show', $event)">
+  <Modal
+    v-if="editingNode"
+    :close-on-confirm="false"
+    :confirm-disabled="Boolean(isSaving) || isImportingBulk || isReadingFile"
+    :show="show"
+    size="2xl"
+    @confirm="handleConfirm"
+    @update:show="emit('update:show', $event)"
+  >
     <template #title>
       <div class="flex items-center gap-3">
         <Link2 class="h-5 w-5 text-fg-muted shrink-0" />
@@ -227,6 +251,12 @@ const handleConfirm = async () => {
 
     <template #body>
       <div class="space-y-5">
+        <RecordConflictBanner
+          :conflict="conflict"
+          :is-saving="isSaving"
+          @force-save="emit('force-save-conflict')"
+          @reload="emit('reload-conflict')"
+        />
         <!-- 名称和颜色标签 - 两栏布局 -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <!-- 节点名称 -->

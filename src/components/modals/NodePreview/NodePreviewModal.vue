@@ -147,7 +147,7 @@ const clearSelection = () => {
 
 const { showToast } = useToastStore();
 const dataStore = useDataStore();
-const { addNodesFromBulk } = useManualNodes(dataStore.markDirty);
+const { addNodesFromBulk } = useManualNodes();
 
 // 单订阅节点开关 & 延迟测速状态
 const isPublicPreview = computed(() => props.apiEndpoint === API_ENDPOINTS.PUBLIC_PREVIEW);
@@ -191,9 +191,13 @@ const flushDisabledNodesSave = async () => {
   }
   if (!hasPendingDisabledSave) return;
   hasPendingDisabledSave = false;
-  await dataStore.saveData?.().catch((err: unknown) => {
-    console.warn('[NodePreview] Failed to save disabledNodes:', err);
-  });
+  const targetSub = currentSubscriptionRecord.value;
+  if (!targetSub?.id) return;
+  await dataStore.patchSubscription?.(
+    targetSub.id,
+    { disabledNodes: Array.isArray(targetSub.disabledNodes) ? targetSub.disabledNodes : [] },
+    { silent: true },
+  );
 };
 
 const syncDisabledNodesToStore = (immediate = false) => {
@@ -212,7 +216,6 @@ const syncDisabledNodesToStore = (immediate = false) => {
     ...targetSub,
     disabledNodes: nextDisabledNodes,
   });
-  dataStore.markDirty();
   hasPendingDisabledSave = true;
 
   if (saveDisabledTimer) {

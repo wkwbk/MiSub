@@ -42,12 +42,15 @@ export interface StoreMisubItem {
   lastError?: string | null;
   lastUpdate?: string | null;
   sortIndex?: number;
+  configVersion?: number;
   createdAt?: string | null;
   updatedAt?: string | null;
   status?: string;
   colorTag?: string | null;
   remarks?: string;
   latency?: number | null;
+  latencyMode?: string;
+  lastTestedAt?: string | null;
   isUpdating?: boolean;
   enableNodeCache?: boolean;
   excludeTraffic?: boolean;
@@ -122,7 +125,6 @@ export interface AppDataSnapshot {
   profiles: StoreProfileConfig[];
   ruleTemplates: RuleTemplateItem[];
   config: AppSettingsConfig;
-  dataRevision: string;
 }
 
 export interface RawAppDataPayload {
@@ -130,26 +132,8 @@ export interface RawAppDataPayload {
   profiles?: StoreProfileConfig[];
   ruleTemplates?: RuleTemplateItem[];
   config?: Partial<AppSettingsConfig> | null;
-  dataRevision?: string;
   error?: string;
   [key: string]: unknown;
-}
-
-export interface SaveMisubsPayload {
-  misubs: StoreMisubItem[];
-  profiles: StoreProfileConfig[];
-  baseRevision?: string;
-  force?: boolean;
-}
-
-export interface SaveMisubsResponse {
-  success?: boolean;
-  message?: string;
-  dataRevision?: string;
-  data?: {
-    misubs?: StoreMisubItem[];
-    profiles?: StoreProfileConfig[];
-  };
 }
 
 export interface SaveSettingsResponse {
@@ -170,11 +154,6 @@ export interface UseAppDataQueryOptions
   queryClient?: QueryClient;
 }
 
-export interface UseSaveMisubsMutationOptions
-  extends Omit<UseMutationOptions<SaveMisubsResponse, Error, SaveMisubsPayload>, 'mutationFn'> {
-  queryClient?: QueryClient;
-}
-
 export interface SaveSettingsMutationVariables {
   settings: Partial<AppSettingsConfig>;
   preferencesOnly?: boolean;
@@ -190,14 +169,6 @@ const dataCache = createStorageCache('misub_data_cache', TIMING.CACHE_TTL_MS);
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-}
-
-function getConflictDetails(error: unknown): { status?: number; code?: string } {
-  if (!isPlainRecord(error)) return {};
-  const status = typeof error.status === 'number' ? error.status : undefined;
-  const data = isPlainRecord(error.data) ? error.data : undefined;
-  const code = typeof data?.code === 'string' ? data.code : undefined;
-  return { status, code };
 }
 
 function sanitizeConfigForCache(config: Partial<AppSettingsConfig> | Record<string, unknown> = {}): Record<string, unknown> {
@@ -264,14 +235,12 @@ function normalizeAppDataSnapshot(
         ? { ...DEFAULT_SETTINGS, ...fallbackConfig }
         : { ...DEFAULT_SETTINGS }
   ) as AppSettingsConfig;
-  const dataRevision = typeof rawData.dataRevision === 'string' ? rawData.dataRevision : '';
 
   return {
     misubs,
     profiles,
     ruleTemplates,
     config,
-    dataRevision,
   };
 }
 
@@ -284,7 +253,6 @@ function persistAppDataToSessionCache(snapshot: AppDataSnapshot | null | undefin
     }),
     profiles: snapshot.profiles || [],
     ruleTemplates: snapshot.ruleTemplates || [],
-    dataRevision: snapshot.dataRevision || '',
     config: sanitizeConfigForCache(snapshot.config || {}),
   });
 }
@@ -330,6 +298,40 @@ export function hydrateAppDataInQueryClient(
   return normalized;
 }
 
+/**
+ * 将细粒度资源变更后的最新列表同步回 Vue Query 与 sessionStorage 缓存。
+ */
+export function syncAppDataSnapshotToCache(
+  queryClient: QueryClient | null | undefined,
+  patch: {
+    misubs?: StoreMisubItem[];
+    profiles?: StoreProfileConfig[];
+    config?: Partial<AppSettingsConfig>;
+  },
+): void {
+  const current =
+    queryClient?.getQueryData<AppDataSnapshot>(QUERY_KEYS.appData) ??
+    normalizeAppDataSnapshot(readSessionCachedAppData());
+
+  const nextSnapshot: AppDataSnapshot = {
+    misubs: patch.misubs ? patch.misubs.map((sub) => hydrateItemTags({ ...sub, isUpdating: false })) : current?.misubs ?? [],
+    profiles: patch.profiles
+      ? patch.profiles.map((profile) => ({ ...profile, tags: getItemTags(profile) }))
+      : current?.profiles ?? [],
+    ruleTemplates: current?.ruleTemplates ?? [],
+    config: (
+      patch.config
+        ? { ...DEFAULT_SETTINGS, ...current?.config, ...patch.config }
+        : current?.config || { ...DEFAULT_SETTINGS }
+    ) as AppSettingsConfig,
+  };
+
+  if (queryClient) {
+    queryClient.setQueryData(QUERY_KEYS.appData, nextSnapshot);
+  }
+  persistAppDataToSessionCache(nextSnapshot);
+}
+
 export async function fetchAppDataWithQueryClient(
   queryClient: QueryClient,
   { forceRefresh = false }: { forceRefresh?: boolean } = {},
@@ -358,58 +360,6 @@ export async function fetchAppDataWithQueryClient(
   return { data: normalized, fromCache: false };
 }
 
-export async function saveMisubsWithQueryClient(
-  queryClient: QueryClient,
-  payload: SaveMisubsPayload,
-  { fallbackConfig = null }: { fallbackConfig?: Partial<AppSettingsConfig> | null } = {},
-): Promise<SaveMisubsResponse> {
-  await queryClient.cancelQueries({ queryKey: QUERY_KEYS.appData });
-  const previousSnapshot = queryClient.getQueryData<AppDataSnapshot>(QUERY_KEYS.appData);
-
-  if (previousSnapshot) {
-    queryClient.setQueryData(QUERY_KEYS.appData, {
-      ...previousSnapshot,
-      misubs: payload.misubs,
-      profiles: payload.profiles,
-    });
-  }
-
-  try {
-    const rawResult: unknown = await api.post(API_ENDPOINTS.MISUBS, payload);
-    const result = (isPlainRecord(rawResult) ? rawResult : {}) as SaveMisubsResponse;
-    if (!result.success) {
-      throw new Error(result.message || 'Save failed');
-    }
-
-    const nextMisubs = result.data?.misubs || payload.misubs;
-    const nextProfiles = result.data?.profiles || payload.profiles;
-    const nextRevision =
-      typeof result.dataRevision === 'string' ? result.dataRevision : previousSnapshot?.dataRevision || '';
-    const nextSnapshot: AppDataSnapshot = {
-      misubs: nextMisubs,
-      profiles: nextProfiles,
-      ruleTemplates: previousSnapshot?.ruleTemplates || [],
-      config:
-        previousSnapshot?.config ||
-        ({ ...DEFAULT_SETTINGS, ...fallbackConfig } as AppSettingsConfig),
-      dataRevision: nextRevision,
-    };
-
-    queryClient.setQueryData(QUERY_KEYS.appData, nextSnapshot);
-    persistAppDataToSessionCache(nextSnapshot);
-    return result;
-  } catch (error: unknown) {
-    if (previousSnapshot !== undefined) {
-      queryClient.setQueryData(QUERY_KEYS.appData, previousSnapshot);
-    }
-    const { status, code } = getConflictDetails(error);
-    if (status === 409 && code === 'DATA_CONFLICT') {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.appData });
-    }
-    throw error;
-  }
-}
-
 export async function saveSettingsWithQueryClient(
   queryClient: QueryClient,
   newSettings: Partial<AppSettingsConfig>,
@@ -430,7 +380,7 @@ export async function saveSettingsWithQueryClient(
   }
 
   try {
-    const rawResult: unknown = await api.post(
+    const rawResult: unknown = await api.patch(
       API_ENDPOINTS.SETTINGS,
       newSettings,
       preferencesOnly ? { headers: { 'X-MiSub-Save-Scope': 'preferences' } } : {},
@@ -507,17 +457,6 @@ export function useAppDataQuery(options: UseAppDataQueryOptions = {}) {
     {
       queryKey: QUERY_KEYS.appData,
       queryFn: async () => normalizeAppDataSnapshot(await fetchAppDataPayload()),
-      ...options,
-    },
-    queryClient,
-  );
-}
-
-export function useSaveMisubsMutation(options: UseSaveMisubsMutationOptions = {}) {
-  const queryClient = options.queryClient || resolveComponentQueryClient();
-  return useMutation(
-    {
-      mutationFn: (payload: SaveMisubsPayload) => saveMisubsWithQueryClient(queryClient, payload),
       ...options,
     },
     queryClient,

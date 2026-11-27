@@ -51,7 +51,7 @@ describe('批量导入：v2rayn:// 需要走后端解析', () => {
   it('后端转换失败时回退前端解析，不抛错', async () => {
     post.mockRejectedValue(new Error('network down'));
 
-    await expect(bulkImport.handleBulkImport(V2RAYN_LINK, '')).resolves.toBeUndefined();
+    await expect(bulkImport.handleBulkImport(V2RAYN_LINK, '')).resolves.toBe(true);
     expect(addedNodes).toHaveLength(0);
   });
 

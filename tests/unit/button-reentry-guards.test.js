@@ -4,7 +4,8 @@ import { mount } from '@vue/test-utils';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { useManualNodes } from '@/composables/useManualNodes.js';
 import { useSubscriptions } from '@/composables/useSubscriptions.js';
-import SavePrompt from '@/components/ui/SavePrompt.vue';
+import { createI18n } from '@/i18n/index.js';
+import SubscriptionEditModal from '@/components/modals/SubscriptionEditModal.vue';
 import NodeActions from '@/components/nodes/ManualNodePanel/NodeActions.vue';
 
 const { mockPingNode, mockFetchNodeCount, mockShowToast } = vi.hoisted(() => ({
@@ -50,7 +51,6 @@ describe('button reentry guards', () => {
     );
 
     const dataStore = useDataStore();
-    vi.spyOn(dataStore, 'saveData').mockResolvedValue(true);
     dataStore.overwriteSubscriptions([
       {
         id: 'node-1',
@@ -60,7 +60,7 @@ describe('button reentry guards', () => {
       },
     ]);
 
-    const { pingAllNodes, isPingingAll } = useManualNodes(() => {});
+    const { pingAllNodes, isPingingAll } = useManualNodes();
 
     expect(isPingingAll.value).toBe(false);
     const firstRun = pingAllNodes();
@@ -107,7 +107,6 @@ describe('button reentry guards', () => {
     );
 
     const dataStore = useDataStore();
-    vi.spyOn(dataStore, 'saveData').mockResolvedValue(true);
     dataStore.overwriteSubscriptions([
       {
         id: 'sub-1',
@@ -118,7 +117,7 @@ describe('button reentry guards', () => {
       },
     ]);
 
-    const { handleUpdateNodeCount } = useSubscriptions(() => {});
+    const { handleUpdateNodeCount } = useSubscriptions();
     const firstCall = handleUpdateNodeCount('sub-1');
     const duplicateResult = await handleUpdateNodeCount('sub-1');
 
@@ -129,27 +128,33 @@ describe('button reentry guards', () => {
     await firstCall;
   });
 
-  it('disables SavePrompt discard button while saving or discarding', () => {
-    const savingWrapper = mount(SavePrompt, {
-      props: {
-        isDirty: true,
-        saveState: 'saving',
-        isDiscarding: false,
-      },
+  it('disables edit modal confirm button while isSaving is true', () => {
+    const pinia = createPinia();
+    setActivePinia(pinia);
+    const i18n = createI18n({ initialLocale: 'zh-CN' });
+    const editingSubscription = {
+      id: 'sub-1',
+      name: 'Airport A',
+      url: 'https://example.com/sub',
+      enabled: true,
+      tags: [],
+    };
+    const commonGlobal = {
+      plugins: [pinia, i18n],
+      stubs: { Teleport: true, EditForm: true, RuleSection: true, AdvancedOptions: true },
+    };
+
+    const idleWrapper = mount(SubscriptionEditModal, {
+      props: { show: true, isNew: false, isSaving: false, editingSubscription },
+      global: commonGlobal,
+    });
+    const savingWrapper = mount(SubscriptionEditModal, {
+      props: { show: true, isNew: false, isSaving: true, editingSubscription },
+      global: commonGlobal,
     });
 
-    const buttons = savingWrapper.findAll('button');
-    expect(buttons).toHaveLength(2);
-    expect(buttons[0].attributes('disabled')).toBeDefined();
-    expect(buttons[1].attributes('disabled')).toBeDefined();
-
-    const discardingWrapper = mount(SavePrompt, {
-      props: {
-        isDirty: true,
-        saveState: 'idle',
-        isDiscarding: true,
-      },
-    });
-    expect(discardingWrapper.findAll('button')[0].attributes('disabled')).toBeDefined();
+    const idleDisabledCount = idleWrapper.findAll('button').filter((b) => b.attributes('disabled') !== undefined).length;
+    const savingDisabledCount = savingWrapper.findAll('button').filter((b) => b.attributes('disabled') !== undefined).length;
+    expect(savingDisabledCount).toBe(idleDisabledCount + 1);
   });
 });

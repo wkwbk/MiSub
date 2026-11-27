@@ -7,7 +7,8 @@ import {
   rotateProfileLinkId,
 } from '@misub/core/domain/profile-link.js';
 import { validateProfileAliases, validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
-import { handleDataRequest, handleMisubsSave } from '../../functions/modules/api-handler.js';
+import { handleDataRequest } from '../../functions/modules/api-handler.js';
+import { handleProfileCreate } from '../../functions/modules/resource-crud-handler.js';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { LogService } from '../../functions/services/log-service.js';
 import { StorageFactory } from '../../functions/storage-adapter.js';
@@ -81,18 +82,21 @@ describe('profile linkId decoupling, alias validation & scoped log clearing (B.6
     });
   });
 
-  it('lazy-migrates linkId on /api/data and rejects duplicate customId on /api/misubs', async () => {
-    const storedProfiles = [{ id: 'p_legacy', name: 'Legacy', subscriptions: [], manualNodes: [] }];
+  it('lazy-migrates linkId via row-level putAllProfiles on /api/data and rejects duplicate customId on /api/profiles', async () => {
+    const storedProfiles = [
+      { id: 'p_legacy', name: 'Legacy', subscriptions: [], manualNodes: [] },
+      { id: 'p_one', name: 'One', customId: 'TeamA', linkId: 'p_111111111111', subscriptions: [], manualNodes: [] },
+    ];
+    const putAllProfiles = vi.fn().mockResolvedValue(true);
     const syncAllProfiles = vi.fn().mockResolvedValue(true);
-    const syncAllSubscriptions = vi.fn().mockResolvedValue(true);
 
     const adapter = {
       type: 'd1',
       getAllSubscriptions: vi.fn().mockResolvedValue([]),
       getAllProfiles: vi.fn().mockResolvedValue(storedProfiles),
       get: vi.fn(async (key) => (key === STORAGE_KEY_SETTINGS ? {} : null)),
+      putAllProfiles,
       syncAllProfiles,
-      syncAllSubscriptions,
       list: vi.fn().mockResolvedValue([]),
     };
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
@@ -100,20 +104,16 @@ describe('profile linkId decoupling, alias validation & scoped log clearing (B.6
     const dataRes = await handleDataRequest({ MISUB_DB: {} });
     const dataBody = await dataRes.json();
     expect(dataBody.profiles[0].linkId).toMatch(/^p_[a-f0-9]{12}$/);
-    expect(syncAllProfiles).toHaveBeenCalledTimes(1);
+    expect(putAllProfiles).toHaveBeenCalledTimes(1);
+    expect(putAllProfiles.mock.calls[0][0]).toHaveLength(1);
+    expect(syncAllProfiles).not.toHaveBeenCalled();
 
-    const badSaveReq = new Request('https://panel.example/api/misubs', {
+    const dupCreateReq = new Request('https://panel.example/api/profiles', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        misubs: [],
-        profiles: [
-          { id: 'p1', name: 'One', customId: 'TeamA' },
-          { id: 'p2', name: 'Two', customId: 'teama' },
-        ],
-      }),
+      body: JSON.stringify({ name: 'Two', customId: 'teama' }),
     });
-    const saveRes = await handleMisubsSave(badSaveReq, { MISUB_DB: {} });
+    const saveRes = await handleProfileCreate(dupCreateReq, { MISUB_DB: {} });
     expect(saveRes.status).toBe(400);
     const saveJson = await saveRes.json();
     expect(saveJson.success).toBe(false);

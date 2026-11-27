@@ -59,6 +59,13 @@ interface ParsedKeyRoute {
 
 interface DataRow {
   data: string;
+  config_version?: number | string | null;
+}
+
+interface ProfileIdRow {
+  id: string;
+  data?: string;
+  config_version?: number | string | null;
 }
 
 interface CacheRow {
@@ -94,6 +101,70 @@ function extractD1Changes(result: unknown): number {
 export function clearSettingsCache(): void {
   settingsCaches = new WeakMap();
   resetD1CollectionCaches();
+}
+
+function normalizeConfigVersion(primary: unknown, fallback?: unknown): number {
+  const candidate = Number(primary);
+  if (Number.isInteger(candidate) && candidate >= 1) {
+    return candidate;
+  }
+  const fallbackNum = Number(fallback);
+  if (Number.isInteger(fallbackNum) && fallbackNum >= 1) {
+    return fallbackNum;
+  }
+  return 1;
+}
+
+function hydrateEntityConfigVersion<T>(entity: T, columnVersion?: unknown): T {
+  if (!isRecord(entity)) return entity;
+  const copy: Record<string, unknown> = { ...entity };
+  const resolved = normalizeConfigVersion(columnVersion, copy.configVersion ?? copy.version);
+  delete copy.version;
+  copy.configVersion = resolved;
+  return copy as T;
+}
+
+function stripVersionFields<T>(entity: T): T {
+  if (!isRecord(entity)) return entity;
+  const copy: Record<string, unknown> = { ...entity };
+  delete copy.configVersion;
+  delete copy.version;
+  return copy as T;
+}
+
+function prepareEntityForWrite<T>(entity: T): { configVersion: number; cleanItem: T; serialized: string } {
+  if (!isRecord(entity)) {
+    return { configVersion: 1, cleanItem: entity, serialized: JSON.stringify(entity) };
+  }
+  const copy: Record<string, unknown> = { ...entity };
+  const configVersion = normalizeConfigVersion(copy.configVersion, copy.version);
+  delete copy.version;
+  // config_version 独立由 D1 列维护，避免把库表内部版本号冗余写入 raw data JSON
+  const storagePayload: Record<string, unknown> = { ...copy };
+  delete storagePayload.configVersion;
+  copy.configVersion = configVersion;
+  return {
+    configVersion,
+    cleanItem: copy as T,
+    serialized: JSON.stringify(storagePayload),
+  };
+}
+
+function buildJsonSetClauses(fields: Record<string, unknown>): { clauses: string[]; values: unknown[] } {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === undefined || !/^[A-Za-z0-9_]+$/.test(key)) continue;
+    const jsonPath = `$.${key}`;
+    if (value === null || typeof value === 'number' || typeof value === 'string') {
+      clauses.push(`'${jsonPath}', ?`);
+      values.push(value);
+    } else {
+      clauses.push(`'${jsonPath}', json(?)`);
+      values.push(JSON.stringify(value));
+    }
+  }
+  return { clauses, values };
 }
 
 function stableStringify(value: unknown): string {
@@ -373,54 +444,73 @@ class D1StorageAdapter implements StorageAdapter {
 
   async _readTableRows<T extends { id?: string; sortIndex?: number } = Record<string, unknown>>(
     table: string,
+    options: { fresh?: boolean } = {},
   ): Promise<T[]> {
-    return readCachedD1Collection(this.db, table, async () => {
-      try {
-        const results = await this.db.prepare(`SELECT data FROM ${table}`).all<DataRow>();
-        if (!Array.isArray(results?.results)) return [];
+    return readCachedD1Collection(
+      this.db,
+      table,
+      async () => {
+        try {
+          const selectCols = table === 'guestbook' ? 'data' : 'data, config_version';
+          const results = await this._withSchemaRetry(() =>
+            this.db.prepare(`SELECT ${selectCols} FROM ${table}`).all<DataRow>(),
+          );
+          if (!Array.isArray(results?.results)) return [];
 
-        const deduped = new Map<string, T>();
-        results.results.forEach((row) => {
-          const parsed = JSON.parse(row.data) as unknown;
-          if (Array.isArray(parsed)) {
-            parsed.forEach((item) => {
-              if (isRecord(item) && typeof item.id === 'string' && item.id) {
-                deduped.set(item.id, item as T);
-              }
-            });
-          } else if (isRecord(parsed) && typeof parsed.id === 'string' && parsed.id) {
-            deduped.set(parsed.id, parsed as T);
-          }
-        });
-        return Array.from(deduped.values()).sort((a, b) => (Number(a.sortIndex) || 0) - (Number(b.sortIndex) || 0));
-      } catch (error) {
-        invalidateD1CollectionCache(this.db, table);
-        if (isNoSuchTableError(error)) return [];
-        console.error(`[D1] Failed to read ${table}:`, error);
-        return [];
-      }
-    });
+          const deduped = new Map<string, T>();
+          results.results.forEach((row) => {
+            const parsed = JSON.parse(row.data) as unknown;
+            if (Array.isArray(parsed)) {
+              parsed.forEach((item) => {
+                if (isRecord(item) && typeof item.id === 'string' && item.id) {
+                  deduped.set(
+                    item.id,
+                    table === 'guestbook' ? (item as T) : hydrateEntityConfigVersion(item as T, row.config_version),
+                  );
+                }
+              });
+            } else if (isRecord(parsed) && typeof parsed.id === 'string' && parsed.id) {
+              deduped.set(
+                parsed.id,
+                table === 'guestbook' ? (parsed as T) : hydrateEntityConfigVersion(parsed as T, row.config_version),
+              );
+            }
+          });
+          return Array.from(deduped.values()).sort((a, b) => (Number(a.sortIndex) || 0) - (Number(b.sortIndex) || 0));
+        } catch (error) {
+          invalidateD1CollectionCache(this.db, table);
+          if (isNoSuchTableError(error)) return [];
+          console.error(`[D1] Failed to read ${table}:`, error);
+          return [];
+        }
+      },
+      options,
+    );
   }
 
   /**
    * 仅读取远程机场订阅（subscriptions 表）
    */
-  async getRemoteSubscriptions(): Promise<SubscriptionItem[]> {
-    return this._readTableRows<SubscriptionItem>('subscriptions');
+  async getRemoteSubscriptions(options: { fresh?: boolean } = {}): Promise<SubscriptionItem[]> {
+    return this._readTableRows<SubscriptionItem>('subscriptions', options);
   }
 
   /**
    * 仅读取手动节点（nodes 表，不扫描 subscriptions 表）
    */
-  async getManualNodes(): Promise<ManualNodeItem[]> {
-    return this._readTableRows<ManualNodeItem>('nodes');
+  async getManualNodes(options: { fresh?: boolean } = {}): Promise<ManualNodeItem[]> {
+    return this._readTableRows<ManualNodeItem>('nodes', options);
   }
 
   async getSubscriptionById(id: string): Promise<MisubItem | null> {
     for (const table of ['subscriptions', 'nodes']) {
       try {
-        const result = await this.db.prepare(`SELECT data FROM ${table} WHERE id = ?`).bind(id).first<DataRow>();
-        if (result) return JSON.parse(result.data) as MisubItem;
+        const result = await this._withSchemaRetry(() =>
+          this.db.prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`).bind(id).first<DataRow>(),
+        );
+        if (result) {
+          return hydrateEntityConfigVersion(JSON.parse(result.data) as MisubItem, result.config_version);
+        }
       } catch (error) {
         if (!isNoSuchTableError(error)) {
           console.error(`[D1] Failed to get ${table} item ${id}:`, error);
@@ -433,10 +523,10 @@ class D1StorageAdapter implements StorageAdapter {
   /**
    * 读取合并集合（供 /api/data、全局订阅、备份等统一接口使用）
    */
-  async getAllSubscriptions(): Promise<MisubItem[]> {
+  async getAllSubscriptions(options: { fresh?: boolean } = {}): Promise<MisubItem[]> {
     const [subs, nodes] = await Promise.all([
-      this._readTableRows<SubscriptionItem>('subscriptions'),
-      this._readTableRows<ManualNodeItem>('nodes'),
+      this._readTableRows<SubscriptionItem>('subscriptions', options),
+      this._readTableRows<ManualNodeItem>('nodes', options),
     ]);
     const deduped = new Map<string, MisubItem>();
     subs.forEach((item) => {
@@ -459,11 +549,11 @@ class D1StorageAdapter implements StorageAdapter {
     try {
       const result = await this._withSchemaRetry(() =>
         this.db
-          .prepare('SELECT data FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
+          .prepare('SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
           .bind(target, target, target)
           .first<DataRow>(),
       );
-      return result?.data ? (JSON.parse(result.data) as ProfileConfig) : null;
+      return result?.data ? hydrateEntityConfigVersion(JSON.parse(result.data) as ProfileConfig, result.config_version) : null;
     } catch (error) {
       if (isSchemaMismatchError(error)) return null;
       console.error(`[D1] Failed to get profile ${idOrCustomId}:`, error);
@@ -483,7 +573,7 @@ class D1StorageAdapter implements StorageAdapter {
       const rows = await this._withSchemaRetry(() =>
         this.db
           .prepare(
-            'SELECT data FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? OR LOWER(custom_id) = LOWER(?) OR LOWER(link_id) = LOWER(?)',
+            'SELECT data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? OR LOWER(custom_id) = LOWER(?) OR LOWER(link_id) = LOWER(?)',
           )
           .bind(target, target, target, target, target)
           .all<DataRow>(),
@@ -491,7 +581,7 @@ class D1StorageAdapter implements StorageAdapter {
       const candidates = (rows?.results || [])
         .map((row): ProfileConfig | null => {
           try {
-            return JSON.parse(row.data) as ProfileConfig;
+            return hydrateEntityConfigVersion(JSON.parse(row.data) as ProfileConfig, row.config_version);
           } catch {
             return null;
           }
@@ -505,8 +595,8 @@ class D1StorageAdapter implements StorageAdapter {
     }
   }
 
-  async getAllProfiles(): Promise<ProfileConfig[]> {
-    return this._readTableRows<ProfileConfig>('profiles');
+  async getAllProfiles(options: { fresh?: boolean } = {}): Promise<ProfileConfig[]> {
+    return this._readTableRows<ProfileConfig>('profiles', options);
   }
 
   /**
@@ -825,9 +915,11 @@ class D1StorageAdapter implements StorageAdapter {
     let sourceTable: string | null = null;
     for (const table of ['subscriptions', 'nodes']) {
       try {
-        const result = await this.db.prepare(`SELECT data FROM ${table} WHERE id = ?`).bind(id).first<DataRow>();
+        const result = await this._withSchemaRetry(() =>
+          this.db.prepare(`SELECT data, config_version FROM ${table} WHERE id = ?`).bind(id).first<DataRow>(),
+        );
         if (result) {
-          existing = JSON.parse(result.data) as MisubItem;
+          existing = hydrateEntityConfigVersion(JSON.parse(result.data) as MisubItem, result.config_version);
           sourceTable = table;
           break;
         }
@@ -838,38 +930,127 @@ class D1StorageAdapter implements StorageAdapter {
       }
     }
     if (!existing) return null;
-    const updated = updater({ ...existing });
-    const targetTable = isManualNodeRecord(updated) ? 'nodes' : 'subscriptions';
-    await this.putSubscription(updated, { skipOtherTableDelete: sourceTable === targetTable });
-    return updated;
+    const preservedVersion = normalizeConfigVersion(existing.configVersion);
+    const candidate = updater({ ...existing });
+    const updated: MisubItem = {
+      ...candidate,
+      configVersion: preservedVersion,
+    };
+    const { cleanItem, serialized } = prepareEntityForWrite(updated);
+    const targetTable = isManualNodeRecord(cleanItem) ? 'nodes' : 'subscriptions';
+    if (sourceTable === targetTable) {
+      // 运行态局部分支只刷新 data，绝不触发 config_version 自增
+      await this._withSchemaRetry(() =>
+        this.db
+          .prepare(`UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+          .bind(serialized, cleanItem.id)
+          .run(),
+      );
+      invalidateD1CollectionCache(this.db, targetTable);
+      return cleanItem;
+    }
+    await this.putSubscription(cleanItem, { skipOtherTableDelete: false });
+    return cleanItem;
+  }
+
+  async updateSubscriptionRuntimeFields(
+    id: string,
+    fields: Record<string, unknown>,
+    options: { preferredTable?: 'subscriptions' | 'nodes' } = {},
+  ): Promise<MisubItem | null> {
+    const targetId = typeof id === 'string' ? id.trim() : '';
+    if (!targetId || !isRecord(fields)) return null;
+    const { configVersion: _omitCV, version: _omitV, id: _omitId, ...runtimeFields } = fields;
+    const { clauses, values } = buildJsonSetClauses(runtimeFields);
+    if (clauses.length === 0) {
+      return await this.getSubscriptionById(targetId);
+    }
+
+    const searchTables =
+      options?.preferredTable === 'nodes' ? (['nodes', 'subscriptions'] as const) : (['subscriptions', 'nodes'] as const);
+    for (const table of searchTables) {
+      const result = await this._withSchemaRetry(() =>
+        this.db
+          .prepare(
+            `UPDATE ${table} SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          )
+          .bind(...values, targetId)
+          .run(),
+      );
+      if (extractD1Changes(result) > 0) {
+        invalidateD1CollectionCache(this.db, table);
+        return await this.getSubscriptionById(targetId);
+      }
+    }
+    return null;
   }
 
   async putSubscription(item: MisubItem, { skipOtherTableDelete = false }: { skipOtherTableDelete?: boolean } = {}): Promise<MisubItem> {
     const isManual = isManualNodeRecord(item);
     const targetTable = isManual ? 'nodes' : 'subscriptions';
     const otherTable = isManual ? 'subscriptions' : 'nodes';
+    const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
 
     await this._withSchemaRetry(async () => {
       await this.db
         .prepare(
           `
-                INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
-                VALUES (?, ?, CURRENT_TIMESTAMP)
+                INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
             `,
         )
-        .bind(item.id, JSON.stringify(item))
+        .bind(cleanItem.id, serialized, configVersion)
         .run();
     });
     invalidateD1CollectionCache(this.db, targetTable);
 
     if (!skipOtherTableDelete) {
       try {
-        await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id).run();
+        await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
         invalidateD1CollectionCache(this.db, otherTable);
       } catch {}
     }
 
-    return item;
+    return cleanItem;
+  }
+
+  async compareAndSwapSubscription(
+    item: MisubItem,
+    expectedConfigVersion: number,
+    { skipOtherTableDelete = false }: { skipOtherTableDelete?: boolean } = {},
+  ): Promise<{ updated: boolean; current: MisubItem | null }> {
+    const isManual = isManualNodeRecord(item);
+    const targetTable = isManual ? 'nodes' : 'subscriptions';
+    const otherTable = isManual ? 'subscriptions' : 'nodes';
+    const expectedVer = normalizeConfigVersion(expectedConfigVersion);
+    const nextItem: MisubItem = {
+      ...item,
+      configVersion: expectedVer + 1,
+    };
+    const { cleanItem, serialized } = prepareEntityForWrite(nextItem);
+
+    const result = await this._withSchemaRetry(async () =>
+      this.db
+        .prepare(
+          `UPDATE ${targetTable} SET data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
+        )
+        .bind(serialized, cleanItem.id, expectedVer)
+        .run(),
+    );
+
+    if (extractD1Changes(result) > 0) {
+      invalidateD1CollectionCache(this.db, targetTable);
+      if (!skipOtherTableDelete) {
+        try {
+          await this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id).run();
+          invalidateD1CollectionCache(this.db, otherTable);
+        } catch {}
+      }
+      return { updated: true, current: cleanItem };
+    }
+
+    const current = await this.getSubscriptionById(cleanItem.id);
+    return { updated: false, current };
   }
 
   async deleteSubscriptionById(id: string): Promise<boolean> {
@@ -891,23 +1072,111 @@ class D1StorageAdapter implements StorageAdapter {
     return deleted;
   }
 
+  async deleteSubscriptionsByIds(ids: string[] = []): Promise<number> {
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean)),
+    );
+    if (uniqueIds.length === 0) return 0;
+
+    const statements: D1PreparedStatement[] = [];
+    for (const id of uniqueIds) {
+      statements.push(this.db.prepare('DELETE FROM subscriptions WHERE id = ?').bind(id));
+      statements.push(this.db.prepare('DELETE FROM nodes WHERE id = ?').bind(id));
+      statements.push(
+        this.db.prepare('DELETE FROM cache WHERE key = ?').bind(`node_cache_subscription_${encodeURIComponent(id)}`),
+      );
+    }
+
+    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    invalidateD1CollectionCache(this.db, 'subscriptions');
+    invalidateD1CollectionCache(this.db, 'nodes');
+    return uniqueIds.length;
+  }
+
   async putProfile(item: ProfileConfig): Promise<ProfileConfig> {
     const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
     const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+    const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
 
     await this._withSchemaRetry(async () => {
       await this.db
         .prepare(
           `
-                INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
-                VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+                INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
             `,
         )
-        .bind(item.id, customId, linkId, JSON.stringify(item))
+        .bind(cleanItem.id, customId, linkId, serialized, configVersion)
         .run();
     });
     invalidateD1CollectionCache(this.db, 'profiles');
-    return item;
+    return cleanItem;
+  }
+
+  async updateProfileRuntimeFields(idOrCustomId: string, fields: Record<string, unknown>): Promise<ProfileConfig | null> {
+    const target = typeof idOrCustomId === 'string' ? idOrCustomId.trim() : '';
+    if (!target || !isRecord(fields)) return null;
+    const { configVersion: _omitCV, version: _omitV, id: _omitId, ...runtimeFields } = fields;
+    const { clauses, values } = buildJsonSetClauses(runtimeFields);
+    if (clauses.length === 0) {
+      return await this.getProfileById(target);
+    }
+
+    try {
+      const matched = await this._withSchemaRetry(() =>
+        this.db
+          .prepare('SELECT id, data, config_version FROM profiles WHERE id = ? OR custom_id = ? OR link_id = ? LIMIT 1')
+          .bind(target, target, target)
+          .first<ProfileIdRow>(),
+      );
+      if (!matched?.id) return null;
+
+      await this._withSchemaRetry(() =>
+        this.db
+          .prepare(
+            `UPDATE profiles SET data = json_set(data, ${clauses.join(', ')}), updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+          )
+          .bind(...values, matched.id)
+          .run(),
+      );
+      invalidateD1CollectionCache(this.db, 'profiles');
+      return await this.getProfileById(matched.id);
+    } catch (error) {
+      if (isSchemaMismatchError(error)) return null;
+      console.error(`[D1] Failed to update profile runtime fields ${idOrCustomId}:`, error);
+      return null;
+    }
+  }
+
+  async compareAndSwapProfile(
+    item: ProfileConfig,
+    expectedConfigVersion: number,
+  ): Promise<{ updated: boolean; current: ProfileConfig | null }> {
+    const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
+    const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+    const expectedVer = normalizeConfigVersion(expectedConfigVersion);
+    const nextItem: ProfileConfig = {
+      ...item,
+      configVersion: expectedVer + 1,
+    };
+    const { cleanItem, serialized } = prepareEntityForWrite(nextItem);
+
+    const result = await this._withSchemaRetry(async () =>
+      this.db
+        .prepare(
+          `UPDATE profiles SET custom_id = ?, link_id = ?, data = ?, config_version = COALESCE(config_version, 1) + 1, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND COALESCE(config_version, 1) = ?`,
+        )
+        .bind(customId, linkId, serialized, cleanItem.id, expectedVer)
+        .run(),
+    );
+
+    if (extractD1Changes(result) > 0) {
+      invalidateD1CollectionCache(this.db, 'profiles');
+      return { updated: true, current: cleanItem };
+    }
+
+    const current = await this.getProfileById(cleanItem.id);
+    return { updated: false, current };
   }
 
   async deleteProfileById(id: string): Promise<boolean> {
@@ -933,19 +1202,58 @@ class D1StorageAdapter implements StorageAdapter {
     return Boolean(result?.success);
   }
 
+  async deleteProfilesByIds(ids: string[] = []): Promise<number> {
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean)),
+    );
+    if (uniqueIds.length === 0) return 0;
+
+    const existingProfiles = await this._queryByIdsChunked<ProfileConfig>('profiles', uniqueIds).catch(() => []);
+    const cacheKeysToClean = new Set<string>();
+    for (const id of uniqueIds) {
+      cacheKeysToClean.add(`node_cache_profile_${id}`);
+    }
+    for (const profile of existingProfiles) {
+      const customId = typeof profile?.customId === 'string' ? profile.customId.trim() : '';
+      const linkId = typeof profile?.linkId === 'string' ? profile.linkId.trim() : '';
+      if (customId) cacheKeysToClean.add(`node_cache_profile_${customId}`);
+      if (linkId) cacheKeysToClean.add(`node_cache_profile_${linkId}`);
+    }
+
+    const statements: D1PreparedStatement[] = [];
+    for (const id of uniqueIds) {
+      statements.push(this.db.prepare('DELETE FROM profiles WHERE id = ?').bind(id));
+    }
+    for (const cacheKey of cacheKeysToClean) {
+      statements.push(this.db.prepare('DELETE FROM cache WHERE key = ?').bind(cacheKey));
+    }
+
+    await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
+    invalidateD1CollectionCache(this.db, 'profiles');
+    return uniqueIds.length;
+  }
+
   async _queryByIdsChunked<T = MisubItem>(table: string, ids: string[]): Promise<T[]> {
     const CHUNK_SIZE = 90;
     const hits: T[] = [];
+    const selectCols = table === 'guestbook' ? 'data' : 'data, config_version';
     for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
       const chunk = ids.slice(i, i + CHUNK_SIZE);
       const placeholders = chunk.map(() => '?').join(',');
       try {
-        const results = await this.db
-          .prepare(`SELECT data FROM ${table} WHERE id IN (${placeholders})`)
-          .bind(...chunk)
-          .all<DataRow>();
+        const results = await this._withSchemaRetry(() =>
+          this.db
+            .prepare(`SELECT ${selectCols} FROM ${table} WHERE id IN (${placeholders})`)
+            .bind(...chunk)
+            .all<DataRow>(),
+        );
         if (Array.isArray(results?.results)) {
-          hits.push(...results.results.map((row) => JSON.parse(row.data) as T));
+          hits.push(
+            ...results.results.map((row) => {
+              const parsed = JSON.parse(row.data) as T;
+              return table === 'guestbook' ? parsed : hydrateEntityConfigVersion(parsed, row.config_version);
+            }),
+          );
         }
       } catch (error) {
         if (!isNoSuchTableError(error)) throw error;
@@ -1020,15 +1328,16 @@ class D1StorageAdapter implements StorageAdapter {
       const isManual = isManualNodeRecord(item);
       const targetTable = isManual ? 'nodes' : 'subscriptions';
       const otherTable = isManual ? 'subscriptions' : 'nodes';
+      const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
         this.db
           .prepare(
-            `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
-                         VALUES (?, ?, CURRENT_TIMESTAMP)`,
+            `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
           )
-          .bind(item.id, JSON.stringify(item)),
+          .bind(cleanItem.id, serialized, configVersion),
       );
-      statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id));
+      statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
     }
 
     await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
@@ -1045,12 +1354,13 @@ class D1StorageAdapter implements StorageAdapter {
     const statements = validItems.map((item) => {
       const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
       const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+      const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       return this.db
         .prepare(
-          `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
-                     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+                     VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
         )
-        .bind(item.id, customId, linkId, JSON.stringify(item));
+        .bind(cleanItem.id, customId, linkId, serialized, configVersion);
     });
 
     await this._withSchemaRetry(() => this._runBatchOrSequential(statements));
@@ -1088,8 +1398,25 @@ class D1StorageAdapter implements StorageAdapter {
       const existing = currentMap.get(item.id);
       const isManual = isManualNodeRecord(item);
       const needsMigration = isManual ? inSubscriptions.has(item.id) : inNodes.has(item.id);
-      if (!existing || needsMigration || stableStringify(existing) !== stableStringify(item)) {
-        toUpsert.push({ item, isManual, needsMigration });
+      const rawRecord = item as unknown as Record<string, unknown>;
+      const hasExplicitVersion = rawRecord.configVersion !== undefined || rawRecord.version !== undefined;
+      const versionChanged = Boolean(
+        existing &&
+          hasExplicitVersion &&
+          normalizeConfigVersion(rawRecord.configVersion, rawRecord.version) !==
+            normalizeConfigVersion(existing.configVersion),
+      );
+      if (
+        !existing ||
+        needsMigration ||
+        versionChanged ||
+        stableStringify(stripVersionFields(existing)) !== stableStringify(stripVersionFields(item))
+      ) {
+        const candidate =
+          existing && !hasExplicitVersion
+            ? ({ ...item, configVersion: existing.configVersion } as MisubItem)
+            : item;
+        toUpsert.push({ item: candidate, isManual, needsMigration });
       }
     }
 
@@ -1102,16 +1429,17 @@ class D1StorageAdapter implements StorageAdapter {
     for (const { item, isManual, needsMigration } of toUpsert) {
       const targetTable = isManual ? 'nodes' : 'subscriptions';
       const otherTable = isManual ? 'subscriptions' : 'nodes';
+      const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
         this.db
           .prepare(
-            `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
-                         VALUES (?, ?, CURRENT_TIMESTAMP)`,
+            `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+                         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
           )
-          .bind(item.id, JSON.stringify(item)),
+          .bind(cleanItem.id, serialized, configVersion),
       );
       if (needsMigration) {
-        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(item.id));
+        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
       }
     }
 
@@ -1148,13 +1476,26 @@ class D1StorageAdapter implements StorageAdapter {
       if (!item?.id) continue;
       nextIds.add(item.id);
       const existing = currentMap.get(item.id);
+      const rawRecord = item as unknown as Record<string, unknown>;
+      const hasExplicitVersion = rawRecord.configVersion !== undefined || rawRecord.version !== undefined;
       const nextItem = existing
         ? {
             ...item,
+            ...(!hasExplicitVersion ? { configVersion: existing.configVersion } : {}),
             downloadCount: Math.max(Number(existing.downloadCount) || 0, Number(item.downloadCount) || 0),
           }
         : item;
-      if (!existing || stableStringify(existing) !== stableStringify(nextItem)) {
+      const versionChanged = Boolean(
+        existing &&
+          hasExplicitVersion &&
+          normalizeConfigVersion(rawRecord.configVersion, rawRecord.version) !==
+            normalizeConfigVersion(existing.configVersion),
+      );
+      if (
+        !existing ||
+        versionChanged ||
+        stableStringify(stripVersionFields(existing)) !== stableStringify(stripVersionFields(nextItem))
+      ) {
         toUpsert.push(nextItem);
       }
     }
@@ -1168,13 +1509,14 @@ class D1StorageAdapter implements StorageAdapter {
     for (const item of toUpsert) {
       const customId = typeof item?.customId === 'string' && item.customId.trim() ? item.customId.trim() : null;
       const linkId = typeof item?.linkId === 'string' && item.linkId.trim() ? item.linkId.trim() : null;
+      const { configVersion, cleanItem, serialized } = prepareEntityForWrite(item);
       statements.push(
         this.db
           .prepare(
-            `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, updated_at)
-                         VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            `INSERT OR REPLACE INTO profiles (id, custom_id, link_id, data, config_version, updated_at)
+                         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
           )
-          .bind(item.id, customId, linkId, JSON.stringify(item)),
+          .bind(cleanItem.id, customId, linkId, serialized, configVersion),
       );
     }
 
@@ -1439,33 +1781,44 @@ class D1StorageAdapter implements StorageAdapter {
       const record = foundById.get(id);
       if (!record) continue;
 
-      let current: MisubItem = { ...record.item };
+      const preservedVersion = normalizeConfigVersion(record.item.configVersion);
+      let current: MisubItem = { ...record.item, configVersion: preservedVersion };
       for (const updater of groupedUpdaters.get(id) ?? []) {
         const next = updater({ ...current });
         if (next && typeof next === 'object') {
-          current = next;
+          current = { ...next, configVersion: preservedVersion };
         }
       }
       if (!current.id) current.id = id;
+      const { cleanItem, serialized } = prepareEntityForWrite(current);
 
-      const targetTable = isManualNodeRecord(current) ? 'nodes' : 'subscriptions';
+      const targetTable = isManualNodeRecord(cleanItem) ? 'nodes' : 'subscriptions';
       const otherTable = targetTable === 'nodes' ? 'subscriptions' : 'nodes';
       touchedTables.add(targetTable);
 
-      statements.push(
-        this.db
-          .prepare(
-            `INSERT OR REPLACE INTO ${targetTable} (id, data, updated_at)
-             VALUES (?, ?, CURRENT_TIMESTAMP)`,
-          )
-          .bind(current.id, JSON.stringify(current)),
-      );
-      if (record.sourceTable !== targetTable) {
+      if (record.sourceTable === targetTable) {
+        // 运行态批量更新仅覆盖 JSON data，不触发 config_version 列自增
+        statements.push(
+          this.db
+            .prepare(
+              `UPDATE ${targetTable} SET data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            )
+            .bind(serialized, cleanItem.id),
+        );
+      } else {
+        statements.push(
+          this.db
+            .prepare(
+              `INSERT OR REPLACE INTO ${targetTable} (id, data, config_version, updated_at)
+               VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+            )
+            .bind(cleanItem.id, serialized, preservedVersion),
+        );
         touchedTables.add(otherTable);
-        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(current.id));
+        statements.push(this.db.prepare(`DELETE FROM ${otherTable} WHERE id = ?`).bind(cleanItem.id));
       }
 
-      updatedItems.push(current);
+      updatedItems.push(cleanItem);
     }
 
     if (statements.length > 0) {

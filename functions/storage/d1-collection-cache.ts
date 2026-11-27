@@ -62,12 +62,15 @@ export async function readCachedD1Collection<T>(
   database: object,
   table: string,
   loader: () => Promise<T>,
+  options: { fresh?: boolean } = {},
 ): Promise<T> {
   const cache = getD1CollectionCache(database);
   const now = Date.now();
-  const existing = cache.get(table) as CollectionCacheEntry<T> | undefined;
-  if (existing && now - existing.timestamp < D1_COLLECTION_CACHE_TTL_MS) {
-    return structuredClone(await existing.promise);
+  if (!options?.fresh) {
+    const existing = cache.get(table) as CollectionCacheEntry<T> | undefined;
+    if (existing && now - existing.timestamp < D1_COLLECTION_CACHE_TTL_MS) {
+      return structuredClone(await existing.promise);
+    }
   }
 
   const promise = Promise.resolve().then(loader);

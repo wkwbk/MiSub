@@ -17,7 +17,7 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
     vi.resetModules();
   });
 
-  it('enforces optimistic concurrency control via dataRevision and baseRevision with force bypass', async () => {
+  it('enforces row-level D1 config_version OCC with 409 VERSION_CONFLICT and force bypass', async () => {
     const db = createMemoryD1({
       subscriptions: [{ id: 'sub-1', name: 'Sub 1', url: 'https://a.example.com/sub', enabled: true, sortIndex: 0 }],
       profiles: [
@@ -38,67 +38,60 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
       ],
     });
     const env = { MISUB_DB: db };
-    const { handleDataRequest, handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+    const { handleDataRequest } = await import('../../functions/modules/api-handler.js');
+    const { handleSubscriptionPatch } = await import('../../functions/modules/resource-crud-handler.js');
 
     const dataRes = await handleDataRequest(env);
     const dataBody = await dataRes.json();
-    expect(typeof dataBody.dataRevision).toBe('string');
-    expect(dataBody.dataRevision).toHaveLength(16);
+    expect(dataBody.dataRevision).toBeUndefined();
+    expect(dataBody.misubs[0].configVersion).toBe(1);
+    expect(dataBody.profiles[0].configVersion).toBe(1);
 
-    const makeSaveRequest = (body) =>
-      new Request('https://example.com/api/misubs', {
-        method: 'POST',
+    const makePatchRequest = (body) =>
+      new Request('https://example.com/api/subscriptions/sub-1', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
-    // Matching baseRevision succeeds and returns new revision
-    const okRes = await handleMisubsSave(
-      makeSaveRequest({
-        misubs: [{ ...dataBody.misubs[0], name: 'Sub 1 Updated' }],
-        profiles: dataBody.profiles,
-        baseRevision: dataBody.dataRevision,
-      }),
+    // Matching configVersion succeeds and increments DB config_version
+    const okRes = await handleSubscriptionPatch(
+      makePatchRequest({ name: 'Sub 1 Updated', configVersion: 1 }),
       env,
+      'sub-1',
     );
     expect(okRes.status).toBe(200);
     const okBody = await okRes.json();
-    expect(okBody.dataRevision).toBeTruthy();
-    expect(okBody.dataRevision).not.toBe(dataBody.dataRevision);
+    expect(okBody.data.configVersion).toBe(2);
+    expect(db.configVersions.subscriptions.get('sub-1')).toBe(2);
 
-    // Stale baseRevision fails with 409 DATA_CONFLICT
-    const conflictRes = await handleMisubsSave(
-      makeSaveRequest({
-        misubs: dataBody.misubs,
-        profiles: dataBody.profiles,
-        baseRevision: dataBody.dataRevision,
-      }),
+    // Stale configVersion fails with 409 VERSION_CONFLICT and returns current server row
+    const conflictRes = await handleSubscriptionPatch(
+      makePatchRequest({ name: 'Stale Write', configVersion: 1 }),
       env,
+      'sub-1',
     );
     expect(conflictRes.status).toBe(409);
     const conflictBody = await conflictRes.json();
-    expect(conflictBody.code).toBe('DATA_CONFLICT');
-    expect(conflictBody.currentRevision).toBe(okBody.dataRevision);
+    expect(conflictBody.code).toBe('VERSION_CONFLICT');
+    expect(conflictBody.current).toMatchObject({ id: 'sub-1', name: 'Sub 1 Updated', configVersion: 2 });
 
-    // force: true overrides stale revision
-    const forceRes = await handleMisubsSave(
-      makeSaveRequest({
-        misubs: [{ ...dataBody.misubs[0], name: 'Sub 1 Forced' }],
-        profiles: dataBody.profiles,
-        baseRevision: dataBody.dataRevision,
-        force: true,
-      }),
+    // force: true overrides stale configVersion
+    const forceRes = await handleSubscriptionPatch(
+      makePatchRequest({ name: 'Sub 1 Forced', configVersion: 1, force: true }),
       env,
+      'sub-1',
     );
     expect(forceRes.status).toBe(200);
+    expect((await forceRes.json()).data.configVersion).toBe(3);
   });
 
-  it('useDataStore sends baseRevision and handles 409 DATA_CONFLICT gracefully with single toast', async () => {
+  it('useDataStore sends configVersion and handles 409 VERSION_CONFLICT gracefully with single toast', async () => {
     const showToast = vi.fn();
     vi.doMock('@/stores/useToastStore.js', () => ({
       useToastStore: () => ({ showToast }),
     }));
-    const apiPost = vi.fn();
+    const apiPatch = vi.fn();
     const apiGet = vi.fn();
     class MockAPIError extends Error {
       constructor(message, status, data) {
@@ -108,7 +101,7 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
       }
     }
     vi.doMock('@/lib/http.js', () => ({
-      api: { get: apiGet, post: apiPost, put: vi.fn(), del: vi.fn(), patch: vi.fn() },
+      api: { get: apiGet, post: vi.fn(), put: vi.fn(), del: vi.fn(), patch: apiPatch },
       APIError: MockAPIError,
     }));
 
@@ -117,32 +110,41 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
     const store = useDataStore();
 
     store.hydrateFromData({
-      misubs: [{ id: 's1', name: 'S1', url: 'https://s1.example.com' }],
+      misubs: [{ id: 's1', name: 'S1', url: 'https://s1.example.com', configVersion: 1 }],
       profiles: [],
       ruleTemplates: [],
       config: {},
-      dataRevision: 'rev-1',
     });
 
-    apiPost.mockResolvedValueOnce({
+    apiPatch.mockResolvedValueOnce({
       success: true,
-      dataRevision: 'rev-2',
-      data: { misubs: [{ id: 's1', name: 'S1', url: 'https://s1.example.com' }], profiles: [] },
+      data: { id: 's1', name: 'S1 Updated', url: 'https://s1.example.com', enabled: true, tags: [], configVersion: 2 },
     });
-    expect(await store.saveData()).toBe(true);
-    expect(apiPost.mock.calls[0][1].baseRevision).toBe('rev-1');
-    expect(store.dataRevision).toBe('rev-2');
-    expect(store.hasSaveConflict).toBe(false);
+    const okRes = await store.updateSubscriptionRecord('s1', { name: 'S1 Updated' }, { expectedConfigVersion: 1 });
+    expect(okRes.ok).toBe(true);
+    expect(apiPatch.mock.calls[0][1].configVersion).toBe(1);
+    expect(store.subscriptions[0].configVersion).toBe(2);
 
     showToast.mockClear();
-    apiPost.mockRejectedValueOnce(new MockAPIError('conflict', 409, { code: 'DATA_CONFLICT' }));
-    await expect(store.saveData()).resolves.toBe(false);
-    expect(store.hasSaveConflict).toBe(true);
+    const serverCurrent = {
+      id: 's1',
+      name: 'Remote',
+      url: 'https://s1.example.com',
+      enabled: true,
+      tags: [],
+      configVersion: 3,
+    };
+    apiPatch.mockRejectedValueOnce(
+      new MockAPIError('conflict', 409, { code: 'VERSION_CONFLICT', message: 'conflict', current: serverCurrent }),
+    );
+    const conflictRes = await store.updateSubscriptionRecord('s1', { name: 'Stale' }, { expectedConfigVersion: 2 });
+    expect(conflictRes.ok).toBe(false);
+    expect(conflictRes.conflict?.current).toEqual(serverCurrent);
     expect(showToast).toHaveBeenCalledTimes(1);
     expect(showToast.mock.calls[0][1]).toBe('warning');
   });
 
-  it('checks notifications incrementally and preserves untouched profile/token caches on save', async () => {
+  it('checks notifications incrementally and preserves untouched profile/token caches on profile PATCH', async () => {
     const checkAndNotify = vi.fn().mockResolvedValue(undefined);
     vi.doMock('../../functions/modules/notifications.js', () => ({
       checkAndNotify,
@@ -165,6 +167,7 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
           subProfiles: [],
           enabled: true,
           sortIndex: 0,
+          configVersion: 1,
         },
         {
           id: 'prof-edited',
@@ -176,6 +179,7 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
           subProfiles: [],
           enabled: true,
           sortIndex: 1,
+          configVersion: 1,
         },
       ],
       node_cache_profile_untouched: { nodes: 'ok', timestamp: Date.now() },
@@ -183,43 +187,17 @@ describe('Batch 3 optimistic concurrency, incremental cache, and UI performance'
       node_cache_token_main: { nodes: 'token-ok', timestamp: Date.now() },
     });
 
-    const { handleMisubsSave } = await import('../../functions/modules/api-handler.js');
+    const { handleProfilePatch } = await import('../../functions/modules/resource-crud-handler.js');
 
-    // Only edit profile-edited name/description without changing subscriptions
-    const response = await handleMisubsSave(
-      new Request('https://example.com/api/misubs', {
-        method: 'POST',
+    // Only edit profile-edited name without changing subscriptions
+    const response = await handleProfilePatch(
+      new Request('https://example.com/api/profiles/prof-edited', {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          misubs: [
-            { id: 'sub-1', name: 'Unchanged', url: 'https://a.example.com/sub', enabled: true },
-            { id: 'sub-2', name: 'Changed', url: 'https://b.example.com/sub', enabled: true },
-          ],
-          profiles: [
-            {
-              id: 'prof-untouched',
-              name: 'Untouched',
-              customId: 'untouched',
-              linkId: 'link-untouched',
-              subscriptions: ['sub-1'],
-              manualNodes: [],
-              subProfiles: [],
-              enabled: true,
-            },
-            {
-              id: 'prof-edited',
-              name: 'Edited Renamed',
-              customId: 'edited',
-              linkId: 'link-edited',
-              subscriptions: ['sub-2'],
-              manualNodes: [],
-              subProfiles: [],
-              enabled: true,
-            },
-          ],
-        }),
+        body: JSON.stringify({ name: 'Edited Renamed', configVersion: 1 }),
       }),
       { MISUB_DB: db },
+      'prof-edited',
     );
 
     expect(response.status).toBe(200);

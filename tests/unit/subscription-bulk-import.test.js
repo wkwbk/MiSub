@@ -57,14 +57,14 @@ describe('机场订阅专用批量导入（多标签支持）', () => {
     expect(extractSubscriptionTagNames(dataStore.subscriptions)).toEqual(['机场A', '主力', '机场B']);
   });
 
-  it('只导入 http/https 订阅链接，忽略节点分享链接，且不填写标签时 tags 为空数组', () => {
+  it('只导入 http/https 订阅链接，忽略节点分享链接，且不填写标签时 tags 为空数组', async () => {
     const input = [
       'https://new-sub.com/api/v1/client/subscribe?token=abc#MySub',
       'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443#OKRA',
       'http://another-sub.com/link',
     ].join('\n');
 
-    importer.handleSubscriptionBulkImport(input, []);
+    await importer.handleSubscriptionBulkImport(input, []);
 
     const urls = dataStore.subscriptions.map((s) => s.url);
     expect(urls).toContain('https://new-sub.com/api/v1/client/subscribe?token=abc#MySub');
@@ -78,28 +78,28 @@ describe('机场订阅专用批量导入（多标签支持）', () => {
     expect(toastStore.toasts.at(-1)?.message).toContain('2');
   });
 
-  it('填写标签时规范化写入 tags 数组', () => {
-    importer.handleSubscriptionBulkImport('https://sub-a2.com/sub', ['机场A', '流媒体']);
+  it('填写标签时规范化写入 tags 数组', async () => {
+    await importer.handleSubscriptionBulkImport('https://sub-a2.com/sub', ['机场A', '流媒体']);
     const tagged = dataStore.subscriptions.find((s) => s.url === 'https://sub-a2.com/sub');
     expect(tagged.tags).toEqual(['机场A', '流媒体']);
     expect(tagged).not.toHaveProperty('group');
 
-    importer.handleSubscriptionBulkImport('https://sub-c.com/sub', ['  新机场C  ']);
+    await importer.handleSubscriptionBulkImport('https://sub-c.com/sub', ['  新机场C  ']);
     const created = dataStore.subscriptions.find((s) => s.url === 'https://sub-c.com/sub');
     expect(created.tags).toEqual(['新机场C']);
   });
 
-  it('全部为非订阅链接时给出明确警告且不写入数据', () => {
+  it('全部为非订阅链接时给出明确警告且不写入数据', async () => {
     const initialCount = dataStore.subscriptions.length;
-    importer.handleSubscriptionBulkImport('vless://uuid@host:443#node\nvmess://abc', []);
+    await importer.handleSubscriptionBulkImport('vless://uuid@host:443#node\nvmess://abc', []);
 
     expect(dataStore.subscriptions).toHaveLength(initialCount);
     expect(toastStore.toasts.at(-1)?.type).toBe('warning');
   });
 
-  it('全部为重复订阅链接时提示已存在', () => {
+  it('全部为重复订阅链接时提示已存在', async () => {
     const initialCount = dataStore.subscriptions.length;
-    importer.handleSubscriptionBulkImport('https://airport-a.com/sub?token=existing', []);
+    await importer.handleSubscriptionBulkImport('https://airport-a.com/sub?token=existing', []);
 
     expect(dataStore.subscriptions).toHaveLength(initialCount);
     expect(toastStore.toasts.at(-1)?.type).toBe('info');

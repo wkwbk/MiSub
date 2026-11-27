@@ -69,7 +69,6 @@ const emit = defineEmits<{
   updateNodeCount: [id: string];
   edit: [id: string];
   toggleSort: [];
-  markDirty: [];
   preview: [id: string];
   deleteAll: [];
   refreshAll: [];
@@ -193,18 +192,12 @@ const handlePreview = (id: string) => emit('preview', id);
 const handleQRCode = (id: string) => emit('qrcode', id);
 const handleAdd = () => emit('add');
 const handleToggleSort = () => emit('toggleSort');
-const handleSortEnd = () => emit('markDirty');
 const handleToggleEnabled = (subscription: PanelSubscription, enabled: boolean | undefined) => {
   if (typeof enabled === 'boolean') {
     emit('toggle', { id: subscription.id, enabled });
   }
-  handleSortEnd();
 };
-const handleDragEnd = (evt: DragEndEvent) => {
-  if (hasDragOrderChanged(evt)) {
-    handleSortEnd();
-  }
-};
+const handleDragEnd = (_evt: DragEndEvent) => {};
 const handleDeleteAll = () => emit('deleteAll');
 const handleRefreshAll = () => emit('refreshAll');
 const handleImport = () => emit('import');

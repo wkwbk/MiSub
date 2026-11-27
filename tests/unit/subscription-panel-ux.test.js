@@ -210,7 +210,7 @@ describe('SubscriptionPanel UX', () => {
     expect(card.classes()).toContain('select-none');
   });
 
-  it('does not emit markDirty when drag ends at the same index', async () => {
+  it('does not trigger reorder or errors when drag ends at the same index', async () => {
     const subs = [
       { id: 's1', name: 'A', url: 'https://a.test/sub' },
       { id: 's2', name: 'B', url: 'https://b.test/sub' },
@@ -225,6 +225,6 @@ describe('SubscriptionPanel UX', () => {
       oldIndex: 0,
       newIndex: 0,
     });
-    expect(wrapper.emitted('markDirty')).toBeUndefined();
+    expect(wrapper.emitted('reorder')).toBeUndefined();
   });
 });

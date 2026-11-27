@@ -1,27 +1,29 @@
+import { computed, ref } from 'vue';
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
 
 export const useEditorStore = defineStore('editor', () => {
-  const isDirty = ref(false);
+  const pendingMutations = ref(0);
   const isLoading = ref(false);
+  const isMutating = computed(() => pendingMutations.value > 0);
 
-  function markDirty(): void {
-    isDirty.value = true;
+  function beginMutation(): void {
+    pendingMutations.value += 1;
   }
 
-  function clearDirty(): void {
-    isDirty.value = false;
+  function endMutation(): void {
+    pendingMutations.value = Math.max(0, pendingMutations.value - 1);
   }
 
   function setLoading(loading: boolean): void {
-    isLoading.value = loading;
+    isLoading.value = Boolean(loading);
   }
 
   return {
-    isDirty,
+    pendingMutations,
+    isMutating,
     isLoading,
-    markDirty,
-    clearDirty,
+    beginMutation,
+    endMutation,
     setLoading,
   };
 });

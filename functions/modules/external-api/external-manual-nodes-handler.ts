@@ -49,6 +49,7 @@ async function removeManualNodeIdFromProfiles(storageAdapter: StorageAdapter, id
     const updated = {
       ...profile,
       manualNodes: manualNodes.filter((item) => item !== id),
+      configVersion: Math.max(1, Number(profile.configVersion) || 1) + 1,
       updatedAt: nowIso(),
     };
     await storageAdapter.putProfile(updated);
@@ -138,6 +139,7 @@ export async function handleExternalManualNodesRequest(
       tags: normalizeStringArray(payload.tags),
       remarks: String(payload.remarks || '').trim(),
       sortIndex: Number.isFinite(Number(payload.sortIndex)) ? Number(payload.sortIndex) : nextSortIndex(all),
+      configVersion: 1,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
@@ -157,6 +159,7 @@ export async function handleExternalManualNodesRequest(
       ...(payload.tags !== undefined ? { tags: normalizeStringArray(payload.tags) } : {}),
       ...(payload.remarks !== undefined ? { remarks: String(payload.remarks || '').trim() } : {}),
       ...(payload.sortIndex !== undefined ? { sortIndex: Number(payload.sortIndex) || 0 } : {}),
+      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
       updatedAt: nowIso(),
     };
     if (!String(updated.name || '').trim())

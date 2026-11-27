@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
 import { nextTick } from 'vue';
 import { useDataStore } from '@/stores/useDataStore.js';
@@ -18,7 +18,7 @@ describe('subscription list search', () => {
       { id: 'n1', name: '手动节点', url: 'ss://example' },
     ];
 
-    const { filteredSubscriptions, searchQuery } = useSubscriptions(vi.fn());
+    const { filteredSubscriptions, searchQuery } = useSubscriptions();
 
     searchQuery.value = '流媒体';
     await nextTick();
@@ -49,7 +49,7 @@ describe('subscription list search', () => {
       })),
     ];
 
-    const { filteredSubscriptions } = useSubscriptions(vi.fn());
+    const { filteredSubscriptions } = useSubscriptions();
     expect(filteredSubscriptions.value.map((item) => item.id)).toHaveLength(12);
   });
 
@@ -60,7 +60,7 @@ describe('subscription list search', () => {
       { id: 'p2', name: '游戏订阅', description: '低延迟线路', customId: 'gaming' },
     ];
 
-    const { filteredProfiles, searchQuery } = useProfiles(vi.fn());
+    const { filteredProfiles, searchQuery } = useProfiles();
 
     searchQuery.value = 'gaming';
     expect(filteredProfiles.value.map((item) => item.id)).toEqual(['p2']);

@@ -187,39 +187,53 @@ export async function handleDeleteCommand(
       allSubscriptions.splice(idx, 1);
     }
 
-    if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+    if (typeof storageAdapter.deleteSubscriptionsByIds === 'function') {
+      await storageAdapter.deleteSubscriptionsByIds(deletedIds);
+    } else if (typeof storageAdapter.deleteSubscriptionById === 'function') {
+      for (const delId of deletedIds) {
+        await storageAdapter.deleteSubscriptionById(delId);
+      }
+    } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
       await storageAdapter.syncAllSubscriptions(allSubscriptions);
     } else {
       await storageAdapter.putAllSubscriptions(allSubscriptions);
     }
 
-    // 3. 清理订阅组中的引用
+    // 3. 清理订阅组中的引用（仅写入受影响行）
     try {
       const profiles = await storageAdapter.getAllProfiles();
       if (profiles.length > 0) {
-        let profilesUpdated = false;
+        const changedProfiles = [];
         const idsToRemove = new Set(deletedIds);
 
-        profiles.forEach((profile) => {
-          // 清理 manualNodes
-          if (Array.isArray(profile.manualNodes)) {
-            const prevLen = profile.manualNodes.length;
-            profile.manualNodes = profile.manualNodes.filter((id) => !idsToRemove.has(id));
-            if (profile.manualNodes.length !== prevLen) profilesUpdated = true;
+        for (const profile of profiles) {
+          let rowChanged = false;
+          const nextProfile = { ...profile };
+          if (Array.isArray(nextProfile.manualNodes)) {
+            const filteredNodes = nextProfile.manualNodes.filter((id) => !idsToRemove.has(id));
+            if (filteredNodes.length !== nextProfile.manualNodes.length) {
+              nextProfile.manualNodes = filteredNodes;
+              rowChanged = true;
+            }
           }
-          // 清理 subscriptions
-          if (Array.isArray(profile.subscriptions)) {
-            const prevLen = profile.subscriptions.length;
-            profile.subscriptions = profile.subscriptions.filter(
+          if (Array.isArray(nextProfile.subscriptions)) {
+            const filteredSubs = nextProfile.subscriptions.filter(
               (item) => !(typeof item === 'string' && idsToRemove.has(item)),
             );
-            if (profile.subscriptions.length !== prevLen) profilesUpdated = true;
+            if (filteredSubs.length !== nextProfile.subscriptions.length) {
+              nextProfile.subscriptions = filteredSubs;
+              rowChanged = true;
+            }
           }
-        });
+          if (rowChanged) {
+            nextProfile.configVersion = Math.max(1, Number(profile.configVersion) || 1) + 1;
+            changedProfiles.push(nextProfile);
+          }
+        }
 
-        if (profilesUpdated) {
-          await storageAdapter.putAllProfiles(profiles);
-          console.info(`[Telegram Push] Cleaned up ${deletedIds.length} node references from profiles`);
+        if (changedProfiles.length > 0) {
+          await storageAdapter.putAllProfiles(changedProfiles);
+          console.info(`[Telegram Push] Cleaned up ${deletedIds.length} node references from ${changedProfiles.length} profiles`);
         }
       }
     } catch (cleanupError: unknown) {
@@ -628,14 +642,24 @@ export async function handleDupCommand(
     }
 
     if (action === 'clean' || action === 'remove') {
-      // 自动清理重复
+      // 自动清理重复（直接按行 ID 删除，不使用全表覆盖同步）
+      const duplicateIds: string[] = [];
       const indicesToDelete = duplicates.map((d) => indexMapping[d.idx]).sort((a, b) => b - a);
 
       for (const idx of indicesToDelete) {
+        if (allSubscriptions[idx]?.id) {
+          duplicateIds.push(allSubscriptions[idx].id);
+        }
         allSubscriptions.splice(idx, 1);
       }
 
-      if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+      if (typeof storageAdapter.deleteSubscriptionsByIds === 'function') {
+        await storageAdapter.deleteSubscriptionsByIds(duplicateIds);
+      } else if (typeof storageAdapter.deleteSubscriptionById === 'function') {
+        for (const dupId of duplicateIds) {
+          await storageAdapter.deleteSubscriptionById(dupId);
+        }
+      } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
         await storageAdapter.syncAllSubscriptions(allSubscriptions);
       } else {
         await storageAdapter.putAllSubscriptions(allSubscriptions);

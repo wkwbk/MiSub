@@ -14,14 +14,8 @@ import {
   normalizeLoginPath,
   readJsonWithLimit,
 } from './utils.js';
-import {
-  checkAndNotify,
-  type NotifiableSubscription,
-  type NotificationSettings,
-  sendTgNotification,
-} from './notifications.js';
+import { sendTgNotification } from './notifications.js';
 import { clearAllNodeCaches } from '../services/node-cache-service.js';
-import { buildSubscriptionNodeCacheKey } from '../services/subscription-service.js';
 import { WEBDAV_LAST_CHECKED_CACHE_KEY } from './scheduled-task-runner.js';
 
 import { DEFAULT_SETTINGS as defaultSettings } from './config.js';
@@ -32,7 +26,6 @@ import {
   normalizeProfileIdentifier,
 } from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
-import { validateProfileAliases } from '@misub/core/domain/profile-alias.js';
 import { listRuleTemplates } from './handlers/rule-template-handler.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { type AccessControlConfig, enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
@@ -47,7 +40,7 @@ type SubscriptionLike = Partial<MisubItem> &
     name?: string;
     enabled?: boolean;
     enableNodeCache?: boolean;
-    userInfo?: NotifiableSubscription['userInfo'];
+    userInfo?: unknown;
   };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -65,7 +58,7 @@ function getErrorStatus(error: unknown): number | undefined {
   return undefined;
 }
 
-function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
+export function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
   const normalized: ProfileLike = { ...profile };
   normalized.subscriptions = Array.isArray(profile.subscriptions)
     ? (profile.subscriptions as ProfileSubscriptionRef[])
@@ -85,7 +78,7 @@ function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
   return normalized;
 }
 
-function stableSerialize(value: unknown): string {
+export function stableSerialize(value: unknown): string {
   if (value === null || typeof value !== 'object') {
     return JSON.stringify(value);
   }
@@ -97,24 +90,7 @@ function stableSerialize(value: unknown): string {
   return `{${keys.map((key) => `${JSON.stringify(key)}:${stableSerialize(obj[key])}`).join(',')}}`;
 }
 
-function stripTransientSubscriptionFields(sub: unknown): unknown {
-  if (!isRecord(sub)) return sub;
-  const { isUpdating: _omitIsUpdating, ...rest } = sub;
-  return rest;
-}
-
-async function computeDataRevision(misubs: unknown[] = [], profiles: unknown[] = []): Promise<string> {
-  const canonicalSubs = (Array.isArray(misubs) ? misubs : []).map(stripTransientSubscriptionFields);
-  const canonicalProfiles = Array.isArray(profiles) ? profiles : [];
-  const payload = stableSerialize({ misubs: canonicalSubs, profiles: canonicalProfiles });
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload));
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 16);
-}
-
-function pickSubscriptionCacheRelevantFields(sub: SubscriptionLike = {}) {
+export function pickSubscriptionCacheRelevantFields(sub: SubscriptionLike = {}) {
   return {
     id: sub.id || '',
     url: sub.url || '',
@@ -133,7 +109,7 @@ function pickSubscriptionCacheRelevantFields(sub: SubscriptionLike = {}) {
   };
 }
 
-function getChangedSubscriptionIds(
+export function getChangedSubscriptionIds(
   previousMisubs: SubscriptionLike[] = [],
   finalMisubs: SubscriptionLike[] = [],
 ): Set<string> {
@@ -170,7 +146,7 @@ function getChangedSubscriptionIds(
   return changed;
 }
 
-function shouldCheckSubscriptionNotification(
+export function shouldCheckSubscriptionNotification(
   sub: SubscriptionLike | null | undefined,
   prevSub: SubscriptionLike | undefined,
 ): boolean {
@@ -188,10 +164,11 @@ function normalizeProfileForDiff(profile: ProfileLike = {}): ProfileLike {
   const normalized = normalizeProfile(profile);
   delete normalized.downloadCount;
   delete normalized.updatedAt;
+  delete normalized.configVersion;
   return normalized;
 }
 
-function getAffectedProfileIds(
+export function getAffectedProfileIds(
   previousProfiles: ProfileLike[] = [],
   finalProfiles: ProfileLike[] = [],
   changedSubIds = new Set<string>(),
@@ -284,9 +261,9 @@ export async function handleDataRequest(
     const repos = createRepositories(env, context);
     const storageAdapter = repos.storage;
     const [misubs, rawProfiles, rawSettings, ruleTemplates] = await Promise.all([
-      repos.subscriptions.getAll(),
-      repos.profiles.getAll(),
-      repos.settings.getMain(),
+      repos.subscriptions.getAll({ fresh: true }),
+      repos.profiles.getAll({ fresh: true }),
+      repos.settings.getMain({ fresh: context?.settings === undefined }),
       listRuleTemplates(storageAdapter).catch((error: unknown) => {
         console.warn('[API /data] Failed to load custom rule templates:', getErrorMessage(error));
         return [];
@@ -294,19 +271,19 @@ export async function handleDataRequest(
     ]);
     const settings: Record<string, unknown> = isRecord(rawSettings) ? rawSettings : {};
     const rawList: ProfileConfig[] = Array.isArray(rawProfiles) ? rawProfiles : [];
-    const needsLinkIdMigration = rawList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
-    const migratedRawProfiles = needsLinkIdMigration ? rawList.map((p) => ensureProfileLinkId(p)) : rawList;
-    if (
-      needsLinkIdMigration &&
-      storageAdapter?.type !== 'noop' &&
-      typeof storageAdapter.syncAllProfiles === 'function'
-    ) {
-      await repos.profiles.syncAll(migratedRawProfiles).catch((err: unknown) => {
+    const profilesNeedingLinkId = rawList.filter((p) => p && !normalizeProfileIdentifier(p.linkId));
+    const migratedLinkIds = new Map(
+      profilesNeedingLinkId.map((p) => {
+        const ensured = ensureProfileLinkId(p);
+        return [ensured.id, ensured] as const;
+      }),
+    );
+    if (migratedLinkIds.size > 0 && storageAdapter?.type !== 'noop') {
+      await repos.profiles.putMany(Array.from(migratedLinkIds.values())).catch((err: unknown) => {
         console.warn('[API /data] Failed to persist linkId migration:', getErrorMessage(err));
       });
     }
-    const profiles = migratedRawProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
-    const dataRevision = await computeDataRevision(misubs, profiles);
+    const profiles = rawList.map((p) => normalizeProfile(migratedLinkIds.get(p?.id) || ensureProfileLinkId(p)));
     const config = redactSettingsForResponse(
       {
         ...defaultSettings,
@@ -315,7 +292,7 @@ export async function handleDataRequest(
       env,
       { scope: 'data' },
     );
-    return createJsonResponse({ misubs, profiles, ruleTemplates, config, dataRevision });
+    return createJsonResponse({ misubs, profiles, ruleTemplates, config });
   } catch (e) {
     console.error('[API Error /data] Failed to read from storage', {
       error: getErrorMessage(e),
@@ -323,247 +300,6 @@ export async function handleDataRequest(
       hasD1: !!env?.MISUB_DB,
     });
     return createErrorResponse(e, 500);
-  }
-}
-
-/**
- * 处理订阅和配置保存API
- */
-export async function handleMisubsSave(
-  request: Request,
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
-  try {
-    // 步骤1: 解析请求体
-    let requestData: unknown;
-    try {
-      requestData = await readJsonWithLimit(request, JSON_BODY_LIMITS.large);
-    } catch (parseError) {
-      console.error('[API Error /misubs] JSON解析失败:', parseError);
-      const parseStatus = getErrorStatus(parseError);
-      const parseMessage = getErrorMessage(parseError);
-      return createJsonResponse(
-        {
-          success: false,
-          message: parseStatus === 413 ? parseMessage : '请求数据格式错误，请检查数据格式',
-        },
-        parseStatus || 400,
-      );
-    }
-
-    const requestObj = isRecord(requestData) ? requestData : {};
-    const { misubs, profiles, baseRevision, force = false } = requestObj;
-    const repos = createRepositories(env, context);
-    const storageAdapter = repos.storage;
-    if (!storageAdapter || storageAdapter.type === 'noop') {
-      return createJsonResponse(
-        {
-          success: false,
-          message: 'D1 database not available',
-        },
-        503,
-      );
-    }
-
-    // 步骤2: 验证必需字段
-    if (typeof misubs === 'undefined' || typeof profiles === 'undefined') {
-      return createJsonResponse(
-        {
-          success: false,
-          message: '请求体中缺少 misubs 或 profiles 字段',
-        },
-        400,
-      );
-    }
-
-    // 步骤3: 验证数据类型
-    if (!Array.isArray(misubs) || !Array.isArray(profiles)) {
-      return createJsonResponse(
-        {
-          success: false,
-          message: 'misubs 和 profiles 必须是数组格式',
-        },
-        400,
-      );
-    }
-
-    const [previousMisubs, previousProfiles] = await Promise.all([
-      typeof storageAdapter.getAllSubscriptions === 'function'
-        ? Promise.resolve(repos.subscriptions.getAll({ fresh: true })).catch(() => [])
-        : Promise.resolve([]),
-      typeof storageAdapter.getAllProfiles === 'function'
-        ? Promise.resolve(repos.profiles.getAll({ fresh: true })).catch(() => [])
-        : Promise.resolve([]),
-    ]);
-    const safePrevMisubs: SubscriptionLike[] = Array.isArray(previousMisubs) ? previousMisubs : [];
-    const safePrevProfiles: ProfileLike[] = Array.isArray(previousProfiles) ? previousProfiles : [];
-    const normalizedPreviousProfiles = safePrevProfiles.map((p) => normalizeProfile(ensureProfileLinkId(p)));
-
-    if (typeof baseRevision === 'string' && baseRevision.trim() && !force) {
-      const currentRevision = await computeDataRevision(safePrevMisubs, normalizedPreviousProfiles);
-      if (baseRevision.trim() !== currentRevision) {
-        return createJsonResponse(
-          {
-            success: false,
-            code: 'DATA_CONFLICT',
-            message: '数据已在其他终端或标签页更新，请刷新最新数据后再保存',
-            currentRevision,
-          },
-          409,
-        );
-      }
-    }
-
-    const prevSubMap = new Map(
-      safePrevMisubs.filter((s): s is SubscriptionLike & { id: string } => Boolean(s?.id)).map((s) => [s.id, s]),
-    );
-    const prevProfileMap = new Map(
-      safePrevProfiles.filter((p): p is ProfileLike & { id: string } => Boolean(p?.id)).map((p) => [p.id, p]),
-    );
-
-    const finalProfiles = profiles.map((p, index) => {
-      const profileObj: ProfileLike = isRecord(p) ? p : {};
-      const normalized = normalizeProfile(profileObj);
-      const existingPrev = normalized.id ? prevProfileMap.get(normalized.id) : undefined;
-      const preservedLinkId = !normalized.linkId ? normalizeProfileIdentifier(existingPrev?.linkId) : '';
-      return ensureProfileLinkId({
-        ...normalized,
-        ...(preservedLinkId ? { linkId: preservedLinkId } : {}),
-        sortIndex: index,
-      });
-    });
-
-    const aliasValidation = validateProfileAliases(finalProfiles, { previousProfiles: safePrevProfiles });
-    if (!aliasValidation.valid) {
-      return createJsonResponse(
-        {
-          success: false,
-          message: aliasValidation.message || '自定义别名校验失败',
-          code: aliasValidation.code || 'invalid_custom_id',
-        },
-        400,
-      );
-    }
-
-    const finalMisubs: SubscriptionLike[] = misubs.map((s, index) => ({
-      ...(isRecord(s) ? (s as SubscriptionLike) : {}),
-      sortIndex: index,
-    }));
-
-    // 步骤4: 获取设置（带错误处理）
-    let settings: NotificationSettings;
-    try {
-      const loadedSettings = await repos.settings.getMain();
-      settings =
-        isRecord(loadedSettings) && Object.keys(loadedSettings).length > 0
-          ? (loadedSettings as NotificationSettings)
-          : defaultSettings;
-    } catch {
-      settings = defaultSettings; // 使用默认设置继续
-    }
-
-    // 步骤5: 增量处理通知（仅对新增或关键字段变更的启用订阅检查，非阻塞）
-    const subsToNotify = (finalMisubs || []).filter((sub) =>
-      shouldCheckSubscriptionNotification(sub, sub?.id ? prevSubMap.get(sub.id) : undefined),
-    );
-    if (subsToNotify.length > 0) {
-      try {
-        const notificationPromises = subsToNotify.map((sub) =>
-          checkAndNotify(sub as NotifiableSubscription, settings, env).catch((notifyError: unknown) => {
-            console.warn('[API] Notification failed for subscription:', sub?.name || sub?.url, notifyError);
-          }),
-        );
-
-        // 并行处理通知；在 Cloudflare Workers 中通过 waitUntil 防止响应返回后任务被中止
-        const notificationBatch = Promise.allSettled(notificationPromises).catch((e: unknown) => {
-          console.warn('[API] Notification batch error:', e);
-        });
-        if (typeof context?.waitUntil === 'function') {
-          context.waitUntil(notificationBatch);
-        }
-      } catch (notificationError) {
-        console.warn('[API] Notification system error:', notificationError);
-      }
-    }
-
-    // 步骤6: 保存数据到存储（通过仓储层触发差异同步与多级缓存失效）
-    try {
-      await Promise.all([
-        repos.subscriptions.syncAll(finalMisubs as MisubItem[]),
-        repos.profiles.syncAll(finalProfiles as ProfileConfig[]),
-      ]);
-    } catch (storageError) {
-      console.error('[API Error /misubs] Storage put failed:', storageError);
-      return createJsonResponse(
-        {
-          success: false,
-          message: `数据保存失败: ${getErrorMessage(storageError) || '存储服务暂时不可用，请稍后重试'}`,
-        },
-        500,
-      );
-    }
-
-    // 步骤6.5: 增量清除节点缓存（保留开启缓存的订阅及未受影响的订阅组缓存）
-    try {
-      const preserveKeys = (Array.isArray(finalMisubs) ? finalMisubs : [])
-        .filter((sub) => sub?.enableNodeCache === true)
-        .map((sub) => buildSubscriptionNodeCacheKey(sub));
-      const changedSubIds = getChangedSubscriptionIds(safePrevMisubs, finalMisubs);
-      const affectedProfileIds = getAffectedProfileIds(normalizedPreviousProfiles, finalProfiles, changedSubIds);
-      const preserveProfileKeys: string[] = [];
-      for (const profile of finalProfiles) {
-        if (!profile?.id || affectedProfileIds.has(profile.id)) continue;
-        const identifiers = new Set(
-          [profile.id, profile.customId, profile.linkId].map((v) => String(v || '').trim()).filter(Boolean),
-        );
-        for (const pid of identifiers) {
-          preserveProfileKeys.push(`node_cache_profile_${pid}`);
-        }
-      }
-
-      const cacheOptions: {
-        preserveKeys: string[];
-        preserveProfileKeys?: string[];
-        skipTokenCaches?: boolean;
-      } = { preserveKeys };
-      if (preserveProfileKeys.length > 0) {
-        cacheOptions.preserveProfileKeys = preserveProfileKeys;
-      }
-      if (safePrevMisubs.length > 0 && changedSubIds.size === 0) {
-        cacheOptions.skipTokenCaches = true;
-      }
-
-      const cacheResult = await clearAllNodeCaches(storageAdapter, cacheOptions);
-      console.info(
-        `[API] Cleared ${cacheResult.cleared} node caches after subscription update, preserved ${cacheResult.skipped || 0}`,
-      );
-    } catch (cacheError) {
-      // 缓存清除失败不影响保存结果
-      console.warn('[API] Failed to clear node caches:', getErrorMessage(cacheError));
-    }
-
-    const nextRevision = await computeDataRevision(finalMisubs, finalProfiles);
-
-    // 步骤7: 返回保存后的数据，确保前端能更新状态
-    return createJsonResponse({
-      success: true,
-      message: '订阅源及订阅组已保存',
-      dataRevision: nextRevision,
-      data: {
-        misubs: finalMisubs,
-        profiles: finalProfiles,
-      },
-    });
-  } catch (e) {
-    console.error('[API Error /misubs] Uncaught error:', e);
-    return createJsonResponse(
-      {
-        success: false,
-        message: `保存失败: ${getErrorMessage(e) || '服务器内部错误，请稍后重试'}`,
-      },
-      500,
-    );
   }
 }
 
@@ -682,7 +418,7 @@ export async function handleSettingsGet(
     const repos = createRepositories(env, context);
     const storageAdapter = repos.storage;
     const [rawSettings, cachedCheck] = await Promise.all([
-      repos.settings.getMain(),
+      repos.settings.getMain({ fresh: context?.settings === undefined }),
       storageAdapter.get<{ checkedAt?: string } | string>(WEBDAV_LAST_CHECKED_CACHE_KEY, 'json').catch(() => null),
     ]);
     const settings = isRecord(rawSettings) ? (rawSettings as Partial<typeof defaultSettings>) : {};
@@ -1016,15 +752,17 @@ export async function handlePublicProfilesRequest(
     };
 
     const rawProfileList: ProfileConfig[] = Array.isArray(profiles) ? profiles : [];
-    const needsLinkIdMigration = rawProfileList.some((p) => p && !normalizeProfileIdentifier(p.linkId));
-    const ensuredProfiles = needsLinkIdMigration ? rawProfileList.map((p) => ensureProfileLinkId(p)) : rawProfileList;
-    if (
-      needsLinkIdMigration &&
-      storageAdapter?.type !== 'noop' &&
-      typeof storageAdapter.syncAllProfiles === 'function'
-    ) {
-      await repos.profiles.syncAll(ensuredProfiles).catch(() => {});
+    const profilesNeedingLinkId = rawProfileList.filter((p) => p && !normalizeProfileIdentifier(p.linkId));
+    const migratedMap = new Map(
+      profilesNeedingLinkId.map((p) => {
+        const ensured = ensureProfileLinkId(p);
+        return [ensured.id, ensured] as const;
+      }),
+    );
+    if (migratedMap.size > 0 && storageAdapter?.type !== 'noop') {
+      await repos.profiles.putMany(Array.from(migratedMap.values())).catch(() => {});
     }
+    const ensuredProfiles = rawProfileList.map((p) => migratedMap.get(p?.id) || p);
 
     // 过滤出公开且启用的订阅组
     const publicProfiles = ensuredProfiles

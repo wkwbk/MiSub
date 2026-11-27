@@ -24,14 +24,15 @@ const pushMock = vi.fn();
 const subscriptionsRef = { value: [] };
 const manualNodesRef = { value: [] };
 
-// 忽略列表现在随设置同步到服务端（useDataStore.saveSettings → POST /api/settings），
+// 忽略列表现在随设置同步到服务端（useDataStore.saveSettings → PATCH /api/settings），
 // 所以要把 http 层挡掉，才能断言「确实发出了同步请求」以及「同步失败时的表现」。
-const { postMock } = vi.hoisted(() => ({ postMock: vi.fn() }));
+const { patchMock } = vi.hoisted(() => ({ patchMock: vi.fn() }));
 
 vi.mock('@/lib/http.js', () => ({
   api: {
     get: vi.fn(),
-    post: postMock,
+    post: vi.fn(),
+    patch: patchMock,
     put: vi.fn(),
     delete: vi.fn(),
   },
@@ -105,8 +106,8 @@ describe('DashboardView 待处理事项', () => {
     // 忽略列表已改为存在设置里，不再需要清 localStorage；
     // 但一次性迁移会读旧键，所以要把它清干净，避免用例互相污染。
     localStorage.clear();
-    postMock.mockReset();
-    postMock.mockResolvedValue({ success: true });
+    patchMock.mockReset();
+    patchMock.mockResolvedValue({ success: true });
     const dataStore = useDataStore();
     dataStore.profiles = [{ id: 'profile-1', name: '日常', enabled: true, customId: 'daily' }];
     useSettingsStore().setConfig({ myToken: 'stable-token', profileToken: 'share-token' });
@@ -364,7 +365,7 @@ describe('DashboardView 待处理事项', () => {
     // The rest of the list is untouched.
     expect(wrapper.vm.dashboardHealthItems.map((i) => i.id)).toContain('disabled-subscriptions');
     // 关键：同步到设置接口，而不是只留在本机
-    expect(postMock).toHaveBeenCalledWith(
+    expect(patchMock).toHaveBeenCalledWith(
       '/api/settings',
       { dismissedHealthItems: ['missing-token'] },
       PREFERENCES_SAVE_OPTIONS,
@@ -403,7 +404,7 @@ describe('DashboardView 待处理事项', () => {
     expect(wrapper.vm.dashboardHealthItems.length).toBe(1);
     expect(wrapper.vm.dismissedHealthItemsCount).toBe(0);
     expect(wrapper.find('[data-testid="health-items-restore"]').exists()).toBe(false);
-    expect(postMock).toHaveBeenLastCalledWith('/api/settings', { dismissedHealthItems: [] }, PREFERENCES_SAVE_OPTIONS);
+    expect(patchMock).toHaveBeenLastCalledWith('/api/settings', { dismissedHealthItems: [] }, PREFERENCES_SAVE_OPTIONS);
   });
 
   it('keeps the dismissal in the settings store so a remount still hides it', async () => {
@@ -428,7 +429,7 @@ describe('DashboardView 待处理事项', () => {
 
   it('surfaces an error toast and keeps the item when syncing fails', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'timeout' })];
-    postMock.mockRejectedValueOnce(new Error('NetworkError'));
+    patchMock.mockRejectedValueOnce(new Error('NetworkError'));
 
     const wrapper = mountDashboard();
     await wrapper.vm.$nextTick();
@@ -456,7 +457,7 @@ describe('DashboardView 待处理事项', () => {
     await wrapper.vm.dismissHealthItemById('auto-token');
     await flushPromises();
 
-    expect(postMock).not.toHaveBeenCalled();
+    expect(patchMock).not.toHaveBeenCalled();
   });
 
   // --- 旧数据一次性迁移（老用户的忽略记录只在 localStorage 里） ---
@@ -469,7 +470,7 @@ describe('DashboardView 待处理事项', () => {
     const wrapper = mountDashboard();
     await flushPromises();
 
-    expect(postMock).toHaveBeenCalledWith(
+    expect(patchMock).toHaveBeenCalledWith(
       '/api/settings',
       { dismissedHealthItems: ['subscription-errors'] },
       PREFERENCES_SAVE_OPTIONS,
@@ -489,7 +490,7 @@ describe('DashboardView 待处理事项', () => {
 
     // 服务端那份为准：它更新、且汇总了所有设备。
     // 否则会把用户在别的设备上「全部恢复」掉的项又塞回来。
-    expect(postMock).not.toHaveBeenCalled();
+    expect(patchMock).not.toHaveBeenCalled();
     expect(wrapper.vm.dismissedHealthItemIds).toEqual(['low-traffic']);
     expect(localStorage.getItem('misub:dismissedHealthItems')).toBeNull();
   });
@@ -497,7 +498,7 @@ describe('DashboardView 待处理事项', () => {
   it('keeps the legacy record when the migration cannot be synced', async () => {
     subscriptionsRef.value = [buildSub({ id: 'failed', lastError: 'timeout' })];
     localStorage.setItem('misub:dismissedHealthItems', JSON.stringify(['auto-token']));
-    postMock.mockRejectedValueOnce(new Error('boom'));
+    patchMock.mockRejectedValueOnce(new Error('boom'));
 
     mountDashboard();
     await flushPromises();

@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDataStore } from '@/stores/useDataStore.js';
+import { useDataStore, type MutationResult, type RecordPatchOptions } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import type { StoreMisubItem } from '@/queries/useAppDataQueries.js';
@@ -78,7 +78,7 @@ function normalizeTcpingResult(entry: TcpingEntry | undefined): PingResult {
   };
 }
 
-export function useManualNodes(markDirty: () => void) {
+export function useManualNodes() {
   const { showToast } = useToastStore();
   const dataStore = useDataStore();
   const settingsStore = useSettingsStore();
@@ -166,8 +166,13 @@ export function useManualNodes(markDirty: () => void) {
     activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
   }
 
-  function batchUpdateTags(nodeIds: string[], payload: TagBatchUpdatePayload): void {
-    if (!nodeIds || nodeIds.length === 0) return;
+  async function batchUpdateTags(
+    nodeIds: string[],
+    payload: TagBatchUpdatePayload,
+  ): Promise<MutationResult<StoreMisubItem[]>> {
+    if (!nodeIds || nodeIds.length === 0) {
+      return { ok: true, data: [] };
+    }
 
     let mode: TagBatchMode = 'replace';
     let inputTags: unknown = payload;
@@ -182,32 +187,34 @@ export function useManualNodes(markDirty: () => void) {
       .map((n) => {
         const { nextTags, changed } = computeBatchUpdatedTags(getItemTags(n), inputTags, mode);
         if (!changed) return null;
-        return { id: n.id, updates: applyItemTags(n, nextTags) };
+        return { id: n.id, tags: nextTags };
       })
-      .filter((item): item is { id: string; updates: StoreMisubItem } => item !== null);
+      .filter((item): item is { id: string; tags: string[] } => item !== null);
 
-    if (updates.length > 0) {
-      updates.forEach(({ id, updates: nextNode }) => {
-        dataStore.updateSubscription(id, nextNode);
-      });
-      markDirty();
+    if (updates.length === 0) {
+      return { ok: true, data: [] };
+    }
+
+    const res = await dataStore.batchUpdateNodeTagsRecord(updates);
+    if (res.ok) {
       showToast(t('manualNodes.batchTagsUpdated', { count: updates.length }), 'success');
     }
+    return res;
   }
 
-  function batchDeleteNodes(nodeIds: string[]): void {
-    if (!nodeIds || nodeIds.length === 0) return;
+  async function batchDeleteNodes(nodeIds: string[]) {
+    if (!nodeIds || nodeIds.length === 0) {
+      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
+    }
 
-    nodeIds.forEach((id) => {
-      dataStore.removeSubscription(id);
-    });
-    dataStore.removeManualNodeFromProfiles(nodeIds);
-
-    markDirty();
-    showToast(t('manualNodes.deletedCount', { count: nodeIds.length }), 'success');
+    const res = await dataStore.batchDeleteNodesRecord({ ids: nodeIds });
+    if (res.ok) {
+      showToast(t('manualNodes.deletedCount', { count: nodeIds.length }), 'success');
+    }
+    return res;
   }
 
-  function addNode(node: StoreMisubItem): void {
+  async function addNode(node: StoreMisubItem): Promise<MutationResult<StoreMisubItem>> {
     const cleanedUrl = cleanNodeUrl(node.url);
     const normalizedNode = applyItemTags(
       {
@@ -219,12 +226,17 @@ export function useManualNodes(markDirty: () => void) {
     if (!normalizedNode.name) {
       normalizedNode.name = extractNodeName(normalizedNode.url);
     }
-    dataStore.addSubscription(normalizedNode);
-    manualNodesCurrentPage.value = 1;
-    markDirty();
+    const res = await dataStore.createNode(normalizedNode);
+    if (res.ok) {
+      manualNodesCurrentPage.value = 1;
+    }
+    return res;
   }
 
-  function updateNode(updatedNode: StoreMisubItem): void {
+  async function updateNode(
+    updatedNode: StoreMisubItem,
+    options: RecordPatchOptions = {},
+  ): Promise<MutationResult<StoreMisubItem>> {
     const normalizedNode = applyItemTags(
       {
         ...updatedNode,
@@ -232,77 +244,90 @@ export function useManualNodes(markDirty: () => void) {
       },
       updatedNode.tags,
     );
-    dataStore.updateSubscription(normalizedNode.id, normalizedNode);
-    markDirty();
+    const {
+      id: _id,
+      sortIndex: _sortIndex,
+      configVersion: _configVersion,
+      version: _version,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      latency: _latency,
+      latencyMode: _latencyMode,
+      lastTestedAt: _lastTestedAt,
+      status: _status,
+      ...patchFields
+    } = normalizedNode as StoreMisubItem;
+    return await dataStore.updateNodeRecord(normalizedNode.id, patchFields, options);
   }
 
-  function deleteNode(nodeId: string): void {
-    dataStore.removeSubscription(nodeId);
-    dataStore.removeManualNodeFromProfiles(nodeId);
-    markDirty();
+  async function deleteNode(nodeId: string) {
+    return await dataStore.deleteNodeRecord(nodeId);
   }
 
-  function deleteAllNodes(): void {
+  async function deleteAllNodes() {
     const idsToRemove = manualNodes.value.map((n) => n.id);
 
     if (idsToRemove.length === 0) {
       showToast(t('manualNodes.noNodesToDelete'), 'info');
-      return;
+      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
     }
 
-    idsToRemove.forEach((id) => dataStore.removeSubscription(id));
-    dataStore.removeManualNodeFromProfiles(idsToRemove);
-
-    manualNodesCurrentPage.value = 1;
-    markDirty();
-    showToast(t('manualNodes.clearedCount', { count: idsToRemove.length }), 'success');
+    const res = await dataStore.batchDeleteNodesRecord({ all: true });
+    if (res.ok) {
+      manualNodesCurrentPage.value = 1;
+      showToast(t('manualNodes.clearedCount', { count: idsToRemove.length }), 'success');
+    }
+    return res;
   }
 
-  function addNodesFromBulk(
+  async function addNodesFromBulk(
     nodes: Array<
       | StoreMisubItem
       | { id?: string; name: string; url: string; enabled: boolean; tags?: string[]; [key: string]: unknown }
     >,
     tagsInput: string | string[] = [],
-  ): void {
+  ): Promise<MutationResult<StoreMisubItem[]>> {
     const extraTags = normalizeTagList(tagsInput);
-    for (let i = nodes.length - 1; i >= 0; i--) {
-      const node = { ...nodes[i] };
+    const prepared = nodes.map((raw) => {
+      const node = { ...raw };
       node.url = cleanNodeUrl(node.url);
       const mergedTags =
         extraTags.length > 0 ? normalizeTagList([...extraTags, ...getItemTags(node)]) : getItemTags(node);
-      dataStore.addSubscription(applyItemTags(node, mergedTags) as StoreMisubItem);
-    }
-    markDirty();
+      return applyItemTags(node, mergedTags) as StoreMisubItem;
+    });
+    return await dataStore.createNodesBatch(prepared);
   }
 
   const buildDedupPlan = (): DedupPlan => buildDedupPlanCore(manualNodes.value);
 
-  function applyDedupPlan(plan: DedupPlan | null | undefined): void {
+  async function applyDedupPlan(plan: DedupPlan | null | undefined) {
     if (!plan || !plan.removeNodes || plan.removeNodes.length === 0) {
       showToast(t('manualNodes.noDuplicates'), 'info');
-      return;
+      return { ok: true, data: { deletedIds: [], updatedProfiles: [] } };
     }
 
-    plan.removeNodes.forEach((node) => {
-      dataStore.removeSubscription(node.id);
-      if (typeof dataStore.removeManualNodeFromProfiles === 'function') {
-        dataStore.removeManualNodeFromProfiles(node.id);
-      }
-    });
-    showToast(t('manualNodes.removedDuplicates', { count: plan.removeNodes.length }), 'success');
-    markDirty();
-    manualNodesCurrentPage.value = 1;
+    const idsToRemove = plan.removeNodes.map((node) => node.id);
+    const res = await dataStore.batchDeleteNodesRecord({ ids: idsToRemove });
+    if (res.ok) {
+      showToast(t('manualNodes.removedDuplicates', { count: idsToRemove.length }), 'success');
+      manualNodesCurrentPage.value = 1;
+    }
+    return res;
   }
 
-  function autoSortNodes(): void {
+  async function autoSortNodes(): Promise<MutationResult<StoreMisubItem[]>> {
     const mergedList = buildAutoSortedSubscriptions(allSubscriptions.value || [], manualNodes.value);
-    dataStore.overwriteSubscriptions(mergedList);
-    manualNodesCurrentPage.value = 1;
-    markDirty();
+    const orderedIds = mergedList
+      .filter((item) => item.url && !/^https?:\/\//i.test(item.url))
+      .map((item) => item.id);
+    const res = await dataStore.reorderNodesRecord(orderedIds, mergedList);
+    if (res.ok) {
+      manualNodesCurrentPage.value = 1;
+    }
+    return res;
   }
 
-  function sortNodesByLatency(): boolean {
+  async function sortNodesByLatency(): Promise<boolean> {
     const results = pingResults.value || {};
     const hasAnyLatency = Object.values(results).some(
       (item) => item && item.status === 'ok' && Number.isFinite(item.latency),
@@ -323,14 +348,18 @@ export function useManualNodes(markDirty: () => void) {
     });
 
     const otherItems = (allSubscriptions.value || []).filter((item) => !nodes.some((n) => n.id === item.id));
-    dataStore.overwriteSubscriptions([...nodes, ...otherItems]);
+    const res = await dataStore.reorderNodesRecord(
+      nodes.map((n) => n.id),
+      [...nodes, ...otherItems],
+    );
 
-    manualNodesCurrentPage.value = 1;
-    markDirty();
-    return true;
+    if (res.ok) {
+      manualNodesCurrentPage.value = 1;
+    }
+    return res.ok;
   }
 
-  function reorderManualNodes(newOrder: StoreMisubItem[]): void {
+  async function reorderManualNodes(newOrder: StoreMisubItem[]): Promise<MutationResult<StoreMisubItem[]>> {
     const currentManualNodes = manualNodes.value;
     const reorderedVisibleNodes = [...(newOrder || [])];
     const newOrderIds = new Set(reorderedVisibleNodes.map((node) => node.id));
@@ -347,8 +376,10 @@ export function useManualNodes(markDirty: () => void) {
     );
 
     const mergedList = [...orderedManualNodes, ...currentSubscriptions];
-    dataStore.overwriteSubscriptions(mergedList);
-    markDirty();
+    return await dataStore.reorderNodesRecord(
+      orderedManualNodes.map((n) => n.id),
+      mergedList,
+    );
   }
 
   const getStoredTagOrder = (): string[] => {
@@ -360,14 +391,14 @@ export function useManualNodes(markDirty: () => void) {
     return collectTags(manualNodes.value, getStoredTagOrder());
   });
 
-  function renameTag(oldName: string, newName: string): void {
+  async function renameTag(oldName: string, newName: string): Promise<void> {
     const normalizedOldName = normalizeTagName(oldName);
     const normalizedNewName = normalizeTagName(newName);
     if (!normalizedOldName || !normalizedNewName || normalizedOldName === normalizedNewName) {
       return;
     }
 
-    let changed = false;
+    const updates: Array<{ id: string; tags: string[] }> = [];
     manualNodes.value.forEach((node) => {
       const { nextTags, changed: itemChanged } = renameTagInList(
         getItemTags(node),
@@ -375,10 +406,13 @@ export function useManualNodes(markDirty: () => void) {
         normalizedNewName,
       );
       if (itemChanged) {
-        dataStore.updateSubscription(node.id, applyItemTags(node, nextTags));
-        changed = true;
+        updates.push({ id: node.id, tags: nextTags });
       }
     });
+
+    if (updates.length > 0) {
+      await dataStore.batchUpdateNodeTagsRecord(updates);
+    }
 
     const customOrder = getStoredTagOrder();
     if (customOrder.includes(normalizedOldName)) {
@@ -400,22 +434,23 @@ export function useManualNodes(markDirty: () => void) {
         activeTagFilters.value.map((tag) => (tag === normalizedOldName ? normalizedNewName : tag)),
       );
     }
-
-    if (changed) markDirty();
   }
 
-  function deleteTag(tagName: string): void {
+  async function deleteTag(tagName: string): Promise<void> {
     const normalizedTagName = normalizeTagName(tagName);
     if (!normalizedTagName) return;
 
-    let changed = false;
+    const updates: Array<{ id: string; tags: string[] }> = [];
     manualNodes.value.forEach((node) => {
       const { nextTags, changed: itemChanged } = removeTagFromList(getItemTags(node), normalizedTagName);
       if (itemChanged) {
-        dataStore.updateSubscription(node.id, applyItemTags(node, nextTags));
-        changed = true;
+        updates.push({ id: node.id, tags: nextTags });
       }
     });
+
+    if (updates.length > 0) {
+      await dataStore.batchUpdateNodeTagsRecord(updates);
+    }
 
     const customOrder = getStoredTagOrder();
     const nextOrder = customOrder.filter((tag) => tag !== normalizedTagName);
@@ -433,8 +468,6 @@ export function useManualNodes(markDirty: () => void) {
     if (activeTagFilters.value.includes(normalizedTagName)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalizedTagName);
     }
-
-    if (changed) markDirty();
   }
 
   function reorderTags(newOrder: string[]): void {

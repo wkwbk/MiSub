@@ -3,7 +3,7 @@
  */
 
 import { Hono } from 'hono';
-import { MisubsSaveRequestSchema, NodeCountRequestSchema, ParseSubscriptionRequestSchema } from '@misub/core/schemas';
+import { NodeCountRequestSchema, ParseSubscriptionRequestSchema } from '@misub/core/schemas';
 import { encodeArrayBufferToBase64 } from '@misub/core/utils/base64.js';
 import type { BoundRequestContext, Env, HonoEnv } from '../types.js';
 import {
@@ -22,7 +22,6 @@ import {
 } from './auth-middleware.js';
 import {
   handleDataRequest,
-  handleMisubsSave,
   handlePublicConfig,
   handlePublicProfilesRequest,
   handleSettingsGet,
@@ -60,6 +59,29 @@ import {
 import { handleAppStoreReleaseRequest, handleGithubReleaseRequest } from './handlers/github-proxy-handler.js';
 import { handleParseSubscription } from './handlers/parse-subscription-handler.js';
 import { handleShortLinkCreate, handleShortLinkTest } from './handlers/shortlink-handler.js';
+import {
+  handleNodeCreate,
+  handleNodeDelete,
+  handleNodePatch,
+  handleNodesBatch,
+  handleNodesBatchDelete,
+  handleNodesBatchTags,
+  handleNodesReorder,
+  handleProfileCreate,
+  handleProfileDelete,
+  handleProfilePatch,
+  handleProfilesBatchAction,
+  handleProfilesBatchDelete,
+  handleProfilesBatchTags,
+  handleProfilesReorder,
+  handleSubscriptionCreate,
+  handleSubscriptionDelete,
+  handleSubscriptionPatch,
+  handleSubscriptionsBatch,
+  handleSubscriptionsBatchDelete,
+  handleSubscriptionsBatchTags,
+  handleSubscriptionsReorder,
+} from './resource-crud-handler.js';
 import { redactUrl, safeFetchPublicNetworkUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/core/main-handler.js';
 import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/core/visual-rules-builder.js';
@@ -268,46 +290,79 @@ function createApiRouter() {
     return await handleTelegramSetupRequest(c.req.raw, c.env);
   });
 
-  apiApp.post(
-    '/misubs',
-    zodJsonValidator(MisubsSaveRequestSchema, {
-      maxBytes: JSON_BODY_LIMITS.large,
-      skipIf: (c) => {
-        const ctx = getBoundContext(c.req.raw, c.env);
-        const storage = ctx?.storage || StorageFactory.createAdapter(c.env);
-        return !storage || storage.type === 'noop';
-      },
-      onParseError: (parseError) =>
-        createJsonResponse(
-          {
-            success: false,
-            message: parseError.status === 413 ? parseError.message : '请求数据格式错误，请检查数据格式',
-          },
-          parseError.status || 400,
-        ),
-      onValidationError: (_error, raw) => {
-        const rawObj = isRecord(raw) ? raw : null;
-        if (!rawObj || typeof rawObj.misubs === 'undefined' || typeof rawObj.profiles === 'undefined') {
-          return createJsonResponse(
-            {
-              success: false,
-              message: '请求体中缺少 misubs 或 profiles 字段',
-            },
-            400,
-          );
-        }
-        return createJsonResponse(
-          {
-            success: false,
-            message: 'misubs 和 profiles 必须是数组格式',
-          },
-          400,
-        );
-      },
-    }),
-    (c) => handleMisubsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  // --- 细粒度资源 CRUD 路由（静态路径置于 :id 之前） ---
+  apiApp.post('/subscriptions/batch', (c) =>
+    handleSubscriptionsBatch(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
   );
-  apiApp.all('/misubs', (c) => handleMisubsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/subscriptions/batch', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/subscriptions/batch-delete', (c) =>
+    handleSubscriptionsBatchDelete(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/subscriptions/batch-delete', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/subscriptions/batch-tags', (c) =>
+    handleSubscriptionsBatchTags(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/subscriptions/batch-tags', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/subscriptions/reorder', (c) =>
+    handleSubscriptionsReorder(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/subscriptions/reorder', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/subscriptions', (c) =>
+    handleSubscriptionCreate(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/subscriptions', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.patch('/subscriptions/:id', (c) =>
+    handleSubscriptionPatch(c.req.raw, c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.delete('/subscriptions/:id', (c) =>
+    handleSubscriptionDelete(c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/subscriptions/:id', () => createErrorResponse('Method Not Allowed', 405));
+
+  apiApp.all('/nodes/inspect', (c) => handleNodeInspectRequest(c.req.raw, c.env));
+  apiApp.all('/nodes/tcping', (c) => handleNodeTcpingRequest(c.req.raw, c.env));
+  apiApp.post('/nodes/batch', (c) => handleNodesBatch(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/nodes/batch', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/nodes/batch-delete', (c) =>
+    handleNodesBatchDelete(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/nodes/batch-delete', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/nodes/batch-tags', (c) => handleNodesBatchTags(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/nodes/batch-tags', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/nodes/reorder', (c) => handleNodesReorder(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/nodes/reorder', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/nodes', (c) => handleNodeCreate(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/nodes', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.patch('/nodes/:id', (c) =>
+    handleNodePatch(c.req.raw, c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.delete('/nodes/:id', (c) => handleNodeDelete(c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/nodes/:id', () => createErrorResponse('Method Not Allowed', 405));
+
+  apiApp.post('/profiles/batch', (c) =>
+    handleProfilesBatchAction(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/profiles/batch', () => createErrorResponse('Method Not Allowed', 405));
+
+  apiApp.post('/profiles/batch-delete', (c) =>
+    handleProfilesBatchDelete(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/profiles/batch-delete', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/profiles/batch-tags', (c) =>
+    handleProfilesBatchTags(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/profiles/batch-tags', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/profiles/reorder', (c) => handleProfilesReorder(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/profiles/reorder', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.post('/profiles', (c) => handleProfileCreate(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.all('/profiles', () => createErrorResponse('Method Not Allowed', 405));
+  apiApp.patch('/profiles/:id', (c) =>
+    handleProfilePatch(c.req.raw, c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.delete('/profiles/:id', (c) =>
+    handleProfileDelete(c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
+  );
+  apiApp.all('/profiles/:id', () => createErrorResponse('Method Not Allowed', 405));
 
   apiApp.all('/rule_templates', (c) => handleRuleTemplatesRequest(c.req.raw, c.env));
   apiApp.all('/backup/export', (c) => handleBackupExport(c.req.raw, c.env));
@@ -344,8 +399,6 @@ function createApiRouter() {
   });
   apiApp.all('/detect_airport_name', () => createErrorResponse('Method Not Allowed', 405));
 
-  apiApp.all('/nodes/inspect', (c) => handleNodeInspectRequest(c.req.raw, c.env));
-  apiApp.all('/nodes/tcping', (c) => handleNodeTcpingRequest(c.req.raw, c.env));
   apiApp.all('/fetch_external_url', (c) => handleExternalFetchRequest(c.req.raw, c.env));
   apiApp.all('/batch_update_nodes', (c) => handleBatchUpdateNodesRequest(c.req.raw, c.env));
   apiApp.all('/subscription_nodes', (c) => handleSubscriptionNodesRequest(c.req.raw, c.env));
@@ -385,6 +438,7 @@ function createApiRouter() {
   apiApp.all('/logs', () => createErrorResponse('Method Not Allowed', 405));
 
   apiApp.get('/settings', (c) => handleSettingsGet(c.env, getBoundContext(c.req.raw, c.env)));
+  apiApp.patch('/settings', (c) => handleSettingsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
   apiApp.post('/settings', (c) => handleSettingsSave(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
   apiApp.all('/settings', () => createJsonResponse('Method Not Allowed', 405));
 

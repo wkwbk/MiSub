@@ -6,6 +6,36 @@ import { useSubscriptions } from '@/composables/useSubscriptions.js';
 import { useDataStore } from '@/stores/useDataStore.js';
 import { collectTags } from '@/utils/tags.js';
 
+vi.mock('@/lib/http.js', async () => {
+  const actual = await vi.importActual('@/lib/http.js');
+  return {
+    ...actual,
+    api: {
+      get: vi.fn(),
+      post: vi.fn(async (url, body) => {
+        const dataStore = useDataStore();
+        if (url === '/api/subscriptions/batch-tags') {
+          return {
+            success: true,
+            data: (body.updates || []).map((u) => {
+              const existing = dataStore.subscriptions.find((s) => s.id === u.id) || {
+                id: u.id,
+                name: u.id,
+                url: `https://${u.id}.test/sub`,
+                enabled: true,
+              };
+              return { ...existing, tags: u.tags, version: (existing.version || 0) + 1 };
+            }),
+          };
+        }
+        return { success: true, data: body };
+      }),
+      patch: vi.fn(),
+      del: vi.fn(),
+    },
+  };
+});
+
 const makeSub = (id, name, url, extra = {}) => ({ id, name, url, enabled: true, ...extra });
 
 const mountPanel = (subscriptions, extraProps = {}) =>
@@ -104,7 +134,7 @@ describe('机场订阅多选标签交集筛选', () => {
     expect(wrapper.text()).toContain('s2');
   });
 
-  it('支持在 useSubscriptions 中重命名和删除标签', () => {
+  it('支持在 useSubscriptions 中重命名和删除标签', async () => {
     const dataStore = useDataStore();
     dataStore.subscriptions = [
       makeSub('a', 's1', 'https://a.test/1', { tags: ['机场A'] }),
@@ -113,16 +143,16 @@ describe('机场订阅多选标签交集筛选', () => {
     ];
 
     const { subscriptionTags, activeTagFilters, setTagFilters, renameSubscriptionTag, deleteSubscriptionTag } =
-      useSubscriptions(vi.fn());
+      useSubscriptions();
 
     expect(subscriptionTags.value).toEqual(['机场A', '流媒体', '机场B', '备用']);
 
     setTagFilters(['机场A']);
-    renameSubscriptionTag('机场A', '主力');
+    await renameSubscriptionTag('机场A', '主力');
     expect(activeTagFilters.value).toEqual(['主力']);
     expect(collectTags(dataStore.subscriptions)).toEqual(['主力', '流媒体', '机场B', '备用']);
 
-    deleteSubscriptionTag('主力');
+    await deleteSubscriptionTag('主力');
     expect(activeTagFilters.value).toEqual([]);
     expect(subscriptionTags.value).toEqual(['流媒体', '机场B', '备用']);
   });

@@ -215,6 +215,7 @@ export const SubscriptionSchema = z
     lastError: z.string().nullable().optional(),
     lastUpdate: z.string().nullable().optional(),
     sortIndex: z.number().optional(),
+    configVersion: z.number().int().positive().optional(),
     createdAt: z.string().nullable().optional(),
     updatedAt: z.string().nullable().optional(),
   })
@@ -233,6 +234,7 @@ export const ManualNodeSchema = z
     remarks: z.string().optional(),
     latency: z.number().nullable().optional(),
     sortIndex: z.number().optional(),
+    configVersion: z.number().int().positive().optional(),
     createdAt: z.string().nullable().optional(),
     updatedAt: z.string().nullable().optional(),
   })
@@ -306,6 +308,7 @@ export const ProfileSchema = z
     nodeTransformPresetId: z.string().optional(),
     expiresAt: z.string().nullable().optional(),
     sortIndex: z.number().optional(),
+    configVersion: z.number().int().positive().optional(),
     createdAt: z.string().nullable().optional(),
     updatedAt: z.string().nullable().optional(),
   })

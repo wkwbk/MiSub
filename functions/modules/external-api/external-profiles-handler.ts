@@ -217,6 +217,7 @@ export async function handleExternalProfilesRequest(
       sortIndex: Number.isFinite(Number(payload.sortIndex))
         ? Number(payload.sortIndex)
         : allProfiles.reduce((max, item) => Math.max(max, Number(item?.sortIndex) || 0), 0) + 1,
+      configVersion: 1,
       createdAt: timestamp,
       updatedAt: timestamp,
     }) as ProfileConfig;
@@ -263,6 +264,7 @@ export async function handleExternalProfilesRequest(
       ...(payload.sortIndex !== undefined ? { sortIndex: Number(payload.sortIndex) || 0 } : {}),
       ...(subscriptionIds !== undefined ? { subscriptions: subscriptionIds } : {}),
       ...(manualNodeIds !== undefined ? { manualNodes: manualNodeIds } : {}),
+      configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
       updatedAt: nowIso(),
     } as ProfileConfig;
     if (!String(updated.name || '').trim())
@@ -301,14 +303,24 @@ export async function handleExternalProfilesRequest(
         request.method === 'POST'
           ? [...new Set([...currentIds, ...incomingIds])]
           : currentIds.filter((item) => !(typeof item === 'string' && incomingIds.includes(item)));
-      updated = { ...current, subscriptions: nextIds, updatedAt: nowIso() };
+      updated = {
+        ...current,
+        subscriptions: nextIds,
+        configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
+        updatedAt: nowIso(),
+      };
     } else {
       const currentIds = Array.isArray(current.manualNodes) ? current.manualNodes : [];
       const nextIds =
         request.method === 'POST'
           ? [...new Set([...currentIds, ...incomingIds])]
           : currentIds.filter((item) => !incomingIds.includes(item));
-      updated = { ...current, manualNodes: nextIds, updatedAt: nowIso() };
+      updated = {
+        ...current,
+        manualNodes: nextIds,
+        configVersion: Math.max(1, Number(current.configVersion) || 1) + 1,
+        updatedAt: nowIso(),
+      };
     }
     await storageAdapter.putProfile(updated);
     return createExternalSuccess(toExternalProfile(updated));

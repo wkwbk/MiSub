@@ -4,7 +4,7 @@ const mocks = vi.hoisted(() => ({
   subscriptionsRef: { value: [] },
   dataStore: {
     settings: { autoUpdateInterval: 0 },
-    saveData: vi.fn(),
+    applySubscriptionRuntimeUpdate: vi.fn(),
   },
 }));
 
@@ -46,7 +46,7 @@ describe('subscription auto-update scheduling', () => {
   it('does not create a timer when the setting is zero', async () => {
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
-    const { startAutoUpdate } = useSubscriptions(vi.fn());
+    const { startAutoUpdate } = useSubscriptions();
 
     startAutoUpdate();
 
@@ -56,7 +56,7 @@ describe('subscription auto-update scheduling', () => {
   it('creates a timer for a positive setting', async () => {
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     const { useSubscriptions } = await import('@/composables/useSubscriptions.js');
-    const { startAutoUpdate, stopAutoUpdate } = useSubscriptions(vi.fn());
+    const { startAutoUpdate, stopAutoUpdate } = useSubscriptions();
 
     mocks.dataStore.settings = { autoUpdateInterval: 5 };
     startAutoUpdate();

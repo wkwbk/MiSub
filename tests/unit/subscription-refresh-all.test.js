@@ -10,7 +10,10 @@ import { handleBatchUpdateNodesRequest } from '../../functions/modules/handlers/
 const mocks = vi.hoisted(() => ({
   subscriptions: null,
   showToast: vi.fn(),
-  saveData: vi.fn().mockResolvedValue(undefined),
+  applySubscriptionRuntimeUpdate: vi.fn((id, patch) => {
+    const target = mocks.subscriptions?.value?.find((s) => s.id === id);
+    if (target) Object.assign(target, patch);
+  }),
   batchUpdateNodes: vi.fn(),
   fetchNodeCount: vi.fn(),
   handleError: vi.fn(),
@@ -20,7 +23,7 @@ vi.mock('@/stores/useDataStore', () => ({
   useDataStore: () => ({
     subscriptions: mocks.subscriptions,
     settings: ref({ autoUpdateInterval: 0 }),
-    saveData: mocks.saveData,
+    applySubscriptionRuntimeUpdate: mocks.applySubscriptionRuntimeUpdate,
     overwriteSubscriptions: vi.fn(),
   }),
 }));
@@ -95,7 +98,7 @@ describe('Subscription Refresh All', () => {
       },
     ]);
     mocks.showToast.mockReset();
-    mocks.saveData.mockClear();
+    mocks.applySubscriptionRuntimeUpdate.mockClear();
     mocks.batchUpdateNodes.mockReset();
     mocks.fetchNodeCount.mockReset();
     mocks.handleError.mockReset();
@@ -123,8 +126,7 @@ describe('Subscription Refresh All', () => {
     wrapper.unmount();
   });
 
-  it('batchUpdateAllSubscriptions updates nodeCount, userInfo, clears lastError, and saves on batch success', async () => {
-    const markDirty = vi.fn();
+  it('batchUpdateAllSubscriptions updates nodeCount, userInfo, and clears lastError via runtime update without saveData', async () => {
     mocks.batchUpdateNodes.mockResolvedValue({
       success: true,
       results: [
@@ -143,7 +145,7 @@ describe('Subscription Refresh All', () => {
       ],
     });
 
-    const { batchUpdateAllSubscriptions, refreshError, isRefreshing } = useSubscriptions(markDirty);
+    const { batchUpdateAllSubscriptions, refreshError, isRefreshing } = useSubscriptions();
     await batchUpdateAllSubscriptions();
 
     expect(mocks.batchUpdateNodes).toHaveBeenCalledWith(
@@ -164,8 +166,7 @@ describe('Subscription Refresh All', () => {
     expect(mocks.subscriptions.value[1].nodeCount).toBe(20);
     expect(refreshError.value).toBe(false);
     expect(isRefreshing.value).toBe(false);
-    expect(markDirty).toHaveBeenCalledTimes(1);
-    expect(mocks.saveData).toHaveBeenCalledTimes(1);
+    expect(mocks.applySubscriptionRuntimeUpdate).toHaveBeenCalledWith('sub-1', expect.objectContaining({ nodeCount: 19 }));
     expect(mocks.showToast).toHaveBeenCalledWith(
       t('subscriptions.refreshDone', { success: 2, total: 2, failed: 0 }),
       'success',
@@ -173,7 +174,6 @@ describe('Subscription Refresh All', () => {
   });
 
   it('clears refreshError and avoids unknown-error toast when fallback sequential update succeeds', async () => {
-    const markDirty = vi.fn();
     mocks.batchUpdateNodes.mockResolvedValue({
       success: false,
       error: 'HTTP 400: 没有找到需要更新的有效订阅',
@@ -189,7 +189,7 @@ describe('Subscription Refresh All', () => {
         data: { count: 8, userInfo: null },
       });
 
-    const { batchUpdateAllSubscriptions, refreshError, isRefreshing } = useSubscriptions(markDirty);
+    const { batchUpdateAllSubscriptions, refreshError, isRefreshing } = useSubscriptions();
     await batchUpdateAllSubscriptions();
 
     expect(mocks.fetchNodeCount).toHaveBeenCalledTimes(2);

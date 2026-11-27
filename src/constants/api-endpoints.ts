@@ -10,12 +10,29 @@ export const API_ENDPOINTS = {
 
   // 数据与设置相关
   DATA: '/api/data',
-  MISUBS: '/api/misubs',
   SETTINGS: '/api/settings',
   SETTINGS_RESET: '/api/settings/reset',
   SETTINGS_ROTATE_TOKEN: '/api/settings/rotate_token',
   RULE_TEMPLATES: '/api/rule_templates',
   LOGS: '/api/logs',
+
+  // 细粒度资源 CRUD
+  SUBSCRIPTIONS: '/api/subscriptions',
+  SUBSCRIPTIONS_BATCH: '/api/subscriptions/batch',
+  SUBSCRIPTIONS_BATCH_DELETE: '/api/subscriptions/batch-delete',
+  SUBSCRIPTIONS_BATCH_TAGS: '/api/subscriptions/batch-tags',
+  SUBSCRIPTIONS_REORDER: '/api/subscriptions/reorder',
+
+  NODES: '/api/nodes',
+  NODES_BATCH: '/api/nodes/batch',
+  NODES_BATCH_DELETE: '/api/nodes/batch-delete',
+  NODES_BATCH_TAGS: '/api/nodes/batch-tags',
+  NODES_REORDER: '/api/nodes/reorder',
+
+  PROFILES: '/api/profiles',
+  PROFILES_BATCH_DELETE: '/api/profiles/batch-delete',
+  PROFILES_BATCH_TAGS: '/api/profiles/batch-tags',
+  PROFILES_REORDER: '/api/profiles/reorder',
 
   // 订阅与节点相关
   SUB_NODES: '/api/subscription_nodes',

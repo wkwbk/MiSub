@@ -647,9 +647,12 @@ export async function handleCallbackQuery(
               const realIdx = originalSubs.findIndex((s) => s.id === targetItem?.id);
 
               if (realIdx !== -1) {
+                const deletedId = originalSubs[realIdx].id;
                 const deletedName = originalSubs[realIdx].name;
                 originalSubs.splice(realIdx, 1);
-                if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+                if (typeof storageAdapter.deleteSubscriptionById === 'function') {
+                  await storageAdapter.deleteSubscriptionById(deletedId);
+                } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
                   await storageAdapter.syncAllSubscriptions(originalSubs);
                 } else {
                   await storageAdapter.putAllSubscriptions(originalSubs);

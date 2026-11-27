@@ -416,6 +416,5 @@ describe('P0/P1 runtime stability & safety guards', () => {
     await panelWrapper.get('input[type="checkbox"]').trigger('change');
     expect(misub.enabled).toBe(true);
     expect(panelWrapper.emitted('toggle')).toEqual([[{ id: 'sub-card-1', enabled: false }]]);
-    expect(panelWrapper.emitted('markDirty')).toHaveLength(1);
   });
 });

@@ -154,9 +154,13 @@ const handleCreateShortLink = async () => {
     localShortLink.value = result.shortUrl;
     customSlug.value = '';
     if (result.savedToProfile && props.profile?.id) {
-      const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === props.profile?.id);
-      if (target) {
-        target.shortLink = result.shortUrl;
+      if (result.profile) {
+        dataStore.syncProfileFromServer(result.profile);
+      } else {
+        const target = (dataStore.profiles as ProfileConfig[]).find((p) => p.id === props.profile?.id);
+        if (target) {
+          target.shortLink = result.shortUrl;
+        }
       }
     }
     showToast(t('copyLink.shortLinkCreated'), 'success');

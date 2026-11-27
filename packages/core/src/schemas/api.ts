@@ -14,22 +14,12 @@ export const LoginRequestSchema = z
   })
   .passthrough();
 
-export const MisubsSaveRequestSchema = z
-  .object({
-    misubs: z.array(z.record(z.string(), z.unknown())),
-    profiles: z.array(z.record(z.string(), z.unknown())),
-    baseRevision: z.string().optional(),
-    force: z.boolean().optional().default(false),
-  })
-  .passthrough();
-
 export const DataResponseSchema = z
   .object({
     misubs: z.array(z.record(z.string(), z.unknown())),
     profiles: z.array(z.record(z.string(), z.unknown())),
     ruleTemplates: z.array(z.record(z.string(), z.unknown())).optional(),
     config: SettingsSchema,
-    dataRevision: z.string().optional(),
   })
   .passthrough();
 

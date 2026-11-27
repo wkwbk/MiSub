@@ -30,7 +30,7 @@ const isDev = import.meta.env.DEV;
 const activePinia = getActivePinia();
 const dataStore = activePinia ? useDataStore() : null;
 const toastStore = activePinia ? useToastStore() : null;
-const { manualNodeTags } = dataStore ? useManualNodes(dataStore.markDirty) : { manualNodeTags: computed<string[]>(() => []) };
+const { manualNodeTags } = dataStore ? useManualNodes() : { manualNodeTags: computed<string[]>(() => []) };
 
 const props = withDefaults(
   defineProps<{

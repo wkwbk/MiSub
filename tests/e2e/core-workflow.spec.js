@@ -18,24 +18,31 @@ async function submitBulkImportAndWaitSave(page, content) {
   await expect(modal).toBeVisible();
   await modal.locator('textarea').fill(content);
 
-  const saveResPromise = page.waitForResponse(
-    (res) => res.url().includes('/api/misubs') && res.request().method() === 'POST',
-  );
+  const lines = content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const expectsSubs = lines.some((line) => /^https?:\/\//i.test(line));
+  const expectsNodes = lines.some((line) => !/^https?:\/\//i.test(line));
+
+  const waits = [];
+  if (expectsNodes) {
+    waits.push(page.waitForResponse((res) => res.url().includes('/api/nodes/batch') && res.request().method() === 'POST'));
+  }
+  if (expectsSubs) {
+    waits.push(
+      page.waitForResponse((res) => res.url().includes('/api/subscriptions/batch') && res.request().method() === 'POST'),
+    );
+  }
+
+  const responsesPromise = Promise.all(waits);
   await modal.getByRole('button', { name: '确认' }).click();
 
-  const saveRes = await saveResPromise;
-  expect(saveRes.status()).toBe(200);
+  const responses = await responsesPromise;
+  for (const res of responses) {
+    expect(res.status()).toBe(201);
+  }
   await expect(modal).toBeHidden();
-}
-
-async function commitSavePrompt(page) {
-  const saveButton = page.getByRole('button', { name: '立即保存' });
-  await expect(saveButton).toBeVisible();
-  const [saveResponse] = await Promise.all([
-    page.waitForResponse((res) => res.url().includes('/api/misubs') && res.request().method() === 'POST'),
-    saveButton.click(),
-  ]);
-  expect(saveResponse.status()).toBe(200);
 }
 
 test.describe('MiSub Core E2E Workflows', () => {
@@ -99,8 +106,14 @@ test.describe('MiSub Core E2E Workflows', () => {
 
     await editModal.getByRole('button', { name: /包含\/排除节点/ }).click();
     await editModal.getByRole('button', { name: '官网', exact: true }).click();
-    await editModal.getByRole('button', { name: '确认' }).click();
-    await commitSavePrompt(page);
+    const [patchRes] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes('/api/subscriptions/') && res.request().method() === 'PATCH',
+      ),
+      editModal.getByRole('button', { name: '确认' }).click(),
+    ]);
+    expect(patchRes.status()).toBe(200);
+    await expect(editModal).toBeHidden();
 
     // Open NodePreviewModal and verify filtered node preview
     const [previewRes] = await Promise.all([
@@ -132,8 +145,14 @@ test.describe('MiSub Core E2E Workflows', () => {
     const editModal = page.getByRole('dialog');
     await editModal.getByRole('button', { name: /包含\/排除节点/ }).click();
     await editModal.getByRole('button', { name: '官网', exact: true }).click();
-    await editModal.getByRole('button', { name: '确认' }).click();
-    await commitSavePrompt(page);
+    const [patchRes] = await Promise.all([
+      page.waitForResponse(
+        (res) => res.url().includes('/api/subscriptions/') && res.request().method() === 'PATCH',
+      ),
+      editModal.getByRole('button', { name: '确认' }).click(),
+    ]);
+    expect(patchRes.status()).toBe(200);
+    await expect(editModal).toBeHidden();
 
     // Create a new Profile on /dashboard/subscriptions
     await page.goto('/dashboard/subscriptions');
@@ -148,9 +167,12 @@ test.describe('MiSub Core E2E Workflows', () => {
     await profileModal.getByRole('button', { name: '全选', exact: true }).click();
     await profileModal.getByRole('navigation', { name: '资源标签页' }).locator('button').nth(1).click();
     await profileModal.getByRole('button', { name: '全选', exact: true }).click();
-    await profileModal.getByRole('button', { name: '确认' }).click();
-
-    await commitSavePrompt(page);
+    const [createProfileRes] = await Promise.all([
+      page.waitForResponse((res) => res.url().includes('/api/profiles') && res.request().method() === 'POST'),
+      profileModal.getByRole('button', { name: '确认' }).click(),
+    ]);
+    expect(createProfileRes.status()).toBe(201);
+    await expect(profileModal).toBeHidden();
 
     // Verify CopyLinkModal shows Clash & Sing-Box links
     await expect(page.locator('body')).toContainText('E2E主力订阅');

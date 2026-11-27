@@ -9,7 +9,6 @@ import {
   LoginRequestSchema,
   ManualNodeSchema,
   MisubItemSchema,
-  MisubsSaveRequestSchema,
   NODE_IR_PROTOCOLS,
   nodeIRsToUrls,
   nodeIRToClashProxy,
@@ -307,10 +306,26 @@ describe('Domain Entity, Operator & API Contracts', () => {
     expect(LoginRequestSchema.safeParse({ password: '' }).success).toBe(false);
 
     expect(
-      MisubsSaveRequestSchema.safeParse({
-        misubs: [{ id: 's1', url: 'https://example.com/sub' }],
-        profiles: [{ id: 'p1', name: 'P1' }],
-        baseRevision: '0123456789abcdef',
+      SubscriptionSchema.safeParse({
+        id: 's1',
+        name: 'Sub 1',
+        url: 'https://example.com/sub',
+        configVersion: 1,
+      }).success,
+    ).toBe(true);
+    expect(
+      ManualNodeSchema.safeParse({
+        id: 'n1',
+        name: 'Node 1',
+        url: 'ss://YWVzLTEyOC1nY206cGFzcw@1.1.1.1:443#N1',
+        configVersion: 2,
+      }).success,
+    ).toBe(true);
+    expect(
+      ProfileSchema.safeParse({
+        id: 'p1',
+        name: 'P1',
+        configVersion: 1,
       }).success,
     ).toBe(true);
 

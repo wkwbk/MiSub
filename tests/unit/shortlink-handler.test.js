@@ -101,14 +101,20 @@ describe('shortlink-handler', () => {
 
   describe('handleShortLinkCreate', () => {
     it('creates random short link when slug is omitted and syncs to profile', async () => {
-      const syncAllProfiles = vi.fn().mockResolvedValue(true);
+      const updateProfileRuntimeFields = vi.fn().mockResolvedValue({
+        id: 'p1',
+        name: 'Main',
+        customId: 'main',
+        shortLink: 'https://ijg.cc/abc123',
+        configVersion: 1,
+      });
       vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue({
         type: 'd1',
         get: vi.fn().mockResolvedValue({
           shortLink: { enabled: true, provider: 'sink', apiUrl: 'ijg.cc', apiToken: 'test-token' },
         }),
-        getAllProfiles: vi.fn().mockResolvedValue([{ id: 'p1', name: 'Main', customId: 'main' }]),
-        syncAllProfiles,
+        getAllProfiles: vi.fn().mockResolvedValue([{ id: 'p1', name: 'Main', customId: 'main', configVersion: 1 }]),
+        updateProfileRuntimeFields,
       });
 
       const fetchMock = vi.fn().mockResolvedValue(
@@ -138,9 +144,7 @@ describe('shortlink-handler', () => {
 
       const [, fetchInit] = fetchMock.mock.calls[0];
       expect(JSON.parse(fetchInit.body)).toEqual({ url: 'https://misub.example.com/sub/main' });
-      expect(syncAllProfiles).toHaveBeenCalledWith(
-        expect.arrayContaining([expect.objectContaining({ id: 'p1', shortLink: 'https://ijg.cc/abc123' })]),
-      );
+      expect(updateProfileRuntimeFields).toHaveBeenCalledWith('p1', { shortLink: 'https://ijg.cc/abc123' });
     });
 
     it('creates custom short link and reports 409 conflict cleanly', async () => {

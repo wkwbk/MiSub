@@ -47,10 +47,10 @@ export class NodeRepository extends BaseRepository {
       edgeCache: this.edgeCache,
       loader: async () => {
         if (typeof this.storage.getManualNodes === 'function') {
-          const rows = await this.storage.getManualNodes();
+          const rows = await this.storage.getManualNodes({ fresh });
           return Array.isArray(rows) ? rows : [];
         }
-        const all = (await this.storage.getAllSubscriptions()) || [];
+        const all = (await this.storage.getAllSubscriptions({ fresh })) || [];
         return all.filter((item): item is ManualNodeItem => isManualNodeRecord(item));
       },
     });
@@ -112,6 +112,51 @@ export class NodeRepository extends BaseRepository {
     const deleted = await this.storage.deleteSubscriptionById(id);
     this.invalidateCaches();
     return deleted;
+  }
+
+  async compareAndSwap(
+    node: ManualNodeItem,
+    expectedConfigVersion: number,
+    options: { skipOtherTableDelete?: boolean } = {},
+  ): Promise<{ updated: boolean; current: MisubItem | null }> {
+    if (!node?.id) return { updated: false, current: null };
+    if (typeof this.storage.compareAndSwapSubscription === 'function') {
+      const result = await this.storage.compareAndSwapSubscription(node, expectedConfigVersion, options);
+      if (result.updated) {
+        this.invalidateCaches();
+      }
+      return result;
+    }
+    const current = await this.getById(node.id, { fresh: true });
+    const currentVer = Math.max(1, Number(current?.configVersion) || 1);
+    const expectedVer = Math.max(1, Number(expectedConfigVersion) || 1);
+    if (!current || currentVer !== expectedVer) {
+      return { updated: false, current };
+    }
+    const nextNode: ManualNodeItem = {
+      ...node,
+      configVersion: currentVer + 1,
+    };
+    const saved = await this.save(nextNode);
+    return { updated: true, current: saved };
+  }
+
+  async deleteManyByIds(ids: string[] = []): Promise<number> {
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean)),
+    );
+    if (uniqueIds.length === 0) return 0;
+    if (typeof this.storage.deleteSubscriptionsByIds === 'function') {
+      const count = await this.storage.deleteSubscriptionsByIds(uniqueIds);
+      this.invalidateCaches();
+      return count;
+    }
+    let deletedCount = 0;
+    for (const id of uniqueIds) {
+      if (await this.storage.deleteSubscriptionById(id)) deletedCount++;
+    }
+    this.invalidateCaches();
+    return deletedCount;
   }
 
   /**

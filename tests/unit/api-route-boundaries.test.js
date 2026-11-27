@@ -114,9 +114,13 @@ describe('API route access boundaries', () => {
 
     const protectedRequests = [
       new Request('https://example.com/api/settings'),
-      new Request('https://example.com/api/misubs', {
+      new Request('https://example.com/api/settings', {
+        method: 'PATCH',
+        body: JSON.stringify({ siteName: 'Updated' }),
+      }),
+      new Request('https://example.com/api/subscriptions', {
         method: 'POST',
-        body: JSON.stringify({ misubs: [], profiles: [] }),
+        body: JSON.stringify({ name: 'Sub', url: 'https://example.com/sub' }),
       }),
       new Request('https://example.com/api/backup/export', {
         method: 'POST',

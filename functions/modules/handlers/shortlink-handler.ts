@@ -2,8 +2,10 @@
  * 短链服务处理模块（支持 Sink 短链服务）
  */
 
+import type { ProfileConfig } from '@misub/core/types.js';
 import type { Env, StorageAdapter } from '../../types.js';
 import { StorageFactory } from '../../storage-adapter.js';
+import { createRepositories } from '../../repositories/index.js';
 import { DEFAULT_SETTINGS, STORAGE_KEY_SETTINGS } from '../config.js';
 import { createErrorResponse, createJsonResponse, JSON_BODY_LIMITS, readJsonWithLimit } from '../utils.js';
 
@@ -284,20 +286,14 @@ export async function handleShortLinkCreate(request: Request, env: Env): Promise
     const shortUrl = `${apiUrl}/${resolvedSlug}`;
 
     let savedToProfile = false;
+    let updatedProfile: ProfileConfig | null = null;
     const profileId = String(body?.profileId || '').trim();
     if (body?.saveToProfile === true && profileId && storageAdapter && storageAdapter.type !== 'noop') {
       try {
-        const profiles = await storageAdapter.getAllProfiles();
-        const targetIndex = profiles.findIndex(
-          (p) => p && (p.id === profileId || p.customId === profileId || p.linkId === profileId),
-        );
-        if (targetIndex !== -1) {
-          const updatedProfiles = profiles.map((p, idx) =>
-            idx === targetIndex ? { ...p, shortLink: shortUrl, updatedAt: new Date().toISOString() } : p,
-          );
-          await storageAdapter.syncAllProfiles(updatedProfiles);
-          savedToProfile = true;
-        }
+        const repos = createRepositories(env, null, { storage: storageAdapter });
+        // 短链回写属于运行态附属信息，走运行态局部 SQL，绝不递增 config_version
+        updatedProfile = await repos.profiles.updateRuntimeShortLink(profileId, shortUrl);
+        savedToProfile = Boolean(updatedProfile);
       } catch (saveError: unknown) {
         const message = saveError instanceof Error ? saveError.message : String(saveError);
         console.warn('[ShortLink] Failed to persist shortLink to profile:', message);
@@ -310,6 +306,7 @@ export async function handleShortLinkCreate(request: Request, env: Env): Promise
       slug: resolvedSlug,
       url: targetUrl,
       savedToProfile,
+      ...(updatedProfile ? { profile: updatedProfile } : {}),
     });
   } catch (error: unknown) {
     const message = error instanceof Error && error.message ? error.message : '生成短链失败';

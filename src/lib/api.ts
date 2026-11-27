@@ -1,5 +1,6 @@
 import type {
   ParseSubscriptionResponse,
+  ProfileConfig,
   SubscriptionItem,
   SubscriptionUserInfo,
   WebdavBackupConfig,
@@ -46,6 +47,7 @@ export interface ShortLinkResult {
   success?: boolean;
   shortUrl?: string;
   savedToProfile?: boolean;
+  profile?: ProfileConfig;
   message?: string;
   error?: string;
   [key: string]: unknown;
@@ -307,6 +309,7 @@ export async function fetchNodeCount(
   fetchProxy = '',
   plusAsSpace = false,
   userAgent = '',
+  options: { subscriptionId?: string; persist?: boolean } = {},
 ): Promise<ApiResult<NodeCountPayload>> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
@@ -318,7 +321,15 @@ export async function fetchNodeCount(
       fetchProxy?: string;
       plusAsSpace?: boolean;
       userAgent?: string;
+      subscriptionId?: string;
+      persist?: boolean;
     } = { url: subUrl };
+    if (options.subscriptionId) {
+      payload.subscriptionId = options.subscriptionId;
+    }
+    if (typeof options.persist === 'boolean') {
+      payload.persist = options.persist;
+    }
     if (fetchProxy) {
       payload.fetchProxy = fetchProxy;
     }
@@ -381,7 +392,7 @@ export async function saveSettings(
   settings: Record<string, unknown>,
 ): Promise<Record<string, unknown> | ApiFailureResult> {
   try {
-    return await api.post<Record<string, unknown>>(API_ENDPOINTS.SETTINGS, settings);
+    return await api.patch<Record<string, unknown>>(API_ENDPOINTS.SETTINGS, settings);
   } catch (error) {
     return handleApiError(error, 'saveSettings');
   }

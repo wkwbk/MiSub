@@ -1,6 +1,6 @@
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { useDataStore } from '@/stores/useDataStore.js';
+import { useDataStore, type MutationResult, type RecordConflictBannerModel } from '@/stores/useDataStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useToastStore } from '@/stores/useToastStore.js';
 import type { StoreProfileConfig } from '@/queries/useAppDataQueries.js';
@@ -64,12 +64,18 @@ export interface EditableProfile {
   fetchMinInterval?: string | number;
   fetchLimitMode?: '' | 'cache' | 'strict';
   sortIndex?: number;
+  configVersion?: number;
+  version?: number;
   createdAt?: string | null;
   updatedAt?: string | null;
   [key: string]: unknown;
 }
 
-export function useProfiles(markDirty: () => void) {
+export interface ProfileConflictState extends RecordConflictBannerModel {
+  current?: StoreProfileConfig;
+}
+
+export function useProfiles() {
   const { showToast } = useToastStore();
   const dataStore = useDataStore();
   const settingsStore = useSettingsStore();
@@ -77,8 +83,15 @@ export function useProfiles(markDirty: () => void) {
 
   const isNewProfile = ref(false);
   const editingProfile = ref<EditableProfile | null>(null);
+  const profileConflict = ref<ProfileConflictState | null>(null);
   const showProfileModal = ref(false);
   const showDeleteProfilesModal = ref(false);
+
+  watch(showProfileModal, (visible) => {
+    if (!visible) {
+      profileConflict.value = null;
+    }
+  });
 
   const searchQuery = ref('');
   const activeTagFilters = ref<string[]>([]);
@@ -96,22 +109,22 @@ export function useProfiles(markDirty: () => void) {
     activeTagFilters.value = toggleTagFilterValue(activeTagFilters.value, tag);
   }
 
-  function renameProfileTag(oldName: string, newName: string): void {
+  async function renameProfileTag(oldName: string, newName: string): Promise<void> {
     const normalizedOld = normalizeTagName(oldName);
     const normalizedNew = normalizeTagName(newName);
     if (!normalizedOld || !normalizedNew || normalizedOld === normalizedNew) return;
 
-    let changed = false;
-    profiles.value.forEach((profile, index) => {
+    const tagUpdates: Array<{ id: string; tags: string[] }> = [];
+    profiles.value.forEach((profile) => {
       const { nextTags, changed: itemChanged } = renameTagInList(getItemTags(profile), normalizedOld, normalizedNew);
       if (itemChanged) {
-        profiles.value[index] = {
-          ...profile,
-          tags: nextTags,
-        };
-        changed = true;
+        tagUpdates.push({ id: profile.id, tags: nextTags });
       }
     });
+
+    if (tagUpdates.length > 0) {
+      await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+    }
 
     const customOrder = settingsStore.config.profileTagOrder || [];
     if (customOrder.includes(normalizedOld)) {
@@ -127,25 +140,23 @@ export function useProfiles(markDirty: () => void) {
         activeTagFilters.value.map((tag) => (tag === normalizedOld ? normalizedNew : tag)),
       );
     }
-
-    if (changed) markDirty();
   }
 
-  function deleteProfileTag(tagName: string): void {
+  async function deleteProfileTag(tagName: string): Promise<void> {
     const normalized = normalizeTagName(tagName);
     if (!normalized) return;
 
-    let changed = false;
-    profiles.value.forEach((profile, index) => {
+    const tagUpdates: Array<{ id: string; tags: string[] }> = [];
+    profiles.value.forEach((profile) => {
       const { nextTags, changed: itemChanged } = removeTagFromList(getItemTags(profile), normalized);
       if (itemChanged) {
-        profiles.value[index] = {
-          ...profile,
-          tags: nextTags,
-        };
-        changed = true;
+        tagUpdates.push({ id: profile.id, tags: nextTags });
       }
     });
+
+    if (tagUpdates.length > 0) {
+      await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+    }
 
     const customOrder = settingsStore.config.profileTagOrder || [];
     const nextOrder = customOrder.filter((tag) => tag !== normalized);
@@ -159,8 +170,6 @@ export function useProfiles(markDirty: () => void) {
     if (activeTagFilters.value.includes(normalized)) {
       activeTagFilters.value = activeTagFilters.value.filter((tag) => tag !== normalized);
     }
-
-    if (changed) markDirty();
   }
 
   function reorderProfileTags(newOrder: string[]): void {
@@ -200,18 +209,18 @@ export function useProfiles(markDirty: () => void) {
     resetDeps: [searchQuery, activeTagFilters],
   });
 
-  const handleProfileToggle = (updatedProfile: Partial<StoreProfileConfig> & { id: string }): void => {
-    const index = profiles.value.findIndex((p) => p.id === updatedProfile.id);
-    if (index !== -1) {
-      profiles.value[index].enabled = Boolean(updatedProfile.enabled);
-      if (updatedProfile.isPublic !== undefined) {
-        profiles.value[index].isPublic = updatedProfile.isPublic;
-      }
-      markDirty();
-    }
+  const isSavingProfile = ref(false);
+
+  const handleProfileToggle = async (updatedProfile: Partial<StoreProfileConfig> & { id: string }): Promise<void> => {
+    const patch: Partial<StoreProfileConfig> = {
+      enabled: Boolean(updatedProfile.enabled),
+      ...(updatedProfile.isPublic !== undefined ? { isPublic: updatedProfile.isPublic } : {}),
+    };
+    await dataStore.patchProfile(updatedProfile.id, patch);
   };
 
   const handleAddProfile = (): void => {
+    profileConflict.value = null;
     isNewProfile.value = true;
     editingProfile.value = {
       name: '',
@@ -230,31 +239,41 @@ export function useProfiles(markDirty: () => void) {
     showProfileModal.value = true;
   };
 
+  const cloneProfileForEdit = (profile: StoreProfileConfig): EditableProfile => {
+    const cloned = JSON.parse(JSON.stringify(profile)) as EditableProfile;
+    cloned.tags = getItemTags(cloned);
+    if (!cloned.transformConfigMode) {
+      cloned.transformConfigMode = cloned.transformConfig ? 'preset' : 'global';
+    }
+    if (!cloned.ruleLevel && cloned.clashRuleLevel) {
+      cloned.ruleLevel = cloned.clashRuleLevel;
+    }
+    cloned.expiresAt = profile.expiresAt || '';
+    if (!Array.isArray(cloned.operators)) {
+      cloned.operators = [];
+    }
+    return cloned;
+  };
+
   const handleEditProfile = (profileId: string): void => {
     const profile = profiles.value.find((p) => p.id === profileId || p.customId === profileId);
     if (profile) {
+      profileConflict.value = null;
       isNewProfile.value = false;
-      const cloned = JSON.parse(JSON.stringify(profile)) as EditableProfile;
-      cloned.tags = getItemTags(cloned);
-      if (!cloned.transformConfigMode) {
-        cloned.transformConfigMode = cloned.transformConfig ? 'preset' : 'global';
-      }
-      if (!cloned.ruleLevel && cloned.clashRuleLevel) {
-        cloned.ruleLevel = cloned.clashRuleLevel;
-      }
-      cloned.expiresAt = profile.expiresAt || '';
-      if (!Array.isArray(cloned.operators)) {
-        cloned.operators = [];
-      }
-      editingProfile.value = cloned;
+      editingProfile.value = cloneProfileForEdit(profile);
       showProfileModal.value = true;
     }
   };
 
-  const handleSaveProfile = (profileData: EditableProfile | null | undefined): void => {
+  const handleSaveProfile = async (
+    profileData: EditableProfile | null | undefined,
+    options: { force?: boolean } = {},
+  ): Promise<boolean> => {
+    if (isSavingProfile.value) return false;
+
     if (!profileData || !profileData.name) {
       showToast(t('profiles.nameRequired'), 'error');
-      return;
+      return false;
     }
     const existingProfile = profileData.id ? profiles.value.find((p) => p.id === profileData.id) : null;
     const prevAlias = normalizeProfileIdentifier(existingProfile?.customId);
@@ -273,8 +292,13 @@ export function useProfiles(markDirty: () => void) {
       else if (aliasCheck.code === 'invalid_chars') errorMsg = t('profiles.customIdInvalidChars');
       else if (aliasCheck.code === 'reserved') errorMsg = t('profiles.customIdReserved', { id: aliasCheck.alias });
       showToast(errorMsg, 'error');
-      return;
+      return false;
     }
+
+    const expectedConfigVersion = Math.max(
+      1,
+      Number(profileData.configVersion ?? existingProfile?.configVersion) || 1,
+    );
 
     const normalizedProfile = ensureProfileLinkId({
       ...profileData,
@@ -282,33 +306,98 @@ export function useProfiles(markDirty: () => void) {
       tags: normalizeTagList(profileData.tags),
       prefixSettings: profileData.prefixSettings as StoreProfileConfig['prefixSettings'],
     }) as StoreProfileConfig;
-    if (isNewProfile.value) {
-      dataStore.addProfile({
-        ...normalizedProfile,
-        id: generateProfileId(),
-        isPublic: normalizedProfile.isPublic ?? false,
-        downloadCount: normalizedProfile.downloadCount ?? 0,
-        subProfiles: normalizedProfile.subProfiles ?? [],
-      });
-    } else {
-      const index = profiles.value.findIndex((p) => p.id === normalizedProfile.id);
-      if (index !== -1) {
-        profiles.value[index] = {
-          ...profiles.value[index],
-          ...normalizedProfile,
-        };
-      }
+
+    const {
+      id: _id,
+      sortIndex: _sortIndex,
+      downloadCount: _downloadCount,
+      configVersion: _configVersion,
+      version: _version,
+      createdAt: _createdAt,
+      updatedAt: _updatedAt,
+      ...rawEditableFields
+    } = normalizedProfile as EditableProfile;
+
+    const editableFields = { ...rawEditableFields };
+    if (
+      !isNewProfile.value &&
+      existingProfile &&
+      String(editableFields.shortLink || '').trim() === String(existingProfile.shortLink || '').trim()
+    ) {
+      delete editableFields.shortLink;
     }
-    markDirty();
-    showProfileModal.value = false;
+
+    isSavingProfile.value = true;
+    try {
+      let result: MutationResult<StoreProfileConfig>;
+      if (isNewProfile.value) {
+        result = await dataStore.createProfile({
+          ...editableFields,
+          id: generateProfileId(),
+          isPublic: normalizedProfile.isPublic ?? false,
+          subProfiles: normalizedProfile.subProfiles ?? [],
+        });
+      } else {
+        result = await dataStore.updateProfileRecord(
+          normalizedProfile.id!,
+          editableFields,
+          options.force
+            ? { force: true }
+            : {
+                expectedConfigVersion,
+                suppressConflictToast: true,
+              },
+        );
+        if (!result.ok && result.conflict) {
+          if (result.conflict.current) {
+            dataStore.syncProfileFromServer(result.conflict.current);
+          }
+          const serverVer = Math.max(
+            expectedConfigVersion + 1,
+            Number(result.conflict.current?.configVersion) || expectedConfigVersion + 1,
+          );
+          profileConflict.value = {
+            current: result.conflict.current,
+            localVersion: expectedConfigVersion,
+            serverVersion: serverVer,
+            message: result.conflict.message,
+          };
+          showToast(t('store.recordConflictTitle'), 'warning');
+          return false;
+        }
+      }
+
+      if (result.ok) {
+        profileConflict.value = null;
+        showProfileModal.value = false;
+        return true;
+      }
+      return false;
+    } finally {
+      isSavingProfile.value = false;
+    }
   };
 
-  const handleDeleteProfile = (profileId: string): void => {
-    dataStore.removeProfile(profileId);
-    markDirty();
+  const reloadProfileFromConflict = (): void => {
+    const serverCurrent = profileConflict.value?.current;
+    if (!serverCurrent) {
+      profileConflict.value = null;
+      return;
+    }
+    editingProfile.value = cloneProfileForEdit(serverCurrent);
+    profileConflict.value = null;
+    showToast(t('store.reloadedLatestRecord'), 'info');
   };
 
-  const batchUpdateProfileTags = (profileIds: string[], payload: TagBatchUpdatePayload): void => {
+  const handleForceSaveProfile = async (profileData: EditableProfile | null | undefined): Promise<boolean> => {
+    return await handleSaveProfile(profileData, { force: true });
+  };
+
+  const handleDeleteProfile = async (profileId: string): Promise<void> => {
+    await dataStore.deleteProfileRecord(profileId);
+  };
+
+  const batchUpdateProfileTags = async (profileIds: string[], payload: TagBatchUpdatePayload): Promise<void> => {
     if (!profileIds || profileIds.length === 0) return;
 
     let mode: TagBatchMode = 'replace';
@@ -319,46 +408,45 @@ export function useProfiles(markDirty: () => void) {
     }
 
     const idsSet = new Set(profileIds);
-    let updatedCount = 0;
-    profiles.value.forEach((profile, index) => {
+    const tagUpdates: Array<{ id: string; tags: string[] }> = [];
+    profiles.value.forEach((profile) => {
       if (!idsSet.has(profile.id) && !(profile.customId && idsSet.has(profile.customId))) return;
       const { nextTags, changed } = computeBatchUpdatedTags(getItemTags(profile), inputTags, mode);
       if (changed) {
-        profiles.value[index] = {
-          ...profile,
-          tags: nextTags,
-        };
-        updatedCount++;
+        tagUpdates.push({ id: profile.id, tags: nextTags });
       }
     });
 
-    if (updatedCount > 0) {
-      markDirty();
-      showToast(t('profiles.batchTagsUpdated', { count: updatedCount }), 'success');
+    if (tagUpdates.length > 0) {
+      const res = await dataStore.batchUpdateProfileTagsRecord(tagUpdates);
+      if (res.ok) {
+        showToast(t('profiles.batchTagsUpdated', { count: tagUpdates.length }), 'success');
+      }
     }
   };
 
-  const batchDeleteProfiles = (profileIds: string[]): void => {
+  const batchDeleteProfiles = async (profileIds: string[]): Promise<void> => {
     if (!profileIds || profileIds.length === 0) return;
 
-    profileIds.forEach((id) => {
-      dataStore.removeProfile(id);
-    });
-
-    markDirty();
-    showToast(t('profiles.deletedCount', { count: profileIds.length }), 'success');
+    const res = await dataStore.batchDeleteProfilesRecord({ ids: profileIds });
+    if (res.ok) {
+      showToast(t('profiles.deletedCount', { count: profileIds.length }), 'success');
+    }
   };
 
-  const handleDeleteAllProfiles = (): void => {
-    profiles.value = [];
-    markDirty();
-    showDeleteProfilesModal.value = false;
+  const handleDeleteAllProfiles = async (): Promise<void> => {
+    const res = await dataStore.batchDeleteProfilesRecord({ all: true });
+    if (res.ok) {
+      showDeleteProfilesModal.value = false;
+    }
   };
 
-  const reorderProfiles = (newOrder: StoreProfileConfig[]): void => {
+  const reorderProfiles = async (newOrder: StoreProfileConfig[]): Promise<void> => {
     if (!Array.isArray(newOrder)) return;
-    dataStore.overwriteProfiles(newOrder);
-    markDirty();
+    await dataStore.reorderProfilesRecord(
+      newOrder.map((p) => p.id),
+      newOrder,
+    );
   };
 
   return {
@@ -374,12 +462,16 @@ export function useProfiles(markDirty: () => void) {
     searchQuery,
     editingProfile,
     isNewProfile,
+    isSavingProfile,
+    profileConflict,
     showProfileModal,
     showDeleteProfilesModal,
     handleProfileToggle,
     handleAddProfile,
     handleEditProfile,
     handleSaveProfile,
+    reloadProfileFromConflict,
+    handleForceSaveProfile,
     handleDeleteProfile,
     handleDeleteAllProfiles,
     batchUpdateProfileTags,

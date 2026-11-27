@@ -28,7 +28,7 @@ export class ProfileRepository extends BaseRepository {
       fresh,
       edgeCache: this.edgeCache,
       loader: async () => {
-        const rows = await this.storage.getAllProfiles();
+        const rows = await this.storage.getAllProfiles({ fresh });
         return Array.isArray(rows) ? rows : [];
       },
     });
@@ -135,6 +135,69 @@ export class ProfileRepository extends BaseRepository {
     const deleted = await this.storage.deleteProfileById(id);
     this.invalidateCaches();
     return deleted;
+  }
+
+  async compareAndSwap(
+    profile: ProfileConfig,
+    expectedConfigVersion: number,
+  ): Promise<{ updated: boolean; current: ProfileConfig | null }> {
+    if (!profile?.id) return { updated: false, current: null };
+    if (typeof this.storage.compareAndSwapProfile === 'function') {
+      const result = await this.storage.compareAndSwapProfile(profile, expectedConfigVersion);
+      if (result.updated) {
+        this.invalidateCaches();
+      }
+      return result;
+    }
+    const current = await this.getById(profile.id, { fresh: true });
+    const currentVer = Math.max(1, Number(current?.configVersion) || 1);
+    const expectedVer = Math.max(1, Number(expectedConfigVersion) || 1);
+    if (!current || currentVer !== expectedVer) {
+      return { updated: false, current };
+    }
+    const nextProfile: ProfileConfig = {
+      ...profile,
+      configVersion: currentVer + 1,
+    };
+    const saved = await this.save(nextProfile);
+    return { updated: true, current: saved };
+  }
+
+  async updateRuntimeShortLink(idOrCustomId: string, shortLink: string): Promise<ProfileConfig | null> {
+    const target = typeof idOrCustomId === 'string' ? idOrCustomId.trim() : '';
+    if (!target) return null;
+    if (typeof this.storage.updateProfileRuntimeFields === 'function') {
+      const updated = await this.storage.updateProfileRuntimeFields(target, { shortLink });
+      this.invalidateCaches();
+      return updated;
+    }
+    const existing = await this.getById(target, { fresh: true });
+    if (!existing) return null;
+    const updated: ProfileConfig = {
+      ...existing,
+      shortLink,
+      configVersion: Math.max(1, Number(existing.configVersion) || 1),
+    };
+    const saved = (await this.save(updated)) || updated;
+    return saved;
+  }
+
+  async deleteManyByIds(ids: string[] = []): Promise<number> {
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean)),
+    );
+    if (uniqueIds.length === 0) return 0;
+    if (typeof this.storage.deleteProfilesByIds === 'function') {
+      const count = await this.storage.deleteProfilesByIds(uniqueIds);
+      this.invalidateCaches();
+      return count;
+    }
+    let deletedCount = 0;
+    for (const id of uniqueIds) {
+      if (await this.storage.deleteProfileById(id)) deletedCount++;
+    }
+    this.invalidateCaches();
+    return deletedCount;
   }
 
   async incrementDownloadCount(idOrCustomId: string): Promise<number | null> {

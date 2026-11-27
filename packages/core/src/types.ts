@@ -62,7 +62,6 @@ import type {
   ExternalProfileCreateSchema,
   ExternalSubscriptionCreateSchema,
   LoginRequestSchema,
-  MisubsSaveRequestSchema,
   NodeCountRequestSchema,
   PaginationQuerySchema,
   ParsedNodePreviewSchema,
@@ -126,7 +125,6 @@ export interface WebdavRemoteFile {
 }
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
-export type MisubsSaveRequest = z.infer<typeof MisubsSaveRequestSchema>;
 export type DataResponse = z.infer<typeof DataResponseSchema>;
 export type ParseSubscriptionRequest = z.infer<typeof ParseSubscriptionRequestSchema>;
 export type ParsedNodePreview = z.infer<typeof ParsedNodePreviewSchema>;

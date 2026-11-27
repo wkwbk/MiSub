@@ -211,6 +211,7 @@ export async function applyTagOperation(
   const allSubscriptions = await getCachedSubscriptions(env, cache);
 
   let changed = 0;
+  const changedItems: typeof allSubscriptions = [];
   allSubscriptions.forEach((sub) => {
     const currentTags = getTelegramItemTags(sub);
     if (!currentTags.includes(tagName)) return;
@@ -224,28 +225,39 @@ export async function applyTagOperation(
     } else if (op === 'clear') {
       sub.tags = currentTags.filter((t) => t !== tagName);
     }
+    if (op !== 'delete') {
+      sub.configVersion = Math.max(1, Number(sub.configVersion) || 1) + 1;
+      changedItems.push(sub);
+    }
     changed++;
   });
 
   if (op === 'delete') {
+    const deletedIds: string[] = [];
     const remaining = allSubscriptions.filter((sub) => {
       const isSub = /^https?:\/\//i.test(sub.url || '');
       const sameType = type === 'sub' ? isSub : !isSub;
       const hasTag = getTelegramItemTags(sub).includes(tagName);
       if (sameType && hasTag) {
-        changed++;
+        if (sub.id) deletedIds.push(sub.id);
         return false;
       }
       return true;
     });
-    if (typeof storageAdapter.syncAllSubscriptions === 'function') {
+    if (typeof storageAdapter.deleteSubscriptionsByIds === 'function') {
+      await storageAdapter.deleteSubscriptionsByIds(deletedIds);
+    } else if (typeof storageAdapter.deleteSubscriptionById === 'function') {
+      for (const id of deletedIds) {
+        await storageAdapter.deleteSubscriptionById(id);
+      }
+    } else if (typeof storageAdapter.syncAllSubscriptions === 'function') {
       await storageAdapter.syncAllSubscriptions(remaining);
     } else {
       await storageAdapter.putAllSubscriptions(remaining);
     }
   } else {
     if (changed === 0) return 0;
-    await storageAdapter.putAllSubscriptions(allSubscriptions);
+    await storageAdapter.putAllSubscriptions(changedItems.length > 0 ? changedItems : allSubscriptions);
   }
 
   // 清理节点缓存，避免前端读到旧数据

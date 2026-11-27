@@ -8,11 +8,15 @@ import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createI18n } from '@/i18n/index.js';
 import { createAppQueryClient, QUERY_KEYS } from '@/lib/query-client.js';
-import { useAppDataQuery, useSaveMisubsMutation, useSaveSettingsMutation } from '@/queries/useAppDataQueries.js';
+import {
+  syncAppDataSnapshotToCache,
+  useAppDataQuery,
+  useSaveSettingsMutation,
+} from '@/queries/useAppDataQueries.js';
 import ImportModal from '@/components/modals/ImportModal.vue';
 import LineNumberTextarea from '@/components/ui/LineNumberTextarea.vue';
 
-const { apiGetMock, apiPostMock, MockAPIError } = vi.hoisted(() => {
+const { apiGetMock, apiPostMock, apiPatchMock, MockAPIError } = vi.hoisted(() => {
   class HoistedAPIError extends Error {
     constructor(message, status = 500, data = null) {
       super(message);
@@ -23,6 +27,7 @@ const { apiGetMock, apiPostMock, MockAPIError } = vi.hoisted(() => {
   return {
     apiGetMock: vi.fn(),
     apiPostMock: vi.fn(),
+    apiPatchMock: vi.fn(),
     MockAPIError: HoistedAPIError,
   };
 });
@@ -33,7 +38,7 @@ vi.mock('@/lib/http.js', () => ({
     post: apiPostMock,
     put: vi.fn(),
     del: vi.fn(),
-    patch: vi.fn(),
+    patch: apiPatchMock,
   },
   APIError: MockAPIError,
 }));
@@ -42,6 +47,7 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
   beforeEach(() => {
     apiGetMock.mockReset();
     apiPostMock.mockReset();
+    apiPatchMock.mockReset();
     sessionStorage.clear();
     localStorage.clear();
   });
@@ -69,19 +75,16 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
       profiles: [{ id: 'p1', name: 'Default', subscriptions: ['s1'], manualNodes: [] }],
       ruleTemplates: [],
       config: { siteName: 'Before', profileToken: 'sub' },
-      dataRevision: 'rev-1',
     });
 
     let appDataQuery;
-    let saveMisubsMutation;
     let saveSettingsMutation;
 
     const Harness = defineComponent({
       setup() {
         appDataQuery = useAppDataQuery();
-        saveMisubsMutation = useSaveMisubsMutation();
         saveSettingsMutation = useSaveSettingsMutation();
-        return () => h('div', appDataQuery.data.value?.dataRevision || 'loading');
+        return () => h('div', appDataQuery.data.value?.misubs?.[0]?.name || 'loading');
       },
     });
 
@@ -93,7 +96,7 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
 
     await flushPromises();
     expect(apiGetMock).toHaveBeenCalledTimes(1);
-    expect(appDataQuery.data.value?.dataRevision).toBe('rev-1');
+    expect(appDataQuery.data.value?.misubs?.[0]?.name).toBe('Airport 1');
 
     // Second query observer reuses cached QueryClient data with 0 extra HTTP requests
     const SecondConsumer = defineComponent({
@@ -109,27 +112,21 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
     expect(apiGetMock).toHaveBeenCalledTimes(1);
     expect(secondWrapper.text()).toBe('Airport 1');
 
-    // Optimistic misubs save rollback on HTTP 500
-    apiPostMock.mockRejectedValueOnce(new MockAPIError('Server exploded', 500));
-    await expect(
-      saveMisubsMutation.mutateAsync({
-        misubs: [{ id: 's1', name: 'Optimistic Name', url: 'https://a.example.com/sub', enabled: true }],
-        profiles: [],
-        baseRevision: 'rev-1',
-      }),
-    ).rejects.toThrow('Server exploded');
+    // Fine-grained resource updates synchronize into QueryClient and sessionStorage snapshot cache
+    syncAppDataSnapshotToCache(queryClient, {
+      misubs: [{ id: 's1', name: 'Synced Airport 1', url: 'https://a.example.com/sub', enabled: true, tags: [] }],
+    });
+    const syncedSnapshot = queryClient.getQueryData(QUERY_KEYS.appData);
+    expect(syncedSnapshot.misubs[0].name).toBe('Synced Airport 1');
 
-    const rolledBack = queryClient.getQueryData(QUERY_KEYS.appData);
-    expect(rolledBack.misubs[0].name).toBe('Airport 1');
-
-    // Settings save passes preferences header and rolls back on failure
-    apiPostMock.mockResolvedValueOnce({ success: true });
+    // Settings save passes preferences header and rolls back on failure via PATCH /api/settings
+    apiPatchMock.mockResolvedValueOnce({ success: true });
     await saveSettingsMutation.mutateAsync({
       settings: { siteName: 'After' },
       preferencesOnly: true,
-      currentConfig: rolledBack.config,
+      currentConfig: syncedSnapshot.config,
     });
-    expect(apiPostMock).toHaveBeenLastCalledWith(
+    expect(apiPatchMock).toHaveBeenLastCalledWith(
       '/api/settings',
       { siteName: 'After' },
       { headers: { 'X-MiSub-Save-Scope': 'preferences' } },
@@ -138,7 +135,7 @@ describe('Stage 5: TanStack Query Integration, Store Naming & Unified ImportModa
     const updatedCache = queryClient.getQueryData(QUERY_KEYS.appData);
     expect(updatedCache.config.siteName).toBe('After');
 
-    apiPostMock.mockRejectedValueOnce(new MockAPIError('Failed settings', 500));
+    apiPatchMock.mockRejectedValueOnce(new MockAPIError('Failed settings', 500));
     await expect(
       saveSettingsMutation.mutateAsync({
         settings: { siteName: 'Broken' },

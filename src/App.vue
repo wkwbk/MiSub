@@ -25,14 +25,12 @@ const Toast = defineAsyncComponent(() => import('@/components/ui/Toast.vue'));
 const Footer = defineAsyncComponent(() => import('@/components/layout/Footer.vue'));
 const Dashboard = defineAsyncComponent(() => import('@/components/dashboard/Dashboard.vue'));
 const Header = defineAsyncComponent(() => import('@/components/layout/Header.vue'));
-const SavePrompt = defineAsyncComponent(() => import('@/components/ui/SavePrompt.vue'));
 const ScrollToTop = defineAsyncComponent(() => import('@/components/ui/ScrollToTop.vue'));
 const VersionChangelogModal = defineAsyncComponent(() => import('@/components/modals/VersionChangelogModal.vue'));
 
 const route = useRoute();
 const router = useRouter();
 const { isNavigating, progress, isFadingOut, showSlowIndicator, pendingPath } = useRouteLoading(router);
-const isDiscarding = ref(false);
 let cancelRoutePrefetch = () => {};
 const { t, locale } = useI18n();
 const themeStore = useThemeStore();
@@ -46,7 +44,6 @@ const { checkSession, login, logout } = sessionStore;
 const toastStore = useToastStore();
 
 const dataStore = useDataStore();
-const { isDirty, saveState } = storeToRefs(dataStore);
 
 const uiStore = useUIStore();
 const { layoutMode } = storeToRefs(uiStore);
@@ -118,29 +115,17 @@ const shouldCenterMain = computed(
     (!isPublicRoute.value || route.name === 'Entrance'),
 );
 
-const showSavePrompt = computed(
-  () => layoutMode.value === 'modern' && (isDirty.value || saveState.value === 'success'),
-);
+const loginComponent = computed(() => {
+  return sessionStore.publicConfig?.hasCustomLoginPath ? NotFound : Login;
+});
 
 // 设置页自带吸底操作栏（内含回到顶部按钮），隐藏全局悬浮 ScrollToTop 以避免重叠
 const isModernSettingsPage = computed(
   () => isLoggedIn.value && layoutMode.value === 'modern' && route.name === 'Settings',
 );
 
-const loginComponent = computed(() => {
-  return sessionStore.publicConfig?.hasCustomLoginPath ? NotFound : Login;
-});
-
-const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
-  if (isLoggedIn.value && layoutMode.value === 'modern' && isDirty.value) {
-    event.preventDefault();
-    event.returnValue = t('common.unsavedLeaveConfirm');
-  }
-};
-
 onMounted(async () => {
   window.addEventListener('misub:unauthorized', handleUnauthorized);
-  window.addEventListener('beforeunload', handleBeforeUnload);
   initTheme();
   await checkSession();
 });
@@ -165,7 +150,7 @@ watch(
   { immediate: true },
 );
 
-const { startAutoUpdate, stopAutoUpdate, restartAutoUpdate } = useSubscriptions(() => dataStore.markDirty());
+const { startAutoUpdate, stopAutoUpdate, restartAutoUpdate } = useSubscriptions();
 
 watch(
   [sessionState, layoutMode],
@@ -200,7 +185,6 @@ function clearVersionCheckTimer() {
 onUnmounted(() => {
   cancelRoutePrefetch();
   window.removeEventListener('misub:unauthorized', handleUnauthorized);
-  window.removeEventListener('beforeunload', handleBeforeUnload);
   stopAutoUpdate();
   clearVersionCheckTimer();
 });
@@ -232,20 +216,6 @@ const handleVersionModalConfirm = () => {
 
 const handleVersionModalSuppress = () => {
   versionStore.suppressUpdateModal();
-};
-
-const handleSave = async () => {
-  await dataStore.saveData();
-};
-const handleDiscard = async () => {
-  if (isDiscarding.value || saveState.value !== 'idle') return;
-  isDiscarding.value = true;
-  try {
-    await dataStore.fetchData(true);
-    toastStore.showToast(t('notices.discardedChanges'));
-  } finally {
-    isDiscarding.value = false;
-  }
 };
 
 const redirectUnauthenticatedRoute = () => {
@@ -379,14 +349,6 @@ const isCustomPageFullWidth = computed(() => {
             </button>
           </div>
         </div>
-
-        <SavePrompt
-          :is-dirty="showSavePrompt"
-          :is-discarding="isDiscarding"
-          :save-state="saveState"
-          @discard="handleDiscard"
-          @save="handleSave"
-        />
 
         <router-view v-if="layoutMode === 'modern'" v-slot="{ Component, route: currentRoute }">
           <RouteErrorBoundary :reset-key="currentRoute.fullPath">
