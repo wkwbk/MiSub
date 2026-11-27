@@ -32,12 +32,12 @@ export const useVersionStore = defineStore('version', () => {
   const showUpdateNotice = ref(false);
   const upstreamRepo = 'wkwbk/MiSub';
 
-  // 当前版本本地更新日志 (v2.9.0)
-  const localChangelog = `🚀 **全仓严格 TypeScript 迁移、运行时加固与工程质量全面升级**
-- **全仓严格 TypeScript 迁移**：将 \`@misub/core\`、Edge 后端（\`worker.ts\` / \`functions/\`）及前端（含 135 个 Vue SFC）全面迁移至严格模式 TypeScript，实现全仓零 \`any\` 类型约束，并接入 \`tsc\` / \`vue-tsc\` CI 门禁。
-- **Worker 运行时加固与可观测性**：强化边缘并发控制、连接清理、SSRF 防护与 Single-Flight 缓存防击穿；配置迁移至 \`wrangler.jsonc\`，启用 Workers Observability、Source Maps 与 Smart Placement。
-- **前端架构标准化**：统一 API 端点与 HTTP 客户端、TanStack Query 数据层、单向数据流、统一错误处理、Zod 校验及国际化文案，精简弹窗导入模块结构。
-- **全仓深度瘦身与性能优化**：完成 P2 专项优化与 Knip 死代码清理，进一步精简前端构建产物体积并提升整体可维护性。`;
+  // 当前版本本地更新日志 (v2.9.1)
+  const localChangelog = `🚀 **订阅防爬虫拦截、浏览器门户与 Mihomo 多端口 SOCKS5、细粒度持久化升级**
+- **IM 与链接预览爬虫拦截防护**：新增 \`blockCrawlerSubAccess\`（默认开启），自动拦截微信、QQ、企业微信、钉钉、飞书、Telegram、WhatsApp、Discord 等聊天软件内置浏览与链接预览爬虫，静默返回伪装页且不触发日志/Telegram 通知；主流代理客户端白名单无条件放行。
+- **订阅浏览器门户与 Mihomo 多端口 SOCKS5**：新增独立订阅详情门户页、自定义门户设计器与 Mihomo 多端口 SOCKS5 listeners 生成及端口映射表导出。
+- **D1 细粒度持久化与并发加固**：迁移至细粒度资源 CRUD 与行级 \`config_version\` 乐观并发控制（OCC），改用 \`schema_versions\` 表追踪 D1 迁移并解耦维护任务。
+- **体验与界面优化**：自定义公开页实时预览工作台、单节点二维码展示、设置页资源卡片默认折叠懒加载，以及删除二次确认、按钮高度与移动端标签换行等多项 UI 一致性修复。`;
 
   function normalizeVersion(version: string | number | null | undefined): string {
     return String(version || '')
