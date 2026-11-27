@@ -88,6 +88,8 @@ export default {
     exit: 'Exit',
     copyNode: 'Copy node',
     viewDetail: 'View details',
+    expand: 'Expand',
+    collapse: 'Collapse',
   },
   notices: {
     discardedChanges: 'Discarded all unsaved changes',

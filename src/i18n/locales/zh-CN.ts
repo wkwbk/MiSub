@@ -88,6 +88,8 @@ export default {
     exit: '退出',
     copyNode: '复制节点',
     viewDetail: '查看详情',
+    expand: '展开',
+    collapse: '收起',
   },
   notices: {
     discardedChanges: '已放弃所有未保存的更改',

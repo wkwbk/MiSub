@@ -34,7 +34,7 @@ interface CollectionLabels {
 </script>
 
 <script setup lang="ts" generic="TItem extends CollectionItemBase = CollectionItemBase">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, SquarePen, Trash2, Upload } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
 import { useToastStore } from '@/stores/useToastStore.js';
@@ -79,6 +79,8 @@ const { t } = useI18n();
 const { showToast } = useToastStore();
 
 const config = ref<CollectionConfig<TItem>>(props.normalizeConfig(props.defaultConfig));
+const isExpanded = ref(false);
+const hasLoaded = ref(false);
 const loading = ref(false);
 const activeTab = ref('all');
 const showEditModal = ref(false);
@@ -131,22 +133,40 @@ const getHostname = (rawUrl?: string) => {
 };
 
 const fetchItems = async () => {
+  if (loading.value) return false;
   loading.value = true;
   try {
     const data = await fetchPublicResource(props.endpoint);
     if (data?.success && data.data) {
       config.value = props.normalizeConfig(data.data);
-    } else if (data?.success === false) {
+      hasLoaded.value = true;
+      return true;
+    }
+    if (data?.success === false) {
       showToast(props.labels.fetchErrorText || data.message || t('settings.loadFailed'), 'error');
     }
+    return false;
   } catch {
     showToast(t('settings.networkError'), 'error');
+    return false;
   } finally {
     loading.value = false;
   }
 };
 
-onMounted(fetchItems);
+const toggleExpanded = async () => {
+  if (isExpanded.value) {
+    isExpanded.value = false;
+    return;
+  }
+  isExpanded.value = true;
+  if (!hasLoaded.value) {
+    const loaded = await fetchItems();
+    if (!loaded) {
+      isExpanded.value = false;
+    }
+  }
+};
 
 const persistConfig = async (nextConfig = config.value) => {
   try {
@@ -341,35 +361,56 @@ const executeReset = async () => {
 </script>
 
 <template>
-  <SettingCard :description="description" :no-margin="!config.enabled" :title="title" :tone="tone">
+  <SettingCard
+    :description="description"
+    :no-margin="!isExpanded || (!loading && (!hasLoaded || !config.enabled))"
+    :title="title"
+    :tone="tone"
+  >
     <template #icon>
       <slot name="icon" />
     </template>
     <template #actions>
       <div class="flex flex-wrap items-center gap-2">
-        <Switch v-model="config.enabled" @change="handleEnabledToggle" />
-        <template v-if="config.enabled">
-          <button
-            class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
-            type="button"
-            @click="showResetConfirm = true"
-          >
-            {{ labels.resetBtn }}
-          </button>
-          <button
-            class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
-            type="button"
-            @click="handleAdd"
-          >
-            {{ labels.addBtn }}
-          </button>
+        <template v-if="isExpanded && hasLoaded">
+          <Switch v-model="config.enabled" @change="handleEnabledToggle" />
+          <template v-if="config.enabled">
+            <button
+              class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line"
+              type="button"
+              @click="showResetConfirm = true"
+            >
+              {{ labels.resetBtn }}
+            </button>
+            <button
+              class="whitespace-nowrap px-3 py-1.5 text-center text-xs font-semibold text-accent-fg bg-accent hover:opacity-90 rounded-md border border-accent shadow-none"
+              type="button"
+              @click="handleAdd"
+            >
+              {{ labels.addBtn }}
+            </button>
+          </template>
         </template>
+        <button
+          :aria-expanded="isExpanded"
+          class="inline-flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 text-xs font-medium text-fg-muted bg-transparent hover:bg-hover hover:text-fg rounded-md border border-line transition-colors"
+          data-testid="resource-collection-toggle"
+          type="button"
+          @click="toggleExpanded"
+        >
+          <span>{{ isExpanded ? t('actions.collapse') : t('actions.expand') }}</span>
+          <ChevronDown
+            :class="{ 'rotate-180': isExpanded }"
+            class="w-3.5 h-3.5 transition-transform duration-200"
+          />
+        </button>
       </div>
     </template>
 
-    <div v-if="config.enabled" class="space-y-4">
-      <div v-if="loading" class="text-center py-8 text-xs text-fg-muted">
-        {{ t('common.loading') }}
+    <div v-if="isExpanded && (loading || (hasLoaded && config.enabled))" class="space-y-4">
+      <div v-if="loading" class="flex items-center justify-center gap-2 py-8 text-xs text-fg-muted">
+        <Loader2 class="w-4 h-4 animate-spin" />
+        <span>{{ t('common.loading') }}</span>
       </div>
 
       <template v-else>

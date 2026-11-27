@@ -106,6 +106,13 @@ describe('settings page English translations', () => {
     await flushPromises();
 
     expect(wrapper.text()).toContain('Client Management');
+    expect(wrapper.text()).toContain('Expand');
+    expectNoChineseOrKeys(wrapper.text());
+
+    await wrapper.get('[data-testid="resource-collection-toggle"]').trigger('click');
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('Collapse');
     expect(wrapper.text()).toContain('Reset defaults');
     expect(wrapper.text()).toContain('Add client');
     expect(wrapper.text()).toContain('Up');

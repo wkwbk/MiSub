@@ -24,9 +24,12 @@ vi.mock('@/lib/api.js', () => ({
   fetchGithubLatestRelease: vi.fn(async () => ({})),
 }));
 
+import { fetchPublicResource } from '@/lib/api.js';
+
 describe('public and settings card layout & action consolidation', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
+    vi.clearAllMocks();
   });
 
   it('uses auto-rows-fr, h-full flex-col cards, and mt-auto footers in public sections and resource cards', async () => {
@@ -105,9 +108,27 @@ describe('public and settings card layout & action consolidation', () => {
       global: { plugins: [i18n] },
     });
     await flushPromises();
+    expect(fetchPublicResource).not.toHaveBeenCalled();
+    expect(resourceWrapper.find('.auto-rows-fr').exists()).toBe(false);
+
+    const toggleBtn = resourceWrapper.get('[data-testid="resource-collection-toggle"]');
+    expect(toggleBtn.attributes('aria-expanded')).toBe('false');
+    await toggleBtn.trigger('click');
+    await flushPromises();
+
+    expect(fetchPublicResource).toHaveBeenCalledTimes(1);
+    expect(toggleBtn.attributes('aria-expanded')).toBe('true');
     expect(resourceWrapper.find('.auto-rows-fr').exists()).toBe(true);
     expect(resourceWrapper.find('.flex.h-full.flex-col').exists()).toBe(true);
     expect(resourceWrapper.find('.mt-auto.border-t').exists()).toBe(true);
+
+    // Collapsing and expanding again should reuse loaded data without refetching
+    await toggleBtn.trigger('click');
+    expect(resourceWrapper.find('.auto-rows-fr').exists()).toBe(false);
+    await toggleBtn.trigger('click');
+    await flushPromises();
+    expect(fetchPublicResource).toHaveBeenCalledTimes(1);
+    expect(resourceWrapper.find('.auto-rows-fr').exists()).toBe(true);
 
     const gridWrapper = mount(ProfileGrid, {
       props: {
