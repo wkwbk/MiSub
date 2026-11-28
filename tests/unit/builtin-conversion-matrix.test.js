@@ -1,10 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ProcessorService } from '../../functions/services/processor-service.js';
 import {
-  resolveBuiltinEngineFlags,
-  resolveEffectiveEngine,
   resolveExternalTemplateConfigUrl,
   resolveTemplateSource,
+  resolveTransformPlan,
 } from '../../functions/modules/subscription/core/main-handler.js';
 
 const NODE_LIST = 'trojan://pass@1.1.1.1:443#HK-01';
@@ -42,45 +41,45 @@ MATCH,MyGroup
 
   it('keeps the current engine selection precedence', () => {
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('engine=external'),
-        profileEngineMode: 'builtin',
-        globalEngineMode: 'builtin',
-      }),
+        profile: { transformMode: 'smart' },
+        config: { transformMode: 'smart' },
+      }).mode,
     ).toBe('external');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('builtin=external'),
-        profileEngineMode: 'builtin',
-        globalEngineMode: 'builtin',
-      }),
+        profile: { transformMode: 'smart' },
+        config: { transformMode: 'smart' },
+      }).mode,
     ).toBe('external');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('builtin=1'),
-        profileEngineMode: 'external',
-        globalEngineMode: 'external',
-      }),
-    ).toBe('builtin');
+        profile: { transformMode: 'external' },
+        config: { transformMode: 'external' },
+      }).mode,
+    ).toBe('smart');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams(''),
         userAgent: HIDDIFY_UA,
-        profileEngineMode: '',
-        globalEngineMode: 'external',
-      }),
-    ).toBe('builtin');
+        profile: {},
+        config: { transformMode: 'external' },
+      }).mode,
+    ).toBe('smart');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('target=singbox'),
         userAgent: HIDDIFY_UA,
-        profileEngineMode: '',
-        globalEngineMode: 'external',
-      }),
+        profile: {},
+        config: { transformMode: 'external' },
+      }).mode,
     ).toBe('external');
   });
 
@@ -99,15 +98,25 @@ MATCH,MyGroup
     expect(resolveTemplateSource('')).toEqual({ kind: 'none', value: '' });
   });
 
-  it('disables builtin engine flags while external engine mode is active', () => {
-    expect(resolveBuiltinEngineFlags({ builtinSkipCertVerify: true, builtinEnableUdp: true }, true)).toEqual({
-      shouldSkipCertificateVerify: false,
-      shouldEnableUdp: false,
+  it('shares unified flags consistently across external and builtin modes with URL > Profile > Global precedence', () => {
+    expect(
+      resolveTransformPlan({
+        config: { transformMode: 'external', skipCertVerify: true, enableUdp: false },
+      }).flags,
+    ).toMatchObject({
+      skipCertVerify: true,
+      enableUdp: false,
     });
 
-    expect(resolveBuiltinEngineFlags({ builtinSkipCertVerify: true, builtinEnableUdp: true }, false)).toEqual({
-      shouldSkipCertificateVerify: true,
-      shouldEnableUdp: true,
+    expect(
+      resolveTransformPlan({
+        searchParams: new URLSearchParams('udp=1'),
+        profile: { enableUdp: false, skipCertVerify: true },
+        config: { transformMode: 'smart', skipCertVerify: false, enableUdp: true },
+      }).flags,
+    ).toMatchObject({
+      skipCertVerify: true,
+      enableUdp: true,
     });
   });
 
@@ -146,7 +155,7 @@ MATCH,MyGroup
         combinedNodeList: NODE_LIST,
         subName: 'Matrix Test',
         config: { UpdateInterval: 86400 },
-        builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
+        builtinOptions: { smartPreset: 'balanced', enableUdp: true, skipCertVerify: false },
         templateSource: { kind: 'builtin', value: 'clash_acl4ssr_lite' },
         managedConfigUrl: `https://example.com/sub?target=${encodeURIComponent(item.targetFormat)}&builtin=1`,
         storageAdapter,
@@ -166,7 +175,7 @@ MATCH,MyGroup
       subName: 'Hiddify Matrix Test',
       config: { UpdateInterval: 86400 },
       builtinOptions: {
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         userAgent: HIDDIFY_UA,
         hiddifyCompatible: true,
         searchParams: new URLSearchParams(''),

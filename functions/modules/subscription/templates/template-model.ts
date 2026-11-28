@@ -4,7 +4,7 @@ interface TemplateMeta {
   name: string;
   source: string;
   target: string;
-  ruleLevel: string;
+  injectSmartGroups: boolean;
   isMeta: boolean;
 }
 
@@ -122,7 +122,7 @@ export function createUnifiedTemplateModel(input: UnifiedTemplateModelInput = {}
       name: input.meta?.name || 'MiSub',
       source: input.meta?.source || 'builtin',
       target: input.meta?.target || 'clash',
-      ruleLevel: input.meta?.ruleLevel || 'std',
+      injectSmartGroups: input.meta?.injectSmartGroups !== false,
       // 客户端内核能力标记：仅 Mihomo/Meta 支持节点级 dialer-proxy（链式代理）。
       isMeta: Boolean(input.meta?.isMeta),
     },

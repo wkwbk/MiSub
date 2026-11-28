@@ -13,13 +13,15 @@ const NODES = 'ss://YWVzLTEyOC1nY206cGFzcw@hk.example.com:8388#香港01';
 
 function getOptimizedTemplateModel(templateId) {
   const template = getBuiltinTemplate(templateId);
-  const model = parseIniTemplate(template.content, { proxies: [], ruleLevel: 'std' });
+  const model = parseIniTemplate(template.content, { proxies: [], injectSmartGroups: true });
   return applySmartModelOptimizations(model);
 }
 
 describe('域名嗅探（sniffer）、DoH 与内置模板策略组完整性', () => {
   it('内置 Clash 配置包含嗅探配置与 skip-domain 防误判', () => {
-    const cfg = yaml.load(generateBuiltinClashConfig(NODES, { ruleLevel: 'relay', isMeta: true }));
+    const cfg = yaml.load(
+      generateBuiltinClashConfig(NODES, { smartPreset: 'balanced', enableRelay: true, isMeta: true }),
+    );
 
     expect(cfg.sniffer).toMatchObject({
       enable: true,
@@ -40,12 +42,13 @@ describe('域名嗅探（sniffer）、DoH 与内置模板策略组完整性', ()
   });
 
   it('内置 sing-box 配置首条路由规则为嗅探（含可视化规则模式）', () => {
-    const parsed = JSON.parse(generateBuiltinSingboxConfig(NODES, { ruleLevel: 'std' }));
+    const parsed = JSON.parse(generateBuiltinSingboxConfig(NODES, { smartPreset: 'balanced' }));
     expect(parsed.route.rules[0]).toEqual({ action: 'sniff' });
 
     const visualParsed = JSON.parse(
       generateBuiltinSingboxConfig(NODES, {
-        builtinTransform: { visualRulesEnabled: true, selectedRules: ['ai'] },
+        smartPreset: 'balanced',
+        customVisualRules: { selectedRules: ['ai_services'] },
       }),
     );
     expect(visualParsed.route.rules[0]).toEqual({ action: 'sniff' });
@@ -59,17 +62,18 @@ describe('域名嗅探（sniffer）、DoH 与内置模板策略组完整性', ()
   });
 
   it('境外 DNS 在内置 Clash / sing-box 输出中均为带代理出口的 DoH', () => {
-    const clash = yaml.load(generateBuiltinClashConfig(NODES, { ruleLevel: 'std' }));
+    const clash = yaml.load(generateBuiltinClashConfig(NODES, { smartPreset: 'balanced' }));
     expect(clash.dns.nameserver).toEqual([
       'https://8.8.8.8/dns-query#🌐 DNS 出口',
       'https://1.1.1.1/dns-query#🌐 DNS 出口',
     ]);
 
-    const singbox = JSON.parse(generateBuiltinSingboxConfig(NODES, { ruleLevel: 'std' }));
+    const singbox = JSON.parse(generateBuiltinSingboxConfig(NODES, { smartPreset: 'balanced' }));
     const foreign = singbox.dns.servers.filter((s) => s.tag.startsWith('dns-foreign'));
     expect(foreign.length).toBeGreaterThan(0);
     expect(foreign.every((s) => s.type === 'https' && s.detour === '🌐 DNS 出口')).toBe(true);
-    expect(singbox.dns.servers[0]).toMatchObject({ type: 'udp', server: '223.5.5.5' });
+    expect(singbox.dns.servers[0]).toMatchObject({ type: 'https', server: '223.5.5.5', server_port: 443 });
+    expect(singbox.dns.servers[0].detour).toBeUndefined();
   });
 
   it('AI 开发者模板与游戏加速模板均定义了直连和漏网之鱼策略组', () => {

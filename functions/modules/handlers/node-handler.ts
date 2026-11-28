@@ -91,7 +91,7 @@ async function resolveNodeCountFetchCfOptions(env: Env): Promise<RequestInit> {
     const storageAdapter = StorageFactory.createAdapter(env) as unknown as StorageAdapter;
     const loaded = await storageAdapter.get<Record<string, unknown>>(STORAGE_KEY_SETTINGS);
     const settings = isRecord(loaded) ? loaded : DEFAULT_SETTINGS;
-    if (settings?.builtinSkipCertVerify === true) {
+    if (settings?.skipCertVerify === true) {
       return { cf: { insecureSkipVerify: true } } as RequestInit;
     }
   } catch (error: unknown) {
@@ -264,7 +264,9 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
             }
           } else {
             const reason = `HTTP ${responses[0].value.status}`;
-            console.warn(`[NodeHandler] Traffic specific request failed (${reason}). Will attempt fallback extraction.`);
+            console.warn(
+              `[NodeHandler] Traffic specific request failed (${reason}). Will attempt fallback extraction.`,
+            );
           }
         } finally {
           await responses[0].value.body?.cancel?.().catch(() => {});
@@ -417,10 +419,7 @@ export async function handleNodeCountRequest(request: Request, env: Env): Promis
 
         if (subToUpdate) {
           const subExtra = subToUpdate as SubscriptionItem & { lastGoodNodeCount?: number };
-          const knownNodeCount = Math.max(
-            Number(subExtra.lastGoodNodeCount) || 0,
-            Number(subExtra.nodeCount) || 0,
-          );
+          const knownNodeCount = Math.max(Number(subExtra.lastGoodNodeCount) || 0, Number(subExtra.nodeCount) || 0);
 
           if (isSuspiciousNodeCountDrop(knownNodeCount, result.count)) {
             console.warn(
@@ -557,7 +556,11 @@ export async function handleBatchUpdateNodesRequest(request: Request, env: Env):
             (typeof subscription.customUserAgent === 'string' && subscription.customUserAgent.trim()) ||
             getProcessedUserAgent(userAgent, subscription.url);
           let requestUrl = subscription.url;
-          if (subscription.fetchProxy && typeof subscription.fetchProxy === 'string' && subscription.fetchProxy.trim()) {
+          if (
+            subscription.fetchProxy &&
+            typeof subscription.fetchProxy === 'string' &&
+            subscription.fetchProxy.trim()
+          ) {
             requestUrl = buildFetchProxyUrl(subscription.fetchProxy, subscription.url, effectiveUserAgent);
           }
           requestUrl = assertPublicNetworkUrl(requestUrl).toString();

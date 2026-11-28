@@ -3,10 +3,10 @@ import { getBuiltinTemplate } from '../../functions/modules/subscription/templat
 import { parseIniTemplate } from '../../functions/modules/subscription/templates/parsers/ini-template-parser.js';
 import { applySmartModelOptimizations } from '../../functions/modules/subscription/templates/template-processor.js';
 import { TRANSFORM_ASSETS } from '@/constants/transform-assets.js';
+import { buildVisualRulesAndProviders } from '../../functions/modules/subscription/core/visual-rules-builder.js';
 import {
-  getBuiltinRules,
-  getRemoteProviderDefinitions,
-  REMOTE_SOURCES,
+  PINNED_RULE_REVISIONS,
+  SING_GEOSITE_BASE,
 } from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
 import { DNS_PROXY_GROUP } from '../../functions/modules/subscription/security/safe-dns.js';
 import { generateBuiltinSingboxConfig } from '../../functions/modules/subscription/adapters/generators/builtin-singbox-generator.js';
@@ -55,7 +55,7 @@ function getOptimizedTemplateModel(templateId) {
 
   const model = parseIniTemplate(template.content, {
     proxies: sampleProxies,
-    ruleLevel: 'std',
+    injectSmartGroups: true,
   });
   return applySmartModelOptimizations(model);
 }
@@ -165,35 +165,32 @@ describe('Builtin template rule audit', () => {
   });
 
   it('uses maintained SagerNet sing-box binary rule sets instead of deprecated Loyalsoldier JSON rules', () => {
-    const rawRules = getBuiltinRules('FULL', 'singbox');
-    const providers = getRemoteProviderDefinitions('singbox', rawRules);
+    const { singboxRuleSets } = buildVisualRulesAndProviders('singbox', { smartPreset: 'full' });
+    const adsRuleSet = singboxRuleSets.find((ruleSet) => ruleSet.tag === 'geosite-category-ads-all');
 
-    expect(REMOTE_SOURCES.ADS.singbox).toMatch(
-      /\/0adeef8a3b9201292f6786ef4de81bcc02e971eb\/geosite-category-ads-all\.srs$/,
-    );
-    expect(
-      Object.values(REMOTE_SOURCES).every((source) => !source.singbox?.includes('Loyalsoldier/sing-box-rules')),
-    ).toBe(true);
-    expect(Object.values(providers).every((provider) => provider.format === 'binary')).toBe(true);
+    expect(SING_GEOSITE_BASE).toContain(`/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`);
+    expect(adsRuleSet).toBeDefined();
+    expect(singboxRuleSets.every((source) => !source.url.includes('Loyalsoldier/sing-box-rules'))).toBe(true);
+    expect(singboxRuleSets.every((provider) => provider.format === 'binary')).toBe(true);
     // 规则源应重写为国内可直连的 jsDelivr 镜像（raw.githubusercontent.com 在大陆不可达）
-    expect(providers.ADS.url).toBe(
-      'https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@0adeef8a3b9201292f6786ef4de81bcc02e971eb/geosite-category-ads-all.srs',
+    expect(adsRuleSet.url).toBe(
+      `https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@${PINNED_RULE_REVISIONS.SING_GEOSITE}/geosite-category-ads-all.srs`,
     );
-    expect(providers.ADS.url).not.toContain('raw.githubusercontent.com');
+    expect(adsRuleSet.url).not.toContain('raw.githubusercontent.com');
   });
 
   it('emits sing-box ADS rule set as binary SRS in builtin config', () => {
     const parsed = JSON.parse(
       generateBuiltinSingboxConfig('ss://YWVzLTEyOC1nY206cGFzcw@example.com:8388#HKNode', {
-        ruleLevel: 'std',
+        smartPreset: 'full',
       }),
     );
-    const adsRuleSet = parsed.route.rule_set.find((ruleSet) => ruleSet.tag === 'ADS');
+    const adsRuleSet = parsed.route.rule_set.find((ruleSet) => ruleSet.tag === 'geosite-category-ads-all');
 
     expect(adsRuleSet).toMatchObject({
       type: 'remote',
       format: 'binary',
-      url: 'https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@0adeef8a3b9201292f6786ef4de81bcc02e971eb/geosite-category-ads-all.srs',
+      url: `https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@${PINNED_RULE_REVISIONS.SING_GEOSITE}/geosite-category-ads-all.srs`,
       download_detour: DNS_PROXY_GROUP,
     });
   });

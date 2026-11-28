@@ -14,10 +14,11 @@ import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../../security/safe-dns.j
 import { applyMihomoChainProxy } from '../../core/mihomo-chain-proxy.js';
 import { GEOX_URLS, GH_PROXY_BASE, pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 import {
+  buildLiteMultiSocksClashConfig,
   CLASH_YAML_DUMP_OPTIONS,
   createBaseClashConfig,
   filterAutoGroupMembers,
-  stripInternalProxyFields,
+  sanitizeClashProxiesForOutput,
 } from '../../core/client-shared.js';
 
 export interface RenderClashOptions {
@@ -167,13 +168,14 @@ function mapRule(rule: TemplateRule, ruleProviderMap: Map<string, string>): stri
   if (typeof rule === 'string') return rule;
   const type = String(rule.type || '').toUpperCase();
   if (!type) return null;
+  const extras = Array.isArray(rule.extras) && rule.extras.length > 0 ? `,${rule.extras.join(',')}` : '';
   if (type === 'MATCH' || type === 'FINAL') return `MATCH,${rule.policy}`;
-  if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
+  if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}${extras}`;
   if (type === 'RULE-SET') {
     const providerName = rule.value ? ruleProviderMap.get(rule.value) : undefined;
-    return `RULE-SET,${providerName || rule.value},${rule.policy}`;
+    return `RULE-SET,${providerName || rule.value},${rule.policy}${extras}`;
   }
-  return `${type},${rule.value},${rule.policy}`;
+  return `${type},${rule.value},${rule.policy}${extras}`;
 }
 
 export function renderClashFromTemplateModel(
@@ -236,12 +238,24 @@ export function renderClashFromTemplateModel(
     ? buildMihomoSocksListeners(buildMultiSocksBindings(normalizedModel.proxies || [], options.multiSocks))
     : [];
 
+  if (options.multiSocks?.enabled && options.multiSocks.lite) {
+    return yaml.dump(
+      buildLiteMultiSocksClashConfig({
+        proxies: normalizedModel.proxies || [],
+        listeners: multiSocksListeners,
+        listen: options.multiSocks.listen,
+        managedConfigUrl: normalizedModel.settings.managedConfigUrl || '',
+      }),
+      CLASH_YAML_DUMP_OPTIONS,
+    );
+  }
+
   const config = createBaseClashConfig({
     dns: resolveSafeDnsConfig(normalizedModel.settings?.customDnsOverride, {
       mode: normalizedModel.settings?.dnsMode,
       proxyGroup: DNS_PROXY_GROUP,
     }),
-    proxies: stripInternalProxyFields(normalizedModel.proxies || []),
+    proxies: sanitizeClashProxiesForOutput(normalizedModel.proxies || []),
     proxyGroups: normalizedModel.groups
       .filter(
         (group) =>
@@ -250,12 +264,16 @@ export function renderClashFromTemplateModel(
       )
       .map((group) => {
         const mappedType = mapGroupType(group.type);
+        const isAutoType = mappedType === 'url-test' || mappedType === 'fallback';
+        const groupOptions =
+          group.options && typeof group.options === 'object' ? (group.options as Record<string, unknown>) : {};
         return {
           name: group.name,
           type: mappedType,
           proxies: filterAutoGroupMembers(mappedType, group.members),
           filter: Array.isArray(group.filters) && group.filters.length > 0 ? group.filters.join('|') : undefined,
-          ...group.options,
+          ...groupOptions,
+          ...(isAutoType && groupOptions.lazy === undefined ? { lazy: true } : {}),
         };
       }),
     ruleProviders,
@@ -276,6 +294,9 @@ export function renderClashFromTemplateModel(
       'external-controller': '127.0.0.1:9090',
       // GEO 数据库走 jsDelivr 镜像，保证模板中 GEOIP/GEOSITE 规则与 geosite:* DNS 策略在大陆可用
       'geox-url': { ...GEOX_URLS },
+      ...(options.multiSocks?.enabled && options.multiSocks.listen === '0.0.0.0'
+        ? { 'allow-lan': true, 'bind-address': '*' }
+        : {}),
       ...(multiSocksListeners.length > 0 ? { listeners: multiSocksListeners } : {}),
     },
   });

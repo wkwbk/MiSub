@@ -196,7 +196,9 @@ function pruneInvalidMembers(model: UnifiedTemplateModel): void {
 
 function ensureDnsProxyGroup(model: UnifiedTemplateModel): void {
   if (model.groups.some((group) => group.name === DNS_PROXY_GROUP)) return;
-  const proxyNames = model.proxies.map((proxy) => proxy.name || proxy.tag).filter((name): name is string => Boolean(name));
+  const proxyNames = model.proxies
+    .map((proxy) => proxy.name || proxy.tag)
+    .filter((name): name is string => Boolean(name));
   model.groups.push({
     name: DNS_PROXY_GROUP,
     type: 'url-test',
@@ -204,8 +206,9 @@ function ensureDnsProxyGroup(model: UnifiedTemplateModel): void {
     filters: [],
     options: {
       url: 'http://www.gstatic.com/generate_204',
-      interval: 300,
+      interval: 600,
       tolerance: 50,
+      lazy: true,
     },
   });
 }
@@ -257,7 +260,7 @@ function ensureAiPolicy(model: UnifiedTemplateModel): void {
       type: 'url-test',
       members: nodeCandidates,
       filters: [],
-      options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
+      options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, lazy: true },
     });
     existingNames.add('🤖 AI 自动');
   }
@@ -267,7 +270,7 @@ function ensureAiPolicy(model: UnifiedTemplateModel): void {
       type: 'fallback',
       members: nodeCandidates,
       filters: [],
-      options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
+      options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, lazy: true },
     });
     existingNames.add('🤖 AI 故障转移');
   }
@@ -317,9 +320,7 @@ function ensureAiPolicy(model: UnifiedTemplateModel): void {
  * 包含：自动解析过滤器、注入地区组、展开占位符、清理无效引用及空组
  */
 export function applySmartModelOptimizations(model: UnifiedTemplateModel): UnifiedTemplateModel {
-  const { ruleLevel } = model.meta || {};
-  const normalizedLevel = (ruleLevel || '').toLowerCase();
-  const isCustomOrNone = !normalizedLevel || normalizedLevel === 'none';
+  const injectSmartGroups = model.meta?.injectSmartGroups !== false;
 
   // 1. 执行现有的正则过滤器解析 (始终执行)
   resolveGroupFilters(model);
@@ -332,18 +333,14 @@ export function applySmartModelOptimizations(model: UnifiedTemplateModel): Unifi
     ensureDnsProxyGroup(model);
   }
 
-  // 3. AI 服务分组与分流规则注入：
-  // 仅在非纯自定义模板模式（启用内置分流）下才注入
-  if (!isCustomOrNone) {
+  // 3. AI 服务分组、地区选优组与主选择器兜底注入：
+  // 仅在启用智能分组注入时执行；自定义/远程模板仅展开占位符和清理
+  if (injectSmartGroups) {
     ensureAiPolicy(model);
-  }
 
-  // 4. 检查等级。如果是 none (完全禁用)，我们只执行占位符展开和清理，不进行智能注入。
-  if (!isCustomOrNone && normalizedLevel !== 'base') {
-    // 3. 准备获取所有节点的名称，用于后续注入
     const proxyNames = model.proxies.map((p) => p.name || p.tag).filter((name): name is string => Boolean(name));
     if (proxyNames.length > 0) {
-      // 4. 识别地区分组并注入
+      // 识别地区分组并注入
       const nodeEntries = proxyNames.map((name) => ({ name, tag: name }));
       const regions = groupNodeLinesByRegion(nodeEntries, {
         regionOverrides: Array.isArray(model.settings?.regionOverrides) ? model.settings.regionOverrides : [],
@@ -360,17 +357,18 @@ export function applySmartModelOptimizations(model: UnifiedTemplateModel): Unifi
             url: 'http://www.gstatic.com/generate_204',
             interval: '300',
             tolerance: '50',
+            lazy: true,
           },
         });
       });
     }
   }
 
-  // 5. 展开魔法占位符 (始终执行，确保模板标签被替换)
+  // 4. 展开魔法占位符 (始终执行，确保模板标签被替换)
   expandMagicPlaceholders(model);
 
-  // 6. 只有在非精简模式下才执行主选择器兜底注入
-  if (normalizedLevel !== 'none' && normalizedLevel !== 'base' && normalizedLevel) {
+  // 5. 执行主选择器兜底注入
+  if (injectSmartGroups) {
     const mainGroupCandidates = model.groups.filter((g) => /选择|Proxy|Default|Global|Main|select/i.test(g.name));
     if (mainGroupCandidates.length > 0) {
       const targetGroup = mainGroupCandidates[0];
@@ -384,7 +382,7 @@ export function applySmartModelOptimizations(model: UnifiedTemplateModel): Unifi
     }
   }
 
-  // 7. 最后进行全局修剪与去重 (始终执行，保证输出质量)
+  // 6. 最后进行全局修剪与去重 (始终执行，保证输出质量)
   dedupeGroupsByName(model);
   pruneInvalidMembers(model);
   pruneEmptyGroups(model);

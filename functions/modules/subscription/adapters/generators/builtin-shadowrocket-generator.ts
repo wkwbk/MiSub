@@ -10,7 +10,8 @@ import { renderShadowrocketConfigFromClash } from '../../templates/renderers/ren
  * 并渲染为 Shadowrocket 原生 INI `.conf` 格式（含手动节点置顶、区域排序、加密 DoH 与 RULE-SET 镜像）。
  */
 export function generateBuiltinShadowrocketConfig(nodeList: string, options: BuiltinGeneratorOptions = {}): string {
-  const clashYaml = generateBuiltinClashConfig(nodeList, options);
+  // Shadowrocket 不支持 Mihomo 二进制 .mrs，显式传 preferMrsRules: false 保持传统 ACL4SSR 文本/YAML 规则源
+  const clashYaml = generateBuiltinClashConfig(nodeList, { ...options, preferMrsRules: false });
   if (!clashYaml) {
     return '[General]\nipv6 = false\nprefer-ipv6 = false\n\n[Proxy]\nDIRECT = direct\n\n[Proxy Group]\n\n[Rule]\nFINAL,DIRECT\n';
   }

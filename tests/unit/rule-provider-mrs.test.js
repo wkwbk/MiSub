@@ -21,7 +21,7 @@ function render(rulesets) {
   return yaml.load(
     renderClashFromIniTemplate(template, {
       proxies: PROXIES.map((proxy) => ({ ...proxy })),
-      ruleLevel: 'none',
+      injectSmartGroups: false,
     }),
   );
 }

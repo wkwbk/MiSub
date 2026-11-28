@@ -67,8 +67,11 @@ describe('/api/data slimming, lazy ruleTemplates, and session cache quota guard'
     expect(body.config.subscriptionTagOrder).toEqual(['Airport']);
     expect(body.config.profileTagOrder).toEqual(['Default']);
     expect(body.config.dismissedHealthItems).toEqual(['missing-token']);
-    expect(body.config.builtinTransform).toBeDefined();
-    expect(body.config.subconverter).toBeDefined();
+    expect(body.config.transformMode).toBeDefined();
+    expect(body.config.smartPreset).toBeDefined();
+    expect(body.config.customVisualRules).toBeDefined();
+    expect(body.config.externalBackend).toBeDefined();
+    expect(body.config.advancedBaseConfig).toBeUndefined();
     expect(body.config.shortLink).toBeDefined();
 
     for (const omittedKey of [

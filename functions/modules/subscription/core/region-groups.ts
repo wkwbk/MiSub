@@ -190,7 +190,7 @@ export function buildRegionPolicyGroups(
         type: 'url-test',
         proxies: region.tags,
         hidden: true,
-        options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
+        options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50, lazy: true },
       });
     }
   });

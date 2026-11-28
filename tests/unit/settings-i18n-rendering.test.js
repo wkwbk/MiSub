@@ -128,11 +128,18 @@ describe('settings page English translations', () => {
     const transform = mount(TransformCard, {
       props: {
         settings: {
-          transformConfigMode: 'preset',
-          transformConfig: '',
-          builtinSkipCertVerify: false,
-          builtinEnableUdp: false,
-          ruleLevel: 'std',
+          transformMode: 'external',
+          templateConfig: '',
+          skipCertVerify: false,
+          enableUdp: true,
+          enableFlagEmoji: true,
+          externalBackend: {
+            url: 'subapi.cmliussss.net',
+            templateUrl: '',
+            sort: false,
+            tfo: false,
+            list: false,
+          },
           subconverter: {
             engineMode: 'external',
             defaultBackend: 'api.v1.mk',
@@ -151,15 +158,25 @@ describe('settings page English translations', () => {
         plugins: [createI18n({ initialLocale: 'en-US' }), pinia],
         stubs: {
           TransformSelector: true,
-          RuleTemplateManager: true,
+          RuleTemplateModal: true,
         },
       },
     });
 
-    expect(transform.text()).toContain('Rules and config scheme');
-    expect(transform.text()).toContain('Built-in');
-    expect(transform.text()).toContain('External backend parameters');
+    expect(transform.text()).toContain('Routing & Conversion Mode');
+    expect(transform.text()).toContain('Smart Routing');
+    expect(transform.text()).toContain('Rule Template');
+    expect(transform.text()).toContain('External Backend');
+    expect(transform.text()).toContain('Common Conversion Options');
     expect(transform.text()).toContain('Test backend availability');
+    expectNoChineseOrKeys(transform.text());
+
+    await transform.get('[data-testid="mode-btn-smart"]').trigger('click');
+    await flushPromises();
+    expectNoChineseOrKeys(transform.text());
+
+    await transform.get('[data-testid="mode-btn-template"]').trigger('click');
+    await flushPromises();
     expectNoChineseOrKeys(transform.text());
 
     const telegram = mount(TelegramCard, {

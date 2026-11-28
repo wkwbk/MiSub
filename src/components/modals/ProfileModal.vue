@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import type {
+  CustomVisualRulesConfig,
   ManualNodeItem,
   OperatorRule,
   ProfileConfig,
-  ProfileSubconverter,
+  ProfileExternalBackend,
   ProfileSubscriptionRef,
+  SmartPreset,
   SubscriptionItem,
+  TransformMode,
 } from '@misub/core/types.js';
 import { Folder } from '@lucide/vue';
 import Modal from '@/components/ui/Modal.vue';
@@ -24,7 +27,7 @@ import { collectTags, getItemTags, matchesTagFilter, normalizeTagList } from '@/
 import { ensureProfileLinkId, generateProfileLinkId } from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
 import { normalizeProfilePortalSocksOverrides } from '@misub/core/domain/multi-socks.js';
-import { normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
+import { normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t } = useI18n();
 const dataStore = useDataStore();
@@ -148,9 +151,7 @@ const countryCodeMap: Record<string, string[]> = {
 
 const storeProfiles = computed<ProfileConfig[]>(() => (dataStore.profiles || []) as ProfileConfig[]);
 
-const allProfileTags = computed(() =>
-  collectTags(storeProfiles.value, settingsStore.config.profileTagOrder || []),
-);
+const allProfileTags = computed(() => collectTags(storeProfiles.value, settingsStore.config.profileTagOrder || []));
 
 const manualNodeTags = computed(() =>
   collectTags(props.allManualNodes || [], settingsStore.config.manualNodeTagOrder || []),
@@ -295,39 +296,46 @@ watch(
         delete profileCopy.prefixSettings.enableNodeEmoji;
       }
 
-      if (!profileCopy.subconverter || typeof profileCopy.subconverter !== 'object') {
-        profileCopy.subconverter = {
-          engineMode: '',
-          backend: '',
-          options: {
-            udp: null,
-            emoji: null,
-            scv: null,
-            sort: null,
-            tfo: null,
-            list: null,
-          },
-        };
-      } else {
-        profileCopy.subconverter.options = profileCopy.subconverter.options || {};
-        const fields = ['udp', 'emoji', 'scv', 'sort', 'tfo', 'list'];
-        fields.forEach((f) => {
-          if (profileCopy.subconverter.options[f] === undefined) {
-            profileCopy.subconverter.options[f] = null;
-          }
+      delete profileCopy.transformConfigMode;
+      delete profileCopy.transformConfig;
+      delete profileCopy.ruleLevel;
+      delete profileCopy.builtinTransform;
+      delete profileCopy.subconverter;
+
+      const rawMode = profileCopy.transformMode;
+      profileCopy.transformMode =
+        rawMode === 'smart' || rawMode === 'template' || rawMode === 'external' ? (rawMode as TransformMode) : null;
+
+      const rawPreset = profileCopy.smartPreset;
+      profileCopy.smartPreset =
+        rawPreset === 'minimal' || rawPreset === 'balanced' || rawPreset === 'full' ? (rawPreset as SmartPreset) : null;
+
+      profileCopy.templateConfig = typeof profileCopy.templateConfig === 'string' ? profileCopy.templateConfig : '';
+
+      if (profileCopy.customVisualRules && typeof profileCopy.customVisualRules === 'object') {
+        profileCopy.customVisualRules = normalizeCustomVisualRules(profileCopy.customVisualRules, {
+          smartPreset: profileCopy.smartPreset || settingsStore.config?.smartPreset || 'balanced',
+          allowEmptyName: true,
         });
       }
 
+      const rawExt =
+        profileCopy.externalBackend && typeof profileCopy.externalBackend === 'object'
+          ? (profileCopy.externalBackend as Record<string, unknown>)
+          : {};
+      profileCopy.externalBackend = {
+        url: typeof rawExt.url === 'string' ? rawExt.url : '',
+        templateUrl: typeof rawExt.templateUrl === 'string' ? rawExt.templateUrl : '',
+        sort: typeof rawExt.sort === 'boolean' ? rawExt.sort : null,
+        tfo: typeof rawExt.tfo === 'boolean' ? rawExt.tfo : null,
+        list: typeof rawExt.list === 'boolean' ? rawExt.list : null,
+      } as ProfileExternalBackend;
+
+      profileCopy.enableUdp = typeof profileCopy.enableUdp === 'boolean' ? profileCopy.enableUdp : null;
+      profileCopy.skipCertVerify = typeof profileCopy.skipCertVerify === 'boolean' ? profileCopy.skipCertVerify : null;
+      profileCopy.enableRelay = typeof profileCopy.enableRelay === 'boolean' ? profileCopy.enableRelay : null;
+
       profileCopy.operators = Array.isArray(profileCopy.operators) ? profileCopy.operators : [];
-      if (!profileCopy.transformConfigMode) {
-        profileCopy.transformConfigMode = profileCopy.transformConfig ? 'preset' : 'global';
-      }
-      if (profileCopy.ruleLevel === undefined || profileCopy.ruleLevel === null) {
-        profileCopy.ruleLevel = '';
-      }
-      if (profileCopy.builtinTransform && typeof profileCopy.builtinTransform === 'object') {
-        profileCopy.builtinTransform = normalizeBuiltinTransform(profileCopy.builtinTransform);
-      }
 
       profileCopy.subProfiles = Array.isArray(profileCopy.subProfiles) ? profileCopy.subProfiles : [];
       profileCopy.shortLink = typeof profileCopy.shortLink === 'string' ? profileCopy.shortLink : '';
@@ -360,6 +368,7 @@ watch(
         portalRedirectUrl: '',
         portalNotice: '',
         multiSocksEnabled: null,
+        multiSocksLite: null,
         multiSocksStartPort: '',
         multiSocksListen: '',
         multiSocksUsername: '',
@@ -367,9 +376,20 @@ watch(
         multiSocksMaxPorts: '',
         isPublic: true,
         description: '',
-        transformConfigMode: 'global',
-        transformConfig: '',
-        ruleLevel: '',
+        transformMode: null,
+        smartPreset: null,
+        templateConfig: '',
+        customVisualRules: undefined,
+        externalBackend: {
+          url: '',
+          templateUrl: '',
+          sort: null,
+          tfo: null,
+          list: null,
+        },
+        enableUdp: null,
+        skipCertVerify: null,
+        enableRelay: null,
         prefixSettings: {
           enableManualNodes: null,
           enableSubscriptions: null,
@@ -411,21 +431,105 @@ function buildPreparedProfile(): EditableProfile {
     delete profileToSave.fetchLimitMode;
   }
   Object.assign(profileToSave, normalizeProfilePortalSocksOverrides(profileToSave));
-  const isVisualMode =
-    profileToSave.transformConfigMode === 'visual' ||
-    (profileToSave.transformConfigMode === 'builtin' && Boolean(profileToSave.builtinTransform?.visualRulesEnabled));
-  if (isVisualMode) {
-    const normalizedBt = normalizeBuiltinTransform(profileToSave.builtinTransform || {});
-    profileToSave.transformConfigMode = 'builtin';
-    profileToSave.builtinTransform = {
-      visualRulesEnabled: true,
-      rulePreset: normalizedBt.rulePreset,
-      selectedRules: normalizedBt.selectedRules,
-      customRules: normalizedBt.customRules,
-    };
-  } else {
-    delete profileToSave.builtinTransform;
+
+  delete profileToSave.transformConfigMode;
+  delete profileToSave.transformConfig;
+  delete profileToSave.ruleLevel;
+  delete profileToSave.builtinTransform;
+  delete profileToSave.subconverter;
+
+  const isValidMode =
+    profileToSave.transformMode === 'smart' ||
+    profileToSave.transformMode === 'template' ||
+    profileToSave.transformMode === 'external';
+  if (!isValidMode) {
+    if (props.isNew) {
+      delete profileToSave.transformMode;
+    } else {
+      profileToSave.transformMode = null;
+    }
   }
+
+  const isValidPreset =
+    profileToSave.smartPreset === 'minimal' ||
+    profileToSave.smartPreset === 'balanced' ||
+    profileToSave.smartPreset === 'full';
+  if (!isValidPreset) {
+    if (props.isNew) {
+      delete profileToSave.smartPreset;
+    } else {
+      profileToSave.smartPreset = null;
+    }
+  }
+
+  if (typeof profileToSave.enableUdp !== 'boolean') {
+    if (props.isNew) {
+      delete profileToSave.enableUdp;
+    } else {
+      profileToSave.enableUdp = null;
+    }
+  }
+
+  if (typeof profileToSave.skipCertVerify !== 'boolean') {
+    if (props.isNew) {
+      delete profileToSave.skipCertVerify;
+    } else {
+      profileToSave.skipCertVerify = null;
+    }
+  }
+
+  if (typeof profileToSave.enableRelay !== 'boolean') {
+    if (props.isNew) {
+      delete profileToSave.enableRelay;
+    } else {
+      profileToSave.enableRelay = null;
+    }
+  }
+
+  profileToSave.templateConfig = String(profileToSave.templateConfig || '').trim();
+
+  if (profileToSave.customVisualRules && typeof profileToSave.customVisualRules === 'object') {
+    const normalizedCvr = normalizeCustomVisualRules(profileToSave.customVisualRules, {
+      smartPreset: (isValidPreset ? profileToSave.smartPreset : settingsStore.config?.smartPreset) || 'balanced',
+      allowEmptyName: false,
+    });
+    const rawCvr = profileToSave.customVisualRules as CustomVisualRulesConfig;
+    profileToSave.customVisualRules = {
+      ...(Array.isArray(rawCvr.selectedRules) ? { selectedRules: normalizedCvr.selectedRules } : {}),
+      customRules: normalizedCvr.customRules,
+      groupByCountry: normalizedCvr.groupByCountry,
+      includeAutoSelect: normalizedCvr.includeAutoSelect,
+    };
+  } else if (props.isNew) {
+    delete profileToSave.customVisualRules;
+  }
+
+  if (profileToSave.externalBackend && typeof profileToSave.externalBackend === 'object') {
+    const ext = profileToSave.externalBackend as ProfileExternalBackend;
+    const normalizedExt: ProfileExternalBackend = {
+      url: String(ext.url ?? '').trim(),
+      templateUrl: String(ext.templateUrl ?? '').trim(),
+      sort: typeof ext.sort === 'boolean' ? ext.sort : null,
+      tfo: typeof ext.tfo === 'boolean' ? ext.tfo : null,
+      list: typeof ext.list === 'boolean' ? ext.list : null,
+    };
+    const isExtEmpty =
+      !normalizedExt.url &&
+      !normalizedExt.templateUrl &&
+      normalizedExt.sort === null &&
+      normalizedExt.tfo === null &&
+      normalizedExt.list === null;
+    if (isExtEmpty) {
+      if (props.isNew) {
+        delete profileToSave.externalBackend;
+      } else {
+        profileToSave.externalBackend = null;
+      }
+    } else {
+      profileToSave.externalBackend = normalizedExt;
+    }
+  }
+
   return profileToSave as EditableProfile;
 }
 
@@ -550,7 +654,10 @@ function updateSelectedIds(listName: SelectionListName, newIds: Array<string | P
         <!-- 资源选择区（节点 / 订阅 / 订阅组） -->
         <div class="space-y-4">
           <div class="border-b border-line">
-            <nav :aria-label="t('profileModal.tabsAriaLabel')" class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
+            <nav
+              :aria-label="t('profileModal.tabsAriaLabel')"
+              class="-mb-px flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar"
+            >
               <button
                 :class="[
                   activeResourceTab === 'manualNodes'

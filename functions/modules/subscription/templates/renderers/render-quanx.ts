@@ -72,6 +72,7 @@ export function renderQuanxFromTemplateModel(
     'no-ipv6',
     'server = 223.5.5.5',
     'server = 114.114.114.114',
+    'doh-server = https://223.5.5.5/dns-query',
     '',
     '[server_local]',
     ...proxies.map((proxy) => buildQuanxProxyLine(proxy)).filter((line): line is string => Boolean(line)),

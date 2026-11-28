@@ -196,19 +196,8 @@ export async function handlePublicPreviewRequest(
     }
 
     const profileRecord = profile as Record<string, unknown>;
-    const profileSettings =
-      profileRecord.settings && typeof profileRecord.settings === 'object'
-        ? (profileRecord.settings as Record<string, unknown>)
-        : null;
     // 调用 handleProfileMode 获取节点（公开页默认显示处理后的结果）
-    const shouldSkipCertificateVerify = Boolean(
-      profileRecord.builtinSkipCertVerify ||
-        profileRecord.transformBackendScv ||
-        profileRecord.skipCertVerify ||
-        profileRecord.skipCertificateVerify ||
-        profileSettings?.builtinSkipCertVerify ||
-        profileSettings?.transformBackendScv,
-    );
+    const shouldSkipCertificateVerify = profileRecord.skipCertVerify === true;
 
     let inflightMap = publicPreviewInflight.get(scopeTarget);
     if (!inflightMap) {

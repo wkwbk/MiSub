@@ -22,6 +22,7 @@ export type ProfilePortalMode = 'inherit' | PortalMode;
 
 export interface EffectiveMultiSocksConfig {
   enabled: boolean;
+  lite: boolean;
   startPort: number;
   listen: MultiSocksListen;
   maxPorts: number;
@@ -117,9 +118,7 @@ export function prepareClashProxiesFromNodeList(
   nodeList: string | ReadonlyArray<string>,
   parseOptions: NodeIRBatchParseOptions = {},
 ): ClashProxy[] {
-  const rawLines = Array.isArray(nodeList)
-    ? nodeList
-    : String(cleanControlCharsCore(nodeList || '')).split(/\r?\n/);
+  const rawLines = Array.isArray(nodeList) ? nodeList : String(cleanControlCharsCore(nodeList || '')).split(/\r?\n/);
   const urls = rawLines
     .map((line) => cleanControlCharsCore(String(line || '')).trim())
     .filter((line) => line && !line.startsWith('#'));
@@ -183,6 +182,7 @@ export function normalizeProfilePortalSocksOverrides(
     portalRedirectUrl: typeof source.portalRedirectUrl === 'string' ? source.portalRedirectUrl.trim() : '',
     portalNotice: typeof source.portalNotice === 'string' ? source.portalNotice.trim() : '',
     multiSocksEnabled: normalizeOptionalBooleanOverride(source.multiSocksEnabled),
+    multiSocksLite: normalizeOptionalBooleanOverride(source.multiSocksLite),
     multiSocksStartPort: stringify ? (startPort === null ? '' : String(startPort)) : startPort,
     multiSocksListen: normalizeOptionalListenOverride(source.multiSocksListen),
     multiSocksUsername: typeof source.multiSocksUsername === 'string' ? source.multiSocksUsername.trim() : '',
@@ -267,10 +267,7 @@ export function buildMultiSocksBindings(
 
     const proxy = realProxies[index];
     const proxyName = String(proxy.name).trim();
-    const meta =
-      proxy.metadata && typeof proxy.metadata === 'object'
-        ? proxy.metadata
-        : extractNodeMetadata(proxyName);
+    const meta = proxy.metadata && typeof proxy.metadata === 'object' ? proxy.metadata : extractNodeMetadata(proxyName);
     const region = typeof meta?.region === 'string' && meta.region.trim() ? meta.region.trim() : '其他';
     const flag = typeof meta?.flag === 'string' ? meta.flag : '';
     const countryCode = extractCountryCodeFromMetadata(region, flag);
@@ -349,13 +346,22 @@ export function resolveEffectiveMultiSocksConfig({
   const profileEnabled = normalizeOptionalBooleanOverride(profile?.multiSocksEnabled);
   let enabled = profileEnabled !== null ? profileEnabled : globalEnabled;
   let explicitByQuery = false;
+  const globalLite =
+    settings?.defaultMultiSocksLite === true || String(settings?.defaultMultiSocksLite ?? '').toLowerCase() === 'true';
+  const profileLite = normalizeOptionalBooleanOverride(profile?.multiSocksLite);
+  let lite = profileLite !== null ? profileLite : globalLite;
 
   const queryMode = searchParams?.get('mode')?.trim().toLowerCase() || '';
   if (queryMode === 'multi-socks' || queryMode === 'multisocks') {
     enabled = true;
     explicitByQuery = true;
+  } else if (queryMode === 'multi-socks-lite' || queryMode === 'multisocks-lite') {
+    enabled = true;
+    explicitByQuery = true;
+    lite = true;
   } else if (queryMode === 'normal' || queryMode === 'standard') {
     enabled = false;
+    lite = false;
   } else {
     const queryFlag =
       parseQueryBooleanFlag(searchParams?.get('multi-socks') ?? null) ??
@@ -365,7 +371,18 @@ export function resolveEffectiveMultiSocksConfig({
       explicitByQuery = true;
     } else if (queryFlag === false) {
       enabled = false;
+      lite = false;
     }
+  }
+
+  const queryLiteFlag =
+    parseQueryBooleanFlag(searchParams?.get('lite') ?? null) ??
+    parseQueryBooleanFlag(searchParams?.get('light') ?? null);
+  if (queryLiteFlag !== null) {
+    lite = enabled && queryLiteFlag;
+  }
+  if (!enabled) {
+    lite = false;
   }
 
   const queryStartPortRaw =
@@ -374,7 +391,8 @@ export function resolveEffectiveMultiSocksConfig({
   const rawProfileStartPort = parseOptionalInteger(profile?.multiSocksStartPort);
   const profileStartPort =
     rawProfileStartPort !== null ? normalizeStartPort(rawProfileStartPort, globalStartPort) : globalStartPort;
-  const startPort = queryStartPortRaw !== null ? normalizeStartPort(queryStartPortRaw, profileStartPort) : profileStartPort;
+  const startPort =
+    queryStartPortRaw !== null ? normalizeStartPort(queryStartPortRaw, profileStartPort) : profileStartPort;
 
   const queryListen = normalizeOptionalListenOverride(searchParams?.get('listen'));
   const globalListen = normalizeListenAddress(settings?.defaultMultiSocksListen);
@@ -395,6 +413,7 @@ export function resolveEffectiveMultiSocksConfig({
 
   return {
     enabled,
+    lite,
     startPort,
     listen,
     maxPorts,
@@ -422,8 +441,7 @@ export function resolveEffectivePortalConfig({
   const mode: PortalMode = normalizedProfileMode === 'inherit' ? globalMode : normalizedProfileMode;
 
   const profileRedirect = typeof profile?.portalRedirectUrl === 'string' ? profile.portalRedirectUrl.trim() : '';
-  const globalRedirect =
-    typeof settings?.subPortalRedirectUrl === 'string' ? settings.subPortalRedirectUrl.trim() : '';
+  const globalRedirect = typeof settings?.subPortalRedirectUrl === 'string' ? settings.subPortalRedirectUrl.trim() : '';
   const rawRedirect = profileRedirect || globalRedirect;
   const redirectUrl = rawRedirect && isValidHttpUrlString(rawRedirect) ? rawRedirect : '';
 

@@ -7,7 +7,8 @@ import {
   buildMultiSocksBindings,
   type EffectiveMultiSocksConfig,
 } from '@misub/core/domain/multi-socks.js';
-import { deduplicateProxyNames, stripInternalProxyFields } from '../modules/subscription/core/client-shared.js';
+import { deduplicateProxyNames, sanitizeClashProxiesForOutput } from '../modules/subscription/core/client-shared.js';
+import { GEOX_URLS } from '../modules/subscription/templates/builtin-rules-provider.js';
 import { generateCombinedNodeList, type SubscriptionSourceItem } from './subscription-service.js';
 import { getClientAdapter } from '../modules/subscription/adapters/adapter-registry.js';
 import {
@@ -44,7 +45,8 @@ export interface ProcessNodesParams {
 
 export interface RenderOutputBuiltinOptions {
   hiddifyCompatible?: boolean;
-  ruleLevel?: string;
+  injectSmartGroups?: boolean;
+  enableRelay?: boolean;
   interval?: number;
   skipCertVerify?: boolean;
   enableUdp?: boolean;
@@ -112,9 +114,7 @@ export function isClashYamlProfileTemplate(templateText: unknown): boolean {
 
   try {
     const parsed = yaml.load(templateText);
-    return Boolean(
-      isRecord(parsed) && Array.isArray(parsed['proxy-groups']) && Array.isArray(parsed.rules),
-    );
+    return Boolean(isRecord(parsed) && Array.isArray(parsed['proxy-groups']) && Array.isArray(parsed.rules));
   } catch {
     return false;
   }
@@ -171,7 +171,7 @@ function renderClashYamlProfileTemplate(
   const multiSocksListeners = options.multiSocks?.enabled
     ? buildMihomoSocksListeners(buildMultiSocksBindings(rawProxies, options.multiSocks))
     : [];
-  const proxies = stripInternalProxyFields(
+  const proxies = sanitizeClashProxiesForOutput(
     rawProxies as Array<ClashProxy & Record<string, unknown>>,
   ) as unknown as TemplateProxy[];
 
@@ -184,12 +184,19 @@ function renderClashYamlProfileTemplate(
     });
   }
 
+  const allowLanMultiSocks = Boolean(options.multiSocks?.enabled && options.multiSocks.listen === '0.0.0.0');
+
   return yaml.dump(
     {
       ...config,
-      'allow-lan': false,
-      'bind-address': '127.0.0.1',
+      'allow-lan': allowLanMultiSocks,
+      'bind-address': allowLanMultiSocks ? '*' : '127.0.0.1',
       ipv6: false,
+      'unified-delay': config['unified-delay'] ?? true,
+      'tcp-concurrent': config['tcp-concurrent'] ?? true,
+      'geodata-mode': config['geodata-mode'] ?? true,
+      'geodata-loader': config['geodata-loader'] ?? 'memconservative',
+      'geox-url': config['geox-url'] ?? { ...GEOX_URLS },
       'external-controller': '127.0.0.1:9090',
       dns: resolveSafeDnsConfig(config.dns, {
         mode: options.dnsMode,
@@ -290,14 +297,17 @@ export class ProcessorService {
       const isIniTemplate = isIniTemplateSource(templateSource, builtinTemplateEntry || customTemplateEntry);
 
       if (templateText && isIniTemplate) {
+        const isCustomOrRemoteTemplate = templateSource.kind === 'custom' || templateSource.kind === 'remote';
         const renderParams = {
           nodeList: combinedNodeList,
           fileName: subName,
           targetFormat,
-          ruleLevel: builtinOptions.ruleLevel,
+          injectSmartGroups: builtinOptions.injectSmartGroups ?? !isCustomOrRemoteTemplate,
           interval:
             builtinOptions.interval ||
-            (config.profileUpdateInterval ? Number(config.profileUpdateInterval) * 3600 : Number(config.UpdateInterval) || 86400),
+            (config.profileUpdateInterval
+              ? Number(config.profileUpdateInterval) * 3600
+              : Number(config.UpdateInterval) || 86400),
           managedConfigUrl,
           skipCertVerify: builtinOptions.skipCertVerify,
           enableUdp: builtinOptions.enableUdp,
@@ -343,10 +353,7 @@ export class ProcessorService {
         const renderedYaml = renderClashYamlProfileTemplate(templateText, combinedNodeList, builtinOptions);
         if (adapter.id === 'shadowrocket' && typeof adapter.renderFromClashConfig === 'function') {
           const parsedClash = yaml.load(renderedYaml);
-          finalContent = await adapter.renderFromClashConfig(
-            isRecord(parsedClash) ? parsedClash : {},
-            builtinOptions,
-          );
+          finalContent = await adapter.renderFromClashConfig(isRecord(parsedClash) ? parsedClash : {}, builtinOptions);
         } else {
           finalContent = renderedYaml;
           contentType = 'application/x-yaml; charset=utf-8';

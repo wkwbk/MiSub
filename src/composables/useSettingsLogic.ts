@@ -4,7 +4,7 @@ import { useToastStore } from '@/stores/useToastStore.js';
 import { useSettingsStore } from '@/stores/useSettingsStore.js';
 import { useSessionStore } from '@/stores/useSessionStore.js';
 import { DEFAULT_SETTINGS } from '@/constants/default-settings.js';
-import type { ExternalApiConfig } from '@misub/core/types.js';
+import type { ExternalApiConfig, SmartPreset, TransformMode } from '@misub/core/types.js';
 import {
   clearAppDataQueryCache,
   fetchSettingsWithQueryClient,
@@ -20,6 +20,7 @@ import { confirmAction } from '@/composables/useConfirm.js';
 import { extractErrorMessage } from '@/utils/error-handler.js';
 import { clearAllPreferences } from '@/utils/local-preference.js';
 import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
+import { normalizeAdvancedBaseConfig, normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 
 export interface DisguiseConfig {
   pageType: 'default' | 'redirect';
@@ -52,10 +53,52 @@ function normalizeExternalApiConfig(value: unknown): ExternalApiConfig {
 }
 
 function normalizeSettingsObject(source: Partial<AppSettingsConfig> = {}): AppSettingsConfig {
-  const { publicLinks: _omitPublicLinks, publicCores: _omitPublicCores, ...merged } = {
+  const {
+    publicLinks: _omitPublicLinks,
+    publicCores: _omitPublicCores,
+    transformConfigMode: _omitLegacyMode,
+    transformConfig: _omitLegacyConfig,
+    ruleLevel: _omitRuleLevel,
+    builtinTransform: _omitBuiltinTransform,
+    builtinEnableUdp: _omitBuiltinUdp,
+    builtinSkipCertVerify: _omitBuiltinScv,
+    subconverter: _omitSubconverter,
+    ...cleanSource
+  } = source as Partial<AppSettingsConfig> & Record<string, unknown>;
+  const merged = {
     ...DEFAULT_SETTINGS,
-    ...source,
+    ...cleanSource,
   } as AppSettingsConfig;
+  const rawMode = String(cleanSource.transformMode || merged.transformMode || 'smart');
+  merged.transformMode = (rawMode === 'template' || rawMode === 'external' ? rawMode : 'smart') as TransformMode;
+  const rawPreset = String(cleanSource.smartPreset || merged.smartPreset || 'balanced');
+  merged.smartPreset = (
+    rawPreset === 'minimal' || rawPreset === 'balanced' || rawPreset === 'full' ? rawPreset : 'balanced'
+  ) as SmartPreset;
+  merged.enableRelay = Boolean(merged.enableRelay);
+  merged.templateConfig = typeof merged.templateConfig === 'string' ? merged.templateConfig : '';
+  merged.customVisualRules = normalizeCustomVisualRules(cleanSource.customVisualRules ?? merged.customVisualRules, {
+    smartPreset: merged.smartPreset,
+    allowEmptyName: true,
+  });
+  merged.advancedBaseConfig = normalizeAdvancedBaseConfig(cleanSource.advancedBaseConfig ?? merged.advancedBaseConfig);
+  merged.enableUdp = merged.enableUdp !== false;
+  merged.skipCertVerify = Boolean(merged.skipCertVerify);
+  merged.enableFlagEmoji = merged.enableFlagEmoji !== false;
+  const srcExternal =
+    cleanSource.externalBackend && typeof cleanSource.externalBackend === 'object'
+      ? cleanSource.externalBackend
+      : merged.externalBackend;
+  merged.externalBackend = {
+    url:
+      typeof srcExternal?.url === 'string' && srcExternal.url.trim()
+        ? srcExternal.url.trim()
+        : DEFAULT_SETTINGS.externalBackend.url,
+    templateUrl: typeof srcExternal?.templateUrl === 'string' ? srcExternal.templateUrl : '',
+    sort: Boolean(srcExternal?.sort),
+    tfo: Boolean(srcExternal?.tfo),
+    list: Boolean(srcExternal?.list),
+  };
   merged.externalApi = normalizeExternalApiConfig(source.externalApi ?? merged.externalApi);
   merged.shortLink = {
     ...DEFAULT_SETTINGS.shortLink,
@@ -71,12 +114,16 @@ function normalizeSettingsObject(source: Partial<AppSettingsConfig> = {}): AppSe
   merged.subPortalTitle = typeof merged.subPortalTitle === 'string' ? merged.subPortalTitle : '';
   merged.subPortalNotice = typeof merged.subPortalNotice === 'string' ? merged.subPortalNotice : '';
   merged.defaultMultiSocksEnabled = Boolean(merged.defaultMultiSocksEnabled);
+  merged.defaultMultiSocksLite = Boolean(merged.defaultMultiSocksLite);
+  merged.dnsMode = merged.dnsMode === 'polluted' ? 'polluted' : 'clean';
   const parsedStartPort = Number(merged.defaultMultiSocksStartPort);
   merged.defaultMultiSocksStartPort =
     Number.isInteger(parsedStartPort) && parsedStartPort >= 1024 && parsedStartPort <= 60000 ? parsedStartPort : 42001;
   merged.defaultMultiSocksListen = merged.defaultMultiSocksListen === '0.0.0.0' ? '0.0.0.0' : '127.0.0.1';
   const rawPortalCustom =
-    source.portalCustomPage && typeof source.portalCustomPage === 'object' ? source.portalCustomPage : merged.portalCustomPage;
+    source.portalCustomPage && typeof source.portalCustomPage === 'object'
+      ? source.portalCustomPage
+      : merged.portalCustomPage;
   merged.portalCustomPage = {
     ...DEFAULT_SETTINGS.portalCustomPage,
     ...(rawPortalCustom && typeof rawPortalCustom === 'object' ? rawPortalCustom : {}),
@@ -130,7 +177,7 @@ export function useSettingsLogic() {
 
   // ========== 计算属性 ==========
   const hasWhitespace = computed(() => {
-    const fieldsCheck = ['fileName', 'myToken', 'profileToken', 'transformConfig', 'botToken', 'chatId'] as const;
+    const fieldsCheck = ['fileName', 'myToken', 'profileToken', 'templateConfig', 'botToken', 'chatId'] as const;
     for (const key of fieldsCheck) {
       const value = settings.value[key];
       if (typeof value === 'string' && value && /\s/.test(value)) return true;
@@ -198,7 +245,6 @@ export function useSettingsLogic() {
         prefixConfig: _omitPrefixConfig,
         prependSubName: _omitPrependSubName,
         nodeTransform: _omitNodeTransform,
-        clashRuleLevel: _omitClashRuleLevel,
         publicLinks: _omitPublicLinks,
         publicCores: _omitPublicCores,
         ...restSettings
@@ -208,7 +254,25 @@ export function useSettingsLogic() {
         ...restSettings,
         externalApi: normalizeExternalApiConfig(settings.value.externalApi),
         disguise: disguiseConfig.value,
-        ruleLevel: settings.value.ruleLevel || settings.value.clashRuleLevel || 'std',
+        transformMode: settings.value.transformMode || 'smart',
+        smartPreset: settings.value.smartPreset || 'balanced',
+        enableRelay: Boolean(settings.value.enableRelay),
+        templateConfig: String(settings.value.templateConfig || ''),
+        customVisualRules: normalizeCustomVisualRules(settings.value.customVisualRules, {
+          smartPreset: settings.value.smartPreset || 'balanced',
+          allowEmptyName: false,
+        }),
+        advancedBaseConfig: normalizeAdvancedBaseConfig(settings.value.advancedBaseConfig),
+        enableUdp: settings.value.enableUdp !== false,
+        skipCertVerify: Boolean(settings.value.skipCertVerify),
+        enableFlagEmoji: settings.value.enableFlagEmoji !== false,
+        externalBackend: {
+          url: String(settings.value.externalBackend?.url || DEFAULT_SETTINGS.externalBackend.url),
+          templateUrl: String(settings.value.externalBackend?.templateUrl || ''),
+          sort: Boolean(settings.value.externalBackend?.sort),
+          tfo: Boolean(settings.value.externalBackend?.tfo),
+          list: Boolean(settings.value.externalBackend?.list),
+        },
       };
 
       const result = (await saveSettings(settingsToSave)) as SaveSettingsResponse & ApiFailureShape;

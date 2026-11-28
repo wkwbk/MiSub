@@ -10,11 +10,7 @@ import { sendEnhancedTgNotification, tgEscape } from '../../notifications.js';
 import { DEFAULT_SETTINGS as defaultSettings } from '../../config.js';
 import { normalizeSubPath } from '@misub/core/domain/reserved-paths.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
-import {
-  createBlockedResponse,
-  isBrowserSubAccessAllowed,
-  isCrawlerSubAccessBlocked,
-} from '../../access-control.js';
+import { createBlockedResponse, isBrowserSubAccessAllowed, isCrawlerSubAccessBlocked } from '../../access-control.js';
 import { isSafeUserRegexPattern } from '../../security-utils.js';
 import {
   generateCacheKey,
@@ -75,16 +71,11 @@ import {
   buildExternalSubconverterUrl,
   normalizeSubconverterBackend,
   resolveAddFlagEmoji,
-  resolveBuiltinEngineFlags,
   resolveBuiltinRequestOptions,
-  resolveEffectiveBuiltinTransform,
-  resolveEffectiveEngine,
   resolveEffectiveNodeTransform,
   resolveExternalTemplateConfigUrl,
   resolveTemplateSource,
-  resolveTemplateUrl,
-  shouldRenderClashYamlProfileTemplateLocally,
-  type SubconverterOptionsContainer,
+  resolveTransformPlan,
 } from './engine-options.js';
 
 export {
@@ -93,17 +84,14 @@ export {
   resolveProfileUpdateInterval,
   formatNotificationExpireTime,
   formatNotificationExpireStatus,
-  resolveTemplateUrl,
   resolveTemplateSource,
   resolveExternalTemplateConfigUrl,
   normalizeSubconverterBackend,
   buildExternalSubconverterUrl,
-  resolveBuiltinEngineFlags,
-  resolveEffectiveEngine,
   resolveBuiltinRequestOptions,
   resolveEffectiveNodeTransform,
   resolveAddFlagEmoji,
-  shouldRenderClashYamlProfileTemplateLocally,
+  resolveTransformPlan,
 };
 
 type RequestWithCf = Request & {
@@ -184,8 +172,7 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const settings = await repos.settings.getMain();
 
   // 关键：我们在这里定义了 `config`，后续都应该使用它
-  const config = migrateConfigSettings({ ...defaultSettings, ...settings }) as SettingsConfig &
-    Record<string, unknown>;
+  const config = migrateConfigSettings({ ...defaultSettings, ...settings }) as SettingsConfig & Record<string, unknown>;
   ctx.config = config;
   ctx.accessLogPersistenceMode =
     typeof config.accessLogPersistenceMode === 'string' ? config.accessLogPersistenceMode : 'light';
@@ -195,9 +182,6 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const urlExclude = url.searchParams.get('exclude');
   const urlRename = url.searchParams.get('rename');
   const urlEmoji = url.searchParams.get('emoji');
-  const urlUdp = url.searchParams.get('udp');
-  const urlTfo = url.searchParams.get('tfo');
-  const urlScv = url.searchParams.get('scv');
   const urlList = url.searchParams.get('list') === 'true';
 
   const isCrawlerOrIm = isCrawlerOrImAgent(userAgentHeader);
@@ -234,26 +218,12 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const DEFAULT_EXPIRED_NODE = `trojan://00000000-0000-0000-0000-000000000000@127.0.0.1:443#${encodeURIComponent('您的订阅已到期')}`;
 
   let currentProfile: (ProfileConfig & Record<string, unknown>) | null = null;
-  let isExternalMode = false;
-  let useBuiltin = true;
-  let shouldSkipCertificateVerify = false;
-  let shouldEnableUdp = true;
-
-  const initEngineFlags = (targetProf: (ProfileConfig & Record<string, unknown>) | null) => {
-    const profileSub = (targetProf?.subconverter || {}) as { engineMode?: string } & SubconverterOptionsContainer;
-    const globalSub = (config.subconverter || {}) as { engineMode?: string } & SubconverterOptionsContainer;
-    const effectiveEngine = resolveEffectiveEngine({
-      searchParams: url.searchParams,
-      userAgent: userAgentHeader,
-      profileEngineMode: profileSub.engineMode,
-      globalEngineMode: globalSub.engineMode,
-    });
-    isExternalMode = effectiveEngine === 'external';
-    useBuiltin = !isExternalMode;
-    const flags = resolveBuiltinEngineFlags(config, isExternalMode);
-    shouldSkipCertificateVerify = flags.shouldSkipCertificateVerify;
-    shouldEnableUdp = flags.shouldEnableUdp;
-  };
+  let transformPlan = resolveTransformPlan({
+    searchParams: url.searchParams,
+    userAgent: userAgentHeader,
+    profile: null,
+    config,
+  });
 
   // 使用统一的确定目标格式的方法（此方法中包含了处理各类客户端如 Surge 等对应版本的最新支持规则）
   let targetFormat = determineTargetFormat(userAgentHeader, url.searchParams);
@@ -402,18 +372,25 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   };
 
   if (profileIdentifier) {
-    const expectedSubPath = normalizeSubPath(typeof config.profileToken === 'string' ? config.profileToken : undefined, 'sub');
+    const expectedSubPath = normalizeSubPath(
+      typeof config.profileToken === 'string' ? config.profileToken : undefined,
+      'sub',
+    );
     if (!token || token !== expectedSubPath) {
       // [伪装加固] 不使用裸 403 响应，统一走访问控制拦截响应
       return createBlockedResponse(config.disguise as Parameters<typeof createBlockedResponse>[0], request.url);
     }
     currentProfile = (await repos.profiles.getPublicByIdentifier(profileIdentifier)) as
-      | (ProfileConfig & Record<string, unknown>)
-      | null;
+      (ProfileConfig & Record<string, unknown>) | null;
     if (currentProfile?.id) {
       fetchGuardScopeKey = `profile:${currentProfile.id}`;
     }
-    initEngineFlags(currentProfile);
+    transformPlan = resolveTransformPlan({
+      searchParams: url.searchParams,
+      userAgent: userAgentHeader,
+      profile: currentProfile,
+      config,
+    });
     const profile = currentProfile;
     if (profile && profile.enabled) {
       subName = profile.name || subName;
@@ -449,7 +426,9 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
         subName = profile.name || subName;
         targetMisubs = [];
         const subSourceIds = Array.isArray(profile.subscriptions)
-          ? profile.subscriptions.map((item) => getProfileSubscriptionId(item)).filter((id): id is string => Boolean(id))
+          ? profile.subscriptions
+              .map((item) => getProfileSubscriptionId(item))
+              .filter((id): id is string => Boolean(id))
           : [];
         const manualNodeIds = Array.isArray(profile.manualNodes) ? profile.manualNodes.filter(Boolean) : [];
         const relatedSubs = await repos.profiles.getSources(subSourceIds, manualNodeIds);
@@ -498,7 +477,7 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
                   subProfileId,
                   userAgentHeader,
                   true,
-                  shouldSkipCertificateVerify,
+                  transformPlan.flags.skipCertVerify,
                   1,
                   new Set(visitedBase),
                 );
@@ -558,7 +537,12 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     }
     const allMisubs = (await repos.subscriptions.getAll()) || [];
     targetMisubs = allMisubs.filter((s) => s.enabled);
-    initEngineFlags(null);
+    transformPlan = resolveTransformPlan({
+      searchParams: url.searchParams,
+      userAgent: userAgentHeader,
+      profile: null,
+      config,
+    });
   }
 
   const updateIntervalHours = resolveProfileUpdateInterval(currentProfile, config);
@@ -606,27 +590,7 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     }
   }
 
-  const profileSub = (currentProfile?.subconverter || {}) as SubconverterOptionsContainer & { backend?: string };
-  const globalSub = (config.subconverter || {}) as SubconverterOptionsContainer & { defaultBackend?: string };
-
-  const globalTemplateUrl = resolveTemplateUrl(config.transformConfigMode, config.transformConfig, '');
-  const templateUrl = currentProfile
-    ? resolveTemplateUrl(currentProfile.transformConfigMode, currentProfile.transformConfig, globalTemplateUrl)
-    : globalTemplateUrl;
-  const templateSource = resolveTemplateSource(templateUrl);
-
-  // [逻辑统一] 规则等级：URL 参数 > 订阅组设置 > 全局设置 > 默认值 (std)
-  // [重要变更] 如果使用了远程自定义配置 (templateSource.kind === 'remote')，则完全禁用内置等级 (强制为 none)
-  const resolvedProfileLevel = String(currentProfile?.ruleLevel || currentProfile?.clashRuleLevel || '');
-  const resolvedGlobalLevel = String(config.ruleLevel || config.clashRuleLevel || 'std');
-
-  let ruleLevel: string;
-  if (templateSource.kind === 'remote' || templateSource.kind === 'custom') {
-    ruleLevel = 'none';
-  } else {
-    ruleLevel =
-      url.searchParams.get('level') || url.searchParams.get('ruleLevel') || resolvedProfileLevel || resolvedGlobalLevel;
-  }
+  const templateSource = transformPlan.templateSource;
 
   // === 缓存机制：快速响应客户端请求 ===
   const cacheKey = generateCacheKey(profileIdentifier ? 'profile' : 'token', profileIdentifier || token);
@@ -693,7 +657,6 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     const generationSettings: Record<string, unknown> & {
       operators: OperatorRule[];
       nodeTransform: Record<string, unknown>;
-      ruleLevel?: string;
     } = {
       ...effectivePrefixSettings,
       nodeTransform: nodeTransformObj,
@@ -749,11 +712,7 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
       userAgentHeader,
       targetMisubs as SubscriptionItem[],
       prependedContentForSubconverter,
-      {
-        ...generationSettings,
-        // [强制透传] 确保 ruleLevel 在订阅组内能够生效
-        ruleLevel: ruleLevel || generationSettings.ruleLevel,
-      },
+      generationSettings,
     );
     const sourceNames = targetMisubs
       .filter((s) => typeof s?.url === 'string' && s.url.startsWith('http'))
@@ -822,12 +781,12 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
   const nodeCountText = `<b>节点数:</b> <code>${nodeCount}</code>`;
 
   if (isPortalHtmlResponse) {
-    const finalAddFlagEmoji =
-      urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
-    const finalPortalSkipCertVerify =
-      urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
-    const finalPortalEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
-    const finalPortalEnableTfo = urlTfo === 'true' || urlTfo === '1';
+    const {
+      enableFlagEmoji: finalAddFlagEmoji,
+      skipCertVerify: finalPortalSkipCertVerify,
+      enableUdp: finalPortalEnableUdp,
+      enableTfo: finalPortalEnableTfo,
+    } = transformPlan.flags;
 
     const mergedInfo = mergeSubscriptionUserInfo(context, targetMisubs);
     const usedBytes = (mergedInfo.upload || 0) + (mergedInfo.download || 0);
@@ -847,7 +806,10 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
       {
         title: effectivePortal.title,
         subName,
-        siteTitle: typeof config.hero?.title1 === 'string' && config.hero.title1 ? config.hero.title1 : config.fileName || 'MiSub',
+        siteTitle:
+          typeof config.hero?.title1 === 'string' && config.hero.title1
+            ? config.hero.title1
+            : config.fileName || 'MiSub',
         notice: effectivePortal.notice,
         subscriptionUrl: buildManagedConfigUrl(request.url),
         pathname: url.pathname,
@@ -907,100 +869,22 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     );
   }
 
-  if (isExternalMode && targetFormat !== 'base64') {
-    if (
-      shouldRenderClashYamlProfileTemplateLocally({
-        isExternalMode,
-        targetFormat,
-        templateSource,
-      })
-    ) {
-      try {
-        const userInfoHeader = buildUserInfoHeaderFromSubscriptions(
-          context,
-          targetMisubs,
-          currentProfile?.expiresAt || undefined,
-        );
-        const finalYamlSkipCertVerify =
-          urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
-        const finalYamlEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
-        const finalYamlAddFlagEmoji =
-          urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
-        const managedUrl = buildManagedConfigUrl(request.url);
-        const builtinOptions: RenderOutputBuiltinOptions = {
-          ...resolveBuiltinRequestOptions({
-            searchParams: url.searchParams,
-            userAgent: userAgentHeader,
-          }),
-          // 透传 emoji 开关到内置生成器（url-to-clash.js 读 options.addFlagEmoji）。
-          // 漏传时 `undefined !== false` 恒为 true，导致无条件加国旗。
-          addFlagEmoji: finalYamlAddFlagEmoji,
-          fileName: subName,
-          managedConfigUrl: managedUrl,
-          interval: updateIntervalSeconds,
-          skipCertVerify: finalYamlSkipCertVerify,
-          enableUdp: finalYamlEnableUdp,
-          enableTfo: urlTfo === 'true' || urlTfo === '1',
-          ruleLevel,
-          regionOverrides: (Array.isArray(config.regionOverrides)
-            ? config.regionOverrides
-            : []) as unknown as RenderOutputBuiltinOptions['regionOverrides'],
-          isMeta: isEffectiveMetaCore(),
-          multiSocks: effectiveMultiSocks.enabled && targetFormat === 'clash' ? effectiveMultiSocks : null,
-          customDnsOverride: typeof config.customDnsOverride === 'string' ? config.customDnsOverride : '',
-          dnsMode:
-            url.searchParams.get('dns-mode') ||
-            url.searchParams.get('dnsMode') ||
-            (typeof config.dnsMode === 'string' ? config.dnsMode : '') ||
-            'clean',
-          isChinaClient,
-          builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
-        };
-        const rendered = await ProcessorService.renderOutput({
-          targetFormat,
-          combinedNodeList: isProfileExpired ? DEFAULT_EXPIRED_NODE + '\n' : combinedNodeList,
-          subName,
-          config,
-          builtinOptions,
-          templateSource,
-          managedConfigUrl: managedUrl,
-          storageAdapter,
-          userInfoHeader: userInfoHeader || undefined,
-        });
-
-        if (rendered.headers?.['X-MiSub-Template-Mode'] === 'clash-yaml-profile') {
-          const responseHeaders = new Headers({
-            'Content-Type': rendered.contentType || 'application/x-yaml; charset=utf-8',
-            'Cache-Control': 'no-store, no-cache',
-            'X-MiSub-Mode': 'local-clash-yaml-profile-template',
-          });
-          if (userInfoHeader) {
-            responseHeaders.set('Subscription-Userinfo', userInfoHeader);
-          }
-          if (updateIntervalHours !== null) {
-            responseHeaders.set('Profile-Update-Interval', String(updateIntervalHours));
-          }
-          Object.entries(rendered.headers || {}).forEach(([key, value]) => responseHeaders.set(key, value));
-          return finalizeGuardedResponse(new Response(rendered.content, { headers: responseHeaders }));
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn('[ExternalTemplate] Local Clash YAML profile render failed, falling back to external redirect:', msg);
-      }
-    }
-
-    const backend = url.searchParams.get('backend') || profileSub.backend || globalSub.defaultBackend;
+  if (transformPlan.mode === 'external' && targetFormat !== 'base64') {
     const externalNodeList = isProfileExpired ? DEFAULT_EXPIRED_NODE + '\n' : combinedNodeList;
     const externalUrl = buildExternalSubconverterUrl({
-      backend,
+      backend: transformPlan.backend,
       targetFormat,
       nodeList: externalNodeList,
       requestUrl: request.url,
-      profileSub,
-      globalSub,
+      templateUrl: transformPlan.templateUrl,
+      enableUdp: transformPlan.flags.enableUdp,
+      skipCertVerify: transformPlan.flags.skipCertVerify,
+      enableFlagEmoji: transformPlan.flags.enableFlagEmoji,
+      sort: transformPlan.sort,
+      tfo: transformPlan.tfo,
+      list: transformPlan.list,
       userAgent: userAgentHeader,
       searchParams: url.searchParams,
-      templateSource,
       subName,
     });
 
@@ -1115,13 +999,12 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     return finalizeGuardedResponse(new Response(base64EncodeUtf8(contentToEncode), { headers }));
   }
 
-  // [Subconverter API] URL 参数优先级高于全局/Profile 设置
-  const finalSkipCertVerify = urlScv !== null ? urlScv === 'true' || urlScv === '1' : shouldSkipCertificateVerify;
-  const finalEnableUdp = urlUdp !== null ? urlUdp === 'true' || urlUdp === '1' : shouldEnableUdp;
-  const finalEnableTfo = urlTfo === 'true' || urlTfo === '1';
-
-  const finalAddFlagEmoji =
-    urlEmoji === 'false' ? false : urlEmoji === 'true' ? true : resolveAddFlagEmoji(currentProfile, config);
+  const {
+    skipCertVerify: finalSkipCertVerify,
+    enableUdp: finalEnableUdp,
+    enableTfo: finalEnableTfo,
+    enableFlagEmoji: finalAddFlagEmoji,
+  } = transformPlan.flags;
 
   const builtinOptions: RenderOutputBuiltinOptions = {
     ...resolveBuiltinRequestOptions({
@@ -1137,7 +1020,6 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
     skipCertVerify: finalSkipCertVerify,
     enableUdp: finalEnableUdp,
     enableTfo: finalEnableTfo,
-    ruleLevel: ruleLevel, // 统一后的规则等级
     regionOverrides: (Array.isArray(config.regionOverrides)
       ? config.regionOverrides
       : []) as unknown as RenderOutputBuiltinOptions['regionOverrides'],
@@ -1150,7 +1032,17 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
       (typeof config.dnsMode === 'string' ? config.dnsMode : '') ||
       'clean',
     isChinaClient,
-    builtinTransform: resolveEffectiveBuiltinTransform(currentProfile, config),
+    ...(transformPlan.mode !== 'external'
+      ? {
+          smartPreset: transformPlan.smartPreset,
+          enableRelay: transformPlan.enableRelay,
+          customVisualRules: transformPlan.customVisualRules,
+          advancedBaseConfig: transformPlan.advancedBaseConfig,
+        }
+      : {
+          smartPreset: 'balanced',
+          enableRelay: false,
+        }),
     ...(targetFormat === 'shadowrocket'
       ? {
           preferredProxyKeys: manualProxyKeys(targetMisubs),
@@ -1161,7 +1053,7 @@ export async function handleMisubRequest(context: BoundRequestContext): Promise<
 
   const managedConfigUrl = buildManagedConfigUrl(request.url);
 
-  const shouldUseBuiltin = useBuiltin && Boolean(getClientAdapter(targetFormat));
+  const shouldUseBuiltin = transformPlan.mode !== 'external' && Boolean(getClientAdapter(targetFormat));
 
   if (shouldUseBuiltin) {
     try {

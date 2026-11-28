@@ -120,7 +120,8 @@ describe('handleMisubRequest regression coverage', () => {
         myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
-        subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
+        transformMode: 'external',
+        externalBackend: { url: 'sub.example' },
       },
       subscriptions,
     });
@@ -173,7 +174,8 @@ describe('handleMisubRequest regression coverage', () => {
         myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
-        subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
+        transformMode: 'external',
+        externalBackend: { url: 'sub.example' },
       },
       subscriptions,
     });
@@ -248,7 +250,8 @@ describe('handleMisubRequest regression coverage', () => {
         myToken: 'stable-token',
         enableFlagEmoji: false,
         enableTrafficNode: false,
-        subconverter: { engineMode: 'external', defaultBackend: backend },
+        transformMode: 'external',
+        externalBackend: { url: backend },
       },
       subscriptions,
     });

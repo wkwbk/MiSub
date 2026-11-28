@@ -16,12 +16,17 @@ import type {
   NodeIRTransportTypeSchema,
 } from './schemas/node-ir.js';
 import type {
+  AdvancedBaseConfigSchema,
   AnnouncementConfigSchema,
   CustomPageConfigSchema,
+  CustomVisualRuleActionSchema,
+  CustomVisualRuleSchema,
+  CustomVisualRulesConfigSchema,
   DisguiseConfigSchema,
   DslStepSchema,
   ExternalApiConfigSchema,
   ExternalApiTokenSchema,
+  ExternalBackendConfigSchema,
   GuestbookConfigSchema,
   HeroConfigSchema,
   ManualNodeSchema,
@@ -34,9 +39,9 @@ import type {
   OperatorSortKeySchema,
   OperatorSortParamsSchema,
   PortalCustomPageConfigSchema,
+  ProfileExternalBackendSchema,
   ProfilePrefixSettingsSchema,
   ProfileSchema,
-  ProfileSubconverterSchema,
   ProfileSubscriptionRefSchema,
   RegexRuleItemSchema,
   RegexRuleObjectSchema,
@@ -44,12 +49,12 @@ import type {
   RuleTemplateSchema,
   SettingsSchema,
   ShortLinkConfigSchema,
-  SubconverterConfigSchema,
-  SubconverterOptionsSchema,
+  SmartPresetSchema,
   SubscriptionSchema,
   SubscriptionUserInfoSchema,
   TelegramPushConfigSchema,
   TokenAutoRotateConfigSchema,
+  TransformModeSchema,
   TurnstileConfigSchema,
   TypedOperatorRuleSchema,
   WebdavBackupConfigSchema,
@@ -92,13 +97,21 @@ export type OperatorScriptParams = z.infer<typeof OperatorScriptParamsSchema>;
 export type OperatorRule = z.infer<typeof OperatorRuleSchema>;
 export type TypedOperatorRule = z.infer<typeof TypedOperatorRuleSchema>;
 
+export type TransformMode = z.infer<typeof TransformModeSchema>;
+export type SmartPreset = z.infer<typeof SmartPresetSchema>;
+export type CustomVisualRuleAction = z.infer<typeof CustomVisualRuleActionSchema>;
+export type CustomVisualRule = z.infer<typeof CustomVisualRuleSchema>;
+export type CustomVisualRulesConfig = z.infer<typeof CustomVisualRulesConfigSchema>;
+export type AdvancedBaseConfig = z.infer<typeof AdvancedBaseConfigSchema>;
+export type ExternalBackendConfig = z.infer<typeof ExternalBackendConfigSchema>;
+export type ProfileExternalBackend = z.infer<typeof ProfileExternalBackendSchema>;
+
 export type SubscriptionUserInfo = z.infer<typeof SubscriptionUserInfoSchema>;
 export type SubscriptionItem = z.infer<typeof SubscriptionSchema>;
 export type ManualNodeItem = z.infer<typeof ManualNodeSchema>;
 export type MisubItem = z.infer<typeof MisubItemSchema>;
 export type ProfileSubscriptionRef = z.infer<typeof ProfileSubscriptionRefSchema>;
 export type ProfilePrefixSettings = z.infer<typeof ProfilePrefixSettingsSchema>;
-export type ProfileSubconverter = z.infer<typeof ProfileSubconverterSchema>;
 export type ProfileConfig = z.infer<typeof ProfileSchema>;
 export type TokenAutoRotateConfig = z.infer<typeof TokenAutoRotateConfigSchema>;
 export type DisguiseConfig = z.infer<typeof DisguiseConfigSchema>;
@@ -108,8 +121,6 @@ export type GuestbookConfig = z.infer<typeof GuestbookConfigSchema>;
 export type WebdavBackupConfig = z.infer<typeof WebdavBackupConfigSchema>;
 export type ExternalApiToken = z.infer<typeof ExternalApiTokenSchema>;
 export type ExternalApiConfig = z.infer<typeof ExternalApiConfigSchema>;
-export type SubconverterOptions = z.infer<typeof SubconverterOptionsSchema>;
-export type SubconverterConfig = z.infer<typeof SubconverterConfigSchema>;
 export type ShortLinkConfig = z.infer<typeof ShortLinkConfigSchema>;
 export type TurnstileConfig = z.infer<typeof TurnstileConfigSchema>;
 export type TelegramPushConfig = z.infer<typeof TelegramPushConfigSchema>;
@@ -211,29 +222,10 @@ export interface OperatorContext {
   [key: string]: unknown;
 }
 
-export interface CustomVisualRule {
-  name: string;
-  action: 'proxy' | 'direct' | 'reject';
-  domainSuffix: string[];
-  domainKeyword: string[];
-  ipCidr: string[];
-  srcIpCidr: string[];
-  ruleSet: string[];
-}
-
-export interface BuiltinTransformConfig {
-  visualRulesEnabled: boolean;
-  rulePreset: string;
+export interface NormalizedCustomVisualRules {
   selectedRules: string[];
   customRules: CustomVisualRule[];
   groupByCountry: boolean;
   includeAutoSelect: boolean;
-  enableClashApi: boolean;
-  externalController: string;
-  externalUiDownloadUrl: string;
-  baseConfig: {
-    singbox: string;
-    clash: string;
-    surge: string;
-  };
+  [key: string]: unknown;
 }

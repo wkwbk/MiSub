@@ -234,7 +234,7 @@ describe('P0/P1 runtime stability & safety guards', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ url: 'https://airport.example.com/sub' }),
       }),
-      { MISUB_DB: createMemoryD1({ main: { builtinSkipCertVerify: false } }) },
+      { MISUB_DB: createMemoryD1({ main: { skipCertVerify: false } }) },
     );
     const data = await okResp.json();
 

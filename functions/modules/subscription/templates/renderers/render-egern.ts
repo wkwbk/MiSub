@@ -72,9 +72,7 @@ function mapTransport(proxy: TemplateProxy): EgernTransportConfig | undefined {
   } else if (network === 'grpc') {
     const grpcOpts = asRecord(proxy['grpc-opts']);
     transport.grpc = {
-      service_name: s(
-        grpcOpts?.['grpc-service-name'] || grpcOpts?.['service-name'] || grpcOpts?.serviceName || 'grpc',
-      ),
+      service_name: s(grpcOpts?.['grpc-service-name'] || grpcOpts?.['service-name'] || grpcOpts?.serviceName || 'grpc'),
     };
     if (tls) transport.tls = tls;
   } else if (network === 'h2' || network === 'http2') {
@@ -205,6 +203,14 @@ function mapProxy(proxy: TemplateProxy): Record<string, Record<string, unknown>>
     };
     const sni = s(proxy.servername ?? proxy.sni ?? proxy.server);
     if (sni) hy2Obj.sni = sni;
+    if (String(proxy.obfs || '').toLowerCase() === 'salamander' && proxy['obfs-password']) {
+      hy2Obj.obfs = 'salamander';
+      hy2Obj.obfs_password = s(proxy['obfs-password']);
+    }
+    const upVal = Number.parseInt(String(proxy.up || ''), 10);
+    if (Number.isFinite(upVal) && upVal > 0) hy2Obj.up = upVal;
+    const downVal = Number.parseInt(String(proxy.down || proxy['download-bandwidth'] || ''), 10);
+    if (Number.isFinite(downVal) && downVal > 0) hy2Obj.down = downVal;
     return { hysteria2: hy2Obj };
   }
 
@@ -216,7 +222,7 @@ function mapProxy(proxy: TemplateProxy): Record<string, Record<string, unknown>>
       uuid,
       password,
       version: 5,
-      congestion_control: s(proxy['congestion-control'] || 'cubic'),
+      congestion_control: s(proxy['congestion-controller'] || proxy['congestion-control'] || 'bbr'),
       skip_tls_verify: Boolean(proxy['skip-cert-verify'] || proxy.skipCertVerify),
     };
     const sni = s(proxy.servername ?? proxy.sni ?? proxy.server);
@@ -292,7 +298,10 @@ function mapPolicyGroup(group: TemplateGroup): Record<string, Record<string, unk
   };
 }
 
-function mapRule(rule: TemplateRule, { isChinaClient = false }: { isChinaClient?: boolean } = {}): Record<string, Record<string, unknown>> | null {
+function mapRule(
+  rule: TemplateRule,
+  { isChinaClient = false }: { isChinaClient?: boolean } = {},
+): Record<string, Record<string, unknown>> | null {
   if (typeof rule === 'string') return null;
   const type = s(rule.type).toLowerCase();
   if (!type) return null;
@@ -329,7 +338,9 @@ export function renderEgernFromTemplateModel(
 ): string {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
 
-  const proxies = normalizedModel.proxies.map(mapProxy).filter((item): item is Record<string, Record<string, unknown>> => Boolean(item));
+  const proxies = normalizedModel.proxies
+    .map(mapProxy)
+    .filter((item): item is Record<string, Record<string, unknown>> => Boolean(item));
 
   const policyGroups = normalizedModel.groups
     .filter((group) => Array.isArray(group.members) && group.members.length > 0)
@@ -341,7 +352,7 @@ export function renderEgernFromTemplateModel(
 
   const config: Record<string, unknown> = {
     general: {
-      dns_server: ['223.5.5.5', '114.114.114.114'],
+      dns_server: ['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query', '223.5.5.5'],
       ipv6: false,
     },
     proxies,

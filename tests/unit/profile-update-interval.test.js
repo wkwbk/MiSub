@@ -197,7 +197,8 @@ describe('Profile-Update-Interval logic and subscription response headers', () =
         settings: {
           myToken: 'test-token',
           profileUpdateInterval: 12,
-          subconverter: { engineMode: 'external', defaultBackend: 'sub.example' },
+          transformMode: 'external',
+          externalBackend: { url: 'sub.example' },
         },
         subscriptions,
       });

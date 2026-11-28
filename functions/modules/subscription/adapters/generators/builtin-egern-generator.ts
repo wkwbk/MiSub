@@ -13,13 +13,16 @@ export function generateBuiltinEgernConfig(nodeList: string, options: BuiltinGen
     nodeList,
     fileName: options.fileName || 'MiSub',
     targetFormat: 'egern',
-    ruleLevel: options.ruleLevel || 'std',
+    injectSmartGroups: options.injectSmartGroups ?? true,
     interval: options.interval || 86400,
     managedConfigUrl: options.managedConfigUrl || '',
     skipCertVerify: options.skipCertVerify,
     enableUdp: options.enableUdp,
     enableTfo: options.enableTfo,
     addFlagEmoji: options.addFlagEmoji,
+    regionOverrides: options.regionOverrides,
+    customDnsOverride: options.customDnsOverride,
+    dnsMode: options.dnsMode,
     isChinaClient: options.isChinaClient,
   };
   const model = buildOptimizedIniTemplateModel(templateEntry.content, renderOptions);

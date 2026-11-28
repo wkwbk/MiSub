@@ -8,14 +8,15 @@ describe('Built-in Sing-box generator', () => {
   it('should generate a JSON config with outbounds', () => {
     const result = generateBuiltinSingboxConfig(
       ['trojan://password@1.2.3.4:443#TestNode', 'trojan://password@1.2.3.5:443#JPNode'].join('\n'),
+      { smartPreset: 'full' },
     );
     const parsed = JSON.parse(result);
 
     expect(Array.isArray(parsed.outbounds)).toBe(true);
     expect(parsed.outbounds.some((outbound) => outbound.tag.endsWith('TestNode'))).toBe(true);
     expect(parsed.outbounds.some((outbound) => outbound.tag.includes('节点选择'))).toBe(true);
-    expect(parsed.outbounds.some((outbound) => outbound.tag.includes('视频广告'))).toBe(true);
-    expect(parsed.outbounds.some((outbound) => outbound.tag.includes('Apple'))).toBe(true);
+    expect(parsed.outbounds.some((outbound) => outbound.tag.includes('广告拦截'))).toBe(true);
+    expect(parsed.outbounds.some((outbound) => outbound.tag.includes('苹果服务'))).toBe(true);
     expect(parsed.outbounds.some((outbound) => outbound.tag.includes('日本') && outbound.type === 'urltest')).toBe(
       true,
     );
@@ -85,7 +86,12 @@ describe('Built-in Sing-box generator', () => {
 
     expect(parsed.dns.servers).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ type: 'udp', server: '223.5.5.5', server_port: 53 }),
+        expect.objectContaining({
+          type: 'https',
+          server: '223.5.5.5',
+          server_port: 443,
+          path: '/dns-query',
+        }),
         expect.objectContaining({
           type: 'https',
           server: '8.8.8.8',
@@ -94,6 +100,9 @@ describe('Built-in Sing-box generator', () => {
         }),
       ]),
     );
+    const cnDnsServers = parsed.dns.servers.filter((s) => s.tag.startsWith('dns-cn'));
+    expect(cnDnsServers.length).toBeGreaterThan(0);
+    expect(cnDnsServers.every((s) => s.detour === undefined)).toBe(true);
     expect(parsed.dns.servers.every((server) => !Object.hasOwn(server, 'address'))).toBe(true);
     expect(trojanNode?.type).toBe('trojan');
     expect(trojanNode?.tls?.enabled).toBe(true);
@@ -128,7 +137,8 @@ describe('Built-in Sing-box generator', () => {
   it('sniffs domain from hardcoded-IP connections as the first route rule', () => {
     const parsed = JSON.parse(
       generateBuiltinSingboxConfig('trojan://password@1.2.3.4:443#Trojan', {
-        ruleLevel: 'relay',
+        smartPreset: 'balanced',
+        enableRelay: true,
       }),
     );
 
@@ -186,7 +196,7 @@ describe('Built-in Sing-box generator', () => {
     // Should have a geoip-cn rule_set reference instead
     const geoipRuleSet = parsed.route.rules.filter((r) => Array.isArray(r.rule_set) && r.rule_set.includes('geoip-cn'));
     expect(geoipRuleSet).toHaveLength(1);
-    expect(geoipRuleSet[0].outbound).toBe('DIRECT');
+    expect(geoipRuleSet[0].outbound).toBe('🔒 国内服务');
 
     // Should have geoip-cn in the rule_set definitions
     const geoipProvider = parsed.route.rule_set.find((rs) => rs.tag === 'geoip-cn');

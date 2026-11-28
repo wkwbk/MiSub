@@ -1,22 +1,32 @@
-import type { BuiltinTransformConfig, ClashProxy, NodeIRBatchParseOptions } from '@misub/core/types.js';
+import type {
+  AdvancedBaseConfig,
+  ClashProxy,
+  CustomVisualRulesConfig,
+  NodeIRBatchParseOptions,
+  NormalizedCustomVisualRules,
+  SmartPreset,
+} from '@misub/core/types.js';
 import type { BoundRequestContext, StorageAdapter } from '../../../types.js';
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
-import { deduplicateNamesCollisionFree, type EffectiveMultiSocksConfig } from '@misub/core/domain/multi-socks.js';
+import {
+  deduplicateNamesCollisionFree,
+  type EffectiveMultiSocksConfig,
+  type MihomoSocksListener,
+  type MultiSocksListen,
+} from '@misub/core/domain/multi-socks.js';
 import { cleanControlChars } from './name-utils.js';
 import {
+  DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
-  POLICY_GROUPS,
   pruneProxyGroups,
+  RELAY_CHAIN_GROUP,
+  RELAY_ENTRY_GROUP,
   type BuiltinRuleEntry,
   type ClashRuleProviderDefinition,
   type SingboxRuleSetDefinition,
 } from '../templates/builtin-rules-provider.js';
-import {
-  applyGeneralGroupToggles,
-  buildVisualPolicyGroups,
-  normalizeBuiltinTransform,
-  type VisualRulesOptions,
-} from './visual-rules-builder.js';
+import { buildVisualPolicyGroups, type VisualRulesOptions } from './visual-rules-builder.js';
+import { normalizeAdvancedBaseConfig, normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 import type { SingboxDnsConfig, SubscriptionDnsPolicyEntry } from '../security/safe-dns.js';
 import { cloneSnifferConfig } from './sniffing-config.js';
 import type { RegionGroupNode, RegionPolicyGroup } from './region-groups.js';
@@ -25,7 +35,11 @@ import type { ShadowrocketSourceItem } from './shadowrocket-order.js';
 import type { ShadowrocketRuleBundleEntry } from './shadowrocket-rule-bundle.js';
 
 export interface BuiltinGeneratorOptions extends NodeIRBatchParseOptions {
-  ruleLevel?: string;
+  injectSmartGroups?: boolean;
+  smartPreset?: SmartPreset | string;
+  enableRelay?: boolean;
+  customVisualRules?: Partial<CustomVisualRulesConfig> | Record<string, unknown> | null;
+  advancedBaseConfig?: Partial<AdvancedBaseConfig> | Record<string, unknown> | null;
   userAgent?: string;
   hiddifyCompatible?: boolean;
   searchParams?: URLSearchParams;
@@ -37,13 +51,13 @@ export interface BuiltinGeneratorOptions extends NodeIRBatchParseOptions {
   interval?: number;
   fileName?: string;
   isChinaClient?: boolean;
-  builtinTransform?: Partial<BuiltinTransformConfig> | Record<string, unknown> | null;
   regionOverrides?: RegionOverrideRule[] | Record<string, unknown>;
   sources?: ShadowrocketSourceItem[];
   preferredProxyKeys?: string[];
   compactNames?: boolean;
   ruleBundle?: ShadowrocketRuleBundleEntry[] | null;
   multiSocks?: EffectiveMultiSocksConfig | null;
+  preferMrsRules?: boolean;
   storageAdapter?: StorageAdapter | null;
   waitUntil?: BoundRequestContext['waitUntil'] | null;
   [key: string]: unknown;
@@ -54,7 +68,9 @@ export const QURE_ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/ma
 
 export const POLICY_GROUP_ICONS: Readonly<Record<string, string>> = Object.freeze({
   [DEFAULT_SELECT_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
-  '🌍 总出口': `${QURE_ICON_REPO}/Proxy.png`,
+  [DEFAULT_RELAY_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
+  [RELAY_CHAIN_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
+  [RELAY_ENTRY_GROUP]: `${QURE_ICON_REPO}/Airport.png`,
   '♻️ 自动选择': `${QURE_ICON_REPO}/Speedtest.png`,
   '🔯 故障转移': `${QURE_ICON_REPO}/Relay.png`,
   '🎬 视频广告': `${QURE_ICON_REPO}/Reject.png`,
@@ -104,7 +120,10 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 /**
  * 解析换行分隔的节点 URL 列表
  */
-export function parseNodeUrlLines(nodeList: string, { stripControl = true }: { stripControl?: boolean } = {}): string[] {
+export function parseNodeUrlLines(
+  nodeList: string,
+  { stripControl = true }: { stripControl?: boolean } = {},
+): string[] {
   const raw = stripControl ? cleanControlChars(nodeList) : String(nodeList || '');
   return String(raw || '')
     .split('\n')
@@ -141,6 +160,24 @@ export function stripInternalProxyFields<T extends Record<string, unknown>>(prox
     if (!proxy || typeof proxy !== 'object' || !('metadata' in proxy)) return proxy;
     const { metadata: _metadata, ...publicProxy } = proxy;
     return publicProxy;
+  });
+}
+
+/**
+ * 清理 Clash/Mihomo 输出节点：移除内部 metadata，并在开启 ECH 时剔除冲突的 uTLS client-fingerprint
+ */
+export function sanitizeClashProxiesForOutput<T extends Record<string, unknown>>(
+  proxies: T[],
+  { stripEchFingerprintConflict = true }: { stripEchFingerprintConflict?: boolean } = {},
+): Array<Record<string, unknown>> {
+  return stripInternalProxyFields(proxies).map((proxy) => {
+    if (!stripEchFingerprintConflict || !proxy || typeof proxy !== 'object') return proxy;
+    const echOpts = asRecord(proxy['ech-opts']) || asRecord(proxy.echOpts);
+    if (echOpts?.enable && ('client-fingerprint' in proxy || 'clientFingerprint' in proxy)) {
+      const { 'client-fingerprint': _cf, clientFingerprint: _cfCamel, ...rest } = proxy as Record<string, unknown>;
+      return rest;
+    }
+    return proxy;
   });
 }
 
@@ -183,54 +220,55 @@ export function filterAutoGroupMembers(type: string, members: unknown): string[]
   return list.filter((member) => !DIRECT_POLICY_TOKENS.has(String(member).toUpperCase()));
 }
 
-export interface ResolveBuiltinPolicyGroupsOptions extends VisualRulesOptions {
-  ruleLevel?: string;
-}
+export interface ResolveBuiltinPolicyGroupsOptions extends VisualRulesOptions {}
 
 export interface ResolveBuiltinPolicyGroupsResult {
-  levelKey: string;
-  bt: BuiltinTransformConfig | null;
-  useVisualRules: boolean;
+  smartPreset: string;
+  isRelay: boolean;
+  customVisualRules: NormalizedCustomVisualRules;
+  advancedBaseConfig: AdvancedBaseConfig;
   proxyGroups: RegionPolicyGroup[];
 }
 
 /**
- * 统一解析内置策略组拓扑（支持可视化分流与通用开关）
+ * 统一解析内置策略组拓扑（基于 smartPreset + customVisualRules 构建）
  */
 export function resolveBuiltinPolicyGroups(
   proxies: RegionGroupNode[],
-  options: ResolveBuiltinPolicyGroupsOptions = {},
-  { allowVisualRules = true }: { allowVisualRules?: boolean } = {},
+  options: ResolveBuiltinPolicyGroupsOptions & {
+    advancedBaseConfig?: Partial<AdvancedBaseConfig> | Record<string, unknown> | null;
+  } = {},
 ): ResolveBuiltinPolicyGroupsResult {
-  const levelKey = (options.ruleLevel || 'std').toUpperCase();
-  const bt = options.builtinTransform ? normalizeBuiltinTransform(options.builtinTransform) : null;
-  const useVisualRules = allowVisualRules && Boolean(bt?.visualRulesEnabled);
+  const rawPreset = String(options.smartPreset || 'balanced')
+    .trim()
+    .toLowerCase();
+  const smartPreset =
+    rawPreset === 'minimal' || rawPreset === 'balanced' || rawPreset === 'full' ? rawPreset : 'balanced';
+  const isRelay = Boolean(options.enableRelay);
+  const customVisualRules = normalizeCustomVisualRules(options.customVisualRules, { smartPreset });
+  const advancedBaseConfig = normalizeAdvancedBaseConfig(options.advancedBaseConfig);
+  const proxyGroups = buildVisualPolicyGroups(proxies, {
+    ...options,
+    smartPreset,
+    enableRelay: isRelay,
+    customVisualRules,
+  });
 
-  let proxyGroups: RegionPolicyGroup[];
-  if (useVisualRules) {
-    proxyGroups = buildVisualPolicyGroups(proxies, { ...options, builtinTransform: bt });
-  } else {
-    const policyFactory = POLICY_GROUPS[levelKey as keyof typeof POLICY_GROUPS] || POLICY_GROUPS.STD;
-    proxyGroups = policyFactory(proxies, options);
-    if (bt) {
-      proxyGroups = applyGeneralGroupToggles(proxyGroups, { builtinTransform: bt });
-    }
-    proxyGroups = pruneProxyGroups(proxyGroups, proxies);
-  }
-
-  return { levelKey, bt, useVisualRules, proxyGroups };
+  return { smartPreset, isRelay, customVisualRules, advancedBaseConfig, proxyGroups };
 }
 
 /**
- * 为 Loon / Surge INI 渲染注入 RELAY 链式代理「入口节点 + 落地节点」分组对
+ * 为 Loon / Surge INI 渲染注入 RELAY 链式代理「🔗 中转节点 + 落地节点」分组对
  */
 export function applyIniRelayGroupPair(groups: RegionPolicyGroup[], proxies: RegionGroupNode[]): RegionPolicyGroup[] {
   const nextGroups = groups.map((group) =>
-    group.name === '🔗 链式代理' ? { ...group, type: 'relay', proxies: ['入口节点', '落地节点'] } : group,
+    group.name === RELAY_CHAIN_GROUP ? { ...group, type: 'relay', proxies: [RELAY_ENTRY_GROUP, '落地节点'] } : group,
   );
   if (!nextGroups.some((group) => group.name === '落地节点')) {
     const proxyNames = proxies.map((proxy) => proxy.name);
-    nextGroups.splice(nextGroups.findIndex((group) => group.name === '入口节点') + 1, 0, {
+    const entryIndex = nextGroups.findIndex((group) => group.name === RELAY_ENTRY_GROUP);
+    const insertAt = entryIndex >= 0 ? entryIndex + 1 : nextGroups.length;
+    nextGroups.splice(insertAt, 0, {
       name: '落地节点',
       type: 'select',
       proxies: ['♻️ 自动选择', '👋 手动切换', 'DIRECT', ...proxyNames],
@@ -245,7 +283,7 @@ export function applyIniRelayGroupPair(groups: RegionPolicyGroup[], proxies: Reg
 export function materializeRelayChainNodes<T extends Record<string, unknown>>({
   nameKey,
   linkKey,
-  linkTarget = '入口节点',
+  linkTarget = RELAY_ENTRY_GROUP,
   publicItems,
   proxyGroups,
   allProxiesForPrune,
@@ -259,13 +297,13 @@ export function materializeRelayChainNodes<T extends Record<string, unknown>>({
 }): { items: T[]; proxyGroups: RegionPolicyGroup[] } {
   const chainItems = publicItems.map((item) => ({
     ...item,
-    [nameKey]: `🔗 链式代理 - ${String(item[nameKey] || '')}`,
+    [nameKey]: `${RELAY_CHAIN_GROUP} - ${String(item[nameKey] || '')}`,
     [linkKey]: linkTarget,
   }));
   const chainNames = chainItems.map((item) => String(item[nameKey] || ''));
 
   const nextProxyGroups = proxyGroups
-    .map((group) => (group.name === '🔗 链式代理' ? { ...group, type: 'select', proxies: chainNames } : group))
+    .map((group) => (group.name === RELAY_CHAIN_GROUP ? { ...group, type: 'select', proxies: chainNames } : group))
     .filter(Boolean);
 
   const pruneCandidates: RegionGroupNode[] = [
@@ -382,6 +420,13 @@ export function createBaseClashConfig({
     ipv6: false,
     mode: 'rule',
     'log-level': 'info',
+    'unified-delay': true,
+    'tcp-concurrent': true,
+    'find-process-mode': 'strict',
+    'geodata-mode': true,
+    'geodata-loader': 'memconservative',
+    'geo-auto-update': true,
+    'geo-update-interval': 24,
     ...extraTopLevel,
     sniffer: cloneSnifferConfig(),
     dns,
@@ -391,9 +436,382 @@ export function createBaseClashConfig({
     rules,
     profile: {
       'store-selected': true,
+      'store-fake-ip': true,
       'subscription-url': managedConfigUrl || '',
     },
   };
+}
+
+/**
+ * 构建纯多端口 SOCKS5 极简减重配置（移除远程规则集、嗅探与后台自动测速轮询）
+ */
+export function buildLiteMultiSocksClashConfig({
+  proxies,
+  listeners,
+  listen = '127.0.0.1',
+  clashApiFields = { 'external-controller': '127.0.0.1:9090' },
+  managedConfigUrl = '',
+}: {
+  proxies: Array<Record<string, unknown>>;
+  listeners: MihomoSocksListener[];
+  listen?: MultiSocksListen;
+  clashApiFields?: Record<string, unknown>;
+  managedConfigUrl?: string;
+}): Record<string, unknown> {
+  const sanitizedProxies = sanitizeClashProxiesForOutput(proxies);
+  const proxyNames = sanitizedProxies
+    .map((proxy) => (typeof proxy.name === 'string' ? proxy.name : ''))
+    .filter(Boolean);
+  const allowLan = listen === '0.0.0.0';
+
+  return {
+    'mixed-port': 7890,
+    'allow-lan': allowLan,
+    'bind-address': allowLan ? '*' : '127.0.0.1',
+    ipv6: false,
+    mode: 'rule',
+    'log-level': 'warning',
+    'unified-delay': true,
+    'tcp-concurrent': true,
+    'find-process-mode': 'off',
+    ...clashApiFields,
+    dns: {
+      enable: true,
+      ipv6: false,
+      'cache-algorithm': 'arc',
+      'enhanced-mode': 'fake-ip',
+      'fake-ip-range': '198.18.0.1/16',
+      'default-nameserver': ['223.5.5.5', '119.29.29.29'],
+      'proxy-server-nameserver': ['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query'],
+      nameserver: ['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query'],
+    },
+    proxies: sanitizedProxies,
+    'proxy-groups': [
+      {
+        name: DEFAULT_SELECT_GROUP,
+        type: 'select',
+        proxies: ['DIRECT', ...proxyNames],
+      },
+    ],
+    rules: ['MATCH,DIRECT'],
+    profile: {
+      'store-selected': true,
+      'store-fake-ip': true,
+      'subscription-url': managedConfigUrl || '',
+    },
+    ...(listeners.length > 0 ? { listeners } : {}),
+  };
+}
+
+export interface SingboxTlsConfig {
+  enabled?: boolean;
+  server_name?: string;
+  insecure?: boolean;
+  alpn?: unknown[];
+  utls?: { enabled: boolean; fingerprint: unknown };
+  reality?: { enabled: boolean; public_key: unknown; short_id: unknown };
+  ech?: { enabled: boolean; query_server_name?: unknown; config?: string[] };
+}
+
+export interface SingboxOutbound extends Record<string, unknown> {
+  tag: string;
+  type: string;
+  name?: string;
+  tls?: SingboxTlsConfig;
+  transport?: Record<string, unknown>;
+}
+
+function sanitizeSingboxTag(name: string | undefined | null): string {
+  if (!name) return 'Untitled';
+  const safe = cleanControlChars(name)
+    .replace(/\s+/g, ' ')
+    .replace(/[\r\n\t]/g, ' ')
+    .trim();
+  return safe || 'Untitled';
+}
+
+function parseSingboxPort(port: unknown): number | undefined {
+  const num = Number.parseInt(String(port), 10);
+  return Number.isFinite(num) ? num : undefined;
+}
+
+/**
+ * 将内部 Clash/Template 代理对象统一转换为 Sing-Box outbound 对象
+ */
+export function buildSingboxOutbound(
+  proxy: ClashProxy | TemplateProxy | Record<string, unknown>,
+): SingboxOutbound | null {
+  if (!proxy || !proxy.server || !proxy.port) return null;
+
+  const type = String(proxy.type || '').toLowerCase();
+  const tag = sanitizeSingboxTag(typeof proxy.name === 'string' ? proxy.name : undefined);
+  const server = String(proxy.server);
+  const port = parseSingboxPort(proxy.port);
+  if (!port) return null;
+
+  const outbound: SingboxOutbound = { tag, type: 'direct' };
+
+  if (type === 'ss' || type === 'shadowsocks') {
+    outbound.type = 'shadowsocks';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.method = proxy.cipher || 'aes-128-gcm';
+    outbound.password = proxy.password || '';
+    if (proxy.udp) outbound.udp_over_tcp = false;
+    applySingboxShadowsocksPlugin(outbound, proxy);
+  } else if (type === 'vmess') {
+    outbound.type = 'vmess';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.uuid = proxy.uuid || '';
+    outbound.security = proxy.cipher || 'auto';
+    outbound.alter_id = Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0;
+    if (proxy.tls || proxy.sni || proxy.servername || proxy['skip-cert-verify'] || proxy.skipCertVerify) {
+      outbound.tls = {
+        enabled: true,
+        server_name: String(proxy.sni || proxy.servername || server),
+      };
+      if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+    }
+    if (proxy.network === 'ws') {
+      const wsOpts = asRecord(proxy['ws-opts']) || asRecord(proxy.wsOpts);
+      const wsHeaders = asRecord(wsOpts?.headers);
+      outbound.transport = { type: 'ws' };
+      if (wsOpts?.path) outbound.transport.path = wsOpts.path;
+      if (wsHeaders?.Host) outbound.transport.headers = { Host: wsHeaders.Host };
+    } else if (proxy.network === 'grpc') {
+      const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
+      outbound.transport = {
+        type: 'grpc',
+        ...(grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName
+          ? { service_name: grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName }
+          : {}),
+      };
+    } else if (proxy.network === 'h2' || proxy.network === 'http') {
+      const h2Opts = asRecord(proxy[`${proxy.network}-opts`]) || asRecord(proxy[`${proxy.network}Opts`]);
+      outbound.transport = {
+        type: 'http',
+        ...(h2Opts?.host ? { host: Array.isArray(h2Opts.host) ? h2Opts.host : [h2Opts.host] } : {}),
+        ...(h2Opts?.path ? { path: h2Opts.path } : {}),
+      };
+    } else if (proxy.network === 'httpupgrade') {
+      const huOpts = asRecord(proxy['httpupgrade-opts']) || asRecord(proxy.httpupgradeOpts);
+      outbound.transport = {
+        type: 'httpupgrade',
+        ...(huOpts?.path ? { path: huOpts.path } : {}),
+        ...(huOpts?.host ? { host: huOpts.host } : {}),
+      };
+    }
+  } else if (type === 'vless') {
+    outbound.type = 'vless';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.uuid = proxy.uuid || '';
+    const vlessNet = String(proxy.network || '').toLowerCase();
+    if (vlessNet && vlessNet !== 'tcp' && vlessNet !== 'raw') {
+      if (vlessNet === 'ws') {
+        outbound.transport = { type: 'ws' };
+        const wsOpts = asRecord(proxy['ws-opts']) || asRecord(proxy.wsOpts);
+        const wsHeaders = asRecord(wsOpts?.headers);
+        if (wsOpts?.path) outbound.transport.path = wsOpts.path;
+        if (wsHeaders?.Host) outbound.transport.headers = { Host: wsHeaders.Host };
+      } else if (vlessNet === 'grpc') {
+        outbound.transport = { type: 'grpc' };
+        const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
+        const serviceName = grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName;
+        if (serviceName) outbound.transport.service_name = serviceName;
+      } else if (vlessNet === 'h2' || vlessNet === 'http') {
+        const h2Opts = asRecord(proxy[`${vlessNet}-opts`]) || asRecord(proxy[`${vlessNet}Opts`]);
+        outbound.transport = {
+          type: 'http',
+          ...(h2Opts?.host ? { host: Array.isArray(h2Opts.host) ? h2Opts.host : [h2Opts.host] } : {}),
+          ...(h2Opts?.path ? { path: h2Opts.path } : {}),
+        };
+      } else if (vlessNet === 'httpupgrade') {
+        const huOpts = asRecord(proxy['httpupgrade-opts']) || asRecord(proxy.httpupgradeOpts);
+        outbound.transport = {
+          type: 'httpupgrade',
+          ...(huOpts?.path ? { path: huOpts.path } : {}),
+          ...(huOpts?.host ? { host: huOpts.host } : {}),
+        };
+      } else if (vlessNet === 'xhttp') {
+        // sing-box 暂不支持 xhttp transport，跳过该节点避免整份配置无法加载
+        return null;
+      }
+    }
+    if (proxy.flow) outbound.flow = proxy.flow;
+    const reality = asRecord(proxy.reality_opts) || asRecord(proxy['reality-opts']) || asRecord(proxy.realityOpts);
+    if (reality) {
+      outbound.tls = {
+        enabled: true,
+        server_name: String(proxy.sni || proxy.servername || server),
+        utls: {
+          enabled: true,
+          fingerprint: proxy['client-fingerprint'] || proxy.clientFingerprint || proxy.fp || 'chrome',
+        },
+        reality: {
+          enabled: true,
+          public_key: reality['public-key'] || reality.public_key || reality.publicKey,
+          short_id: reality['short-id'] || reality.short_id || reality.shortId,
+        },
+      };
+    } else if (proxy.tls || proxy.sni || proxy.servername || proxy['skip-cert-verify'] || proxy.skipCertVerify) {
+      outbound.tls = {
+        enabled: true,
+        server_name: String(proxy.sni || proxy.servername || server),
+      };
+      if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+    }
+  } else if (type === 'trojan') {
+    outbound.type = 'trojan';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.password = proxy.password || '';
+    outbound.tls = {
+      enabled: true,
+      server_name: String(proxy.sni || proxy.servername || server),
+    };
+    if (proxy.network === 'ws') {
+      const wsOpts = asRecord(proxy['ws-opts']) || asRecord(proxy.wsOpts);
+      outbound.transport = {
+        type: 'ws',
+        path: wsOpts?.path || '/',
+        headers: asRecord(wsOpts?.headers) || {},
+      };
+    } else if (proxy.network === 'grpc') {
+      const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
+      const serviceName = grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName;
+      outbound.transport = {
+        type: 'grpc',
+        ...(serviceName ? { service_name: serviceName } : {}),
+      };
+    }
+  } else if (type === 'hysteria2' || type === 'hy2') {
+    outbound.type = 'hysteria2';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.password = proxy.password || '';
+    if (String(proxy.obfs || '').toLowerCase() === 'salamander' && proxy['obfs-password']) {
+      outbound.obfs = {
+        type: 'salamander',
+        password: String(proxy['obfs-password']),
+      };
+    }
+    const rawPorts = proxy.ports || proxy['port-hopping'];
+    if (rawPorts) {
+      const ranges = String(rawPorts)
+        .split(',')
+        .map((r) => r.trim().replace('-', ':'))
+        .filter(Boolean);
+      if (ranges.length > 0) outbound.server_ports = ranges;
+    }
+    const upVal = Number.parseInt(String(proxy.up || ''), 10);
+    if (Number.isFinite(upVal) && upVal > 0) outbound.up_mbps = upVal;
+    const downVal = Number.parseInt(String(proxy.down || proxy['download-bandwidth'] || ''), 10);
+    if (Number.isFinite(downVal) && downVal > 0) outbound.down_mbps = downVal;
+    outbound.tls = {
+      enabled: true,
+      server_name: String(proxy.sni || proxy.servername || server),
+    };
+  } else if (type === 'tuic') {
+    outbound.type = 'tuic';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.uuid = proxy.uuid || '';
+    outbound.password = proxy.password || '';
+    applySingboxTuicExtraFields(outbound, proxy);
+    outbound.tls = {
+      enabled: true,
+      server_name: String(proxy.sni || proxy.servername || server),
+    };
+    if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+  } else if (type === 'anytls') {
+    outbound.type = 'anytls';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.password = proxy.password || '';
+    outbound.tls = {
+      enabled: true,
+      server_name: String(proxy.sni || proxy.servername || server),
+    };
+    if (proxy.alpn) outbound.tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
+  } else if (type === 'snell') {
+    outbound.type = 'snell';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.psk = proxy.psk || proxy.password || '';
+    if (proxy.version) outbound.version = Number(proxy.version);
+  } else if (type === 'wireguard') {
+    outbound.type = 'wireguard';
+    outbound.server = server;
+    outbound.server_port = port;
+    outbound.private_key = proxy['private-key'] || '';
+    outbound.local_address = Array.isArray(proxy.ip) ? proxy.ip : proxy.ip ? [proxy.ip] : [];
+    outbound.peer_public_key = proxy['public-key'] || '';
+    outbound.pre_shared_key = proxy['preshared-key'] || '';
+    if (proxy.reserved !== undefined) outbound.reserved = proxy.reserved;
+  } else if (type === 'http' || type === 'https') {
+    outbound.type = 'http';
+    outbound.server = server;
+    outbound.server_port = port;
+    if (proxy.username) outbound.username = proxy.username;
+    if (proxy.password) outbound.password = proxy.password;
+    if (type === 'https' || proxy.tls || proxy.sni || proxy.servername) {
+      outbound.tls = {
+        enabled: true,
+        server_name: String(proxy.sni || proxy.servername || server),
+        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
+      };
+    }
+  } else if (type === 'socks5' || type === 'socks5-tls') {
+    outbound.type = 'socks';
+    outbound.server = server;
+    outbound.server_port = port;
+    if (proxy.username) outbound.username = proxy.username;
+    if (proxy.password) outbound.password = proxy.password;
+    if (type === 'socks5-tls') {
+      outbound.tls = {
+        enabled: true,
+        server_name: String(proxy.sni || proxy.servername || server),
+      };
+    }
+  } else {
+    return null;
+  }
+
+  if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) {
+    outbound.tls = outbound.tls || {};
+    outbound.tls.enabled = true;
+    outbound.tls.insecure = true;
+  }
+  if (
+    (proxy.sni || proxy.servername) &&
+    ((type !== 'ss' && type !== 'shadowsocks') || proxy.tls || outbound.tls?.enabled)
+  ) {
+    outbound.tls = outbound.tls || {};
+    outbound.tls.server_name = String(proxy.sni || proxy.servername);
+  }
+  const fingerprint = proxy['client-fingerprint'] || proxy.clientFingerprint || proxy.fp;
+  if (fingerprint) {
+    outbound.tls = outbound.tls || {};
+    outbound.tls.utls = { enabled: true, fingerprint };
+  }
+  const echOpts = asRecord(proxy['ech-opts']) || asRecord(proxy.echOpts);
+  if (echOpts?.enable && outbound.tls?.enabled) {
+    const ech: NonNullable<SingboxTlsConfig['ech']> = { enabled: true };
+    if (echOpts['query-server-name']) {
+      ech.query_server_name = echOpts['query-server-name'];
+    } else if (echOpts.config) {
+      ech.config = [`-----BEGIN ECH CONFIGS-----\n${echOpts.config}\n-----END ECH CONFIGS-----`];
+    }
+    outbound.tls.ech = ech;
+  }
+
+  if (proxy.tfo) {
+    outbound.tcp_fast_open = true;
+  }
+
+  return outbound;
 }
 
 /**

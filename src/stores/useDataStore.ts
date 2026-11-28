@@ -179,18 +179,17 @@ function serializeMisubPayload(item: Partial<StoreMisubItem>, forPatch = false):
 }
 
 function serializeProfilePayload(profile: Partial<StoreProfileConfig>, forPatch = false): Record<string, unknown> {
-  const { clashRuleLevel, ...restProfile } = profile;
-  const serialized: Record<string, unknown> = { ...restProfile };
-  if (profile.tags !== undefined || Array.isArray(restProfile.tags)) {
+  const serialized: Record<string, unknown> = { ...profile };
+  if (profile.tags !== undefined || Array.isArray(profile.tags)) {
     serialized.tags = normalizeTagList(getItemTags(profile));
-  }
-  if (restProfile.ruleLevel !== undefined || clashRuleLevel !== undefined) {
-    serialized.ruleLevel = restProfile.ruleLevel || clashRuleLevel || '';
   }
   return forPatch ? stripDisallowedKeys(serialized, PROFILE_NON_PATCH_KEYS) : serialized;
 }
 
-function buildPatchRequestBody(serialized: Record<string, unknown>, options: RecordPatchOptions): Record<string, unknown> {
+function buildPatchRequestBody(
+  serialized: Record<string, unknown>,
+  options: RecordPatchOptions,
+): Record<string, unknown> {
   const body = { ...serialized };
   if (options.expectedConfigVersion !== undefined) {
     body.configVersion = options.expectedConfigVersion;

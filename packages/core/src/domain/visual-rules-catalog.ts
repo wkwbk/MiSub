@@ -2,7 +2,12 @@
  * 可视化分流规则目录与预设定义（前后端共享）
  */
 
-import type { BuiltinTransformConfig, CustomVisualRule } from '../types.js';
+import type {
+  AdvancedBaseConfig,
+  CustomVisualRule,
+  CustomVisualRulesConfig,
+  NormalizedCustomVisualRules,
+} from '../types.js';
 
 export interface VisualRuleCategory {
   id: string;
@@ -28,7 +33,7 @@ export const VISUAL_RULE_CATEGORIES: readonly VisualRuleCategory[] = Object.free
     groupName: '🛑 广告拦截',
     defaultAction: 'reject',
     geosite: ['category-ads-all'],
-    clashProvider: 'ACL4SSR/Clash/Providers/BanAD.yaml',
+    clashProvider: 'ACL4SSR/Clash/BanAD.list',
     surgeList: 'ACL4SSR/Clash/BanAD.list',
   },
   {
@@ -96,7 +101,7 @@ export const VISUAL_RULE_CATEGORIES: readonly VisualRuleCategory[] = Object.free
     geoip: ['private'],
     domains: ['localhost', 'local'],
     ipCidrs: ['127.0.0.0/8', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16'],
-    clashProvider: 'ACL4SSR/Clash/Providers/LocalAreaNetwork.yaml',
+    clashProvider: 'ACL4SSR/Clash/LocalAreaNetwork.list',
     surgeList: 'ACL4SSR/Clash/LocalAreaNetwork.list',
   },
   {
@@ -108,7 +113,7 @@ export const VISUAL_RULE_CATEGORIES: readonly VisualRuleCategory[] = Object.free
     defaultAction: 'direct',
     geosite: ['cn'],
     geoip: ['cn'],
-    clashProvider: 'ACL4SSR/Clash/Providers/ChinaDomain.yaml',
+    clashProvider: 'ACL4SSR/Clash/ChinaDomain.list',
     surgeList: 'ACL4SSR/Clash/ChinaDomain.list',
   },
   {
@@ -238,19 +243,28 @@ export const VISUAL_RULE_MAP: Readonly<Record<string, VisualRuleCategory>> = Obj
   Object.fromEntries(VISUAL_RULE_CATEGORIES.map((item) => [item.id, item])),
 );
 
-export const VISUAL_RULE_PRESETS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+export const VISUAL_RULE_PRESETS: Readonly<Record<'minimal' | 'balanced' | 'full', readonly string[]>> = Object.freeze({
   minimal: ['private', 'cn_services', 'non_cn'],
   balanced: ['ai_services', 'youtube', 'google', 'private', 'cn_services', 'telegram', 'github', 'non_cn'],
-  comprehensive: VISUAL_RULE_CATEGORIES.map((item) => item.id),
+  full: VISUAL_RULE_CATEGORIES.map((item) => item.id),
 });
 
-export const DEFAULT_BUILTIN_TRANSFORM: Readonly<BuiltinTransformConfig> = Object.freeze({
-  visualRulesEnabled: false,
-  rulePreset: 'balanced',
-  selectedRules: [...VISUAL_RULE_PRESETS.balanced],
+export function getSmartPresetRuleIds(preset?: string): string[] {
+  const normalized = String(preset || 'balanced')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'minimal') return [...VISUAL_RULE_PRESETS.minimal];
+  if (normalized === 'full') return [...VISUAL_RULE_PRESETS.full];
+  return [...VISUAL_RULE_PRESETS.balanced];
+}
+
+export const DEFAULT_CUSTOM_VISUAL_RULES: CustomVisualRulesConfig = Object.freeze({
   customRules: [],
   groupByCountry: true,
   includeAutoSelect: true,
+});
+
+export const DEFAULT_ADVANCED_BASE_CONFIG: Readonly<AdvancedBaseConfig> = Object.freeze({
   enableClashApi: false,
   externalController: '0.0.0.0:9090',
   externalUiDownloadUrl: '',
@@ -265,13 +279,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
-export function detectVisualRulePreset(selectedRules: unknown[] = []): string {
+export function detectVisualRulePreset(selectedRules: unknown[] = []): 'minimal' | 'balanced' | 'full' | 'custom' {
   const normalized = new Set(
-    Array.isArray(selectedRules) ? selectedRules.filter((id): id is string => typeof id === 'string' && Boolean(VISUAL_RULE_MAP[id])) : [],
+    Array.isArray(selectedRules)
+      ? selectedRules.filter((id): id is string => typeof id === 'string' && Boolean(VISUAL_RULE_MAP[id]))
+      : [],
   );
   for (const [presetKey, presetList] of Object.entries(VISUAL_RULE_PRESETS)) {
     if (presetList.length === normalized.size && presetList.every((id) => normalized.has(id))) {
-      return presetKey;
+      return presetKey as 'minimal' | 'balanced' | 'full';
     }
   }
   return 'custom';
@@ -290,10 +306,16 @@ function normalizeStringList(value: unknown): string[] {
   return [];
 }
 
-export function normalizeCustomRule(raw: unknown): CustomVisualRule | null {
+export interface NormalizeCustomVisualRulesOptions {
+  smartPreset?: string;
+  allowEmptyName?: boolean;
+}
+
+export function normalizeCustomRule(raw: unknown, options: { allowEmptyName?: boolean } = {}): CustomVisualRule | null {
   if (!isRecord(raw)) return null;
-  const name = String(raw.name || '').trim();
-  if (!name) return null;
+  const rawName = typeof raw.name === 'string' ? raw.name : String(raw.name || '');
+  const name = options.allowEmptyName ? rawName : rawName.trim();
+  if (!options.allowEmptyName && !name) return null;
   const rawAction = String(raw.action || 'proxy')
     .trim()
     .toLowerCase();
@@ -310,30 +332,40 @@ export function normalizeCustomRule(raw: unknown): CustomVisualRule | null {
   };
 }
 
-export function normalizeBuiltinTransform(raw: unknown = {}): BuiltinTransformConfig {
+export function normalizeCustomVisualRules(
+  raw: unknown = {},
+  options: NormalizeCustomVisualRulesOptions = {},
+): NormalizedCustomVisualRules {
   const input = isRecord(raw) ? raw : {};
   const selectedRules = Array.isArray(input.selectedRules)
     ? Array.from(
-        new Set(input.selectedRules.filter((id): id is string => typeof id === 'string' && Boolean(VISUAL_RULE_MAP[id]))),
+        new Set(
+          input.selectedRules.filter((id): id is string => typeof id === 'string' && Boolean(VISUAL_RULE_MAP[id])),
+        ),
       )
-    : [...DEFAULT_BUILTIN_TRANSFORM.selectedRules];
+    : getSmartPresetRuleIds(options.smartPreset);
   const customRules = Array.isArray(input.customRules)
     ? input.customRules
-        .map(normalizeCustomRule)
+        .map((item) => normalizeCustomRule(item, { allowEmptyName: options.allowEmptyName }))
         .filter((rule): rule is CustomVisualRule => Boolean(rule))
     : [];
-  const rawBase = isRecord(input.baseConfig) ? input.baseConfig : {};
 
   return {
-    visualRulesEnabled: Boolean(input.visualRulesEnabled),
-    rulePreset: detectVisualRulePreset(selectedRules),
     selectedRules,
     customRules,
     groupByCountry: input.groupByCountry !== false,
     includeAutoSelect: input.includeAutoSelect !== false,
+  };
+}
+
+export function normalizeAdvancedBaseConfig(raw: unknown = {}): AdvancedBaseConfig {
+  const input = isRecord(raw) ? raw : {};
+  const rawBase = isRecord(input.baseConfig) ? input.baseConfig : {};
+
+  return {
     enableClashApi: Boolean(input.enableClashApi),
     externalController:
-      String(input.externalController || DEFAULT_BUILTIN_TRANSFORM.externalController).trim() || '0.0.0.0:9090',
+      String(input.externalController || DEFAULT_ADVANCED_BASE_CONFIG.externalController).trim() || '0.0.0.0:9090',
     externalUiDownloadUrl: String(input.externalUiDownloadUrl || '').trim(),
     baseConfig: {
       singbox: typeof rawBase.singbox === 'string' ? rawBase.singbox : '',

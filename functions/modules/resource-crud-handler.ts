@@ -13,7 +13,11 @@ import {
   isValidRemoteSubscriptionUrl,
 } from '@misub/core/utils/url-validators.js';
 import { generateNodeId, generateProfileId, generateSubscriptionId } from '@misub/core/utils/id.js';
-import { ensureProfileLinkId, normalizeProfileIdentifier, rotateProfileLinkId } from '@misub/core/domain/profile-link.js';
+import {
+  ensureProfileLinkId,
+  normalizeProfileIdentifier,
+  rotateProfileLinkId,
+} from '@misub/core/domain/profile-link.js';
 import { getProfileSubscriptionId } from '@misub/core/domain/profile-subscription-ref.js';
 import {
   MAX_MULTI_SOCKS_START_PORT,
@@ -24,6 +28,7 @@ import {
   parseOptionalInteger,
 } from '@misub/core/domain/multi-socks.js';
 import { validateSingleProfileAlias } from '@misub/core/domain/profile-alias.js';
+import { normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 import type { BoundRequestContext, Env, Repositories } from '../types.js';
 import { createRepositories } from '../repositories/index.js';
 import { isManualNodeRecord } from '../storage/d1-schema.js';
@@ -98,13 +103,16 @@ const PROFILE_EDITABLE_FIELDS = [
   'manualNodes',
   'subProfiles',
   'tags',
-  'transformConfigMode',
-  'transformConfig',
-  'builtinTransform',
-  'ruleLevel',
+  'transformMode',
+  'smartPreset',
+  'customVisualRules',
+  'templateConfig',
+  'externalBackend',
+  'enableUdp',
+  'skipCertVerify',
+  'enableRelay',
   'target',
   'prefixSettings',
-  'subconverter',
   'operators',
   'nodeTransform',
   'nodeTransformPresetId',
@@ -115,6 +123,7 @@ const PROFILE_EDITABLE_FIELDS = [
   'portalRedirectUrl',
   'portalNotice',
   'multiSocksEnabled',
+  'multiSocksLite',
   'multiSocksStartPort',
   'multiSocksListen',
   'multiSocksUsername',
@@ -122,6 +131,9 @@ const PROFILE_EDITABLE_FIELDS = [
   'multiSocksMaxPorts',
   'sortIndex',
 ] as const;
+
+const VALID_PROFILE_TRANSFORM_MODES = new Set(['smart', 'template', 'external']);
+const VALID_PROFILE_SMART_PRESETS = new Set(['minimal', 'balanced', 'full']);
 
 const SUBSCRIPTION_RUNTIME_FIELDS = [
   'nodeCount',
@@ -210,7 +222,10 @@ function preserveRuntimeFields(target: RecordObj, current: RecordObj, runtimeFie
   return next;
 }
 
-function ensureStorageAvailable(env: EnvLike, context: BoundRequestContext | null): {
+function ensureStorageAvailable(
+  env: EnvLike,
+  context: BoundRequestContext | null,
+): {
   repos?: Repositories;
   errorResponse?: Response;
 } {
@@ -1137,8 +1152,12 @@ export const handleSubscriptionsBatchCreate = (req: Request, env: EnvLike, ctx: 
 export const handleSubscriptionsBatch = (req: Request, env: EnvLike, ctx: BoundRequestContext | null = null) =>
   dispatchMisubBatch(SUBSCRIPTION_DESCRIPTOR, req, env, ctx);
 
-export const handleSubscriptionPatch = (req: Request, env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
-  patchMisubSingle(SUBSCRIPTION_DESCRIPTOR, req, env, id, ctx);
+export const handleSubscriptionPatch = (
+  req: Request,
+  env: EnvLike,
+  id: string,
+  ctx: BoundRequestContext | null = null,
+) => patchMisubSingle(SUBSCRIPTION_DESCRIPTOR, req, env, id, ctx);
 
 export const handleSubscriptionDelete = (env: EnvLike, id: string, ctx: BoundRequestContext | null = null) =>
   deleteMisubSingle(SUBSCRIPTION_DESCRIPTOR, env, id, ctx);
@@ -1223,6 +1242,15 @@ function validateAndNormalizeProfilePortalSocksPatch(target: RecordObj): string 
     }
   }
 
+  if (Object.prototype.hasOwnProperty.call(target, 'multiSocksLite')) {
+    const rawLite = target.multiSocksLite;
+    if (rawLite === '' || rawLite === null) {
+      target.multiSocksLite = null;
+    } else if (typeof rawLite !== 'boolean') {
+      return '多端口 SOCKS5 轻量模式参数无效';
+    }
+  }
+
   if (Object.prototype.hasOwnProperty.call(target, 'multiSocksStartPort')) {
     const rawPort = target.multiSocksStartPort;
     if (rawPort === '' || rawPort === null) {
@@ -1273,6 +1301,115 @@ function validateAndNormalizeProfilePortalSocksPatch(target: RecordObj): string 
   return null;
 }
 
+function normalizeNullableBoolFlag(raw: unknown): boolean | null {
+  if (raw === true || raw === false) return raw;
+  return null;
+}
+
+function applyProfileTransformFields(target: RecordObj, patch: RecordObj): string | null {
+  delete target.transformConfigMode;
+  delete target.transformConfig;
+  delete target.ruleLevel;
+  delete target.builtinTransform;
+  delete target.subconverter;
+  delete target.clashRuleLevel;
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'transformMode')) {
+    const raw = patch.transformMode;
+    if (raw === null || raw === '') {
+      delete target.transformMode;
+    } else {
+      const normalized = String(raw).trim().toLowerCase();
+      if (!VALID_PROFILE_TRANSFORM_MODES.has(normalized)) {
+        return '转换模式仅支持 smart、template 或 external';
+      }
+      target.transformMode = normalized;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'smartPreset')) {
+    const raw = patch.smartPreset;
+    if (raw === null || raw === '') {
+      delete target.smartPreset;
+    } else {
+      const normalized = String(raw).trim().toLowerCase();
+      if (!VALID_PROFILE_SMART_PRESETS.has(normalized)) {
+        return '智能分流预设仅支持 minimal、balanced 或 full';
+      }
+      target.smartPreset = normalized;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'enableUdp')) {
+    if (patch.enableUdp === null) {
+      delete target.enableUdp;
+    } else if (typeof patch.enableUdp === 'boolean') {
+      target.enableUdp = patch.enableUdp;
+    } else {
+      return 'enableUdp 覆写值必须为布尔值或 null';
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'skipCertVerify')) {
+    if (patch.skipCertVerify === null) {
+      delete target.skipCertVerify;
+    } else if (typeof patch.skipCertVerify === 'boolean') {
+      target.skipCertVerify = patch.skipCertVerify;
+    } else {
+      return 'skipCertVerify 覆写值必须为布尔值或 null';
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'enableRelay')) {
+    if (patch.enableRelay === null) {
+      delete target.enableRelay;
+    } else if (typeof patch.enableRelay === 'boolean') {
+      target.enableRelay = patch.enableRelay;
+    } else {
+      return 'enableRelay 覆写值必须为布尔值或 null';
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'templateConfig')) {
+    const trimmed = String(patch.templateConfig ?? '').trim();
+    if (!trimmed) {
+      delete target.templateConfig;
+    } else {
+      target.templateConfig = trimmed;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'customVisualRules')) {
+    if (patch.customVisualRules === null) {
+      delete target.customVisualRules;
+    } else if (isRecord(patch.customVisualRules)) {
+      const normalizedCvr = normalizeCustomVisualRules(patch.customVisualRules, { allowEmptyName: false });
+      target.customVisualRules = {
+        ...(Array.isArray(patch.customVisualRules.selectedRules) ? { selectedRules: normalizedCvr.selectedRules } : {}),
+        customRules: normalizedCvr.customRules,
+        groupByCountry: normalizedCvr.groupByCountry,
+        includeAutoSelect: normalizedCvr.includeAutoSelect,
+      };
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(patch, 'externalBackend')) {
+    if (patch.externalBackend === null) {
+      delete target.externalBackend;
+    } else if (isRecord(patch.externalBackend)) {
+      target.externalBackend = {
+        url: String(patch.externalBackend.url ?? '').trim(),
+        templateUrl: String(patch.externalBackend.templateUrl ?? '').trim(),
+        sort: normalizeNullableBoolFlag(patch.externalBackend.sort),
+        tfo: normalizeNullableBoolFlag(patch.externalBackend.tfo),
+        list: normalizeNullableBoolFlag(patch.externalBackend.list),
+      };
+    }
+  }
+
+  return null;
+}
+
 export async function handleProfileCreate(
   request: Request,
   env: EnvLike,
@@ -1303,9 +1440,6 @@ export async function handleProfileCreate(
     const timestamp = nowIso();
     const id = typeof body.id === 'string' && body.id.trim() ? body.id.trim() : generateProfileId();
     const picked = pickAllowedFields(body, PROFILE_EDITABLE_FIELDS);
-    if (!Object.prototype.hasOwnProperty.call(picked, 'ruleLevel') && typeof body.clashRuleLevel === 'string') {
-      picked.ruleLevel = body.clashRuleLevel;
-    }
     const portalSocksValidationError = validateAndNormalizeProfilePortalSocksPatch(picked);
     if (portalSocksValidationError) {
       return createJsonResponse({ success: false, message: portalSocksValidationError }, 400);
@@ -1325,6 +1459,10 @@ export async function handleProfileCreate(
         updatedAt: timestamp,
       }),
     ) as ProfileConfig;
+    const transformError = applyProfileTransformFields(normalized as RecordObj, picked);
+    if (transformError) {
+      return createJsonResponse({ success: false, message: transformError }, 400);
+    }
     delete (normalized as RecordObj).version;
 
     const saved = (await repos.profiles.save(normalized)) || normalized;
@@ -1356,9 +1494,6 @@ export async function handleProfilePatch(
     }
 
     const patch = pickAllowedFields(body, PROFILE_EDITABLE_FIELDS);
-    if (!Object.prototype.hasOwnProperty.call(patch, 'ruleLevel') && typeof body.clashRuleLevel === 'string') {
-      patch.ruleLevel = body.clashRuleLevel;
-    }
     if (Object.prototype.hasOwnProperty.call(patch, 'name')) {
       const nextName = String(patch.name ?? '').trim();
       if (!nextName) {
@@ -1414,7 +1549,10 @@ export async function handleProfilePatch(
         updatedAt: nowIso(),
       }),
     ) as ProfileConfig;
-    delete (merged as RecordObj).clashRuleLevel;
+    const transformError = applyProfileTransformFields(merged as RecordObj, patch);
+    if (transformError) {
+      return createJsonResponse({ success: false, message: transformError }, 400);
+    }
     delete (merged as RecordObj).version;
 
     const casResult = await persistWithCas(repos.profiles, merged, expected, force, '订阅组不存在');

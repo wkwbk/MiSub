@@ -82,7 +82,10 @@ describe('Hono Router, Zod Validation & Lazy ClientAdapter Pipeline', () => {
     for (const id of ['clash', 'surge', 'loon', 'quanx', 'singbox', 'egern', 'shadowrocket']) {
       const adapter = getClientAdapter(id);
       expect(adapter).not.toBeNull();
-      const output = await transformBuiltinSubscription(nodeList, id, { ruleLevel: 'std', fileName: 'LazyTest' });
+      const output = await transformBuiltinSubscription(nodeList, id, {
+        smartPreset: 'balanced',
+        fileName: 'LazyTest',
+      });
       expect(typeof output).toBe('string');
       expect(output.length).toBeGreaterThan(20);
     }

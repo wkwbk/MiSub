@@ -25,7 +25,8 @@ interface TransformAsset {
   description?: string;
 }
 
-type SelectOptionNode = { value: string; label: string } | { label: string; options: Array<{ value: string; label: string }> };
+type SelectOptionNode =
+  { value: string; label: string } | { label: string; options: Array<{ value: string; label: string }> };
 
 const { t } = useI18n();
 
@@ -35,22 +36,18 @@ const props = withDefaults(
     type: string;
     placeholder?: string;
     allowEmpty?: boolean;
-    forceCustom?: boolean;
     customPlaceholder?: string;
     excludeBuiltinAssets?: boolean;
-    customTemplatesOnly?: boolean;
   }>(),
   {
     modelValue: '',
     placeholder: '',
     allowEmpty: true,
-    forceCustom: false,
     // ⚠️ 默认值不能写成 t('...')：prop 的 default 在组件定义时就被求值，
     // 那时候 i18n 还没初始化，而且切换语言也不会重新求值。
     // 这里只留空字符串，真正的兜底文案交给下面的 resolvedCustomPlaceholder。
     customPlaceholder: '',
     excludeBuiltinAssets: false,
-    customTemplatesOnly: false,
   },
 );
 
@@ -85,8 +82,6 @@ const customTemplateAssets = computed<TransformAsset[]>(() => {
 });
 
 const assets = computed<TransformAsset[]>(() => {
-  if (props.customTemplatesOnly) return customTemplateAssets.value;
-
   // 在 computed 里解析模板名称，切换语言时下拉框即时更新。
   const builtinAndRemote = (getLocalizedTransformAssets(t) as (TransformAsset | null)[]).filter(
     (item): item is TransformAsset =>
@@ -97,7 +92,7 @@ const assets = computed<TransformAsset[]>(() => {
 
 const missingCustomTemplateValue = computed(() => {
   const value = String(props.modelValue || '').trim();
-  if (!props.customTemplatesOnly || !value.startsWith('custom:')) return '';
+  if (props.excludeBuiltinAssets || !value.startsWith('custom:')) return '';
   return customTemplateAssets.value.some((item) => item.url === value) ? '' : value;
 });
 
@@ -120,21 +115,6 @@ const showTemplateVariables = ref(false);
 watch(
   () => props.modelValue,
   (newVal) => {
-    if (props.forceCustom) {
-      isCustom.value = true;
-      selectedUrl.value = 'custom';
-      emit('select-asset', null);
-      return;
-    }
-
-    if (props.customTemplatesOnly) {
-      const foundCustom = assets.value.find((item) => item.url === newVal);
-      selectedUrl.value = foundCustom ? newVal : '';
-      isCustom.value = false;
-      emit('select-asset', foundCustom || null);
-      return;
-    }
-
     if (props.excludeBuiltinAssets && String(newVal || '').startsWith('builtin:')) {
       selectedUrl.value = '';
       isCustom.value = false;
@@ -149,6 +129,15 @@ watch(
       selectedUrl.value = newVal;
       isCustom.value = false;
       emit('select-asset', found);
+    } else if (
+      !props.excludeBuiltinAssets &&
+      String(newVal || '')
+        .trim()
+        .startsWith('custom:')
+    ) {
+      selectedUrl.value = '';
+      isCustom.value = false;
+      emit('select-asset', null);
     } else if (newVal && String(newVal).trim() !== '') {
       selectedUrl.value = 'custom';
       isCustom.value = true;
@@ -162,40 +151,19 @@ watch(
   { immediate: true },
 );
 
-watch(
-  customTemplateAssets,
-  () => {
-    const current = String(props.modelValue || '').trim();
-    if (!current.startsWith('custom:') || props.forceCustom) return;
-    const found = assets.value.find((item) => item.url === current);
-    if (found) {
-      selectedUrl.value = current;
-      isCustom.value = false;
-      emit('select-asset', found);
-    }
-  },
-);
-
-watch(
-  () => props.forceCustom,
-  (newVal) => {
-    if (newVal) {
-      isCustom.value = true;
-      selectedUrl.value = 'custom';
-      emit('select-asset', null);
-    } else if (!props.modelValue) {
-      isCustom.value = false;
-      selectedUrl.value = '';
-      emit('select-asset', null);
-    }
-  },
-  { immediate: true },
-);
+watch(customTemplateAssets, () => {
+  const current = String(props.modelValue || '').trim();
+  if (!current.startsWith('custom:')) return;
+  const found = assets.value.find((item) => item.url === current);
+  if (found) {
+    selectedUrl.value = current;
+    isCustom.value = false;
+    emit('select-asset', found);
+  }
+});
 
 const handleSelectChange = (val: string) => {
-  if (props.forceCustom) return;
-
-  if (val === 'custom' && !props.customTemplatesOnly) {
+  if (val === 'custom') {
     isCustom.value = true;
     emit('select-asset', null);
     emit('update:modelValue', '');
@@ -228,12 +196,10 @@ const selectOptions = computed<SelectOptionNode[]>(() => {
     });
   }
 
-  if (!props.customTemplatesOnly) {
-    opts.push({
-      value: 'custom',
-      label: t('transformSelector.customInputOption'),
-    });
-  }
+  opts.push({
+    value: 'custom',
+    label: t('transformSelector.customInputOption'),
+  });
 
   return opts;
 });
@@ -243,8 +209,6 @@ const handleCustomInput = (e: Event) => {
 };
 
 const switchToSelect = () => {
-  if (props.forceCustom) return;
-
   isCustom.value = false;
   selectedUrl.value = '';
   emit('select-asset', null);
@@ -252,9 +216,6 @@ const switchToSelect = () => {
 };
 
 const helperText = computed(() => {
-  if (props.customTemplatesOnly) {
-    return t('transformSelector.helperCustomTemplatesOnly');
-  }
   if (props.excludeBuiltinAssets) {
     return t('transformSelector.helperExcludeBuiltin');
   }
@@ -281,7 +242,6 @@ const helperText = computed(() => {
           />
         </div>
         <button
-          v-if="!forceCustom"
           :aria-label="t('operators.backToList')"
           :title="t('operators.backToList')"
           class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-line bg-transparent text-fg-muted transition-colors hover:bg-hover hover:text-fg"

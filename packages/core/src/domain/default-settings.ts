@@ -1,5 +1,13 @@
-import type { OperatorRule, RegionOverrideRule } from '../types.js';
-import { DEFAULT_BUILTIN_TRANSFORM } from './visual-rules-catalog.js';
+import type {
+  AdvancedBaseConfig,
+  CustomVisualRulesConfig,
+  ExternalBackendConfig,
+  OperatorRule,
+  RegionOverrideRule,
+  SmartPreset,
+  TransformMode,
+} from '../types.js';
+import { DEFAULT_ADVANCED_BASE_CONFIG, DEFAULT_CUSTOM_VISUAL_RULES } from './visual-rules-catalog.js';
 
 export const DEFAULT_SUBCONVERTER_BACKEND = 'subapi.cmliussss.net';
 
@@ -17,21 +25,33 @@ export const DEFAULT_SHARED_SETTINGS = {
   cronSecret: '',
   botToken: '',
   chatId: '',
-  transformConfigMode: 'builtin',
-  transformConfig: '',
-  ruleLevel: 'std',
-  builtinSkipCertVerify: false,
-  builtinEnableUdp: true,
-  builtinTransform: {
-    ...DEFAULT_BUILTIN_TRANSFORM,
-    baseConfig: { ...DEFAULT_BUILTIN_TRANSFORM.baseConfig },
-  },
+  transformMode: 'smart' as TransformMode,
+  smartPreset: 'balanced' as SmartPreset,
+  enableRelay: false,
+  templateConfig: '',
+  customVisualRules: {
+    ...DEFAULT_CUSTOM_VISUAL_RULES,
+    customRules: [],
+  } as CustomVisualRulesConfig,
+  advancedBaseConfig: {
+    ...DEFAULT_ADVANCED_BASE_CONFIG,
+    baseConfig: { ...DEFAULT_ADVANCED_BASE_CONFIG.baseConfig },
+  } as AdvancedBaseConfig,
+  enableUdp: true,
+  skipCertVerify: false,
+  enableFlagEmoji: true,
+  externalBackend: {
+    url: DEFAULT_SUBCONVERTER_BACKEND,
+    templateUrl: '',
+    sort: false,
+    tfo: false,
+    list: false,
+  } as ExternalBackendConfig,
   enableAccessLog: false,
   accessLogPersistenceMode: 'light',
   notifyThresholdDays: 3,
   notifyThresholdPercent: 90,
   enableTrafficNode: false,
-  enableFlagEmoji: true,
   enablePublicPage: true,
   allowBrowserSubAccess: true,
   blockCrawlerSubAccess: true,
@@ -40,6 +60,7 @@ export const DEFAULT_SHARED_SETTINGS = {
   subPortalTitle: '',
   subPortalNotice: '',
   defaultMultiSocksEnabled: false,
+  defaultMultiSocksLite: false,
   defaultMultiSocksStartPort: 42001,
   defaultMultiSocksListen: '127.0.0.1' as '127.0.0.1' | '0.0.0.0',
   portalCustomPage: {
@@ -74,6 +95,7 @@ export const DEFAULT_SHARED_SETTINGS = {
   profileTagOrder: [] as string[],
   dismissedHealthItems: [] as string[],
   customDnsOverride: '',
+  dnsMode: 'clean' as 'clean' | 'polluted',
   regionOverrides: [] as RegionOverrideRule[],
   nodeTransformPresets: [] as Array<Record<string, unknown>>,
   guestbook: {
@@ -105,18 +127,6 @@ export const DEFAULT_SHARED_SETTINGS = {
         token: '',
       },
     ],
-  },
-  subconverter: {
-    engineMode: 'builtin',
-    defaultBackend: DEFAULT_SUBCONVERTER_BACKEND,
-    defaultOptions: {
-      udp: true,
-      emoji: true,
-      scv: true,
-      tfo: false,
-      sort: false,
-      list: false,
-    },
   },
   shortLink: {
     enabled: false,

@@ -1,72 +1,59 @@
-<script setup lang="ts" generic="T extends { builtinTransform?: BuiltinTransformConfig }">
-import { computed, ref, watch } from 'vue';
-import type { BuiltinTransformConfig, CustomVisualRule } from '@misub/core/types.js';
-import { Check, Code2, Copy, Plus, Sliders, Trash2 } from '@lucide/vue';
+<script setup lang="ts">
+import { computed, nextTick, reactive, ref, watch } from 'vue';
+import type {
+  CustomVisualRule,
+  CustomVisualRulesConfig,
+  NormalizedCustomVisualRules,
+  SmartPreset,
+} from '@misub/core/types.js';
+import { Code2, Plus, Sliders, Trash2 } from '@lucide/vue';
 import Select from '@/components/ui/Select.vue';
-import { API_ENDPOINTS } from '@/constants/api-endpoints.js';
 import { useI18n } from '@/i18n/index.js';
-import { copyTextToClipboard } from '@/utils/clipboard.js';
 import {
-  DEFAULT_BUILTIN_TRANSFORM,
-  detectVisualRulePreset,
-  normalizeBuiltinTransform,
   normalizeCustomRule,
+  normalizeCustomVisualRules,
   VISUAL_RULE_CATEGORIES,
-  VISUAL_RULE_PRESETS,
 } from '@misub/core/domain/visual-rules-catalog.js';
 
 const { t, locale } = useI18n();
 
 const props = withDefaults(
   defineProps<{
-    settings: T;
-    section?: string; // 'rules' | 'advanced'
+    smartPreset?: SmartPreset | string;
+    customVisualRules?: Partial<CustomVisualRulesConfig> | null;
   }>(),
   {
-    section: 'rules',
+    smartPreset: 'balanced',
+    customVisualRules: null,
   },
 );
 
 const emit = defineEmits<{
-  'update:settings': [value: T];
+  'update:customVisualRules': [value: CustomVisualRulesConfig];
 }>();
 
-const bt = computed<BuiltinTransformConfig>(() =>
-  normalizeBuiltinTransform(props.settings?.builtinTransform || DEFAULT_BUILTIN_TRANSFORM),
+const rootRef = ref<HTMLElement | null>(null);
+
+const bt = computed<NormalizedCustomVisualRules>(() =>
+  normalizeCustomVisualRules(props.customVisualRules, {
+    smartPreset: props.smartPreset,
+    allowEmptyName: true,
+  }),
 );
 
-function updateBt(patch: Partial<BuiltinTransformConfig>): void {
-  emit('update:settings', {
-    ...props.settings,
-    builtinTransform: {
-      ...bt.value,
-      ...patch,
-    },
+function updateBt(patch: Partial<CustomVisualRulesConfig>): void {
+  emit('update:customVisualRules', {
+    selectedRules: [...bt.value.selectedRules],
+    customRules: [...bt.value.customRules],
+    groupByCountry: bt.value.groupByCountry,
+    includeAutoSelect: bt.value.includeAutoSelect,
+    ...patch,
   });
 }
 
 const isZh = computed(() => String(locale?.value || 'zh-CN').startsWith('zh'));
 
 // --- 1. 规则选择 ---
-const presetOptions = computed(() => [
-  { value: 'minimal', label: t('settings.visualPresetMinimal') },
-  { value: 'balanced', label: t('settings.visualPresetBalanced') },
-  { value: 'comprehensive', label: t('settings.visualPresetComprehensive') },
-  { value: 'custom', label: t('settings.visualPresetCustom'), disabled: true },
-]);
-
-const currentPreset = computed({
-  get: () => detectVisualRulePreset(bt.value.selectedRules),
-  set: (preset: string) => {
-    if (VISUAL_RULE_PRESETS[preset]) {
-      updateBt({
-        selectedRules: [...VISUAL_RULE_PRESETS[preset]],
-        rulePreset: preset,
-      });
-    }
-  },
-});
-
 function isRuleSelected(ruleId: string) {
   return Array.isArray(bt.value.selectedRules) && bt.value.selectedRules.includes(ruleId);
 }
@@ -81,7 +68,6 @@ function toggleRule(ruleId: string) {
   }
   updateBt({
     selectedRules: current,
-    rulePreset: detectVisualRulePreset(current),
   });
 }
 
@@ -93,6 +79,19 @@ function getCategoryLabel(cat: { labelZh: string; labelEn: string }) {
 const customRuleMode = ref('form'); // 'form' | 'json'
 const customRuleJsonText = ref('');
 const customRuleJsonError = ref('');
+const listInputDrafts = reactive<Record<string, string>>({});
+
+type ListFieldKey = 'domainSuffix' | 'domainKeyword' | 'ipCidr' | 'srcIpCidr';
+
+function draftKey(index: number, key: ListFieldKey): string {
+  return `${index}:${key}`;
+}
+
+function clearAllListDrafts(): void {
+  for (const k of Object.keys(listInputDrafts)) {
+    delete listInputDrafts[k];
+  }
+}
 
 const actionOptions = computed(() => [
   { value: 'proxy', label: t('settings.visualActionProxy') },
@@ -106,12 +105,15 @@ function syncJsonFromCustomRules() {
 }
 
 watch(customRuleMode, (mode) => {
+  clearAllListDrafts();
   if (mode === 'json') {
     syncJsonFromCustomRules();
   }
 });
 
-function addCustomRule() {
+async function addCustomRule() {
+  customRuleMode.value = 'form';
+  clearAllListDrafts();
   const nextRules: CustomVisualRule[] = [
     ...(bt.value.customRules || []),
     {
@@ -125,18 +127,25 @@ function addCustomRule() {
     },
   ];
   updateBt({ customRules: nextRules });
+
+  await nextTick();
+  const nameInputs = rootRef.value?.querySelectorAll<HTMLInputElement>('[data-testid="custom-rule-name-input"]');
+  const lastInput = nameInputs && nameInputs.length > 0 ? nameInputs[nameInputs.length - 1] : null;
+  if (lastInput) {
+    lastInput.focus();
+    lastInput.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 function removeCustomRule(index: number) {
+  clearAllListDrafts();
   updateBt({
     customRules: (bt.value.customRules || []).filter((_, idx) => idx !== index),
   });
 }
 
 function updateCustomRule(index: number, patch: Partial<CustomVisualRule>) {
-  const nextRules = (bt.value.customRules || []).map((rule, idx) =>
-    idx === index ? { ...rule, ...patch } : rule,
-  );
+  const nextRules = (bt.value.customRules || []).map((rule, idx) => (idx === index ? { ...rule, ...patch } : rule));
   updateBt({ customRules: nextRules });
 }
 
@@ -144,16 +153,22 @@ function formatListField(list: unknown) {
   return Array.isArray(list) ? list.join(', ') : '';
 }
 
-function updateListField(
-  index: number,
-  key: 'domainSuffix' | 'domainKeyword' | 'ipCidr' | 'srcIpCidr',
-  rawValue: string,
-) {
+function getListFieldValue(index: number, key: ListFieldKey, list: unknown): string {
+  const k = draftKey(index, key);
+  return k in listInputDrafts ? listInputDrafts[k] : formatListField(list);
+}
+
+function updateListField(index: number, key: ListFieldKey, rawValue: string) {
+  listInputDrafts[draftKey(index, key)] = rawValue;
   const nextList = String(rawValue || '')
     .split(/[\n,]+/)
     .map((s) => s.trim())
     .filter(Boolean);
   updateCustomRule(index, { [key]: nextList } as Partial<CustomVisualRule>);
+}
+
+function clearListFieldDraft(index: number, key: ListFieldKey) {
+  delete listInputDrafts[draftKey(index, key)];
 }
 
 function handleCustomRuleJsonInput(event: Event) {
@@ -171,7 +186,7 @@ function handleCustomRuleJsonInput(event: Event) {
       return;
     }
     const normalized = parsed
-      .map(normalizeCustomRule)
+      .map((item) => normalizeCustomRule(item, { allowEmptyName: true }))
       .filter((item): item is CustomVisualRule => Boolean(item));
     updateBt({ customRules: normalized });
     customRuleJsonError.value = '';
@@ -179,129 +194,19 @@ function handleCustomRuleJsonInput(event: Event) {
     customRuleJsonError.value = t('settings.visualCustomRulesJsonInvalid');
   }
 }
-
-// --- 3. Subconverter 外部配置链接 ---
-const copiedSubconverterUrl = ref(false);
-
-const subconverterConfigUrl = computed(() => {
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://example.com';
-  const params = new URLSearchParams();
-  const preset = detectVisualRulePreset(bt.value.selectedRules);
-  if (preset !== 'custom') {
-    params.set('selectedRules', preset);
-  } else {
-    params.set('selectedRules', JSON.stringify(bt.value.selectedRules || []));
-  }
-  params.set('group_by_country', bt.value.groupByCountry ? 'true' : 'false');
-  params.set('include_auto_select', bt.value.includeAutoSelect ? 'true' : 'false');
-
-  const validCustom = (bt.value.customRules || []).filter((r) => r && String(r.name || '').trim());
-  if (validCustom.length > 0) {
-    params.set('customRules', JSON.stringify(validCustom));
-  }
-  return `${origin}${API_ENDPOINTS.SUBCONVERTER_CONFIG}?${params.toString()}`;
-});
-
-async function copySubconverterUrl() {
-  const copied = await copyTextToClipboard(subconverterConfigUrl.value);
-  if (copied) {
-    copiedSubconverterUrl.value = true;
-    setTimeout(() => {
-      copiedSubconverterUrl.value = false;
-    }, 2000);
-  }
-}
-
-// --- 4. 基础配置设置 ---
-type BaseConfigTarget = 'singbox' | 'clash' | 'surge';
-const activeBaseConfigTarget = ref<BaseConfigTarget>('singbox');
-
-const baseConfigTargetOptions = [
-  { value: 'singbox', label: 'Sing-Box (JSON)' },
-  { value: 'clash', label: 'Clash / Mihomo (YAML)' },
-  { value: 'surge', label: 'Surge (INI)' },
-];
-
-const activeBaseConfigText = computed({
-  get: () => bt.value.baseConfig?.[activeBaseConfigTarget.value] || '',
-  set: (val: string) => {
-    const baseConfig = bt.value.baseConfig || { singbox: '', clash: '', surge: '' };
-    updateBt({
-      baseConfig: {
-        ...baseConfig,
-        [activeBaseConfigTarget.value]: val,
-      },
-    });
-  },
-});
-
-const baseConfigValidationError = ref('');
-let baseConfigValidateSeq = 0;
-
-watch(
-  [activeBaseConfigText, activeBaseConfigTarget],
-  async ([rawText, target]) => {
-    const seq = ++baseConfigValidateSeq;
-    const raw = String(rawText || '').trim();
-    if (!raw) {
-      baseConfigValidationError.value = '';
-      return;
-    }
-    if (target === 'singbox') {
-      try {
-        const parsed = JSON.parse(raw);
-        baseConfigValidationError.value =
-          !parsed || typeof parsed !== 'object' || Array.isArray(parsed)
-            ? t('settings.visualBaseConfigMustBeObject')
-            : '';
-      } catch {
-        baseConfigValidationError.value = t('settings.dnsOverrideInvalidJson');
-      }
-      return;
-    }
-    if (target === 'clash') {
-      try {
-        const yaml = await import('js-yaml');
-        if (seq !== baseConfigValidateSeq) return;
-        const parsed = yaml.load(raw);
-        if (seq !== baseConfigValidateSeq) return;
-        baseConfigValidationError.value =
-          !parsed || typeof parsed !== 'object' || Array.isArray(parsed)
-            ? t('settings.visualBaseConfigMustBeObject')
-            : '';
-      } catch {
-        if (seq !== baseConfigValidateSeq) return;
-        baseConfigValidationError.value = t('settings.dnsOverrideInvalidYaml');
-      }
-      return;
-    }
-    baseConfigValidationError.value = '';
-  },
-  { immediate: true },
-);
-
-function clearActiveBaseConfig() {
-  activeBaseConfigText.value = '';
-}
 </script>
 
 <template>
-  <!-- 模式 A：可视化规则勾选 + 自定义规则（嵌入在「分流规则」卡片内） -->
-  <div v-if="section === 'rules'" class="space-y-5" data-testid="visual-rules-editor">
+  <!-- 可视化规则勾选 + 自定义规则 -->
+  <div ref="rootRef" class="space-y-5" data-testid="visual-rules-editor">
     <!-- 规则勾选网格 -->
     <div class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualRulesTitle') }}</h4>
-          <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualRulesGridHint') }}</p>
-        </div>
-        <div class="w-28">
-          <Select v-model="currentPreset" :options="presetOptions" size="sm" />
-        </div>
+      <div>
+        <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualRulesTitle') }}</h4>
+        <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualRulesGridHint') }}</p>
       </div>
 
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
         <label
           v-for="cat in VISUAL_RULE_CATEGORIES"
           :key="cat.id"
@@ -310,11 +215,11 @@ function clearActiveBaseConfig() {
               ? 'border-accent/60 bg-accent/10 text-fg'
               : 'border-line bg-inset text-fg-muted hover:border-line-strong hover:text-fg'
           "
-          class="flex cursor-pointer items-center gap-2.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors select-none"
+          class="flex min-h-10 cursor-pointer items-center gap-2 rounded-md border px-2.5 py-2 text-xs font-medium transition-colors select-none"
         >
           <input
             :checked="isRuleSelected(cat.id)"
-            class="h-3.5 w-3.5 rounded border-line bg-surface accent-accent"
+            class="h-3.5 w-3.5 shrink-0 rounded border-line bg-surface accent-accent"
             type="checkbox"
             @change="toggleRule(cat.id)"
           />
@@ -336,7 +241,7 @@ function clearActiveBaseConfig() {
             :class="
               customRuleMode === 'form' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'form'"
           >
@@ -347,7 +252,7 @@ function clearActiveBaseConfig() {
             :class="
               customRuleMode === 'json' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'json'"
           >
@@ -360,11 +265,11 @@ function clearActiveBaseConfig() {
       <div v-if="customRuleMode === 'form'" class="space-y-3">
         <div
           v-if="!bt.customRules || bt.customRules.length === 0"
-          class="flex items-center justify-between rounded-md border border-dashed border-line bg-inset px-4 py-3"
+          class="flex flex-col gap-3 rounded-md border border-dashed border-line bg-inset p-4 sm:flex-row sm:items-center sm:justify-between"
         >
           <p class="text-xs text-fg-muted">{{ t('settings.visualCustomRulesEmpty') }}</p>
           <button
-            class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90"
+            class="inline-flex min-h-9 w-full shrink-0 items-center justify-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-accent-fg transition-opacity hover:opacity-90 sm:w-auto"
             data-testid="add-custom-rule-btn"
             type="button"
             @click="addCustomRule"
@@ -378,22 +283,45 @@ function clearActiveBaseConfig() {
           <div
             v-for="(rule, index) in bt.customRules"
             :key="index"
-            class="rounded-md border border-line bg-inset/40 p-4 space-y-3"
+            class="rounded-md border border-line bg-inset/40 p-3.5 sm:p-4 space-y-3"
+            data-testid="custom-rule-card"
           >
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
-              <div class="sm:col-span-6">
+            <div class="flex items-center justify-between gap-2 border-b border-line-subtle pb-2">
+              <span class="font-mono text-xs font-semibold text-fg-muted">#{{ index + 1 }}</span>
+              <button
+                :aria-label="t('actions.delete')"
+                class="inline-flex min-h-8 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 text-xs text-status-danger shadow-none transition-colors hover:bg-status-danger-bg hover:border-status-danger-border"
+                data-testid="remove-custom-rule-btn"
+                type="button"
+                @click="removeCustomRule(index)"
+              >
+                <Trash2 class="h-3.5 w-3.5" />
+                <span>{{ t('actions.delete') }}</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-start">
+              <div class="sm:col-span-7">
                 <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualCustomRuleName') }}
                 </label>
                 <input
                   :placeholder="t('settings.visualCustomRuleNamePlaceholder')"
                   :value="rule.name"
-                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 text-xs text-fg shadow-none focus:border-line-strong"
+                  class="block h-9 w-full rounded-md border border-line bg-inset px-3 text-sm sm:text-xs text-fg shadow-none focus:border-line-strong"
+                  data-testid="custom-rule-name-input"
                   type="text"
                   @input="updateCustomRule(index, { name: ($event.target as HTMLInputElement).value })"
                 />
+                <p
+                  v-if="!String(rule.name || '').trim()"
+                  class="mt-1 text-xs text-amber-500"
+                  data-testid="custom-rule-name-hint"
+                >
+                  {{ t('settings.visualCustomRuleNameRequiredHint') }}
+                </p>
               </div>
-              <div class="sm:col-span-4">
+              <div class="sm:col-span-5">
                 <label class="mb-1 block text-xs font-medium text-fg-muted">
                   {{ t('settings.visualCustomRuleAction') }}
                 </label>
@@ -406,17 +334,6 @@ function clearActiveBaseConfig() {
                   "
                 />
               </div>
-              <div class="flex justify-end sm:col-span-2">
-                <button
-                  :aria-label="t('actions.delete')"
-                  class="inline-flex h-8 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 text-xs text-status-danger shadow-none transition-colors hover:bg-status-danger-bg hover:border-status-danger-border"
-                  type="button"
-                  @click="removeCustomRule(index)"
-                >
-                  <Trash2 class="h-3.5 w-3.5" />
-                  <span>{{ t('actions.delete') }}</span>
-                </button>
-              </div>
             </div>
 
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -425,10 +342,12 @@ function clearActiveBaseConfig() {
                   {{ t('settings.visualDomainSuffix') }}
                 </label>
                 <input
-                  :value="formatListField(rule.domainSuffix)"
-                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
+                  :value="getListFieldValue(index, 'domainSuffix', rule.domainSuffix)"
+                  class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm sm:text-xs text-fg shadow-none focus:border-line-strong"
+                  data-testid="custom-rule-domain-suffix-input"
                   placeholder="example.com, internal.local"
                   type="text"
+                  @blur="clearListFieldDraft(index, 'domainSuffix')"
                   @input="updateListField(index, 'domainSuffix', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -437,10 +356,11 @@ function clearActiveBaseConfig() {
                   {{ t('settings.visualDomainKeyword') }}
                 </label>
                 <input
-                  :value="formatListField(rule.domainKeyword)"
-                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
+                  :value="getListFieldValue(index, 'domainKeyword', rule.domainKeyword)"
+                  class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm sm:text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="openai, company"
                   type="text"
+                  @blur="clearListFieldDraft(index, 'domainKeyword')"
                   @input="updateListField(index, 'domainKeyword', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -449,10 +369,11 @@ function clearActiveBaseConfig() {
                   {{ t('settings.visualIpCidr') }}
                 </label>
                 <input
-                  :value="formatListField(rule.ipCidr)"
-                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
+                  :value="getListFieldValue(index, 'ipCidr', rule.ipCidr)"
+                  class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm sm:text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="10.0.0.0/8, 192.168.1.0/24"
                   type="text"
+                  @blur="clearListFieldDraft(index, 'ipCidr')"
                   @input="updateListField(index, 'ipCidr', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -461,10 +382,11 @@ function clearActiveBaseConfig() {
                   {{ t('settings.visualSrcIpCidr') }}
                 </label>
                 <input
-                  :value="formatListField(rule.srcIpCidr)"
-                  class="block h-8 w-full rounded-md border border-line bg-inset px-3 font-mono text-xs text-fg shadow-none focus:border-line-strong"
+                  :value="getListFieldValue(index, 'srcIpCidr', rule.srcIpCidr)"
+                  class="block h-9 w-full rounded-md border border-line bg-inset px-3 font-mono text-sm sm:text-xs text-fg shadow-none focus:border-line-strong"
                   placeholder="192.168.1.100/32"
                   type="text"
+                  @blur="clearListFieldDraft(index, 'srcIpCidr')"
                   @input="updateListField(index, 'srcIpCidr', ($event.target as HTMLInputElement).value)"
                 />
               </div>
@@ -472,7 +394,8 @@ function clearActiveBaseConfig() {
           </div>
 
           <button
-            class="inline-flex items-center gap-1.5 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+            class="inline-flex min-h-9 w-full items-center justify-center gap-1.5 rounded-md border border-line bg-transparent px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg sm:w-auto"
+            data-testid="add-custom-rule-btn"
             type="button"
             @click="addCustomRule"
           >
@@ -486,78 +409,13 @@ function clearActiveBaseConfig() {
         <textarea
           :placeholder="t('settings.visualCustomRulesJsonPlaceholder')"
           :value="customRuleJsonText"
-          class="block min-h-[140px] w-full rounded-md border border-line bg-inset p-3 font-mono text-xs text-fg focus:border-line-strong"
+          class="block min-h-[140px] w-full rounded-md border border-line bg-inset p-3 font-mono text-sm sm:text-xs text-fg focus:border-line-strong"
           @input="handleCustomRuleJsonInput"
         />
         <p v-if="customRuleJsonError" class="text-xs text-status-danger">
           {{ customRuleJsonError }}
         </p>
       </div>
-    </div>
-
-    <!-- 导出为 Subconverter 外部配置链接（由上方可视化规则动态生成） -->
-    <div class="border-t border-line pt-4 space-y-2">
-      <div>
-        <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualSubconverterTitle') }}</h4>
-        <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualSubconverterDesc') }}</p>
-      </div>
-      <div class="flex flex-col gap-2 sm:flex-row">
-        <input
-          :value="subconverterConfigUrl"
-          class="block w-full rounded-md border border-line bg-inset px-3 py-2 font-mono text-xs text-fg-muted"
-          data-testid="subconverter-config-url"
-          readonly
-          type="text"
-        />
-        <button
-          class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border border-line bg-elevated-card px-3.5 py-2 text-xs font-medium text-fg transition-colors hover:bg-hover"
-          data-testid="copy-subconverter-config-url"
-          type="button"
-          @click="copySubconverterUrl"
-        >
-          <Check v-if="copiedSubconverterUrl" class="h-3.5 w-3.5 text-status-success" />
-          <Copy v-else class="h-3.5 w-3.5" />
-          <span>{{
-            copiedSubconverterUrl ? t('settings.visualCopied') : t('settings.visualCopySubconverterUrl')
-          }}</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 模式 B：折叠高级选项（仅基础配置覆写） -->
-  <div v-else class="space-y-2.5" data-testid="visual-advanced-editor">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <div>
-        <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualBaseConfigTitle') }}</h4>
-        <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualBaseConfigDesc') }}</p>
-      </div>
-      <div class="w-44">
-        <Select v-model="activeBaseConfigTarget" :options="baseConfigTargetOptions" size="sm" />
-      </div>
-    </div>
-
-    <textarea
-      v-model="activeBaseConfigText"
-      :placeholder="t('settings.visualBaseConfigPlaceholder')"
-      class="block min-h-[130px] w-full rounded-md border border-line bg-inset p-3 font-mono text-xs text-fg focus:border-line-strong"
-    />
-    <div class="flex items-center justify-between gap-2">
-      <p v-if="baseConfigValidationError" class="text-xs text-status-danger">
-        {{ baseConfigValidationError }}
-      </p>
-      <p v-else class="text-xs text-fg-muted">
-        {{ t('settings.visualBaseConfigHint') }}
-      </p>
-      <button
-        v-if="activeBaseConfigText"
-        class="inline-flex shrink-0 items-center gap-1 rounded-md border border-line bg-transparent px-2.5 py-1 text-xs font-medium text-status-danger transition-colors hover:bg-status-danger-bg hover:border-status-danger-border"
-        type="button"
-        @click="clearActiveBaseConfig"
-      >
-        <Trash2 class="h-3 w-3" />
-        {{ t('settings.visualBaseConfigClear') }}
-      </button>
     </div>
   </div>
 </template>

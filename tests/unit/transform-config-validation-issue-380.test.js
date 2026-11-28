@@ -11,101 +11,101 @@ describe('Issue #380: SubConverter 配置文件自定义无法使用', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'custom_template',
-      transformConfig: 'custom:我的自定义规则',
+      transformMode: 'template',
+      templateConfig: 'custom:我的自定义规则',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(true);
-    expect(result.errors.transformConfig).toBeUndefined();
+    expect(result.errors.templateConfig).toBeUndefined();
   });
 
   it('应该允许 builtin: 前缀的预设模板名称', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'preset',
-      transformConfig: 'builtin:ACL4SSR_Online_Full',
+      transformMode: 'template',
+      templateConfig: 'builtin:ACL4SSR_Online_Full',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(true);
-    expect(result.errors.transformConfig).toBeUndefined();
+    expect(result.errors.templateConfig).toBeUndefined();
   });
 
-  it('custom 模式下应该要求有效的 URL', () => {
+  it('preset 模式下应该要求有效的 URL', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'custom',
-      transformConfig: 'not-a-url',
+      transformMode: 'template',
+      templateConfig: 'not-a-url',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.transformConfig).toBeDefined();
-    expect(result.errors.transformConfig[0]).toContain('URL');
+    expect(result.errors.templateConfig).toBeDefined();
+    expect(result.errors.templateConfig[0]).toContain('URL');
   });
 
-  it('custom 模式下应该接受有效的 URL', () => {
+  it('preset 模式下应该接受有效的 URL', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'custom',
-      transformConfig: 'https://example.com/config.ini',
+      transformMode: 'template',
+      templateConfig: 'https://example.com/config.ini',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(true);
-    expect(result.errors.transformConfig).toBeUndefined();
+    expect(result.errors.templateConfig).toBeUndefined();
   });
 
   it('应该拒绝 custom: 后面为空的模板名称', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'custom_template',
-      transformConfig: 'custom:',
+      transformMode: 'template',
+      templateConfig: 'custom:',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.transformConfig).toBeDefined();
-    expect(result.errors.transformConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
+    expect(result.errors.templateConfig).toBeDefined();
+    expect(result.errors.templateConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
   });
 
   it('应该拒绝 custom: 后面只有空格的模板名称', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'custom_template',
-      transformConfig: 'custom:   ',
+      transformMode: 'template',
+      templateConfig: 'custom:   ',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.transformConfig).toBeDefined();
-    expect(result.errors.transformConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
+    expect(result.errors.templateConfig).toBeDefined();
+    expect(result.errors.templateConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
   });
 
   it('应该拒绝 builtin: 后面为空的模板名称', () => {
     const profile = {
       name: 'Test Profile',
       customId: 'test',
-      transformConfigMode: 'preset',
-      transformConfig: 'builtin:',
+      transformMode: 'template',
+      templateConfig: 'builtin:',
     };
 
     const result = validateProfile(profile);
 
     expect(result.isValid).toBe(false);
-    expect(result.errors.transformConfig).toBeDefined();
-    expect(result.errors.transformConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
+    expect(result.errors.templateConfig).toBeDefined();
+    expect(result.errors.templateConfig[0]).toContain(messages['zh-CN'].validation.templateNameEmpty);
   });
 });

@@ -57,13 +57,13 @@ describe('Data store settings cache', () => {
       config: {
         siteName: 'old site',
         enablePublicPage: false,
-        transformConfig: 'https://example.com/old.ini',
+        templateConfig: 'https://example.com/old.ini',
       },
     };
     const nextSettings = {
       siteName: 'new site',
       enablePublicPage: true,
-      transformConfig: 'https://example.com/new.ini',
+      templateConfig: 'https://example.com/new.ini',
     };
 
     vi.stubGlobal(
@@ -90,6 +90,6 @@ describe('Data store settings cache', () => {
     const settingsStore = useSettingsStore();
     expect(settingsStore.config.siteName).toBe('new site');
     expect(settingsStore.config.enablePublicPage).toBe(true);
-    expect(settingsStore.config.transformConfig).toBe('https://example.com/new.ini');
+    expect(settingsStore.config.templateConfig).toBe('https://example.com/new.ini');
   });
 });

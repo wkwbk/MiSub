@@ -50,7 +50,7 @@ describe('Shadowrocket native .conf generator and rule bundle', () => {
       combinedNodeList: sampleNodes,
       config: {},
       builtinOptions: {
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         isChinaClient: true,
         compactNames: true,
       },
@@ -104,7 +104,7 @@ describe('Shadowrocket native .conf generator and rule bundle', () => {
       subName: 'MySR',
       combinedNodeList: sampleNodes,
       config: {},
-      builtinOptions: { ruleLevel: 'none', isChinaClient: false, compactNames: false, addFlagEmoji: false },
+      builtinOptions: { injectSmartGroups: false, isChinaClient: false, compactNames: false, addFlagEmoji: false },
       templateSource: { kind: 'custom', value: template.id },
       storageAdapter: {
         get: async (key) => (key === 'rule_templates' ? [template] : storageAdapter.get(key)),

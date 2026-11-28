@@ -1,7 +1,6 @@
 import {
   normalizeUnifiedTemplateModel,
   type TemplateGroup,
-  type TemplateProxy,
   type TemplateRule,
   type UnifiedTemplateModelInput,
 } from '../template-model.js';
@@ -9,9 +8,8 @@ import { buildSingboxDnsConfig, DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../
 import { getSingboxDnsRuleSet, pinRemoteRuleUrl, type SingboxRuleSetDefinition } from '../builtin-rules-provider.js';
 import { SINGBOX_SNIFF_RULE } from '../../core/sniffing-config.js';
 import {
-  applySingboxShadowsocksPlugin,
-  applySingboxTuicExtraFields,
   buildSingboxConfigEnvelope,
+  buildSingboxOutbound,
   DEFAULT_TEST_URL,
   filterAutoGroupMembers,
   resolveModelProxies,
@@ -23,242 +21,8 @@ export interface RenderSingboxOptions {
   [key: string]: unknown;
 }
 
-interface SingboxTlsBlock {
-  enabled: boolean;
-  server_name: string;
-  insecure: boolean;
-  alpn?: unknown[];
-  utls?: { enabled: boolean; fingerprint: string };
-  reality?: { enabled: boolean; public_key: string; short_id: string };
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
-}
-
 function sanitizeTag(value: unknown): string {
   return String(value || '').trim() || 'Untitled';
-}
-
-function parsePort(port: unknown): number | undefined {
-  const num = Number.parseInt(String(port), 10);
-  return Number.isFinite(num) ? num : undefined;
-}
-
-function buildOutbound(proxy: TemplateProxy): Record<string, unknown> | null {
-  if (!proxy || !proxy.server || !proxy.port) return null;
-
-  const type = String(proxy.type || '').toLowerCase();
-  const tag = sanitizeTag(proxy.name);
-  const server = proxy.server;
-  const serverPort = parsePort(proxy.port);
-  if (!serverPort) return null;
-
-  if (type === 'http' || type === 'https') {
-    const outbound: Record<string, unknown> = {
-      tag,
-      type: 'http',
-      server,
-      server_port: serverPort,
-      username: proxy.username || undefined,
-      password: proxy.password || undefined,
-    };
-    if (type === 'https' || proxy.tls || proxy.sni || proxy.servername) {
-      outbound.tls = {
-        enabled: true,
-        server_name: proxy.servername ?? proxy.sni ?? server,
-        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-      };
-    }
-    return outbound;
-  }
-
-  if (type === 'trojan') {
-    return {
-      tag,
-      type: 'trojan',
-      server,
-      server_port: serverPort,
-      password: proxy.password || '',
-      tls: {
-        enabled: true,
-        server_name: proxy.servername ?? proxy.sni ?? server,
-        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-      },
-    };
-  }
-
-  if (type === 'ss' || type === 'shadowsocks') {
-    const outbound: Record<string, unknown> = {
-      tag,
-      type: 'shadowsocks',
-      server,
-      server_port: serverPort,
-      method: proxy.cipher || 'aes-128-gcm',
-      password: proxy.password || '',
-    };
-    // sing-box 的 Shadowsocks 出站使用 SIP003 plugin/plugin_opts；
-    // `transport` 仅属于 V2Ray 传输协议，SFA 会严格拒绝它。
-    applySingboxShadowsocksPlugin(outbound, proxy);
-    return outbound;
-  }
-
-  if (type === 'vmess') {
-    const outbound: Record<string, unknown> = {
-      tag,
-      type: 'vmess',
-      server,
-      server_port: serverPort,
-      uuid: proxy.uuid || '',
-      security: proxy.cipher || 'auto',
-      alter_id: Number.isFinite(Number(proxy.alterId)) ? Number(proxy.alterId) : 0,
-    };
-
-    const network = proxy.network || '';
-    if (network === 'ws') {
-      const wsOpts = asRecord(proxy['ws-opts']) || asRecord(proxy.wsOpts);
-      outbound.transport = {
-        type: 'ws',
-        path: wsOpts?.path || '/',
-        headers: asRecord(wsOpts?.headers) || {},
-      };
-    } else if (network === 'grpc') {
-      const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
-      outbound.transport = {
-        type: 'grpc',
-        service_name: grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName || 'grpc',
-      };
-    } else if (network === 'h2' || network === 'http') {
-      const opts = asRecord(proxy[`${network}-opts`]) || asRecord(proxy[`${network}Opts`]);
-      outbound.transport = {
-        type: 'http',
-        host: opts?.host ? (Array.isArray(opts.host) ? opts.host : [opts.host]) : [],
-        path: opts?.path || '/',
-      };
-    }
-
-    if (proxy.tls || proxy.sni || proxy.servername) {
-      const tls: SingboxTlsBlock = {
-        enabled: true,
-        server_name: String(proxy.servername ?? proxy.sni ?? server),
-        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-      };
-      if (proxy.alpn) tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
-      outbound.tls = tls;
-    }
-    return outbound;
-  }
-
-  if (type === 'vless') {
-    const outbound: Record<string, unknown> = {
-      tag,
-      type: 'vless',
-      server,
-      server_port: serverPort,
-      uuid: proxy.uuid || '',
-    };
-    if (proxy.flow) outbound.flow = proxy.flow;
-
-    const network = proxy.network || '';
-    if (network === 'ws') {
-      const wsOpts = asRecord(proxy['ws-opts']) || asRecord(proxy.wsOpts);
-      outbound.transport = {
-        type: 'ws',
-        path: wsOpts?.path || '/',
-        headers: asRecord(wsOpts?.headers) || {},
-      };
-    } else if (network === 'grpc') {
-      const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
-      outbound.transport = {
-        type: 'grpc',
-        service_name: grpcOpts?.['grpc-service-name'] || grpcOpts?.serviceName || 'grpc',
-      };
-    } else if (network === 'httpupgrade') {
-      const httpupgradeOpts = asRecord(proxy['httpupgrade-opts']) || asRecord(proxy.httpupgradeOpts);
-      outbound.transport = {
-        type: 'httpupgrade',
-        path: httpupgradeOpts?.path || '/',
-        host: httpupgradeOpts?.host || '',
-      };
-    }
-
-    if (proxy.tls || proxy.sni || proxy.servername) {
-      const tls: SingboxTlsBlock = {
-        enabled: true,
-        server_name: String(proxy.servername ?? proxy.sni ?? server),
-        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-      };
-
-      const fingerprint = proxy['client-fingerprint'] || proxy.clientFingerprint || proxy.fp;
-      if (fingerprint) {
-        tls.utls = {
-          enabled: true,
-          fingerprint: String(fingerprint),
-        };
-      }
-
-      const realityOpts = asRecord(proxy['reality-opts']) || asRecord(proxy.realityOpts);
-      if (realityOpts) {
-        tls.reality = {
-          enabled: true,
-          public_key: String(realityOpts['public-key'] || realityOpts.publicKey || ''),
-          short_id: String(realityOpts['short-id'] || realityOpts.shortId || ''),
-        };
-      }
-      outbound.tls = tls;
-    }
-    return outbound;
-  }
-
-  if (type === 'hysteria2' || type === 'hy2') {
-    return {
-      tag,
-      type: 'hysteria2',
-      server,
-      server_port: serverPort,
-      password: proxy.password || '',
-      tls: {
-        enabled: true,
-        server_name: proxy.servername ?? proxy.sni ?? server,
-        insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-      },
-    };
-  }
-
-  if (type === 'tuic') {
-    const tls: SingboxTlsBlock = {
-      enabled: true,
-      server_name: String(proxy.servername ?? proxy.sni ?? server),
-      insecure: proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true,
-    };
-    if (proxy.alpn) tls.alpn = Array.isArray(proxy.alpn) ? proxy.alpn : [proxy.alpn];
-    const outbound: Record<string, unknown> = {
-      tag,
-      type: 'tuic',
-      server,
-      server_port: serverPort,
-      uuid: proxy.uuid || '',
-      password: proxy.password || '',
-      tls,
-    };
-    applySingboxTuicExtraFields(outbound, proxy);
-    return outbound;
-  }
-
-  if (type === 'wireguard') {
-    return {
-      tag,
-      type: 'wireguard',
-      server,
-      server_port: serverPort,
-      local_address: Array.isArray(proxy.ip) ? proxy.ip : proxy.ip ? [proxy.ip] : [],
-      private_key: proxy['private-key'] || '',
-      peer_public_key: proxy['public-key'] || '',
-      pre_shared_key: proxy['preshared-key'] || '',
-    };
-  }
-
-  return null;
 }
 
 function mapGroupType(type: unknown): 'selector' | 'urltest' {
@@ -269,27 +33,62 @@ function mapGroupType(type: unknown): 'selector' | 'urltest' {
   return 'selector';
 }
 
-function buildGroupOutbounds(groups: TemplateGroup[]): Array<Record<string, unknown>> {
-  return groups.map((group) => {
+function buildGroupOutbounds(
+  groups: TemplateGroup[],
+  skippedProxyTags: Set<string> = new Set(),
+): Array<Record<string, unknown>> {
+  const candidates = groups.map((group) => {
     const mappedType = mapGroupType(group.type);
-    const outbounds = filterAutoGroupMembers(mappedType, group.members);
-    const outbound: Record<string, unknown> = {
+    const filteredMembers = group.members.filter(
+      (member) => !skippedProxyTags.has(member) && !skippedProxyTags.has(sanitizeTag(member)),
+    );
+    return {
+      group,
       tag: sanitizeTag(group.name),
-      type: mappedType,
-      outbounds,
+      mappedType,
+      outbounds: filterAutoGroupMembers(mappedType, filteredMembers),
     };
-
-    if (mappedType === 'urltest') {
-      outbound.url = group.options?.url || DEFAULT_TEST_URL;
-      outbound.interval = `${group.options?.interval || 300}s`;
-    }
-
-    if (mappedType === 'selector' && outbounds.length > 0) {
-      outbound.default = outbounds[0];
-    }
-
-    return outbound;
   });
+
+  // 迭代剔除因全部节点被跳过而变成空列表的 urltest 分组及其上级引用
+  const droppedGroupTags = new Set<string>();
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const item of candidates) {
+      if (droppedGroupTags.has(item.tag)) continue;
+      item.outbounds = item.outbounds.filter(
+        (member) => !droppedGroupTags.has(member) && !droppedGroupTags.has(sanitizeTag(member)),
+      );
+      if (item.mappedType === 'urltest' && item.outbounds.length === 0) {
+        droppedGroupTags.add(item.tag);
+        changed = true;
+      }
+    }
+  }
+
+  return candidates
+    .filter((item) => !droppedGroupTags.has(item.tag))
+    .map(({ group, tag, mappedType, outbounds }) => {
+      const finalOutbounds = mappedType === 'selector' && outbounds.length === 0 ? ['DIRECT'] : outbounds;
+      const outbound: Record<string, unknown> = {
+        tag,
+        type: mappedType,
+        outbounds: finalOutbounds,
+      };
+
+      if (mappedType === 'urltest') {
+        outbound.url = group.options?.url || DEFAULT_TEST_URL;
+        outbound.interval = `${group.options?.interval || 300}s`;
+        outbound.idle_timeout = '30m';
+      }
+
+      if (mappedType === 'selector' && finalOutbounds.length > 0) {
+        outbound.default = finalOutbounds[0];
+      }
+
+      return outbound;
+    });
 }
 
 function mapRuleToSingbox(rule: TemplateRule): Record<string, unknown> | null {
@@ -406,9 +205,23 @@ export function renderSingboxFromTemplateModel(
 ): string {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
   const proxies = resolveModelProxies(normalizedModel, options);
-  const proxyOutbounds = proxies.map(buildOutbound).filter((item): item is Record<string, unknown> => Boolean(item));
+  const proxyOutbounds: Array<Record<string, unknown>> = [];
+  const skippedProxyTags = new Set<string>();
+  for (const proxy of proxies) {
+    const outbound = buildSingboxOutbound(proxy);
+    if (outbound) {
+      proxyOutbounds.push(outbound);
+    } else if (proxy && typeof proxy === 'object') {
+      const rawTag = proxy.name || (proxy as { tag?: unknown }).tag;
+      if (rawTag) skippedProxyTags.add(sanitizeTag(rawTag));
+    }
+  }
+  for (const outbound of proxyOutbounds) {
+    if (typeof outbound.tag === 'string') skippedProxyTags.delete(outbound.tag);
+  }
   const groupOutbounds = buildGroupOutbounds(
     normalizedModel.groups.filter((g) => Array.isArray(g.members) && g.members.length > 0),
+    skippedProxyTags,
   );
   const ruleSetObjects = [
     getSingboxDnsRuleSet({ isChinaClient: options.isChinaClient }),

@@ -101,7 +101,7 @@ describe('自定义规则模板 Phase 1 后端模型/API/渲染', () => {
       combinedNodeList: NODE_LIST,
       subName: 'Demo',
       config: { UpdateInterval: 86400 },
-      builtinOptions: { ruleLevel: 'none', enableUdp: true, skipCertVerify: false },
+      builtinOptions: { injectSmartGroups: false, enableUdp: true, skipCertVerify: false },
       templateSource: { kind: 'custom', value: 'tpl-a' },
       managedConfigUrl: 'https://example.com/sub',
       storageAdapter,

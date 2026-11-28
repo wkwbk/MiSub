@@ -347,25 +347,24 @@ describe('Surge 内置生成器', () => {
       const ss = 'ss://YWVzLTEyOC1nY206cGFzc3dvcmQ=@1.2.3.4:8388#TestSS';
       const result = generateBuiltinSurgeConfig(ss);
       expect(result).toContain(
-        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Apple.list,🍎 Apple`,
+        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Ruleset/OpenAi.list,💬 AI 服务`,
       );
       expect(result).toContain(
-        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Netflix.list,🎥 流媒体`,
+        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/Ruleset/YouTube.list,📹 油管视频`,
       );
       expect(result).toContain(
-        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,DIRECT`,
+        `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,🔒 国内服务`,
       );
-      expect(result).toContain('DOMAIN-SUFFIX,cn,DIRECT');
-      expect(result).toContain('GEOIP,CN,DIRECT');
+      expect(result).toContain('GEOIP,CN,🔒 国内服务,no-resolve');
       expect(result).toContain('FINAL,🚀 节点选择,dns-failed');
       expect(result).not.toContain('gh-proxy.org');
 
-      const mainlandResult = generateBuiltinSurgeConfig(ss, {
-        ruleLevel: 'std',
+      const fullResult = generateBuiltinSurgeConfig(ss, {
+        smartPreset: 'full',
         isChinaClient: true,
       });
-      expect(mainlandResult).toContain(
-        `RULE-SET,${GH_PROXY_BASE}https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,DIRECT`,
+      expect(fullResult).toContain(
+        `RULE-SET,${GH_PROXY_BASE}https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,🔒 国内服务`,
       );
     });
   });

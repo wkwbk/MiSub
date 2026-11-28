@@ -69,7 +69,7 @@ MATCH,MyGroup
       combinedNodeList: NODE_LIST,
       subName: 'Demo',
       config: { UpdateInterval: 86400 },
-      builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
+      builtinOptions: { injectSmartGroups: true, enableUdp: true, skipCertVerify: false },
       templateSource: { kind: 'remote', value: 'https://example.com/template.ini?token=abc' },
       managedConfigUrl: 'https://example.com/sub',
       storageAdapter,
@@ -86,7 +86,7 @@ MATCH,MyGroup
       combinedNodeList: NODE_LIST,
       subName: 'Demo',
       config: {},
-      builtinOptions: { ruleLevel: 'base' },
+      builtinOptions: { smartPreset: 'minimal' },
       managedConfigUrl: 'https://example.com/sub',
       storageAdapter,
     });
@@ -135,7 +135,7 @@ rules:
       combinedNodeList: NODE_LIST,
       subName: 'ShellCrash',
       config: { UpdateInterval: 86400 },
-      builtinOptions: { ruleLevel: 'std', enableUdp: true, skipCertVerify: false },
+      builtinOptions: { smartPreset: 'balanced', enableUdp: true, skipCertVerify: false },
       templateSource: {
         kind: 'remote',
         value:
@@ -169,7 +169,7 @@ rules:
       subName: 'YAML Chain',
       config: { UpdateInterval: 86400 },
       builtinOptions: {
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         enableUdp: true,
         skipCertVerify: false,
         isMeta: true,
@@ -206,7 +206,7 @@ rules:
       subName: 'YAML Chain',
       config: { UpdateInterval: 86400 },
       builtinOptions: {
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         enableUdp: true,
         skipCertVerify: false,
         isMeta: false,
@@ -246,7 +246,7 @@ rules:
       subName: 'Hiddify Test',
       config: { UpdateInterval: 86400 },
       builtinOptions: {
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         userAgent: 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box',
         searchParams: new URLSearchParams(''),
       },
@@ -269,7 +269,7 @@ rules:
       subName: 'Hiddify Test',
       config: { UpdateInterval: 86400 },
       builtinOptions: {
-        ruleLevel: 'std',
+        injectSmartGroups: true,
         userAgent: 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box',
         hiddifyCompatible: true,
         searchParams: new URLSearchParams(''),
@@ -293,7 +293,7 @@ rules:
       combinedNodeList: NODE_LIST,
       subName: 'Demo',
       config: { UpdateInterval: 86400 },
-      builtinOptions: { ruleLevel: 'std', skipCertVerify: false, enableUdp: false },
+      builtinOptions: { smartPreset: 'balanced', skipCertVerify: false, enableUdp: false },
       managedConfigUrl: 'https://example.com/sub?target=quanx&builtin=1',
       storageAdapter,
     });

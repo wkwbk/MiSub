@@ -95,6 +95,16 @@ function buildProxyLine(proxy: TemplateProxy): string | null {
     const extras = [`password=${proxy.password || ''}`];
     const sni = proxy.servername ?? proxy.sni;
     if (sni !== undefined) extras.push(`sni=${sni}`);
+    if (proxy['skip-cert-verify'] === true || proxy.skipCertVerify === true) extras.push('skip-cert-verify=true');
+    if (proxy.down || proxy['download-bandwidth']) {
+      extras.push(`download-bandwidth=${proxy.down || proxy['download-bandwidth']}`);
+    }
+    if (proxy['port-hopping'] || proxy.ports) {
+      extras.push(`port-hopping=${proxy['port-hopping'] || proxy.ports}`);
+    }
+    if (proxy['port-hopping-interval']) {
+      extras.push(`port-hopping-interval=${proxy['port-hopping-interval']}`);
+    }
     // Surge 用 salamander-password 表达 Hysteria2 Salamander 混淆 (Mac 6.4.4+ / iOS 5.17.0+)
     if (String(proxy.obfs || '').toLowerCase() === 'salamander' && proxy['obfs-password'])
       extras.push('salamander-password=' + proxy['obfs-password']);
@@ -183,10 +193,13 @@ function buildRuleLine(rule: TemplateRule, { isChinaClient = false }: { isChinaC
   if (typeof rule === 'string') return rule;
   const type = String(rule.type || '').toUpperCase();
   if (!type) return null;
-  if (type === 'RULE-SET') return `RULE-SET,${pinRemoteRuleUrl(String(rule.value || ''), { isChinaClient })},${rule.policy}`;
+  const extras = Array.isArray(rule.extras) && rule.extras.length > 0 ? `,${rule.extras.join(',')}` : '';
+  if (type === 'RULE-SET') {
+    return `RULE-SET,${pinRemoteRuleUrl(String(rule.value || ''), { isChinaClient })},${rule.policy}${extras}`;
+  }
   if (type === 'MATCH' || type === 'FINAL') return `FINAL,${rule.policy}`;
-  if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
-  return `${type},${rule.value},${rule.policy}`;
+  if (type === 'GEOIP') return `GEOIP,${rule.value || 'CN'},${rule.policy}${extras}`;
+  return `${type},${rule.value},${rule.policy}${extras}`;
 }
 
 export function renderSurgeFromTemplateModel(
@@ -216,7 +229,7 @@ export function renderSurgeFromTemplateModel(
     '[General]',
     'loglevel = notify',
     'dns-server = 223.5.5.5, 119.29.29.29',
-    'encrypted-dns-server = h3://223.6.6.6/dns-query',
+    'encrypted-dns-server = https://223.5.5.5/dns-query, https://120.53.53.53/dns-query',
     'skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, localhost, *.local, elpass.app, e.crashlytics.com, captive.apple.com, ::ffff:0:0:0:0/1, ::ffff:128:0:0:0/1, fe80::/10, fc00::/7, ::1/128',
     'bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10',
     'ipv6 = true',

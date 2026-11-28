@@ -1,12 +1,19 @@
 /**
- * 订阅转换引擎选择、Subconverter 链接构建与节点转换参数解析
+ * 订阅转换引擎选择、Subconverter 链接构建与转换执行计划解析
  */
 
-import type { BuiltinTransformConfig, ProfileConfig, SettingsConfig } from '@misub/core/types.js';
+import type {
+  AdvancedBaseConfig,
+  NormalizedCustomVisualRules,
+  ProfileConfig,
+  SettingsConfig,
+  SmartPreset,
+  TransformMode,
+} from '@misub/core/types.js';
 import { DEFAULT_SUBCONVERTER_BACKEND } from '../../config.js';
 import { assertPublicNetworkUrl } from '../../security-utils.js';
 import { isHiddifyAgent, isMetaCore } from './user-agent-utils.js';
-import { DEFAULT_BUILTIN_TRANSFORM, normalizeBuiltinTransform } from '@misub/core/domain/visual-rules-catalog.js';
+import { normalizeAdvancedBaseConfig, normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 
 type TemplateSourceKind = 'none' | 'builtin' | 'custom' | 'remote';
 
@@ -15,30 +22,21 @@ export interface TemplateSource {
   value: string;
 }
 
-export interface SubconverterOptionsContainer {
-  options?: Record<string, unknown>;
-  defaultOptions?: Record<string, unknown>;
-  [key: string]: unknown;
-}
-
 export interface BuildExternalSubconverterUrlParams {
   backend?: string;
   targetFormat?: string;
   nodeList?: string;
   requestUrl?: string;
-  profileSub?: SubconverterOptionsContainer | null;
-  globalSub?: SubconverterOptionsContainer | null;
+  templateUrl?: string;
+  enableUdp?: boolean;
+  skipCertVerify?: boolean;
+  enableFlagEmoji?: boolean;
+  sort?: boolean;
+  tfo?: boolean;
+  list?: boolean;
   userAgent?: string;
   searchParams?: URLSearchParams;
-  templateSource?: Partial<TemplateSource> | null;
   subName?: string;
-}
-
-export interface ResolveEffectiveEngineParams {
-  searchParams?: URLSearchParams;
-  userAgent?: string;
-  profileEngineMode?: string;
-  globalEngineMode?: string;
 }
 
 export interface BuiltinRequestOptions {
@@ -48,19 +46,40 @@ export interface BuiltinRequestOptions {
   dnsMode: 'clean' | 'polluted';
 }
 
-export function resolveTemplateUrl(mode: unknown, value: unknown, fallbackUrl = ''): string {
-  const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
-  const normalizedValue = typeof value === 'string' ? value.trim() : '';
-  const normalizedFallback = typeof fallbackUrl === 'string' ? fallbackUrl.trim() : '';
+export interface ResolvedTransformFlags {
+  enableUdp: boolean;
+  skipCertVerify: boolean;
+  enableFlagEmoji: boolean;
+  enableTfo: boolean;
+}
 
-  if (normalizedMode === 'builtin' || normalizedMode === 'visual') return '';
-  if (normalizedMode === 'global') return normalizedFallback;
-  if (normalizedMode === 'custom_template') {
-    return normalizedValue.startsWith('custom:') ? normalizedValue : '';
-  }
-  if (normalizedMode === 'preset' || normalizedMode === 'custom') return normalizedValue;
+const VALID_TRANSFORM_MODES = new Set<TransformMode>(['smart', 'template', 'external']);
+const VALID_SMART_PRESETS = new Set<SmartPreset>(['minimal', 'balanced', 'full']);
 
-  return normalizedValue;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function normalizeTransformMode(value: unknown): TransformMode | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase() as TransformMode;
+  return VALID_TRANSFORM_MODES.has(normalized) ? normalized : undefined;
+}
+
+function normalizeSmartPreset(value: unknown): SmartPreset | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase() as SmartPreset;
+  return VALID_SMART_PRESETS.has(normalized) ? normalized : undefined;
+}
+
+function parseQueryBool(params: URLSearchParams, key: string): boolean | undefined {
+  if (!params.has(key)) return undefined;
+  const val = String(params.get(key) || '')
+    .trim()
+    .toLowerCase();
+  if (val === 'true' || val === '1') return true;
+  if (val === 'false' || val === '0') return false;
+  return undefined;
 }
 
 export function resolveTemplateSource(value: unknown): TemplateSource {
@@ -116,13 +135,10 @@ export function normalizeSubconverterBackend(
 ): URL {
   let backend = String(input || fallback || DEFAULT_SUBCONVERTER_BACKEND).trim();
 
-  // 防止历史 UI 文案或标签被误保存为后端地址。
   if (!backend || backend.includes('后端') || backend.includes('参数')) {
     backend = fallback || DEFAULT_SUBCONVERTER_BACKEND;
   }
 
-  // 用户只需填写 host，例如 subapi.cmliussss.net 或 api.v1.mk。
-  // 兼容历史完整 URL，但统一规范为 https://<host>/sub。
   backend = backend.replace(/\s+/g, '');
   if (!/^https?:\/\//i.test(backend)) {
     backend = `https://${backend}`;
@@ -133,7 +149,6 @@ export function normalizeSubconverterBackend(
     externalUrl.pathname = '/sub';
   }
 
-  // 历史默认值可能保存为 /sub?；URL 会自动消除空 query。
   externalUrl.hash = '';
   return externalUrl;
 }
@@ -143,17 +158,20 @@ export function buildExternalSubconverterUrl({
   targetFormat,
   nodeList,
   requestUrl,
-  profileSub = {},
-  globalSub = {},
+  templateUrl = '',
+  enableUdp = true,
+  skipCertVerify = false,
+  enableFlagEmoji = true,
+  sort = false,
+  tfo = false,
+  list = false,
   userAgent = '',
   searchParams,
-  templateSource,
   subName = '',
 }: BuildExternalSubconverterUrlParams = {}): URL {
   const externalUrl = normalizeSubconverterBackend(backend);
   const params = searchParams || new URLSearchParams('');
 
-  // [优化] 解析 targetFormat，支持带参数的格式（如 surge&ver=4）
   const [targetBase, ...targetParams] = String(targetFormat || '').split('&');
   externalUrl.searchParams.set('target', targetBase || 'clash');
   targetParams.forEach((p) => {
@@ -165,6 +183,10 @@ export function buildExternalSubconverterUrl({
     const dataSourceUrl = new URL(requestUrl);
     const paramsToClear = [
       'target',
+      'mode',
+      'preset',
+      'relay',
+      'level',
       'engine',
       'builtin',
       'clash',
@@ -199,93 +221,31 @@ export function buildExternalSubconverterUrl({
     }
   }
 
-  const effectiveOptions: Record<string, unknown> = { ...globalSub?.defaultOptions };
-  if (profileSub?.options && typeof profileSub.options === 'object') {
-    for (const [k, v] of Object.entries(profileSub.options)) {
-      if (v !== null && v !== undefined) {
-        effectiveOptions[k] = v;
-      }
-    }
-  }
-  const flagMap: Record<string, string> = {
-    udp: 'udp',
-    emoji: 'emoji',
-    scv: 'scv',
-    sort: 'sort',
-    tfo: 'tfo',
-    list: 'list',
-  };
-
   if (isMetaCore(userAgent, params)) {
     externalUrl.searchParams.set('meta', 'true');
   }
 
-  Object.entries(flagMap).forEach(([key, paramName]) => {
-    const val = params.has(paramName) ? params.get(paramName) === 'true' : effectiveOptions[key];
+  const flagValues: Record<string, boolean> = {
+    udp: Boolean(enableUdp),
+    emoji: Boolean(enableFlagEmoji),
+    scv: Boolean(skipCertVerify),
+    sort: Boolean(sort),
+    tfo: Boolean(tfo),
+    list: Boolean(list),
+  };
+
+  Object.entries(flagValues).forEach(([paramName, defaultVal]) => {
+    const val = params.has(paramName) ? params.get(paramName) === 'true' : defaultVal;
     externalUrl.searchParams.set(paramName, val ? 'true' : 'false');
   });
 
-  const externalTemplateConfigUrl = resolveExternalTemplateConfigUrl(templateSource);
-  if (externalTemplateConfigUrl) {
-    externalUrl.searchParams.set('config', externalTemplateConfigUrl);
+  const resolvedConfigUrl = resolveExternalTemplateConfigUrl(resolveTemplateSource(templateUrl));
+  if (resolvedConfigUrl) {
+    externalUrl.searchParams.set('config', resolvedConfigUrl);
   }
 
   externalUrl.searchParams.set('filename', subName);
   return externalUrl;
-}
-
-export function resolveBuiltinEngineFlags(
-  config: (Partial<SettingsConfig> & Record<string, unknown>) = {},
-  isExternalMode = false,
-): {
-  shouldSkipCertificateVerify: boolean;
-  shouldEnableUdp: boolean;
-} {
-  if (isExternalMode) {
-    return {
-      shouldSkipCertificateVerify: false,
-      shouldEnableUdp: false,
-    };
-  }
-
-  return {
-    shouldSkipCertificateVerify: Boolean(config.builtinSkipCertVerify),
-    shouldEnableUdp: Boolean(config.builtinEnableUdp),
-  };
-}
-
-export function resolveEffectiveEngine({
-  searchParams,
-  userAgent = '',
-  profileEngineMode = '',
-  globalEngineMode = '',
-}: ResolveEffectiveEngineParams = {}): string {
-  const params = searchParams || new URLSearchParams('');
-  const builtinParam = (params.get('builtin') || '').toLowerCase();
-  const engineParam = (params.get('engine') || '').toLowerCase();
-  const hasExplicitFormat = Boolean(
-    params.get('target') ||
-    params.has('clash') ||
-    params.has('singbox') ||
-    params.has('surge') ||
-    params.has('loon') ||
-    params.has('quanx') ||
-    params.has('egern') ||
-    params.has('base64') ||
-    params.has('v2ray') ||
-    params.has('trojan') ||
-    params.has('nodes'),
-  );
-
-  if (engineParam) return engineParam;
-  if (builtinParam === 'external') return 'external';
-  if (builtinParam === 'true' || builtinParam === '1' || builtinParam === 'builtin') return 'builtin';
-
-  if (!hasExplicitFormat && isHiddifyAgent(userAgent)) {
-    return 'builtin';
-  }
-
-  return profileEngineMode || globalEngineMode || 'builtin';
 }
 
 export function resolveBuiltinRequestOptions({
@@ -305,12 +265,9 @@ export function resolveBuiltinRequestOptions({
   };
 }
 
-/**
- * 解析 profile 生效的 nodeTransform（订阅组 > 预设 > 空对象）。
- */
 export function resolveEffectiveNodeTransform(
   profile: (Partial<ProfileConfig> & Record<string, unknown>) | null | undefined,
-  config: (Partial<SettingsConfig> & Record<string, unknown>) = {},
+  config: Partial<SettingsConfig> & Record<string, unknown> = {},
 ): Record<string, unknown> {
   const presets = Array.isArray(config?.nodeTransformPresets)
     ? (config.nodeTransformPresets as Array<{ id?: string; config?: Record<string, unknown> }>)
@@ -326,17 +283,9 @@ export function resolveEffectiveNodeTransform(
   return hasProfileNodeTransform ? profileNodeTransform : presetNodeTransform || {};
 }
 
-/**
- * 解析内置生成器应使用的 addFlagEmoji 开关。
- *
- * 优先级与 subscription-service 的 shouldKeepEmoji 一致：
- *   nodeTransform.addFlagEmoji（true/false） > config.enableFlagEmoji > 默认 true
- *
- * 返回 undefined 表示两边都没显式配置，保持 url-to-clash.js 的默认行为（加国旗）。
- */
 export function resolveAddFlagEmoji(
   profile: (Partial<ProfileConfig> & Record<string, unknown>) | null | undefined,
-  config: (Partial<SettingsConfig> & Record<string, unknown>) = {},
+  config: Partial<SettingsConfig> & Record<string, unknown> = {},
 ): boolean | undefined {
   const explicit = resolveEffectiveNodeTransform(profile, config).addFlagEmoji;
   if (explicit === true || explicit === false) return explicit;
@@ -346,66 +295,202 @@ export function resolveAddFlagEmoji(
   return undefined;
 }
 
-export function shouldRenderClashYamlProfileTemplateLocally({
-  isExternalMode = false,
-  targetFormat = '',
-  templateSource = {},
-}: {
-  isExternalMode?: boolean;
-  targetFormat?: string;
-  templateSource?: Partial<TemplateSource>;
-} = {}): boolean {
-  if (!isExternalMode || targetFormat !== 'clash' || templateSource?.kind !== 'remote') return false;
-  try {
-    const parsed = new URL(String(templateSource.value || '').trim());
-    return /\.ya?ml$/i.test(parsed.pathname);
-  } catch {
-    return /\.ya?ml(?:[?#].*)?$/i.test(String(templateSource.value || '').trim());
-  }
-}
+export type TransformPlan =
+  | {
+      mode: 'external';
+      backend: string;
+      templateUrl: string;
+      templateSource: TemplateSource;
+      sort: boolean;
+      tfo: boolean;
+      list: boolean;
+      enableRelay: boolean;
+      flags: ResolvedTransformFlags;
+    }
+  | {
+      mode: 'template';
+      templateSource: TemplateSource;
+      smartPreset: SmartPreset;
+      enableRelay: boolean;
+      customVisualRules: NormalizedCustomVisualRules;
+      advancedBaseConfig: AdvancedBaseConfig;
+      flags: ResolvedTransformFlags;
+    }
+  | {
+      mode: 'smart';
+      smartPreset: SmartPreset;
+      enableRelay: boolean;
+      customVisualRules: NormalizedCustomVisualRules;
+      advancedBaseConfig: AdvancedBaseConfig;
+      templateSource: TemplateSource;
+      flags: ResolvedTransformFlags;
+    };
 
 /**
- * 解析当前请求生效的内置可视化分流配置（订阅组规则覆盖 > 全局配置）。
+ * 按 URL 参数 > 订阅组覆写 > 全局配置 的优先级解析订阅转换执行计划与通用开关。
  */
-export function resolveEffectiveBuiltinTransform(
-  profile: (Partial<ProfileConfig> & Record<string, unknown>) | null | undefined,
-  config: (Partial<SettingsConfig> & Record<string, unknown>) = {},
-): BuiltinTransformConfig | null {
-  const hasGlobalBt = Boolean(config?.builtinTransform && typeof config.builtinTransform === 'object');
-  const globalBt = hasGlobalBt ? normalizeBuiltinTransform(config.builtinTransform) : null;
+export function resolveTransformPlan({
+  searchParams,
+  userAgent = '',
+  profile = null,
+  config = {},
+}: {
+  searchParams?: URLSearchParams;
+  userAgent?: string;
+  targetFormat?: string;
+  profile?: (Partial<ProfileConfig> & Record<string, unknown>) | null;
+  config?: Partial<SettingsConfig> & Record<string, unknown>;
+} = {}): TransformPlan {
+  const params = searchParams || new URLSearchParams('');
 
-  if (!profile || typeof profile !== 'object') {
-    return globalBt;
+  const profileUdp = typeof profile?.enableUdp === 'boolean' ? profile.enableUdp : undefined;
+  const profileScv = typeof profile?.skipCertVerify === 'boolean' ? profile.skipCertVerify : undefined;
+  const globalUdp = typeof config?.enableUdp === 'boolean' ? config.enableUdp : true;
+  const globalScv = typeof config?.skipCertVerify === 'boolean' ? config.skipCertVerify : false;
+  const resolvedEmoji = resolveAddFlagEmoji(profile, config);
+
+  const flags: ResolvedTransformFlags = {
+    enableUdp: parseQueryBool(params, 'udp') ?? profileUdp ?? globalUdp,
+    skipCertVerify: parseQueryBool(params, 'scv') ?? profileScv ?? globalScv,
+    enableFlagEmoji: parseQueryBool(params, 'emoji') ?? (typeof resolvedEmoji === 'boolean' ? resolvedEmoji : true),
+    enableTfo: parseQueryBool(params, 'tfo') ?? false,
+  };
+
+  const profileMode = normalizeTransformMode(profile?.transformMode);
+  const globalMode = normalizeTransformMode(config?.transformMode);
+
+  const rawModeParam = normalizeTransformMode(params.get('mode'));
+  const rawEngineParam = (params.get('engine') || '').trim().toLowerCase();
+  const rawBuiltinParam = (params.get('builtin') || '').trim().toLowerCase();
+  const hasExplicitFormat = Boolean(
+    params.get('target') ||
+    params.has('clash') ||
+    params.has('singbox') ||
+    params.has('surge') ||
+    params.has('loon') ||
+    params.has('quanx') ||
+    params.has('egern') ||
+    params.has('base64') ||
+    params.has('v2ray') ||
+    params.has('trojan') ||
+    params.has('nodes'),
+  );
+
+  let mode: TransformMode;
+  if (rawModeParam) {
+    mode = rawModeParam;
+  } else if (rawEngineParam === 'external' || rawBuiltinParam === 'external') {
+    mode = 'external';
+  } else if (
+    rawEngineParam === 'builtin' ||
+    rawBuiltinParam === 'true' ||
+    rawBuiltinParam === '1' ||
+    rawBuiltinParam === 'builtin'
+  ) {
+    const baseMode = profileMode || globalMode || 'smart';
+    mode = baseMode === 'external' ? 'smart' : baseMode;
+  } else {
+    mode = profileMode || globalMode || 'smart';
+    if (!hasExplicitFormat && isHiddifyAgent(userAgent) && mode === 'external') {
+      mode = 'smart';
+    }
   }
 
-  const rawMode = String(profile.transformConfigMode || 'global')
-    .trim()
-    .toLowerCase();
+  const advancedBaseConfig = normalizeAdvancedBaseConfig(config?.advancedBaseConfig);
+  const queryPreset = normalizeSmartPreset(params.get('preset'));
+  const profilePreset = profileMode === 'smart' ? normalizeSmartPreset(profile?.smartPreset) : undefined;
+  const globalPreset = normalizeSmartPreset(config?.smartPreset);
+  const smartPreset: SmartPreset = queryPreset || profilePreset || globalPreset || 'balanced';
 
-  if (rawMode === 'global') {
-    return globalBt;
-  }
+  const queryRelayParam = parseQueryBool(params, 'relay');
+  const queryLevelRelay = (params.get('level') || '').trim().toLowerCase() === 'relay' ? true : undefined;
+  const queryEnableRelay = queryRelayParam ?? queryLevelRelay;
+  const profileEnableRelay = typeof profile?.enableRelay === 'boolean' ? profile.enableRelay : undefined;
+  const globalEnableRelay = config?.enableRelay === true;
+  const enableRelay = queryEnableRelay ?? profileEnableRelay ?? globalEnableRelay;
 
-  const baseBt = globalBt || normalizeBuiltinTransform(DEFAULT_BUILTIN_TRANSFORM);
-  const profileBtRaw =
-    profile.builtinTransform && typeof profile.builtinTransform === 'object' ? profile.builtinTransform : null;
-  const isProfileVisual =
-    rawMode === 'visual' ||
-    (rawMode === 'builtin' && Boolean((profileBtRaw as { visualRulesEnabled?: unknown } | null)?.visualRulesEnabled));
+  const globalCvrRaw = (isRecord(config?.customVisualRules) ? config.customVisualRules : {}) as Record<string, unknown>;
+  const useProfileCvr = profileMode === 'smart' && isRecord(profile?.customVisualRules);
+  const rawCvrSource: Record<string, unknown> = queryPreset
+    ? {
+        groupByCountry: globalCvrRaw.groupByCountry,
+        includeAutoSelect: globalCvrRaw.includeAutoSelect,
+        customRules: useProfileCvr
+          ? (profile!.customVisualRules as Record<string, unknown>).customRules
+          : globalCvrRaw.customRules,
+      }
+    : useProfileCvr
+      ? {
+          groupByCountry: globalCvrRaw.groupByCountry,
+          includeAutoSelect: globalCvrRaw.includeAutoSelect,
+          ...(profile!.customVisualRules as Record<string, unknown>),
+        }
+      : profilePreset
+        ? {
+            groupByCountry: globalCvrRaw.groupByCountry,
+            includeAutoSelect: globalCvrRaw.includeAutoSelect,
+            customRules: globalCvrRaw.customRules,
+          }
+        : globalCvrRaw;
+  const customVisualRules = normalizeCustomVisualRules(rawCvrSource, { smartPreset });
 
-  if (isProfileVisual) {
-    const normalizedProfileBt = normalizeBuiltinTransform(profileBtRaw || baseBt);
+  if (mode === 'external') {
+    const useProfileExternal = profileMode === 'external';
+    const profileExt = (isRecord(profile?.externalBackend) ? profile.externalBackend : {}) as Record<string, unknown>;
+    const globalExt = (isRecord(config?.externalBackend) ? config.externalBackend : {}) as Record<string, unknown>;
+
+    const backend = String(
+      params.get('backend') || (useProfileExternal ? profileExt.url : '') || globalExt.url || '',
+    ).trim();
+    const templateUrl = String(
+      params.get('config') || (useProfileExternal ? profileExt.templateUrl : '') || globalExt.templateUrl || '',
+    ).trim();
+    const sort =
+      parseQueryBool(params, 'sort') ??
+      (useProfileExternal && typeof profileExt.sort === 'boolean' ? profileExt.sort : Boolean(globalExt.sort));
+    const tfo =
+      parseQueryBool(params, 'tfo') ??
+      (useProfileExternal && typeof profileExt.tfo === 'boolean' ? profileExt.tfo : Boolean(globalExt.tfo));
+    const list =
+      parseQueryBool(params, 'list') ??
+      (useProfileExternal && typeof profileExt.list === 'boolean' ? profileExt.list : Boolean(globalExt.list));
+
     return {
-      ...baseBt,
-      visualRulesEnabled: true,
-      rulePreset: normalizedProfileBt.rulePreset,
-      selectedRules: normalizedProfileBt.selectedRules,
-      customRules: normalizedProfileBt.customRules,
+      mode: 'external',
+      backend,
+      templateUrl,
+      templateSource: resolveTemplateSource(templateUrl),
+      sort,
+      tfo,
+      list,
+      enableRelay,
+      flags,
+    };
+  }
+
+  if (mode === 'template') {
+    const rawTemplate =
+      profileMode === 'template'
+        ? String(profile?.templateConfig || '').trim()
+        : String(config?.templateConfig || '').trim();
+    return {
+      mode: 'template',
+      templateSource: resolveTemplateSource(rawTemplate),
+      smartPreset,
+      enableRelay,
+      customVisualRules,
+      advancedBaseConfig,
+      flags,
     };
   }
 
   return {
-    ...baseBt,
-    visualRulesEnabled: false,
+    mode: 'smart',
+    smartPreset,
+    enableRelay,
+    customVisualRules,
+    advancedBaseConfig,
+    templateSource: { kind: 'none', value: '' },
+    flags,
   };
 }

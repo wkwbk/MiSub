@@ -61,9 +61,7 @@ function validateForm(formData: Record<string, unknown>, rules: ValidationRules)
     // 必填验证
     if (fieldRules.required && (!value || String(value).trim() === '')) {
       fieldErrors.push(
-        typeof fieldRules.required === 'string'
-          ? fieldRules.required
-          : t('validation.fieldRequired', { field }),
+        typeof fieldRules.required === 'string' ? fieldRules.required : t('validation.fieldRequired', { field }),
       );
     }
 
@@ -135,7 +133,7 @@ export function validateProfile(profile: Partial<ProfileConfig> | Record<string,
     customId: {
       maxLength: 64,
     },
-    transformConfig: {
+    templateConfig: {
       validator: (value: unknown) => {
         if (typeof value !== 'string' || !value) return null;
 
@@ -158,6 +156,17 @@ export function validateProfile(profile: Partial<ProfileConfig> | Record<string,
 
         // 其他情况必须是有效的 URL
         if (!isValidUrl(value)) {
+          return t('validation.invalidTransformUrl');
+        }
+        return null;
+      },
+    },
+    externalBackend: {
+      validator: (value: unknown) => {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+        const templateUrl = (value as { templateUrl?: unknown }).templateUrl;
+        if (typeof templateUrl !== 'string' || !templateUrl.trim()) return null;
+        if (!isValidUrl(templateUrl.trim())) {
           return t('validation.invalidTransformUrl');
         }
         return null;

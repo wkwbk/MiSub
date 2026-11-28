@@ -12,7 +12,7 @@ import { pinRemoteRuleUrl } from '../builtin-rules-provider.js';
 export interface ParseIniTemplateOptions {
   fileName?: string;
   targetFormat?: string;
-  ruleLevel?: string;
+  injectSmartGroups?: boolean;
   isMeta?: boolean;
   proxies?: TemplateProxy[];
   managedConfigUrl?: string;
@@ -97,7 +97,10 @@ function parseRuleLine(line: string): TemplateRuleObject | null {
   };
 }
 
-function parseAclRuleSetLine(line: string, { isChinaClient = false }: { isChinaClient?: boolean } = {}): TemplateRuleObject | null {
+function parseAclRuleSetLine(
+  line: string,
+  { isChinaClient = false }: { isChinaClient?: boolean } = {},
+): TemplateRuleObject | null {
   const raw = line.replace(/^ruleset=/i, '');
   const parts = raw.split(',').map((part) => part.trim());
   if (parts.length < 2) return null;
@@ -235,9 +238,7 @@ export function parseIniTemplate(templateText: string, options: ParseIniTemplate
       name: options.fileName || 'MiSub',
       source: 'ini',
       target: options.targetFormat || 'clash',
-      // [逻辑说明] ruleLevel 在 INI 模式下暂不直接影响生成，因为 INI 自带了 hardcoded rules。
-      // 仅作为元数据打包进 TemplateModel，供未来动态模板扩展使用。
-      ruleLevel: options.ruleLevel || 'std',
+      injectSmartGroups: options.injectSmartGroups !== false,
       isMeta: Boolean(options.isMeta),
     },
     proxies: options.proxies || [],

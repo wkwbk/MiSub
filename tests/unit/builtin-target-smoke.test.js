@@ -11,7 +11,7 @@ describe('Builtin target smoke output', () => {
   it('renders parseable Clash YAML with core sections', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'clash', {
       fileName: 'Smoke Clash',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       managedConfigUrl: 'https://example.com/sub?target=clash&builtin=1',
     });
     const parsed = yaml.load(rendered);
@@ -27,7 +27,7 @@ describe('Builtin target smoke output', () => {
   it('renders parseable Sing-box JSON with outbounds and route', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'singbox', {
       fileName: 'Smoke Singbox',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
     });
     const parsed = JSON.parse(rendered);
 
@@ -41,7 +41,7 @@ describe('Builtin target smoke output', () => {
   it('renders Surge sections with proxy, policy group, and rules', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'surge&ver=4', {
       fileName: 'Smoke Surge',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       managedConfigUrl: 'https://example.com/sub?target=surge&ver=4&builtin=1',
     });
 
@@ -54,7 +54,7 @@ describe('Builtin target smoke output', () => {
   it('renders Loon sections with proxy, policy group, and rules', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'loon', {
       fileName: 'Smoke Loon',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       managedConfigUrl: 'https://example.com/sub?target=loon&builtin=1',
     });
 
@@ -67,7 +67,7 @@ describe('Builtin target smoke output', () => {
   it('renders Quantumult X sections without pseudo DIRECT node entries', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'quanx', {
       fileName: 'Smoke QuanX',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       managedConfigUrl: 'https://example.com/sub?target=quanx&builtin=1',
     });
 
@@ -82,7 +82,7 @@ describe('Builtin target smoke output', () => {
   it('renders parseable Egern YAML with proxies, policy groups, and rules', async () => {
     const rendered = await transformBuiltinSubscription(NODE_LIST, 'egern', {
       fileName: 'Smoke Egern',
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       managedConfigUrl: 'https://example.com/sub?target=egern&builtin=1',
     });
     const parsed = yaml.load(rendered);
@@ -103,7 +103,7 @@ describe('Builtin target smoke output', () => {
     for (const target of targets) {
       const rendered = await transformBuiltinSubscription(node, target, {
         fileName: `Emoji ${target}`,
-        ruleLevel: 'std',
+        smartPreset: 'balanced',
         addFlagEmoji: false,
       });
 

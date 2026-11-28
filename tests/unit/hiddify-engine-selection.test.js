@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { determineTargetFormat, isHiddifyAgent } from '../../functions/modules/subscription/core/user-agent-utils.js';
 import {
   resolveBuiltinRequestOptions,
-  resolveEffectiveEngine,
+  resolveTransformPlan,
 } from '../../functions/modules/subscription/core/main-handler.js';
 
 const hiddifyUa = 'HiddifyNext/4.1.1 (android) like ClashMeta v2ray sing-box';
@@ -15,45 +15,45 @@ describe('Hiddify subscription compatibility', () => {
     expect(determineTargetFormat(hiddifyUa, params)).toBe('singbox');
   });
 
-  it('forces automatic Hiddify requests to builtin engine even when global default is external', () => {
+  it('forces automatic Hiddify requests to smart engine even when global default is external', () => {
     const params = new URLSearchParams('');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: params,
         userAgent: hiddifyUa,
-        profileEngineMode: '',
-        globalEngineMode: 'external',
-      }),
-    ).toBe('builtin');
+        profile: {},
+        config: { transformMode: 'external' },
+      }).mode,
+    ).toBe('smart');
   });
 
-  it('still respects explicit engine and builtin parameters for Hiddify requests', () => {
+  it('still respects explicit engine, mode, and target parameters for Hiddify requests', () => {
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('?engine=external'),
         userAgent: hiddifyUa,
-        profileEngineMode: '',
-        globalEngineMode: 'builtin',
-      }),
+        profile: {},
+        config: { transformMode: 'smart' },
+      }).mode,
     ).toBe('external');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('?builtin=external'),
         userAgent: hiddifyUa,
-        profileEngineMode: '',
-        globalEngineMode: 'builtin',
-      }),
+        profile: {},
+        config: { transformMode: 'smart' },
+      }).mode,
     ).toBe('external');
 
     expect(
-      resolveEffectiveEngine({
+      resolveTransformPlan({
         searchParams: new URLSearchParams('?target=singbox'),
         userAgent: hiddifyUa,
-        profileEngineMode: '',
-        globalEngineMode: 'external',
-      }),
+        profile: {},
+        config: { transformMode: 'external' },
+      }).mode,
     ).toBe('external');
   });
 

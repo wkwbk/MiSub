@@ -45,10 +45,14 @@ export interface EditableProfile {
   manualNodes?: string[];
   subProfiles?: string[];
   tags?: string[];
-  transformConfigMode?: string;
-  transformConfig?: string;
-  ruleLevel?: string;
-  clashRuleLevel?: string;
+  transformMode?: StoreProfileConfig['transformMode'] | null;
+  smartPreset?: StoreProfileConfig['smartPreset'] | null;
+  customVisualRules?: StoreProfileConfig['customVisualRules'] | null;
+  templateConfig?: string | null;
+  externalBackend?: StoreProfileConfig['externalBackend'] | null;
+  enableUdp?: boolean | null;
+  skipCertVerify?: boolean | null;
+  enableRelay?: boolean | null;
   target?: string;
   prefixSettings?: {
     enableManualNodes?: boolean | null;
@@ -58,7 +62,6 @@ export interface EditableProfile {
     prependTagName?: boolean | null;
     [key: string]: unknown;
   };
-  subconverter?: StoreProfileConfig['subconverter'];
   operators?: StoreProfileConfig['operators'];
   nodeTransform?: StoreProfileConfig['nodeTransform'];
   nodeTransformPresetId?: string;
@@ -69,6 +72,7 @@ export interface EditableProfile {
   portalRedirectUrl?: string;
   portalNotice?: string;
   multiSocksEnabled?: boolean | null;
+  multiSocksLite?: boolean | null;
   multiSocksStartPort?: number | string | null;
   multiSocksListen?: '' | '127.0.0.1' | '0.0.0.0' | null;
   multiSocksUsername?: string;
@@ -231,10 +235,16 @@ export function useProfiles() {
   const handleProfileToggle = async (updatedProfile: Partial<StoreProfileConfig> & { id: string }): Promise<void> => {
     const existing = profiles.value.find((p) => p.id === updatedProfile.id);
     const patch: Partial<StoreProfileConfig> = {};
-    if (updatedProfile.enabled !== undefined && (!existing || Boolean(existing.enabled) !== Boolean(updatedProfile.enabled))) {
+    if (
+      updatedProfile.enabled !== undefined &&
+      (!existing || Boolean(existing.enabled) !== Boolean(updatedProfile.enabled))
+    ) {
       patch.enabled = Boolean(updatedProfile.enabled);
     }
-    if (updatedProfile.isPublic !== undefined && (!existing || Boolean(existing.isPublic) !== Boolean(updatedProfile.isPublic))) {
+    if (
+      updatedProfile.isPublic !== undefined &&
+      (!existing || Boolean(existing.isPublic) !== Boolean(updatedProfile.isPublic))
+    ) {
       patch.isPublic = Boolean(updatedProfile.isPublic);
     }
     if (Object.keys(patch).length === 0) {
@@ -258,9 +268,12 @@ export function useProfiles() {
       tags: [],
       customId: '',
       linkId: generateProfileLinkId(),
-      transformConfigMode: 'global',
-      transformConfig: '',
-      ruleLevel: '',
+      transformMode: undefined,
+      smartPreset: undefined,
+      templateConfig: '',
+      enableUdp: undefined,
+      skipCertVerify: undefined,
+      enableRelay: undefined,
       expiresAt: '',
       operators: [],
     };
@@ -270,12 +283,6 @@ export function useProfiles() {
   const cloneProfileForEdit = (profile: StoreProfileConfig): EditableProfile => {
     const cloned = JSON.parse(JSON.stringify(profile)) as EditableProfile;
     cloned.tags = getItemTags(cloned);
-    if (!cloned.transformConfigMode) {
-      cloned.transformConfigMode = cloned.transformConfig ? 'preset' : 'global';
-    }
-    if (!cloned.ruleLevel && cloned.clashRuleLevel) {
-      cloned.ruleLevel = cloned.clashRuleLevel;
-    }
     cloned.expiresAt = profile.expiresAt || '';
     if (!Array.isArray(cloned.operators)) {
       cloned.operators = [];
@@ -324,18 +331,17 @@ export function useProfiles() {
       return false;
     }
 
-    const expectedConfigVersion = Math.max(
-      1,
-      Number(profileData.configVersion ?? existingProfile?.configVersion) || 1,
-    );
+    const expectedConfigVersion = Math.max(1, Number(profileData.configVersion ?? existingProfile?.configVersion) || 1);
 
     const normalizedProfile = ensureProfileLinkId({
-      ...profileData,
+      ...(profileData as Partial<StoreProfileConfig>),
       customId: aliasCheck.alias,
       tags: normalizeTagList(profileData.tags),
       prefixSettings: profileData.prefixSettings as StoreProfileConfig['prefixSettings'],
       multiSocksStartPort:
-        profileData.multiSocksStartPort === undefined ? undefined : parseOptionalInteger(profileData.multiSocksStartPort),
+        profileData.multiSocksStartPort === undefined
+          ? undefined
+          : parseOptionalInteger(profileData.multiSocksStartPort),
       multiSocksMaxPorts:
         profileData.multiSocksMaxPorts === undefined ? undefined : parseOptionalInteger(profileData.multiSocksMaxPorts),
       multiSocksListen:

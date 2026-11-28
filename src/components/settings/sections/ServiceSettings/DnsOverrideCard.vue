@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Globe } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import SettingCard from '@/components/settings/SettingCard.vue';
+import Select from '@/components/ui/Select.vue';
 import Textarea from '@/components/ui/Textarea.vue';
 import type { AppSettingsConfig } from '@/queries/useAppDataQueries.js';
 
@@ -15,6 +14,21 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:settings': [value: AppSettingsConfig];
 }>();
+
+const dnsModeOptions = computed(() => [
+  { value: 'clean', label: t('settings.dnsModeClean') },
+  { value: 'polluted', label: t('settings.dnsModePolluted') },
+]);
+
+const dnsModeModel = computed({
+  get: () => (props.settings.dnsMode === 'polluted' ? 'polluted' : 'clean'),
+  set: (value: string) => {
+    emit('update:settings', {
+      ...props.settings,
+      dnsMode: value === 'polluted' ? 'polluted' : 'clean',
+    });
+  },
+});
 
 const inputValue = computed({
   get() {
@@ -69,26 +83,29 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
 </script>
 
 <template>
-  <SettingCard :description="t('settings.dnsOverrideDesc')" :title="t('settings.dnsOverrideTitle')">
-    <template #icon>
-      <Globe class="h-4 w-4" />
-    </template>
-    <template v-if="hasValue" #actions>
-      <span class="badge-success">
-        {{ t('settings.dnsOverrideActive') }}
-      </span>
-    </template>
+  <div class="space-y-4">
+    <div>
+      <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-fg-muted">
+        {{ t('settings.dnsModeLabel') }}
+      </label>
+      <Select v-model="dnsModeModel" :options="dnsModeOptions" size="sm" />
+    </div>
 
     <div>
-      <label class="mb-2 block text-xs font-medium uppercase tracking-wider text-fg-muted">
-        {{ t('settings.dnsOverrideLabel') }}
-      </label>
+      <div class="mb-2 flex items-center justify-between gap-2">
+        <label class="block text-xs font-medium uppercase tracking-wider text-fg-muted">
+          {{ t('settings.dnsOverrideLabel') }}
+        </label>
+        <span v-if="hasValue" class="badge-success">
+          {{ t('settings.dnsOverrideActive') }}
+        </span>
+      </div>
       <Textarea
         v-model="inputValue"
         :invalid="Boolean(jsonError)"
         :placeholder="t('settings.dnsOverridePlaceholder')"
         class="px-3 py-2.5 font-mono text-xs leading-relaxed"
-        rows="16"
+        rows="8"
         spellcheck="false"
         @blur="validateInput"
       />
@@ -99,5 +116,5 @@ const hasValue = computed(() => inputValue.value.trim().length > 0);
         {{ t('settings.dnsOverrideHint') }}
       </p>
     </div>
-  </SettingCard>
+  </div>
 </template>

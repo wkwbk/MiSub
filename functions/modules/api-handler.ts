@@ -33,6 +33,7 @@ import {
   parseOptionalInteger,
 } from '@misub/core/domain/multi-socks.js';
 import { isValidHttpUrlString } from '@misub/core/utils/url-validators.js';
+import { normalizeAdvancedBaseConfig, normalizeCustomVisualRules } from '@misub/core/domain/visual-rules-catalog.js';
 import { syncTelegramPushBot } from './handlers/telegram/client.js';
 import { type AccessControlConfig, enforcePublicApiAccess, isPublicPageEnabled } from './access-control.js';
 import { getPublicTurnstileConfig } from './turnstile.js';
@@ -66,6 +67,12 @@ function getErrorStatus(error: unknown): number | undefined {
 
 export function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
   const normalized: ProfileLike = { ...profile };
+  delete normalized.transformConfigMode;
+  delete normalized.transformConfig;
+  delete normalized.ruleLevel;
+  delete normalized.builtinTransform;
+  delete normalized.subconverter;
+  delete normalized.clashRuleLevel;
   normalized.subscriptions = Array.isArray(profile.subscriptions)
     ? (profile.subscriptions as ProfileSubscriptionRef[])
     : [];
@@ -85,13 +92,17 @@ export function normalizeProfile(profile: ProfileLike = {}): ProfileLike {
     normalized.portalMode = normalizeProfilePortalMode(profile.portalMode);
   }
   if (profile.portalRedirectUrl !== undefined) {
-    normalized.portalRedirectUrl = typeof profile.portalRedirectUrl === 'string' ? profile.portalRedirectUrl.trim() : '';
+    normalized.portalRedirectUrl =
+      typeof profile.portalRedirectUrl === 'string' ? profile.portalRedirectUrl.trim() : '';
   }
   if (profile.portalNotice !== undefined) {
     normalized.portalNotice = typeof profile.portalNotice === 'string' ? profile.portalNotice.trim() : '';
   }
   if (profile.multiSocksEnabled !== undefined) {
     normalized.multiSocksEnabled = normalizeOptionalBooleanOverride(profile.multiSocksEnabled);
+  }
+  if (profile.multiSocksLite !== undefined) {
+    normalized.multiSocksLite = normalizeOptionalBooleanOverride(profile.multiSocksLite);
   }
   if (profile.multiSocksStartPort !== undefined) {
     normalized.multiSocksStartPort = parseOptionalInteger(profile.multiSocksStartPort);
@@ -281,6 +292,20 @@ export function isStorageUnavailableError(error: unknown): boolean {
   );
 }
 
+const LEGACY_TRANSFORM_SETTINGS_KEYS = [
+  'transformConfigMode',
+  'transformConfig',
+  'ruleLevel',
+  'builtinTransform',
+  'builtinEnableUdp',
+  'builtinSkipCertVerify',
+  'subconverter',
+  'clashRuleLevel',
+] as const;
+
+const VALID_TRANSFORM_MODES = new Set(['smart', 'template', 'external']);
+const VALID_SMART_PRESETS = new Set(['minimal', 'balanced', 'full']);
+
 const DATA_SCOPE_OMITTED_SETTINGS_KEYS = [
   'customPage',
   'portalCustomPage',
@@ -298,6 +323,7 @@ const DATA_SCOPE_OMITTED_SETTINGS_KEYS = [
   'hasCronSecret',
   'hasEnvCronSecret',
   'customDnsOverride',
+  'advancedBaseConfig',
   'regionOverrides',
   'nodeTransformPresets',
   'defaultOperators',
@@ -307,10 +333,7 @@ const DATA_SCOPE_OMITTED_SETTINGS_KEYS = [
 /**
  * 处理数据获取API
  */
-export async function handleDataRequest(
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
+export async function handleDataRequest(env: EnvLike, context: BoundRequestContext | null = null): Promise<Response> {
   const storageType = STORAGE_TYPES.D1;
   try {
     if (!env?.MISUB_DB) {
@@ -369,6 +392,9 @@ function redactSettingsForResponse(
   const cleaned: Record<string, unknown> = { ...settings };
   delete cleaned.publicLinks;
   delete cleaned.publicCores;
+  for (const key of LEGACY_TRANSFORM_SETTINGS_KEYS) {
+    delete cleaned[key];
+  }
   const rawShortLink = isRecord(cleaned.shortLink) ? cleaned.shortLink : null;
   const shortLink = rawShortLink
     ? {
@@ -452,10 +478,7 @@ function pickLatestTimestamp(a: string | null | undefined, b: string | null | un
   return a || b || null;
 }
 
-export async function handleSettingsGet(
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
+export async function handleSettingsGet(env: EnvLike, context: BoundRequestContext | null = null): Promise<Response> {
   try {
     const repos = createRepositories(env, context);
     const storageAdapter = repos.storage;
@@ -600,6 +623,74 @@ export async function handleSettingsSave(
       incomingSettings.defaultMultiSocksEnabled =
         incomingSettings.defaultMultiSocksEnabled === true || incomingSettings.defaultMultiSocksEnabled === 'true';
     }
+    if ('defaultMultiSocksLite' in incomingSettings) {
+      incomingSettings.defaultMultiSocksLite =
+        incomingSettings.defaultMultiSocksLite === true || incomingSettings.defaultMultiSocksLite === 'true';
+    }
+    if ('dnsMode' in incomingSettings) {
+      const mode = incomingSettings.dnsMode;
+      if (mode !== 'clean' && mode !== 'polluted') {
+        return createJsonResponse({ success: false, message: 'DNS 模式仅支持 clean 或 polluted' }, 400);
+      }
+    }
+    if ('transformMode' in incomingSettings) {
+      const mode = String(incomingSettings.transformMode ?? '')
+        .trim()
+        .toLowerCase();
+      if (!VALID_TRANSFORM_MODES.has(mode)) {
+        return createJsonResponse({ success: false, message: '转换模式仅支持 smart、template 或 external' }, 400);
+      }
+      incomingSettings.transformMode = mode;
+    }
+    if ('smartPreset' in incomingSettings) {
+      const preset = String(incomingSettings.smartPreset ?? '')
+        .trim()
+        .toLowerCase();
+      if (!VALID_SMART_PRESETS.has(preset)) {
+        return createJsonResponse({ success: false, message: '智能分流预设仅支持 minimal、balanced 或 full' }, 400);
+      }
+      incomingSettings.smartPreset = preset;
+    }
+    if ('templateConfig' in incomingSettings) {
+      incomingSettings.templateConfig = String(incomingSettings.templateConfig ?? '').trim();
+    }
+    if ('enableUdp' in incomingSettings) {
+      incomingSettings.enableUdp = incomingSettings.enableUdp === true || incomingSettings.enableUdp === 'true';
+    }
+    if ('skipCertVerify' in incomingSettings) {
+      incomingSettings.skipCertVerify =
+        incomingSettings.skipCertVerify === true || incomingSettings.skipCertVerify === 'true';
+    }
+    if ('enableRelay' in incomingSettings) {
+      incomingSettings.enableRelay = incomingSettings.enableRelay === true || incomingSettings.enableRelay === 'true';
+    }
+    if ('enableFlagEmoji' in incomingSettings) {
+      incomingSettings.enableFlagEmoji =
+        incomingSettings.enableFlagEmoji === true || incomingSettings.enableFlagEmoji === 'true';
+    }
+    if ('customVisualRules' in incomingSettings) {
+      const rawCvr = isRecord(incomingSettings.customVisualRules) ? incomingSettings.customVisualRules : {};
+      const normalizedCvr = normalizeCustomVisualRules(rawCvr, { allowEmptyName: false });
+      incomingSettings.customVisualRules = {
+        ...(Array.isArray(rawCvr.selectedRules) ? { selectedRules: normalizedCvr.selectedRules } : {}),
+        customRules: normalizedCvr.customRules,
+        groupByCountry: normalizedCvr.groupByCountry,
+        includeAutoSelect: normalizedCvr.includeAutoSelect,
+      };
+    }
+    if ('advancedBaseConfig' in incomingSettings) {
+      incomingSettings.advancedBaseConfig = normalizeAdvancedBaseConfig(incomingSettings.advancedBaseConfig);
+    }
+    if ('externalBackend' in incomingSettings) {
+      const rawExt = isRecord(incomingSettings.externalBackend) ? incomingSettings.externalBackend : {};
+      incomingSettings.externalBackend = {
+        url: String(rawExt.url ?? '').trim() || defaultSettings.externalBackend.url,
+        templateUrl: String(rawExt.templateUrl ?? '').trim(),
+        sort: rawExt.sort === true || rawExt.sort === 'true',
+        tfo: rawExt.tfo === true || rawExt.tfo === 'true',
+        list: rawExt.list === true || rawExt.list === 'true',
+      };
+    }
     if ('defaultMultiSocksStartPort' in incomingSettings) {
       const parsedPort = Number(incomingSettings.defaultMultiSocksStartPort);
       if (!Number.isInteger(parsedPort) || parsedPort < 1024 || parsedPort > 60000) {
@@ -710,6 +801,9 @@ export async function handleSettingsSave(
     const finalSettings: Record<string, unknown> = { ...oldSettings, ...incomingSettings };
     delete finalSettings.publicLinks;
     delete finalSettings.publicCores;
+    for (const key of LEGACY_TRANSFORM_SETTINGS_KEYS) {
+      delete finalSettings[key];
+    }
 
     // 使用存储适配器保存设置
     if (!storageAdapter || storageAdapter.type === 'noop') {
@@ -784,10 +878,7 @@ export async function handleSettingsSave(
 /**
  * 处理设置重置API
  */
-export async function handleSettingsReset(
-  env: EnvLike,
-  context: BoundRequestContext | null = null,
-): Promise<Response> {
+export async function handleSettingsReset(env: EnvLike, context: BoundRequestContext | null = null): Promise<Response> {
   try {
     const repos = createRepositories(env, context);
     const storageAdapter = repos.storage;

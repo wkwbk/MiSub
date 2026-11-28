@@ -84,7 +84,11 @@ import {
 } from './resource-crud-handler.js';
 import { redactUrl, safeFetchPublicNetworkUrl, safeFetchPublicUrl, validatePublicFetchUrl } from './security-utils.js';
 import { normalizeSubconverterBackend } from './subscription/core/main-handler.js';
-import { generateSubconverterIniConfig, VISUAL_RULE_PRESETS } from './subscription/core/visual-rules-builder.js';
+import {
+  generateSubconverterIniConfig,
+  normalizeCustomVisualRules,
+  VISUAL_RULE_PRESETS,
+} from './subscription/core/visual-rules-builder.js';
 import { StorageFactory } from '../storage-adapter.js';
 import { STORAGE_KEY_SETTINGS } from './config.js';
 import { handleExternalApiRequest } from './external-api/external-api-router.js';
@@ -138,8 +142,10 @@ async function handleSubconverterConfigRequest(
           : (await (context?.storage || StorageFactory.createAdapter(env)).get<Record<string, unknown>>(
               STORAGE_KEY_SETTINGS,
             )) || {};
-      if (isRecord(savedSettings) && isRecord(savedSettings.builtinTransform)) {
-        options = savedSettings.builtinTransform;
+      if (isRecord(savedSettings)) {
+        const smartPreset = typeof savedSettings.smartPreset === 'string' ? savedSettings.smartPreset : 'balanced';
+        const rawCvr = isRecord(savedSettings.customVisualRules) ? savedSettings.customVisualRules : {};
+        options = normalizeCustomVisualRules(rawCvr, { smartPreset }) as unknown as Record<string, unknown>;
       }
     } catch {
       // 无存储绑定时回退默认配置
@@ -148,7 +154,7 @@ async function handleSubconverterConfigRequest(
     let selectedRules: readonly string[] | unknown[];
     if (!rawSelected) {
       selectedRules = VISUAL_RULE_PRESETS.balanced;
-    } else if (VISUAL_RULE_PRESETS[rawSelected]) {
+    } else if (rawSelected === 'minimal' || rawSelected === 'balanced' || rawSelected === 'full') {
       selectedRules = VISUAL_RULE_PRESETS[rawSelected];
     } else {
       try {
@@ -213,9 +219,7 @@ function createApiRouter() {
   apiApp.all('/public/profiles', (c) =>
     handlePublicProfilesRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
   );
-  apiApp.all('/public/preview', (c) =>
-    handlePublicPreviewRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
-  );
+  apiApp.all('/public/preview', (c) => handlePublicPreviewRequest(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
 
   apiApp.get('/public/guestbook', (c) => handleGuestbookGet(c.req.raw, c.env));
   apiApp.post('/public/guestbook', (c) => handleGuestbookPost(c.req.raw, c.env));
@@ -307,9 +311,7 @@ function createApiRouter() {
     handleSubscriptionsReorder(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
   );
   apiApp.all('/subscriptions/reorder', () => createErrorResponse('Method Not Allowed', 405));
-  apiApp.post('/subscriptions', (c) =>
-    handleSubscriptionCreate(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
-  );
+  apiApp.post('/subscriptions', (c) => handleSubscriptionCreate(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
   apiApp.all('/subscriptions', () => createErrorResponse('Method Not Allowed', 405));
   apiApp.patch('/subscriptions/:id', (c) =>
     handleSubscriptionPatch(c.req.raw, c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)),
@@ -339,9 +341,7 @@ function createApiRouter() {
   apiApp.delete('/nodes/:id', (c) => handleNodeDelete(c.env, c.req.param('id'), getBoundContext(c.req.raw, c.env)));
   apiApp.all('/nodes/:id', () => createErrorResponse('Method Not Allowed', 405));
 
-  apiApp.post('/profiles/batch', (c) =>
-    handleProfilesBatchAction(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)),
-  );
+  apiApp.post('/profiles/batch', (c) => handleProfilesBatchAction(c.req.raw, c.env, getBoundContext(c.req.raw, c.env)));
   apiApp.all('/profiles/batch', () => createErrorResponse('Method Not Allowed', 405));
 
   apiApp.post('/profiles/batch-delete', (c) =>

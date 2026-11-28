@@ -37,7 +37,7 @@ describe('handleNodeCountRequest error body handling', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const errorText = 'failed to fetch remote profile with status 400 Bad Request';
     const adapter = createAdapter({
-      settings: { builtinSkipCertVerify: false },
+      settings: { skipCertVerify: false },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
@@ -79,7 +79,7 @@ describe('handleNodeCountRequest error body handling', () => {
 
   it('does not skip certificate verification for node count by default', async () => {
     const adapter = createAdapter({
-      settings: { builtinSkipCertVerify: false },
+      settings: { skipCertVerify: false },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
@@ -105,7 +105,7 @@ describe('handleNodeCountRequest error body handling', () => {
 
   it('only skips certificate verification for node count when enabled in settings', async () => {
     const adapter = createAdapter({
-      settings: { builtinSkipCertVerify: true },
+      settings: { skipCertVerify: true },
       subscriptions: [{ id: 'sub-a', url: 'https://airport.example/sub' }],
     });
     vi.spyOn(StorageFactory, 'createAdapter').mockReturnValue(adapter);
@@ -131,7 +131,7 @@ describe('handleNodeCountRequest error body handling', () => {
 
   it('protects the stored healthy node count when automatic refresh sees one partial node', async () => {
     const adapter = createAdapter({
-      settings: { builtinSkipCertVerify: false },
+      settings: { skipCertVerify: false },
       subscriptions: [
         {
           id: 'sub-a',

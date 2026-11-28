@@ -14,7 +14,8 @@ import {
   sanitizeIniNodeName,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
-import { getBuiltinRules } from '../../templates/builtin-rules-provider.js';
+import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP } from '../../templates/builtin-rules-provider.js';
+import { buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 
 export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGeneratorOptions = {}): string {
   const { managedConfigUrl = '', interval = 86400 } = options;
@@ -39,7 +40,7 @@ export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGen
 
   if (proxyLines.length === 0) {
     const header = managedConfigUrl ? `#!MANAGED-CONFIG ${managedConfigUrl} interval=${interval} strict=false\n\n` : '';
-    return `${header}[general]\nserver_check_url = http://www.gstatic.com/generate_204\nexcluded_routes = 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 10.0.0.0/8\n\n[dns]\nno-ipv6\nserver = 223.5.5.5\nserver = 119.29.29.29\n\n[server_remote]\n\n[server_local]\n\n[rewrite_remote]\n\n[rewrite_local]\n\n[mitm]\n`;
+    return `${header}[general]\nserver_check_url = http://www.gstatic.com/generate_204\nexcluded_routes = 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 10.0.0.0/8\n\n[dns]\nno-ipv6\nserver = 223.5.5.5\nserver = 119.29.29.29\ndoh-server = https://223.5.5.5/dns-query\n\n[server_remote]\n\n[server_local]\n\n[rewrite_remote]\n\n[rewrite_local]\n\n[mitm]\n`;
   }
 
   const sections: string[] = [];
@@ -50,13 +51,16 @@ export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGen
   sections.push(
     `[general]\nserver_check_url = http://www.gstatic.com/generate_204\nexcluded_routes = 192.168.0.0/16, 172.16.0.0/12, 100.64.0.0/10, 10.0.0.0/8`,
   );
-  sections.push(`[dns]\nno-ipv6\nserver = 223.5.5.5\nserver = 119.29.29.29`);
+  sections.push(`[dns]\nno-ipv6\nserver = 223.5.5.5\nserver = 119.29.29.29\ndoh-server = https://223.5.5.5/dns-query`);
   sections.push(`[server_remote]`);
   sections.push(`[server_local]\n${proxyLines.join('\n')}`);
 
-  const { levelKey, proxyGroups: abstractGroups } = resolveBuiltinPolicyGroups(proxiesWithMetadata, options, {
-    allowVisualRules: false,
-  });
+  const {
+    smartPreset,
+    isRelay,
+    customVisualRules,
+    proxyGroups: abstractGroups,
+  } = resolveBuiltinPolicyGroups(proxiesWithMetadata, options);
 
   const groupLines = abstractGroups.map((group) => {
     const normalizePolicyMember = (member: string): string => {
@@ -78,9 +82,12 @@ export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGen
 
   sections.push(`[policy]\n${groupLines.join('\n')}`);
 
-  const rawRules = getBuiltinRules(levelKey, 'quanx', options).filter(
-    (rule): rule is string => typeof rule === 'string',
-  );
+  const rawRules = buildVisualRulesAndProviders('quanx', {
+    ...options,
+    smartPreset,
+    enableRelay: isRelay,
+    customVisualRules,
+  }).rules.filter((rule): rule is string => typeof rule === 'string');
   const remoteRules = rawRules
     .filter((r) => r.startsWith('filter_remote'))
     .map((r) => r.replace(/^filter_remote,\s*/i, ''));
@@ -108,6 +115,9 @@ export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGen
     'ip-cidr, 172.16.0.0/12, direct',
     'ip-cidr, 192.168.0.0/16, direct',
     ...localRules,
+    ...(!localRules.some((r) => /^final\b/i.test(r))
+      ? [`final, ${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`]
+      : []),
   ];
 
   sections.push(`[filter_remote]\n${remoteRules.join('\n')}`);

@@ -57,7 +57,9 @@ export function validateClashConfig(config, mode) {
   assert(array(dns['nameserver-policy']?.['geosite:cn']).length > 0, 'Clash geosite:cn DNS policy is missing');
 
   assertNoLoopbackNodes(config.proxies, 'Clash');
-  const aiGroups = array(config['proxy-groups']).filter((group) => String(group?.name || '').startsWith('🤖'));
+  const aiGroups = array(config['proxy-groups']).filter((group) =>
+    /^(?:🤖|💬)\s*AI|🤖/i.test(String(group?.name || '')),
+  );
   assert(aiGroups.length > 0, 'Clash AI groups are missing');
   assert(
     aiGroups.every((group) => !array(group.proxies).includes('DIRECT')),
@@ -96,8 +98,12 @@ export function validateSingboxConfig(config, mode) {
   const domestic = array(dns.servers).filter((server) => String(server?.tag || '').startsWith('dns-cn-'));
   const foreign = array(dns.servers).filter((server) => String(server?.tag || '').startsWith('dns-foreign-'));
   assert(
-    domestic.length > 0 && domestic.every((server) => server.type === 'udp' && server.detour === 'DIRECT'),
-    'sing-box domestic DNS path is not direct plaintext',
+    domestic.length > 0 &&
+      domestic.every(
+        (server) =>
+          (server.type === 'https' || server.type === 'tls' || server.type === 'udp') && server.detour === undefined,
+      ),
+    'sing-box domestic DNS path must be direct without detour (Sing-Box 1.12+)',
   );
   assertDnsMode(
     foreign.map(
@@ -115,7 +121,9 @@ export function validateSingboxConfig(config, mode) {
     array(config.outbounds).filter((outbound) => outbound?.server),
     'sing-box',
   );
-  const aiGroups = array(config.outbounds).filter((outbound) => String(outbound?.tag || '').startsWith('🤖'));
+  const aiGroups = array(config.outbounds).filter((outbound) =>
+    /^(?:🤖|💬)\s*AI|🤖/i.test(String(outbound?.tag || '')),
+  );
   assert(aiGroups.length > 0, 'sing-box AI groups are missing');
   assert(
     aiGroups.every((group) => !array(group.outbounds).includes('DIRECT')),

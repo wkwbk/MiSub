@@ -15,7 +15,7 @@ function render(template, options = {}) {
   return yaml.load(
     renderClashFromIniTemplate(template, {
       proxies: proxies.map((proxy) => ({ ...proxy })),
-      ruleLevel: 'none',
+      injectSmartGroups: false,
       ...renderOptions,
     }),
   );
@@ -76,7 +76,7 @@ describe('Mihomo chain proxy', () => {
       parseIniTemplate(CHAIN_TEMPLATE, {
         proxies: sharedProxies,
         isMeta: true,
-        ruleLevel: 'none',
+        injectSmartGroups: false,
       }),
     );
     const first = yaml.load(renderClashFromTemplateModel(model));

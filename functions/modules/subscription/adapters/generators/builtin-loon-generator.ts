@@ -24,7 +24,8 @@ import {
   sanitizeIniNodeName,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
-import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP, getBuiltinRules } from '../../templates/builtin-rules-provider.js';
+import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP } from '../../templates/builtin-rules-provider.js';
+import { buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
@@ -174,6 +175,13 @@ function clashProxyToLoonResult(proxy: ClashProxy): string | null {
     parts.push(server);
     parts.push(String(port));
     parts.push(loonQuote(proxy.password || ''));
+    if (String(proxy.obfs || '').toLowerCase() === 'salamander' && proxy['obfs-password']) {
+      parts.push(`salamander-password=${loonQuote(proxy['obfs-password'])}`);
+    }
+    const downVal = Number.parseInt(String(proxy.down || proxy['download-bandwidth'] || ''), 10);
+    if (Number.isFinite(downVal) && downVal > 0) {
+      parts.push(`download-bandwidth=${downVal}`);
+    }
     appendTlsParams(parts, proxy);
   } else if (type === 'tuic') {
     parts.push(`${name} = tuic`);
@@ -290,16 +298,19 @@ export function generateBuiltinLoonConfig(nodeList: string, options: BuiltinGene
   sections.push(`[General]
 ipv6 = false
 dns-server = system, 223.5.5.5, 119.29.29.29
+doh-server = https://223.5.5.5/dns-query, https://120.53.53.53/dns-query
+geoip-url = https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb
 skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, localhost, *.local
 proxy-test-url = http://www.gstatic.com/generate_204
 resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/scripts/sub-store-parser.js`);
 
   sections.push(`[Proxy]\nDIRECT = direct\n${proxyLines.join('\n')}`);
 
-  const { levelKey, proxyGroups } = resolveBuiltinPolicyGroups(proxiesWithMetadata, options, {
-    allowVisualRules: false,
-  });
-  const abstractGroups = levelKey === 'RELAY' ? applyIniRelayGroupPair(proxyGroups, proxiesWithMetadata) : proxyGroups;
+  const { smartPreset, isRelay, customVisualRules, proxyGroups } = resolveBuiltinPolicyGroups(
+    proxiesWithMetadata,
+    options,
+  );
+  const abstractGroups = isRelay ? applyIniRelayGroupPair(proxyGroups, proxiesWithMetadata) : proxyGroups;
 
   const proxyGroupLines = abstractGroups.map((group) =>
     formatIniProxyGroupLine(group, { iconMap: POLICY_GROUP_ICONS }),
@@ -307,17 +318,21 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
 
   sections.push(`[Proxy Group]\n${proxyGroupLines.join('\n')}`);
 
-  const builtinRuleLines = getBuiltinRules(levelKey, 'loon', options).filter(
-    (line): line is string => typeof line === 'string',
-  );
+  const rawRuleLines = buildVisualRulesAndProviders('loon', {
+    ...options,
+    smartPreset,
+    enableRelay: isRelay,
+    customVisualRules,
+  }).rules;
+  const builtinRuleLines = rawRuleLines.filter((line): line is string => typeof line === 'string');
   const ruleLines = [
     '# 基础分流',
-    'IP-CIDR,127.0.0.0/8,DIRECT',
-    'IP-CIDR,10.0.0.0/8,DIRECT',
-    'IP-CIDR,172.16.0.0/12,DIRECT',
-    'IP-CIDR,192.168.0.0/16,DIRECT',
+    'IP-CIDR,127.0.0.0/8,DIRECT,no-resolve',
+    'IP-CIDR,10.0.0.0/8,DIRECT,no-resolve',
+    'IP-CIDR,172.16.0.0/12,DIRECT,no-resolve',
+    'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve',
     ...builtinRuleLines,
-    `FINAL,${levelKey === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`,
+    `FINAL,${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`,
   ];
   sections.push(`[Rule]\n${ruleLines.filter(Boolean).join('\n')}`);
 

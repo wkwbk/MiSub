@@ -42,7 +42,9 @@ MATCH,节点选择
     const trojan = parsed.outbounds.find((outbound) => outbound.tag === 'Trojan WS');
 
     expect(parsed.dns.servers).toEqual(
-      expect.arrayContaining([expect.objectContaining({ type: 'udp', server: '223.5.5.5', server_port: 53 })]),
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'https', server: '223.5.5.5', server_port: 443, path: '/dns-query' }),
+      ]),
     );
     expect(parsed.dns.rules).toEqual(
       expect.arrayContaining([

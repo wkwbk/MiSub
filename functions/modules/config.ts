@@ -1,6 +1,11 @@
-import type { OperatorRule, SettingsConfig } from '@misub/core/types.js';
+import type {
+  AdvancedBaseConfig,
+  CustomVisualRulesConfig,
+  ExternalBackendConfig,
+  OperatorRule,
+  SettingsConfig,
+} from '@misub/core/types.js';
 import { SETTINGS_KEYS } from '../storage/d1-schema.js';
-import { DEFAULT_BUILTIN_TRANSFORM } from '@misub/core/domain/visual-rules-catalog.js';
 import { DEFAULT_SHARED_SETTINGS, DEFAULT_SUBCONVERTER_BACKEND } from '@misub/core/domain/default-settings.js';
 
 export const STORAGE_KEY_SETTINGS = SETTINGS_KEYS.MAIN;
@@ -19,8 +24,10 @@ export const DEFAULT_SETTINGS: SettingsConfig & {
     intervalDays: number;
     lastRotatedAt: string | null;
   };
-  builtinTransform: typeof DEFAULT_BUILTIN_TRANSFORM;
+  customVisualRules: CustomVisualRulesConfig;
+  advancedBaseConfig: AdvancedBaseConfig;
   enableFlagEmoji: boolean;
+  externalBackend: ExternalBackendConfig;
   disguise: {
     pageType: 'default' | 'redirect';
     redirectUrl: string;
@@ -93,18 +100,6 @@ export const DEFAULT_SETTINGS: SettingsConfig & {
   externalApi: {
     enabled: boolean;
     tokens: Array<{ name: string; token: string }>;
-  };
-  subconverter: {
-    engineMode: string;
-    defaultBackend: string;
-    defaultOptions: {
-      udp: boolean;
-      emoji: boolean;
-      scv: boolean;
-      tfo: boolean;
-      sort: boolean;
-      list: boolean;
-    };
   };
   shortLink: {
     enabled: boolean;

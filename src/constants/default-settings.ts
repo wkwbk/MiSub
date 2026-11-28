@@ -1,12 +1,27 @@
-import type { BuiltinTransformConfig, ProfileSubscriptionRef } from '@misub/core/types.js';
+import type {
+  AdvancedBaseConfig,
+  CustomVisualRulesConfig,
+  ExternalBackendConfig,
+  ProfileExternalBackend,
+  ProfileSubscriptionRef,
+  SmartPreset,
+  TransformMode,
+} from '@misub/core/types.js';
 import { DEFAULT_SHARED_SETTINGS } from '@misub/core/domain/default-settings.js';
 
 export const DEFAULT_SETTINGS = {
   ...DEFAULT_SHARED_SETTINGS,
-  builtinTransform: {
-    ...DEFAULT_SHARED_SETTINGS.builtinTransform,
-    baseConfig: { ...DEFAULT_SHARED_SETTINGS.builtinTransform.baseConfig },
-  } as BuiltinTransformConfig,
+  customVisualRules: {
+    ...DEFAULT_SHARED_SETTINGS.customVisualRules,
+    customRules: [],
+  } as CustomVisualRulesConfig,
+  advancedBaseConfig: {
+    ...DEFAULT_SHARED_SETTINGS.advancedBaseConfig,
+    baseConfig: { ...DEFAULT_SHARED_SETTINGS.advancedBaseConfig.baseConfig },
+  } as AdvancedBaseConfig,
+  externalBackend: {
+    ...DEFAULT_SHARED_SETTINGS.externalBackend,
+  } as ExternalBackendConfig,
   defaultPrefixSettings: {
     ...DEFAULT_SHARED_SETTINGS.defaultPrefixSettings,
     subscriptionPrefix: '',
@@ -72,9 +87,20 @@ export const DEFAULT_PROFILE_FORM = {
   customId: '',
   linkId: '',
   shortLink: '',
-  transformConfigMode: 'global',
-  transformConfig: '',
-  ruleLevel: '', // 为空表示跟随全局配置
+  transformMode: undefined as TransformMode | undefined,
+  smartPreset: undefined as SmartPreset | undefined,
+  customVisualRules: undefined as CustomVisualRulesConfig | undefined,
+  templateConfig: '',
+  externalBackend: {
+    url: '',
+    templateUrl: '',
+    sort: null as boolean | null,
+    tfo: null as boolean | null,
+    list: null as boolean | null,
+  } as ProfileExternalBackend,
+  enableUdp: undefined as boolean | undefined,
+  skipCertVerify: undefined as boolean | undefined,
+  enableRelay: undefined as boolean | undefined,
   subscriptions: [] as ProfileSubscriptionRef[],
   manualNodes: [] as string[],
   enabled: true,
@@ -85,24 +111,13 @@ export const DEFAULT_PROFILE_FORM = {
     subscriptionPrefix: '',
     prependTagName: null as boolean | null,
   },
-  subconverter: {
-    engineMode: '',
-    backend: '',
-    options: {
-      udp: null as boolean | null,
-      emoji: null as boolean | null,
-      scv: null as boolean | null,
-      sort: null as boolean | null,
-      tfo: null as boolean | null,
-      list: null as boolean | null,
-    },
-  },
   nodeTransform: null as Record<string, unknown> | null,
   nodeTransformPresetId: '',
   portalMode: 'inherit' as 'inherit' | 'portal' | 'redirect' | 'raw',
   portalRedirectUrl: '',
   portalNotice: '',
   multiSocksEnabled: null as boolean | null,
+  multiSocksLite: null as boolean | null,
   multiSocksStartPort: '' as string | number | null,
   multiSocksListen: '' as '' | '127.0.0.1' | '0.0.0.0',
   multiSocksUsername: '',

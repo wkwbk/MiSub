@@ -10,6 +10,7 @@ import { cleanControlChars } from '../../core/name-utils.js';
 import { isMetaCore } from '../../core/user-agent-utils.js';
 import { DNS_PROXY_GROUP, resolveSafeDnsConfig } from '../../security/safe-dns.js';
 import {
+  buildLiteMultiSocksClashConfig,
   CLASH_YAML_DUMP_OPTIONS,
   createBaseClashConfig,
   deduplicateProxyNames,
@@ -17,6 +18,7 @@ import {
   materializeRelayChainNodes,
   parseNodeUrlLines,
   resolveBuiltinPolicyGroups,
+  sanitizeClashProxiesForOutput,
   stripInternalProxyFields,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
@@ -24,9 +26,7 @@ import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   GEOX_URLS,
-  getBuiltinRules,
-  getRemoteProviderDefinitions,
-  type BuiltinRuleEntry,
+  RELAY_CHAIN_GROUP,
 } from '../../templates/builtin-rules-provider.js';
 import type { RegionPolicyGroup } from '../../core/region-groups.js';
 import { applyClashBaseConfigOverride, buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
@@ -79,6 +79,8 @@ function normalizeClashProxyGroups(proxyGroups: RegionPolicyGroup[]): Array<Reco
     if (normalized.type === 'url-test' || normalized.type === 'fallback') {
       if (!normalized.url) normalized.url = DEFAULT_TEST_URL;
       if (!normalized.interval) normalized.interval = 300;
+      if (normalized.lazy === undefined) normalized.lazy = true;
+      if (normalized.type === 'url-test' && normalized.tolerance === undefined) normalized.tolerance = 50;
     }
     return normalized;
   });
@@ -88,15 +90,14 @@ function normalizeClashProxyGroups(proxyGroups: RegionPolicyGroup[]): Array<Reco
  * 生成内置 Clash 配置
  */
 export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGeneratorOptions = {}): string {
-  const {
-    ruleLevel = 'std', // [New] 支持 base, std, full
-    userAgent = '',
-    hiddifyCompatible = false,
-  } = options;
+  const { userAgent = '', hiddifyCompatible = false } = options;
   const enableMihomoSyntax = Boolean(options.isMeta) || isMetaCore(userAgent, options.searchParams);
   const isHiddifyClient = hiddifyCompatible || /hiddify/i.test(userAgent || '');
   // Stash 通过 #SUBSCRIBED <url> 注释行识别订阅地址以支持自动更新
   const isStashClient = /stash/i.test(userAgent || '');
+  const isLegacyClashClient = /clashforwindows|clash[-.]for[-.]windows|\bcfw\b|clashx(?!\.meta)/i.test(userAgent || '');
+  const preferMrsRules =
+    options.preferMrsRules !== undefined ? Boolean(options.preferMrsRules) : !isStashClient && !isLegacyClashClient;
 
   const nodeUrls = parseNodeUrlLines(nodeList);
   const proxies = deepCleanControlChars(urlsToClashProxies(nodeUrls, options));
@@ -109,42 +110,66 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
   // 生成 YAML
   try {
     const {
-      levelKey,
-      bt,
-      useVisualRules,
+      smartPreset,
+      isRelay,
+      customVisualRules,
+      advancedBaseConfig,
       proxyGroups: resolvedGroups,
-    } = resolveBuiltinPolicyGroups(proxies, options, { allowVisualRules: !isHiddifyClient });
+    } = resolveBuiltinPolicyGroups(proxies, options);
+
+    const clashApiFields: Record<string, unknown> = advancedBaseConfig?.enableClashApi
+      ? {
+          'external-controller': advancedBaseConfig.externalController || '0.0.0.0:9090',
+          'external-ui': 'ui',
+          ...(advancedBaseConfig.externalUiDownloadUrl
+            ? { 'external-ui-url': advancedBaseConfig.externalUiDownloadUrl }
+            : {}),
+        }
+      : {
+          'external-controller': '127.0.0.1:9090',
+        };
+
+    if (options.multiSocks?.enabled && options.multiSocks.lite && !isHiddifyClient) {
+      const bindings = buildMultiSocksBindings(proxies, options.multiSocks);
+      const listeners = buildMihomoSocksListeners(bindings);
+      const liteConfig = buildLiteMultiSocksClashConfig({
+        proxies,
+        listeners,
+        listen: options.multiSocks.listen,
+        clashApiFields,
+        managedConfigUrl: options.managedConfigUrl,
+      });
+      let liteYaml = yaml.dump(liteConfig, CLASH_YAML_DUMP_OPTIONS);
+      if (isStashClient && options.managedConfigUrl && String(options.managedConfigUrl).trim()) {
+        liteYaml = `#SUBSCRIBED ${options.managedConfigUrl}\n${liteYaml}`;
+      }
+      return cleanControlChars(liteYaml);
+    }
 
     let proxyGroups = resolvedGroups;
     let ruleProviders: Record<string, unknown>;
-    let clashRules: Array<string | BuiltinRuleEntry>;
+    let clashRules: string[];
 
-    if (useVisualRules) {
-      const visualOutput = buildVisualRulesAndProviders('clash', { ...options, builtinTransform: bt });
+    if (isHiddifyClient) {
+      // Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
+      // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
+      ruleProviders = {};
+      clashRules = [`MATCH,${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`];
+    } else {
+      const visualOutput = buildVisualRulesAndProviders('clash', {
+        ...options,
+        smartPreset,
+        enableRelay: isRelay,
+        customVisualRules,
+        preferMrs: preferMrsRules,
+      });
       ruleProviders = visualOutput.clashProviders;
       clashRules = visualOutput.rules.filter((r): r is string => typeof r === 'string');
-    } else {
-      const rawRules: BuiltinRuleEntry[] = isHiddifyClient
-        ? ['MATCH,🚀 节点选择']
-        : getBuiltinRules(levelKey, 'clash', options);
-
-      // 提取远程 Provider 定义。Hiddify 4.x 的 Clash 转 sing-box 解析对 rule-providers 兼容性较差，
-      // 自动识别为 Hiddify 时降级为纯 MATCH 规则，避免导入时报 unable to determine config format。
-      ruleProviders = isHiddifyClient ? {} : getRemoteProviderDefinitions('clash', rawRules, options);
-
-      // 转换规则行为最终字符串
-      clashRules = rawRules
-        .map((r) => {
-          if (typeof r === 'string') return r;
-          if ('type' in r && r.type === 'rule-provider') return `RULE-SET,${r.provider},${r.target}`;
-          return null;
-        })
-        .filter((r): r is string => Boolean(r));
     }
 
-    let publicProxies: Array<Record<string, unknown>> = stripInternalProxyFields(proxies);
-    if (!useVisualRules && levelKey === 'RELAY' && enableMihomoSyntax) {
-      const relayGroup = proxyGroups.find((group) => group.name === '🔗 链式代理');
+    let publicProxies: Array<Record<string, unknown>> = sanitizeClashProxiesForOutput(proxies);
+    if (isRelay && enableMihomoSyntax) {
+      const relayGroup = proxyGroups.find((group) => group.name === RELAY_CHAIN_GROUP);
       if (relayGroup) {
         const relayConfig = materializeRelayChainNodes({
           nameKey: 'name',
@@ -172,16 +197,6 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
       subscriptionDnsPolicies: options.subscriptionDnsPolicies || [],
     });
 
-    const clashApiFields: Record<string, unknown> = bt?.enableClashApi
-      ? {
-          'external-controller': bt.externalController || '0.0.0.0:9090',
-          'external-ui': 'ui',
-          ...(bt.externalUiDownloadUrl ? { 'external-ui-url': bt.externalUiDownloadUrl } : {}),
-        }
-      : {
-          'external-controller': '127.0.0.1:9090',
-        };
-
     let config = createBaseClashConfig({
       dns: dnsConfig,
       proxies: publicProxies,
@@ -196,8 +211,8 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
       },
     });
 
-    if (bt?.baseConfig?.clash) {
-      config = applyClashBaseConfigOverride(config, bt.baseConfig.clash);
+    if (advancedBaseConfig?.baseConfig?.clash) {
+      config = applyClashBaseConfigOverride(config, advancedBaseConfig.baseConfig.clash);
     }
 
     if (options.multiSocks?.enabled) {
@@ -205,6 +220,10 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
       const listeners = buildMihomoSocksListeners(bindings);
       if (listeners.length > 0) {
         config.listeners = listeners;
+      }
+      if (options.multiSocks.listen === '0.0.0.0') {
+        config['allow-lan'] = true;
+        config['bind-address'] = '*';
       }
     }
 
@@ -221,7 +240,7 @@ export function generateBuiltinClashConfig(nodeList: string, options: BuiltinGen
     console.error('[BuiltinClash] Generation failed:', e);
     // Fallback: 至少返回包含节点的有效 YAML 结构，而不是传回会导致 Clash 报错的 Base64
     const fallbackProxies = Array.isArray(proxies) ? stripInternalProxyFields(proxies) : [];
-    const selectGroup = (ruleLevel || '').toUpperCase() === 'RELAY' ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP;
+    const selectGroup = options.enableRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP;
     const fallbackYaml =
       `proxies:\n${fallbackProxies.map((p) => `  - ${JSON.stringify(p)}`).join('\n')}\n` +
       `proxy-groups:\n  - name: ${selectGroup}\n    type: select\n    proxies: ${JSON.stringify(fallbackProxies.map((p) => p.name))}\n` +

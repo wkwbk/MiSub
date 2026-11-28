@@ -26,10 +26,7 @@ function getD1(env: Env | Record<string, unknown> | null | undefined): D1Databas
 /**
  * 读取运行时环境变量。
  */
-function getRuntimeEnvValue(
-  env: Env | Record<string, unknown> | null | undefined,
-  key: string,
-): string | undefined {
+function getRuntimeEnvValue(env: Env | Record<string, unknown> | null | undefined, key: string): string | undefined {
   const envValue = env?.[key];
   if (envValue !== undefined && envValue !== null && String(envValue).trim() !== '') {
     return String(envValue);
@@ -180,6 +177,9 @@ export function migrateConfigSettings<T extends Record<string, unknown>>(config:
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksEnabled')) {
     migratedConfig.defaultMultiSocksEnabled = toBoolean(migratedConfig.defaultMultiSocksEnabled);
   }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksLite')) {
+    migratedConfig.defaultMultiSocksLite = toBoolean(migratedConfig.defaultMultiSocksLite);
+  }
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'defaultMultiSocksStartPort')) {
     const parsedPort = Number(migratedConfig.defaultMultiSocksStartPort);
     migratedConfig.defaultMultiSocksStartPort =
@@ -213,11 +213,14 @@ export function migrateConfigSettings<T extends Record<string, unknown>>(config:
       redirectUrl: typeof rawDisguise.redirectUrl === 'string' ? rawDisguise.redirectUrl.trim() : '',
     };
   }
-  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinSkipCertVerify')) {
-    migratedConfig.builtinSkipCertVerify = toBoolean(migratedConfig.builtinSkipCertVerify);
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'skipCertVerify')) {
+    migratedConfig.skipCertVerify = toBoolean(migratedConfig.skipCertVerify);
   }
-  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'builtinEnableUdp')) {
-    migratedConfig.builtinEnableUdp = toBoolean(migratedConfig.builtinEnableUdp);
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'enableUdp')) {
+    migratedConfig.enableUdp = toBoolean(migratedConfig.enableUdp);
+  }
+  if (Object.prototype.hasOwnProperty.call(migratedConfig, 'enableRelay')) {
+    migratedConfig.enableRelay = toBoolean(migratedConfig.enableRelay);
   }
 
   if (Object.prototype.hasOwnProperty.call(migratedConfig, 'profileUpdateInterval')) {

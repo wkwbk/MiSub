@@ -170,6 +170,23 @@ describe('User-Agent Utils', () => {
       });
     });
 
+    it('should detect Sparkle, Clash Nyanpasu, FlyClash, Butterfly, and Karing as clash Meta clients', () => {
+      const params = new URLSearchParams('');
+      const metaUas = [
+        'Sparkle/1.0',
+        'clash-nyanpasu/1.6.1',
+        'nyanpasu/1.6.1',
+        'FlyClash/1.0',
+        'Butterfly/1.0',
+        'Karing/1.0',
+      ];
+
+      metaUas.forEach((ua) => {
+        expect(isBrowserAgent(ua)).toBe(false);
+        expect(determineTargetFormat(ua, params)).toBe('clash');
+      });
+    });
+
     it('should fallback to base64 for unknown UAs', () => {
       const params = new URLSearchParams('');
       expect(determineTargetFormat('UnknownClient/1.0', params)).toBe('base64');
@@ -181,6 +198,14 @@ describe('User-Agent Utils', () => {
     it('should treat Clash-Party default User-Agent as Meta-compatible', () => {
       expect(isMetaCore('mihomo.party/v1.8.5 (clash.meta)')).toBe(true);
       expect(isMetaCore('clash-party/v1.8.5')).toBe(true);
+    });
+
+    it('should treat Sparkle, Clash Nyanpasu, FlyClash, Butterfly, and Karing as Meta-compatible', () => {
+      expect(isMetaCore('Sparkle/1.0')).toBe(true);
+      expect(isMetaCore('clash-nyanpasu/1.6.1')).toBe(true);
+      expect(isMetaCore('FlyClash/1.0')).toBe(true);
+      expect(isMetaCore('Butterfly/1.0')).toBe(true);
+      expect(isMetaCore('Karing/1.0')).toBe(true);
     });
   });
 });

@@ -31,7 +31,7 @@ interface SingboxDnsServer {
   type: string;
   server: string;
   server_port: number;
-  detour: string;
+  detour?: string;
   path?: string;
   tls?: {
     enabled: boolean;
@@ -43,22 +43,53 @@ export interface SingboxDnsConfig {
   strategy: string;
   servers: SingboxDnsServer[];
   rules: Array<
-    | { rule_set: string[]; action: string; server: string }
-    | { domain_suffix: string[]; action: string; server: string }
+    { rule_set: string[]; action: string; server: string } | { domain_suffix: string[]; action: string; server: string }
   >;
   final: string;
 }
 
 export const DNS_PROXY_GROUP = '🌐 DNS 出口';
 export const SINGBOX_CN_RULE_SET = 'geosite-cn';
+export const DEFAULT_BOOTSTRAP_DNS = ['223.5.5.5', '119.29.29.29'] as const;
 
 const DEFAULT_DNS_POLICY = Object.freeze({
-  domestic: ['223.5.5.5', '119.29.29.29'],
+  // 国内解析使用 IP 型 DoH：免引导域名解析、抗运营商 UDP 劫持，并支持 ECH 所需的 HTTPS (Type 65) 记录
+  domestic: ['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query'],
   // 境外解析统一使用 IP 型 DoH：免引导解析（无需先解析域名），
   // TCP 承载比明文 UDP:53 更抗污染、在代理链路上更稳定
   foreign: ['https://8.8.8.8/dns-query', 'https://1.1.1.1/dns-query'],
   polluted: ['https://8.8.8.8/dns-query', 'https://1.1.1.1/dns-query'],
 });
+
+const IPV4_LITERAL_PATTERN = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+const IPV6_LITERAL_PATTERN = /^\[[0-9a-f:]+\]$/i;
+
+function resolveBootstrapDns(domestic: readonly string[]): string[] {
+  const isDefaultDomestic =
+    domestic.length === DEFAULT_DNS_POLICY.domestic.length &&
+    domestic.every((value, index) => value === DEFAULT_DNS_POLICY.domestic[index]);
+  if (isDefaultDomestic) {
+    return [...DEFAULT_BOOTSTRAP_DNS];
+  }
+
+  const ips: string[] = [];
+  for (const item of domestic) {
+    const raw = String(item || '').trim();
+    if (!raw || raw === 'system') continue;
+    const candidate = DNS_SCHEME_PATTERN.test(raw) ? raw : `udp://${raw}`;
+    try {
+      const parsed = new URL(candidate);
+      const hostname = parsed.hostname;
+      if (!IPV4_LITERAL_PATTERN.test(hostname) && !IPV6_LITERAL_PATTERN.test(hostname)) continue;
+      const cleanHost = hostname.replace(/^\[|\]$/g, '');
+      if (cleanHost === '::1' || cleanHost.startsWith('127.') || cleanHost.startsWith('0.')) continue;
+      if (!ips.includes(cleanHost)) ips.push(cleanHost);
+    } catch {
+      continue;
+    }
+  }
+  return ips.length > 0 ? ips : [...DEFAULT_BOOTSTRAP_DNS];
+}
 
 const SAFE_DNS_FIELDS = [
   'cache-algorithm',
@@ -162,17 +193,35 @@ function withProxy(value: unknown, proxyGroup: string): string {
   return `${raw}#${proxyGroup}`;
 }
 
+const DEFAULT_FALLBACK_FILTER = Object.freeze({
+  geoip: true,
+  'geoip-code': 'CN',
+  ipcidr: ['240.0.0.0/4', '0.0.0.0/32', '127.0.0.0/8', '100.64.0.0/10'],
+});
+
 const DEFAULT_DNS_CONFIG: Record<string, unknown> = {
   enable: true,
   ipv6: false,
+  'cache-algorithm': 'arc',
   'enhanced-mode': 'fake-ip',
   'fake-ip-range': '198.18.0.1/16',
   'fake-ip-filter-mode': 'blacklist',
-  'fake-ip-filter': ['geosite:private', 'geosite:category-ntp', '*.lan', '*.local', 'localhost', '*.arpa'],
+  'fake-ip-filter': [
+    'geosite:private',
+    'geosite:category-ntp',
+    'geosite:connectivity-check',
+    '*.lan',
+    '*.local',
+    'localhost',
+    '*.arpa',
+    '+.msftconnecttest.com',
+    '+.msftncsi.com',
+    'localhost.ptlogin2.qq.com',
+  ],
   'use-hosts': true,
   'use-system-hosts': true,
   'respect-rules': true,
-  'default-nameserver': [...DEFAULT_DNS_POLICY.domestic],
+  'default-nameserver': [...DEFAULT_BOOTSTRAP_DNS],
   nameserver: DEFAULT_DNS_POLICY.foreign.map((value) => withProxy(value, DNS_PROXY_GROUP)),
   'nameserver-policy': {
     'geosite:private': [...DEFAULT_DNS_POLICY.domestic],
@@ -182,12 +231,6 @@ const DEFAULT_DNS_CONFIG: Record<string, unknown> = {
   'proxy-server-nameserver': [...DEFAULT_DNS_POLICY.domestic],
   'direct-nameserver': [...DEFAULT_DNS_POLICY.domestic],
   'direct-nameserver-follow-policy': true,
-  fallback: [],
-  'fallback-filter': {
-    geoip: true,
-    'geoip-code': 'CN',
-    ipcidr: ['240.0.0.0/4', '0.0.0.0/32', '127.0.0.0/8', '100.64.0.0/10'],
-  },
 };
 
 function isExplicitDnsBlock(override: unknown): override is Record<string, unknown> {
@@ -220,7 +263,7 @@ export function resolveSafeDnsConfig(raw: unknown, options: ResolveDnsOptions = 
     return acc;
   }, {});
 
-  dns['default-nameserver'] = [...policy.domestic];
+  dns['default-nameserver'] = resolveBootstrapDns(policy.domestic);
   dns.nameserver = foreign.map((value) => withProxy(value, proxyGroup));
   dns['nameserver-policy'] = {
     'geosite:private': [...policy.domestic],
@@ -230,7 +273,13 @@ export function resolveSafeDnsConfig(raw: unknown, options: ResolveDnsOptions = 
   };
   dns['proxy-server-nameserver'] = [...policy.domestic];
   dns['direct-nameserver'] = [...policy.domestic];
-  dns.fallback = policy.mode === DNS_MODES.POLLUTED ? foreign.map((value) => withProxy(value, proxyGroup)) : [];
+  if (policy.mode === DNS_MODES.POLLUTED) {
+    dns.fallback = foreign.map((value) => withProxy(value, proxyGroup));
+    dns['fallback-filter'] = clone(DEFAULT_FALLBACK_FILTER);
+  } else {
+    delete dns.fallback;
+    delete dns['fallback-filter'];
+  }
 
   const override = policyInput(rawOverride);
   SAFE_DNS_FIELDS.forEach((key) => {
@@ -250,14 +299,18 @@ export function resolveSafeDnsConfig(raw: unknown, options: ResolveDnsOptions = 
   return dns;
 }
 
-function parseSingboxResolver(value: unknown, tag: string, detour: string): SingboxDnsServer {
+function parseSingboxResolver(value: unknown, tag: string, detour?: string): SingboxDnsServer {
   const raw = String(value || '').trim();
   const candidate = DNS_SCHEME_PATTERN.test(raw) ? raw : `udp://${raw}`;
   const parsed = new URL(candidate);
   const type = parsed.protocol.slice(0, -1);
   const server = parsed.hostname.replace(/^\[|\]$/g, '');
   const serverPort = Number(parsed.port) || (type === 'https' ? 443 : type === 'tls' ? 853 : 53);
-  const result: SingboxDnsServer = { tag, type, server, server_port: serverPort, detour };
+  const result: SingboxDnsServer = { tag, type, server, server_port: serverPort };
+  // sing-box 1.12+ 禁止对直连 DNS 服务器设置 detour: DIRECT，否则启动报 fatal error
+  if (detour && detour.toUpperCase() !== 'DIRECT') {
+    result.detour = detour;
+  }
   if (type === 'https') result.path = parsed.pathname || '/dns-query';
   if (type === 'tls') result.tls = { enabled: true, server_name: server };
   return result;
@@ -267,9 +320,7 @@ export function buildSingboxDnsConfig(raw: unknown, options: ResolveDnsOptions =
   const policy = resolveDnsPolicy(raw, options);
   const proxyGroup = String(options.proxyGroup || DNS_PROXY_GROUP);
   const foreign = policy.mode === DNS_MODES.POLLUTED ? policy.polluted : policy.foreign;
-  const domesticServers = policy.domestic.map((value, index) =>
-    parseSingboxResolver(value, `dns-cn-${index + 1}`, 'DIRECT'),
-  );
+  const domesticServers = policy.domestic.map((value, index) => parseSingboxResolver(value, `dns-cn-${index + 1}`));
   const foreignServers = foreign.map((value, index) =>
     parseSingboxResolver(value, `dns-foreign-${index + 1}`, proxyGroup),
   );

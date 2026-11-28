@@ -11,14 +11,20 @@ describe('shared split DNS policy', () => {
     const dns = resolveSafeDnsConfig('');
 
     expect(dns['respect-rules']).toBe(true);
-    expect(dns['nameserver-policy']['geosite:cn']).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(dns['default-nameserver']).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(dns['cache-algorithm']).toBe('arc');
+    expect(dns['nameserver-policy']['geosite:cn']).toEqual([
+      'https://223.5.5.5/dns-query',
+      'https://120.53.53.53/dns-query',
+    ]);
     // 境外解析默认为 IP 型 DoH（免引导解析，比明文 UDP:53 抗污染、链路更稳）
     expect(dns.nameserver).toEqual([
       `https://8.8.8.8/dns-query#${DNS_PROXY_GROUP}`,
       `https://1.1.1.1/dns-query#${DNS_PROXY_GROUP}`,
     ]);
-    expect(dns.fallback).toEqual([]);
-    expect(dns['proxy-server-nameserver']).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(dns.fallback).toBeUndefined();
+    expect(dns['fallback-filter']).toBeUndefined();
+    expect(dns['proxy-server-nameserver']).toEqual(['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query']);
   });
 
   it('uses encrypted foreign resolvers in both clean and polluted modes', () => {
@@ -42,7 +48,16 @@ describe('shared split DNS policy', () => {
     const dns = resolveSafeDnsConfig({ nameserver: ['https://dns.google/dns-query'] });
 
     expect(dns.nameserver).toEqual([`https://dns.google/dns-query#${DNS_PROXY_GROUP}`]);
-    expect(dns.fallback).toEqual([]);
+    expect(dns.fallback).toBeUndefined();
+    expect(dns['fallback-filter']).toBeUndefined();
+  });
+
+  it('populates fallback resolvers in polluted mode', () => {
+    const pollutedDns = resolveSafeDnsConfig({ mode: 'polluted' });
+
+    expect(Array.isArray(pollutedDns.fallback)).toBe(true);
+    expect(pollutedDns.fallback.length).toBeGreaterThan(0);
+    expect(pollutedDns['fallback-filter']).toBeDefined();
   });
 
   it('rejects unsafe resolver overrides and keeps the safe policy', () => {
@@ -53,7 +68,7 @@ describe('shared split DNS policy', () => {
       polluted: ['https://8.8.8.8/dns-query'],
     });
 
-    expect(policy.domestic).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(policy.domestic).toEqual(['https://223.5.5.5/dns-query', 'https://120.53.53.53/dns-query']);
     expect(policy.foreign).toEqual(['https://8.8.8.8/dns-query', 'https://1.1.1.1/dns-query']);
     expect(policy.polluted).toEqual(['https://8.8.8.8/dns-query']);
   });

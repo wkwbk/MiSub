@@ -25,7 +25,12 @@ function createBaseDb({ settings = {}, profiles = [], subscriptions = [] } = {})
             name: '机场A',
             url: 'https://airport.example.com/sub',
             enabled: true,
-            userInfo: { upload: 1024 * 1024 * 1024, download: 2 * 1024 * 1024 * 1024, total: 10 * 1024 * 1024 * 1024, expire: 1893456000 },
+            userInfo: {
+              upload: 1024 * 1024 * 1024,
+              download: 2 * 1024 * 1024 * 1024,
+              total: 10 * 1024 * 1024 * 1024,
+              expire: 1893456000,
+            },
             sortIndex: 0,
           },
         ],
@@ -330,7 +335,9 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
 
     const parsedYaml = yaml.load(await yamlRes.text());
     const portalHtml = await portalRes.text();
-    const jsonMatch = portalHtml.match(/<script id="__MISUB_PORTAL_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+    const jsonMatch = portalHtml.match(
+      /<script id="__MISUB_PORTAL_DATA__" type="application\/json">([\s\S]*?)<\/script>/,
+    );
     expect(jsonMatch).not.toBeNull();
     const portalPayload = JSON.parse(jsonMatch[1]);
     const portalBindings = portalPayload.multiSocks.bindings;
@@ -457,6 +464,33 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
     });
     const disabledByQueryYaml = yaml.load(await disabledByQueryRes.text());
     expect(disabledByQueryYaml.listeners).toBeUndefined();
+
+    // URL 参数开启轻量多端口 SOCKS5（?mode=multi-socks-lite&listen=0.0.0.0 與 ?mode=multi-socks&lite=1）
+    for (const liteUrl of [
+      'https://portal.example.com/sub/prio?mode=multi-socks-lite&listen=0.0.0.0',
+      'https://portal.example.com/sub/prio?mode=multi-socks&lite=1&listen=0.0.0.0',
+    ]) {
+      const liteRes = await handleMisubRequest({
+        request: new Request(liteUrl, {
+          headers: { 'User-Agent': 'ClashMeta/1.18.0' },
+        }),
+        env: { MISUB_DB: db },
+        waitUntil: vi.fn(),
+      });
+      expect(liteRes.headers.get('Content-Type')).toContain('yaml');
+      const liteYaml = yaml.load(await liteRes.text());
+      expect(liteYaml['allow-lan']).toBe(true);
+      expect(liteYaml['bind-address']).toBe('*');
+      expect(liteYaml['find-process-mode']).toBe('off');
+      expect(liteYaml['rule-providers']).toBeUndefined();
+      expect(liteYaml.sniffer).toBeUndefined();
+      expect(liteYaml['geox-url']).toBeUndefined();
+      expect(liteYaml['proxy-groups']).toHaveLength(1);
+      expect(liteYaml['proxy-groups'][0]).toMatchObject({ name: '🚀 节点选择', type: 'select' });
+      expect(liteYaml['proxy-groups'].some((g) => g.type === 'url-test' || g.type === 'fallback')).toBe(false);
+      expect(liteYaml.rules).toEqual(['MATCH,DIRECT']);
+      expect(liteYaml.listeners[0]).toMatchObject({ port: 45001, listen: '0.0.0.0' });
+    }
   });
 
   it('persists and validates new portal & multi-socks fields via PATCH /api/profiles/:id and PATCH /api/settings', async () => {
@@ -487,8 +521,10 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
           subPortalTitle: '企业订阅门户',
           subPortalNotice: '全局通知',
           defaultMultiSocksEnabled: true,
+          defaultMultiSocksLite: true,
           defaultMultiSocksStartPort: 44001,
           defaultMultiSocksListen: '0.0.0.0',
+          dnsMode: 'polluted',
           portalCustomPage: {
             enabled: true,
             type: 'html',
@@ -511,8 +547,10 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
       subPortalTitle: '企业订阅门户',
       subPortalNotice: '全局通知',
       defaultMultiSocksEnabled: true,
+      defaultMultiSocksLite: true,
       defaultMultiSocksStartPort: 44001,
       defaultMultiSocksListen: '0.0.0.0',
+      dnsMode: 'polluted',
       portalCustomPage: {
         enabled: true,
         type: 'html',
@@ -547,6 +585,7 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
           portalMode: 'portal',
           portalNotice: '单组公告',
           multiSocksEnabled: true,
+          multiSocksLite: false,
           multiSocksStartPort: 45100,
           multiSocksListen: '127.0.0.1',
           multiSocksUsername: 'u1',
@@ -564,6 +603,7 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
       portalMode: 'portal',
       portalNotice: '单组公告',
       multiSocksEnabled: true,
+      multiSocksLite: false,
       multiSocksStartPort: 45100,
       multiSocksListen: '127.0.0.1',
       multiSocksUsername: 'u1',
@@ -580,6 +620,7 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
           configVersion: 2,
           portalMode: 'inherit',
           multiSocksEnabled: null,
+          multiSocksLite: null,
           multiSocksStartPort: null,
           multiSocksListen: '',
           multiSocksMaxPorts: null,
@@ -594,9 +635,52 @@ describe('Subscription browser portal & Mihomo multi-port SOCKS5', () => {
       configVersion: 3,
       portalMode: 'inherit',
       multiSocksEnabled: null,
+      multiSocksLite: null,
       multiSocksStartPort: null,
       multiSocksListen: '',
       multiSocksMaxPorts: null,
     });
+  });
+
+  it('resolves multi-socks lite priority across URL > Profile > Global', async () => {
+    const { resolveEffectiveMultiSocksConfig } = await import('@misub/core/domain/multi-socks.js');
+    const globalWithLite = { defaultMultiSocksEnabled: true, defaultMultiSocksLite: true };
+
+    expect(
+      resolveEffectiveMultiSocksConfig({
+        settings: globalWithLite,
+        profile: { multiSocksEnabled: null, multiSocksLite: null },
+      }),
+    ).toMatchObject({ enabled: true, lite: true });
+
+    expect(
+      resolveEffectiveMultiSocksConfig({
+        settings: globalWithLite,
+        profile: { multiSocksEnabled: null, multiSocksLite: false },
+      }),
+    ).toMatchObject({ enabled: true, lite: false });
+
+    expect(
+      resolveEffectiveMultiSocksConfig({
+        settings: globalWithLite,
+        profile: { multiSocksEnabled: null, multiSocksLite: false },
+        searchParams: new URLSearchParams('lite=1'),
+      }),
+    ).toMatchObject({ enabled: true, lite: true });
+
+    expect(
+      resolveEffectiveMultiSocksConfig({
+        settings: globalWithLite,
+        profile: { multiSocksEnabled: null, multiSocksLite: null },
+        searchParams: new URLSearchParams('lite=0'),
+      }),
+    ).toMatchObject({ enabled: true, lite: false });
+
+    expect(
+      resolveEffectiveMultiSocksConfig({
+        settings: { defaultMultiSocksEnabled: false, defaultMultiSocksLite: true },
+        profile: { multiSocksEnabled: false, multiSocksLite: null },
+      }),
+    ).toMatchObject({ enabled: false, lite: false });
   });
 });

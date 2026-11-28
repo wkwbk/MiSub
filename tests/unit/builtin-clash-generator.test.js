@@ -48,7 +48,13 @@ describe('Clash 内置生成器', () => {
     expect(parsed.dns['respect-rules']).toBe(true);
     expect(parsed.dns.nameserver).toContain('https://8.8.8.8/dns-query#🌐 DNS 出口');
     expect(parsed.sniffer?.enable).toBe(true);
-    expect(parsed.dns['nameserver-policy']['geosite:cn']).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(parsed.dns['default-nameserver']).toEqual(['223.5.5.5', '119.29.29.29']);
+    expect(parsed.dns['cache-algorithm']).toBe('arc');
+    expect(parsed.dns['nameserver-policy']['geosite:cn']).toEqual([
+      'https://223.5.5.5/dns-query',
+      'https://120.53.53.53/dns-query',
+    ]);
+    expect(parsed.dns.fallback).toBeUndefined();
   });
   it('should render SS v2ray-plugin mux as a boolean for Clash compatibility', () => {
     const node =
@@ -132,23 +138,15 @@ describe('Clash 内置生成器', () => {
   });
 
   it('应为主要 AI 服务生成独立的代理组且不允许 DIRECT', () => {
-    const parsed = yaml.load(generateBuiltinClashConfig('trojan://password@example.com:443#US-01'));
+    const parsed = yaml.load(
+      generateBuiltinClashConfig('trojan://password@example.com:443#US-01', { smartPreset: 'balanced' }),
+    );
 
-    for (const name of [
-      '🤖 智能 AI',
-      '🤖 OpenAI',
-      '🤖 Claude',
-      '🤖 Gemini',
-      '🤖 Grok',
-      '🤖 Perplexity',
-      '🤖 Mistral',
-    ]) {
-      const group = parsed['proxy-groups'].find((item) => item.name === name);
-      expect(group, `${name} should exist`).toBeTruthy();
-      expect(group.proxies).not.toContain('DIRECT');
-    }
-    expect(parsed.rules).toContain('DOMAIN-SUFFIX,claude.ai,🤖 Claude');
-    expect(parsed.rules).toContain('DOMAIN-SUFFIX,grok.com,🤖 Grok');
+    const aiGroup = parsed['proxy-groups'].find((item) => item.name === '💬 AI 服务');
+    expect(aiGroup, '💬 AI 服务 should exist').toBeTruthy();
+    expect(aiGroup.proxies).not.toContain('DIRECT');
+    expect(parsed.rules).toContain('DOMAIN-SUFFIX,claude.ai,💬 AI 服务');
+    expect(parsed.rules).toContain('DOMAIN-SUFFIX,grok.com,💬 AI 服务');
   });
 
   it('hysteria2 节点应同时输出 auth 与 password 字段以兼容 Stash', () => {

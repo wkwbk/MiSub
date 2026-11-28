@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import { Network } from '@lucide/vue';
 import { useI18n } from '@/i18n/index.js';
-import SettingCard from '@/components/settings/SettingCard.vue';
 import Input from '@/components/ui/Input.vue';
 import Select from '@/components/ui/Select.vue';
 import Switch from '@/components/ui/Switch.vue';
@@ -34,31 +32,23 @@ const defaultMultiSocksStartPortError = computed(() => {
 </script>
 
 <template>
-  <SettingCard
-    :description="t('settings.multiSocksCardDesc')"
-    :title="t('settings.multiSocksCardTitle')"
-    tone="indigo"
-  >
-    <template #icon>
-      <Network class="h-4 w-4" />
-    </template>
-
-    <div class="space-y-4">
-      <div class="flex items-center justify-between gap-6">
-        <div class="space-y-1">
-          <p class="text-sm font-medium text-fg">{{ t('settings.defaultMultiSocksEnabledTitle') }}</p>
-          <p class="text-xs text-fg-muted leading-relaxed">
-            {{ t('settings.defaultMultiSocksEnabledDesc') }}
-          </p>
-        </div>
-        <Switch
-          :model-value="Boolean(settings.defaultMultiSocksEnabled)"
-          class="shrink-0"
-          @update:model-value="patchSettings({ defaultMultiSocksEnabled: Boolean($event) })"
-        />
+  <div class="space-y-4">
+    <div class="flex items-center justify-between gap-6">
+      <div class="space-y-1">
+        <p class="text-sm font-medium text-fg">{{ t('settings.defaultMultiSocksEnabledTitle') }}</p>
+        <p class="text-xs text-fg-muted leading-relaxed">
+          {{ t('settings.defaultMultiSocksEnabledDesc') }}
+        </p>
       </div>
+      <Switch
+        :model-value="Boolean(settings.defaultMultiSocksEnabled)"
+        class="shrink-0"
+        @update:model-value="patchSettings({ defaultMultiSocksEnabled: Boolean($event) })"
+      />
+    </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-line-subtle">
+    <div v-if="settings.defaultMultiSocksEnabled" class="space-y-4 pt-4 border-t border-line-subtle">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Input
             id="setting-defaultMultiSocksStartPort"
@@ -91,6 +81,20 @@ const defaultMultiSocksStartPortError = computed(() => {
           />
         </div>
       </div>
+
+      <div class="flex items-center justify-between gap-6">
+        <div class="space-y-0.5">
+          <p class="text-xs font-medium text-fg">{{ t('settings.defaultMultiSocksLiteLabel') }}</p>
+          <p class="text-xs text-fg-muted leading-relaxed">{{ t('settings.defaultMultiSocksLiteDesc') }}</p>
+        </div>
+        <Switch
+          :model-value="Boolean(settings.defaultMultiSocksLite)"
+          class="shrink-0"
+          data-testid="default-multisocks-lite-switch"
+          size="sm"
+          @update:model-value="patchSettings({ defaultMultiSocksLite: Boolean($event) })"
+        />
+      </div>
     </div>
-  </SettingCard>
+  </div>
 </template>

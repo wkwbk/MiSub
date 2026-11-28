@@ -3,20 +3,24 @@
  */
 
 import * as yaml from 'js-yaml';
-import type { BuiltinTransformConfig } from '@misub/core/types.js';
+import type { CustomVisualRulesConfig, SmartPreset } from '@misub/core/types.js';
 import {
-  normalizeBuiltinTransform,
+  normalizeCustomVisualRules,
   VISUAL_RULE_MAP,
   VISUAL_RULE_PRESETS,
 } from '@misub/core/domain/visual-rules-catalog.js';
 import {
   ACL4SSR_BASE,
   AUTO_SELECT_GROUP,
+  buildMetaMrsProvider,
+  DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
   FALLBACK_GROUP,
   MANUAL_SELECT_GROUP,
   pinRemoteRuleUrl,
   pruneProxyGroups,
+  RELAY_CHAIN_GROUP,
+  RELAY_ENTRY_GROUP,
   SING_GEOIP_BASE,
   SING_GEOSITE_BASE,
   type ClashRuleProviderDefinition,
@@ -32,7 +36,10 @@ import {
 import { DNS_PROXY_GROUP } from '../security/safe-dns.js';
 
 export interface VisualRulesOptions extends RegionGroupsOptions, PinRemoteRuleUrlOptions {
-  builtinTransform?: Partial<BuiltinTransformConfig> | Record<string, unknown> | null;
+  smartPreset?: SmartPreset | string;
+  enableRelay?: boolean;
+  customVisualRules?: Partial<CustomVisualRulesConfig> | Record<string, unknown> | null;
+  preferMrs?: boolean;
 }
 
 export type SingboxVisualRule =
@@ -62,14 +69,21 @@ function buildGroupCandidates({
   action = 'proxy',
   includeAutoSelect = true,
   regionNames = [],
+  isRelay = false,
   includeDirect = true,
 }: {
   action?: string;
   includeAutoSelect?: boolean;
   regionNames?: string[];
+  isRelay?: boolean;
   includeDirect?: boolean;
 }): string[] {
-  const proxyCandidates = [...(includeAutoSelect ? [AUTO_SELECT_GROUP] : []), ...regionNames, MANUAL_SELECT_GROUP];
+  const proxyCandidates = [
+    ...(isRelay ? [RELAY_CHAIN_GROUP, '🚀 常用节点'] : []),
+    ...(includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
+    ...regionNames,
+    MANUAL_SELECT_GROUP,
+  ];
   if (action === 'reject') {
     return ['REJECT', 'DIRECT', ...proxyCandidates];
   }
@@ -80,19 +94,25 @@ function buildGroupCandidates({
 }
 
 /**
- * 构建可视化规则对应的策略组（供 Clash / Sing-Box / Surge 复用）
+ * 构建可视化规则对应的策略组（供 Clash / Sing-Box / Surge / Loon / QuanX 统一复用）
  */
 export function buildVisualPolicyGroups(
   proxies: RegionGroupNode[],
   options: VisualRulesOptions = {},
 ): RegionPolicyGroup[] {
-  const bt = normalizeBuiltinTransform(options.builtinTransform);
+  const smartPreset = String(options.smartPreset || 'balanced').toLowerCase();
+  const isRelay = Boolean(options.enableRelay);
+  const cvr = normalizeCustomVisualRules(options.customVisualRules, { smartPreset });
   const proxyNames = proxies.map((p) => p.tag || p.name);
   const nodeCandidates = proxyNames.length > 0 ? proxyNames : ['DIRECT'];
 
-  const { regionSelectGroups, regionSupportGroups, regionNames } = bt.groupByCountry
-    ? buildRegionPolicyGroups(proxies, { ...options, includeAutoSelect: bt.includeAutoSelect })
-    : { regionSelectGroups: [] as RegionPolicyGroup[], regionSupportGroups: [] as RegionPolicyGroup[], regionNames: [] as string[] };
+  const { regionSelectGroups, regionSupportGroups, regionNames } = cvr.groupByCountry
+    ? buildRegionPolicyGroups(proxies, { ...options, includeAutoSelect: cvr.includeAutoSelect })
+    : {
+        regionSelectGroups: [] as RegionPolicyGroup[],
+        regionSupportGroups: [] as RegionPolicyGroup[],
+        regionNames: [] as string[],
+      };
 
   const groups: RegionPolicyGroup[] = [
     {
@@ -102,20 +122,66 @@ export function buildVisualPolicyGroups(
       hidden: true,
       options: { url: 'http://www.gstatic.com/generate_204', interval: 300, tolerance: 50 },
     },
-    {
+  ];
+
+  if (isRelay) {
+    groups.push(
+      {
+        name: DEFAULT_RELAY_GROUP,
+        type: 'select',
+        proxies: [
+          RELAY_CHAIN_GROUP,
+          ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
+          FALLBACK_GROUP,
+          MANUAL_SELECT_GROUP,
+          '🚀 常用节点',
+          ...regionNames,
+          'DIRECT',
+        ],
+      },
+      {
+        name: RELAY_CHAIN_GROUP,
+        type: 'select',
+        proxies: [
+          RELAY_ENTRY_GROUP,
+          ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
+          MANUAL_SELECT_GROUP,
+          'DIRECT',
+          ...proxyNames,
+        ],
+      },
+      {
+        name: RELAY_ENTRY_GROUP,
+        type: 'select',
+        proxies: [...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []), MANUAL_SELECT_GROUP, 'DIRECT', ...proxyNames],
+      },
+      {
+        name: '🚀 常用节点',
+        type: 'select',
+        proxies: [
+          ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
+          FALLBACK_GROUP,
+          MANUAL_SELECT_GROUP,
+          ...regionNames,
+          'DIRECT',
+        ],
+      },
+    );
+  } else {
+    groups.push({
       name: DEFAULT_SELECT_GROUP,
       type: 'select',
       proxies: [
-        ...(bt.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
+        ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
         FALLBACK_GROUP,
         MANUAL_SELECT_GROUP,
         ...regionNames,
         'DIRECT',
       ],
-    },
-  ];
+    });
+  }
 
-  if (bt.includeAutoSelect) {
+  if (cvr.includeAutoSelect) {
     groups.push({ name: AUTO_SELECT_GROUP, type: 'url-test', proxies: nodeCandidates });
   }
   groups.push({ name: FALLBACK_GROUP, type: 'fallback', proxies: nodeCandidates });
@@ -125,7 +191,7 @@ export function buildVisualPolicyGroups(
   const seenGroupNames = new Set(groups.map((g) => g.name));
 
   // 自定义规则策略组优先展示
-  for (const rule of bt.customRules) {
+  for (const rule of cvr.customRules) {
     if (seenGroupNames.has(rule.name)) continue;
     seenGroupNames.add(rule.name);
     groups.push({
@@ -133,14 +199,15 @@ export function buildVisualPolicyGroups(
       type: 'select',
       proxies: buildGroupCandidates({
         action: rule.action,
-        includeAutoSelect: bt.includeAutoSelect,
+        includeAutoSelect: cvr.includeAutoSelect,
         regionNames,
+        isRelay,
       }),
     });
   }
 
   // 勾选的内置分类策略组
-  for (const ruleId of bt.selectedRules) {
+  for (const ruleId of cvr.selectedRules) {
     const cat = VISUAL_RULE_MAP[ruleId];
     if (!cat || seenGroupNames.has(cat.groupName)) continue;
     seenGroupNames.add(cat.groupName);
@@ -149,8 +216,10 @@ export function buildVisualPolicyGroups(
       type: 'select',
       proxies: buildGroupCandidates({
         action: cat.defaultAction,
-        includeAutoSelect: bt.includeAutoSelect,
+        includeAutoSelect: cvr.includeAutoSelect,
         regionNames,
+        isRelay,
+        includeDirect: cat.id !== 'ai_services',
       }),
     });
   }
@@ -166,7 +235,10 @@ export function buildVisualRulesAndProviders(
   format: string,
   options: VisualRulesOptions = {},
 ): VisualRulesAndProvidersResult {
-  const bt = normalizeBuiltinTransform(options.builtinTransform);
+  const smartPreset = String(options.smartPreset || 'balanced').toLowerCase();
+  const isRelay = Boolean(options.enableRelay);
+  const finalGroup = isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP;
+  const cvr = normalizeCustomVisualRules(options.customVisualRules, { smartPreset });
   const normalizedFormat = String(format || 'clash').toLowerCase();
 
   const rules: Array<string | SingboxVisualRule> = [];
@@ -204,7 +276,7 @@ export function buildVisualRulesAndProviders(
   };
 
   // 1. 自定义规则（高优先级：SRC-IP-CIDR -> 域名 -> 规则集 -> IP-CIDR）
-  for (const custom of bt.customRules) {
+  for (const custom of cvr.customRules) {
     const target = custom.name;
     if (normalizedFormat === 'singbox' || normalizedFormat === 'sing-box') {
       if (custom.srcIpCidr.length) {
@@ -228,6 +300,10 @@ export function buildVisualRulesAndProviders(
       custom.domainSuffix.forEach((d) => rules.push(`DOMAIN-SUFFIX,${d},${target}`));
       custom.domainKeyword.forEach((k) => rules.push(`DOMAIN-KEYWORD,${k},${target}`));
       custom.ipCidr.forEach((cidr) => rules.push(`IP-CIDR,${cidr},${target},no-resolve`));
+    } else if (normalizedFormat === 'quanx') {
+      custom.domainSuffix.forEach((d) => rules.push(`HOST-SUFFIX,${d},${target}`));
+      custom.domainKeyword.forEach((k) => rules.push(`HOST-KEYWORD,${k},${target}`));
+      custom.ipCidr.forEach((cidr) => rules.push(`IP-CIDR,${cidr},${target}`));
     } else {
       // Clash / Mihomo
       custom.srcIpCidr.forEach((cidr) => rules.push(`SRC-IP-CIDR,${cidr},${target}`));
@@ -238,57 +314,124 @@ export function buildVisualRulesAndProviders(
     }
   }
 
-  // 2. 勾选的内置分类规则
-  for (const ruleId of bt.selectedRules) {
+  // 2. 勾选的内置分类规则：两阶段收集（Pass 1 域名优先 -> Pass 2 IP/GeoIP 兜底并附加 no-resolve）
+  const domainRules: Array<string | SingboxVisualRule> = [];
+  const ipRules: Array<string | SingboxVisualRule> = [];
+  const supplementalDomainCategories = new Set(['ai_services', 'social_media', 'finance', 'cloud', 'education']);
+  const useMrs = options.preferMrs !== false;
+  const seenClashRuleKeys = new Set<string>();
+
+  for (const ruleId of cvr.selectedRules) {
     const cat = VISUAL_RULE_MAP[ruleId];
     if (!cat) continue;
     const target = cat.groupName;
 
     if (normalizedFormat === 'singbox' || normalizedFormat === 'sing-box') {
-      const ruleSetTags: string[] = [];
-      (cat.geosite || []).forEach((s) => ruleSetTags.push(addSingboxGeosite(s)));
-      (cat.geoip || []).forEach((g) => ruleSetTags.push(addSingboxGeoip(g)));
-      if (ruleSetTags.length > 0) {
-        rules.push({ rule_set: ruleSetTags, outbound: target });
+      const geositeTags = (cat.geosite || []).map((s) => addSingboxGeosite(s));
+      if (geositeTags.length > 0) {
+        domainRules.push({ rule_set: geositeTags, outbound: target });
       }
-      if (cat.domains?.length) {
-        rules.push({ domain_suffix: [...cat.domains], outbound: target });
+      if (cat.domains?.length && cat.id !== 'private') {
+        domainRules.push({ domain_suffix: [...cat.domains], outbound: target });
+      }
+      const geoipTags = (cat.geoip || []).map((g) => addSingboxGeoip(g));
+      if (geoipTags.length > 0) {
+        ipRules.push({ rule_set: geoipTags, outbound: target });
       }
       if (cat.ipCidrs?.length) {
-        rules.push({ ip_cidr: [...cat.ipCidrs], outbound: target });
+        ipRules.push({ ip_cidr: [...cat.ipCidrs], outbound: target });
       }
     } else if (normalizedFormat === 'surge' || normalizedFormat === 'loon') {
       if (cat.surgeList) {
-        rules.push(`RULE-SET,${resolveAcl4ssrUrl(cat.surgeList, options)},${target}`);
+        domainRules.push(`RULE-SET,${resolveAcl4ssrUrl(cat.surgeList, options)},${target}`);
       } else {
-        (cat.domains || []).forEach((d) => rules.push(`DOMAIN-SUFFIX,${d},${target}`));
-        (cat.ipCidrs || []).forEach((cidr) => rules.push(`IP-CIDR,${cidr},${target},no-resolve`));
+        (cat.domains || []).forEach((d) => domainRules.push(`DOMAIN-SUFFIX,${d},${target}`));
+        (cat.ipCidrs || []).forEach((cidr) => ipRules.push(`IP-CIDR,${cidr},${target},no-resolve`));
+      }
+      if (cat.id === 'cn_services') {
+        ipRules.push(`GEOIP,CN,${target},no-resolve`);
+      }
+    } else if (normalizedFormat === 'quanx') {
+      if (cat.surgeList) {
+        domainRules.push(
+          `filter_remote, ${resolveAcl4ssrUrl(cat.surgeList, options)}, tag=${cat.groupName}, force-policy=${target}, update-interval=86400`,
+        );
+      } else {
+        (cat.domains || []).forEach((d) => domainRules.push(`HOST-SUFFIX,${d},${target}`));
+        (cat.ipCidrs || []).forEach((cidr) => ipRules.push(`IP-CIDR,${cidr},${target}`));
+      }
+      if (cat.id === 'cn_services') {
+        ipRules.push(`GEOIP,CN,${target}`);
+      }
+    } else if (useMrs) {
+      for (const site of cat.geosite || []) {
+        const providerKey = `geosite-${site}`;
+        if (!clashProviders[providerKey]) {
+          clashProviders[providerKey] = buildMetaMrsProvider('geosite', site);
+        }
+        const line = `RULE-SET,${providerKey},${target}`;
+        if (!seenClashRuleKeys.has(line)) {
+          seenClashRuleKeys.add(line);
+          domainRules.push(line);
+        }
+      }
+      if ((!cat.geosite?.length || supplementalDomainCategories.has(cat.id)) && cat.domains?.length) {
+        for (const d of cat.domains) {
+          const line = `DOMAIN-SUFFIX,${d},${target}`;
+          if (!seenClashRuleKeys.has(line)) {
+            seenClashRuleKeys.add(line);
+            domainRules.push(line);
+          }
+        }
+      }
+      for (const g of cat.geoip || []) {
+        const providerKey = `geoip-${g}`;
+        if (!clashProviders[providerKey]) {
+          clashProviders[providerKey] = buildMetaMrsProvider('geoip', g);
+        }
+        const line = `RULE-SET,${providerKey},${target},no-resolve`;
+        if (!seenClashRuleKeys.has(line)) {
+          seenClashRuleKeys.add(line);
+          ipRules.push(line);
+        }
+      }
+      if (!cat.geoip?.length && cat.ipCidrs?.length) {
+        for (const cidr of cat.ipCidrs) {
+          const line = `IP-CIDR,${cidr},${target},no-resolve`;
+          if (!seenClashRuleKeys.has(line)) {
+            seenClashRuleKeys.add(line);
+            ipRules.push(line);
+          }
+        }
       }
     } else {
-      // Clash / Mihomo
       if (cat.clashProvider) {
         const providerKey = `VIS_${cat.id.toUpperCase()}`;
+        const providerUrl = resolveAcl4ssrUrl(cat.clashProvider, options);
+        const isTextList = /\.(list|txt)$/i.test(providerUrl);
         clashProviders[providerKey] = {
           type: 'http',
           behavior: 'classical',
-          url: resolveAcl4ssrUrl(cat.clashProvider, options),
-          path: `./ruleset/${providerKey}.yaml`,
+          url: providerUrl,
+          path: `./ruleset/${providerKey}.${isTextList ? 'list' : 'yaml'}`,
           interval: 86400,
+          ...(isTextList ? { format: 'text' } : {}),
         };
-        rules.push(`RULE-SET,${providerKey},${target}`);
+        domainRules.push(`RULE-SET,${providerKey},${target}`);
       } else {
-        (cat.domains || []).forEach((d) => rules.push(`DOMAIN-SUFFIX,${d},${target}`));
-        (cat.ipCidrs || []).forEach((cidr) => rules.push(`IP-CIDR,${cidr},${target},no-resolve`));
+        (cat.domains || []).forEach((d) => domainRules.push(`DOMAIN-SUFFIX,${d},${target}`));
+        (cat.ipCidrs || []).forEach((cidr) => ipRules.push(`IP-CIDR,${cidr},${target},no-resolve`));
       }
       if (cat.id === 'cn_services') {
-        rules.push(`GEOIP,CN,${target}`);
+        ipRules.push(`GEOIP,CN,${target},no-resolve`);
       }
     }
   }
 
-  // 兜底规则
+  rules.push(...domainRules, ...ipRules);
+
   if (normalizedFormat === 'clash') {
-    rules.push(`MATCH,${DEFAULT_SELECT_GROUP}`);
+    rules.push(`MATCH,${finalGroup}`);
   }
 
   return {
@@ -296,59 +439,6 @@ export function buildVisualRulesAndProviders(
     clashProviders,
     singboxRuleSets: Array.from(singboxRuleSets.values()),
   };
-}
-
-/**
- * 过滤掉内置策略组中的地区组 / 自动选择组（用于未开启 visualRulesEnabled 但调整了通用开关的场景）
- */
-export function applyGeneralGroupToggles(
-  proxyGroups: RegionPolicyGroup[],
-  options: VisualRulesOptions = {},
-): RegionPolicyGroup[] {
-  const bt = normalizeBuiltinTransform(options.builtinTransform);
-  let nextGroups = Array.isArray(proxyGroups)
-    ? proxyGroups.map((g) => ({ ...g, proxies: [...(g.proxies || [])] }))
-    : [];
-
-  if (!bt.includeAutoSelect) {
-    const removedNames = new Set(
-      nextGroups
-        .filter((g) => g.name === AUTO_SELECT_GROUP || String(g.name || '').startsWith('⚡️ '))
-        .map((g) => g.name),
-    );
-    nextGroups = nextGroups
-      .filter((g) => !removedNames.has(g.name))
-      .map((g) => ({
-        ...g,
-        proxies: g.proxies.filter((member) => !removedNames.has(member)),
-      }));
-  }
-
-  if (!bt.groupByCountry) {
-    const removedRegions = new Set(
-      nextGroups
-        .filter(
-          (g) =>
-            String(g.name || '').endsWith('节点') &&
-            g.name !== '入口节点' &&
-            g.name !== '落地节点' &&
-            g.name !== '🚀 常用节点',
-        )
-        .map((g) => g.name),
-    );
-    const removedRegionAuto = new Set(
-      nextGroups.filter((g) => String(g.name || '').startsWith('⚡️ ')).map((g) => g.name),
-    );
-    const allRemoved = new Set([...removedRegions, ...removedRegionAuto]);
-    nextGroups = nextGroups
-      .filter((g) => !allRemoved.has(g.name))
-      .map((g) => ({
-        ...g,
-        proxies: g.proxies.filter((member) => !allRemoved.has(member)),
-      }));
-  }
-
-  return nextGroups;
 }
 
 /**
@@ -418,7 +508,6 @@ export function applySurgeBaseConfigOverride(
   const trimmed = String(rawIni || '').trim();
   if (!trimmed) return generatedSections;
 
-  // 解析用户基础配置 INI 的各个 [Section]
   const customSections = new Map<string, string[]>();
   let currentSection: string | null = null;
   for (const rawLine of trimmed.split(/\r?\n/)) {
@@ -439,7 +528,6 @@ export function applySurgeBaseConfigOverride(
   if (customSections.size === 0) return generatedSections;
 
   const result = [...generatedSections];
-  // 替换 [General]
   for (const [sectionName, lines] of customSections.entries()) {
     const lower = sectionName.toLowerCase();
     if (SURGE_PROTECTED_SECTIONS.has(lower)) continue;
@@ -455,13 +543,14 @@ export function applySurgeBaseConfigOverride(
 /**
  * 动态生成可供外部 Subconverter 使用的 [custom] INI 配置文件
  */
-export function generateSubconverterIniConfig(options: Partial<BuiltinTransformConfig> | Record<string, unknown> = {}): string {
-  const bt = normalizeBuiltinTransform(options);
-  const selectedIds = bt.selectedRules.length > 0 ? bt.selectedRules : VISUAL_RULE_PRESETS.balanced;
+export function generateSubconverterIniConfig(
+  options: Partial<CustomVisualRulesConfig> | Record<string, unknown> = {},
+): string {
+  const cvr = normalizeCustomVisualRules(options);
+  const selectedIds = cvr.selectedRules.length > 0 ? cvr.selectedRules : VISUAL_RULE_PRESETS.balanced;
   const lines = ['[custom]'];
 
-  // 1. 自定义规则
-  for (const custom of bt.customRules) {
+  for (const custom of cvr.customRules) {
     custom.srcIpCidr.forEach((cidr) => lines.push(`ruleset=${custom.name},[]SRC-IP-CIDR,${cidr}`));
     custom.domainSuffix.forEach((d) => lines.push(`ruleset=${custom.name},[]DOMAIN-SUFFIX,${d}`));
     custom.domainKeyword.forEach((k) => lines.push(`ruleset=${custom.name},[]DOMAIN-KEYWORD,${k}`));
@@ -469,21 +558,23 @@ export function generateSubconverterIniConfig(options: Partial<BuiltinTransformC
     custom.ipCidr.forEach((cidr) => lines.push(`ruleset=${custom.name},[]IP-CIDR,${cidr},no-resolve`));
   }
 
-  // 2. 勾选的内置规则
+  const domainIniLines: string[] = [];
+  const ipIniLines: string[] = [];
   for (const ruleId of selectedIds) {
     const cat = VISUAL_RULE_MAP[ruleId];
     if (!cat) continue;
     if (cat.surgeList) {
-      lines.push(`ruleset=${cat.groupName},${resolveAcl4ssrUrl(cat.surgeList)}`);
+      domainIniLines.push(`ruleset=${cat.groupName},${resolveAcl4ssrUrl(cat.surgeList)}`);
     } else {
-      (cat.domains || []).forEach((d) => lines.push(`ruleset=${cat.groupName},[]DOMAIN-SUFFIX,${d}`));
-      (cat.ipCidrs || []).forEach((cidr) => lines.push(`ruleset=${cat.groupName},[]IP-CIDR,${cidr},no-resolve`));
+      (cat.domains || []).forEach((d) => domainIniLines.push(`ruleset=${cat.groupName},[]DOMAIN-SUFFIX,${d}`));
+      (cat.ipCidrs || []).forEach((cidr) => ipIniLines.push(`ruleset=${cat.groupName},[]IP-CIDR,${cidr},no-resolve`));
     }
     if (cat.id === 'cn_services') {
-      lines.push(`ruleset=${cat.groupName},[]GEOIP,CN`);
+      ipIniLines.push(`ruleset=${cat.groupName},[]GEOIP,CN`);
     }
   }
 
+  lines.push(...domainIniLines, ...ipIniLines);
   lines.push(`ruleset=${DEFAULT_SELECT_GROUP},[]FINAL`);
   lines.push('');
 
@@ -500,22 +591,20 @@ export function generateSubconverterIniConfig(options: Partial<BuiltinTransformC
     { name: '🇰🇷 韩国节点', regex: '(KR|Korea|KOR|首尔|韩|韓)' },
   ];
 
-  const regionRefs = bt.groupByCountry ? REGION_REGEX_GROUPS.map((r) => `[]${r.name}`).join('`') : '';
-  const autoRef = bt.includeAutoSelect ? `[]${AUTO_SELECT_GROUP}` : '';
+  const regionRefs = cvr.groupByCountry ? REGION_REGEX_GROUPS.map((r) => `[]${r.name}`).join('`') : '';
+  const autoRef = cvr.includeAutoSelect ? `[]${AUTO_SELECT_GROUP}` : '';
   const commonProxyRefs = [autoRef, regionRefs, `[]${MANUAL_SELECT_GROUP}`].filter(Boolean).join('`');
 
-  // 顶层策略组
   lines.push(
     `custom_proxy_group=${DEFAULT_SELECT_GROUP}\`select\`${[commonProxyRefs, '[]DIRECT'].filter(Boolean).join('`')}`,
   );
-  if (bt.includeAutoSelect) {
+  if (cvr.includeAutoSelect) {
     lines.push(`custom_proxy_group=${AUTO_SELECT_GROUP}\`url-test\`.*\`http://www.gstatic.com/generate_204\`300,,50`);
   }
   lines.push(`custom_proxy_group=${MANUAL_SELECT_GROUP}\`select\`.*`);
 
-  // 自定义规则组
   const emittedGroups = new Set([DEFAULT_SELECT_GROUP, AUTO_SELECT_GROUP, MANUAL_SELECT_GROUP]);
-  for (const custom of bt.customRules) {
+  for (const custom of cvr.customRules) {
     if (emittedGroups.has(custom.name)) continue;
     emittedGroups.add(custom.name);
     const members =
@@ -527,7 +616,6 @@ export function generateSubconverterIniConfig(options: Partial<BuiltinTransformC
     lines.push(`custom_proxy_group=${custom.name}\`select\`${members}`);
   }
 
-  // 勾选分类组
   for (const ruleId of selectedIds) {
     const cat = VISUAL_RULE_MAP[ruleId];
     if (!cat || emittedGroups.has(cat.groupName)) continue;
@@ -541,8 +629,7 @@ export function generateSubconverterIniConfig(options: Partial<BuiltinTransformC
     lines.push(`custom_proxy_group=${cat.groupName}\`select\`${members}`);
   }
 
-  // 地区分组
-  if (bt.groupByCountry) {
+  if (cvr.groupByCountry) {
     for (const region of REGION_REGEX_GROUPS) {
       lines.push(
         `custom_proxy_group=${region.name}\`url-test\`${region.regex}\`http://www.gstatic.com/generate_204\`300,,50`,
@@ -557,4 +644,4 @@ export function generateSubconverterIniConfig(options: Partial<BuiltinTransformC
   return `${lines.join('\n')}\n`;
 }
 
-export { normalizeBuiltinTransform, VISUAL_RULE_PRESETS };
+export { normalizeCustomVisualRules, VISUAL_RULE_PRESETS };

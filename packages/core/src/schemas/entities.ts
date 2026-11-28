@@ -264,21 +264,65 @@ export const ProfilePrefixSettingsSchema = z
   })
   .passthrough();
 
-export const ProfileSubconverterSchema = z
+export const TransformModeSchema = z.enum(['smart', 'template', 'external']);
+export const SmartPresetSchema = z.enum(['minimal', 'balanced', 'full']);
+export const CustomVisualRuleActionSchema = z.enum(['proxy', 'direct', 'reject']);
+
+export const CustomVisualRuleSchema = z
   .object({
-    engineMode: z.string().optional(),
-    backend: z.string().optional(),
-    options: z
-      .object({
-        udp: z.boolean().nullable().optional(),
-        emoji: z.boolean().nullable().optional(),
-        scv: z.boolean().nullable().optional(),
-        sort: z.boolean().nullable().optional(),
-        tfo: z.boolean().nullable().optional(),
-        list: z.boolean().nullable().optional(),
-      })
-      .passthrough()
-      .optional(),
+    name: z.string().default(''),
+    action: CustomVisualRuleActionSchema.default('proxy'),
+    domainSuffix: z.array(z.string()).default([]),
+    domainKeyword: z.array(z.string()).default([]),
+    ipCidr: z.array(z.string()).default([]),
+    srcIpCidr: z.array(z.string()).default([]),
+    ruleSet: z.array(z.string()).default([]),
+  })
+  .passthrough();
+
+export const CustomVisualRulesConfigSchema = z
+  .object({
+    selectedRules: z.array(z.string()).optional(),
+    customRules: z.array(CustomVisualRuleSchema).default([]),
+    groupByCountry: z.boolean().optional(),
+    includeAutoSelect: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const BaseConfigTemplatesSchema = z
+  .object({
+    singbox: z.string().default(''),
+    clash: z.string().default(''),
+    surge: z.string().default(''),
+  })
+  .passthrough();
+
+export const AdvancedBaseConfigSchema = z
+  .object({
+    enableClashApi: z.boolean().default(false),
+    externalController: z.string().default('0.0.0.0:9090'),
+    externalUiDownloadUrl: z.string().default(''),
+    baseConfig: BaseConfigTemplatesSchema.default({ singbox: '', clash: '', surge: '' }),
+  })
+  .passthrough();
+
+export const ExternalBackendConfigSchema = z
+  .object({
+    url: z.string().default(''),
+    templateUrl: z.string().default(''),
+    sort: z.boolean().default(false),
+    tfo: z.boolean().default(false),
+    list: z.boolean().default(false),
+  })
+  .passthrough();
+
+export const ProfileExternalBackendSchema = z
+  .object({
+    url: z.string().optional(),
+    templateUrl: z.string().optional(),
+    sort: z.boolean().nullable().optional(),
+    tfo: z.boolean().nullable().optional(),
+    list: z.boolean().nullable().optional(),
   })
   .passthrough();
 
@@ -297,12 +341,16 @@ export const ProfileSchema = z
     manualNodes: z.array(z.string()).default([]),
     subProfiles: z.array(z.string()).default([]),
     tags: z.array(z.string()).optional(),
-    transformConfigMode: z.string().optional(),
-    transformConfig: z.string().optional(),
-    ruleLevel: z.string().optional(),
+    transformMode: TransformModeSchema.optional(),
+    smartPreset: SmartPresetSchema.optional(),
+    customVisualRules: CustomVisualRulesConfigSchema.optional(),
+    templateConfig: z.string().optional(),
+    externalBackend: ProfileExternalBackendSchema.optional(),
+    enableUdp: z.boolean().optional(),
+    skipCertVerify: z.boolean().optional(),
+    enableRelay: z.boolean().optional(),
     target: z.string().optional(),
     prefixSettings: ProfilePrefixSettingsSchema.optional(),
-    subconverter: ProfileSubconverterSchema.optional(),
     operators: z.array(OperatorRuleSchema).optional(),
     nodeTransform: z.record(z.string(), z.unknown()).nullable().optional(),
     nodeTransformPresetId: z.string().optional(),
@@ -311,6 +359,7 @@ export const ProfileSchema = z
     portalRedirectUrl: z.string().optional(),
     portalNotice: z.string().optional(),
     multiSocksEnabled: z.boolean().nullable().optional(),
+    multiSocksLite: z.boolean().nullable().optional(),
     multiSocksStartPort: z.number().int().min(1024).max(60000).nullable().optional(),
     multiSocksListen: z.enum(['', '127.0.0.1', '0.0.0.0']).nullable().optional(),
     multiSocksUsername: z.string().optional(),
@@ -387,25 +436,6 @@ export const ExternalApiConfigSchema = z
   .object({
     enabled: z.boolean().default(false),
     tokens: z.array(ExternalApiTokenSchema).default([]),
-  })
-  .passthrough();
-
-export const SubconverterOptionsSchema = z
-  .object({
-    udp: z.boolean().optional(),
-    emoji: z.boolean().optional(),
-    scv: z.boolean().optional(),
-    tfo: z.boolean().optional(),
-    sort: z.boolean().optional(),
-    list: z.boolean().optional(),
-  })
-  .passthrough();
-
-export const SubconverterConfigSchema = z
-  .object({
-    engineMode: z.string().optional(),
-    defaultBackend: z.string().optional(),
-    defaultOptions: SubconverterOptionsSchema.optional(),
   })
   .passthrough();
 
@@ -522,12 +552,14 @@ export const SettingsSchema = z
     hasBotToken: z.boolean().optional(),
     chatId: z.string().optional(),
     customLoginPath: z.string().optional(),
-    transformConfigMode: z.string().optional(),
-    transformConfig: z.string().optional(),
-    ruleLevel: z.string().optional(),
-    builtinSkipCertVerify: z.boolean().optional(),
-    builtinEnableUdp: z.boolean().optional(),
-    builtinTransform: z.record(z.string(), z.unknown()).optional(),
+    transformMode: TransformModeSchema.optional(),
+    smartPreset: SmartPresetSchema.optional(),
+    templateConfig: z.string().optional(),
+    customVisualRules: CustomVisualRulesConfigSchema.optional(),
+    advancedBaseConfig: AdvancedBaseConfigSchema.optional(),
+    enableUdp: z.boolean().optional(),
+    skipCertVerify: z.boolean().optional(),
+    enableRelay: z.boolean().optional(),
     enableAccessLog: z.boolean().optional(),
     accessLogPersistenceMode: z.string().optional(),
     mergeExpireStrategy: z.enum(['max', 'min']).optional(),
@@ -543,6 +575,7 @@ export const SettingsSchema = z
     subPortalTitle: z.string().optional(),
     subPortalNotice: z.string().optional(),
     defaultMultiSocksEnabled: z.boolean().optional(),
+    defaultMultiSocksLite: z.boolean().optional(),
     defaultMultiSocksStartPort: z.number().int().min(1024).max(60000).optional(),
     defaultMultiSocksListen: z.enum(['127.0.0.1', '0.0.0.0']).optional(),
     disguise: DisguiseConfigSchema.optional(),
@@ -563,11 +596,12 @@ export const SettingsSchema = z
     guestbook: GuestbookConfigSchema.optional(),
     webdavBackup: WebdavBackupConfigSchema.optional(),
     externalApi: ExternalApiConfigSchema.optional(),
-    subconverter: SubconverterConfigSchema.optional(),
+    externalBackend: ExternalBackendConfigSchema.optional(),
     shortLink: ShortLinkConfigSchema.optional(),
     turnstile: TurnstileConfigSchema.optional(),
     telegramPushConfig: TelegramPushConfigSchema.optional(),
     customDnsOverride: z.string().optional(),
+    dnsMode: z.enum(['clean', 'polluted']).optional(),
     customPage: CustomPageConfigSchema.optional(),
     portalCustomPage: PortalCustomPageConfigSchema.optional(),
     hero: HeroConfigSchema.optional(),

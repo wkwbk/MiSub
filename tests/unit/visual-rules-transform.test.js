@@ -5,6 +5,8 @@ import { generateBuiltinSingboxConfig } from '../../functions/modules/subscripti
 import { generateBuiltinSurgeConfig } from '../../functions/modules/subscription/adapters/generators/builtin-surge-generator.js';
 import { generateSubconverterIniConfig } from '../../functions/modules/subscription/core/visual-rules-builder.js';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
+import { transformBuiltinSubscription } from '../../functions/modules/subscription/adapters/transformer-factory.js';
+import { VISUAL_RULE_PRESETS } from '../../packages/core/src/domain/visual-rules-catalog.js';
 
 const SAMPLE_NODES = [
   'trojan://pass1@1.1.1.1:443#🇭🇰 香港 01',
@@ -15,8 +17,8 @@ const SAMPLE_NODES = [
 describe('MiSub Native Visual Rules & Transform Options', () => {
   it('generates Clash config from visual selectedRules, customRules, Clash API, and baseConfig override', () => {
     const clashYaml = generateBuiltinClashConfig(SAMPLE_NODES, {
-      builtinTransform: {
-        visualRulesEnabled: true,
+      smartPreset: 'balanced',
+      customVisualRules: {
         selectedRules: ['ai_services', 'youtube', 'cn_services'],
         customRules: [
           {
@@ -29,6 +31,8 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
         ],
         groupByCountry: true,
         includeAutoSelect: false,
+      },
+      advancedBaseConfig: {
         enableClashApi: true,
         externalController: '0.0.0.0:9099',
         externalUiDownloadUrl: 'https://example.com/ui.zip',
@@ -61,8 +65,8 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
 
   it('generates Sing-Box config with visual rules, Clash API experimental block, and JSON baseConfig override', () => {
     const rawJson = generateBuiltinSingboxConfig(SAMPLE_NODES, {
-      builtinTransform: {
-        visualRulesEnabled: true,
+      smartPreset: 'balanced',
+      customVisualRules: {
         selectedRules: ['ai_services', 'github'],
         customRules: [
           {
@@ -73,6 +77,8 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
         ],
         groupByCountry: false,
         includeAutoSelect: true,
+      },
+      advancedBaseConfig: {
         enableClashApi: true,
         externalController: '0.0.0.0:9090',
         externalUiDownloadUrl: 'https://example.com/zashboard.zip',
@@ -104,12 +110,14 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
 
   it('generates Surge config with visual rules and baseConfig [General] override', () => {
     const surgeIni = generateBuiltinSurgeConfig(SAMPLE_NODES, {
-      builtinTransform: {
-        visualRulesEnabled: true,
+      smartPreset: 'balanced',
+      customVisualRules: {
         selectedRules: ['telegram'],
         customRules: [{ name: '直连站点', action: 'direct', domainSuffix: ['my-site.cn'] }],
         groupByCountry: false,
         includeAutoSelect: false,
+      },
+      advancedBaseConfig: {
         baseConfig: {
           surge: '[General]\nloglevel = verbose\nipv6 = true\n',
         },
@@ -147,5 +155,88 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
     expect(body).toContain('🔒 国内服务');
     expect(body).not.toContain('🇭🇰 香港节点');
     expect(body).not.toContain('♻️ 自动选择');
+  });
+
+  it('minimal preset emits Mihomo .mrs providers with domain-before-IP order and no-resolve', () => {
+    const clashYaml = generateBuiltinClashConfig(SAMPLE_NODES, {
+      userAgent: 'ClashMeta/1.18.0',
+      smartPreset: 'minimal',
+      customVisualRules: {
+        selectedRules: [...VISUAL_RULE_PRESETS.minimal],
+      },
+    });
+    const parsed = yaml.load(clashYaml);
+    const providers = parsed['rule-providers'] || {};
+
+    expect(Object.keys(providers)).toEqual(
+      expect.arrayContaining(['geosite-private', 'geosite-cn', 'geosite-geolocation-!cn', 'geoip-private', 'geoip-cn']),
+    );
+    for (const def of Object.values(providers)) {
+      expect(def.format).toBe('mrs');
+      expect(def.url).toMatch(/\.mrs$/);
+      expect(def.url).not.toMatch(/\.yaml$/i);
+    }
+
+    const rules = parsed.rules || [];
+    const geositeCnIdx = rules.findIndex((r) => r.startsWith('RULE-SET,geosite-cn,'));
+    const geoipPrivateIdx = rules.findIndex((r) => r.startsWith('RULE-SET,geoip-private,'));
+    const geoipCnIdx = rules.findIndex((r) => r.startsWith('RULE-SET,geoip-cn,'));
+    expect(geositeCnIdx).toBeGreaterThan(-1);
+    expect(geositeCnIdx).toBeLessThan(geoipPrivateIdx);
+    expect(geoipPrivateIdx).toBeLessThan(geoipCnIdx);
+    expect(rules[geoipPrivateIdx]).toContain(',no-resolve');
+    expect(rules[geoipCnIdx]).toContain(',no-resolve');
+  });
+
+  it('falls back to fixed .list text providers when preferMrsRules is false or Stash UA is used', () => {
+    for (const opts of [{ preferMrsRules: false }, { userAgent: 'Stash/2.6.0 Clash/1.18.0' }]) {
+      const clashYaml = generateBuiltinClashConfig(SAMPLE_NODES, {
+        ...opts,
+        smartPreset: 'minimal',
+        customVisualRules: {
+          selectedRules: [...VISUAL_RULE_PRESETS.minimal],
+        },
+      });
+      const parsed = yaml.load(clashYaml);
+      const providerMap = parsed['rule-providers'] || {};
+      const providers = Object.values(providerMap);
+      expect(providers.length).toBeGreaterThan(0);
+      for (const def of providers) {
+        expect(def.format).not.toBe('mrs');
+        expect(def.url).not.toMatch(/\.mrs$/i);
+        expect(def.url).not.toMatch(/Providers\/(?:LocalAreaNetwork|ChinaDomain)\.yaml$/i);
+      }
+      expect(providerMap.VIS_PRIVATE).toMatchObject({
+        format: 'text',
+        url: expect.stringMatching(/\.list$/i),
+      });
+      expect(providerMap.VIS_CN_SERVICES).toMatchObject({
+        format: 'text',
+        url: expect.stringMatching(/\.list$/i),
+      });
+      expect(providerMap.VIS_NON_CN.format).toBeUndefined();
+      expect(providerMap.VIS_NON_CN.url).toMatch(/Providers\/ProxyLite\.yaml$/i);
+      expect(parsed.rules).toContain('GEOIP,CN,🔒 国内服务,no-resolve');
+    }
+  });
+
+  it('supports Loon and Quantumult X visual rules end-to-end with IP-DoH DNS', async () => {
+    const visualOpts = {
+      smartPreset: 'balanced',
+      customVisualRules: {
+        selectedRules: ['ad_block', 'private', 'cn_services'],
+      },
+    };
+
+    const loon = await transformBuiltinSubscription(SAMPLE_NODES, 'loon', visualOpts);
+    expect(loon).toContain('doh-server = https://223.5.5.5/dns-query, https://120.53.53.53/dns-query');
+    expect(loon).toContain('geoip-url = https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb');
+    expect(loon).toContain('BanAD.list');
+    expect(loon).toContain('GEOIP,CN,🔒 国内服务,no-resolve');
+
+    const quanx = await transformBuiltinSubscription(SAMPLE_NODES, 'quanx', visualOpts);
+    expect(quanx).toContain('doh-server = https://223.5.5.5/dns-query');
+    expect(quanx).toContain('filter_remote');
+    expect(quanx).toContain('final, 🚀 节点选择');
   });
 });

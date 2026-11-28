@@ -7,8 +7,7 @@ import {
   formatNotificationExpireTime,
   resolveExternalTemplateConfigUrl,
   resolveTemplateSource,
-  resolveTemplateUrl,
-  shouldRenderClashYamlProfileTemplateLocally,
+  resolveTransformPlan,
 } from '../../functions/modules/subscription/core/main-handler.js';
 
 describe('Main handler template url', () => {
@@ -58,23 +57,30 @@ describe('Main handler template url', () => {
     );
   });
 
-  it('should resolve template sources by mode', () => {
-    expect(resolveTemplateUrl('builtin', 'https://example.com/a.yaml', 'https://example.com/fallback.yaml')).toBe('');
-    expect(resolveTemplateUrl('global', '', 'https://example.com/fallback.yaml')).toBe(
-      'https://example.com/fallback.yaml',
-    );
-    expect(resolveTemplateUrl('preset', 'https://example.com/preset.yaml', 'https://example.com/fallback.yaml')).toBe(
-      'https://example.com/preset.yaml',
-    );
-    expect(resolveTemplateUrl('custom', 'https://example.com/custom.yaml', 'https://example.com/fallback.yaml')).toBe(
-      'https://example.com/custom.yaml',
-    );
-    expect(resolveTemplateUrl('custom_template', 'custom:tpl-a', 'https://example.com/fallback.yaml')).toBe(
-      'custom:tpl-a',
-    );
-    expect(
-      resolveTemplateUrl('custom_template', 'https://example.com/not-local.ini', 'https://example.com/fallback.yaml'),
-    ).toBe('');
+  it('should resolve template sources cleanly per transform mode', () => {
+    const smartPlan = resolveTransformPlan({
+      profile: { transformMode: 'smart', templateConfig: 'https://example.com/a.yaml' },
+      config: { transformMode: 'template', templateConfig: 'https://example.com/fallback.yaml' },
+    });
+    expect(smartPlan.mode).toBe('smart');
+    expect(smartPlan.templateSource).toEqual({ kind: 'none', value: '' });
+
+    const inheritTemplatePlan = resolveTransformPlan({
+      profile: {},
+      config: { transformMode: 'template', templateConfig: 'https://example.com/fallback.yaml' },
+    });
+    expect(inheritTemplatePlan.mode).toBe('template');
+    expect(inheritTemplatePlan.templateSource).toEqual({
+      kind: 'remote',
+      value: 'https://example.com/fallback.yaml',
+    });
+
+    const profileCustomTemplatePlan = resolveTransformPlan({
+      profile: { transformMode: 'template', templateConfig: 'custom:tpl-a' },
+      config: { transformMode: 'template', templateConfig: 'https://example.com/fallback.yaml' },
+    });
+    expect(profileCustomTemplatePlan.templateSource).toEqual({ kind: 'custom', value: 'tpl-a' });
+
     expect(resolveTemplateSource('builtin:clash_acl4ssr_full')).toEqual({
       kind: 'builtin',
       value: 'clash_acl4ssr_full',
@@ -92,9 +98,7 @@ describe('Main handler template url', () => {
       backend: 'https://sub.example.com/sub',
       targetFormat: 'clash',
       nodeList: 'ss://node-a#A\nss://node-b#B',
-      templateSource: resolveTemplateSource(
-        'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/main/subconverter-shellcrash-needs.yaml',
-      ),
+      templateUrl: 'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/main/subconverter-shellcrash-needs.yaml',
       subName: 'ShellCrash',
     });
 
@@ -110,9 +114,7 @@ describe('Main handler template url', () => {
       backend: 'https://sub.example.com/sub',
       targetFormat: 'clash',
       nodeList: 'ss://node-a#A',
-      templateSource: resolveTemplateSource(
-        'https://github.com/Luckylos/shellcrashyaml/blob/main/subconverter-shellcrash-needs.yaml',
-      ),
+      templateUrl: 'https://github.com/Luckylos/shellcrashyaml/blob/main/subconverter-shellcrash-needs.yaml',
       subName: 'ShellCrash',
     });
 
@@ -121,31 +123,33 @@ describe('Main handler template url', () => {
     );
   });
 
-  it('should render remote Clash YAML profile templates locally in external mode', () => {
-    expect(
-      shouldRenderClashYamlProfileTemplateLocally({
-        isExternalMode: true,
-        targetFormat: 'clash',
-        templateSource: resolveTemplateSource(
+  it('treats remote Clash YAML profiles strictly as template mode rather than external mode', () => {
+    const externalPlan = resolveTransformPlan({
+      profile: {
+        transformMode: 'external',
+        externalBackend: {
+          url: 'api.v1.mk',
+          templateUrl:
+            'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml',
+        },
+      },
+      config: { transformMode: 'smart' },
+    });
+    expect(externalPlan.mode).toBe('external');
+
+    const templatePlan = resolveTransformPlan({
+      profile: {
+        transformMode: 'template',
+        templateConfig:
           'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml',
-        ),
-      }),
-    ).toBe(true);
-    expect(
-      shouldRenderClashYamlProfileTemplateLocally({
-        isExternalMode: true,
-        targetFormat: 'surge',
-        templateSource: resolveTemplateSource(
-          'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml',
-        ),
-      }),
-    ).toBe(false);
-    expect(
-      shouldRenderClashYamlProfileTemplateLocally({
-        isExternalMode: true,
-        targetFormat: 'clash',
-        templateSource: resolveTemplateSource('https://example.com/subconverter.ini'),
-      }),
-    ).toBe(false);
+      },
+      config: { transformMode: 'smart' },
+    });
+    expect(templatePlan.mode).toBe('template');
+    expect(templatePlan.templateSource).toEqual({
+      kind: 'remote',
+      value:
+        'https://raw.githubusercontent.com/Luckylos/shellcrashyaml/refs/heads/main/subconverter-shellcrash-needs.yaml',
+    });
   });
 });

@@ -73,27 +73,6 @@ describe('Custom rule template UX regressions', () => {
     expect(wrapper.find('[data-testid="open-template-variables"]').exists()).toBe(false);
   });
 
-  it('restricts custom_template mode to saved custom: templates instead of remote URL input', () => {
-    const wrapper = mountWithStore(TransformSelector, {
-      props: {
-        modelValue: '',
-        type: 'config',
-        customTemplatesOnly: true,
-        allowEmpty: false,
-      },
-      ruleTemplates: [{ id: 'local-a', name: '本地模板 A', enabled: true, content: '[custom]\n' }],
-    });
-
-    const selectComp = wrapper.findComponent({ name: 'Select' });
-    const flattenValues = (opts) =>
-      opts.flatMap((item) => (Array.isArray(item.options) ? flattenValues(item.options) : [item.value]));
-    const optionValues = flattenValues(selectComp.props('options'));
-    expect(optionValues).toContain('custom:local-a');
-    expect(optionValues).not.toContain('custom');
-    expect(optionValues.some((value) => String(value || '').startsWith('http'))).toBe(false);
-    expect(wrapper.text()).toContain('仅可选择已保存的 custom: 自定义规则模板');
-  });
-
   it('keeps template variable helper collapsed by default and expands on demand', async () => {
     const wrapper = mountWithStore(TransformSelector, {
       props: {
@@ -163,7 +142,6 @@ describe('Custom rule template UX regressions', () => {
       props: {
         modelValue: 'custom:missing-template',
         type: 'config',
-        customTemplatesOnly: true,
         allowEmpty: false,
       },
       ruleTemplates: [{ id: 'other-template', name: '其他模板', enabled: true, content: '[custom]\n' }],

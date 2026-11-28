@@ -92,6 +92,12 @@ function buildProxyLine(proxy: TemplateProxy): string | null {
       const grpcOpts = asRecord(proxy['grpc-opts']) || asRecord(proxy.grpcOpts);
       if (grpcOpts?.['grpc-service-name']) extras.push(`grpc-service-name=${grpcOpts['grpc-service-name']}`);
     }
+    if (proxy.network === 'xhttp' || proxy['xhttp-opts']) {
+      const xhttpOpts = asRecord(proxy['xhttp-opts']) || asRecord(proxy.xhttpOpts);
+      if (xhttpOpts?.path) extras.push(`path=${xhttpOpts.path}`);
+      if (xhttpOpts?.host) extras.push(`host=${xhttpOpts.host}`);
+      if (xhttpOpts?.mode) extras.push(`mode=${xhttpOpts.mode}`);
+    }
     if (proxy.flow) extras.push(`flow=${proxy.flow}`);
     if (proxy.tls || sni !== undefined) extras.push('over-tls=true');
     const realityOpts = asRecord(proxy['reality-opts']) || asRecord(proxy.realityOpts);
@@ -240,16 +246,20 @@ function buildRuleLine(rule: TemplateRule): string | null {
   if (typeof rule === 'string') return rule;
   const type = String(rule.type || '').toUpperCase();
   if (!type || type === 'RULE-SET') return null;
+  const extras = Array.isArray(rule.extras) && rule.extras.length > 0 ? `,${rule.extras.join(',')}` : '';
   if (type === 'MATCH' || type === 'FINAL') {
     return `FINAL,${rule.policy}`;
   }
   if (type === 'GEOIP') {
-    return `GEOIP,${rule.value || 'CN'},${rule.policy}`;
+    return `GEOIP,${rule.value || 'CN'},${rule.policy}${extras}`;
   }
-  return `${type},${rule.value},${rule.policy}`;
+  return `${type},${rule.value},${rule.policy}${extras}`;
 }
 
-function buildRemoteRuleLine(rule: TemplateRule, { isChinaClient = false }: { isChinaClient?: boolean } = {}): string | null {
+function buildRemoteRuleLine(
+  rule: TemplateRule,
+  { isChinaClient = false }: { isChinaClient?: boolean } = {},
+): string | null {
   if (typeof rule === 'string') return null;
   const type = String(rule.type || '').toUpperCase();
   if (type !== 'RULE-SET') return null;
@@ -257,10 +267,7 @@ function buildRemoteRuleLine(rule: TemplateRule, { isChinaClient = false }: { is
   return `${pinRemoteRuleUrl(rule.value, { isChinaClient })}, policy=${rule.policy}, enabled=true`;
 }
 
-export function renderLoonFromTemplateModel(
-  model: UnifiedTemplateModelInput,
-  options: RenderLoonOptions = {},
-): string {
+export function renderLoonFromTemplateModel(model: UnifiedTemplateModelInput, options: RenderLoonOptions = {}): string {
   const normalizedModel = normalizeUnifiedTemplateModel(model);
   const proxies = resolveModelProxies(normalizedModel, options);
   const ruleLines = normalizedModel.rules
@@ -282,7 +289,7 @@ export function renderLoonFromTemplateModel(
     '[General]',
     'ip-mode = ipv4-preferred',
     'dns-server = 223.5.5.5, 119.29.29.29',
-    'doh-server = https://223.5.5.5/resolve,https://sm2.doh.pub/dns-query',
+    'doh-server = https://223.5.5.5/dns-query, https://120.53.53.53/dns-query',
     'skip-proxy = 127.0.0.1, 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10, localhost, *.local, elpass.app, e.crashlytics.com, captive.apple.com, ::ffff:0:0:0:0/1, ::ffff:128:0:0:0/1, fe80::/10, fc00::/7, ::1/128',
     'bypass-tun = 192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12, 100.64.0.0/10',
     'interface-mode = auto',
@@ -292,7 +299,7 @@ export function renderLoonFromTemplateModel(
     'wifi-access-http-port = 7222',
     'wifi-access-socks5-port = 7221',
     'resource-parser = https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-parser.loon.min.js',
-    'geoip-url = https://gitlab.com/Masaiki/GeoIP2-CN/-/raw/release/Country.mmdb',
+    'geoip-url = https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb',
     'proxy-test-url = http://www.gstatic.com/generate_204',
     'internet-test-url = http://www.apple.com/library/test/success.html',
 

@@ -6,12 +6,16 @@ import {
   type UseQueryOptions,
 } from '@tanstack/vue-query';
 import type {
-  BuiltinTransformConfig,
+  AdvancedBaseConfig,
+  CustomVisualRulesConfig,
+  ExternalBackendConfig,
   ProfileConfig,
   SettingsConfig,
+  SmartPreset,
   SubscriptionItem,
   SubscriptionUserInfo,
   TelegramPushConfig,
+  TransformMode,
 } from '@misub/core/types.js';
 import { api } from '@/lib/http.js';
 import { fetchSettings, type ApiFailureResult, type ApiResult } from '@/lib/api.js';
@@ -64,7 +68,6 @@ export interface StoreMisubItem {
 }
 
 export type StoreProfileConfig = ProfileConfig & {
-  clashRuleLevel?: string;
   desc?: string;
   remark?: string;
 };
@@ -87,8 +90,13 @@ type DefaultSettingsShape = Omit<
   | 'mergeExpireStrategy'
   | 'subFetchLimitMode'
   | 'subPortalMode'
+  | 'dnsMode'
   | 'defaultMultiSocksListen'
-  | 'builtinTransform'
+  | 'transformMode'
+  | 'smartPreset'
+  | 'customVisualRules'
+  | 'advancedBaseConfig'
+  | 'externalBackend'
   | 'tokenAutoRotate'
   | 'disguise'
   | 'defaultPrefixSettings'
@@ -96,7 +104,6 @@ type DefaultSettingsShape = Omit<
   | 'guestbook'
   | 'webdavBackup'
   | 'externalApi'
-  | 'subconverter'
   | 'shortLink'
   | 'turnstile'
   | 'customPage'
@@ -107,21 +114,30 @@ type DefaultSettingsShape = Omit<
 
 export type AppSettingsConfig = Omit<
   KnownKeys<SettingsConfig>,
-  | 'builtinTransform'
   | 'telegramPushConfig'
   | 'mergeExpireStrategy'
   | 'subFetchLimitMode'
   | 'subPortalMode'
+  | 'dnsMode'
   | 'defaultMultiSocksListen'
+  | 'transformMode'
+  | 'smartPreset'
+  | 'customVisualRules'
+  | 'advancedBaseConfig'
+  | 'externalBackend'
 > &
   DefaultSettingsShape & {
     mergeExpireStrategy?: 'max' | 'min';
     subFetchLimitMode?: 'cache' | 'strict';
     subPortalMode?: 'portal' | 'redirect' | 'raw';
+    dnsMode?: 'clean' | 'polluted';
     defaultMultiSocksListen?: '127.0.0.1' | '0.0.0.0';
-    builtinTransform?: BuiltinTransformConfig;
+    transformMode?: TransformMode;
+    smartPreset?: SmartPreset;
+    customVisualRules?: CustomVisualRulesConfig;
+    advancedBaseConfig?: AdvancedBaseConfig;
+    externalBackend?: ExternalBackendConfig;
     customLoginPath?: string;
-    clashRuleLevel?: string;
     prefixConfig?: unknown;
     prependSubName?: unknown;
     nodeTransform?: unknown;
@@ -158,11 +174,10 @@ export interface SaveSettingsResponse {
   };
 }
 
-export interface UseAppDataQueryOptions
-  extends Omit<
-    UseQueryOptions<AppDataSnapshot | null, Error, AppDataSnapshot | null, typeof QUERY_KEYS.appData>,
-    'queryKey' | 'queryFn'
-  > {
+export interface UseAppDataQueryOptions extends Omit<
+  UseQueryOptions<AppDataSnapshot | null, Error, AppDataSnapshot | null, typeof QUERY_KEYS.appData>,
+  'queryKey' | 'queryFn'
+> {
   queryClient?: QueryClient;
 }
 
@@ -172,8 +187,10 @@ export interface SaveSettingsMutationVariables {
   currentConfig?: Partial<AppSettingsConfig>;
 }
 
-export interface UseSaveSettingsMutationOptions
-  extends Omit<UseMutationOptions<SaveSettingsResponse, Error, SaveSettingsMutationVariables>, 'mutationFn'> {
+export interface UseSaveSettingsMutationOptions extends Omit<
+  UseMutationOptions<SaveSettingsResponse, Error, SaveSettingsMutationVariables>,
+  'mutationFn'
+> {
   queryClient?: QueryClient;
 }
 
@@ -184,7 +201,9 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 }
 
-function sanitizeConfigForCache(config: Partial<AppSettingsConfig> | Record<string, unknown> = {}): Record<string, unknown> {
+function sanitizeConfigForCache(
+  config: Partial<AppSettingsConfig> | Record<string, unknown> = {},
+): Record<string, unknown> {
   if (!isPlainRecord(config)) return {};
   const sanitized: Record<string, unknown> = { ...config };
   delete sanitized.botToken;
@@ -329,16 +348,16 @@ export function syncAppDataSnapshotToCache(
     normalizeAppDataSnapshot(readSessionCachedAppData());
 
   const nextSnapshot: AppDataSnapshot = {
-    misubs: patch.misubs ? patch.misubs.map((sub) => hydrateItemTags({ ...sub, isUpdating: false })) : current?.misubs ?? [],
+    misubs: patch.misubs
+      ? patch.misubs.map((sub) => hydrateItemTags({ ...sub, isUpdating: false }))
+      : (current?.misubs ?? []),
     profiles: patch.profiles
       ? patch.profiles.map((profile) => ({ ...profile, tags: getItemTags(profile) }))
-      : current?.profiles ?? [],
+      : (current?.profiles ?? []),
     ruleTemplates: current?.ruleTemplates ?? [],
-    config: (
-      patch.config
-        ? { ...DEFAULT_SETTINGS, ...current?.config, ...patch.config }
-        : current?.config || { ...DEFAULT_SETTINGS }
-    ) as AppSettingsConfig,
+    config: (patch.config
+      ? { ...DEFAULT_SETTINGS, ...current?.config, ...patch.config }
+      : current?.config || { ...DEFAULT_SETTINGS }) as AppSettingsConfig,
   };
 
   if (queryClient) {

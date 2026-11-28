@@ -4,6 +4,7 @@ import { transformBuiltinSubscription } from '../../functions/modules/subscripti
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { createMemoryD1 } from '../helpers/memory-d1.js';
 import { VISUAL_RULE_CATEGORIES, VISUAL_RULE_PRESETS } from '@misub/core/domain/visual-rules-catalog.js';
+import { renderSingboxFromIniTemplate } from '../../functions/modules/subscription/templates/template-pipeline.js';
 
 // 覆盖所有 MiSub 支持的协议类型 + 多地区名称
 const ALL_PROTOCOL_NODES = [
@@ -166,12 +167,19 @@ function assertSingboxIntegrity(jsonStr) {
 }
 
 describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All Clients', () => {
-  describe('1. Built-in auto routing (base / std / full / relay) across all clients', () => {
-    for (const ruleLevel of ['base', 'std', 'full', 'relay']) {
-      it(`renders valid Clash, Sing-Box, Surge, Loon, QuanX, Egern for ruleLevel=${ruleLevel}`, async () => {
+  describe('1. Built-in smart routing presets (minimal / balanced / full) & enableRelay across all clients', () => {
+    for (const { smartPreset, enableRelay } of [
+      { smartPreset: 'minimal', enableRelay: false },
+      { smartPreset: 'balanced', enableRelay: false },
+      { smartPreset: 'full', enableRelay: false },
+      { smartPreset: 'minimal', enableRelay: true },
+      { smartPreset: 'full', enableRelay: true },
+    ]) {
+      it(`renders valid Clash, Sing-Box, Surge, Loon, QuanX, Egern for smartPreset=${smartPreset}, enableRelay=${enableRelay}`, async () => {
         const clash = assertClashIntegrity(
           await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', {
-            ruleLevel,
+            smartPreset,
+            enableRelay,
             isMeta: true,
             enableUdp: true,
             skipCertVerify: true,
@@ -179,18 +187,26 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         );
         // 所有协议节点均应被解析
         expect(clash.proxies.length).toBeGreaterThanOrEqual(16);
+        if (enableRelay) {
+          expect(clash['proxy-groups'].some((g) => g.name === '🔗 中转节点')).toBe(true);
+        }
 
         const singbox = assertSingboxIntegrity(
           await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', {
-            ruleLevel,
+            smartPreset,
+            enableRelay,
             enableUdp: true,
             skipCertVerify: true,
           }),
         );
         expect(singbox.outbounds.filter((o) => o.server).length).toBeGreaterThanOrEqual(16);
+        if (enableRelay) {
+          expect(singbox.outbounds.some((o) => o.tag === '🔗 中转节点')).toBe(true);
+        }
 
         const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', {
-          ruleLevel,
+          smartPreset,
+          enableRelay,
           managedConfigUrl: 'https://misub.example.com/sub/test',
         });
         expect(surge).toContain('[General]');
@@ -205,36 +221,40 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         expect(surge).toContain('= tuic-v5,');
         expect(surge).toContain('= snell,');
 
-        const loon = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'loon', { ruleLevel });
+        const loon = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'loon', { smartPreset, enableRelay });
         expect(loon).toContain('[Proxy]');
         expect(loon).toContain('[Proxy Group]');
 
-        const quanx = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'quanx', { ruleLevel });
+        const quanx = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'quanx', { smartPreset, enableRelay });
         expect(quanx).toContain('[server_local]');
         expect(quanx).toContain('[policy]');
 
-        const egern = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'egern', { ruleLevel });
+        const egern = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'egern', { smartPreset, enableRelay });
         expect(egern).toContain('proxies:');
       });
     }
   });
 
-  describe('2. Visual rules mode (minimal / balanced / comprehensive / custom + customRules)', () => {
+  describe('2. Visual rules mode (minimal / balanced / full / custom + customRules)', () => {
     for (const [presetName, ruleIds] of Object.entries(VISUAL_RULE_PRESETS)) {
       it(`generates integrity-verified Clash, Sing-Box, Surge for visual preset=${presetName}`, async () => {
-        const builtinTransform = {
-          visualRulesEnabled: true,
-          selectedRules: ruleIds,
-          customRules: CUSTOM_RULES_SAMPLE,
-          groupByCountry: true,
-          includeAutoSelect: true,
-          enableClashApi: true,
-          externalController: '0.0.0.0:9090',
-          externalUiDownloadUrl: 'https://example.com/zashboard.zip',
+        const visualOpts = {
+          smartPreset: presetName,
+          customVisualRules: {
+            selectedRules: ruleIds,
+            customRules: CUSTOM_RULES_SAMPLE,
+            groupByCountry: true,
+            includeAutoSelect: true,
+          },
+          advancedBaseConfig: {
+            enableClashApi: true,
+            externalController: '0.0.0.0:9090',
+            externalUiDownloadUrl: 'https://example.com/zashboard.zip',
+          },
         };
 
         const clash = assertClashIntegrity(
-          await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform, isMeta: true }),
+          await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { ...visualOpts, isMeta: true }),
         );
         const clashGroupNames = clash['proxy-groups'].map((g) => g.name);
         expect(clashGroupNames).toContain('🏢 公司内网');
@@ -247,7 +267,7 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         expect(clash.rules).toContain('GEOSITE,openai,⭐ 专属代理');
 
         const singbox = assertSingboxIntegrity(
-          await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }),
+          await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', visualOpts),
         );
         const sbTags = singbox.outbounds.map((o) => o.tag);
         expect(sbTags).toContain('🏢 公司内网');
@@ -255,7 +275,7 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         expect(sbTags).toContain('⭐ 专属代理');
         expect(singbox.experimental?.clash_api?.external_controller).toBe('0.0.0.0:9090');
 
-        const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', { builtinTransform });
+        const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', visualOpts);
         expect(surge).toContain('🏢 公司内网 = select, DIRECT');
         expect(surge).toContain('🚫 屏蔽域名 = select, REJECT');
         expect(surge).toContain('SRC-IP-CIDR,192.168.1.88/32,🏢 公司内网');
@@ -263,22 +283,24 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
     }
 
     it('handles empty selectedRules cleanly without crashing or producing invalid configs', async () => {
-      const builtinTransform = {
-        visualRulesEnabled: true,
-        selectedRules: [],
-        customRules: [],
-        groupByCountry: false,
-        includeAutoSelect: false,
-        enableClashApi: false,
+      const emptyOpts = {
+        smartPreset: 'balanced',
+        customVisualRules: {
+          selectedRules: [],
+          customRules: [],
+          groupByCountry: false,
+          includeAutoSelect: false,
+        },
+        advancedBaseConfig: {
+          enableClashApi: false,
+        },
       };
-      const clash = assertClashIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
-      );
+      const clash = assertClashIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', emptyOpts));
       expect(clash['proxy-groups'].map((g) => g.name)).not.toContain('♻️ 自动选择');
       expect(clash['proxy-groups'].map((g) => g.name)).not.toContain('🇭🇰 香港节点');
 
       const singbox = assertSingboxIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }),
+        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', emptyOpts),
       );
       expect(singbox.outbounds.map((o) => o.tag)).not.toContain('♻️ 自动选择');
       expect(singbox.experimental).toBeUndefined();
@@ -286,12 +308,12 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
 
     it('supports all 18 visual rule categories individually without broken providers', async () => {
       const allIds = VISUAL_RULE_CATEGORIES.map((c) => c.id);
-      const builtinTransform = { visualRulesEnabled: true, selectedRules: allIds };
+      const customVisualRules = { selectedRules: allIds };
       const clash = assertClashIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
+        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { smartPreset: 'full', customVisualRules }),
       );
       const singbox = assertSingboxIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }),
+        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { smartPreset: 'full', customVisualRules }),
       );
       expect(clash['proxy-groups'].length).toBeGreaterThanOrEqual(allIds.length);
       expect(singbox.route.rule_set.length).toBeGreaterThan(10);
@@ -299,77 +321,81 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
   });
 
   describe('3. General switches & Base Config Override edge cases', () => {
-    it('disables groupByCountry and includeAutoSelect in fixed ruleLevel mode too', async () => {
-      const builtinTransform = {
-        visualRulesEnabled: false,
-        groupByCountry: false,
-        includeAutoSelect: false,
+    it('disables groupByCountry and includeAutoSelect under balanced preset too', async () => {
+      const opts = {
+        smartPreset: 'balanced',
+        customVisualRules: {
+          groupByCountry: false,
+          includeAutoSelect: false,
+        },
       };
-      const clash = assertClashIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { ruleLevel: 'std', builtinTransform }),
-      );
+      const clash = assertClashIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', opts));
       const names = clash['proxy-groups'].map((g) => g.name);
       expect(names).not.toContain('♻️ 自动选择');
       expect(names).not.toContain('🇭🇰 香港节点');
 
-      const singbox = assertSingboxIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { ruleLevel: 'std', builtinTransform }),
-      );
+      const singbox = assertSingboxIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', opts));
       const sbTags = singbox.outbounds.map((o) => o.tag);
       expect(sbTags).not.toContain('♻️ 自动选择');
       expect(sbTags).not.toContain('🇭🇰 香港节点');
     });
 
     it('gracefully ignores malformed baseConfig (invalid YAML/JSON) without crashing', async () => {
-      const builtinTransform = {
-        visualRulesEnabled: true,
-        selectedRules: VISUAL_RULE_PRESETS.minimal,
-        baseConfig: {
-          clash: ':::invalid: [yaml',
-          singbox: '{invalid json',
-          surge: 'not even a section',
+      const malformedOpts = {
+        smartPreset: 'minimal',
+        customVisualRules: {
+          selectedRules: VISUAL_RULE_PRESETS.minimal,
+        },
+        advancedBaseConfig: {
+          baseConfig: {
+            clash: ':::invalid: [yaml',
+            singbox: '{invalid json',
+            surge: 'not even a section',
+          },
         },
       };
-      assertClashIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }));
-      assertSingboxIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }));
-      const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', { builtinTransform });
+      assertClashIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', malformedOpts));
+      assertSingboxIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', malformedOpts));
+      const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', malformedOpts);
       expect(surge).toContain('[General]');
     });
 
     it('merges valid baseConfig while protecting proxies/outbounds/rules across Clash, Sing-Box, Surge', async () => {
-      const builtinTransform = {
-        visualRulesEnabled: true,
-        selectedRules: VISUAL_RULE_PRESETS.minimal,
-        baseConfig: {
-          clash: 'mixed-port: 10808\nallow-lan: true\nipv6: true\nproxies: []\nproxy-groups: []\nrules: []\n',
-          singbox: JSON.stringify({
-            log: { level: 'debug' },
-            ntp: { enabled: true, server: 'time.apple.com' },
-            outbounds: [],
-            route: { auto_detect_interface: false, rules: [], rule_set: [] },
-          }),
-          surge:
-            '[General]\nloglevel = info\nipv6 = true\n\n[MITM]\nskip-server-cert-verify = true\n\n[Proxy]\nFAKE = direct\n',
+      const baseOpts = {
+        smartPreset: 'minimal',
+        customVisualRules: {
+          selectedRules: VISUAL_RULE_PRESETS.minimal,
+        },
+        advancedBaseConfig: {
+          baseConfig: {
+            clash: 'mixed-port: 10808\nallow-lan: true\nipv6: true\nproxies: []\nproxy-groups: []\nrules: []\n',
+            singbox: JSON.stringify({
+              log: { level: 'debug' },
+              ntp: { enabled: true, server: 'time.apple.com' },
+              outbounds: [],
+              route: { auto_detect_interface: false, rules: [], rule_set: [] },
+            }),
+            surge:
+              '[General]\nloglevel = info\nipv6 = true\n\n[MITM]\nskip-server-cert-verify = true\n\n[Proxy]\nFAKE = direct\n',
+          },
         },
       };
 
-      const clash = assertClashIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { builtinTransform }),
-      );
+      const clash = assertClashIntegrity(await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', baseOpts));
       expect(clash['mixed-port']).toBe(10808);
       expect(clash['allow-lan']).toBe(true);
       expect(clash.ipv6).toBe(true);
       expect(clash.proxies.length).toBeGreaterThanOrEqual(16);
 
       const singbox = assertSingboxIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', { builtinTransform }),
+        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'singbox', baseOpts),
       );
       expect(singbox.log.level).toBe('debug');
       expect(singbox.ntp?.enabled).toBe(true);
       expect(singbox.route.auto_detect_interface).toBe(false);
       expect(singbox.outbounds.filter((o) => o.server).length).toBeGreaterThanOrEqual(16);
 
-      const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', { builtinTransform });
+      const surge = await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'surge', baseOpts);
       expect(surge).toContain('ipv6 = true');
       expect(surge).toContain('[MITM]');
       expect(surge).not.toContain('FAKE = direct');
@@ -377,11 +403,12 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
   });
 
   describe('4. Subconverter external config API (/api/subconverter-config)', () => {
-    it('loads saved settings.builtinTransform when no query params are provided', async () => {
+    it('loads saved settings.customVisualRules when no query params are provided', async () => {
       const env = {
         MISUB_DB: createMemoryD1({
           main: {
-            builtinTransform: {
+            smartPreset: 'balanced',
+            customVisualRules: {
               selectedRules: ['ai_services', 'github'],
               customRules: [{ name: '保存的规则', action: 'direct', domainSuffix: ['saved.local'] }],
               groupByCountry: false,
@@ -445,7 +472,9 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
       ).toString('base64')}`;
 
       const clash = assertClashIntegrity(
-        await transformBuiltinSubscription([vlessEch, trojanEch, vmessEch].join('\n'), 'clash', { ruleLevel: 'std' }),
+        await transformBuiltinSubscription([vlessEch, trojanEch, vmessEch].join('\n'), 'clash', {
+          smartPreset: 'balanced',
+        }),
       );
       const vlessProxy = clash.proxies.find((p) => p.name.includes('OKRA|XHTTP|CDN'));
       const trojanProxy = clash.proxies.find((p) => p.name.includes('Trojan-ECH'));
@@ -459,7 +488,7 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
       });
 
       const singbox = assertSingboxIntegrity(
-        await transformBuiltinSubscription([trojanEch, vmessEch].join('\n'), 'singbox', { ruleLevel: 'std' }),
+        await transformBuiltinSubscription([trojanEch, vmessEch].join('\n'), 'singbox', { smartPreset: 'balanced' }),
       );
       const sbTrojan = singbox.outbounds.find((o) => o.tag.includes('Trojan-ECH'));
       const sbVmess = singbox.outbounds.find((o) => o.tag.includes('VMess-ECH'));
@@ -470,7 +499,7 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
 
     it('flattens Clash proxy-group options to top-level url/interval/tolerance', async () => {
       const clash = assertClashIntegrity(
-        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { ruleLevel: 'std' }),
+        await transformBuiltinSubscription(ALL_PROTOCOL_NODES, 'clash', { smartPreset: 'balanced' }),
       );
       for (const group of clash['proxy-groups']) {
         expect(group).not.toHaveProperty('options');
@@ -486,11 +515,97 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         'tuic://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257:pass123@no.okra.ijg.cc:51888?alpn=h3&congestion_control=bbr#OKRA%7CTU5',
         'tuic://legacytoken123@v4.example.com:443?alpn=h3#TUIC-V4',
       ].join('\n');
-      const surge = await transformBuiltinSubscription(nodes, 'surge', { ruleLevel: 'std' });
+      const surge = await transformBuiltinSubscription(nodes, 'surge', { smartPreset: 'balanced' });
       expect(surge).toContain(
         'OKRA|TU5 = tuic-v5, no.okra.ijg.cc, 51888, password=pass123, uuid=ecb7b51b-3e4f-448b-89a4-6fd2ceef8257, alpn=h3',
       );
       expect(surge).toContain('TUIC-V4 = tuic, v4.example.com, 443, token=legacytoken123, alpn=h3');
+    });
+
+    it('strips client-fingerprint when ech-opts is enabled on Clash/Mihomo output and defaults url-test/fallback lazy to true', async () => {
+      const vlessEch =
+        'vless://ecb7b51b-3e4f-448b-89a4-6fd2ceef8257@cf.libk.top:443?encryption=none&security=tls&sni=okra.ijg.cc&fp=chrome&alpn=h3&ech=cloudflare-ech.com&type=ws&path=%2Fws#VLESS-ECH';
+      const trojanPlain = 'trojan://pass123@tr.example.com:443?sni=tr.example.com#Trojan-Plain';
+
+      const clash = assertClashIntegrity(
+        await transformBuiltinSubscription([vlessEch, trojanPlain].join('\n'), 'clash', { smartPreset: 'balanced' }),
+      );
+      const vlessProxy = clash.proxies.find((p) => p.name.includes('VLESS-ECH'));
+      expect(vlessProxy['ech-opts']).toEqual({ enable: true, 'query-server-name': 'cloudflare-ech.com' });
+      expect(vlessProxy['client-fingerprint']).toBeUndefined();
+
+      for (const group of clash['proxy-groups']) {
+        if (group.type === 'url-test' || group.type === 'fallback') {
+          expect(group.lazy).toBe(true);
+        }
+      }
+    });
+
+    it('enforces Sing-Box INI template parity for anytls, hysteria2 salamander/server_ports, tls.ech, and skips vless xhttp', () => {
+      const rendered = renderSingboxFromIniTemplate(
+        '[Proxy Group]\nNode = select, AnyTLS-1, Hy2-PortHop, Trojan-ECH, VLESS-XHTTP, DIRECT\n[Rule]\nMATCH,Node',
+        {
+          proxies: [
+            {
+              name: 'AnyTLS-1',
+              type: 'anytls',
+              server: 'any.example.com',
+              port: 443,
+              password: 'pw',
+              sni: 'any.example.com',
+            },
+            {
+              name: 'Hy2-PortHop',
+              type: 'hysteria2',
+              server: 'hy.example.com',
+              port: 443,
+              password: 'pw',
+              obfs: 'salamander',
+              'obfs-password': 'sal',
+              ports: '20000-30000',
+              up: 50,
+              down: 200,
+            },
+            {
+              name: 'Trojan-ECH',
+              type: 'trojan',
+              server: 'tr.example.com',
+              port: 443,
+              password: 'pw',
+              tls: true,
+              sni: 'tr.example.com',
+              'ech-opts': { enable: true, 'query-server-name': 'cloudflare-ech.com' },
+            },
+            {
+              name: 'VLESS-XHTTP',
+              type: 'vless',
+              server: 'x.example.com',
+              port: 443,
+              uuid: '11111111-2222-3333-4444-555555555555',
+              tls: true,
+              network: 'xhttp',
+            },
+          ],
+        },
+      );
+      const parsed = JSON.parse(rendered);
+      const anytlsOut = parsed.outbounds.find((o) => o.tag === 'AnyTLS-1');
+      const hy2Out = parsed.outbounds.find((o) => o.tag === 'Hy2-PortHop');
+      const trojanOut = parsed.outbounds.find((o) => o.tag === 'Trojan-ECH');
+      const xhttpOut = parsed.outbounds.find((o) => o.tag === 'VLESS-XHTTP');
+      const selectOut = parsed.outbounds.find((o) => o.tag === 'Node');
+
+      expect(anytlsOut).toMatchObject({ type: 'anytls', server: 'any.example.com', password: 'pw' });
+      expect(hy2Out).toMatchObject({
+        type: 'hysteria2',
+        obfs: { type: 'salamander', password: 'sal' },
+        server_ports: ['20000:30000'],
+        up_mbps: 50,
+        down_mbps: 200,
+      });
+      expect(trojanOut.tls.ech).toEqual({ enabled: true, query_server_name: 'cloudflare-ech.com' });
+      expect(xhttpOut).toBeUndefined();
+      expect(selectOut.outbounds).not.toContain('VLESS-XHTTP');
     });
   });
 });

@@ -17,7 +17,8 @@ const sampleProfiles = [
     name: '订阅组',
     subscriptions: ['airport-1'],
     manualNodes: ['manual-1'],
-    ruleLevel: 'std',
+    transformMode: 'smart',
+    smartPreset: 'balanced',
   },
 ];
 const sampleTemplates = [

@@ -3,7 +3,10 @@ import { createPinia, setActivePinia } from 'pinia';
 import { handleApiRequest } from '../../functions/modules/api-router.js';
 import { createSignedToken, getSessionSigningSecret } from '../../functions/modules/auth-middleware.js';
 import { COOKIE_NAME } from '../../functions/modules/config.js';
-import { handleBatchUpdateNodesRequest, handleNodeCountRequest } from '../../functions/modules/handlers/node-handler.js';
+import {
+  handleBatchUpdateNodesRequest,
+  handleNodeCountRequest,
+} from '../../functions/modules/handlers/node-handler.js';
 import { handleShortLinkCreate } from '../../functions/modules/handlers/shortlink-handler.js';
 import { NodeRepository } from '../../functions/repositories/node-repository.js';
 import { StorageFactory } from '../../functions/storage-adapter.js';
@@ -125,10 +128,7 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
 
     // Attach createdSub to prof-1 to test cascading delete pruning
     const profBefore = JSON.parse(db.tables.profiles.get('prof-1'));
-    db.tables.profiles.set(
-      'prof-1',
-      JSON.stringify({ ...profBefore, subscriptions: ['sub-keep', createdSub.id] }),
-    );
+    db.tables.profiles.set('prof-1', JSON.stringify({ ...profBefore, subscriptions: ['sub-keep', createdSub.id] }));
 
     // 2. Batch create subscriptions -> 201
     const batchCreateRes = await handleApiRequest(
@@ -246,10 +246,19 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     const { env, cookie } = await createAuthedEnv(db);
 
     // Immediate settings save via PATCH /api/settings + fresh GET /api/data
+    const invalidSettingsPresetRes = await handleApiRequest(
+      makeAuthedRequest('/api/settings', cookie, {
+        method: 'PATCH',
+        body: { smartPreset: 'relay' },
+      }),
+      env,
+    );
+    expect(invalidSettingsPresetRes.status).toBe(400);
+
     const patchSettingsRes = await handleApiRequest(
       makeAuthedRequest('/api/settings', cookie, {
         method: 'PATCH',
-        body: { siteName: 'MiSub Modern Panel' },
+        body: { siteName: 'MiSub Modern Panel', enableRelay: true },
       }),
       env,
     );
@@ -257,6 +266,7 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     const dataRes = await handleApiRequest(makeAuthedRequest('/api/data', cookie), env);
     const dataPayload = await dataRes.json();
     expect(dataPayload.config.siteName).toBe('MiSub Modern Panel');
+    expect(dataPayload.config.enableRelay).toBe(true);
     expect(dataPayload).not.toHaveProperty('dataRevision');
 
     // Create manual node
@@ -285,7 +295,13 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     const storedNode = JSON.parse(db.tables.nodes.get(createdNode.id));
     db.tables.nodes.set(
       createdNode.id,
-      JSON.stringify({ ...storedNode, latency: 42, status: 'ok', latencyMode: 'tcping', lastTestedAt: '2026-11-27T00:00:00Z' }),
+      JSON.stringify({
+        ...storedNode,
+        latency: 42,
+        status: 'ok',
+        latencyMode: 'tcping',
+        lastTestedAt: '2026-11-27T00:00:00Z',
+      }),
     );
     const parentProf = JSON.parse(db.tables.profiles.get('parent-prof'));
     db.tables.profiles.set('parent-prof', JSON.stringify({ ...parentProf, manualNodes: [createdNode.id] }));
@@ -508,11 +524,12 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     // 2. handleShortLinkCreate (saveToProfile: true) updates shortLink without bumping config_version
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockImplementation(async () =>
-        new Response(JSON.stringify({ link: { slug: 'vip-rt' } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn().mockImplementation(
+        async () =>
+          new Response(JSON.stringify({ link: { slug: 'vip-rt' } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const slRes = await handleShortLinkCreate(
@@ -800,7 +817,12 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
     frontendMocks.apiPatch.mockReset();
     const profTools = useProfiles();
     profTools.handleEditProfile('prof-edit');
-    const remoteProfV3 = { ...origProfile, name: 'Server Prof v3', shortLink: 'https://s.example.com/new', configVersion: 3 };
+    const remoteProfV3 = {
+      ...origProfile,
+      name: 'Server Prof v3',
+      shortLink: 'https://s.example.com/new',
+      configVersion: 3,
+    };
     frontendMocks.apiPatch.mockRejectedValueOnce(
       new APIError('conflict', 409, { code: 'VERSION_CONFLICT', message: 'conflict', current: remoteProfV3 }),
     );
@@ -820,13 +842,15 @@ describe('Fine-grained Resource CRUD, Row-Level config_version OCC & Config/Runt
       success: true,
       data: { ...remoteProfV3, name: 'Forced Prof', configVersion: 4 },
     });
-    expect(await profTools.handleForceSaveProfile({ ...profTools.editingProfile.value, name: 'Forced Prof' })).toBe(true);
+    expect(await profTools.handleForceSaveProfile({ ...profTools.editingProfile.value, name: 'Forced Prof' })).toBe(
+      true,
+    );
     expect(profTools.showProfileModal.value).toBe(false);
   });
 });
 
 describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions', () => {
-  it('Audit #1: post-create immediate follow-up edit/toggle works without refresh and preserves builtinTransform', async () => {
+  it('Audit #1: post-create immediate follow-up edit/toggle works without refresh and supports orthogonal transform overrides & PATCH null clearing', async () => {
     const db = createMemoryD1();
     const { env, cookie } = await createAuthedEnv(db);
 
@@ -876,13 +900,30 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
     expect(nodeFollowUp.status).toBe(200);
     expect((await nodeFollowUp.json()).data.configVersion).toBe(2);
 
+    const invalidProfilePresetRes = await handleApiRequest(
+      makeAuthedRequest('/api/profiles', cookie, {
+        method: 'POST',
+        body: { name: 'Bad Preset', customId: 'bad-preset', smartPreset: 'relay' },
+      }),
+      env,
+    );
+    expect(invalidProfilePresetRes.status).toBe(400);
+
     const profCreate = await handleApiRequest(
       makeAuthedRequest('/api/profiles', cookie, {
         method: 'POST',
         body: {
           name: 'Immediate Profile',
           customId: 'imm-prof',
-          builtinTransform: { preset: 'default', enabled: true },
+          transformMode: 'smart',
+          smartPreset: 'balanced',
+          enableUdp: false,
+          skipCertVerify: true,
+          enableRelay: true,
+          customVisualRules: {
+            selectedRules: ['private', 'cn_services', 'non_cn'],
+            customRules: [],
+          },
         },
       }),
       env,
@@ -890,21 +931,44 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
     expect(profCreate.status).toBe(201);
     const createdProf = (await profCreate.json()).data;
     expect(createdProf.configVersion).toBe(1);
-    expect(createdProf.builtinTransform).toMatchObject({ preset: 'default', enabled: true });
+    expect(createdProf.transformMode).toBe('smart');
+    expect(createdProf.smartPreset).toBe('balanced');
+    expect(createdProf.enableUdp).toBe(false);
+    expect(createdProf.skipCertVerify).toBe(true);
+    expect(createdProf.enableRelay).toBe(true);
+    expect(createdProf.customVisualRules).toMatchObject({
+      selectedRules: ['private', 'cn_services', 'non_cn'],
+    });
 
     const profFollowUp = await handleApiRequest(
       makeAuthedRequest(`/api/profiles/${createdProf.id}`, cookie, {
         method: 'PATCH',
-        body: { enabled: false, configVersion: createdProf.configVersion },
+        body: {
+          enabled: false,
+          transformMode: null,
+          smartPreset: null,
+          enableUdp: null,
+          skipCertVerify: null,
+          enableRelay: null,
+          customVisualRules: null,
+          configVersion: createdProf.configVersion,
+        },
       }),
       env,
     );
     expect(profFollowUp.status).toBe(200);
-    expect((await profFollowUp.json()).data).toMatchObject({
+    const patchedProf = (await profFollowUp.json()).data;
+    expect(patchedProf).toMatchObject({
       id: createdProf.id,
       enabled: false,
       configVersion: 2,
     });
+    expect(patchedProf.transformMode).toBeUndefined();
+    expect(patchedProf.smartPreset).toBeUndefined();
+    expect(patchedProf.enableUdp).toBeUndefined();
+    expect(patchedProf.skipCertVerify).toBeUndefined();
+    expect(patchedProf.enableRelay).toBeUndefined();
+    expect(patchedProf.customVisualRules).toBeUndefined();
 
     setActivePinia(createPinia());
     const { useDataStore } = await import('@/stores/useDataStore.js');
@@ -1053,8 +1117,24 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
     const store = useDataStore();
     store.hydrateFromData({
       misubs: [
-        { id: 's1', name: 'S1', url: 'https://1.example.com', enabled: true, nodeCount: 5, sortIndex: 0, configVersion: 1 },
-        { id: 's2', name: 'S2', url: 'https://2.example.com', enabled: true, nodeCount: 8, sortIndex: 1, configVersion: 1 },
+        {
+          id: 's1',
+          name: 'S1',
+          url: 'https://1.example.com',
+          enabled: true,
+          nodeCount: 5,
+          sortIndex: 0,
+          configVersion: 1,
+        },
+        {
+          id: 's2',
+          name: 'S2',
+          url: 'https://2.example.com',
+          enabled: true,
+          nodeCount: 8,
+          sortIndex: 1,
+          configVersion: 1,
+        },
       ],
       profiles: [],
     });
@@ -1188,7 +1268,16 @@ describe('Tail UX, concurrency, payload purity & legacy D1 fallback regressions'
 
     const sentSubPatch = frontendMocks.apiPatch.mock.calls.at(-1)[1];
     expect(sentSubPatch).toMatchObject({ name: 'New', configVersion: 2 });
-    for (const forbidden of ['nodeCount', 'userInfo', 'downloadCount', 'lastUpdate', 'latency', 'status', 'sortIndex', 'version']) {
+    for (const forbidden of [
+      'nodeCount',
+      'userInfo',
+      'downloadCount',
+      'lastUpdate',
+      'latency',
+      'status',
+      'sortIndex',
+      'version',
+    ]) {
       expect(sentSubPatch).not.toHaveProperty(forbidden);
     }
 

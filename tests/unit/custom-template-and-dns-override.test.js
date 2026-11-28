@@ -50,7 +50,7 @@ describe('Custom template isolation & Custom DNS override', () => {
   it('does not inject AI groups or AI domain rules in custom template mode, but keeps default DNS proxy group when no custom DNS is configured', () => {
     const output = renderClashFromIniTemplate(customIniTemplate, {
       nodeList: sampleNodeList,
-      ruleLevel: 'none',
+      injectSmartGroups: false,
       fileName: 'TestSub',
     });
     const parsed = yaml.load(output);
@@ -88,7 +88,7 @@ describe('Custom template isolation & Custom DNS override', () => {
   it('does not inject DNS_PROXY_GROUP when customDnsOverride is configured in template pipeline', () => {
     const output = renderClashFromIniTemplate(customIniTemplate, {
       nodeList: sampleNodeList,
-      ruleLevel: 'std',
+      injectSmartGroups: true,
       customDnsOverride: userCustomDnsYaml,
       fileName: 'TestSub',
     });
@@ -101,7 +101,7 @@ describe('Custom template isolation & Custom DNS override', () => {
 
   it('does not inject DNS_PROXY_GROUP in builtin generator when customDnsOverride is present without DNS exit', () => {
     const output = generateBuiltinClashConfig(sampleNodeList, {
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       customDnsOverride: userCustomDnsYaml,
       fileName: 'BuiltinTest',
     });
@@ -114,15 +114,14 @@ describe('Custom template isolation & Custom DNS override', () => {
 
   it('still retains AI policy and default safe DNS in standard builtin mode', () => {
     const output = generateBuiltinClashConfig(sampleNodeList, {
-      ruleLevel: 'std',
+      smartPreset: 'balanced',
       fileName: 'BuiltinStd',
     });
     const parsed = yaml.load(output);
 
     const groupNames = (parsed['proxy-groups'] || []).map((g) => g.name);
     expect(groupNames).toContain(DNS_PROXY_GROUP);
-    expect(groupNames).toContain('🤖 AI 自动');
-    expect(groupNames).toContain('🤖 OpenAI');
+    expect(groupNames).toContain('💬 AI 服务');
     expect(parsed.dns.nameserver).toEqual([
       `https://8.8.8.8/dns-query#${DNS_PROXY_GROUP}`,
       `https://1.1.1.1/dns-query#${DNS_PROXY_GROUP}`,
