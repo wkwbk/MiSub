@@ -174,9 +174,6 @@ export default {
     skipCert: 'Skip cert check',
     nodeSort: 'Node sort',
     outputList: 'Output as list',
-    nodeFlagsOverrideTitle: 'Node parameter overrides',
-    enableUdpOverride: 'UDP forwarding override',
-    skipCertVerifyOverride: 'Skip cert check override',
     coreConfig: 'Core config',
     coreConfigDesc: 'Controls conversion and routing',
     externalEngineHint:

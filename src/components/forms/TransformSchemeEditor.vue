@@ -234,7 +234,7 @@ const smartPresetOptions = computed(() => [
   { value: 'custom', label: t('settings.visualPresetCustom'), disabled: true },
 ]);
 
-const triStateRelayOptions = computed(() => [
+const triStateOptions = computed(() => [
   { value: null, label: t('profileModal.followGlobal') },
   { value: true, label: t('profileModal.on') },
   { value: false, label: t('profileModal.off') },
@@ -485,7 +485,7 @@ const globalSummaryLabel = computed(() => {
     </div>
 
     <!-- 2. 智能分流（内置） -->
-    <div v-if="activeMode === 'smart'" class="space-y-4" data-testid="smart-mode-panel">
+    <div v-else-if="activeMode === 'smart'" class="space-y-4" data-testid="smart-mode-panel">
       <div class="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-end">
         <div>
           <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-fg-muted">
@@ -563,104 +563,8 @@ const globalSummaryLabel = computed(() => {
       </div>
     </div>
 
-    <!-- 订阅组三态链式中转覆写（跟随全局且全局为智能分流，或覆盖为智能分流时均可用） -->
-    <div v-if="showProfileRelayOverride" class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <div class="min-w-0 space-y-0.5">
-        <div
-          ref="relayTooltipRef"
-          class="relative group inline-flex max-w-full items-center gap-1"
-          @mouseleave="showRelayTooltip = false"
-        >
-          <span class="text-xs font-medium text-fg">{{ t('settings.transformEnableRelayLabel') }}</span>
-          <button
-            :aria-expanded="showRelayTooltip"
-            :aria-label="t('settings.transformEnableRelayDesc')"
-            class="inline-flex shrink-0 items-center justify-center rounded-full p-0.5 text-fg-subtle transition-colors hover:text-fg focus-visible:text-fg focus-visible:outline-hidden"
-            data-testid="relay-info-trigger"
-            type="button"
-            @click.stop="showRelayTooltip = !showRelayTooltip"
-          >
-            <Info class="h-3.5 w-3.5" />
-          </button>
-          <div
-            :class="
-              showRelayTooltip
-                ? 'opacity-100 visible pointer-events-auto'
-                : 'opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto'
-            "
-            class="popover-surface absolute left-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-4rem)] rounded-lg p-3 text-xs leading-relaxed text-fg-muted transition-opacity duration-150"
-            data-testid="relay-info-tooltip"
-            role="tooltip"
-          >
-            {{ t('settings.transformEnableRelayDesc') }}
-          </div>
-        </div>
-        <div v-if="model?.enableRelay == null" class="flex items-center gap-1.5 pt-0.5 text-xs text-fg-muted">
-          <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
-          <span>
-            {{
-              t('profileModal.currentGlobal', {
-                value: globalSettings?.enableRelay ? t('profileModal.on') : t('profileModal.off'),
-              })
-            }}
-          </span>
-        </div>
-      </div>
-      <div class="w-full shrink-0 sm:w-44">
-        <Select
-          :model-value="(model?.enableRelay as boolean | null | undefined) ?? null"
-          :options="triStateRelayOptions"
-          data-testid="profile-override-relay"
-          size="sm"
-          @update:model-value="patchModel({ enableRelay: ($event as boolean | null) ?? null })"
-        />
-      </div>
-    </div>
-
-    <!-- 折叠式可视化分类勾选与自定义规则 -->
-    <div v-if="activeMode === 'smart'" class="border-t border-line pt-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <button
-          class="flex items-center gap-2 rounded-md py-1 text-xs font-medium text-fg-muted transition-colors hover:text-fg"
-          data-testid="toggle-visual-customize"
-          type="button"
-          @click="showVisualCustomize = !showVisualCustomize"
-        >
-          <ChevronDown :class="{ 'rotate-180': showVisualCustomize }" class="h-4 w-4 transition-transform" />
-          <span>{{ t('settings.transformCustomizeRules') }}</span>
-          <span
-            v-if="
-              smartPreset === 'custom' || (customVisualRules.customRules && customVisualRules.customRules.length > 0)
-            "
-            class="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-semibold text-accent"
-          >
-            {{ customVisualRules.selectedRules.length }}
-          </span>
-        </button>
-
-        <button
-          v-if="!isGlobalScope"
-          class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
-          data-testid="sync-global-visual-rules"
-          type="button"
-          @click="syncVisualRulesFromGlobal"
-        >
-          <RotateCcw class="h-3 w-3" />
-          <span>{{ t('profileModal.syncGlobalVisualRules') }}</span>
-        </button>
-      </div>
-
-      <div v-if="showVisualCustomize" class="mt-4">
-        <VisualTransformCard
-          :custom-visual-rules="customVisualRules"
-          :smart-preset="effectiveSmartPresetSetting"
-          @update:custom-visual-rules="patchCustomVisualRules($event)"
-        />
-      </div>
-    </div>
-
     <!-- 3. 规则模板（内置本地渲染） -->
-    <div v-if="activeMode === 'template'" class="space-y-2" data-testid="template-mode-panel">
+    <div v-else-if="activeMode === 'template'" class="space-y-2" data-testid="template-mode-panel">
       <div class="flex items-center justify-between gap-2">
         <label class="block text-xs font-medium uppercase tracking-wider text-fg-muted">
           {{ isGlobalScope ? t('settings.transformTemplateConfig') : t('profileModal.templateLabel') }}
@@ -855,17 +759,158 @@ const globalSummaryLabel = computed(() => {
             <label class="block text-xs font-medium uppercase text-fg-muted">{{ flag.label }}</label>
             <Select
               :model-value="(externalRecord[flag.key] as boolean | null | undefined) ?? null"
-              :options="[
-                { value: null, label: t('profileModal.followGlobal') },
-                { value: true, label: t('profileModal.on') },
-                { value: false, label: t('profileModal.off') },
-              ]"
+              :options="triStateOptions"
               size="sm"
               @update:model-value="patchExternalBackend({ [flag.key]: $event as boolean | null })"
             />
           </div>
         </div>
       </template>
+    </div>
+
+    <!-- 订阅组三态功能与节点参数覆写（顺序与全局设置一致：链式中转 -> UDP 转发 -> 跳过证书校验） -->
+    <div
+      v-if="!isGlobalScope"
+      :class="showProfileRelayOverride ? 'sm:grid-cols-3' : 'sm:grid-cols-2'"
+      class="grid grid-cols-1 gap-4"
+      data-testid="profile-node-flags-override"
+    >
+      <div v-if="showProfileRelayOverride" class="space-y-1.5">
+        <div
+          ref="relayTooltipRef"
+          class="relative group flex min-h-5 max-w-full items-center gap-1"
+          @mouseleave="showRelayTooltip = false"
+        >
+          <label class="text-xs font-medium text-fg-muted">{{ t('settings.transformEnableRelayLabel') }}</label>
+          <button
+            :aria-expanded="showRelayTooltip"
+            :aria-label="t('settings.transformEnableRelayDesc')"
+            class="inline-flex shrink-0 items-center justify-center rounded-full p-0.5 text-fg-subtle transition-colors hover:text-fg focus-visible:text-fg focus-visible:outline-hidden"
+            data-testid="relay-info-trigger"
+            type="button"
+            @click.stop="showRelayTooltip = !showRelayTooltip"
+          >
+            <Info class="h-3.5 w-3.5" />
+          </button>
+          <div
+            :class="
+              showRelayTooltip
+                ? 'opacity-100 visible pointer-events-auto'
+                : 'opacity-0 invisible pointer-events-none group-hover:opacity-100 group-hover:visible group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:visible group-focus-within:pointer-events-auto'
+            "
+            class="popover-surface absolute left-0 top-full z-30 mt-2 w-64 max-w-[calc(100vw-4rem)] rounded-lg p-3 text-xs leading-relaxed text-fg-muted transition-opacity duration-150"
+            data-testid="relay-info-tooltip"
+            role="tooltip"
+          >
+            {{ t('settings.transformEnableRelayDesc') }}
+          </div>
+        </div>
+        <Select
+          :model-value="(model?.enableRelay as boolean | null | undefined) ?? null"
+          :options="triStateOptions"
+          data-testid="profile-override-relay"
+          size="sm"
+          @update:model-value="patchModel({ enableRelay: ($event as boolean | null) ?? null })"
+        />
+        <div v-if="model?.enableRelay == null" class="flex items-center gap-1.5 text-xs text-fg-muted">
+          <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+          <span>
+            {{
+              t('profileModal.currentGlobal', {
+                value: globalSettings?.enableRelay ? t('profileModal.on') : t('profileModal.off'),
+              })
+            }}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="flex min-h-5 items-center text-xs font-medium text-fg-muted">{{
+          t('settings.transformUdp')
+        }}</label>
+        <Select
+          :model-value="(model?.enableUdp as boolean | null | undefined) ?? null"
+          :options="triStateOptions"
+          data-testid="profile-override-udp"
+          size="sm"
+          @update:model-value="patchModel({ enableUdp: ($event as boolean | null) ?? null })"
+        />
+        <div v-if="model?.enableUdp == null" class="flex items-center gap-1.5 text-xs text-fg-muted">
+          <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+          <span>
+            {{
+              t('profileModal.currentGlobal', {
+                value: globalSettings?.enableUdp !== false ? t('profileModal.on') : t('profileModal.off'),
+              })
+            }}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="flex min-h-5 items-center text-xs font-medium text-fg-muted">{{
+          t('settings.transformSkipCert')
+        }}</label>
+        <Select
+          :model-value="(model?.skipCertVerify as boolean | null | undefined) ?? null"
+          :options="triStateOptions"
+          data-testid="profile-override-scv"
+          size="sm"
+          @update:model-value="patchModel({ skipCertVerify: ($event as boolean | null) ?? null })"
+        />
+        <div v-if="model?.skipCertVerify == null" class="flex items-center gap-1.5 text-xs text-fg-muted">
+          <span class="h-1.5 w-1.5 rounded-full bg-zinc-400"></span>
+          <span>
+            {{
+              t('profileModal.currentGlobal', {
+                value: globalSettings?.skipCertVerify ? t('profileModal.on') : t('profileModal.off'),
+              })
+            }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 折叠式可视化分类勾选与自定义规则 -->
+    <div v-if="activeMode === 'smart'" class="border-t border-line pt-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <button
+          class="flex items-center gap-2 rounded-md py-1 text-xs font-medium text-fg-muted transition-colors hover:text-fg"
+          data-testid="toggle-visual-customize"
+          type="button"
+          @click="showVisualCustomize = !showVisualCustomize"
+        >
+          <ChevronDown :class="{ 'rotate-180': showVisualCustomize }" class="h-4 w-4 transition-transform" />
+          <span>{{ t('settings.transformCustomizeRules') }}</span>
+          <span
+            v-if="
+              smartPreset === 'custom' || (customVisualRules.customRules && customVisualRules.customRules.length > 0)
+            "
+            class="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-semibold text-accent"
+          >
+            {{ customVisualRules.selectedRules.length }}
+          </span>
+        </button>
+
+        <button
+          v-if="!isGlobalScope"
+          class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-fg-muted transition-colors hover:bg-hover hover:text-fg"
+          data-testid="sync-global-visual-rules"
+          type="button"
+          @click="syncVisualRulesFromGlobal"
+        >
+          <RotateCcw class="h-3 w-3" />
+          <span>{{ t('profileModal.syncGlobalVisualRules') }}</span>
+        </button>
+      </div>
+
+      <div v-if="showVisualCustomize" class="mt-4">
+        <VisualTransformCard
+          :custom-visual-rules="customVisualRules"
+          :smart-preset="effectiveSmartPresetSetting"
+          @update:custom-visual-rules="patchCustomVisualRules($event)"
+        />
+      </div>
     </div>
 
     <RuleTemplateModal

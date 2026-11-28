@@ -82,12 +82,6 @@ const updateLocalProfile = (patch: Partial<EditableProfile>) => {
   });
 };
 
-const triStateOptions = computed(() => [
-  { value: null, label: t('profileModal.followGlobal') },
-  { value: true, label: t('profileModal.on') },
-  { value: false, label: t('profileModal.off') },
-]);
-
 const updatePrefixSettings = (patch: NonNullable<EditableProfile['prefixSettings']>) => {
   updateLocalProfile({
     prefixSettings: {
@@ -385,46 +379,12 @@ const subscriptionOverridePreviewUrl = computed(() => {
           <span class="text-xs text-fg-subtle">{{ t('profileModal.coreConfigDesc') }}</span>
         </div>
 
-        <div class="space-y-4">
-          <TransformSchemeEditor
-            :global-settings="globalSettings"
-            :model="localProfile"
-            scope="profile"
-            @update:model="emit('update:localProfile', $event as EditableProfile)"
-          />
-
-          <div class="border-t border-line pt-4 space-y-3" data-testid="profile-node-flags-override">
-            <p class="text-xs font-medium text-fg-muted">
-              {{ t('profileModal.nodeFlagsOverrideTitle') }}
-            </p>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="space-y-1.5">
-                <label class="block text-xs font-medium text-fg-muted">
-                  {{ t('profileModal.enableUdpOverride') }}
-                </label>
-                <Select
-                  :model-value="localProfile.enableUdp ?? null"
-                  :options="triStateOptions"
-                  data-testid="profile-override-udp"
-                  size="sm"
-                  @update:model-value="updateLocalProfile({ enableUdp: ($event as boolean | null) ?? null })"
-                />
-              </div>
-              <div class="space-y-1.5">
-                <label class="block text-xs font-medium text-fg-muted">
-                  {{ t('profileModal.skipCertVerifyOverride') }}
-                </label>
-                <Select
-                  :model-value="localProfile.skipCertVerify ?? null"
-                  :options="triStateOptions"
-                  data-testid="profile-override-scv"
-                  size="sm"
-                  @update:model-value="updateLocalProfile({ skipCertVerify: ($event as boolean | null) ?? null })"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
+        <TransformSchemeEditor
+          :global-settings="globalSettings"
+          :model="localProfile"
+          scope="profile"
+          @update:model="emit('update:localProfile', $event as EditableProfile)"
+        />
       </div>
 
       <!-- === 区块 B：参数微调与后处理 (Parameter Tuning) === -->

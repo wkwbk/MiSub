@@ -173,9 +173,6 @@ export default {
     skipCert: '跳过证书校验',
     nodeSort: '节点排序',
     outputList: '输出为列表',
-    nodeFlagsOverrideTitle: '节点参数覆写',
-    enableUdpOverride: 'UDP 转发覆写',
-    skipCertVerifyOverride: '跳过证书校验覆写',
     coreConfig: '渲染核心配置',
     coreConfigDesc: '决定订阅如何转换与分流',
     externalEngineHint:
