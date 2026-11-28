@@ -348,9 +348,98 @@ MATCH,节点选择
     expect(parsed.outbounds.some((outbound) => outbound.tag === '🇯🇵 JP-01' && outbound.type === 'vmess')).toBe(true);
     expect(Array.isArray(parsed.route.rule_set)).toBe(true);
     expect(parsed.route.rule_set.length).toBeGreaterThan(0);
-    const aclRuleSets = parsed.route.rule_set.filter((ruleSet) => String(ruleSet.url).endsWith('.list'));
-    expect(aclRuleSets.length).toBeGreaterThan(0);
-    expect(aclRuleSets.every((ruleSet) => ruleSet.format === 'source')).toBe(true);
+
+    expect(parsed.route.rule_set.some((ruleSet) => /\.list$/i.test(String(ruleSet.url)))).toBe(false);
+    expect(parsed.route.rule_set.every((ruleSet) => ruleSet.format === 'binary' && /\.srs$/i.test(ruleSet.url))).toBe(
+      true,
+    );
+
+    const ruleSetByTag = new Map(parsed.route.rule_set.map((ruleSet) => [ruleSet.tag, ruleSet]));
+    expect(Array.from(ruleSetByTag.keys())).toEqual(
+      expect.arrayContaining([
+        'geosite-openai',
+        'geosite-youtube',
+        'geosite-netflix',
+        'geoip-netflix',
+        'geosite-telegram',
+        'geoip-telegram',
+        'geosite-private',
+        'geoip-private',
+        'geosite-category-ads-all',
+        'geosite-steam',
+        'geosite-geolocation-!cn',
+        'geosite-cn',
+        'geoip-cn',
+      ]),
+    );
+    expect(ruleSetByTag.get('geoip-private')?.url).toContain('MetaCubeX/meta-rules-dat@sing/geo/geoip/');
+    expect(ruleSetByTag.get('geoip-telegram')?.url).toContain('MetaCubeX/meta-rules-dat@sing/geo/geoip/');
+
+    for (const rule of parsed.route.rules) {
+      const refs = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
+      for (const tag of refs) {
+        expect(ruleSetByTag.has(tag), `route rule references missing rule_set "${tag}"`).toBe(true);
+      }
+    }
+  });
+
+  it('renders all MiSub builtin INI presets to sing-box binary .srs rule sets without dangling references', () => {
+    const presetIds = ['clash_misub_minimal', 'clash_acl4ssr_lite', 'clash_misub_media_ai', 'clash_acl4ssr_full'];
+    for (const id of presetIds) {
+      const builtinTemplate = getBuiltinTemplate(id);
+      const parsed = JSON.parse(
+        renderSingboxFromIniTemplate(builtinTemplate.content, {
+          nodeList: 'trojan://password@1.2.3.4:443#HK-01',
+          targetFormat: 'singbox',
+        }),
+      );
+      const tags = new Set((parsed.route.rule_set || []).map((rs) => rs.tag));
+      expect(parsed.route.rule_set.some((rs) => /\.(list|yaml|yml|txt|conf)$/i.test(String(rs.url)))).toBe(false);
+      expect(parsed.route.rule_set.every((rs) => rs.format === 'binary')).toBe(true);
+      for (const rule of parsed.route.rules) {
+        const refs = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
+        for (const tag of refs) {
+          expect(tags.has(tag), `${id} references missing rule_set "${tag}"`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('keeps sing-box .srs and .json remote rule-sets while omitting unmapped .list rule-sets', () => {
+    const parsed = JSON.parse(
+      renderSingboxFromIniTemplate(
+        `
+[custom]
+ruleset=🚀 节点选择,https://example.com/custom-binary.srs
+ruleset=🚀 节点选择,https://example.com/custom-source.json
+ruleset=🚀 节点选择,https://example.com/UnmappedCustomRules.list
+ruleset=🐟 漏网之鱼,[]FINAL
+custom_proxy_group=🚀 节点选择\`select\`.*\`[]DIRECT
+custom_proxy_group=🐟 漏网之鱼\`select\`[]🚀 节点选择\`[]DIRECT
+`,
+        {
+          nodeList: 'trojan://password@1.2.3.4:443#HK-01',
+          targetFormat: 'singbox',
+        },
+      ),
+    );
+    const urls = parsed.route.rule_set.map((rs) => rs.url);
+    expect(urls).toContain('https://example.com/custom-binary.srs');
+    expect(urls).toContain('https://example.com/custom-source.json');
+    expect(urls).not.toContain('https://example.com/UnmappedCustomRules.list');
+
+    const binarySet = parsed.route.rule_set.find((rs) => rs.url === 'https://example.com/custom-binary.srs');
+    const sourceSet = parsed.route.rule_set.find((rs) => rs.url === 'https://example.com/custom-source.json');
+    expect(binarySet?.format).toBe('binary');
+    expect(sourceSet?.format).toBe('source');
+
+    const tags = new Set(parsed.route.rule_set.map((rs) => rs.tag));
+    for (const rule of parsed.route.rules) {
+      const refs = Array.isArray(rule.rule_set) ? rule.rule_set : rule.rule_set ? [rule.rule_set] : [];
+      for (const tag of refs) {
+        expect(tags.has(tag), `route rule references missing rule_set "${tag}"`).toBe(true);
+      }
+    }
   });
 
   it('should render surge config sections from ACL4SSR custom template', () => {

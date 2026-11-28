@@ -138,10 +138,10 @@ export function pruneProxyGroups<T extends RegionPolicyGroup>(proxyGroups: T[], 
  * 远程规则源版本钉死配置
  */
 export const PINNED_RULE_REVISIONS = Object.freeze({
-  ACL4SSR: '433381ebc4b1de59350fa8bed2a04a888228f801',
-  SING_GEOSITE: '0adeef8a3b9201292f6786ef4de81bcc02e971eb',
-  SING_GEOIP: 'b9c5e675b4d5359d4b47f4434fa7ae77e9991306',
-  BLACKMATRIX: '538b8a79532c44dfbcb8e694d2f43e753c60b157',
+  ACL4SSR: '054771ad40c0b40b5e54d98a5d959fbb911aae91',
+  SING_GEOSITE: 'e15c5cbcfa72c589fada8dd3de60af9996119f95',
+  SING_GEOIP: '66c864fcfe1535549e0658569cb514dbd35756ba',
+  BLACKMATRIX: '0b6897dc17e0c513d25449c935a9694818e32f0c',
 });
 
 export const ACL4SSR_BASE = `https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}`;
@@ -151,12 +151,28 @@ export const GH_PROXY_BASE = 'https://gh-proxy.org/';
 
 const METARULES_BASE = 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release';
 export const METARULES_MRS_BASE = 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@meta/geo';
+export const METARULES_SING_GEOIP_BASE = 'https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip';
 export const GEOX_URLS = Object.freeze({
   geoip: `${METARULES_BASE}/geoip.dat`,
   geosite: `${METARULES_BASE}/geosite.dat`,
   mmdb: `${METARULES_BASE}/country.mmdb`,
   asn: `${METARULES_BASE}/GeoLite2-ASN.mmdb`,
 });
+
+/**
+ * 解析 Sing-Box GeoIP 规则集下载地址：
+ * SagerNet/sing-geoip 仅包含 2 位国家代码（如 cn、us）；private、telegram 等非国家标签改走 MetaCubeX sing 分支。
+ */
+export function resolveSingboxGeoipRuleSetUrl(tagName: string, options: PinRemoteRuleUrlOptions = {}): string {
+  const normalized =
+    String(tagName || 'cn')
+      .trim()
+      .toLowerCase() || 'cn';
+  if (!/^[a-z]{2}$/.test(normalized)) {
+    return `${METARULES_SING_GEOIP_BASE}/${normalized}.srs`;
+  }
+  return pinRemoteRuleUrl(`${SING_GEOIP_BASE}/geoip-${normalized}.srs`, options);
+}
 
 /**
  * 构建主流 Mihomo 二进制 .mrs 规则提供器定义

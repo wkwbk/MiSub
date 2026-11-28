@@ -21,7 +21,7 @@ import {
   pruneProxyGroups,
   RELAY_CHAIN_GROUP,
   RELAY_ENTRY_GROUP,
-  SING_GEOIP_BASE,
+  resolveSingboxGeoipRuleSetUrl,
   SING_GEOSITE_BASE,
   type ClashRuleProviderDefinition,
   type PinRemoteRuleUrlOptions,
@@ -267,7 +267,7 @@ export function buildVisualRulesAndProviders(
         tag,
         type: 'remote',
         format: 'binary',
-        url: pinRemoteRuleUrl(`${SING_GEOIP_BASE}/geoip-${tagName}.srs`, options),
+        url: resolveSingboxGeoipRuleSetUrl(tagName, options),
         update_interval: '24h',
         download_detour: DNS_PROXY_GROUP,
       });

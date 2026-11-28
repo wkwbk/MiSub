@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   GH_PROXY_BASE,
+  METARULES_SING_GEOIP_BASE,
   PINNED_RULE_REVISIONS,
   pinRemoteRuleUrl,
+  resolveSingboxGeoipRuleSetUrl,
 } from '../../functions/modules/subscription/templates/builtin-rules-provider.js';
 
 /**
@@ -75,5 +77,13 @@ describe('pinRemoteRuleUrl - 规则源下载链路解析', () => {
     expect(pinRemoteRuleUrl('')).toBe('');
     expect(pinRemoteRuleUrl(null)).toBe(null);
     expect(pinRemoteRuleUrl('not-a-url')).toBe('not-a-url');
+  });
+
+  it('resolveSingboxGeoipRuleSetUrl 为国家代码走 SagerNet/sing-geoip，非国家标签走 MetaCubeX sing 分支', () => {
+    expect(resolveSingboxGeoipRuleSetUrl('cn')).toBe(
+      `https://cdn.jsdelivr.net/gh/SagerNet/sing-geoip@${PINNED_RULE_REVISIONS.SING_GEOIP}/geoip-cn.srs`,
+    );
+    expect(resolveSingboxGeoipRuleSetUrl('private')).toBe(`${METARULES_SING_GEOIP_BASE}/private.srs`);
+    expect(resolveSingboxGeoipRuleSetUrl('telegram')).toBe(`${METARULES_SING_GEOIP_BASE}/telegram.srs`);
   });
 });

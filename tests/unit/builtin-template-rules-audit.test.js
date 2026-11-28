@@ -167,6 +167,9 @@ describe('Builtin template rule audit', () => {
   it('uses maintained SagerNet sing-box binary rule sets instead of deprecated Loyalsoldier JSON rules', () => {
     const { singboxRuleSets } = buildVisualRulesAndProviders('singbox', { smartPreset: 'full' });
     const adsRuleSet = singboxRuleSets.find((ruleSet) => ruleSet.tag === 'geosite-category-ads-all');
+    const geoipCn = singboxRuleSets.find((ruleSet) => ruleSet.tag === 'geoip-cn');
+    const geoipPrivate = singboxRuleSets.find((ruleSet) => ruleSet.tag === 'geoip-private');
+    const geoipTelegram = singboxRuleSets.find((ruleSet) => ruleSet.tag === 'geoip-telegram');
 
     expect(SING_GEOSITE_BASE).toContain(`/SagerNet/sing-geosite/${PINNED_RULE_REVISIONS.SING_GEOSITE}`);
     expect(adsRuleSet).toBeDefined();
@@ -177,6 +180,13 @@ describe('Builtin template rule audit', () => {
       `https://cdn.jsdelivr.net/gh/SagerNet/sing-geosite@${PINNED_RULE_REVISIONS.SING_GEOSITE}/geosite-category-ads-all.srs`,
     );
     expect(adsRuleSet.url).not.toContain('raw.githubusercontent.com');
+    expect(geoipCn?.url).toBe(
+      `https://cdn.jsdelivr.net/gh/SagerNet/sing-geoip@${PINNED_RULE_REVISIONS.SING_GEOIP}/geoip-cn.srs`,
+    );
+    expect(geoipPrivate?.url).toBe('https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/private.srs');
+    expect(geoipPrivate?.url).not.toContain('SagerNet/sing-geoip');
+    expect(geoipTelegram?.url).toBe('https://cdn.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@sing/geo/geoip/telegram.srs');
+    expect(geoipTelegram?.url).not.toContain('SagerNet/sing-geoip');
   });
 
   it('emits sing-box ADS rule set as binary SRS in builtin config', () => {
