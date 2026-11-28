@@ -9,7 +9,7 @@
   // 参考: https://developers.cloudflare.com/workers/observability/
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "head_sampling_rate": 1,
   },
 
   // 上传 Source Maps：在 Cloudflare Workers Observability 中直接还原 worker.ts 的原始报错堆栈行号
@@ -17,7 +17,7 @@
 
   // 智能放置 (Smart Placement)：自动将 Worker 调度至离 D1 数据库和上游订阅源站最近的边缘节点，降低跨区请求延迟
   "placement": {
-    "mode": "smart"
+    "mode": "smart",
   },
 
   // 绑定自定义域名后，取消下方注释可关闭默认的 *.workers.dev 入口与预览链接以防探测
@@ -26,7 +26,7 @@
 
   // 前端构建配置：在执行 wrangler dev / wrangler deploy 时自动构建前端静态产物
   "build": {
-    "command": "npm run build"
+    "command": "npm run build",
   },
 
   // 静态资源托管 (Cloudflare Workers Static Assets)
@@ -35,7 +35,7 @@
     "directory": "./dist",
     "binding": "ASSETS",
     "run_worker_first": true,
-    "not_found_handling": "none"
+    "not_found_handling": "none",
   },
 
   // 原生定时触发器（按业务独立调度，无需依赖外部定时服务）
@@ -43,11 +43,7 @@
   // - "0 2 * * *":   每天 UTC 02:00（北京时间 10:00）执行 WebDAV 自动备份
   // - "30 3 * * *":  每天 UTC 03:30（北京时间 11:30）执行存储维护清理
   "triggers": {
-    "crons": [
-      "0 */6 * * *",
-      "0 2 * * *",
-      "30 3 * * *"
-    ]
+    "crons": ["0 */6 * * *", "0 2 * * *", "30 3 * * *"],
   },
 
   // ==============================================================================
@@ -71,8 +67,8 @@
     {
       "binding": "MISUB_DB",
       "database_name": "misub",
-      "database_id": "aaaeee3d-8647-4aa9-8f6c-71d390a9f894"
-    }
+      "database_id": "aaaeee3d-8647-4aa9-8f6c-71d390a9f894",
+    },
   ],
 
   // 建议在正式项目中为 previews 绑定独立的测试 D1 database_id，避免预览部署读写生产库
@@ -81,8 +77,8 @@
     "d1_databases": [
       {
         "binding": "MISUB_DB",
-        "database_id": "1834a1bf-a87f-4837-9834-33f3f2ec3b09"
-      }
-    ]
-  }
+        "database_id": "b9e9cee2-fa77-4bf0-b7a2-821cd9f0fd9e",
+      },
+    ],
+  },
 }
