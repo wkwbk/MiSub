@@ -106,7 +106,7 @@ describe('dashboard UI components', () => {
     expect(wrapper.text()).toContain('设置默认订阅 Token');
     expect(input.attributes('disabled')).toBeDefined();
     expect(input.element.value).toBe('请先在“设置”中配置 默认订阅 Token');
-    expect(input.element.value).not.toContain('https://libk.top/:');
+    expect(input.element.value).not.toContain('https://sub.libk.top/:');
   });
 
   it('renders stat cards and generated-link panel in English without leaking i18n keys', () => {

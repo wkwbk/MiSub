@@ -245,9 +245,9 @@ npx wrangler d1 execute misub --file=schema.sql --remote
 | 变量名 | 说明 | 示例 |
 |--------|------|------|
 | `CRON_SECRET` | 外部 `/cron/*` 定时任务校验密钥（Secret，可选；也可在管理后台「服务集成」中设置） | `your_cron_secret` |
-| `CORS_ORIGINS` | 允许跨域访问的来源(逗号分隔)，同域可不填 | `https://libk.top,http://localhost:5173` |
-| `MISUB_PUBLIC_URL` | 站点对外访问的公开域名，用于生成订阅转换回调地址 | `https://libk.top` |
-| `MISUB_CALLBACK_URL` | 订阅转换回调基础地址（优先级高于 MISUB_PUBLIC_URL），通常保持默认即可 | `https://libk.top` |
+| `CORS_ORIGINS` | 允许跨域访问的来源(逗号分隔)，同域可不填 | `https://sub.libk.top,http://localhost:5173` |
+| `MISUB_PUBLIC_URL` | 站点对外访问的公开域名，用于生成订阅转换回调地址 | `https://sub.libk.top` |
+| `MISUB_CALLBACK_URL` | 订阅转换回调基础地址（优先级高于 MISUB_PUBLIC_URL），通常保持默认即可 | `https://sub.libk.top` |
 | `GITHUB_TOKEN` | GitHub 个人访问令牌（只读公开仓库即可），用于提升版本检查与公开页客户端版本号拉取的 GitHub API 限额（建议设为 `Secret`） | `ghp_xxxx` / `github_pat_xxxx` |
 
 **前端构建变量（可选）：**
