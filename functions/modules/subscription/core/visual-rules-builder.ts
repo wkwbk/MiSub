@@ -11,22 +11,29 @@ import {
 } from '@misub/core/domain/visual-rules-catalog.js';
 import {
   ACL4SSR_BASE,
-  AUTO_SELECT_GROUP,
   buildMetaMrsProvider,
-  DEFAULT_RELAY_GROUP,
-  DEFAULT_SELECT_GROUP,
-  FALLBACK_GROUP,
-  MANUAL_SELECT_GROUP,
   pinRemoteRuleUrl,
-  pruneProxyGroups,
-  RELAY_CHAIN_GROUP,
-  RELAY_ENTRY_GROUP,
   resolveSingboxGeoipRuleSetUrl,
   SING_GEOSITE_BASE,
   type ClashRuleProviderDefinition,
   type PinRemoteRuleUrlOptions,
   type SingboxRuleSetDefinition,
 } from '../templates/builtin-rules-provider.js';
+import {
+  AUTO_SELECT_GROUP,
+  buildMasterGroupMembers,
+  buildRelayCommonGroupMembers,
+  buildRuleGroupCandidates,
+  DEFAULT_RELAY_GROUP,
+  DEFAULT_SELECT_GROUP,
+  FALLBACK_GROUP,
+  FINAL_FALLBACK_GROUP,
+  MANUAL_SELECT_GROUP,
+  RELAY_CHAIN_GROUP,
+  RELAY_COMMON_GROUP,
+  RELAY_ENTRY_GROUP,
+  sanitizePolicyGroupGraph,
+} from './policy-group-topology.js';
 import {
   buildRegionPolicyGroups,
   type RegionGroupNode,
@@ -65,34 +72,6 @@ function resolveAcl4ssrUrl(relativePath: string | undefined, options: PinRemoteR
   return pinRemoteRuleUrl(`${ACL4SSR_BASE}/${stripped}`, options);
 }
 
-function buildGroupCandidates({
-  action = 'proxy',
-  includeAutoSelect = true,
-  regionNames = [],
-  isRelay = false,
-  includeDirect = true,
-}: {
-  action?: string;
-  includeAutoSelect?: boolean;
-  regionNames?: string[];
-  isRelay?: boolean;
-  includeDirect?: boolean;
-}): string[] {
-  const proxyCandidates = [
-    ...(isRelay ? [RELAY_CHAIN_GROUP, '🚀 常用节点'] : []),
-    ...(includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
-    ...regionNames,
-    MANUAL_SELECT_GROUP,
-  ];
-  if (action === 'reject') {
-    return ['REJECT', 'DIRECT', ...proxyCandidates];
-  }
-  if (action === 'direct') {
-    return ['DIRECT', ...proxyCandidates];
-  }
-  return includeDirect ? [...proxyCandidates, 'DIRECT'] : proxyCandidates;
-}
-
 /**
  * 构建可视化规则对应的策略组（供 Clash / Sing-Box / Surge / Loon / QuanX 统一复用）
  */
@@ -129,15 +108,12 @@ export function buildVisualPolicyGroups(
       {
         name: DEFAULT_RELAY_GROUP,
         type: 'select',
-        proxies: [
-          RELAY_CHAIN_GROUP,
-          ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
-          FALLBACK_GROUP,
-          MANUAL_SELECT_GROUP,
-          '🚀 常用节点',
-          ...regionNames,
-          'DIRECT',
-        ],
+        proxies: buildMasterGroupMembers({
+          includeAutoSelect: cvr.includeAutoSelect,
+          includeFallback: true,
+          regionNames,
+          isRelay: true,
+        }),
       },
       {
         name: RELAY_CHAIN_GROUP,
@@ -156,28 +132,25 @@ export function buildVisualPolicyGroups(
         proxies: [...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []), MANUAL_SELECT_GROUP, 'DIRECT', ...proxyNames],
       },
       {
-        name: '🚀 常用节点',
+        name: RELAY_COMMON_GROUP,
         type: 'select',
-        proxies: [
-          ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
-          FALLBACK_GROUP,
-          MANUAL_SELECT_GROUP,
-          ...regionNames,
-          'DIRECT',
-        ],
+        proxies: buildRelayCommonGroupMembers({
+          includeAutoSelect: cvr.includeAutoSelect,
+          includeFallback: true,
+          regionNames,
+        }),
       },
     );
   } else {
     groups.push({
       name: DEFAULT_SELECT_GROUP,
       type: 'select',
-      proxies: [
-        ...(cvr.includeAutoSelect ? [AUTO_SELECT_GROUP] : []),
-        FALLBACK_GROUP,
-        MANUAL_SELECT_GROUP,
-        ...regionNames,
-        'DIRECT',
-      ],
+      proxies: buildMasterGroupMembers({
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay: false,
+      }),
     });
   }
 
@@ -197,9 +170,10 @@ export function buildVisualPolicyGroups(
     groups.push({
       name: rule.name,
       type: 'select',
-      proxies: buildGroupCandidates({
+      proxies: buildRuleGroupCandidates({
         action: rule.action,
         includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
         regionNames,
         isRelay,
       }),
@@ -214,9 +188,10 @@ export function buildVisualPolicyGroups(
     groups.push({
       name: cat.groupName,
       type: 'select',
-      proxies: buildGroupCandidates({
+      proxies: buildRuleGroupCandidates({
         action: cat.defaultAction,
         includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
         regionNames,
         isRelay,
         includeDirect: cat.id !== 'ai_services',
@@ -224,8 +199,24 @@ export function buildVisualPolicyGroups(
     });
   }
 
+  if (!seenGroupNames.has(FINAL_FALLBACK_GROUP)) {
+    seenGroupNames.add(FINAL_FALLBACK_GROUP);
+    groups.push({
+      name: FINAL_FALLBACK_GROUP,
+      type: 'select',
+      proxies: buildRuleGroupCandidates({
+        action: 'proxy',
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay,
+        includeDirect: true,
+      }),
+    });
+  }
+
   groups.push(...regionSupportGroups);
-  return pruneProxyGroups(groups, proxies);
+  return sanitizePolicyGroupGraph(groups, proxies);
 }
 
 /**
@@ -236,8 +227,6 @@ export function buildVisualRulesAndProviders(
   options: VisualRulesOptions = {},
 ): VisualRulesAndProvidersResult {
   const smartPreset = String(options.smartPreset || 'balanced').toLowerCase();
-  const isRelay = Boolean(options.enableRelay);
-  const finalGroup = isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP;
   const cvr = normalizeCustomVisualRules(options.customVisualRules, { smartPreset });
   const normalizedFormat = String(format || 'clash').toLowerCase();
 
@@ -431,7 +420,7 @@ export function buildVisualRulesAndProviders(
   rules.push(...domainRules, ...ipRules);
 
   if (normalizedFormat === 'clash') {
-    rules.push(`MATCH,${finalGroup}`);
+    rules.push(`MATCH,${FINAL_FALLBACK_GROUP}`);
   }
 
   return {
@@ -575,7 +564,7 @@ export function generateSubconverterIniConfig(
   }
 
   lines.push(...domainIniLines, ...ipIniLines);
-  lines.push(`ruleset=${DEFAULT_SELECT_GROUP},[]FINAL`);
+  lines.push(`ruleset=${FINAL_FALLBACK_GROUP},[]FINAL`);
   lines.push('');
 
   const REGION_REGEX_GROUPS = [
@@ -591,28 +580,38 @@ export function generateSubconverterIniConfig(
     { name: '🇰🇷 韩国节点', regex: '(KR|Korea|KOR|首尔|韩|韓)' },
   ];
 
-  const regionRefs = cvr.groupByCountry ? REGION_REGEX_GROUPS.map((r) => `[]${r.name}`).join('`') : '';
-  const autoRef = cvr.includeAutoSelect ? `[]${AUTO_SELECT_GROUP}` : '';
-  const commonProxyRefs = [autoRef, regionRefs, `[]${MANUAL_SELECT_GROUP}`].filter(Boolean).join('`');
+  const regionNames = cvr.groupByCountry ? REGION_REGEX_GROUPS.map((r) => r.name) : [];
+  const toIniRefs = (members: readonly string[]): string => members.map((m) => `[]${m}`).join('`');
 
   lines.push(
-    `custom_proxy_group=${DEFAULT_SELECT_GROUP}\`select\`${[commonProxyRefs, '[]DIRECT'].filter(Boolean).join('`')}`,
+    `custom_proxy_group=${DEFAULT_SELECT_GROUP}\`select\`${toIniRefs(
+      buildMasterGroupMembers({
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay: false,
+      }),
+    )}`,
   );
   if (cvr.includeAutoSelect) {
     lines.push(`custom_proxy_group=${AUTO_SELECT_GROUP}\`url-test\`.*\`http://www.gstatic.com/generate_204\`300,,50`);
   }
+  lines.push(`custom_proxy_group=${FALLBACK_GROUP}\`fallback\`.*\`http://www.gstatic.com/generate_204\`300,,50`);
   lines.push(`custom_proxy_group=${MANUAL_SELECT_GROUP}\`select\`.*`);
 
-  const emittedGroups = new Set([DEFAULT_SELECT_GROUP, AUTO_SELECT_GROUP, MANUAL_SELECT_GROUP]);
+  const emittedGroups = new Set([DEFAULT_SELECT_GROUP, AUTO_SELECT_GROUP, FALLBACK_GROUP, MANUAL_SELECT_GROUP]);
   for (const custom of cvr.customRules) {
     if (emittedGroups.has(custom.name)) continue;
     emittedGroups.add(custom.name);
-    const members =
-      custom.action === 'reject'
-        ? `[]REJECT\`[]DIRECT\`${commonProxyRefs}`
-        : custom.action === 'direct'
-          ? `[]DIRECT\`${commonProxyRefs}`
-          : `${commonProxyRefs}\`[]DIRECT`;
+    const members = toIniRefs(
+      buildRuleGroupCandidates({
+        action: custom.action,
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay: false,
+      }),
+    );
     lines.push(`custom_proxy_group=${custom.name}\`select\`${members}`);
   }
 
@@ -620,13 +619,32 @@ export function generateSubconverterIniConfig(
     const cat = VISUAL_RULE_MAP[ruleId];
     if (!cat || emittedGroups.has(cat.groupName)) continue;
     emittedGroups.add(cat.groupName);
-    const members =
-      cat.defaultAction === 'reject'
-        ? `[]REJECT\`[]DIRECT\`${commonProxyRefs}`
-        : cat.defaultAction === 'direct'
-          ? `[]DIRECT\`${commonProxyRefs}`
-          : `${commonProxyRefs}\`[]DIRECT`;
+    const members = toIniRefs(
+      buildRuleGroupCandidates({
+        action: cat.defaultAction,
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay: false,
+        includeDirect: cat.id !== 'ai_services',
+      }),
+    );
     lines.push(`custom_proxy_group=${cat.groupName}\`select\`${members}`);
+  }
+
+  if (!emittedGroups.has(FINAL_FALLBACK_GROUP)) {
+    emittedGroups.add(FINAL_FALLBACK_GROUP);
+    const finalMembers = toIniRefs(
+      buildRuleGroupCandidates({
+        action: 'proxy',
+        includeAutoSelect: cvr.includeAutoSelect,
+        includeFallback: true,
+        regionNames,
+        isRelay: false,
+        includeDirect: true,
+      }),
+    );
+    lines.push(`custom_proxy_group=${FINAL_FALLBACK_GROUP}\`select\`${finalMembers}`);
   }
 
   if (cvr.groupByCountry) {

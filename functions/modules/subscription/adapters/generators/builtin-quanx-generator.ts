@@ -14,7 +14,7 @@ import {
   sanitizeIniNodeName,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
-import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP } from '../../templates/builtin-rules-provider.js';
+import { FINAL_FALLBACK_GROUP } from '../../templates/builtin-rules-provider.js';
 import { buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 
 export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGeneratorOptions = {}): string {
@@ -115,9 +115,7 @@ export function generateBuiltinQuanxConfig(nodeList: string, options: BuiltinGen
     'ip-cidr, 172.16.0.0/12, direct',
     'ip-cidr, 192.168.0.0/16, direct',
     ...localRules,
-    ...(!localRules.some((r) => /^final\b/i.test(r))
-      ? [`final, ${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`]
-      : []),
+    ...(!localRules.some((r) => /^final\b/i.test(r)) ? [`final, ${FINAL_FALLBACK_GROUP}`] : []),
   ];
 
   sections.push(`[filter_remote]\n${remoteRules.join('\n')}`);

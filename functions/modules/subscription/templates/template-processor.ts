@@ -1,4 +1,5 @@
 import { groupNodeLinesByRegion, type RegionGroupBucket } from '../core/region-groups.js';
+import { removePolicyGroupCycles } from '../core/policy-group-topology.js';
 import { AI_SERVICE_RULES } from './builtin-rules-provider.js';
 import { DNS_PROXY_GROUP } from '../security/safe-dns.js';
 import type { TemplateGroup, TemplateRuleObject, UnifiedTemplateModel } from './template-model.js';
@@ -185,13 +186,27 @@ function pruneInvalidMembers(model: UnifiedTemplateModel): void {
     ...model.groups.map((g) => g.name),
     'DIRECT',
     'REJECT',
+    'REJECT-DROP',
+    'PASS',
   ]);
 
   model.groups.forEach((group) => {
     if (Array.isArray(group.members)) {
-      group.members = group.members.filter((m) => validTargetNames.has(m));
+      const seen = new Set<string>();
+      group.members = group.members.filter((m) => {
+        if (m === group.name || !validTargetNames.has(m) || seen.has(m)) return false;
+        seen.add(m);
+        return true;
+      });
     }
   });
+
+  model.groups = removePolicyGroupCycles(
+    model.groups,
+    (g) => g.name,
+    (g) => g.members,
+    (g, next) => ({ ...g, members: next }),
+  );
 }
 
 function ensureDnsProxyGroup(model: UnifiedTemplateModel): void {

@@ -93,6 +93,27 @@ const CUSTOM_RULES_SAMPLE = [
   },
 ];
 
+function assertAcyclicPolicyGraph(edgesByName, kindLabel) {
+  const state = new Map();
+  const visit = (name, trail) => {
+    const current = state.get(name) || 0;
+    if (current === 2) return;
+    if (current === 1) {
+      throw new Error(`${kindLabel} policy group cycle detected: ${[...trail, name].join(' -> ')}`);
+    }
+    state.set(name, 1);
+    for (const member of edgesByName.get(name) || []) {
+      if (edgesByName.has(member)) {
+        visit(member, [...trail, name]);
+      }
+    }
+    state.set(name, 2);
+  };
+  for (const name of edgesByName.keys()) {
+    visit(name, []);
+  }
+}
+
 function assertClashIntegrity(yamlStr) {
   const parsed = yaml.load(yamlStr);
   expect(parsed).toBeTruthy();
@@ -109,14 +130,17 @@ function assertClashIntegrity(yamlStr) {
     ...parsed['proxy-groups'].map((g) => g.name),
   ]);
 
+  const edgesByName = new Map();
   for (const group of parsed['proxy-groups']) {
     expect(Array.isArray(group.proxies)).toBe(true);
     expect(group.proxies.length).toBeGreaterThan(0);
+    edgesByName.set(group.name, group.proxies);
     for (const member of group.proxies) {
       expect(member, `Group "${group.name}" must not reference itself`).not.toBe(group.name);
       expect(validTargets.has(member), `Group "${group.name}" references unknown target "${member}"`).toBe(true);
     }
   }
+  assertAcyclicPolicyGraph(edgesByName, 'Clash');
 
   return parsed;
 }
@@ -134,10 +158,12 @@ function assertSingboxIntegrity(jsonStr) {
     true,
   );
 
+  const edgesByTag = new Map();
   for (const outbound of parsed.outbounds) {
     if (outbound.type === 'selector' || outbound.type === 'urltest') {
       expect(Array.isArray(outbound.outbounds)).toBe(true);
       expect(outbound.outbounds.length).toBeGreaterThan(0);
+      edgesByTag.set(outbound.tag, outbound.outbounds);
       for (const member of outbound.outbounds) {
         expect(member, `Outbound "${outbound.tag}" must not reference itself`).not.toBe(outbound.tag);
         expect(outboundTags.has(member), `Outbound "${outbound.tag}" references unknown outbound "${member}"`).toBe(
@@ -150,6 +176,7 @@ function assertSingboxIntegrity(jsonStr) {
       expect(outbound.transport.type, `Outbound "${outbound.tag}" has invalid transport.type`).not.toBe('tcp');
     }
   }
+  assertAcyclicPolicyGraph(edgesByTag, 'Sing-Box');
 
   const ruleSetTags = new Set((parsed.route.rule_set || []).map((rs) => rs.tag));
   for (const rule of parsed.route.rules) {
@@ -187,6 +214,9 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
         );
         // 所有协议节点均应被解析
         expect(clash.proxies.length).toBeGreaterThanOrEqual(16);
+        const nonCnClash = clash['proxy-groups'].find((g) => g.name === '🌍 非中国');
+        expect(nonCnClash?.proxies[0]).toBe(enableRelay ? '🌍 总出口' : '🚀 节点选择');
+        expect(nonCnClash?.proxies).toEqual(expect.arrayContaining(['♻️ 自动选择', '🔯 故障转移', '👋 手动切换']));
         if (enableRelay) {
           expect(clash['proxy-groups'].some((g) => g.name === '🔗 中转节点')).toBe(true);
         }
@@ -200,6 +230,10 @@ describe('Full Matrix: All Protocols x All Routing Modes x All Parameters x All 
           }),
         );
         expect(singbox.outbounds.filter((o) => o.server).length).toBeGreaterThanOrEqual(16);
+        const nonCnSingbox = singbox.outbounds.find((o) => o.tag === '🌍 非中国');
+        expect(nonCnSingbox?.default).toBe(enableRelay ? '🌍 总出口' : '🚀 节点选择');
+        expect(nonCnSingbox?.outbounds[0]).toBe(enableRelay ? '🌍 总出口' : '🚀 节点选择');
+        expect(nonCnSingbox?.outbounds).toEqual(expect.arrayContaining(['♻️ 自动选择', '🔯 故障转移', '👋 手动切换']));
         if (enableRelay) {
           expect(singbox.outbounds.some((o) => o.tag === '🔗 中转节点')).toBe(true);
         }

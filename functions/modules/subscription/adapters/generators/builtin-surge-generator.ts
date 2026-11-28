@@ -20,7 +20,7 @@ import {
   sanitizeIniNodeName,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
-import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP } from '../../templates/builtin-rules-provider.js';
+import { FINAL_FALLBACK_GROUP } from '../../templates/builtin-rules-provider.js';
 import { applySurgeBaseConfigOverride, buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 
 interface SurgeProxyResult {
@@ -388,7 +388,7 @@ encrypted-dns-server = https://223.5.5.5/dns-query, https://120.53.53.53/dns-que
     'IP-CIDR,172.16.0.0/12,DIRECT,no-resolve',
     'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve',
     ...builtinRuleLines,
-    `FINAL,${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP},dns-failed`,
+    `FINAL,${FINAL_FALLBACK_GROUP},dns-failed`,
   ];
   sections.push(`[Rule]\n${ruleLines.filter(Boolean).join('\n')}`);
 

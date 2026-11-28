@@ -6,8 +6,7 @@
 import { urlsToClashProxies } from '@misub/core/protocols/url-to-clash.js';
 import { getUniqueName } from '../../core/name-utils.js';
 import {
-  DEFAULT_RELAY_GROUP,
-  DEFAULT_SELECT_GROUP,
+  FINAL_FALLBACK_GROUP,
   getSingboxDnsRuleSet,
   type SingboxRuleSetDefinition,
 } from '../../templates/builtin-rules-provider.js';
@@ -97,6 +96,7 @@ export function generateBuiltinSingboxConfig(nodeList: string, options: BuiltinG
       tag: group.name,
       type: type,
       outbounds: group.proxies,
+      ...(type === 'selector' && group.proxies.length > 0 ? { default: group.proxies[0] } : {}),
       ...(type === 'urltest'
         ? {
             url: DEFAULT_TEST_URL,
@@ -141,7 +141,7 @@ export function generateBuiltinSingboxConfig(nodeList: string, options: BuiltinG
     dnsConfig,
     proxyOutbounds: outbounds,
     groupOutbounds,
-    finalOutbound: isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP,
+    finalOutbound: FINAL_FALLBACK_GROUP,
     ruleSets,
     routeRules,
     clashApi: advancedBaseConfig?.enableClashApi

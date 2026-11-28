@@ -24,7 +24,7 @@ import {
   sanitizeIniNodeName,
   type BuiltinGeneratorOptions,
 } from '../../core/client-shared.js';
-import { DEFAULT_RELAY_GROUP, DEFAULT_SELECT_GROUP } from '../../templates/builtin-rules-provider.js';
+import { FINAL_FALLBACK_GROUP } from '../../templates/builtin-rules-provider.js';
 import { buildVisualRulesAndProviders } from '../../core/visual-rules-builder.js';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -332,7 +332,7 @@ resource-parser = https://raw.githubusercontent.com/sub-store-org/Sub-Store/mast
     'IP-CIDR,172.16.0.0/12,DIRECT,no-resolve',
     'IP-CIDR,192.168.0.0/16,DIRECT,no-resolve',
     ...builtinRuleLines,
-    `FINAL,${isRelay ? DEFAULT_RELAY_GROUP : DEFAULT_SELECT_GROUP}`,
+    `FINAL,${FINAL_FALLBACK_GROUP}`,
   ];
   sections.push(`[Rule]\n${ruleLines.filter(Boolean).join('\n')}`);
 

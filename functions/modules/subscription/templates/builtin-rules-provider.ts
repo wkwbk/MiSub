@@ -1,5 +1,17 @@
-import type { RegionGroupNode, RegionPolicyGroup } from '../core/region-groups.js';
 import { DNS_PROXY_GROUP, SINGBOX_CN_RULE_SET } from '../security/safe-dns.js';
+
+export {
+  AUTO_SELECT_GROUP,
+  DEFAULT_RELAY_GROUP,
+  DEFAULT_SELECT_GROUP,
+  FALLBACK_GROUP,
+  FINAL_FALLBACK_GROUP,
+  MANUAL_SELECT_GROUP,
+  RELAY_CHAIN_GROUP,
+  RELAY_COMMON_GROUP,
+  RELAY_ENTRY_GROUP,
+  sanitizePolicyGroupGraph as pruneProxyGroups,
+} from '../core/policy-group-topology.js';
 
 export interface PinRemoteRuleUrlOptions {
   mirror?: boolean;
@@ -34,17 +46,6 @@ export interface SingboxRuleSetDefinition {
   update_interval: string;
   download_detour: string;
 }
-
-/**
- * 策略组标准名称常量
- */
-export const DEFAULT_SELECT_GROUP = '🚀 节点选择';
-export const DEFAULT_RELAY_GROUP = '🌍 总出口';
-export const RELAY_CHAIN_GROUP = '🔗 链式代理';
-export const RELAY_ENTRY_GROUP = '🔗 中转节点';
-export const AUTO_SELECT_GROUP = '♻️ 自动选择';
-export const FALLBACK_GROUP = '🔯 故障转移';
-export const MANUAL_SELECT_GROUP = '👋 手动切换';
 
 export const AI_SERVICE_RULES = Object.freeze([
   {
@@ -87,52 +88,6 @@ export const AI_SERVICE_RULES = Object.freeze([
     domains: ['poe.com', 'character.ai', 'huggingface.co', 'replicate.com', 'openrouter.ai', 'groq.com', 'cohere.com'],
   },
 ]);
-
-/**
- * 清理策略组中不存在的成员引用
- */
-export function pruneProxyGroups<T extends RegionPolicyGroup>(proxyGroups: T[], proxies: RegionGroupNode[]): T[] {
-  const validTargetNames = new Set([
-    ...proxies.map((p) => p.tag || p.name),
-    ...proxyGroups.map((g) => g.name),
-    DEFAULT_SELECT_GROUP,
-    DEFAULT_RELAY_GROUP,
-    RELAY_CHAIN_GROUP,
-    RELAY_ENTRY_GROUP,
-    AUTO_SELECT_GROUP,
-    FALLBACK_GROUP,
-    MANUAL_SELECT_GROUP,
-    DNS_PROXY_GROUP,
-    'DIRECT',
-    'REJECT',
-    'REJECT-DROP',
-    'ANY',
-  ]);
-
-  return proxyGroups.map((group) => {
-    if (!Array.isArray(group.proxies)) return group;
-
-    const newProxies = group.proxies.filter((member) => {
-      if (member === group.name) return false;
-      if (member === DEFAULT_SELECT_GROUP || member === DEFAULT_RELAY_GROUP) {
-        return false;
-      }
-      if (
-        typeof member === 'string' &&
-        (member.startsWith('(') || member.includes('.*') || member.includes('+') || member.includes('$'))
-      ) {
-        return true;
-      }
-      return validTargetNames.has(member);
-    });
-
-    const failClosed = String(group.name || '').startsWith('🤖') || group.name === DNS_PROXY_GROUP;
-    return {
-      ...group,
-      proxies: newProxies.length > 0 ? newProxies : [failClosed ? 'REJECT' : 'DIRECT'],
-    };
-  });
-}
 
 /**
  * 远程规则源版本钉死配置

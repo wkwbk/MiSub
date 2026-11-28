@@ -237,6 +237,6 @@ describe('MiSub Native Visual Rules & Transform Options', () => {
     const quanx = await transformBuiltinSubscription(SAMPLE_NODES, 'quanx', visualOpts);
     expect(quanx).toContain('doh-server = https://223.5.5.5/dns-query');
     expect(quanx).toContain('filter_remote');
-    expect(quanx).toContain('final, 🚀 节点选择');
+    expect(quanx).toContain('final, 🐟 漏网之鱼');
   });
 });

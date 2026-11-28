@@ -405,7 +405,7 @@ export function renderShadowrocketConfigFromClash(
   // [Proxy Group]
   sections.push('[Proxy Group]');
   const ranks = new Map(sortedProxies.map((proxy, index) => [proxy.name, index]));
-  const priorityOrder = ['OpenAI-US', 'Claude-US', 'Gemini-US', 'Google-US', 'PROXY', '🚀 节点选择'];
+  const priorityOrder = ['OpenAI-US', 'Claude-US', 'Gemini-US', 'Google-US', 'PROXY', '🚀 节点选择', '🌍 总出口'];
   const groupRank = (g: ShadowrocketClashGroup): number => {
     const idx = priorityOrder.indexOf(g?.name || '');
     return idx >= 0 ? idx : priorityOrder.length;

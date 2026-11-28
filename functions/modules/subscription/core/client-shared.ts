@@ -18,6 +18,7 @@ import { cleanControlChars } from './name-utils.js';
 import {
   DEFAULT_RELAY_GROUP,
   DEFAULT_SELECT_GROUP,
+  FINAL_FALLBACK_GROUP,
   pruneProxyGroups,
   RELAY_CHAIN_GROUP,
   RELAY_ENTRY_GROUP,
@@ -69,6 +70,7 @@ export const QURE_ICON_REPO = 'https://raw.githubusercontent.com/Koolson/Qure/ma
 export const POLICY_GROUP_ICONS: Readonly<Record<string, string>> = Object.freeze({
   [DEFAULT_SELECT_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
   [DEFAULT_RELAY_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
+  [FINAL_FALLBACK_GROUP]: `${QURE_ICON_REPO}/Final.png`,
   [RELAY_CHAIN_GROUP]: `${QURE_ICON_REPO}/Proxy.png`,
   [RELAY_ENTRY_GROUP]: `${QURE_ICON_REPO}/Airport.png`,
   '♻️ 自动选择': `${QURE_ICON_REPO}/Speedtest.png`,

@@ -20,7 +20,10 @@ describe('Built-in Sing-box generator', () => {
     expect(parsed.outbounds.some((outbound) => outbound.tag.includes('日本') && outbound.type === 'urltest')).toBe(
       true,
     );
-    expect(parsed.route.final).toContain('节点选择');
+    const finalGroup = parsed.outbounds.find((outbound) => outbound.tag === '🐟 漏网之鱼');
+    expect(finalGroup?.type).toBe('selector');
+    expect(finalGroup?.default).toBe('🚀 节点选择');
+    expect(parsed.route.final).toBe('🐟 漏网之鱼');
   });
 
   it('should include a tun inbound for sing-box Android client deployment', () => {

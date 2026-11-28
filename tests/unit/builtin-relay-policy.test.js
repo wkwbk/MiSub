@@ -117,9 +117,20 @@ describe('内置 Relay 链式中转开关', () => {
       expect.arrayContaining(['🌍 总出口', '🔗 链式代理', '🔗 中转节点', '⭐ 专属中转业务', '🔒 国内服务']),
     );
     expect(minimalGroupNames).not.toContain('💬 AI 服务');
+    const defaultRelayGroup = minimalClash['proxy-groups'].find((g) => g.name === '🌍 总出口');
+    expect(defaultRelayGroup?.proxies[0]).toBe('🔗 链式代理');
     const customGroupInMinimal = minimalClash['proxy-groups'].find((g) => g.name === '⭐ 专属中转业务');
-    expect(customGroupInMinimal?.proxies[0]).toBe('🔗 链式代理');
-    expect(minimalClash.rules.at(-1)).toBe('MATCH,🌍 总出口');
+    expect(customGroupInMinimal?.proxies.slice(0, 6)).toEqual([
+      '🌍 总出口',
+      '🔗 链式代理',
+      '🚀 常用节点',
+      '♻️ 自动选择',
+      '🔯 故障转移',
+      '👋 手动切换',
+    ]);
+    expect(minimalClash.rules.at(-1)).toBe('MATCH,🐟 漏网之鱼');
+    const minimalFinalGroup = minimalClash['proxy-groups'].find((g) => g.name === '🐟 漏网之鱼');
+    expect(minimalFinalGroup?.proxies[0]).toBe('🌍 总出口');
 
     const fullSingbox = JSON.parse(
       generateBuiltinSingboxConfig(RELAY_NODE_LIST, {
@@ -137,8 +148,12 @@ describe('内置 Relay 链式中转开关', () => {
         '⭐ 专属中转业务',
         '💬 AI 服务',
         '🎮 游戏平台',
+        '🐟 漏网之鱼',
       ]),
     );
-    expect(fullSingbox.route.final).toBe('🌍 总出口');
+    const fullFinalOutbound = fullSingbox.outbounds.find((o) => o.tag === '🐟 漏网之鱼');
+    expect(fullFinalOutbound?.default).toBe('🌍 总出口');
+    expect(fullFinalOutbound?.outbounds[0]).toBe('🌍 总出口');
+    expect(fullSingbox.route.final).toBe('🐟 漏网之鱼');
   });
 });

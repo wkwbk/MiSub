@@ -356,7 +356,8 @@ describe('Surge 内置生成器', () => {
         `RULE-SET,https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/${PINNED_RULE_REVISIONS.ACL4SSR}/Clash/ChinaDomain.list,🔒 国内服务`,
       );
       expect(result).toContain('GEOIP,CN,🔒 国内服务,no-resolve');
-      expect(result).toContain('FINAL,🚀 节点选择,dns-failed');
+      expect(result).toContain('🐟 漏网之鱼 = select, 🚀 节点选择');
+      expect(result).toContain('FINAL,🐟 漏网之鱼,dns-failed');
       expect(result).not.toContain('gh-proxy.org');
 
       const fullResult = generateBuiltinSurgeConfig(ss, {
