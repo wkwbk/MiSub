@@ -262,10 +262,11 @@ describe('modal mobile UX regressions', () => {
       },
     });
 
-    const pingButtons = wrapper.findAll('button').filter((b) => b.text().trim() === '测速');
+    const pingButtons = wrapper.findAll('button[aria-label="测试该节点延迟"]');
     expect(pingButtons).toHaveLength(2);
     for (const btn of pingButtons) {
       expect(btn.classes()).toContain('h-7');
+      expect(btn.classes()).toContain('w-7');
       expect(btn.classes()).toContain('shrink-0');
     }
 
@@ -310,9 +311,9 @@ describe('modal mobile UX regressions', () => {
       },
     });
 
-    const pingBtn = wrapper.findAll('button').find((b) => b.text().trim() === '测速');
-    expect(pingBtn).toBeTruthy();
+    const pingBtn = wrapper.get('button[aria-label="测试该节点延迟"]');
     expect(pingBtn.classes()).toContain('h-7');
+    expect(pingBtn.classes()).toContain('w-7');
     expect(pingBtn.classes()).toContain('shrink-0');
 
     const detailBtn = wrapper.get('button[aria-label="查看详情"]');
