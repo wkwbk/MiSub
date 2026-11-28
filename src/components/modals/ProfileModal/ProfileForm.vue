@@ -385,7 +385,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
           <span class="text-xs text-fg-subtle">{{ t('profileModal.coreConfigDesc') }}</span>
         </div>
 
-        <div class="bg-transparent p-4 border border-line rounded-md shadow-none">
+        <div class="space-y-4">
           <TransformSchemeEditor
             :global-settings="globalSettings"
             :model="localProfile"
@@ -393,32 +393,32 @@ const subscriptionOverridePreviewUrl = computed(() => {
             @update:model="emit('update:localProfile', $event as EditableProfile)"
           />
 
-          <div class="mt-4 border-t border-line pt-4 space-y-2.5" data-testid="profile-node-flags-override">
+          <div class="border-t border-line pt-4 space-y-3" data-testid="profile-node-flags-override">
             <p class="text-xs font-medium text-fg-muted">
               {{ t('profileModal.nodeFlagsOverrideTitle') }}
             </p>
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div class="flex flex-col gap-1.5 rounded-md border border-line bg-transparent p-2.5">
-                <span class="text-xs font-medium text-fg-muted">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-medium text-fg-muted">
                   {{ t('profileModal.enableUdpOverride') }}
-                </span>
+                </label>
                 <Select
                   :model-value="localProfile.enableUdp ?? null"
                   :options="triStateOptions"
                   data-testid="profile-override-udp"
-                  size="xs"
+                  size="sm"
                   @update:model-value="updateLocalProfile({ enableUdp: ($event as boolean | null) ?? null })"
                 />
               </div>
-              <div class="flex flex-col gap-1.5 rounded-md border border-line bg-transparent p-2.5">
-                <span class="text-xs font-medium text-fg-muted">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-medium text-fg-muted">
                   {{ t('profileModal.skipCertVerifyOverride') }}
-                </span>
+                </label>
                 <Select
                   :model-value="localProfile.skipCertVerify ?? null"
                   :options="triStateOptions"
                   data-testid="profile-override-scv"
-                  size="xs"
+                  size="sm"
                   @update:model-value="updateLocalProfile({ skipCertVerify: ($event as boolean | null) ?? null })"
                 />
               </div>
@@ -428,7 +428,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
       </div>
 
       <!-- === 区块 B：参数微调与后处理 (Parameter Tuning) === -->
-      <div class="space-y-3">
+      <div class="space-y-3 border-t border-line pt-5">
         <div class="flex items-center gap-2">
           <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
             {{ t('profileModal.tuningTitle') }}
@@ -436,7 +436,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
           <span class="text-xs text-fg-subtle">{{ t('profileModal.tuningDesc') }}</span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-transparent p-4 border border-line rounded-md shadow-none">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <!-- 到期时间 -->
           <div>
             <label class="block text-xs font-medium text-fg-muted mb-1.5">{{ t('profileModal.expiresLabel') }}</label>
@@ -538,7 +538,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
       </div>
 
       <!-- === 区块 C：处理管道 (Process Workflow) === -->
-      <div class="space-y-3">
+      <div class="space-y-3 border-t border-line pt-5">
         <div class="flex items-center gap-2">
           <h3 class="text-xs font-semibold uppercase tracking-wider text-fg">
             {{ t('profileModal.pipelineTitle') }}
@@ -633,7 +633,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
   </div>
 
   <!-- === Mihomo 多端口 SOCKS5 出站折叠配置区 === -->
-  <div class="rounded-md border border-line bg-transparent mt-3 overflow-hidden">
+  <div class="rounded-md border border-line bg-transparent mt-4 overflow-hidden">
     <button
       :aria-expanded="showMultiSocks"
       class="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-hover/40 focus-visible:outline-hidden"
@@ -773,7 +773,7 @@ const subscriptionOverridePreviewUrl = computed(() => {
       </div>
 
       <!-- 实时订阅地址与多端口参数预览 -->
-      <div class="rounded-md border border-line bg-inset/60 p-3 space-y-1.5">
+      <div class="rounded-md bg-inset/60 p-3 space-y-1.5">
         <p class="text-xs font-medium text-fg">{{ t('profileModal.subscriptionPreviewLabel') }}</p>
         <p class="font-mono text-xs text-fg-muted break-all">{{ subscriptionBasePreviewUrl }}</p>
         <p v-if="effectiveMultiSocksEnabledPreview" class="text-xs text-emerald-500 dark:text-emerald-400">

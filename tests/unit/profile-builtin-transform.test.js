@@ -239,13 +239,26 @@ describe('ProfileForm orthogonal 3+1 mode editor & tri-state node parameter over
       },
     });
 
-    // 默认处于跟随全局状态，显示只读摘要（含全局预设与 Relay 状态），并渲染正交节点参数覆写区
+    // 默认处于跟随全局状态，显示只读摘要（含全局预设与 Relay 状态），并直接暴露链式中转三态覆写及正交节点参数覆写区
     expect(wrapper.find('[data-testid="profile-follow-global-summary"]').exists()).toBe(true);
     expect(wrapper.get('[data-testid="profile-follow-global-summary"]').text()).toContain('精简');
     expect(wrapper.get('[data-testid="profile-follow-global-summary"]').text()).toContain('链式中转');
+    expect(wrapper.find('[data-testid="profile-override-relay"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="profile-node-flags-override"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="profile-override-udp"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="profile-override-scv"]').exists()).toBe(true);
+
+    // 即使保持跟随全局方案，也可以单独关闭或开启链式中转
+    const globalRelaySelect = wrapper.get('[data-testid="profile-override-relay"]');
+    await globalRelaySelect.find('button[role="combobox"]').trigger('click');
+    await nextTick();
+    await globalRelaySelect
+      .findAll('[role="option"]')
+      .find((o) => o.text().includes('关闭'))
+      .trigger('click');
+    await nextTick();
+    expect(state.profile.transformMode).toBeNull();
+    expect(state.profile.enableRelay).toBe(false);
 
     // 切换 UDP 覆写为 false，切换跳过证书校验覆写为 true
     const udpSelect = wrapper.get('[data-testid="profile-override-udp"]');
@@ -287,20 +300,22 @@ describe('ProfileForm orthogonal 3+1 mode editor & tri-state node parameter over
     await nextTick();
     expect(state.profile.enableRelay).toBe(true);
 
-    // 切换到第三方后端：不清空已保存的 templateConfig 与 customVisualRules，且正交覆写保留
+    // 切换到第三方后端：不清空已保存的 templateConfig 与 customVisualRules，隐藏内置中转控件但保留已选值
     await wrapper.get('[data-testid="mode-btn-external"]').trigger('click');
     await nextTick();
     expect(state.profile.transformMode).toBe('external');
+    expect(wrapper.find('[data-testid="profile-override-relay"]').exists()).toBe(false);
     expect(state.profile.templateConfig).toBe('https://example.com/custom.ini');
     expect(state.profile.customVisualRules.selectedRules).toEqual(['private', 'cn_services', 'non_cn']);
     expect(state.profile.enableUdp).toBe(false);
     expect(state.profile.skipCertVerify).toBe(true);
     expect(state.profile.enableRelay).toBe(true);
 
-    // 切回跟随全局：清空 transformMode 为 null（PATCH 语义）
+    // 切回跟随全局：清空 transformMode 为 null（PATCH 语义），并在全局为智能分流时继续显示链式中转控件
     await wrapper.get('[data-testid="mode-btn-global"]').trigger('click');
     await nextTick();
     expect(state.profile.transformMode).toBeNull();
+    expect(wrapper.find('[data-testid="profile-override-relay"]').exists()).toBe(true);
   });
 
   it('ProfileModal buildPreparedProfile omits null overrides on create (isNew=true) and preserves explicit null on PATCH (isNew=false)', async () => {

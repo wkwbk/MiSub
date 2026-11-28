@@ -1465,7 +1465,6 @@ export default {
     transformCustomizeRules: '自定义分流规则与分类',
     transformCommonParamsTitle: '通用转换参数',
     transformCommonParamsDesc: '所有转换模式共享的基础开关，切换模式时不会相互重置。',
-    transformFlagEmojiLabel: '自动国旗 Emoji',
     transformAdvancedTitle: '高级设置',
     transformAdvancedDesc: 'DNS 策略覆写、Clash API 控制面板、基础配置骨架与 Mihomo 多端口 SOCKS5。',
     transformAdvancedExpand: '展开高级项',

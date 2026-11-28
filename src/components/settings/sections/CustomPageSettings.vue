@@ -375,10 +375,7 @@ onUnmounted(() => {
             </span>
           </div>
 
-          <div
-            class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2"
-            data-testid="custom-page-layout-options"
-          >
+          <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2" data-testid="custom-page-layout-options">
             <div
               v-for="row in layoutSwitchRows"
               :key="row.key"
@@ -399,15 +396,15 @@ onUnmounted(() => {
           <div class="flex flex-wrap items-center justify-between gap-2">
             <!-- 左侧：HTML / CSS 切换 + 安全规则 Tooltip -->
             <div class="flex items-center gap-2 flex-wrap">
-              <div class="inline-flex shrink-0 items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
                   :class="
                     activeCodeTab === 'html'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   data-testid="custom-page-tab-html"
                   type="button"
                   @click="activeCodeTab = 'html'"
@@ -424,10 +421,10 @@ onUnmounted(() => {
                   :aria-pressed="activeCodeTab === 'css'"
                   :class="
                     activeCodeTab === 'css'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   data-testid="custom-page-tab-css"
                   type="button"
                   @click="activeCodeTab = 'css'"
@@ -468,7 +465,9 @@ onUnmounted(() => {
                   <div v-for="row in fixedDisabledRows" :key="row.titleKey" class="space-y-1 border-t border-line pt-2">
                     <div class="flex items-center justify-between gap-2">
                       <span class="font-medium text-fg">{{ t(row.titleKey) }}</span>
-                      <span class="shrink-0 px-1.5 py-0.5 rounded border border-line text-[10px] font-mono text-fg-muted">
+                      <span
+                        class="shrink-0 px-1.5 py-0.5 rounded border border-line text-[10px] font-mono text-fg-muted"
+                      >
                         {{ t('settings.customPageFixedDisabled') }}
                       </span>
                     </div>
@@ -806,15 +805,15 @@ onUnmounted(() => {
           <!-- 全屏左侧代码区 -->
           <div class="min-h-0 h-full flex flex-col bg-inset overflow-hidden">
             <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-line bg-surface/70 shrink-0">
-              <div class="inline-flex shrink-0 items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
                   :class="
                     activeCodeTab === 'html'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'html'"
                 >
@@ -825,10 +824,10 @@ onUnmounted(() => {
                   :aria-pressed="activeCodeTab === 'css'"
                   :class="
                     activeCodeTab === 'css'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'css'"
                 >
@@ -836,10 +835,7 @@ onUnmounted(() => {
                 </button>
               </div>
 
-              <div
-                v-if="activeCodeTab === 'html'"
-                class="flex items-center gap-1 overflow-x-auto no-scrollbar"
-              >
+              <div v-if="activeCodeTab === 'html'" class="flex items-center gap-1 overflow-x-auto no-scrollbar">
                 <button
                   v-for="p in placeholderChips"
                   :key="`fs-chip-${p}`"

@@ -392,15 +392,15 @@ onUnmounted(() => {
         <div class="space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-2 flex-wrap">
-              <div class="inline-flex shrink-0 items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
                   :class="
                     activeCodeTab === 'html'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   data-testid="portal-custom-page-tab-html"
                   type="button"
                   @click="activeCodeTab = 'html'"
@@ -417,10 +417,10 @@ onUnmounted(() => {
                   :aria-pressed="activeCodeTab === 'css'"
                   :class="
                     activeCodeTab === 'css'
-                      ? 'bg-accent text-accent-fg'
-                      : 'text-fg-muted hover:text-fg hover:bg-hover'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
                   "
-                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  class="inline-flex shrink-0 whitespace-nowrap items-center gap-1.5 px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   data-testid="portal-custom-page-tab-css"
                   type="button"
                   @click="activeCodeTab = 'css'"
@@ -458,7 +458,9 @@ onUnmounted(() => {
                   <div v-for="row in fixedDisabledRows" :key="row.titleKey" class="space-y-1 border-t border-line pt-2">
                     <div class="flex items-center justify-between gap-2">
                       <span class="font-medium text-fg">{{ t(row.titleKey) }}</span>
-                      <span class="shrink-0 px-1.5 py-0.5 rounded border border-line text-[10px] font-mono text-fg-muted">
+                      <span
+                        class="shrink-0 px-1.5 py-0.5 rounded border border-line text-[10px] font-mono text-fg-muted"
+                      >
                         {{ t('settings.customPageFixedDisabled') }}
                       </span>
                     </div>
@@ -656,7 +658,9 @@ onUnmounted(() => {
           class="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 border-b border-line bg-surface shrink-0"
         >
           <div class="flex items-center gap-3 min-w-0 flex-wrap">
-            <span class="text-sm font-semibold text-fg truncate">{{ t('settings.portalCustomPageFullscreenTitle') }}</span>
+            <span class="text-sm font-semibold text-fg truncate">{{
+              t('settings.portalCustomPageFullscreenTitle')
+            }}</span>
             <div class="hidden xl:flex items-center gap-1.5">
               <div
                 v-for="row in layoutSwitchRows"
@@ -728,14 +732,20 @@ onUnmounted(() => {
           </div>
         </header>
 
-        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-line overflow-hidden">
+        <div
+          class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-line overflow-hidden"
+        >
           <div class="flex flex-col min-h-0 bg-inset overflow-hidden">
             <div class="flex items-center justify-between gap-2 px-3 py-2 border-b border-line bg-surface/60 shrink-0">
-              <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+              <div class="inline-flex items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
                 <button
                   :aria-pressed="activeCodeTab === 'html'"
-                  :class="activeCodeTab === 'html' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:text-fg hover:bg-hover'"
-                  class="px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  :class="
+                    activeCodeTab === 'html'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
+                  "
+                  class="px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'html'"
                 >
@@ -743,8 +753,12 @@ onUnmounted(() => {
                 </button>
                 <button
                   :aria-pressed="activeCodeTab === 'css'"
-                  :class="activeCodeTab === 'css' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:text-fg hover:bg-hover'"
-                  class="px-2.5 py-1 rounded text-xs font-mono font-medium transition-colors"
+                  :class="
+                    activeCodeTab === 'css'
+                      ? 'border-line-strong bg-active font-semibold text-fg'
+                      : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
+                  "
+                  class="px-2.5 py-1 rounded border text-xs font-mono font-medium transition-colors"
                   type="button"
                   @click="activeCodeTab = 'css'"
                 >

@@ -144,21 +144,29 @@ const isProcessedToggleVisible = computed(() => {
           <label class="block text-xs uppercase font-medium text-fg-subtle mb-1.5 tracking-wider">
             {{ t('nodePreview.layoutLabel') }}
           </label>
-          <div class="inline-flex items-center border border-line rounded-md overflow-hidden divide-x divide-line">
+          <div class="inline-flex items-center gap-0.5 border border-line rounded-md bg-inset p-0.5">
             <button
               :aria-label="t('common.listView')"
-              :class="viewMode === 'list' ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-subtle hover:text-fg'"
+              :class="
+                viewMode === 'list'
+                  ? 'border-line-strong bg-active text-fg'
+                  : 'border-transparent bg-transparent text-fg-subtle hover:bg-hover hover:text-fg'
+              "
               :title="t('common.listView')"
-              class="flex h-[36px] w-[36px] items-center justify-center text-sm font-medium transition-colors"
+              class="flex h-8 w-8 items-center justify-center rounded border text-sm font-medium transition-colors"
               @click="emit('update:viewMode', 'list')"
             >
               <List class="w-4 h-4" />
             </button>
             <button
               :aria-label="t('common.cardView')"
-              :class="viewMode === 'card' ? 'bg-accent text-accent-fg' : 'bg-transparent text-fg-subtle hover:text-fg'"
+              :class="
+                viewMode === 'card'
+                  ? 'border-line-strong bg-active text-fg'
+                  : 'border-transparent bg-transparent text-fg-subtle hover:bg-hover hover:text-fg'
+              "
               :title="t('common.cardView')"
-              class="flex h-[36px] w-[36px] items-center justify-center text-sm font-medium transition-colors"
+              class="flex h-8 w-8 items-center justify-center rounded border text-sm font-medium transition-colors"
               @click="emit('update:viewMode', 'card')"
             >
               <LayoutGrid class="w-4 h-4" />

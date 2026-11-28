@@ -110,6 +110,7 @@ describe('TransformCard orthogonal 3-mode selector, unified flags, backend test 
 
     expect(wrapper.find('[data-testid="smart-mode-panel"]').exists()).toBe(true);
     expect(wrapper.find('[data-testid="common-transform-params"]').exists()).toBe(true);
+    expect(wrapper.find('[data-testid="common-switch-emoji"]').exists()).toBe(false);
 
     await wrapper.get('[data-testid="mode-btn-template"]').trigger('click');
     await nextTick();

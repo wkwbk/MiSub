@@ -236,12 +236,14 @@ function handleCustomRuleJsonInput(event: Event) {
           <h4 class="text-xs font-semibold text-fg">{{ t('settings.visualCustomRulesTitle') }}</h4>
           <p class="mt-0.5 text-xs text-fg-muted">{{ t('settings.visualCustomRulesDesc') }}</p>
         </div>
-        <div class="flex shrink-0 rounded-md border border-line bg-inset p-0.5">
+        <div class="flex shrink-0 gap-0.5 rounded-md border border-line bg-inset p-0.5">
           <button
             :class="
-              customRuleMode === 'form' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
+              customRuleMode === 'form'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded border px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'form'"
           >
@@ -250,9 +252,11 @@ function handleCustomRuleJsonInput(event: Event) {
           </button>
           <button
             :class="
-              customRuleMode === 'json' ? 'bg-accent text-accent-fg' : 'text-fg-muted hover:bg-hover hover:text-fg'
+              customRuleMode === 'json'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
+            class="inline-flex min-h-8 shrink-0 whitespace-nowrap items-center gap-1 rounded border px-2.5 py-1 text-xs font-medium transition-colors"
             type="button"
             @click="customRuleMode = 'json'"
           >

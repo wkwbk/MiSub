@@ -206,7 +206,10 @@ const commitParsedNodes = async (
 
   if (typeof props.addNodesFromBulk === 'function') {
     const outcome = await props.addNodesFromBulk(uniqueNodes, normalizedTags);
-    if (outcome === false || (outcome && typeof outcome === 'object' && 'ok' in outcome && !(outcome as { ok?: boolean }).ok)) {
+    if (
+      outcome === false ||
+      (outcome && typeof outcome === 'object' && 'ok' in outcome && !(outcome as { ok?: boolean }).ok)
+    ) {
       return false;
     }
   }
@@ -441,18 +444,15 @@ const handleModalConfirm = () => {
     <template #body>
       <div :class="isNodesMode ? 'space-y-4' : 'space-y-5'">
         <!-- 来源 Tab 切换（subscriptions 仅文本批量模式无需切换） -->
-        <div
-          v-if="!isSubscriptionsMode"
-          class="grid grid-cols-2 divide-x divide-line-subtle border border-line rounded-md overflow-hidden bg-inset"
-        >
+        <div v-if="!isSubscriptionsMode" class="grid grid-cols-2 gap-1 border border-line rounded-md p-1 bg-inset">
           <button
             v-if="isNodesMode"
             :class="
               activeTab === 'url'
-                ? 'bg-accent text-accent-fg font-semibold'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
+            class="px-2 py-1.5 rounded border text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'url'"
           >
@@ -462,10 +462,10 @@ const handleModalConfirm = () => {
             v-else
             :class="
               activeTab === 'text'
-                ? 'bg-accent text-accent-fg font-semibold'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
+            class="px-2 py-1.5 rounded border text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'text'"
           >
@@ -474,10 +474,10 @@ const handleModalConfirm = () => {
           <button
             :class="
               activeTab === 'file'
-                ? 'bg-accent text-accent-fg font-semibold'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="px-2 py-1.5 text-xs font-medium whitespace-nowrap truncate transition-colors"
+            class="px-2 py-1.5 rounded border text-xs font-medium whitespace-nowrap truncate transition-colors"
             type="button"
             @click="activeTab = 'file'"
           >

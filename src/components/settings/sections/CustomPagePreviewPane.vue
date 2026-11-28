@@ -199,16 +199,16 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
       </div>
 
       <div class="flex items-center gap-1.5 shrink-0">
-        <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+        <div class="inline-flex items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
           <button
             :aria-pressed="viewport === 'desktop'"
             :class="
               viewport === 'desktop'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewDesktop')"
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded border text-[11px] font-medium transition-colors"
             data-testid="preview-viewport-desktop"
             type="button"
             @click="emit('update:viewport', 'desktop')"
@@ -220,11 +220,11 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
             :aria-pressed="viewport === 'mobile'"
             :class="
               viewport === 'mobile'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewMobile')"
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded border text-[11px] font-medium transition-colors"
             data-testid="preview-viewport-mobile"
             type="button"
             @click="emit('update:viewport', 'mobile')"
@@ -234,16 +234,16 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
           </button>
         </div>
 
-        <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+        <div class="inline-flex items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
           <button
             :aria-pressed="theme === 'light'"
             :class="
               theme === 'light'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewLight')"
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded border text-[11px] font-medium transition-colors"
             data-testid="preview-theme-light"
             type="button"
             @click="emit('update:theme', 'light')"
@@ -255,11 +255,11 @@ const desktopIframeStyle = computed<CSSProperties>(() => {
             :aria-pressed="theme === 'dark'"
             :class="
               theme === 'dark'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
             :title="t('settings.customPagePreviewDark')"
-            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded text-[11px] font-medium transition-colors"
+            class="inline-flex shrink-0 whitespace-nowrap items-center gap-1 px-2 py-1 rounded border text-[11px] font-medium transition-colors"
             data-testid="preview-theme-dark"
             type="button"
             @click="emit('update:theme', 'dark')"

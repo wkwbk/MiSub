@@ -1498,7 +1498,6 @@ export default {
     transformCustomizeRules: 'Customize categories & rules',
     transformCommonParamsTitle: 'Common Conversion Options',
     transformCommonParamsDesc: 'Shared switches across modes. Switching modes keeps your existing configuration.',
-    transformFlagEmojiLabel: 'Country flag Emoji',
     transformAdvancedTitle: 'Advanced Settings',
     transformAdvancedDesc: 'DNS policy & override, Clash API, base config skeleton, and Mihomo multi-port SOCKS5.',
     transformAdvancedExpand: 'Expand advanced',

@@ -85,10 +85,10 @@ const toggleProtocol = (protocol: string): void => {
           <button
             :class="
               params.includeProtocol
-                ? 'bg-accent text-accent-fg font-semibold'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="rounded px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
+            class="rounded border px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
             type="button"
             @click="updateValue({ includeProtocol: true })"
           >
@@ -97,10 +97,10 @@ const toggleProtocol = (protocol: string): void => {
           <button
             :class="
               !params.includeProtocol
-                ? 'bg-accent text-accent-fg font-semibold'
-                : 'text-fg-muted hover:bg-hover hover:text-fg'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:bg-hover hover:text-fg'
             "
-            class="rounded px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
+            class="rounded border px-2.5 text-xs font-medium transition-colors whitespace-nowrap"
             type="button"
             @click="updateValue({ includeProtocol: false })"
           >

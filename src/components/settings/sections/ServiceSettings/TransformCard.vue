@@ -17,7 +17,7 @@ const emit = defineEmits<{
   'update:settings': [value: AppSettingsConfig];
 }>();
 
-function patchCommonToggle(settingKey: 'enableUdp' | 'skipCertVerify' | 'enableFlagEmoji', value: boolean): void {
+function patchCommonToggle(settingKey: 'enableUdp' | 'skipCertVerify', value: boolean): void {
   emit('update:settings', {
     ...props.settings,
     [settingKey]: value,
@@ -38,13 +38,6 @@ const commonSwitches = computed(() => [
     label: t('settings.transformSkipCert'),
     value: Boolean(props.settings?.skipCertVerify),
     update: (val: boolean) => patchCommonToggle('skipCertVerify', val),
-  },
-  {
-    key: 'emoji',
-    testId: 'common-switch-emoji',
-    label: t('settings.transformFlagEmojiLabel'),
-    value: props.settings?.enableFlagEmoji !== false,
-    update: (val: boolean) => patchCommonToggle('enableFlagEmoji', val),
   },
 ]);
 </script>
@@ -76,7 +69,7 @@ const commonSwitches = computed(() => [
         <Cpu class="h-4 w-4" />
       </template>
 
-      <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+      <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <div v-for="item in commonSwitches" :key="item.key" class="setting-switch-card">
           <span class="truncate text-xs font-medium text-fg-muted">{{ item.label }}</span>
           <Switch

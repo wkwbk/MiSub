@@ -229,15 +229,15 @@ onUnmounted(() => {
         v-model:settings="settingsModel"
       />
       <div v-if="visitedTabs.has('custom-page')" v-show="activeTab === 'custom-page'" class="space-y-4">
-        <div class="inline-flex items-center rounded-md border border-line bg-inset p-0.5">
+        <div class="inline-flex items-center gap-0.5 rounded-md border border-line bg-inset p-0.5">
           <button
             :aria-pressed="customPageSubTab === 'public'"
             :class="
               customPageSubTab === 'public'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
-            class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+            class="px-3 py-1.5 rounded border text-xs font-medium transition-colors"
             data-testid="custom-page-subtab-public"
             type="button"
             @click="customPageSubTab = 'public'"
@@ -248,10 +248,10 @@ onUnmounted(() => {
             :aria-pressed="customPageSubTab === 'portal'"
             :class="
               customPageSubTab === 'portal'
-                ? 'bg-accent text-accent-fg'
-                : 'text-fg-muted hover:text-fg hover:bg-hover'
+                ? 'border-line-strong bg-active font-semibold text-fg'
+                : 'border-transparent text-fg-muted hover:text-fg hover:bg-hover'
             "
-            class="px-3 py-1.5 rounded text-xs font-medium transition-colors"
+            class="px-3 py-1.5 rounded border text-xs font-medium transition-colors"
             data-testid="custom-page-subtab-portal"
             type="button"
             @click="customPageSubTab = 'portal'"
