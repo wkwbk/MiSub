@@ -477,7 +477,7 @@ export function syncSettingsSnapshotToCache(
   if (queryClient) {
     const existingSettings = queryClient.getQueryData<Record<string, unknown>>(QUERY_KEYS.settings);
     queryClient.setQueryData(QUERY_KEYS.settings, {
-      ...(existingSettings || {}),
+      ...existingSettings,
       ...savedSettings,
     });
 
